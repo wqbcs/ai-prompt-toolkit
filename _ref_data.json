@@ -1,0 +1,423 @@
+{
+  "all_refs": [
+    {
+      "source_file": "00_项目提示词总览与使用指南.md",
+      "source_section": "项目信息",
+      "target_file": "00_项目提示词总览与使用指南.md",
+      "target_anchor": "附录-c进阶用法-多文档链式组合",
+      "target_raw": "#附录-c进阶用法-多文档链式组合",
+      "text": "附录 C：链式组合",
+      "ref_type": "锚点引用",
+      "pos": 7070
+    },
+    {
+      "source_file": "00_项目提示词总览与使用指南.md",
+      "source_section": "项目信息",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 7115
+    },
+    {
+      "source_file": "01_需求分析与产品规划提示词.md",
+      "source_section": "01 — 需求分析与产品规划提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "02_架构设计与技术选型提示词.md",
+      "source_section": "02 — 架构设计与技术选型提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 209
+    },
+    {
+      "source_file": "03_编码规范与AI辅助开发提示词.md",
+      "source_section": "03 — 编码规范与 AI 辅助开发提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "04_代码审查与质量保障提示词.md",
+      "source_section": "04 — 代码审查与质量保障提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 263
+    },
+    {
+      "source_file": "05_全维度测试策略提示词.md",
+      "source_section": "05 — 全维度测试策略提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 192
+    },
+    {
+      "source_file": "06_CI_CD与自动化部署提示词.md",
+      "source_section": "06 — CI/CD 与自动化部署提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "07_监控告警与运维保障提示词.md",
+      "source_section": "07 — 监控告警与运维保障提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 196
+    },
+    {
+      "source_file": "08_安全审计与合规检查提示词.md",
+      "source_section": "08 — 安全审计与合规检查提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 202
+    },
+    {
+      "source_file": "09_性能压测与优化提示词.md",
+      "source_section": "09 — 性能压测与优化提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 198
+    },
+    {
+      "source_file": "10_技术文档与知识沉淀提示词.md",
+      "source_section": "10 — 技术文档与知识沉淀提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 197
+    },
+    {
+      "source_file": "10_技术文档与知识沉淀提示词.md",
+      "source_section": "设计决策",
+      "target_file": "decisions/ADR-001-xxx.md",
+      "target_anchor": null,
+      "target_raw": "./decisions/ADR-001-xxx.md",
+      "text": "ADR-001",
+      "ref_type": "文档引用",
+      "pos": 2405
+    },
+    {
+      "source_file": "11_项目管理与迭代复盘提示词.md",
+      "source_section": "11 — 项目管理与迭代复盘提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 1：外部调研（强制耗时≥30%）",
+      "target_file": "URL",
+      "target_anchor": null,
+      "target_raw": "URL",
+      "text": "来源标题",
+      "ref_type": "文档引用",
+      "pos": 1511
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 3：迭代记录与验收",
+      "target_file": "URL1",
+      "target_anchor": null,
+      "target_raw": "URL1",
+      "text": "来源1标题",
+      "ref_type": "文档引用",
+      "pos": 2066
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 3：迭代记录与验收",
+      "target_file": "URL2",
+      "target_anchor": null,
+      "target_raw": "URL2",
+      "text": "来源2标题",
+      "ref_type": "文档引用",
+      "pos": 2090
+    }
+  ],
+  "broken_links": [
+    {
+      "source_file": "10_技术文档与知识沉淀提示词.md",
+      "source_section": "设计决策",
+      "target_file": "decisions/ADR-001-xxx.md",
+      "target_anchor": null,
+      "target_raw": "./decisions/ADR-001-xxx.md",
+      "text": "ADR-001",
+      "ref_type": "文档引用",
+      "pos": 2405
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 1：外部调研（强制耗时≥30%）",
+      "target_file": "URL",
+      "target_anchor": null,
+      "target_raw": "URL",
+      "text": "来源标题",
+      "ref_type": "文档引用",
+      "pos": 1511
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 3：迭代记录与验收",
+      "target_file": "URL1",
+      "target_anchor": null,
+      "target_raw": "URL1",
+      "text": "来源1标题",
+      "ref_type": "文档引用",
+      "pos": 2066
+    },
+    {
+      "source_file": "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md",
+      "source_section": "步骤 3：迭代记录与验收",
+      "target_file": "URL2",
+      "target_anchor": null,
+      "target_raw": "URL2",
+      "text": "来源2标题",
+      "ref_type": "文档引用",
+      "pos": 2090
+    }
+  ],
+  "invalid_anchors": [],
+  "valid_refs": [
+    {
+      "source_file": "00_项目提示词总览与使用指南.md",
+      "source_section": "项目信息",
+      "target_file": "00_项目提示词总览与使用指南.md",
+      "target_anchor": "附录-c进阶用法-多文档链式组合",
+      "target_raw": "#附录-c进阶用法-多文档链式组合",
+      "text": "附录 C：链式组合",
+      "ref_type": "锚点引用",
+      "pos": 7070
+    },
+    {
+      "source_file": "00_项目提示词总览与使用指南.md",
+      "source_section": "项目信息",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 7115
+    },
+    {
+      "source_file": "01_需求分析与产品规划提示词.md",
+      "source_section": "01 — 需求分析与产品规划提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "02_架构设计与技术选型提示词.md",
+      "source_section": "02 — 架构设计与技术选型提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 209
+    },
+    {
+      "source_file": "03_编码规范与AI辅助开发提示词.md",
+      "source_section": "03 — 编码规范与 AI 辅助开发提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "04_代码审查与质量保障提示词.md",
+      "source_section": "04 — 代码审查与质量保障提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 263
+    },
+    {
+      "source_file": "05_全维度测试策略提示词.md",
+      "source_section": "05 — 全维度测试策略提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 192
+    },
+    {
+      "source_file": "06_CI_CD与自动化部署提示词.md",
+      "source_section": "06 — CI/CD 与自动化部署提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    },
+    {
+      "source_file": "07_监控告警与运维保障提示词.md",
+      "source_section": "07 — 监控告警与运维保障提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 196
+    },
+    {
+      "source_file": "08_安全审计与合规检查提示词.md",
+      "source_section": "08 — 安全审计与合规检查提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 202
+    },
+    {
+      "source_file": "09_性能压测与优化提示词.md",
+      "source_section": "09 — 性能压测与优化提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 198
+    },
+    {
+      "source_file": "10_技术文档与知识沉淀提示词.md",
+      "source_section": "10 — 技术文档与知识沉淀提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 197
+    },
+    {
+      "source_file": "11_项目管理与迭代复盘提示词.md",
+      "source_section": "11 — 项目管理与迭代复盘提示词",
+      "target_file": "12_AI时代开发专项提示词.md",
+      "target_anchor": null,
+      "target_raw": "12_AI时代开发专项提示词.md",
+      "text": "12_AI时代",
+      "ref_type": "文档引用",
+      "pos": 203
+    }
+  ],
+  "cycles": [],
+  "core_docs": [
+    "00_项目提示词总览与使用指南.md",
+    "01_需求分析与产品规划提示词.md",
+    "02_架构设计与技术选型提示词.md",
+    "03_编码规范与AI辅助开发提示词.md",
+    "04_代码审查与质量保障提示词.md",
+    "05_全维度测试策略提示词.md",
+    "06_CI_CD与自动化部署提示词.md",
+    "07_监控告警与运维保障提示词.md",
+    "08_安全审计与合规检查提示词.md",
+    "09_性能压测与优化提示词.md",
+    "10_技术文档与知识沉淀提示词.md",
+    "11_项目管理与迭代复盘提示词.md",
+    "12_AI时代开发专项提示词.md"
+  ],
+  "adj": {
+    "00_项目提示词总览与使用指南.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "01_需求分析与产品规划提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "02_架构设计与技术选型提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "03_编码规范与AI辅助开发提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "04_代码审查与质量保障提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "05_全维度测试策略提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "06_CI_CD与自动化部署提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "07_监控告警与运维保障提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "08_安全审计与合规检查提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "09_性能压测与优化提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "10_技术文档与知识沉淀提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "11_项目管理与迭代复盘提示词.md": [
+      "12_AI时代开发专项提示词.md"
+    ],
+    "12_AI时代开发专项提示词.md": []
+  },
+  "in_counts": {
+    "00_项目提示词总览与使用指南.md": 1,
+    "12_AI时代开发专项提示词.md": 12
+  },
+  "out_counts": {
+    "00_项目提示词总览与使用指南.md": 2,
+    "01_需求分析与产品规划提示词.md": 1,
+    "02_架构设计与技术选型提示词.md": 1,
+    "03_编码规范与AI辅助开发提示词.md": 1,
+    "04_代码审查与质量保障提示词.md": 1,
+    "05_全维度测试策略提示词.md": 1,
+    "06_CI_CD与自动化部署提示词.md": 1,
+    "07_监控告警与运维保障提示词.md": 1,
+    "08_安全审计与合规检查提示词.md": 1,
+    "09_性能压测与优化提示词.md": 1,
+    "10_技术文档与知识沉淀提示词.md": 2,
+    "11_项目管理与迭代复盘提示词.md": 1,
+    "工业级项目全流程螺旋式迭代管理总纲（V3.0 Agent 专属执行版）.md": 3
+  }
+}

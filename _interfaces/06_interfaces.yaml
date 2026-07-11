@@ -1,0 +1,42 @@
+# 06_interfaces.yaml
+document: "06_CI_CD与自动化部署提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: architecture_design
+      type: object
+      description: "架构设计文档(来自02架构设计输出)，含技术栈和部署架构"
+    - name: deploy_environment
+      type: object
+      description: "部署环境信息，包含目标平台、集群配置、镜像仓库"
+  optional:
+    - name: release_strategy_requirement
+      type: string
+      description: "发布策略要求，如灰度比例、回滚时间限制"
+    - name: existing_pipeline
+      type: string
+      description: "已有CI/CD流水线配置，用于优化"
+    - name: db_migration_spec
+      type: object
+      description: "数据库迁移规范要求"
+output:
+  required:
+    - name: pipeline_config
+      type: object
+      description: "CI/CD流水线配置文件，含构建/测试/部署全阶段"
+    - name: deploy_manifest
+      type: object
+      description: "部署清单(Dockerfile/K8s资源/Helm Chart)"
+    - name: rollback_plan
+      type: object
+      description: "回滚方案，含回滚条件和操作步骤"
+  optional:
+    - name: release_strategy
+      type: object
+      description: "发布策略，含灰度比例、观察时长、自动/手动放量"
+    - name: monitor_metrics_config
+      type: object
+      description: "发布期间监控指标配置(传递给07监控运维)"
+    - name: env_management_plan
+      type: object
+      description: "多环境管理方案"

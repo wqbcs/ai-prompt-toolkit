@@ -1,0 +1,13 @@
+{
+  "batch": "E1",
+  "name": "Agent协议基建",
+  "iterations": [
+    {"id": "E1-1", "target": "创建_agents/目录", "change": "mkdir _agents/", "effect": {"agent_autonomy": "+2"}, "status": "completed"},
+    {"id": "E1-2", "target": "定义L0-L4五级Agent自主度协议", "change": "新增agent_protocol_spec.md", "effect": {"agent_autonomy": "+3"}, "status": "completed"},
+    {"id": "E1-3", "target": "设计CodeReviewAgent模板", "change": "新增agent_first_templates.md(04场景)", "effect": {"agent_autonomy": "+1"}, "status": "completed"},
+    {"id": "E1-4", "target": "设计SecurityAuditAgent模板", "change": "新增agent_first_templates.md(08场景)", "effect": {"agent_autonomy": "+1"}, "status": "completed"},
+    {"id": "E1-5", "target": "定义Agent安全边界", "change": "新增agent_security_boundary.md", "effect": {"agent_autonomy": "+1", "constraint": "+0.2"}, "status": "completed"},
+    {"id": "E1-6", "target": "设计PerformanceAgent/MonitorAgent模板", "change": "新增agent_first_templates.md(09/07场景)", "effect": {"agent_autonomy": "+1"}, "status": "completed"},
+    {"id": "E1-7", "target": "建立世界级质量标准", "change": "新增world_class_quality_standard.md", "effect": {"ecosystem": "+0.5"}, "status": "completed"}
+  ]
+}

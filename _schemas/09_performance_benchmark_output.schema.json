@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prompt-system.local/schemas/09_performance_benchmark_output.schema.json",
+  "title": "性能压测结果输出Schema",
+  "description": "定义09_性能压测与优化提示词中L1级场景（场景A）的输出结构化格式，适用于压测结果机器解析和性能监控系统集成",
+  "type": "object",
+  "required": ["benchmarkSummary", "scenarios", "releaseRecommendation"],
+  "properties": {
+    "benchmarkSummary": {
+      "type": "object",
+      "required": ["projectName", "benchmarkDate", "tool", "environment"],
+      "description": "压测概要",
+      "properties": {
+        "projectName": {"type": "string", "description": "项目名称"},
+        "benchmarkDate": {"type": "string", "format": "date", "description": "压测日期"},
+        "tool": {
+          "type": "string",
+          "enum": ["jmeter", "k6", "locust", "gatling", "wrk", "vegeta", "other"],
+          "description": "压测工具"
+        },
+        "toolVersion": {"type": "string", "description": "工具版本"},
+        "environment": {
+          "type": "object",
+          "required": ["name", "configMatch"],
+          "description": "压测环境信息",
+          "properties": {
+            "name": {"type": "string", "description": "环境名称"},
+            "configMatch": {
+              "type": "string",
+              "enum": ["identical", "near_identical", "scaled_down", "different"],
+              "description": "与生产环境配置匹配度：identical=完全一致, near_identical=近似一致, scaled_down=等比缩小, different=不同"
+            },
+            "differences": {"type": "array", "items": {"type": "string"}, "description": "与生产环境的差异说明"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "scenarios": {
+      "type": "array",
+      "description": "压测场景结果列表",
+      "items": {
+        "type": "object",
+        "required": ["scenarioName", "scenarioType", "endpoint", "targetQps", "actualQps", "metrics", "conclusion"],
+        "properties": {
+          "scenarioName": {
+            "type": "string",
+            "minLength": 1,
+            "description": "场景名称"
+          },
+          "scenarioType": {
+            "type": "string",
+            "enum": ["baseline", "load", "stress", "stability", "spike"],
+            "description": "压测类型：baseline=基准, load=负载, stress=压力, stability=稳定性, spike=尖峰"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "压测接口/URL"
+          },
+          "concurrencyLevels": {
+            "type": "array",
+            "items": {"type": "integer"},
+            "description": "并发数阶梯列表，如[100, 200, 500]"
+          },
+          "durationMinutes": {
+            "type": "number",
+            "minimum": 0,
+            "description": "持续时间（分钟）"
+          },
+          "targetQps": {
+            "type": "number",
+            "minimum": 0,
+            "description": "目标QPS"
+          },
+          "actualQps": {
+            "type": "number",
+            "minimum": 0,
+            "description": "实际达到QPS"
+          },
+          "metrics": {
+            "type": "object",
+            "required": ["p50Ms", "p95Ms", "p99Ms", "errorRate"],
+            "description": "性能指标",
+            "properties": {
+              "p50Ms": {"type": "number", "minimum": 0, "description": "P50延迟(毫秒)"},
+              "p95Ms": {"type": "number", "minimum": 0, "description": "P95延迟(毫秒)"},
+              "p99Ms": {"type": "number", "minimum": 0, "description": "P99延迟(毫秒)"},
+              "errorRate": {"type": "number", "minimum": 0, "maximum": 100, "description": "错误率(%)"},
+              "throughputMBps": {"type": "number", "minimum": 0, "description": "吞吐量(MB/s)"},
+              "maxConcurrentUsers": {"type": "integer", "minimum": 0, "description": "最大并发用户数"},
+              "cpuUsageMax": {"type": "number", "minimum": 0, "maximum": 100, "description": "CPU使用率峰值(%)"},
+              "memoryUsageMaxMb": {"type": "number", "minimum": 0, "description": "内存使用峰值(MB)"}
+            },
+            "additionalProperties": false
+          },
+          "bottlenecks": {
+            "type": "array",
+            "description": "发现的瓶颈",
+            "items": {
+              "type": "object",
+              "required": ["layer", "description"],
+              "properties": {
+                "layer": {
+                  "type": "string",
+                  "enum": ["frontend", "backend", "database", "cache", "network", "infrastructure"],
+                  "description": "瓶颈层级"
+                },
+                "description": {"type": "string", "description": "瓶颈描述"},
+                "rootCause": {"type": "string", "description": "根因分析"}
+              },
+              "additionalProperties": false
+            }
+          },
+          "conclusion": {
+            "type": "string",
+            "enum": ["passed", "passed_with_issues", "failed"],
+            "description": "结论：passed=通过, passed_with_issues=通过但有问题, failed=未通过"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "optimizationSuggestions": {
+      "type": "array",
+      "description": "优化建议（按预期收益排序）",
+      "items": {
+        "type": "object",
+        "required": ["item", "expectedImprovement", "effortDays"],
+        "properties": {
+          "item": {"type": "string", "description": "优化项描述"},
+          "expectedImprovement": {"type": "string", "description": "预期提升效果，如'2x QPS'"},
+          "effortDays": {"type": "number", "minimum": 0, "description": "工作量(人天)"},
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "优先级"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "releaseRecommendation": {
+      "type": "string",
+      "enum": ["approved", "optimize_before_release", "rejected"],
+      "description": "上线建议：approved=可以上线, optimize_before_release=需优化后上线, rejected=不可上线"
+    }
+  },
+  "additionalProperties": false
+}

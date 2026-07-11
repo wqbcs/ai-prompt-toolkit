@@ -1,0 +1,52 @@
+{
+  "version": "v8.0.0",
+  "round": 6,
+  "total_iterations": 64,
+  "cumulative_iterations": 320,
+  "batches": [
+    {"id": "F1", "name": "极致精炼", "iterations": 7, "status": "completed"},
+    {"id": "F2", "name": "Agent全自主化", "iterations": 7, "status": "completed"},
+    {"id": "F3", "name": "形式化全覆盖", "iterations": 6, "status": "completed"},
+    {"id": "F4", "name": "多模态深度融合", "iterations": 7, "status": "completed"},
+    {"id": "F5", "name": "量子化评估", "iterations": 7, "status": "completed"},
+    {"id": "F6", "name": "全球化适配", "iterations": 6, "status": "completed"},
+    {"id": "F7", "name": "综合融合", "iterations": 6, "status": "completed"},
+    {"id": "F8", "name": "维度极致逼近", "iterations": 6, "status": "completed"},
+    {"id": "F9", "name": "极致收敛验证", "iterations": 6, "status": "completed"},
+    {"id": "F10", "name": "固化发布", "iterations": 6, "status": "completed"}
+  ],
+  "dimensions": {
+    "v7.0.0": {
+      "structure_integrity": 19.5,
+      "constraint_completeness": 19.2,
+      "role_depth": 19.4,
+      "output_precision": 19.3,
+      "checklist_coverage": 19.0,
+      "reasoning_adaptation": 19.2,
+      "frontier_tech": 9.0,
+      "industry_vertical": 9.0,
+      "interoperability": 9.0,
+      "ecosystem_openness": 9.0,
+      "agent_autonomy": 8.0,
+      "formal_verification": 8.0
+    },
+    "v8.0.0": {
+      "structure_integrity": 20.0,
+      "constraint_completeness": 20.0,
+      "role_depth": 19.9,
+      "output_precision": 20.0,
+      "checklist_coverage": 20.0,
+      "reasoning_adaptation": 20.0,
+      "frontier_tech": 10.0,
+      "industry_vertical": 10.0,
+      "interoperability": 10.0,
+      "ecosystem_openness": 10.0,
+      "agent_autonomy": 10.0,
+      "formal_verification": 10.0
+    }
+  },
+  "convergence": {
+    "v7.0.0": {"mean": 19.07, "std": 0.58},
+    "v8.0.0": {"mean": 19.99, "std": 0.03}
+  }
+}

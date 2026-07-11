@@ -1,0 +1,95 @@
+name: "安全审计→安全编码→安全测试"
+version: "v1.0.0"
+description: "安全审计发现漏洞→编码规范执行安全修复→测试策略验证安全性"
+chain: "08→03→05"
+steps:
+  - id: security_audit
+    document: "08_安全审计与合规检查"
+    action: "执行安全审计，输出漏洞清单和加固方案"
+    input_from: external
+    output_to: security_fix
+    interface_mapping:
+      input:
+        system_architecture: "external.system_architecture"
+        code_files: "external.code_files"
+        compliance_standards: "external.compliance_standards"
+      output:
+        vulnerability_list: "security_fix.vulnerability_list"
+        security_hardening_plan: "security_fix.security_hardening_plan"
+        compliance_gap_analysis: "security_fix.compliance_gap_analysis"
+    transformation_rules:
+      audit_to_fix:
+        description: "安全审计结果→安全修复指令映射"
+        field_mapping:
+          - source: "vulnerability_list[].id"
+            target: "fix_instruction.security_issue_id"
+            transform: "direct"
+          - source: "vulnerability_list[].severity"
+            target: "fix_instruction.priority"
+            transform: "mapping:P0→critical,P1→high,P2→medium,P3→low"
+          - source: "vulnerability_list[].fix_solution"
+            target: "fix_instruction.security_fix_approach"
+            transform: "enhance_with_security_pattern"
+          - source: "vulnerability_list[].cwe_id"
+            target: "fix_instruction.cwe_reference"
+            transform: "direct"
+          - source: "security_hardening_plan.short_term"
+            target: "fix_instruction.immediate_hardening"
+            transform: "direct"
+        security_fix_rules:
+          - rule: "P0漏洞(如SQL注入/RCE)必须使用参数化查询/输入验证修复"
+          - rule: "认证漏洞必须使用安全框架(Spring Security/OAuth2)替代自研"
+          - rule: "数据泄露漏洞必须加密存储+最小权限+审计日志"
+          - rule: "修复不能引入新漏洞(如XSS修复不能引入新的注入点)"
+  - id: security_fix
+    document: "03_编码规范与AI辅助开发"
+    action: "根据安全加固方案执行安全编码修复"
+    input_from: security_audit
+    output_to: security_verify
+    interface_mapping:
+      input:
+        issue_list: "security_audit.vulnerability_list"
+        architecture_design: "external.system_architecture"
+      output:
+        code_files: "security_verify.code_files"
+        fix_report: "security_verify.fix_report"
+    transformation_rules:
+      fix_to_verify:
+        description: "安全修复→安全测试输入映射"
+        field_mapping:
+          - source: "fix_report.fixed_issues[]"
+            target: "security_test.target_vulnerabilities"
+            transform: "direct"
+          - source: "security_audit.vulnerability_list[].cwe_id"
+            target: "security_test.cwe_test_mapping"
+            transform: "map_cwe_to_test_case"
+          - source: "security_audit.compliance_gap_analysis"
+            target: "security_test.compliance_test_scope"
+            transform: "direct"
+        security_test_generation:
+          - category: "owasp_top10"
+            rule: "为每个OWASP Top10类别生成攻击测试用例"
+          - category: "authentication"
+            rule: "生成认证绕过/越权/会话固定测试用例"
+          - category: "data_protection"
+            rule: "生成数据泄露/未授权访问/加密强度测试用例"
+          - category: "input_validation"
+            rule: "生成注入/XSS/路径遍历/SSRF测试用例"
+  - id: security_verify
+    document: "05_全维度测试策略"
+    action: "安全回归测试验证漏洞修复效果"
+    input_from: security_fix
+    output_to: external
+    interface_mapping:
+      input:
+        code_files: "security_fix.code_files"
+        issue_list: "security_audit.vulnerability_list"
+      output:
+        regression_result: "external.regression_result"
+        test_report: "external.security_test_report"
+    verification_rules:
+      - rule: "所有P0/P1安全漏洞修复并通过安全回归测试"
+      - rule: "OWASP Top10全量覆盖验证通过"
+      - rule: "合规差距修复并通过合规验证"
+      - rule: "修复未引入新安全漏洞(通过SAST/DAST二次扫描)"
+validation: "安全审计无P0/P1漏洞→安全修复通过验证→合规检查通过"

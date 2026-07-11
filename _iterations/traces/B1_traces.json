@@ -1,0 +1,66 @@
+{
+  "batch": "B1",
+  "batch_name": "提示词结构优化",
+  "iterations": [
+    {
+      "iteration_id": "B1-iter1",
+      "target_doc": "01_需求分析与产品规划提示词.md",
+      "target_scene": "场景A:从零开始的新产品",
+      "dimension_target": "结构完整性",
+      "input_snapshot": "场景A仅有输出级别L3和5项任务列表,无5要素结构",
+      "modification": "为场景A补充5要素结构表(描述/输入/输出/检查清单/验收标准)和输出示例片段(MVP功能清单+技术风险点表格)",
+      "output_snapshot": "场景A现在包含5要素结构表+原始模板+输出示例片段",
+      "score_change": {"结构完整性": "14→17", "输出格式精确性": "16→17"}
+    },
+    {
+      "iteration_id": "B1-iter2",
+      "target_doc": "01_需求分析与产品规划提示词.md",
+      "target_scene": "场景B:已有产品的新版本规划",
+      "dimension_target": "结构完整性",
+      "input_snapshot": "场景B仅有输出级别L3和5项任务列表,无5要素结构",
+      "modification": "为场景B补充5要素结构表(描述/输入/输出/检查清单/验收标准)",
+      "output_snapshot": "场景B现在包含5要素结构表+原始模板",
+      "score_change": {"结构完整性": "14→16"}
+    },
+    {
+      "iteration_id": "B1-iter3",
+      "target_doc": "02_架构设计与技术选型提示词.md",
+      "target_scene": "场景A:从零开始设计系统架构",
+      "dimension_target": "输出格式精确性",
+      "input_snapshot": "场景A有详细任务列表但无结构化输出示例",
+      "modification": "补充结构化输出示例:架构总览表+技术选型对比矩阵示例",
+      "output_snapshot": "场景A现在包含结构化输出示例(架构总览5维度表+选型4项对比矩阵)",
+      "score_change": {"输出格式精确性": "15→17"}
+    },
+    {
+      "iteration_id": "B1-iter4",
+      "target_doc": "02_架构设计与技术选型提示词.md",
+      "target_scene": "场景B:已有架构评审与优化",
+      "dimension_target": "输出格式精确性",
+      "input_snapshot": "场景B有任务列表但无结构化输出示例",
+      "modification": "补充结构化输出示例:架构瓶颈识别表+优化方案对比表",
+      "output_snapshot": "场景B现在包含结构化输出示例(瓶颈识别4列+方案对比5列)",
+      "score_change": {"输出格式精确性": "15→17"}
+    },
+    {
+      "iteration_id": "B1-iter5",
+      "target_doc": "03_编码规范与AI辅助开发提示词.md",
+      "target_scene": "场景A:根据需求生成功能代码",
+      "dimension_target": "推理模式适配性",
+      "input_snapshot": "场景A无Few-shot示例,推理模式适配性得分低",
+      "modification": "补充Few-shot示例:用户注册功能完整代码(service层)+3个测试用例(成功/重复邮箱/空邮箱)",
+      "output_snapshot": "场景A现在包含Few-shot示例(Python FastAPI风格,含正常/异常/边界3类测试)",
+      "score_change": {"推理模式适配性": "10→14"}
+    },
+    {
+      "iteration_id": "B1-iter6",
+      "target_doc": "03_编码规范与AI辅助开发提示词.md",
+      "target_scene": "场景D:Bug修复",
+      "dimension_target": "推理模式适配性",
+      "input_snapshot": "场景D无Few-shot示例,推理模式适配性得分低",
+      "modification": "补充Few-shot示例:NoneType AttributeError的完整Bug修复流程(根因→修复代码→验证→类似问题)",
+      "output_snapshot": "场景D现在包含Few-shot示例(含修复前后代码对比+验证方法+潜在问题扫描)",
+      "score_change": {"推理模式适配性": "10→14"}
+    }
+  ]
+}

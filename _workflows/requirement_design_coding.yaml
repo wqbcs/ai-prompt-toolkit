@@ -1,0 +1,100 @@
+name: "需求→设计→编码"
+version: "v2.0.0"
+description: "需求分析输出PRD→架构设计基于PRD→编码实现基于架构"
+chain: "01→02→03"
+steps:
+  - id: requirement
+    document: "01_需求分析与产品规划"
+    action: "执行需求分析，输出PRD和用户故事"
+    input_from: external
+    output_to: design
+    interface_mapping:
+      input:
+        business_context: "external.business_context"
+        requirement_scope: "external.requirement_scope"
+      output:
+        prd_document: "design.prd_document"
+        priority_matrix: "design.priority_matrix"
+    transformation_rules:
+      requirement_to_design:
+        description: "PRD→架构约束映射"
+        field_mapping:
+          - source: "prd_document.functional_requirements[]"
+            target: "architecture_constraint.functional_modules"
+            transform: "extract_module_boundary"
+          - source: "prd_document.non_functional_requirements"
+            target: "architecture_constraint.quality_attributes"
+            transform: "map_quality_attributes"
+          - source: "priority_matrix.P0_features"
+            target: "architecture_constraint.core_services"
+            transform: "identify_core_services"
+          - source: "prd_document.user_story_list"
+            target: "architecture_constraint.api_scope"
+            transform: "derive_api_scope"
+        quality_attribute_mapping:
+          - prd_attribute: "性能要求(响应时间<200ms)"
+            architecture_constraint: "缓存层+异步处理+连接池优化"
+          - prd_attribute: "可用性要求(99.9%)"
+            architecture_constraint: "多副本部署+健康检查+故障转移"
+          - prd_attribute: "安全要求(数据加密)"
+            architecture_constraint: "TLS1.2+AES-256+密钥轮换"
+          - prd_attribute: "扩展性要求(水平扩展)"
+            architecture_constraint: "无状态服务+分片策略+服务发现"
+          - prd_attribute: "合规要求(等保2.0)"
+            architecture_constraint: "审计日志+访问控制+数据分类"
+  - id: design
+    document: "02_架构设计与技术选型"
+    action: "基于PRD进行架构设计和技术选型"
+    input_from: requirement
+    output_to: coding
+    interface_mapping:
+      input:
+        prd_document: "requirement.prd_document"
+        non_functional_requirements: "external.non_functional_requirements"
+      output:
+        architecture_design: "coding.architecture_design"
+        tech_selection_matrix: "coding.tech_selection_matrix"
+        data_model: "coding.data_model"
+    transformation_rules:
+      design_to_coding:
+        description: "架构约束→编码规范映射"
+        field_mapping:
+          - source: "architecture_design.service_topology"
+            target: "coding_spec.module_structure"
+            transform: "derive_directory_layout"
+          - source: "architecture_design.tech_stack"
+            target: "coding_spec.language_framework"
+            transform: "direct"
+          - source: "architecture_design.data_model"
+            target: "coding_spec.data_access_pattern"
+            transform: "map_orm_config"
+          - source: "architecture_design.api_spec"
+            target: "coding_spec.api_implementation"
+            transform: "derive_api_skeleton"
+        coding_standard_mapping:
+          - architecture_choice: "微服务架构"
+            coding_rules: ["服务间REST/gRPC通信", "每个服务独立数据库", "配置中心管理", "分布式追踪集成"]
+          - architecture_choice: "事件驱动架构"
+            coding_rules: ["消息幂等处理", "事件版本兼容", "死信队列处理", "补偿事务实现"]
+          - architecture_choice: "分层架构"
+            coding_rules: ["Controller-Service-DAO分层", "依赖注入", "DTO/DO转换", "事务边界在Service层"]
+          - architecture_choice: "CQRS架构"
+            coding_rules: ["命令与查询分离", "读写模型独立", "事件溯源支持", "最终一致性处理"]
+  - id: coding
+    document: "03_编码规范与AI辅助开发"
+    action: "基于架构设计实现代码"
+    input_from: design
+    output_to: external
+    interface_mapping:
+      input:
+        architecture_design: "design.architecture_design"
+        interface_spec: "design.data_model"
+      output:
+        code_files: "external.code_files"
+        test_files: "external.test_files"
+    coding_validation:
+      - rule: "代码结构与架构设计一致"
+      - rule: "编码规范符合架构约束映射规则"
+      - rule: "所有P0功能已实现并含单元测试"
+      - rule: "接口实现与API规范一致"
+validation: "PRD完整→架构设计通过评审→代码通过单元测试"

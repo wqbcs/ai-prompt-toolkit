@@ -1,0 +1,66 @@
+{
+  "batch": "B2",
+  "batch_name": "约束条件完备化",
+  "iterations": [
+    {
+      "iteration_id": "B2-iter7",
+      "target_doc": "04_代码审查与质量保障提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-安全维度",
+      "input_snapshot": "核心约束6条,偏审查流程,缺少安全维度的显式约束",
+      "modification": "新增约束7-安全审查约束:OWASP Top 10全量检查/敏感代码L3审查/P0安全漏洞阻断上线并通知安全团队",
+      "output_snapshot": "核心约束8条,安全维度显式声明完毕",
+      "score_change": {"约束条件完备性": "12→15"}
+    },
+    {
+      "iteration_id": "B2-iter8",
+      "target_doc": "04_代码审查与质量保障提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-性能维度",
+      "input_snapshot": "核心约束已有安全维度,但缺性能维度显式约束",
+      "modification": "新增约束8-性能审查约束:核心接口N+1/连接池审查/热点路径GC+锁审查/性能退化>10%标为P1+",
+      "output_snapshot": "核心约束8条,安全+性能维度均有显式声明",
+      "score_change": {"约束条件完备性": "12→16"}
+    },
+    {
+      "iteration_id": "B2-iter9",
+      "target_doc": "06_CI_CD与自动化部署提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-合规维度",
+      "input_snapshot": "核心约束6条,缺少合规维度约束",
+      "modification": "新增约束7-合规审查约束:许可证合规扫描/PIA隐私影响评估/等保GDPR发布前自动检查",
+      "output_snapshot": "核心约束8条,合规维度显式声明完毕",
+      "score_change": {"约束条件完备性": "12→15"}
+    },
+    {
+      "iteration_id": "B2-iter10",
+      "target_doc": "06_CI_CD与自动化部署提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-回滚维度",
+      "input_snapshot": "约束2有回滚提及但不够完整,缺少回滚完整性约束链",
+      "modification": "新增约束8-回滚完整性约束:保留回滚脚本+上一镜像/DB变更可执行回滚SQL/5分钟内完成+演练验证/蓝绿保留旧实例24h",
+      "output_snapshot": "核心约束8条,合规+回滚维度均有显式声明",
+      "score_change": {"约束条件完备性": "12→16"}
+    },
+    {
+      "iteration_id": "B2-iter11",
+      "target_doc": "08_安全审计与合规检查提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-业务连续性维度",
+      "input_snapshot": "核心约束5条,缺少业务连续性专项约束",
+      "modification": "新增约束6-业务连续性约束:加固不超RTO/安全变更需BCP/事件响应保障可用性/灾难恢复演练半年一次",
+      "output_snapshot": "核心约束7条,业务连续性维度显式声明完毕",
+      "score_change": {"约束条件完备性": "13→16"}
+    },
+    {
+      "iteration_id": "B2-iter12",
+      "target_doc": "08_安全审计与合规检查提示词.md",
+      "target_scene": "核心约束章节",
+      "dimension_target": "约束条件完备性-数据保护维度",
+      "input_snapshot": "核心约束已有业务连续性,但缺数据保护专项约束",
+      "modification": "新增约束7-数据保护约束:敏感数据AES-256加密+密钥分离/TLS1.2+弱密码禁用/逻辑+物理双删除/GDPR被遗忘权/跨境安全评估",
+      "output_snapshot": "核心约束7条,业务连续性+数据保护维度均有显式声明",
+      "score_change": {"约束条件完备性": "13→17"}
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+# 05_interfaces.yaml
+document: "05_全维度测试策略提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: requirement_description
+      type: string
+      description: "需求描述或用户故事，用于生成测试用例"
+    - name: code_files
+      type: array
+      description: "代码文件列表(来自03编码规范输出)，用于测试覆盖率分析"
+  optional:
+    - name: issue_list
+      type: array
+      description: "问题清单(来自04代码审查)，用于回归测试验证"
+    - name: interface_spec
+      type: object
+      description: "接口规范定义，用于API测试和契约测试"
+    - name: architecture_doc
+      type: object
+      description: "架构设计文档，用于微服务契约测试设计"
+    - name: optimization_result
+      type: object
+      description: "优化结果(来自09性能压测或03编码修复)，用于回归验证"
+output:
+  required:
+    - name: test_plan
+      type: object
+      description: "测试计划，含测试范围、进度表、风险矩阵、准入/准出标准"
+    - name: test_cases
+      type: array
+      description: "测试用例清单，覆盖正常/异常/边界三种场景，含P0/P1/P2分级"
+    - name: test_result
+      type: object
+      description: "测试结果，含通过率、失败用例、Bug统计"
+  optional:
+    - name: automation_scripts
+      type: array
+      description: "自动化测试脚本文件列表"
+    - name: test_report
+      type: object
+      description: "测试报告，含质量评估和上线建议"
+    - name: regression_result
+      type: object
+      description: "回归测试结果，含修复验证结论"

@@ -1,0 +1,42 @@
+# 04_interfaces.yaml
+document: "04_代码审查与质量保障提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: code_files
+      type: array
+      description: "待审查代码文件列表，每个元素含file_path和content"
+    - name: project_metadata
+      type: object
+      description: "项目元数据，包含技术栈、代码行数、语言/框架"
+  optional:
+    - name: architecture_doc
+      type: object
+      description: "架构设计文档，用于架构合规审查"
+    - name: review_level
+      type: string
+      description: "审查层级(L1-L5)，默认L1"
+    - name: focus_areas
+      type: array
+      description: "审查重点关注领域，如安全、性能、逻辑等"
+output:
+  required:
+    - name: issue_list
+      type: array
+      description: "问题清单，每个元素含id/level/title/location/description/fix_solution"
+    - name: quality_score
+      type: string
+      description: "质量评分(A/B/C/D)"
+    - name: release_recommendation
+      type: string
+      description: "上线建议(通过/需整改/不合格)"
+  optional:
+    - name: review_report
+      type: object
+      description: "完整审查报告，含审查概要、问题分级明细、总结与建议"
+    - name: security_vulnerabilities
+      type: array
+      description: "安全漏洞清单(高亮标注)"
+    - name: tech_debt_list
+      type: array
+      description: "技术债清单及偿还路线图"

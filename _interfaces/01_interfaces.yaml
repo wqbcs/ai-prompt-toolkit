@@ -1,0 +1,42 @@
+# 01_interfaces.yaml
+document: "01_需求分析与产品规划提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: business_context
+      type: string
+      description: "业务背景描述，包含项目定位、目标用户、核心痛点"
+    - name: requirement_scope
+      type: string
+      description: "需求范围定义，包含功能边界和MVP范围"
+  optional:
+    - name: competitor_analysis
+      type: string
+      description: "竞品分析数据，用于差异化定位"
+    - name: user_research_data
+      type: string
+      description: "用户调研数据，包含用户画像和需求优先级"
+    - name: existing_prd
+      type: string
+      description: "已有PRD文档，用于需求评审与反推"
+output:
+  required:
+    - name: prd_document
+      type: object
+      description: "产品需求文档，包含需求全景、用户故事、优先级矩阵"
+    - name: user_story_list
+      type: array
+      description: "用户故事清单，Epic→Feature→UserStory三级层级"
+    - name: priority_matrix
+      type: object
+      description: "优先级矩阵，P0/P1/P2/P3分级与功能映射"
+  optional:
+    - name: business_flow_diagram
+      type: string
+      description: "业务流程图(Mermaid格式)"
+    - name: data_metrics_plan
+      type: object
+      description: "数据指标体系设计方案，含OSM模型和埋点方案"
+    - name: mvp_scope
+      type: array
+      description: "MVP功能清单与交付路线图"

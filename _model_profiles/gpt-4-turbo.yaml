@@ -1,0 +1,12 @@
+model: "GPT-4-Turbo"
+provider: "OpenAI"
+capabilities:
+  context_window: 128000
+  instruction_following: 92
+  structured_output: 95
+  chinese_understanding: 80
+  code_generation: 92
+  reasoning_depth: 90
+best_for: ["结构化JSON输出", "代码生成", "多轮对话"]
+limitations: ["中文理解偏弱", "超长文档需分段"]
+prompt_style: "系统提示+JSON模式"

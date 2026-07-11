@@ -1,0 +1,41 @@
+name: "性能→优化→验证"
+description: "性能压测发现瓶颈→编码规范执行优化→测试策略验证优化效果"
+steps:
+  - id: perf_test
+    document: "09_性能压测与优化"
+    action: "执行性能压测，输出瓶颈分析和优化方案"
+    input_from: external
+    output_to: optimize
+    interface_mapping:
+      input:
+        system_architecture: "external.architecture_design"
+        core_api_list: "external.core_api_list"
+      output:
+        bottleneck_analysis: "optimize.optimization_target"
+        optimization_plan: "optimize.optimization_plan"
+        performance_targets: "verify.performance_targets"
+  - id: optimize
+    document: "03_编码规范与AI辅助开发"
+    action: "根据优化方案执行代码/SQL/配置优化"
+    input_from: perf_test
+    output_to: verify
+    interface_mapping:
+      input:
+        optimization_target: "perf_test.bottleneck_analysis"
+        architecture_design: "external.architecture_design"
+      output:
+        code_files: "verify.code_files"
+        fix_report: "verify.fix_report"
+  - id: verify
+    document: "05_全维度测试策略"
+    action: "回归测试验证优化效果是否达标"
+    input_from: optimize
+    output_to: external
+    interface_mapping:
+      input:
+        code_files: "optimize.code_files"
+        optimization_result: "optimize.fix_report"
+      output:
+        regression_result: "external.regression_result"
+        test_report: "external.test_report"
+validation: "性能指标达到目标阈值→优化代码通过回归测试→无性能退化"

@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prompt-system.local/schemas/08_security_audit_output.schema.json",
+  "title": "安全审计结果输出Schema",
+  "description": "定义08_安全审计与合规检查提示词中L1级场景（场景A/B）的输出结构化格式，适用于安全扫描结果机器解析和漏洞跟踪系统集成",
+  "type": "object",
+  "required": ["auditSummary", "vulnerabilities", "complianceGaps"],
+  "properties": {
+    "auditSummary": {
+      "type": "object",
+      "required": ["systemName", "systemType", "auditDate", "auditor", "riskLevel"],
+      "description": "审计概要",
+      "properties": {
+        "systemName": {"type": "string", "description": "系统名称"},
+        "systemType": {
+          "type": "string",
+          "enum": ["web_application", "api_service", "mobile_app", "internal_system", "infrastructure"],
+          "description": "系统类型"
+        },
+        "auditDate": {"type": "string", "format": "date", "description": "审计日期"},
+        "auditor": {"type": "string", "description": "审计人/团队"},
+        "riskLevel": {
+          "type": "string",
+          "enum": ["critical", "high", "medium", "low"],
+          "description": "整体风险等级"
+        },
+        "vulnerabilityCounts": {
+          "type": "object",
+          "required": ["P0", "P1", "P2", "P3"],
+          "description": "各级别漏洞计数",
+          "properties": {
+            "P0": {"type": "integer", "minimum": 0, "description": "致命漏洞数"},
+            "P1": {"type": "integer", "minimum": 0, "description": "高危漏洞数"},
+            "P2": {"type": "integer", "minimum": 0, "description": "中危漏洞数"},
+            "P3": {"type": "integer", "minimum": 0, "description": "低危漏洞数"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "vulnerabilities": {
+      "type": "array",
+      "description": "漏洞清单",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "category", "description", "location"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^VUL-[0-9]{4,}$",
+            "description": "漏洞编号，格式如VUL-0001"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "严重级别"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "漏洞标题"
+          },
+          "category": {
+            "type": "string",
+            "enum": ["application_security", "identity_auth", "data_security", "network_security", "infrastructure_security", "log_audit", "third_party", "compliance"],
+            "description": "所属安全领域：application_security=应用安全, identity_auth=身份认证授权, data_security=数据安全, network_security=网络安全, infrastructure_security=基础设施安全, log_audit=日志审计, third_party=第三方安全, compliance=合规"
+          },
+          "cweId": {
+            "type": "string",
+            "pattern": "^CWE-[0-9]+$",
+            "description": "CWE编号（可选）"
+          },
+          "owaspCategory": {
+            "type": "string",
+            "description": "OWASP Top 10分类（可选）"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "漏洞详细描述"
+          },
+          "location": {
+            "type": "object",
+            "required": ["filePath"],
+            "description": "漏洞位置",
+            "properties": {
+              "filePath": {"type": "string", "description": "文件路径"},
+              "startLine": {"type": "integer", "minimum": 1, "description": "起始行号"},
+              "endLine": {"type": "integer", "minimum": 1, "description": "结束行号"},
+              "configKey": {"type": "string", "description": "配置项键名（基础设施漏洞时使用）"}
+            },
+            "additionalProperties": false
+          },
+          "attackVector": {
+            "type": "string",
+            "description": "攻击路径和利用条件（P0/P1必填）"
+          },
+          "fixSuggestion": {
+            "type": "object",
+            "required": ["description"],
+            "description": "修复方案",
+            "properties": {
+              "description": {"type": "string", "description": "修复说明"},
+              "codeSnippet": {"type": "string", "description": "修复代码/配置片段"},
+              "priority": {
+                "type": "string",
+                "enum": ["immediate", "short_term", "medium_term", "long_term"],
+                "description": "修复优先级：immediate=立即, short_term=短期, medium_term=中期, long_term=长期"
+              }
+            },
+            "additionalProperties": false
+          },
+          "fixSla": {
+            "type": "string",
+            "enum": ["24h", "7d", "30d", "next_iteration"],
+            "description": "修复SLA：24h=P0, 7d=P1, 30d=P2, next_iteration=P3"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "complianceGaps": {
+      "type": "array",
+      "description": "合规差距分析",
+      "items": {
+        "type": "object",
+        "required": ["standard", "requirement", "status", "gap"],
+        "properties": {
+          "standard": {
+            "type": "string",
+            "enum": ["等保2.0", "GDPR", "PCI-DSS", "SOC2", "个人信息保护法"],
+            "description": "合规标准"
+          },
+          "requirement": {"type": "string", "description": "合规要求项"},
+          "status": {
+            "type": "string",
+            "enum": ["compliant", "partial", "non_compliant", "not_assessed"],
+            "description": "合规状态：compliant=合规, partial=部分合规, non_compliant=不合规, not_assessed=未评估"
+          },
+          "gap": {"type": "string", "description": "差距说明"},
+          "remediation": {"type": "string", "description": "整改方案"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "hardeningPlan": {
+      "type": "object",
+      "description": "安全加固方案",
+      "properties": {
+        "shortTerm": {"type": "array", "items": {"type": "string"}, "description": "短期加固措施（1-7天）"},
+        "mediumTerm": {"type": "array", "items": {"type": "string"}, "description": "中期加固措施（1-4周）"},
+        "longTerm": {"type": "array", "items": {"type": "string"}, "description": "长期加固措施（1-3月）"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

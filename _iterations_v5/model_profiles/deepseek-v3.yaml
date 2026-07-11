@@ -1,0 +1,106 @@
+model: "DeepSeek-V3"
+provider: "DeepSeek"
+version: "deepseek-v3"
+date: "2026-05-29"
+
+context_window: 128000
+max_output_tokens: 8192
+
+capabilities:
+  instruction_following: 88
+  chinese_understanding: 90
+  code_generation: 95
+  structured_output: 82
+  reasoning_depth: 90
+  multi_modal: 0
+  function_calling: 85
+  json_mode: false
+  long_context_utilization: 82
+
+strengths:
+  - "代码生成国内最强，接近GPT-4级别，尤其Python/JS/Go"
+  - "MoE架构，推理效率高，性价比极高"
+  - "深度推理能力强，CoT推理质量高"
+  - "开源可用，支持私有化部署"
+  - "中文CoT推理效果好于英文CoT翻译"
+
+weaknesses:
+  - "结构化输出(JSON)稳定性弱，需显式格式指令+示例"
+  - "中文理解略弱于Qwen-Max(90 vs 97)"
+  - "不支持JSON mode，需prompt内要求JSON格式"
+  - "多模态能力暂不支持"
+  - "指令遵循在复杂嵌套条件下可能不稳定"
+
+best_scenarios:
+  - id: "04-A"
+    reason: "代码审查核心场景，代码理解+问题识别能力最强"
+    priority: "S"
+  - id: "04-B"
+    reason: "全量代码审查，代码分析深度和广度"
+    priority: "S"
+  - id: "03-A"
+    reason: "编码规范制定+代码生成，代码质量高"
+    priority: "S"
+  - id: "03-B"
+    reason: "AI代码审查+重构建议"
+    priority: "S"
+  - id: "02-A"
+    reason: "架构评审(代码架构分析)"
+    priority: "A"
+  - id: "06-A"
+    reason: "CI/CD Pipeline代码生成"
+    priority: "A"
+  - id: "05-A"
+    reason: "测试用例代码生成"
+    priority: "A"
+  - id: "09-B"
+    reason: "性能优化(代码级优化)"
+    priority: "A"
+
+related_model:
+  name: "DeepSeek-R1"
+  version: "deepseek-r1"
+  best_for: "深度推理/数学/逻辑/算法"
+  best_scenarios: ["02-A", "02-C", "09-B"]
+  reasoning_depth: 98
+  cot_native: true
+
+adaptation_instructions:
+  structured_output: |
+    【重要】请严格按照以下JSON格式输出，不要添加任何额外文字：
+    ```json
+    {json_example}
+    ```
+    输出必须是合法JSON，可直接被JSON.parse()解析。
+
+  cot_chinese_optimization: |
+    【中文CoT优化指令】
+    请用中文逐步分析和推理，每个步骤给出明确的结论：
+    
+    1. 【理解代码】分析代码的功能、结构和关键逻辑
+    2. 【识别问题】逐项检查以下维度：
+       - 正确性：逻辑错误、边界条件、异常处理
+       - 安全性：OWASP Top 10、输入验证、权限检查
+       - 性能：N+1查询、资源泄漏、算法复杂度
+       - 可维护性：命名、注释、代码结构
+    3. 【评估严重度】对每个问题按P0/P1/P2/P3分级
+    4. 【生成修复】对P0/P1问题给出具体修复代码
+    5. 【输出报告】按标准格式输出审查报告
+
+  code_generation_with_verification: |
+    生成代码时请遵循：
+    1. 先分析需求，给出设计思路
+    2. 编写完整可运行代码
+    3. 标注潜在风险点
+    4. 建议测试用例覆盖的关键场景
+
+limitations_handling:
+  structured_output: "JSON格式输出需在prompt中提供完整示例，并强调'严格JSON，无额外文字'。"
+  complex_nested: "复杂嵌套条件拆分为平铺的多个if-else步骤，避免深层嵌套。"
+  long_output: "超过3000字的输出分段生成，每段末尾添加'[继续输出请回复继续]'。"
+
+api_config:
+  base_url: "https://api.deepseek.com/v1"
+  api_format: "openai_compatible"
+  open_source: true
+  pricing: "极高性价比"

@@ -1,0 +1,22 @@
+model: "Domestic-Models"
+provider: "Alibaba/Baidu/DeepSeek"
+models:
+  - name: "通义千问-Qwen-Max"
+    provider: "Alibaba"
+    context_window: 32000
+  - name: "文心一言-ERNIE-4.0"
+    provider: "Baidu"
+    context_window: 128000
+  - name: "DeepSeek-V3"
+    provider: "DeepSeek"
+    context_window: 128000
+capabilities:
+  context_window: 128000
+  instruction_following: 88
+  structured_output: 82
+  chinese_understanding: 95
+  code_generation: 85
+  reasoning_depth: 86
+best_for: ["中文场景", "国内合规", "业务文档生成"]
+limitations: ["英文推理弱于Claude/GPT", "复杂代码生成需验证", "结构化输出不稳定"]
+prompt_style: "直接指令式+分段输出"

@@ -1,0 +1,89 @@
+model: "Qwen-Max"
+provider: "Alibaba"
+version: "qwen3.7-max"
+date: "2026-05-29"
+
+context_window: 128000
+max_output_tokens: 8192
+
+capabilities:
+  instruction_following: 90
+  chinese_understanding: 97
+  code_generation: 88
+  structured_output: 90
+  reasoning_depth: 88
+  multi_modal: 85
+  function_calling: 90
+  json_mode: true
+  long_context_utilization: 85
+
+strengths:
+  - "中文理解国内最强，业务文档生成质量极高"
+  - "结构化输出(JSON mode)稳定性好，Schema合规率高"
+  - "指令遵循能力强，复杂多步指令执行准确"
+  - "Function Calling兼容OpenAI格式，工具调用稳定"
+  - "兼容OpenAI接口规范，迁移成本极低"
+
+weaknesses:
+  - "英文推理略弱于Claude/GPT-4"
+  - "代码生成复杂逻辑需人工验证"
+  - "深度CoT推理不如DeepSeek-R1"
+
+best_scenarios:
+  - id: "01-A"
+    reason: "中文业务文档/PRD生成，中文理解优势"
+    priority: "S"
+  - id: "01-D"
+    reason: "竞品分析，中文信息获取和理解"
+    priority: "S"
+  - id: "08-B"
+    reason: "国内合规检查(等保/GDPR)，合规知识强"
+    priority: "S"
+  - id: "10-A"
+    reason: "中文技术文档写作"
+    priority: "A"
+  - id: "10-D"
+    reason: "知识库构建，中文知识处理"
+    priority: "A"
+  - id: "11-A"
+    reason: "项目规划文档，中文表述准确"
+    priority: "A"
+  - id: "04-A"
+    reason: "代码审查(结构化输出JSON报告)"
+    priority: "A"
+  - id: "05-A"
+    reason: "测试策略文档"
+    priority: "B"
+
+adaptation_instructions:
+  structured_output: |
+    请以严格的JSON格式输出结果。输出必须符合以下JSON Schema：
+    {schema_definition}
+    确保所有必填字段存在，字段类型正确，不含多余字段。
+
+  cot_chinese: |
+    请按以下步骤逐步分析和推理：
+    第一步：[理解需求] - 明确任务目标和关键约束
+    第二步：[信息收集] - 检查输入信息的完整性
+    第三步：[分析推理] - 逐项分析，给出推理过程
+    第四步：[结果生成] - 根据推理生成最终输出
+    第五步：[自检验证] - 检查输出是否满足所有约束条件
+
+  function_calling: |
+    当需要调用外部工具时，使用以下格式：
+    工具名称：{tool_name}
+    参数：{parameters}
+    等待工具返回结果后继续推理。
+
+limitations_handling:
+  long_output: "对于超过2000字的输出，分段生成：先输出第一部分，用户确认后继续下一部分。"
+  complex_reasoning: "对于复杂推理任务，显式拆分为单步指令，逐步执行。"
+  code_verification: "生成的代码必须标注'需人工验证'，特别是涉及并发/安全/性能的代码。"
+
+api_config:
+  base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  api_format: "openai_compatible"
+  supported_regions:
+    - "cn-beijing"
+    - "us-east-1"
+    - "ap-southeast"

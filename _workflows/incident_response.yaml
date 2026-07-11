@@ -1,0 +1,93 @@
+name: "故障响应→安全排查→复盘"
+version: "v1.0.0"
+description: "监控运维触发故障响应→安全审计排查安全因素→项目管理执行复盘"
+chain: "07→08→11"
+steps:
+  - id: incident_response
+    document: "07_监控告警与运维保障"
+    action: "故障应急响应，执行初步诊断和止损"
+    input_from: external
+    output_to: security_investigation
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_topology: "external.deploy_topology"
+        incident_alert: "external.incident_alert"
+      output:
+        incident_report: "security_investigation.incident_report"
+        mitigation_actions: "security_investigation.mitigation_actions"
+        affected_components: "security_investigation.affected_components"
+    transformation_rules:
+      incident_to_security:
+        description: "故障响应→安全排查输入映射"
+        field_mapping:
+          - source: "incident_report.incident_type"
+            target: "security_input.investigation_trigger"
+            transform: "map_incident_to_security_check"
+          - source: "affected_components"
+            target: "security_input.scope"
+            transform: "direct"
+          - source: "incident_report.timeline"
+            target: "security_input.event_timeline"
+            transform: "direct"
+          - source: "incident_report.anomalies"
+            target: "security_input.anomaly_indicators"
+            transform: "extract_security_indicators"
+        security_trigger_rules:
+          - incident_type: "服务不可用"
+            security_check: "DDoS攻击/凭证泄露/配置篡改排查"
+          - incident_type: "数据异常"
+            security_check: "数据泄露/未授权访问/SQL注入排查"
+          - incident_type: "性能骤降"
+            security_check: "资源耗尽攻击/加密货币挖矿/异常流量排查"
+          - incident_type: "权限异常"
+            security_check: "越权访问/凭证泄露/配置错误排查"
+  - id: security_investigation
+    document: "08_安全审计与合规检查"
+    action: "排查安全因素，确认是否为安全事件"
+    input_from: incident_response
+    output_to: postmortem
+    interface_mapping:
+      input:
+        system_architecture: "external.architecture_design"
+        code_files: "external.code_files"
+        incident_context: "incident_response.incident_report"
+      output:
+        vulnerability_list: "postmortem.security_findings"
+        incident_response_plan: "postmortem.response_plan"
+        compliance_gap_analysis: "postmortem.compliance_impact"
+    transformation_rules:
+      security_to_postmortem:
+        description: "安全排查→复盘输入映射"
+        field_mapping:
+          - source: "vulnerability_list"
+            target: "postmortem_input.root_cause_candidates"
+            transform: "categorize_findings"
+          - source: "incident_response.incident_report"
+            target: "postmortem_input.incident_timeline"
+            transform: "merge_timelines"
+          - source: "incident_response.mitigation_actions"
+            target: "postmortem_input.actions_taken"
+            transform: "direct"
+          - source: "compliance_gap_analysis"
+            target: "postmortem_input.compliance_impact"
+            transform: "direct"
+  - id: postmortem
+    document: "11_项目管理与迭代复盘"
+    action: "执行事后复盘，输出改进措施和预防方案"
+    input_from: security_investigation
+    output_to: external
+    interface_mapping:
+      input:
+        incident_context: "security_investigation.incident_report"
+        security_findings: "security_investigation.vulnerability_list"
+      output:
+        postmortem_report: "external.postmortem_report"
+        action_items: "external.improvement_action_items"
+        prevention_plan: "external.prevention_plan"
+    postmortem_rules:
+      - rule: "复盘报告包含5Whys根因分析"
+      - rule: "每项改进措施指定责任人和截止日期"
+      - rule: "安全事件必须输出预防方案和检测增强措施"
+      - rule: "复盘结论纳入知识库并触发相关文档更新"
+validation: "故障已止损→安全因素已排查→复盘报告已完成并包含改进措施"

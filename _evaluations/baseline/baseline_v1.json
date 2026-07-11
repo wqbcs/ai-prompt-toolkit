@@ -1,0 +1,13 @@
+{
+  "version": "v3.3.0",
+  "date": "2026-05-28",
+  "metrics": {
+    "output_completeness": 95.0,
+    "output_accuracy": 88.0,
+    "structure_compliance": 92.0,
+    "execution_time_ms": 15000
+  },
+  "documents_evaluated": 13,
+  "scenarios_total": 55,
+  "notes": "基线建立于体系优化完成后首次评估"
+}

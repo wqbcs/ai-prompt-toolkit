@@ -1,0 +1,492 @@
+# Changelog
+
+本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [v15.0.0] - 2026-05-29
+
+### Added (第十三轮深度迭代M1-M10批次 2026-05-29)
+
+#### SDK参考实现(M1)
+- 新增 `_iterations_v15/_sdk/python/prompt_engine.py`：Python SDK完整实现(PromptEngine+ScenarioLoader+Evaluator+Combinator+Builder)
+- 新增 `_iterations_v15/_sdk/typescript/prompt-engine.ts`：TypeScript SDK完整实现(同架构)
+- 新增 `_iterations_v15/_sdk/docs/sdk_api_docs.md`：SDK API文档+使用示例
+
+#### UPPL编译器原型(M2)
+- 新增词法分析器(14 Token+8状态+状态机)、语法分析器(21 AST节点+EBNF)、3目标编译器(NL/JSON/Agent)
+
+#### 提示词运行时原型(M3)
+- 新增5阶段流水线+沙箱(进程隔离+资源限制+网络白名单+3安全等级)+监控(追踪+指标+告警)
+
+#### 行业联盟倡议(M4)
+- 新增PEA联盟组织架构(理事会+TC+EC+CC+SC)+运营机制(6类活动)+4级会员体系+IP策略
+
+#### 影响力度量(M5)
+- 新增5类15项指标+Dashboard数据模型+综合分数算法+报告模板+基线17.8/100
+
+#### 3年路线图(M6)
+- 新增v15→v18(2026-2029)路线图+里程碑+资源规划(67FTE+$12.7M)
+
+### Changed
+- 评估框架：24维度→26维度(新增实现完整度+影响力指数)
+- 子维度：96→104(+8)
+- 设计原则：30→32(+实现验证+影响度量)
+- 反模式：30→32(+纸上谈兵+影响空心)
+- 门禁：19→21(+实现门禁+影响力门禁)
+- 闭环：11→13(+实现闭环+影响力闭环)
+- 级别：满分标准学术引领级→满分实现影响力级
+
+---
+
+## [v12.0.0] - 2026-05-29
+
+### Added (第十轮深度迭代J1-J10批次 2026-05-29)
+
+#### 应力测试(J1)
+- 新增 `_iterations_v12/_stress_test/stress_test_framework_v1.md`：4类38用例应力测试框架+18防御指令
+- 应力鲁棒度基线10.00(模型切换稳定性+输入异常容忍度+并发一致性+版本兼容性)
+
+#### 未来防御(J2)
+- 新增 `_iterations_v12/_future_proof/future_proof_v1.md`：GPT-5/Claude-4/Gemini-2预适配+能力抽象层10接口+指令弹性4级
+- 未来就绪度基线10.00(模型预适配覆盖+指令弹性度+迁移路径完备+前瞻趋势覆盖)
+
+#### 跨域迁移(J3)
+- 新增 `_iterations_v12/_cross_domain/cross_domain_v1.md`：法律/医疗/教育/科研4领域×5场景+7共性模式
+
+#### 历史归档(J4)
+- 新增 `_iterations_v12/_archive/evolution_archive_v1.md`：v2.9→v12.0.0进化轨迹+18决策记录+版本矩阵
+
+#### 终极文档(J5)
+- 新增 `_iterations_v12/_manual/complete_manual_v1.md`：完全手册7章
+
+#### 满分守护(J6)
+- 新增 `_iterations_v12/_guardian/guardian_mechanism_v1.md`：守护机制+CI+基线锁定+3级审批+仪表盘
+
+#### 方法论v9.0
+- 新增 `_iterations_v12/methodology/methodology_v9.md`：26原则+26反模式+20维度80子维度+15门禁+9闭环
+
+#### 调研
+- 新增 `_iterations_v12/research/R12-01_next_gen_llm_prediction.md`
+- 新增 `_iterations_v12/research/R12-02_cross_domain_prompt_engineering.md`
+
+### Changed
+- 评估框架：18维度→20维度(新增应力鲁棒度+未来就绪度)
+- 子维度：72→80(+8)
+- 设计原则：24→26(+应力优先+未来适配)
+- 反模式：24→26(+脆弱满分+模型锁定)
+- 门禁：13→15(+应力门禁+未来门禁)
+- 闭环：8→9(+满分守护闭环)
+- 行业覆盖：5→9(+法律/医疗/教育/科研跨域)
+
+### Fixed
+- 补强输入异常防御(null/编码/递归/矛盾/注入)
+- 补强并发写冲突防御(乐观锁+快照读+令牌桶限流)
+- 补强版本冲突防御(向上引用降级+三方合并)
+- 完善模型切换格式归一化层
+
+---
+
+## [v5.0.0] - 2026-05-29
+
+### Added (第三轮深度迭代C10-C14批次 2026-05-29)
+
+- 新增 `_iterations_v5/adaptation/deepseek_v3_cot_selfcorrect.md`：DeepSeek-V3 CoT+自纠错组合适配指令(迭代47)
+- 新增 `_iterations_v5/adaptation/qwen_structured_json_mode.md`：Qwen-Max结构化输出+JSON模式适配指令(迭代48)
+- 新增 `_iterations_v5/adaptation/kimi_long_context_strategy.md`：Kimi长上下文适配策略(迭代49)
+- 新增 `_iterations_v5/adaptation/adaptation_matrix_v3.md`：7模型×55场景完整适配矩阵v3.0(迭代50)
+- 新增 `_evaluations_v5/judge_templates/judge_template.md`：LLM-as-Judge评估脚本模板(迭代51)
+- 新增 `_evaluations_v5/regression/core_scenario_test_cases.md`：核心场景回归测试用例36个(迭代52)
+- 新增 `_evaluations_v5/ab_tests/ab_test_config.yaml`：A/B测试配置模板+5个预定义测试(迭代53)
+- 新增 `_evaluations_v5/reports/evaluation_v4_8_0.md`：八维度第三次全量评估(92.5分)(迭代54)
+- 新增 `_evaluations_v5/reports/convergence_analysis.md`：分数趋势图与收敛分析(迭代55)
+- 新增 `_iterations_v5/evaluations/frontier_tech_supplement.md`：前沿技术适配补充(Agent-First/PoT/Active-Prompt)(迭代56)
+- 新增 `_iterations_v5/evaluations/industry_scenario_supplement.md`：行业专用场景模板(金融/医疗/电商)(迭代57)
+- 新增 `_iterations_v5/evaluations/constraint_supplement.md`：全体系约束补充22项(迭代58)
+- 新增 `_iterations_v5/evaluations/structure_integrity_verification.md`：55场景5要素100%覆盖验证(迭代59)
+- 新增 `_evaluations_v5/reports/evaluation_v4_9_0_final.md`：八维度第四次全量评估(96.5分)(迭代60)
+- 新增 `_evaluations_v5/reports/integrity_regression_check.md`：引用完整性回归276/276通过(迭代61)
+- 新增 `_evaluations_v5/reports/convergence_final_report.md`：收敛判定报告(迭代62)
+- 新增 `_iterations_v5/methodology/design_principles.md`：设计原则v2.0(8→12条)
+- 新增 `_iterations_v5/methodology/anti_patterns.md`：反模式v2.0(8→12种)
+- 新增 `_iterations_v5/methodology/evaluation_framework.md`：八维度评估框架v2.0
+- 新增 `_iterations_v5/methodology/optimization_process.md`：优化流程v2.0(三轮螺旋+五元组)
+- 新增 `_iterations_v5/traces/C10_trace.json ~ C14_trace.json`：C10-C14批次追溯记录
+- 新增 `_iterations_v5/C10_C14_execution_report.md`：C10-C14批次执行报告
+- 新增 `_iterations_v5/final_audit_report.md`：v5.0.0最终验收报告(16/16通过)
+- 新增 `_iterations_v5/release_v5_0_0.md`：v5.0.0发布报告
+
+### Changed (C10批次-国产模型深度适配 迭代47-50)
+
+- **04_代码审查场景A**：添加DeepSeek-V3 CoT+自纠错组合指令(5步推理+4项自检+JSON强制)
+- **08_安全审计场景A**：添加DeepSeek-V3 CoT+自纠错(攻击者思维6步+4项自检)
+- **09_性能优化场景B**：添加DeepSeek-V3 CoT+自纠错(方法论5步+4项自检)
+- **01_需求分析场景A**：添加Qwen-Max JSON模式+结构化输出指令(JSON Schema+5步中文推理)
+- **02_架构设计场景A**：添加Qwen-Max结构化输出+JSON模式(6质量属性+风险矩阵)
+- **03_编码规范场景A**：添加Qwen-Max编码规范JSON输出(命名+结构+示例)
+- **02_架构设计场景A**：添加Kimi长文档分析策略(200K全量注入+4阶段分析+联网搜索)
+- **_adaptation_matrix.md**：v2.0→v3.0，7模型×55场景完整适配矩阵+适配效果评分
+
+### Changed (C12批次-维度逼近优化 迭代56-59)
+
+- **05/06/07/10/11场景**：补充Agent-First/PoT/Active-Prompt前沿技术适配指令
+- 新增金融代码审查/医疗安全审计/电商性能优化3个行业专用场景模板
+- 全体系补充22项缺失约束(安全3项+性能10项+合规9项)
+- 10个场景补充验收标准，55场景5要素100%覆盖
+
+## [v4.6.0] - 2026-05-29
+
+### Added (第三轮深度迭代C7-C9批次 2026-05-29)
+
+- 新增 `_workflows/requirement_test_deploy.yaml`：需求→测试计划→部署配置工作流(01→05→06)
+- 新增 `_workflows/security_hardening_verify.yaml`：安全审计→安全编码→安全测试工作流(08→03→05)
+- 新增 `_workflows/incident_response.yaml`：故障响应→安全排查→复盘工作流(07→08→11)
+- 新增 `_workflows/capacity_optimize_verify.yaml`：容量分析→代码优化→性能验证工作流(09→03→05)
+- 新增 `_workflows/financial_audit_deploy.yaml`：金融行业专用工作流(08金融→06金融→07金融)
+- 新增 `_industries/financial/` 目录：金融行业3文件(checklist+glossary+compliance)
+- 新增 `_industries/healthcare/` 目录：医疗行业3文件(checklist+glossary+compliance)
+- 新增 `_industries/ecommerce/` 目录：电商行业3文件(checklist+glossary+compliance)
+- 新增 `_industries/saas/` 目录：SaaS行业3文件(checklist+glossary+compliance)
+- 新增 `_industries/gaming/` 目录：游戏行业3文件(checklist+glossary+compliance)
+- 新增 `_iterations_v5/traces/C7_trace.json`：C7批次6次迭代追溯
+- 新增 `_iterations_v5/traces/C8_trace.json`：C8批次5次迭代追溯
+- 新增 `_iterations_v5/traces/C9_trace.json`：C9批次3次迭代追溯
+- 新增 `_iterations_v5/C7_C9_execution_report.md`：C7-C9批次执行报告
+- 新增 `_evaluations_v5/reports/mid_term_evaluation_v4_6_0.md`：八维度中期评估报告(89.2分)
+
+### Changed (C7批次-工作流深度编排 迭代33-38)
+
+- **review_fix_verify.yaml**：v1.0→v2.0，新增transformation_rules(审查→修复→验证完整字段映射+4类测试生成规则+4条验证规则)
+- **requirement_design_coding.yaml**：v1.0→v2.0，新增PRD→架构约束(5种质量属性)→编码规范(4种架构选择)完整映射链
+
+### Changed (C8批次-行业垂直化扩展 迭代39-43)
+
+- 每行业含专项检查清单(PCI-DSS/HIPAA/高并发/多租户/反作弊等)
+- 每行业含30个专业术语的中英文对照表
+- 每行业含合规要求(中国法规+国际标准)及01-12号提示词集成指引
+
+### Changed (C9批次-三维融合 迭代44-46)
+
+- **00_项目提示词总览与使用指南**：v3.4→v3.5，新增六-A行业垂直化体系+六-B链式工作流索引(9条)
+
+## [v4.3.0] - 2026-05-29
+
+### Added (第三轮深度迭代C4-C6批次 2026-05-29)
+
+- 新增 `_iterations_v5/traces/C4_trace.json`：C4批次8次迭代追溯
+- 新增 `_iterations_v5/traces/C5_trace.json`：C5批次6次迭代追溯
+- 新增 `_iterations_v5/traces/C6_trace.json`：C6批次4次迭代追溯
+- 新增 `_iterations_v5/C4_C6_execution_report.md`：C4-C6批次执行报告
+
+### Changed (C4批次-低分场景深度打磨 迭代15-22)
+
+- **06_CI/CD场景E**：补充环境隔离矩阵(8维度)+配置差异清单(10项)+环境晋升流程图+质量门禁(17条)
+- **10_文档沉淀场景D**：补充新人7天Onboarding计划(14项)+知识图谱模板+TOP20 FAQ(含严重度分级)
+- **12_AI时代场景B**：深化为30项完整审查清单(安全10+正确8+性能6+可维护6)，每项含示例
+- **11_项目管理场景D**：补充4大类风险框架(13子类)+量化矩阵(5维度加权)+5种应对策略库
+- **03_编码规范场景C**：补充迁移决策树+风险矩阵(5维度)+增量迁移策略(5阶段)+兼容性8项
+- **07_监控运维场景D**：补充On-Call分级SOP(4级+5步法)+MTTA/MTTR框架(5指标)+疲劳防治(8措施)
+- **05_测试策略场景D**：补充契约定义模板+消费者驱动流程+Pact示例+Spring Cloud Contract示例
+- **02_架构设计场景E**：补充API规范+BF决策树+前后端6维度契约+REST vs GraphQL决策矩阵
+
+### Changed (C5批次-领域专家知识嵌入 迭代23-28)
+
+- **08_安全审计**：嵌入OWASP Top10 2024(10项)+STRIDE威胁建模(6类)+CVE检索指令(6步)
+- **09_性能优化**：嵌入USL通用可扩展性定律+Little's Law+Amdahl定律(含推论和应用实例)
+- **04_代码审查**：嵌入SOLID原则审查清单(5项)+设计模式反模式检测(7项)+Clean Code 10条规则
+- **06_CI/CD**：嵌入12-Factor App清单(12项)+GitOps原则(4条)+不可变基础设施+声明式部署
+- **07_监控运维**：嵌入Google SRE四大支柱+SLI/SLO/SLA误差预算框架+Toil消除策略(7类)
+- **02_架构设计**：嵌入AWS/Azure Well-Architected Framework六大支柱+演进式架构7原则
+
+### Changed (C6批次-前沿技术融合 迭代29-32)
+
+- **04_代码审查场景A**：添加Program-of-Thoughts(PoT)指令(3步+4适用场景)
+- **08_安全审计场景A**：添加Active-Prompt指令(基于不确定性优先审查，4步+6级评分)
+- **02_架构设计场景A**：添加Agent-First架构适配指令(4个Agent+协作策略)
+- **全体系L1场景**：为04/06/07/08/09共9个L1场景添加结构化输出强制指令
+
+## [v4.0.0] - 2026-05-28
+
+### Added (第三轮深度迭代C1-C3批次 2026-05-29)
+
+- 新增 `_iterations_v5/research/R3-C1-01_llm_as_judge_best_practices.md`：LLM-as-Judge评估最佳实践调研
+- 新增 `_iterations_v5/research/R3-C1-02_domestic_models_capability.md`：国产大模型能力与适配调研
+- 新增 `_iterations_v5/research/R3-C1-03_prompt_frontier_techniques.md`：Prompt前沿技术(PoT/Active-Prompt/APE/Agent-First)调研
+- 新增 `_evaluations_v5/evaluation_framework_v5.md`：八维度评估框架v2.0.0（前沿技术适配度+行业垂直化覆盖度）
+- 新增 `_evaluations_v5/llm_judge_templates.md`：LLM-as-Judge评估prompt模板集（6个维度模板）
+- 新增 `_evaluations_v5/regression/test_case_index.md`：55场景回归测试用例索引（44个核心用例）
+- 新增 `_evaluations_v5/ab_tests/ab_test_framework.md`：A/B测试框架设计文档
+- 新增 `_evaluations_v5/baseline/baseline_v4_0_0.json`：v4.0.0八维度基线分数（加权总分80.5）
+- 新增 `_evaluations_v5/reports/baseline_v4_0_0_report.md`：基线评估报告
+- 新增 `_evaluations_v5/reports/low_score_scenarios_top15.md`：低分Top15场景识别+优化路线
+- 新增 `_iterations_v5/model_profiles/qwen-max.yaml`：Qwen-Max详细模型画像
+- 新增 `_iterations_v5/model_profiles/deepseek-v3.yaml`：DeepSeek-V3详细模型画像（含R1关联）
+- 新增 `_iterations_v5/model_profiles/ernie-4.0.yaml`：ERNIE-4.0详细模型画像
+- 新增 `_iterations_v5/model_profiles/kimi.yaml`：Kimi详细模型画像
+- 新增 `_iterations_v5/adaptation/domestic_model_matrix_v5.md`：55场景×4国产模型适配策略矩阵
+- 新增 `_iterations_v5/traces/C1_trace.json`：C1批次6次迭代追溯
+- 新增 `_iterations_v5/traces/C2_trace.json`：C2批次4次迭代追溯
+- 新增 `_iterations_v5/traces/C3_trace.json`：C3批次4次迭代追溯
+
+### Changed (第三轮深度迭代C1-C3批次 2026-05-29)
+
+- **04_代码审查与质量保障提示词**：场景A添加国产模型适配指令（DeepSeek中文CoT优化+Qwen结构化输出）
+- **08_安全审计与合规检查提示词**：场景A添加国产模型适配指令（DeepSeek+ERNIE合规增强+Qwen）
+- **01_需求分析与产品规划提示词**：场景A添加中文推理模式优化指令（Qwen深度推理+DeepSeek+Kimi长文档）
+- **_adaptation_matrix.md**：v1.0.0→v2.0.0，国产模型从整体拆分为Qwen/DeepSeek/ERNIE/Kimi 4列，策略矩阵扩展为7模型列
+
+### Added
+
+- 新增 `_iterations/traces/B10_trace.json`：B10批次(最终收敛与固化)7次迭代追溯记录(迭代58-64)
+- 新增 `_iterations/convergence_report.md`：迭代收敛报告，包含64次迭代摘要、六维度三次评估对比、收敛判定结论
+- 新增 `_iterations/methodology/design_principles.md`：提示词设计原则文档（8条原则，含调研依据和迭代验证）
+- 新增 `_iterations/methodology/anti_patterns.md`：提示词反模式清单（8种反模式，含修复方案）
+- 新增 `_iterations/methodology/evaluation_framework.md`：六维度评估框架（维度定义/评分标准/评估流程/收敛判定）
+- 新增 `_iterations/methodology/optimization_process.md`：提示词优化流程（螺旋闭环/8步执行/批次管理/追溯规范）
+- 新增 `_iterations/final_audit_report.md`：最终验收报告
+
+### Changed
+
+- **04_代码审查与质量保障提示词**：
+  - 场景C/D补充5要素结构表+约束显式声明
+- **05_全维度测试策略提示词**：
+  - 场景C/D/E补充5要素结构表+CoT指令
+- **06_CI_CD与自动化部署提示词**：
+  - 补充DevOps工作方式描述+安全约束显式声明
+- 全体系CoT/Few-shot/ReAct/Self-Correction/Prompt-Chaining/Meta-Prompting/Directional-Stimulus标注统一为HTML注释块格式：`<!-- 模式名:描述 -->`
+- **iteration_state.json**：版本号更新至v4.0.0，completed_iterations=64，B10批次completed=7，收敛状态全部converged=true
+
+### Fixed
+
+- 55个场景模板5要素结构完整性100%覆盖（迭代61验证通过）
+- 全体系引用完整性回归检查通过（迭代62验证无断链/锚点错误/反向引用缺失）
+
+## [v3.7.0] - 2026-05-28
+
+### Added
+
+- 新增 `_iterations/research/RSH-B7-1_react_meta_chaining.md`：B7批次增量调研（ReAct/Prompt Chaining/Meta-Prompting/Self-Correction/Directional Stimulus/Prompt Caching最佳实践）
+- 新增 `_iterations/research/B9_evaluation_comparison.md`：B9批次六维度二次全量评估对比报告
+- 新增 `_iterations/traces/B7_trace.json`：B7批次(最佳实践融合)7次迭代追溯记录
+- 新增 `_iterations/traces/B8_trace.json`：B8批次(综合质量提升)7次迭代追溯记录
+- 新增 `_iterations/traces/B9_trace.json`：B9批次(收敛验证与微调)7次迭代追溯记录
+
+### Changed
+
+- **04_代码审查与质量保障提示词**：
+  - 场景A添加ReAct模式指令：Thought→Action→Observation→Fix循环
+- **08_安全审计与合规检查提示词**：
+  - 场景A添加ReAct攻击者思维循环：假设攻击路径→验证可达性→确认风险→纵深防御
+- **09_性能压测与优化提示词**：
+  - 场景B添加Prompt Chaining指令：瓶颈定位→根因分析→优化方案→验证确认4子任务链
+- **02_架构设计与技术选型提示词**：
+  - 场景A添加Meta-Prompting指令：根据技术栈自动生成专用审查清单
+  - 场景C添加微服务拆分决策框架(5步)和反模式清单(8种)
+- **05_全维度测试策略提示词**：
+  - 场景B添加Self-Correction+工具验证指令：覆盖率自检/边界补全/异常补全/P0验证
+- **06_CI_CD与自动化部署提示词**：
+  - 场景A添加Prompt Caching优化标注和CoT指令(6步+自纠错)
+  - 场景E补充5要素结构表+CoT指令(5步)+多环境检查清单(12项4维度)
+- **01_需求分析与产品规划提示词**：
+  - 场景A添加Directional Stimulus Prompting：[PRD输出]方向性引导标记
+- **10_技术文档与知识沉淀提示词**：
+  - 场景A添加CoT指令(5步+完整性自检)
+  - 场景D补充5要素结构表+Few-shot示例(项目结构段落+常见问题TOP10)
+- **12_AI时代开发专项提示词**：
+  - 深化角色设定(10年+OSCP/AI安全认证+4工作方式：威胁建模/零信任/持续监测/纵深防御)
+  - 添加Prompt注入攻击类型分类表(8类攻击手法)
+  - 添加防御策略矩阵(14策略×4防御层)
+- **11_项目管理与迭代复盘提示词**：
+  - 场景C补充复盘CoT流程(回顾→分析→提炼→行动4步)
+  - 场景C补充复盘输出模板(数据总览+5Whys+鱼骨图+Start/Stop/Continue+行动计划)
+- **03_编码规范与AI辅助开发提示词**：
+  - 场景A添加CoT指令(5步+自纠错检查)
+  - 场景C补充迁移风险检查清单(10项5维度)+回滚策略(4种)+兼容性验证方案(4种)
+- **07_监控告警与运维保障提示词**：
+  - 场景A添加CoT指令(6步+自纠错检查)
+  - 场景C补充容量建模公式(5个)+扩缩容决策树+成本效率评估维度表(8项)
+
+## [v3.6.0] - 2026-05-28
+
+### Added
+
+- 新增 `_iterations/traces/B4_traces.json`：B4批次(输出格式精确化)6次迭代追溯记录
+- 新增 `_iterations/traces/B5_traces.json`：B5批次(检查清单全覆盖)6次迭代追溯记录
+- 新增 `_iterations/traces/B6_traces.json`：B6批次(CoT/多轮/自我纠错模式)6次迭代追溯记录
+
+### Changed
+
+- **04_代码审查与质量保障提示词**：
+  - 场景A补充结构化输出JSON模板(summary/issues/qualityScore/releaseRecommendation字段)
+  - 场景A添加CoT指令：逐步分析(理解意图→识别问题→评估严重度→提供修复方案)
+- **06_CI_CD与自动化部署提示词**：
+  - 场景A补充Pipeline YAML结构化输出模板(7个job节点+阶段策略表+质量门禁)
+  - 补充部署安全检查清单(密钥管理/网络策略/镜像安全/合规审计4维度14项)
+- **07_监控告警与运维保障提示词**：
+  - 场景A补充Prometheus告警规则YAML输出模板+Grafana Dashboard JSON模板
+  - 补充监控覆盖度检查清单(四大黄金指标/业务指标/日志/链路追踪/告警5维度15项)
+- **08_安全审计与合规检查提示词**：
+  - 场景A补充安全审计报告结构化JSON模板(auditSummary/vulnerabilities/complianceGaps/hardeningPlan)
+  - 场景A添加CoT指令：攻击者思维逐步分析(识别攻击面→STRIDE评估→构建攻击链→纵深防御)
+- **09_性能压测与优化提示词**：
+  - 场景A补充压测报告结构化JSON模板(benchmarkSummary/scenarios/optimizationSuggestions)
+  - 场景B添加CoT指令：性能分析方法论(建立基线→识别瓶颈→假设验证→优化实施→效果确认)
+  - 补充性能优化验证清单(基线对比/回归测试/资源监控/容量规划4维度12项)
+- **01_需求分析与产品规划提示词**：
+  - 场景D补充竞品分析矩阵输出模板(对比维度×竞品评分矩阵+权重+加权总分)
+  - 场景A添加Few-shot CoT示例：完整的需求分析推理过程(6步从模糊需求到PRD)
+- **03_编码规范与AI辅助开发提示词**：
+  - 补充AI生成代码专项检查清单(安全审查/正确性验证/性能评估/可维护性4维度13项)
+- **02_架构设计与技术选型提示词**：
+  - 场景B添加自纠错指令：完成架构评审后自我检查(非功能需求/单点故障/扩展性/成本)
+- **05_全维度测试策略提示词**：
+  - 场景A添加多轮对话指令：4轮交互(确定范围→设计用例→补充边界→评估覆盖率)
+- **11_项目管理与迭代复盘提示词**：
+  - 补充项目健康度检查清单(进度/质量/风险/团队/沟通/交付6维度14项，含健康/预警/危险三级阈值)
+- **12_AI时代开发专项提示词**：
+  - 补充AI安全专项检查清单(Prompt注入/数据泄露/模型偏见/合规审计/可解释性5维度17项)
+
+## [v3.5.0] - 2026-05-28
+
+### Added
+
+- 新增 `_iterations/research/evaluation_baseline.json`：六维度全量评估基线，覆盖01-12号文档55个场景模板
+- 新增 `_iterations/traces/B1_traces.json`：B1批次(结构优化)6次迭代追溯记录
+- 新增 `_iterations/traces/B2_traces.json`：B2批次(约束完备化)6次迭代追溯记录
+- 新增 `_iterations/traces/B3_traces.json`：B3批次(角色设定深化)6次迭代追溯记录
+
+### Changed
+
+- **01_需求分析与产品规划提示词**：
+  - 场景A新增5要素结构表(描述/输入/输出/检查清单/验收标准)和输出示例片段
+  - 场景B新增5要素结构表
+- **02_架构设计与技术选型提示词**：
+  - 场景A新增结构化输出示例(架构总览表+技术选型对比矩阵)
+  - 场景B新增结构化输出示例(架构瓶颈识别表+优化方案对比表)
+- **03_编码规范与AI辅助开发提示词**：
+  - 场景A新增Few-shot示例(用户注册功能完整代码+3类测试用例)
+  - 场景D新增Few-shot示例(NoneType Bug完整修复流程)
+- **04_代码审查与质量保障提示词**：
+  - 核心约束新增第7条：安全审查约束(OWASP Top 10全量/L3审查/P0阻断)
+  - 核心约束新增第8条：性能审查约束(N+1/连接池/GC/锁/退化>10%)
+- **06_CI_CD与自动化部署提示词**：
+  - 核心约束新增第7条：合规审查约束(许可证扫描/PIA/等保GDPR)
+  - 核心约束新增第8条：回滚完整性约束(回滚脚本/回滚SQL/5min/演练/蓝绿保留24h)
+- **08_安全审计与合规检查提示词**：
+  - 核心约束新增第6条：业务连续性约束(RTO/BCP/灾难恢复演练)
+  - 核心约束新增第7条：数据保护约束(AES-256/TLS1.2/双删除/被遗忘权/跨境评估)
+- **05_全维度测试策略提示词**：
+  - 身份定义新增5条专业工作方式(测试左移/风险导向/分层自动化/持续反馈/跨角色协作)
+- **07_监控告警与运维保障提示词**：
+  - 身份定义新增5条SRE On-Call专业工作方式(三原则/SLA驱动/SLO体系/渐进式故障处理/可观测性先行)
+- **10_技术文档与知识沉淀提示词**：
+  - 身份定义新增5条专业工作方式与评审流程(Diátaxis框架/三级评审/质量度量/知识闭环/协作规范)
+
+## [v3.4.0] - 2026-05-28
+
+### Added
+
+- 新增 `_evaluations/` 目录，建立效果评估与反馈闭环体系：
+  - `evaluation_framework.md`：效果评估框架，定义4项核心指标（输出完整度、输出准确率、结构合规率、执行耗时）、阈值与优化触发条件、闭环流程（评估→分析→优化→再评估）、评估报告模板
+  - `baseline/baseline_v1.json`：初始基线数据（完整度95%、准确率88%、合规率92%、耗时15s）
+  - `reports/.gitkeep`：评估报告存放目录
+- 新增 `_i18n/` 目录，建立国际化支持体系：
+  - `glossary_zh_en.md`：中英术语对照表，62个术语按8大分类提供英文对照
+  - `cultural_rules.md`：文化适配规则，定义中文版委婉建议式风格、英文版直接指令式风格、通用翻译规则
+- 00_项目提示词总览与使用指南新增「十、多语言版本」章节，标注中文版（主）与英文版目录及当前可用术语对照表
+
+## [v3.3.0] - 2026-05-28
+
+### Added
+
+- 新增 `_model_profiles/` 目录，建立AI模型能力画像，包含4个模型画像YAML文件：
+  - `claude-3-opus.yaml`：200K上下文，指令遵循95，推理深度95，推荐详细CoT+XML标记风格
+  - `gpt-4-turbo.yaml`：128K上下文，指令遵循92，结构化输出95，推荐系统提示+JSON模式
+  - `gemini-pro.yaml`：1M上下文，多模态95，推荐长上下文+多模态输入风格
+  - `domestic-models.yaml`：通义千问/文心一言/DeepSeek，中文理解95+，推荐直接指令式+分段输出
+- 新增 `_adaptation_matrix.md`：AI模型适配策略矩阵，包含模型×文档×适配级别策略矩阵表、每个模型使用建议、降级方案汇总
+- 为01-12号核心文档的"身份定义"章节添加S1通用适配标注（`<!-- S1:通用适配 - 所有模型共用 -->`）
+- 为02_架构设计、03_编码规范、04_代码审查的关键场景模板添加S2偏好适配标注（Claude/GPT/国产三种风格）
+- 为02_架构设计(场景C)、03_编码规范(场景B)、04_代码审查(场景B)的长上下文需求场景添加S3降级方案标注
+
+## [v3.2.0] - 2026-05-28
+
+### Added
+
+- 新增 `_interfaces/` 目录，为01-09号文档创建输入/输出接口Schema定义（YAML格式），每个接口包含required/optional的input和output字段定义
+- 新增 `_workflows/` 目录，定义4条链式工作流：
+  - `review_fix_verify.yaml`：审查→整改→验证 (04→03→05)
+  - `requirement_design_coding.yaml`：需求→设计→编码 (01→02→03)
+  - `deploy_monitor_security.yaml`：部署→监控→安全 (06→07→08)
+  - `perf_optimize_verify.yaml`：性能→优化→验证 (09→03→05)
+- 新增 `_interfaces/compatibility_report.yaml`：接口兼容性校验报告，17条链路全部通过，1条需类型转换（priority_matrix: object→string 序列化）
+- 01-09号文档输出规范章节末尾新增接口引用块，标注输入接口、输出接口和传递协议（字段映射+类型转换规则）
+
+### Changed
+
+- **01_需求分析与产品规划提示词**：输出规范章节3.4末尾新增接口引用块
+- **02_架构设计与技术选型提示词**：输出规范章节3.5末尾新增接口引用块
+- **03_编码规范与AI辅助开发提示词**：输出规范章节8.3末尾新增接口引用块
+- **04_代码审查与质量保障提示词**：审查规范章节4.2末尾新增接口引用块
+- **05_全维度测试策略提示词**：输出规范章节10.3末尾新增接口引用块
+- **06_CI_CD与自动化部署提示词**：输出规范章节9.3末尾新增接口引用块
+- **07_监控告警与运维保障提示词**：输出规范章节9.3末尾新增接口引用块
+- **08_安全审计与合规检查提示词**：输出规范章节8.3末尾新增接口引用块
+- **09_性能压测与优化提示词**：输出规范章节9.3末尾新增接口引用块
+
+## [v3.1.0] - 2026-05-28
+
+### Added
+
+- 06_CI_CD与自动化部署提示词新增「场景 F：MLOps 流水线设计」，覆盖 ML 流水线架构、模型版本管理（MLflow/W&B）、数据版本管理（DVC）、模型评估门禁、部署策略、漂移监控与回滚机制
+- 09_性能压测与优化提示词新增「场景 F：云成本优化（FinOps）」，覆盖成本分布分析、资源利用率审查、优化建议（右缩容/预留实例/存储分层/网络出口）、FinOps 治理机制与节省预估
+- 08_安全审计与合规检查提示词新增「场景 F：ESG 合规评估」，覆盖 ESG 三维度评估（环境/社会/治理）、合规差距分级、整改路线图、持续监控指标与报告模板
+- 00_项目提示词总览与使用指南场景快速参考卡更新：场景总数从 52 更新为 55，5.5/5.6/5.7 阶段各新增一行场景引用
+
+### Changed
+
+- **06_CI_CD与自动化部署提示词**：v1.3.0 → v1.4.0（Minor 升级：新增 MLOps 场景模板）
+- **09_性能压测与优化提示词**：v1.3.0 → v1.4.0（Minor 升级：新增 FinOps 场景模板）
+- **08_安全审计与合规检查提示词**：v1.3.0 → v1.4.0（Minor 升级：新增 ESG 合规评估场景模板）
+- **00_项目提示词总览与使用指南**：v3.0.0 → v3.1.0（Minor 升级：场景快速参考卡扩展至 55 个场景）
+
+## [v3.0.0] - 2026-05-28
+
+### Added
+
+- 全体系实施语义化版本管理（SemVer vX.Y.Z），取代原有非标准版本号格式
+- 新增 `CHANGELOG.md`，记录全量变更历史
+- 00_总览文档新增「九、版本联动规则」章节，包含：
+  - 9.1 语义化版本策略定义
+  - 9.2 核心文档 Major 变更时的受影响文档评估规则
+  - 9.3 文档依赖关系表（含联动规则）
+  - 9.4 特殊联动场景说明
+
+### Changed
+
+- **00_项目提示词总览与使用指南**：v2.9 → v3.0.0（Major 升级：体系架构级变更，新增版本联动规则章节与 CHANGELOG 机制）
+- **01_需求分析与产品规划提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **02_架构设计与技术选型提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **03_编码规范与AI辅助开发提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **04_代码审查与质量保障提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **05_全维度测试策略提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **06_CI_CD与自动化部署提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **07_监控告警与运维保障提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **08_安全审计与合规检查提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **09_性能压测与优化提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **10_技术文档与知识沉淀提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **11_项目管理与迭代复盘提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **12_AI时代开发专项提示词**：v1.2 → v1.3.0（Minor 升级：补充输出规范/检查清单章节）
+- **工业级项目全流程螺旋式迭代管理总纲**：V3.0 → v3.0.1（Patch 升级：版本号格式规范化）
+- **整体审查提示词**：v2.0 → v2.0.1（Patch 升级：版本号格式规范化）
+- **_glossary**：无版本号 → v1.1.0（新增版本号标注，术语体系已稳定）
+- **_project_context**：无版本号 → v1.0.1（新增版本号标注，模板格式规范化）
+- **角色定义**：无版本号 → v1.0.1（新增版本号标注，格式规范化）
+- **一、前置身份与能力锚定**：无版本号 → v1.0.1（新增版本号标注，格式规范化）
+- **_project_bug_review**：无版本号 → v2.0.1（新增版本号标注，与 Bug 检查 V2.0 对齐）
+- **批量扫描与修复工作流**：无版本号 → v1.0.1（新增版本号标注，格式规范化）
+- 00_总览版本号跟踪表全面更新为语义化版本格式
+- 00_总览版本历史新增 v3.0.0 记录
+
+### Fixed
+
+- 全体系版本号格式统一为 `vX.Y.Z`（修正原有 `vX.Y`、`VX.Y`、无版本号等不一致情况）
+- 00_总览更新说明更新为 v3.0.0 变更描述

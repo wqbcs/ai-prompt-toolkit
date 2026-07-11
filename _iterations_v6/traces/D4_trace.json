@@ -1,0 +1,16 @@
+{
+  "batch": "D4",
+  "name": "场景互操作性深度优化",
+  "iterations": [
+    {"id": "D4-01", "action": "扩展55场景标准输入/输出接口", "dimension": "interoperability", "delta": 0.5},
+    {"id": "D4-02", "action": "定义01→02→03零损耗数据传递契约", "dimension": "interoperability", "delta": 0.5},
+    {"id": "D4-03", "action": "定义04→03→05零损耗数据传递契约", "dimension": "interoperability", "delta": 0.5},
+    {"id": "D4-04", "action": "定义06→07→08零损耗数据传递契约", "dimension": "interoperability", "delta": 0.5},
+    {"id": "D4-05", "action": "定义01→11和02→10传递契约", "dimension": "interoperability", "delta": 0.5},
+    {"id": "D4-06", "action": "定义04→05→06质量门禁级联", "dimension": "interoperability", "delta": 0.3},
+    {"id": "D4-07", "action": "执行端到端互操作性验证", "dimension": "interoperability", "delta": 0.2},
+    {"id": "D4-08", "action": "更新兼容性校验报告v2.0(17→32条)", "dimension": "interoperability", "delta": 0.0, "artifacts": ["_interfaces/compatibility_report_v2.yaml"]}
+  ],
+  "batch_delta": {"interoperability": 2.0},
+  "status": "completed"
+}

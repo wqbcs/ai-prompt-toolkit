@@ -1,0 +1,100 @@
+name: "容量分析→代码优化→性能验证"
+version: "v1.0.0"
+description: "性能压测分析容量瓶颈→编码规范执行优化→测试策略验证性能达标"
+chain: "09→03→05"
+steps:
+  - id: capacity_analysis
+    document: "09_性能压测与优化"
+    action: "容量分析与压测，输出瓶颈和优化方案"
+    input_from: external
+    output_to: optimize
+    interface_mapping:
+      input:
+        system_architecture: "external.architecture_design"
+        core_api_list: "external.core_api_list"
+        capacity_target: "external.capacity_target"
+      output:
+        bottleneck_analysis: "optimize.optimization_target"
+        optimization_plan: "optimize.optimization_plan"
+        performance_targets: "verify.performance_targets"
+        capacity_report: "optimize.capacity_context"
+    transformation_rules:
+      capacity_to_optimize:
+        description: "容量分析→代码优化指令映射"
+        field_mapping:
+          - source: "bottleneck_analysis.bottlenecks[]"
+            target: "optimization_input.target_list"
+            transform: "prioritize_by_impact"
+          - source: "optimization_plan.code_optimizations[]"
+            target: "optimization_input.code_fix_instructions"
+            transform: "derive_fix_instructions"
+          - source: "optimization_plan.sql_optimizations[]"
+            target: "optimization_input.sql_fix_instructions"
+            transform: "derive_sql_instructions"
+          - source: "optimization_plan.config_optimizations[]"
+            target: "optimization_input.config_instructions"
+            transform: "derive_config_instructions"
+        optimization_mapping:
+          - bottleneck_type: "CPU密集"
+            fix_strategy: "算法优化/并行化/缓存/异步"
+          - bottleneck_type: "IO密集"
+            fix_strategy: "批量处理/连接池/异步IO/缓存"
+          - bottleneck_type: "内存瓶颈"
+            fix_strategy: "对象池/懒加载/内存回收/数据结构优化"
+          - bottleneck_type: "数据库瓶颈"
+            fix_strategy: "索引优化/查询优化/分库分表/读写分离"
+          - bottleneck_type: "网络瓶颈"
+            fix_strategy: "压缩/合并请求/CDN/连接复用"
+  - id: optimize
+    document: "03_编码规范与AI辅助开发"
+    action: "根据容量分析结果执行代码/SQL/配置优化"
+    input_from: capacity_analysis
+    output_to: verify
+    interface_mapping:
+      input:
+        optimization_target: "capacity_analysis.bottleneck_analysis"
+        architecture_design: "external.architecture_design"
+      output:
+        code_files: "verify.code_files"
+        fix_report: "verify.fix_report"
+    transformation_rules:
+      optimize_to_verify:
+        description: "优化结果→性能验证输入映射"
+        field_mapping:
+          - source: "fix_report.fixed_issues[]"
+            target: "perf_verify.optimized_items"
+            transform: "direct"
+          - source: "capacity_analysis.performance_targets"
+            target: "perf_verify.target_metrics"
+            transform: "direct"
+          - source: "fix_report.change_summary"
+            target: "perf_verify.optimization_scope"
+            transform: "direct"
+        performance_test_generation:
+          - category: "baseline_comparison"
+            rule: "优化前后同场景压测对比，量化提升幅度"
+          - category: "capacity_validation"
+            rule: "验证系统达到目标容量(QPS/并发数/数据量)"
+          - category: "stability_test"
+            rule: "目标容量下持续运行>=2h，验证无内存泄露/连接泄露"
+          - category: "degradation_check"
+            rule: "验证非优化场景性能无退化(波动<5%)"
+  - id: verify
+    document: "05_全维度测试策略"
+    action: "性能回归测试验证优化效果是否达标"
+    input_from: optimize
+    output_to: external
+    interface_mapping:
+      input:
+        code_files: "optimize.code_files"
+        optimization_result: "optimize.fix_report"
+      output:
+        regression_result: "external.regression_result"
+        test_report: "external.performance_test_report"
+    verification_rules:
+      - rule: "性能指标达到目标阈值(QPS/延迟/错误率)"
+      - rule: "容量目标达标(目标并发数/数据量)"
+      - rule: "优化代码通过回归测试，无功能退化"
+      - rule: "非优化场景性能无退化(波动<5%)"
+      - rule: "稳定性验证通过(无内存泄露/连接泄露)"
+validation: "容量目标达标→性能指标达到阈值→优化通过回归测试且无退化"

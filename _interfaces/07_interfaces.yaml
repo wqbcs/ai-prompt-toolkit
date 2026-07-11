@@ -1,0 +1,45 @@
+# 07_interfaces.yaml
+document: "07_监控告警与运维保障提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: architecture_design
+      type: object
+      description: "架构设计文档(来自02或06输出)，含服务拓扑和部署架构"
+    - name: deploy_topology
+      type: object
+      description: "部署拓扑信息，含服务列表、端口、依赖关系"
+  optional:
+    - name: monitor_metrics_config
+      type: object
+      description: "监控指标配置(来自06 CI/CD输出)，含发布期间关注指标"
+    - name: business_metrics
+      type: array
+      description: "业务指标定义，含指标名、阈值、告警级别"
+    - name: sla_requirements
+      type: object
+      description: "SLA要求，含可用性目标、响应时间承诺"
+    - name: security_alert_config
+      type: object
+      description: "安全告警配置(来自08安全审计输出)"
+output:
+  required:
+    - name: monitor_plan
+      type: object
+      description: "监控方案，含技术栈选型、指标清单、仪表盘设计"
+    - name: alert_rules
+      type: array
+      description: "告警规则清单，按P0/P1/P2/P3分级，含PromQL表达式"
+    - name: ops_manual
+      type: object
+      description: "运维手册，含常见故障处理SOP"
+  optional:
+    - name: incident_response_flow
+      type: object
+      description: "故障应急响应流程，含分级标准和升级路径"
+    - name: capacity_plan
+      type: object
+      description: "容量规划方案，含扩缩容配置和成本优化建议"
+    - name: log_spec
+      type: object
+      description: "日志规范，含结构化格式定义和采集策略"

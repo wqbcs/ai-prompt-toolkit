@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prompt-system.local/schemas/07_monitoring_alert_output.schema.json",
+  "title": "监控告警规则输出Schema",
+  "description": "定义07_监控告警与运维保障提示词中L1级场景（场景D: On-Call管理）的输出结构化格式，适用于告警系统自动配置和值班管理",
+  "type": "object",
+  "required": ["serviceName", "alertRules", "onCallSchedule"],
+  "properties": {
+    "serviceName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "服务名称"
+    },
+    "alertRules": {
+      "type": "array",
+      "description": "告警规则列表",
+      "items": {
+        "type": "object",
+        "required": ["alertName", "expr", "forDuration", "severity", "summary"],
+        "properties": {
+          "alertName": {
+            "type": "string",
+            "pattern": "^[A-Z][a-zA-Z0-9]*$",
+            "description": "告警规则名称，PascalCase格式"
+          },
+          "expr": {
+            "type": "string",
+            "minLength": 1,
+            "description": "PromQL表达式"
+          },
+          "forDuration": {
+            "type": "string",
+            "pattern": "^[0-9]+[smhd]$",
+            "description": "持续时长，如1m/5m/1h"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "告警严重级别"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "description": "告警摘要模板"
+          },
+          "description": {
+            "type": "string",
+            "description": "告警详细描述模板"
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {"type": "string"},
+            "description": "附加标签"
+          },
+          "notificationChannels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["phone", "sms", "im", "email", "dashboard"]
+            },
+            "description": "通知渠道：phone=电话, sms=短信, im=即时通讯, email=邮件, dashboard=仪表盘"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "alertSuppression": {
+      "type": "object",
+      "description": "告警抑制/聚合策略（风暴治理）",
+      "properties": {
+        "dependencySuppression": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否启用依赖抑制（下游故障不重复告警上游）"
+        },
+        "aggregationWindow": {
+          "type": "string",
+          "pattern": "^[0-9]+[smhd]$",
+          "description": "聚合窗口，相同服务同类告警合并"
+        },
+        "silencePolicy": {
+          "type": "string",
+          "description": "静默策略说明"
+        }
+      },
+      "additionalProperties": false
+    },
+    "onCallSchedule": {
+      "type": "object",
+      "required": ["rotationMembers", "coverage", "escalationPath"],
+      "description": "On-Call值班管理",
+      "properties": {
+        "rotationMembers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "role"],
+            "properties": {
+              "name": {"type": "string", "description": "值班人姓名"},
+              "role": {"type": "string", "description": "角色/职级"},
+              "contact": {"type": "string", "description": "联系方式"}
+            },
+            "additionalProperties": false
+          },
+          "description": "值班轮换人员列表"
+        },
+        "rotationPeriodDays": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30,
+          "description": "轮换周期（天）"
+        },
+        "coverage": {
+          "type": "string",
+          "enum": ["7x24", "5x8"],
+          "description": "覆盖范围：7x24=全天候, 5x8=工作日"
+        },
+        "escalationPath": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["level", "responseTimeMinutes", "members"],
+            "properties": {
+              "level": {"type": "integer", "minimum": 1, "description": "升级层级(1=一线,2=二线,3=架构师)"},
+              "responseTimeMinutes": {"type": "integer", "minimum": 1, "description": "响应时间要求(分钟)"},
+              "members": {"type": "array", "items": {"type": "string"}, "description": "该层级人员列表"}
+            },
+            "additionalProperties": false
+          },
+          "description": "升级路径"
+        },
+        "efficiencyMetrics": {
+          "type": "object",
+          "description": "值班效率度量指标",
+          "properties": {
+            "mttaTargetMinutes": {"type": "integer", "description": "MTTA（平均确认时间）目标(分钟)"},
+            "mttrTargetMinutes": {"type": "integer", "description": "MTTR（平均恢复时间）目标(分钟)"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

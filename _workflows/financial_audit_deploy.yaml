@@ -1,0 +1,115 @@
+name: "金融审计→金融部署→金融监控"
+version: "v1.0.0"
+description: "金融安全审计(含PCI-DSS/AML)→金融合规部署(含等保/数据分级)→金融交易监控(含风控/对账)"
+chain: "08_金融→06_金融→07_金融"
+industry: "financial"
+steps:
+  - id: financial_audit
+    document: "08_安全审计与合规检查"
+    action: "执行金融行业安全审计，含PCI-DSS合规、AML反洗钱、交易安全检查"
+    input_from: external
+    output_to: financial_deploy
+    interface_mapping:
+      input:
+        system_architecture: "external.system_architecture"
+        code_files: "external.code_files"
+        compliance_standards: ["PCI-DSS-4.0", "AML", "等保2.0-三级", "个保法", "数据安全法"]
+      output:
+        vulnerability_list: "financial_deploy.vulnerability_list"
+        compliance_gap_analysis: "financial_deploy.compliance_gap_analysis"
+        security_hardening_plan: "financial_deploy.security_hardening_plan"
+        pci_dss_assessment: "financial_deploy.pci_dss_assessment"
+        aml_assessment: "financial_deploy.aml_assessment"
+    transformation_rules:
+      audit_to_deploy:
+        description: "金融审计结果→金融部署配置映射"
+        field_mapping:
+          - source: "security_hardening_plan.short_term"
+            target: "deploy_config.immediate_hardening"
+            transform: "derive_deploy_hardening"
+          - source: "pci_dss_assessment.requirements[]"
+            target: "deploy_config.pci_controls"
+            transform: "map_pci_to_deploy_config"
+          - source: "compliance_gap_analysis.gaps[]"
+            target: "deploy_config.compliance_remediation"
+            transform: "prioritize_by_severity"
+        pci_dss_deploy_mapping:
+          - pci_requirement: "网络分段(CDE隔离)"
+            deploy_config: "K8s NetworkPolicy+专用VLAN+防火墙规则"
+          - pci_requirement: "加密传输(TLS1.2+)"
+            deploy_config: "Ingress TLS终止+服务间mTLS+证书管理"
+          - pci_requirement: "访问控制(最小权限+MFA)"
+            deploy_config: "RBAC+IAM MFA+Secret管理+审计日志"
+          - pci_requirement: "日志和监控"
+            deploy_config: "SIEM集成+日志聚合+7年保留+不可篡改"
+        aml_deploy_mapping:
+          - aml_requirement: "交易监控"
+            deploy_config: "风控引擎+实时流处理+告警规则"
+          - aml_requirement: "可疑交易报告"
+            deploy_config: "STR自动生成+审批流程+报送接口"
+          - aml_requirement: "KYC数据管理"
+            deploy_config: "加密存储+访问控制+5年保留"
+  - id: financial_deploy
+    document: "06_CI_CD与自动化部署"
+    action: "金融合规部署，含等保2.0/数据分级/密钥管理/审计日志配置"
+    input_from: financial_audit
+    output_to: financial_monitor
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_environment: "external.deploy_environment"
+        security_hardening_plan: "financial_audit.security_hardening_plan"
+      output:
+        pipeline_config: "external.pipeline_config"
+        deploy_manifest: "external.deploy_manifest"
+        rollback_plan: "external.rollback_plan"
+        audit_log_config: "financial_monitor.audit_log_config"
+        data_classification_config: "financial_monitor.data_classification_config"
+    transformation_rules:
+      deploy_to_monitor:
+        description: "金融部署配置→金融监控配置映射"
+        field_mapping:
+          - source: "deploy_manifest.services[]"
+            target: "monitor_config.service_monitors"
+            transform: "derive_financial_monitors"
+          - source: "audit_log_config"
+            target: "monitor_config.audit_monitoring"
+            transform: "direct"
+          - source: "data_classification_config"
+            target: "monitor_config.data_access_monitoring"
+            transform: "derive_access_monitoring"
+        financial_monitor_mapping:
+          - deploy_component: "交易服务"
+            monitor_metrics: ["QPS", "延迟P99", "成功率", "交易金额", "异常交易率"]
+          - deploy_component: "支付网关"
+            monitor_metrics: ["通道成功率", "回调延迟", "对账差异", "退款率"]
+          - deploy_component: "风控引擎"
+            monitor_metrics: ["决策延迟", "拦截率", "误杀率", "规则命中分布"]
+          - deploy_component: "审计日志"
+            monitor_metrics: ["写入延迟", "完整性校验", "存储容量", "访问频率"]
+  - id: financial_monitor
+    document: "07_监控告警与运维保障"
+    action: "金融交易监控，含风控告警/对账监控/合规指标/审计日志监控"
+    input_from: financial_deploy
+    output_to: external
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_topology: "financial_deploy.deploy_manifest"
+      output:
+        monitor_plan: "external.monitor_plan"
+        alert_rules: "external.alert_rules"
+        ops_manual: "external.ops_manual"
+        financial_dashboards: "external.financial_dashboards"
+    financial_monitoring_rules:
+      - category: "交易监控"
+        rules: ["交易成功率<99.9%告警", "单笔金额>阈值告警", "交易频率异常告警", "交易金额波动>30%告警"]
+      - category: "风控监控"
+        rules: ["风控拦截率>阈值告警", "风控延迟>P99告警", "误杀率>阈值告警", "新规则异常告警"]
+      - category: "对账监控"
+        rules: ["日终对账差异>0告警", "对账超时告警", "差异未处理>24h告警"]
+      - category: "合规监控"
+        rules: ["敏感数据访问异常", "权限变更审计", "配置变更审计", "密钥轮换到期告警"]
+      - category: "审计日志"
+        rules: ["日志写入延迟>1s告警", "日志完整性校验失败告警", "日志存储>80%告警"]
+validation: "PCI-DSS评估通过+AML合规通过+等保三级达标+交易监控覆盖+对账机制就绪+审计日志完整"

@@ -1,0 +1,42 @@
+{
+  "batch": "C2",
+  "batch_name": "调研画像",
+  "iterations": [7, 8, 9, 10],
+  "date": "2026-05-29",
+  "round": 3,
+  "version": "v4.0.0",
+  "trace_records": [
+    {
+      "iteration": 7,
+      "name": "Qwen-Max详细模型画像",
+      "input": "调研2-国产模型能力数据+阿里云百炼文档",
+      "output": "_iterations_v5/model_profiles/qwen-max.yaml",
+      "change_type": "Added",
+      "key_decisions": ["中文理解97分(国内最强)","结构化输出JSON mode稳定","8个best_scenarios含适配指令","兼容OpenAI接口迁移成本极低"]
+    },
+    {
+      "iteration": 8,
+      "name": "DeepSeek-V3详细模型画像",
+      "input": "调研2-国产模型能力数据",
+      "output": "_iterations_v5/model_profiles/deepseek-v3.yaml",
+      "change_type": "Added",
+      "key_decisions": ["代码生成95分(国内最强)","中文CoT优化指令模板","结构化输出需显式JSON指令+示例","关联DeepSeek-R1推理模型"]
+    },
+    {
+      "iteration": 9,
+      "name": "ERNIE-4.0和Kimi模型画像",
+      "input": "调研2-国产模型能力数据+百度千帆文档",
+      "output": "_iterations_v5/model_profiles/ernie-4.0.yaml + kimi.yaml",
+      "change_type": "Added",
+      "key_decisions": ["ERNIE知识图谱90分合规场景首选","Kimi 200K上下文长文档首选","千帆平台Agent+MCP能力","Kimi联网搜索增强能力"]
+    },
+    {
+      "iteration": 10,
+      "name": "国产模型适配策略矩阵",
+      "input": "4个模型画像+55场景模板",
+      "output": "_iterations_v5/adaptation/domestic_model_matrix_v5.md",
+      "change_type": "Added",
+      "key_decisions": ["55场景×4模型S/A/B/C四级适配","DeepSeek 18个S级(代码类)","Qwen 12个S级(文档类)","ERNIE 4个S级(合规类)","Kimi 2个S级(长文档类)"]
+    }
+  ]
+}

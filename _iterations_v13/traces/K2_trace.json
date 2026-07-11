@@ -1,0 +1,13 @@
+{
+  "trace_id": "K2",
+  "batch": "教学体系",
+  "iterations": 7,
+  "deliverables": [
+    "5级课程体系 (84学时30模块)",
+    "CPE认证体系 (5级15题)",
+    "教学平台架构"
+  ],
+  "dimension_impact": {"D22": 20.00},
+  "gate_status": "all_passed",
+  "status": "completed"
+}

@@ -1,0 +1,89 @@
+name: "审查→整改→验证"
+version: "v2.0.0"
+description: "代码审查发现问题→编码规范修复代码→测试策略验证修复"
+chain: "04→03→05"
+steps:
+  - id: review
+    document: "04_代码审查与质量保障"
+    action: "执行代码审查，输出问题清单"
+    input_from: external
+    output_to: fix
+    interface_mapping:
+      input:
+        code_files: "external.code_files"
+        project_metadata: "external.project_metadata"
+      output:
+        issue_list: "fix.issue_list"
+        quality_score: "fix.quality_score"
+    transformation_rules:
+      review_to_fix:
+        description: "审查问题清单→修复指令映射"
+        field_mapping:
+          - source: "issue_list[].id"
+            target: "fix_instruction.ref_issue_id"
+            transform: "direct"
+          - source: "issue_list[].level"
+            target: "fix_instruction.priority"
+            transform: "mapping:P0→critical,P1→high,P2→medium,P3→low"
+          - source: "issue_list[].fix_solution"
+            target: "fix_instruction.fix_approach"
+            transform: "direct"
+          - source: "issue_list[].location"
+            target: "fix_instruction.target_location"
+            transform: "direct"
+        test_generation_rules:
+          - rule: "每个P0/P1问题必须生成至少1条回归测试用例"
+          - rule: "修复涉及边界条件时，生成边界值测试用例"
+          - rule: "修复涉及异常处理时，生成异常路径测试用例"
+          - rule: "修复涉及并发时，生成并发安全测试用例"
+  - id: fix
+    document: "03_编码规范与AI辅助开发"
+    action: "根据问题清单执行修复"
+    input_from: review
+    output_to: verify
+    interface_mapping:
+      input:
+        issue_list: "review.issue_list"
+        architecture_design: "external.architecture_design"
+      output:
+        code_files: "verify.code_files"
+        fix_report: "verify.fix_report"
+    transformation_rules:
+      fix_to_verify:
+        description: "修复报告→测试验证输入映射"
+        field_mapping:
+          - source: "fix_report.fixed_issues[]"
+            target: "test_verification.target_issues"
+            transform: "direct"
+          - source: "fix_report.change_summary.modified_files"
+            target: "test_verification.scope_files"
+            transform: "direct"
+          - source: "fix_report.impact_analysis"
+            target: "test_verification.impact_scope"
+            transform: "direct"
+        test_case_generation:
+          - category: "regression"
+            rule: "为每个修复问题生成回归测试，验证原问题不再复现"
+          - category: "boundary"
+            rule: "修复涉及数值/范围判断时，生成边界值用例(min-1,min,max,max+1)"
+          - category: "exception"
+            rule: "修复涉及异常捕获时，生成异常触发用例(空值/越界/类型错误)"
+          - category: "concurrency"
+            rule: "修复涉及共享状态时，生成并发竞争用例(多线程/竞态条件)"
+  - id: verify
+    document: "05_全维度测试策略"
+    action: "回归测试验证修复效果"
+    input_from: fix
+    output_to: external
+    interface_mapping:
+      input:
+        code_files: "fix.code_files"
+        issue_list: "review.issue_list"
+      output:
+        regression_result: "external.regression_result"
+    verification_rules:
+      - rule: "所有P0/P1问题修复并通过回归测试"
+      - rule: "回归测试通过率>=95%"
+      - rule: "无新增P0/P1级别问题"
+      - rule: "性能无退化(响应时间波动<10%)"
+validation: "所有P0/P1问题修复并通过回归测试"

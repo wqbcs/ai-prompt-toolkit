@@ -1,0 +1,14 @@
+{
+  "batch": "D2",
+  "name": "多模态Prompt",
+  "iterations": [
+    {"id": "D2-01", "action": "创建_multimodal/目录和多模态设计规范", "dimension": "frontier", "delta": 1.0, "artifacts": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D2-02", "action": "定义架构图文本描述模板(C4/微服务)", "dimension": "output", "delta": 0.1, "artifacts": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D2-03", "action": "定义流程图/时序图文本描述模板", "dimension": "output", "delta": 0.1, "artifacts": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D2-04", "action": "为02/07/09场景添加多模态增强指令", "dimension": "frontier", "delta": 0.5, "artifacts": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D2-05", "action": "定义跨模态推理指令模板", "dimension": "reasoning", "delta": 0.2, "artifacts": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D2-06", "action": "定义降级兼容策略(无图像输入)", "dimension": "constraint", "delta": 0.1, "artifacts": ["_multimodal/multimodal_design_spec.md"]}
+  ],
+  "batch_delta": {"frontier": 1.5, "output": 0.2, "reasoning": 0.2, "constraint": 0.1},
+  "status": "completed"
+}

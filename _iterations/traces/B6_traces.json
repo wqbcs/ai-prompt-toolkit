@@ -1,0 +1,66 @@
+{
+  "batch": "B6",
+  "batch_name": "CoT/多轮/自我纠错模式",
+  "iterations": [
+    {
+      "iteration_id": "B6-iter31",
+      "target_doc": "04_代码审查与质量保障提示词.md",
+      "target_scene": "场景A:PR/MR代码审查",
+      "dimension_target": "推理模式-CoT逐步分析",
+      "input_snapshot": "场景A有结构化JSON模板但无CoT指令，AI可能跳步直接输出结果",
+      "modification": "添加CoT指令：1)理解代码意图 2)识别潜在问题(按安全→逻辑→性能→规范→架构优先级) 3)评估严重程度 4)提供修复方案",
+      "output_snapshot": "场景A现有CoT指令+JSON模板，AI必须逐步分析再输出结构化结果",
+      "score_change": {"推理模式深度": "8→17"}
+    },
+    {
+      "iteration_id": "B6-iter32",
+      "target_doc": "08_安全审计与合规检查提示词.md",
+      "target_scene": "场景A:全面安全审计",
+      "dimension_target": "推理模式-攻击者思维CoT",
+      "input_snapshot": "场景A有JSON模板但无CoT指令，安全分析可能不够系统深入",
+      "modification": "添加攻击者思维CoT指令：1)识别攻击面(输入点/数据出口/信任边界) 2)评估每个入口风险(STRIDE模型) 3)构建攻击链(漏洞组合串联) 4)设计防御方案(纵深防御)",
+      "output_snapshot": "场景A现有攻击者思维CoT+JSON模板，安全分析按STRIDE模型系统性执行",
+      "score_change": {"推理模式深度": "8→18"}
+    },
+    {
+      "iteration_id": "B6-iter33",
+      "target_doc": "09_性能压测与优化提示词.md",
+      "target_scene": "场景B:性能瓶颈定位与优化",
+      "dimension_target": "推理模式-性能分析方法论CoT",
+      "input_snapshot": "场景B无CoT指令，性能优化可能基于直觉而非数据驱动",
+      "modification": "添加性能分析方法论CoT指令：1)建立基线 2)识别瓶颈(逐层排查) 3)假设验证(A/B测试/灰度验证) 4)优化实施(按收益/成本排序，单项验证) 5)效果确认(重新压测，退化>10%回滚)",
+      "output_snapshot": "场景B现有5步性能分析方法论CoT，确保优化数据驱动且效果可归因",
+      "score_change": {"推理模式深度": "8→18"}
+    },
+    {
+      "iteration_id": "B6-iter34",
+      "target_doc": "02_架构设计与技术选型提示词.md",
+      "target_scene": "场景B:已有架构评审与优化",
+      "dimension_target": "推理模式-自纠错指令",
+      "input_snapshot": "场景B无自纠错机制，架构评审可能遗漏非功能需求或单点故障",
+      "modification": "添加自纠错指令：1)是否遗漏非功能需求(6属性逐项检查) 2)是否有单点故障(每组件宕机验证) 3)是否满足扩展性目标(10x增长验证) 4)成本评估是否完整(5类成本补全)",
+      "output_snapshot": "场景B现有自纠错指令，架构评审后必须自我检查4项并补充遗漏",
+      "score_change": {"推理模式深度": "8→17"}
+    },
+    {
+      "iteration_id": "B6-iter35",
+      "target_doc": "05_全维度测试策略提示词.md",
+      "target_scene": "场景A:制定项目测试计划",
+      "dimension_target": "推理模式-多轮对话指令",
+      "input_snapshot": "场景A为单轮输出，测试策略设计复杂度高但缺乏渐进式交互指导",
+      "modification": "添加多轮对话指令：第1轮确定测试范围→第2轮设计测试用例→第3轮补充边界条件→第4轮评估覆盖率，每轮有明确输入输出目标",
+      "output_snapshot": "场景A现有4轮交互指导，测试策略设计可渐进深入而非一次性输出",
+      "score_change": {"推理模式深度": "8→17"}
+    },
+    {
+      "iteration_id": "B6-iter36",
+      "target_doc": "01_需求分析与产品规划提示词.md",
+      "target_scene": "场景A:从零开始的新产品",
+      "dimension_target": "推理模式-Few-shot CoT示例",
+      "input_snapshot": "场景A有输出示例片段但无完整CoT推理过程示例，AI可能直接输出结果而不展示推理",
+      "modification": "添加Few-shot CoT示例(在线教育平台)，展示6步推理过程：1)理解业务本质 2)识别核心用户价值 3)确定MVP边界 4)量化验收标准 5)识别风险 6)输出交付路线图",
+      "output_snapshot": "场景A现有完整CoT推理Few-shot示例，AI可参考6步推理过程从模糊需求推导到结构化PRD",
+      "score_change": {"推理模式深度": "8→18"}
+    }
+  ]
+}

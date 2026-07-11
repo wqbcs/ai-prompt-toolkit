@@ -1,0 +1,14 @@
+{
+  "batch": "D3",
+  "name": "评估工业化",
+  "iterations": [
+    {"id": "D3-01", "action": "创建_evaluations_v6/目录和十维度评估框架v3.0", "dimension": "ecosystem", "delta": 1.5, "artifacts": ["_evaluations_v6/evaluation_framework_v6.md"]},
+    {"id": "D3-02", "action": "设计Promptfoo配置YAML", "dimension": "ecosystem", "delta": 1.0, "artifacts": ["_evaluations_v6/promptfoo/promptfooconfig.yaml"]},
+    {"id": "D3-03", "action": "创建回归测试套件(78用例)", "dimension": "ecosystem", "delta": 1.0, "artifacts": ["_evaluations_v6/regression/test_case_index_v6.md"]},
+    {"id": "D3-04", "action": "设计评估Dashboard数据结构", "dimension": "ecosystem", "delta": 0.5, "artifacts": ["_evaluations_v6/evaluation_framework_v6.md"]},
+    {"id": "D3-05", "action": "定义门禁标准和收敛判定v3.0", "dimension": "ecosystem", "delta": 0.5, "artifacts": ["_evaluations_v6/evaluation_framework_v6.md"]},
+    {"id": "D3-06", "action": "创建v5.0→v6.0基线对比报告", "dimension": "ecosystem", "delta": 0.5, "artifacts": ["_evaluations_v6/baseline/baseline_v5_0_0_to_v6_0_0.md"]}
+  ],
+  "batch_delta": {"ecosystem": 5.0},
+  "status": "completed"
+}

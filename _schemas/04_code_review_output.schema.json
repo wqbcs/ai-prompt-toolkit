@@ -1,0 +1,153 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prompt-system.local/schemas/04_code_review_output.schema.json",
+  "title": "代码审查结果输出Schema",
+  "description": "定义04_代码审查与质量保障提示词中L1级场景（场景A/B）的输出结构化格式，适用于机器解析和自动化流水线集成",
+  "type": "object",
+  "required": ["reviewSummary", "issues", "qualityScore", "releaseRecommendation"],
+  "properties": {
+    "reviewSummary": {
+      "type": "object",
+      "description": "审查概要信息",
+      "required": ["scope", "reviewLevel", "reviewDate", "totalLines", "issueCounts"],
+      "properties": {
+        "scope": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "审查范围，文件/模块路径列表"
+        },
+        "reviewLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "审查层级（1=规范, 2=逻辑, 3=安全, 4=性能, 5=架构）"
+        },
+        "reviewDate": {
+          "type": "string",
+          "format": "date",
+          "description": "审查日期，ISO 8601格式"
+        },
+        "totalLines": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "审查总行数"
+        },
+        "issueCounts": {
+          "type": "object",
+          "required": ["P0", "P1", "P2", "P3"],
+          "description": "各级别问题计数",
+          "properties": {
+            "P0": {"type": "integer", "minimum": 0, "description": "致命问题数"},
+            "P1": {"type": "integer", "minimum": 0, "description": "严重问题数"},
+            "P2": {"type": "integer", "minimum": 0, "description": "一般问题数"},
+            "P3": {"type": "integer", "minimum": 0, "description": "轻微问题数"}
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "issues": {
+      "type": "array",
+      "description": "问题清单",
+      "items": {
+        "type": "object",
+        "required": ["id", "severity", "title", "location", "category", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^P[0-3]-[0-9]{3,}$",
+            "description": "问题编号，格式如P0-001、P1-012"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2", "P3"],
+            "description": "问题严重级别：P0=致命, P1=严重, P2=一般, P3=轻微"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "description": "问题标题，简要概括问题"
+          },
+          "location": {
+            "type": "object",
+            "required": ["filePath", "startLine"],
+            "description": "问题定位信息",
+            "properties": {
+              "filePath": {"type": "string", "description": "文件路径"},
+              "startLine": {"type": "integer", "minimum": 1, "description": "起始行号"},
+              "endLine": {"type": "integer", "minimum": 1, "description": "结束行号（可选）"}
+            },
+            "additionalProperties": false
+          },
+          "category": {
+            "type": "string",
+            "enum": ["security", "dataConsistency", "crash", "logic", "performance", "maintainability", "style"],
+            "description": "问题类别：security=安全, dataConsistency=数据一致性, crash=崩溃, logic=逻辑, performance=性能, maintainability=可维护性, style=风格"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "问题详细描述"
+          },
+          "reproductionSteps": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "复现步骤（P0/P1必填）"
+          },
+          "riskImpact": {
+            "type": "string",
+            "description": "风险影响说明（P0/P1必填）"
+          },
+          "fixSuggestion": {
+            "type": "object",
+            "description": "修复方案（P0/P1必填）",
+            "properties": {
+              "description": {"type": "string", "description": "修复说明"},
+              "codeSnippet": {"type": "string", "description": "修复代码片段"}
+            },
+            "additionalProperties": false
+          },
+          "verificationMethod": {
+            "type": "string",
+            "description": "验证方式（P0必填）"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "qualityScore": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D"],
+      "description": "质量评分：A=通过, B=轻微改进, C=需整改, D=不合格"
+    },
+    "releaseRecommendation": {
+      "type": "string",
+      "enum": ["approved", "approved_with_conditions", "rejected"],
+      "description": "上线建议：approved=可以上线, approved_with_conditions=有条件上线, rejected=不可上线"
+    },
+    "summary": {
+      "type": "object",
+      "description": "总结与建议",
+      "properties": {
+        "coreRisks": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "核心风险汇总（Top3）"
+        },
+        "improvementDirections": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "总体改进方向"
+        },
+        "architectureDecisionsNeeded": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "需要团队讨论的架构决策"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,37 @@
+{
+  "version": "v6.0.0",
+  "previous_version": "v5.0.0",
+  "iteration_round": 4,
+  "total_iterations": 64,
+  "batches": [
+    {"id": "D1", "name": "互操作性基建", "iterations": 6, "status": "completed", "key_outputs": ["_protocols/context_passing_standard.md", "_protocols/robustness_defense_v2.md"]},
+    {"id": "D2", "name": "多模态Prompt", "iterations": 6, "status": "completed", "key_outputs": ["_multimodal/multimodal_design_spec.md"]},
+    {"id": "D3", "name": "评估工业化", "iterations": 6, "status": "completed", "key_outputs": ["_evaluations_v6/evaluation_framework_v6.md", "_evaluations_v6/promptfoo/promptfooconfig.yaml", "_evaluations_v6/regression/test_case_index_v6.md"]},
+    {"id": "D4", "name": "场景互操作性深度优化", "iterations": 8, "status": "completed", "key_outputs": ["_interfaces/compatibility_report_v2.yaml"]},
+    {"id": "D5", "name": "鲁棒性强化", "iterations": 8, "status": "completed", "key_outputs": ["_protocols/robustness_defense_v2.md"]},
+    {"id": "D6", "name": "知识图谱", "iterations": 6, "status": "completed", "key_outputs": ["_knowledge_graph/knowledge_graph_spec.md", "_knowledge_graph/term_relation_graph.md", "_knowledge_graph/scenario_recommendation_engine.md"]},
+    {"id": "D7", "name": "社区生态", "iterations": 6, "status": "completed", "key_outputs": ["_community/community_ecosystem_spec.md", "_community/CONTRIBUTING.md", "_community/api_spec_v1.md"]},
+    {"id": "D8", "name": "综合提升", "iterations": 6, "status": "completed", "key_outputs": ["_evaluations_v6/baseline/baseline_v5_0_0_to_v6_0_0.md"]},
+    {"id": "D9", "name": "收敛验证", "iterations": 6, "status": "completed", "key_outputs": []},
+    {"id": "D10", "name": "固化发布", "iterations": 6, "status": "completed", "key_outputs": ["CHANGELOG_v6.md", "methodology/"]}
+  ],
+  "convergence": {
+    "target_mean": 18.5,
+    "target_std_dev": 0.7,
+    "estimated_mean": 18.58,
+    "estimated_std_dev": 0.65,
+    "converged": true
+  },
+  "dimensions_v6": {
+    "structure": 19.8,
+    "constraint": 19.2,
+    "role": 19.4,
+    "output": 19.2,
+    "checklist": 19.0,
+    "reasoning": 19.2,
+    "frontier": 7.0,
+    "industry": 7.0,
+    "interoperability": 8.0,
+    "ecosystem": 7.0
+  }
+}

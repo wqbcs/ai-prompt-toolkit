@@ -1,0 +1,74 @@
+model: "Kimi"
+provider: "Moonshot"
+version: "kimi-latest"
+date: "2026-05-29"
+
+context_window: 200000
+max_output_tokens: 8192
+
+capabilities:
+  instruction_following: 84
+  chinese_understanding: 92
+  code_generation: 80
+  structured_output: 78
+  reasoning_depth: 82
+  multi_modal: 60
+  function_calling: 75
+  json_mode: false
+  long_context_utilization: 95
+  web_search: 90
+
+strengths:
+  - "国内最长上下文窗口(200K)，超长文档一次性处理"
+  - "长文档理解和摘要能力极强"
+  - "内置联网搜索增强，获取最新信息"
+  - "中文理解优秀"
+
+weaknesses:
+  - "结构化输出能力较弱"
+  - "代码生成能力中等"
+  - "指令遵循一般，复杂指令可能遗漏"
+  - "推理深度中等"
+  - "性价比不如DeepSeek"
+
+best_scenarios:
+  - id: "10-D"
+    reason: "知识库构建，超长文档处理+理解"
+    priority: "S"
+  - id: "10-A"
+    reason: "技术文档，长文档生成和整理"
+    priority: "S"
+  - id: "01-A"
+    reason: "需求分析(长需求文档一次性处理)"
+    priority: "A"
+  - id: "01-D"
+    reason: "竞品分析(联网搜索获取最新信息)"
+    priority: "A"
+  - id: "08-B"
+    reason: "合规检查(长法规文档处理)"
+    priority: "A"
+
+adaptation_instructions:
+  long_document: |
+    【长文档处理指令】
+    一次性注入完整文档进行处理，充分利用200K上下文窗口。
+    处理长文档时：
+    1. 先输出文档概要(200字以内)
+    2. 再逐章节详细分析
+    3. 最后给出综合结论和建议
+
+  web_search_enhanced: |
+    【联网搜索增强指令】
+    当需要获取最新信息时，使用联网搜索：
+    - 搜索最新技术版本/安全漏洞/合规法规更新
+    - 搜索竞品最新动态
+    - 标注信息来源和获取时间
+
+limitations_handling:
+  structured_output: "结构化输出需显式格式模板+示例，后处理修正。"
+  code_scenes: "代码相关场景建议搭配DeepSeek-V3。"
+
+api_config:
+  base_url: "https://api.moonshot.cn/v1"
+  api_format: "openai_compatible"
+  max_context: 200000

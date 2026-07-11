@@ -1,0 +1,12 @@
+model: "Claude-3-Opus"
+provider: "Anthropic"
+capabilities:
+  context_window: 200000
+  instruction_following: 95
+  structured_output: 90
+  chinese_understanding: 85
+  code_generation: 90
+  reasoning_depth: 95
+best_for: ["复杂推理", "长文档分析", "结构化输出"]
+limitations: ["中文理解略弱于国产模型", "代码生成需验证"]
+prompt_style: "详细CoT，XML标记"

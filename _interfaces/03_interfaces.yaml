@@ -1,0 +1,45 @@
+# 03_interfaces.yaml
+document: "03_编码规范与AI辅助开发提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: architecture_design
+      type: object
+      description: "架构设计文档，由02文档输出传递"
+    - name: requirement_description
+      type: string
+      description: "需求描述或问题清单，用于代码生成或修复"
+  optional:
+    - name: interface_spec
+      type: object
+      description: "接口规范定义，包含API契约和数据模型"
+    - name: issue_list
+      type: array
+      description: "问题清单(来自04代码审查)，含P0/P1/P2/P3分级"
+    - name: code_snippet
+      type: string
+      description: "待修复/待重构的代码片段"
+    - name: optimization_target
+      type: object
+      description: "优化目标(来自09性能压测)，含瓶颈描述和性能指标"
+output:
+  required:
+    - name: code_files
+      type: array
+      description: "代码文件列表，每个元素含file_path和content"
+    - name: test_files
+      type: array
+      description: "单元测试文件列表，覆盖正常/异常/边界三种场景"
+    - name: change_summary
+      type: object
+      description: "变更摘要，含修改文件、修改类型、影响范围"
+  optional:
+    - name: fix_report
+      type: object
+      description: "修复报告，含根因分析、修复方案、验证方法"
+    - name: refactor_plan
+      type: object
+      description: "重构方案，含优先级、预期收益、改造工作量"
+    - name: git_commit_message
+      type: string
+      description: "符合Conventional Commits格式的提交信息"

@@ -1,0 +1,63 @@
+{
+  "batch": "B7",
+  "theme": "最佳实践融合",
+  "dimension": "最佳实践",
+  "iterations": [
+    {
+      "id": 37,
+      "target": "04_代码审查与质量保障提示词",
+      "scene": "场景A:PR/MR代码审查",
+      "change": "添加ReAct模式指令：Thought(分析原因)→Action(定位代码)→Observation(验证影响)→Fix(提供修复)",
+      "delta": {"推理模式适配性": +2},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "04_代码审查与质量保障提示词.md:146-150"]
+    },
+    {
+      "id": 38,
+      "target": "08_安全审计与合规检查提示词",
+      "scene": "场景A:全面安全审计",
+      "change": "添加ReAct攻击者思维循环：Thought(假设攻击路径)→Action(验证可达性)→Observation(确认风险)→Fix(纵深防御)",
+      "delta": {"推理模式适配性": +2},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "08_安全审计与合规检查提示词.md:159-163"]
+    },
+    {
+      "id": 39,
+      "target": "09_性能压测与优化提示词",
+      "scene": "场景B:性能瓶颈定位与优化",
+      "change": "添加Prompt Chaining指令：瓶颈定位→根因分析→优化方案→验证确认4个子任务链",
+      "delta": {"推理模式适配性": +2},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "09_性能压测与优化提示词.md:165-170"]
+    },
+    {
+      "id": 40,
+      "target": "02_架构设计与技术选型提示词",
+      "scene": "场景A:从零开始设计系统架构",
+      "change": "添加Meta-Prompting指令：根据技术栈自动生成专用审查清单",
+      "delta": {"推理模式适配性": +1, "灵活度": +2},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "02_架构设计与技术选型提示词.md:172"]
+    },
+    {
+      "id": 41,
+      "target": "05_全维度测试策略提示词",
+      "scene": "场景B:为功能生成测试用例",
+      "change": "添加Self-Correction+工具验证指令：覆盖率自检+边界补全+异常补全+P0验证+工具验证",
+      "delta": {"推理模式适配性": +2, "检查清单覆盖度": +1},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "05_全维度测试策略提示词.md:172-177"]
+    },
+    {
+      "id": 42,
+      "target": "06_CI_CD与自动化部署提示词",
+      "scene": "场景A:构建CI/CD流水线",
+      "change": "添加Prompt Caching优化标注：<!-- 可缓存前缀 -->",
+      "delta": {"成本效率": +1},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "06_CI_CD与自动化部署提示词.md:93"]
+    },
+    {
+      "id": 43,
+      "target": "01_需求分析与产品规划提示词",
+      "scene": "场景A:从零开始新产品",
+      "change": "添加Directional Stimulus Prompting：[PRD输出]方向性引导标记",
+      "delta": {"输出格式精确性": +1},
+      "trace": ["RSH-B7-1_react_meta_chaining.md", "01_需求分析与产品规划提示词.md:111"]
+    }
+  ]
+}

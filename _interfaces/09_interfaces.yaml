@@ -1,0 +1,42 @@
+# 09_interfaces.yaml
+document: "09_性能压测与优化提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: system_architecture
+      type: object
+      description: "系统架构信息(来自02架构设计输出)，含技术栈和部署规模"
+    - name: core_api_list
+      type: array
+      description: "核心接口列表，含接口路径和预期QPS"
+  optional:
+    - name: monitor_data
+      type: object
+      description: "现有监控数据(来自07监控运维输出)，含当前性能基线"
+    - name: performance_symptom
+      type: string
+      description: "性能问题症状描述"
+    - name: existing_perf_report
+      type: object
+      description: "历史压测报告"
+output:
+  required:
+    - name: perf_test_plan
+      type: object
+      description: "压测方案，覆盖基准/负载/压力/稳定性四种类型"
+    - name: performance_targets
+      type: object
+      description: "性能目标指标，含QPS/延迟/错误率量化阈值"
+    - name: perf_report
+      type: object
+      description: "压测报告，含瓶颈分析、上线建议"
+  optional:
+    - name: bottleneck_analysis
+      type: object
+      description: "瓶颈根因分析，定位到具体代码/SQL/配置层面"
+    - name: optimization_plan
+      type: object
+      description: "优化方案(传递给03编码规范执行)，含代码/SQL/配置优化和预期效果"
+    - name: optimization_result
+      type: object
+      description: "优化后结果对比，含量化提升数据"

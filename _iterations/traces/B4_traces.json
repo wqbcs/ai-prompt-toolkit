@@ -1,0 +1,66 @@
+{
+  "batch": "B4",
+  "batch_name": "输出格式精确化",
+  "iterations": [
+    {
+      "iteration_id": "B4-iter19",
+      "target_doc": "04_代码审查与质量保障提示词.md",
+      "target_scene": "场景A:PR/MR代码审查",
+      "dimension_target": "输出格式-结构化JSON模板",
+      "input_snapshot": "场景A仅有'请输出审查报告'自由格式指令，无结构化输出约束",
+      "modification": "补充结构化JSON模板(summary/issues/qualityScore/releaseRecommendation字段)，添加'请严格按以下JSON格式输出审查结果'指令",
+      "output_snapshot": "场景A现有JSON结构化输出模板，含summary/issues/qualityScore/releaseRecommendation完整字段定义",
+      "score_change": {"输出格式精确度": "12→18"}
+    },
+    {
+      "iteration_id": "B4-iter20",
+      "target_doc": "06_CI_CD与自动化部署提示词.md",
+      "target_scene": "场景A:构建CI/CD流水线",
+      "dimension_target": "输出格式-Pipeline YAML结构化模板",
+      "input_snapshot": "场景A输出为自由格式7项列表，无YAML结构约束",
+      "modification": "补充Pipeline YAML结构化模板(lint/test/build/security-scan/deploy-staging/deploy-production/rollback 7个job节点)，添加阶段执行策略表和质量门禁配置要求",
+      "output_snapshot": "场景A现有YAML结构化模板+阶段策略表+质量门禁配置，输出格式明确可解析",
+      "score_change": {"输出格式精确度": "10→17"}
+    },
+    {
+      "iteration_id": "B4-iter21",
+      "target_doc": "07_监控告警与运维保障提示词.md",
+      "target_scene": "场景A:设计监控体系",
+      "dimension_target": "输出格式-Prometheus YAML+Grafana JSON模板",
+      "input_snapshot": "场景A告警规则和仪表盘输出为自由格式描述",
+      "modification": "补充Prometheus告警规则YAML模板(alert/expr/for/labels/annotations含runbook_url)和Grafana Dashboard JSON模板(title/panels/targets/gridPos/templating)",
+      "output_snapshot": "场景A现有Prometheus YAML+Grafana JSON双结构化模板，可直接导入对应系统",
+      "score_change": {"输出格式精确度": "10→18"}
+    },
+    {
+      "iteration_id": "B4-iter22",
+      "target_doc": "08_安全审计与合规检查提示词.md",
+      "target_scene": "场景A:全面安全审计",
+      "dimension_target": "输出格式-安全审计报告JSON模板",
+      "input_snapshot": "场景A输出为自由格式6项列表，无结构化约束",
+      "modification": "补充安全审计报告JSON模板(auditSummary/vulnerabilities/complianceGaps/hardeningPlan 4个顶层字段)，含漏洞SLA和加固计划分层",
+      "output_snapshot": "场景A现有JSON结构化模板，含审计摘要/漏洞清单/合规差距/加固计划完整字段",
+      "score_change": {"输出格式精确度": "11→18"}
+    },
+    {
+      "iteration_id": "B4-iter23",
+      "target_doc": "09_性能压测与优化提示词.md",
+      "target_scene": "场景A:系统性能评估与压测方案",
+      "dimension_target": "输出格式-压测报告结构化模板",
+      "input_snapshot": "场景A输出为自由格式6项列表，压测报告仅有文本模板",
+      "modification": "补充压测报告结构化JSON模板(benchmarkSummary/scenarios/optimizationSuggestions 3个顶层字段)，含场景类型/目标/实际指标/优化建议",
+      "output_snapshot": "场景A现有JSON结构化压测报告模板，可直接被下游系统解析和对比",
+      "score_change": {"输出格式精确度": "11→17"}
+    },
+    {
+      "iteration_id": "B4-iter24",
+      "target_doc": "01_需求分析与产品规划提示词.md",
+      "target_scene": "场景D:竞品分析与差异化",
+      "dimension_target": "输出格式-竞品分析矩阵模板",
+      "input_snapshot": "场景D竞品功能对比为自由格式，无矩阵结构约束",
+      "modification": "补充竞品分析矩阵模板(对比维度×竞品评分矩阵+权重+加权总分)，含5维度1-5评分和差异化分析结构",
+      "output_snapshot": "场景D现有结构化竞品分析矩阵，含加权评分计算和差异化/机会点/取舍建议结构",
+      "score_change": {"输出格式精确度": "10→17"}
+    }
+  ]
+}

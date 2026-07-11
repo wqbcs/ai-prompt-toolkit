@@ -1,0 +1,14 @@
+{
+  "batch": "D1",
+  "name": "互操作性基建",
+  "iterations": [
+    {"id": "D1-01", "action": "创建_protocols/目录和上下文传递标准", "dimension": "interoperability", "delta": 2.0, "artifacts": ["_protocols/context_passing_standard.md"]},
+    {"id": "D1-02", "action": "定义9条工作流接口转换规则", "dimension": "interoperability", "delta": 1.5, "artifacts": ["_protocols/context_passing_standard.md"]},
+    {"id": "D1-03", "action": "建立上下文传递标准JSON封装格式", "dimension": "interoperability", "delta": 1.0, "artifacts": ["_protocols/context_passing_standard.md"]},
+    {"id": "D1-04", "action": "定义零损耗协议v2.0(断点续传+错误隔离)", "dimension": "interoperability", "delta": 1.5, "artifacts": ["_protocols/context_passing_standard.md"]},
+    {"id": "D1-05", "action": "增量调研: Promptfoo CI/CD集成方式", "dimension": "ecosystem", "delta": 1.0, "artifacts": ["_iterations_v6/research/R4-D1-01_promptfoo_cicd_integration.md"]},
+    {"id": "D1-06", "action": "增量调研: 多模态Prompt+注入防御", "dimension": "frontier", "delta": 1.0, "artifacts": ["_iterations_v6/research/R4-D1-02_multimodal_prompt_best_practices.md", "_iterations_v6/research/R4-D1-03_prompt_injection_defense_v2.md"]}
+  ],
+  "batch_delta": {"interoperability": 6.0, "ecosystem": 1.0, "frontier": 1.0},
+  "status": "completed"
+}

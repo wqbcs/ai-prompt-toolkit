@@ -1,0 +1,48 @@
+# 08_interfaces.yaml
+document: "08_安全审计与合规检查提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: system_architecture
+      type: object
+      description: "系统架构信息(来自02架构设计输出)，含组件和通信方式"
+    - name: code_files
+      type: array
+      description: "待审计代码文件列表"
+  optional:
+    - name: deploy_config
+      type: object
+      description: "部署配置信息(来自06 CI/CD输出)，含网络拓扑和安全配置"
+    - name: compliance_standards
+      type: array
+      description: "合规标准列表，如等保2.0/GDPR/PCI-DSS/SOC2"
+    - name: network_topology
+      type: object
+      description: "网络拓扑信息，含防火墙规则、安全组配置"
+    - name: existing_vulnerability_list
+      type: array
+      description: "已有漏洞清单(来自04代码审查的安全审查结果)"
+output:
+  required:
+    - name: vulnerability_list
+      type: array
+      description: "漏洞清单，按P0/P1/P2/P3分级，含精确位置和修复方案"
+    - name: compliance_gap_analysis
+      type: object
+      description: "合规差距分析，含不合规项和整改方案"
+    - name: security_hardening_plan
+      type: object
+      description: "安全加固方案，按短期/中期/长期分层"
+  optional:
+    - name: security_alert_config
+      type: object
+      description: "安全告警配置(传递给07监控运维)"
+    - name: pen_test_plan
+      type: object
+      description: "渗透测试方案"
+    - name: auto_scan_plan
+      type: object
+      description: "安全自动化扫描方案(SAST/DAST/SCA)"
+    - name: incident_response_plan
+      type: object
+      description: "安全事件应急响应预案"

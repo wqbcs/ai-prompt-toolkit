@@ -1,0 +1,13 @@
+model: "Gemini-Pro"
+provider: "Google"
+capabilities:
+  context_window: 1000000
+  instruction_following: 88
+  structured_output: 85
+  chinese_understanding: 78
+  code_generation: 85
+  reasoning_depth: 88
+  multimodal: 95
+best_for: ["超长上下文处理", "多模态分析", "大规模代码库审查"]
+limitations: ["中文理解较弱", "结构化输出不如Claude/GPT"]
+prompt_style: "多模态输入，长上下文利用"

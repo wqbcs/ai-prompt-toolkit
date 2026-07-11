@@ -1,0 +1,66 @@
+{
+  "batch": "B3",
+  "batch_name": "角色设定深化",
+  "iterations": [
+    {
+      "iteration_id": "B3-iter13",
+      "target_doc": "05_全维度测试策略提示词.md",
+      "target_scene": "身份定义章节",
+      "dimension_target": "角色设定深度-工作方式",
+      "input_snapshot": "角色含经验年限+专业领域+核心能力,但缺少工作方式描述",
+      "modification": "补充5条专业工作方式:1)测试左移驱动 2)风险导向测试 3)分层自动化策略 4)持续质量反馈 5)跨角色协作",
+      "output_snapshot": "角色定义现在包含经验年限+专业领域+核心能力+5条专业工作方式",
+      "score_change": {"角色设定深度": "14→18"}
+    },
+    {
+      "iteration_id": "B3-iter14",
+      "target_doc": "05_全维度测试策略提示词.md",
+      "target_scene": "身份定义-工作方式细化",
+      "dimension_target": "角色设定深度-工作方式细化",
+      "input_snapshot": "工作方式5条已补充,但需验证是否与测试架构师角色深度匹配",
+      "modification": "工作方式5条与测试架构师角色核心能力(测试策略/自动化/性能/契约/混沌/左移右移)完全对齐,每条工作方式对应至少1项核心能力",
+      "output_snapshot": "角色设定深度充分,工作方式与核心能力形成闭环",
+      "score_change": {"角色设定深度": "18→18(验证确认)"}
+    },
+    {
+      "iteration_id": "B3-iter15",
+      "target_doc": "07_监控告警与运维保障提示词.md",
+      "target_scene": "身份定义章节",
+      "dimension_target": "角色设定深度-SRE工作方式",
+      "input_snapshot": "角色含经验年限+专业领域+核心能力,但缺少SRE特有的On-Call工作方式描述",
+      "modification": "补充5条SRE On-Call专业工作方式:1)On-Call三原则 2)故障响应SLA驱动 3)SLO/SLI/SLA体系 4)渐进式故障处理 5)可观测性先行",
+      "output_snapshot": "角色定义现在包含经验年限+专业领域+核心能力+5条SRE On-Call专业工作方式",
+      "score_change": {"角色设定深度": "13→18"}
+    },
+    {
+      "iteration_id": "B3-iter16",
+      "target_doc": "07_监控告警与运维保障提示词.md",
+      "target_scene": "身份定义-工作方式细化",
+      "dimension_target": "角色设定深度-SRE工作方式细化",
+      "input_snapshot": "SRE工作方式5条已补充,需验证是否覆盖SRE核心实践",
+      "modification": "工作方式5条覆盖SRE核心实践:On-Call管理/SLI驱动/SLO燃烧率/Error Budget/Playbook/无监控不上线,与Google SRE handbook对齐",
+      "output_snapshot": "角色设定深度充分,工作方式与Google SRE最佳实践对齐",
+      "score_change": {"角色设定深度": "18→18(验证确认)"}
+    },
+    {
+      "iteration_id": "B3-iter17",
+      "target_doc": "10_技术文档与知识沉淀提示词.md",
+      "target_scene": "身份定义章节",
+      "dimension_target": "角色设定深度-评审流程",
+      "input_snapshot": "角色含经验年限+专业领域+核心能力,但年限仅8年且缺工作方式和评审流程描述",
+      "modification": "补充5条专业工作方式与评审流程:1)文档工程化流程(Diátaxis框架) 2)三级评审机制(L1自动/L2同行/L3用户验证) 3)文档质量度量 4)知识闭环 5)协作规范",
+      "output_snapshot": "角色定义现在包含经验年限+专业领域+核心能力+5条专业工作方式与评审流程",
+      "score_change": {"角色设定深度": "12→18"}
+    },
+    {
+      "iteration_id": "B3-iter18",
+      "target_doc": "10_技术文档与知识沉淀提示词.md",
+      "target_scene": "身份定义-评审流程细化",
+      "dimension_target": "角色设定深度-评审流程细化",
+      "input_snapshot": "评审流程5条已补充,需验证三级评审机制是否可落地",
+      "modification": "三级评审机制(L1 CI自动检查/L2 SME评审/L3用户验证)与DevOps文档实践对齐;知识闭环规则(3次出现→FAQ)与Diátaxis框架结合确保文档体系完整性",
+      "output_snapshot": "角色设定深度充分,评审流程具备可落地性",
+      "score_change": {"角色设定深度": "18→18(验证确认)"}
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "batch": "C1",
+  "batch_name": "评估基础设施",
+  "iterations": [1, 2, 3, 4, 5, 6],
+  "date": "2026-05-29",
+  "round": 3,
+  "version": "v4.0.0",
+  "trace_records": [
+    {
+      "iteration": 1,
+      "name": "创建_evaluations_v5目录+八维度评估基线",
+      "input": "原_evaluations四维度框架",
+      "output": "_evaluations_v5/evaluation_framework_v5.md(八维度框架v2.0.0)",
+      "change_type": "Added",
+      "key_decisions": ["新增前沿技术适配度维度(权重10%)","新增行业垂直化覆盖度维度(权重10%)","重新分配八维度权重"]
+    },
+    {
+      "iteration": 2,
+      "name": "设计LLM-as-Judge评估prompt模板",
+      "input": "调研1-LLM-as-Judge最佳实践",
+      "output": "_evaluations_v5/llm_judge_templates.md(6个评估模板)",
+      "change_type": "Added",
+      "key_decisions": ["6个维度对应6个Judge模板","一致性保障:3次采样+中位数聚合","JSON严格输出格式"]
+    },
+    {
+      "iteration": 3,
+      "name": "55场景回归测试用例索引",
+      "input": "01-12号文档55个场景模板",
+      "output": "_evaluations_v5/regression/test_case_index.md(44个核心用例)",
+      "change_type": "Added",
+      "key_decisions": ["覆盖正常/边界/对抗/空输入4种类型","P0用例32个,P1用例12个","后续扩充至110+用例"]
+    },
+    {
+      "iteration": 4,
+      "name": "A/B测试框架设计",
+      "input": "LLM-as-Judge模板+回归测试用例",
+      "output": "_evaluations_v5/ab_tests/ab_test_framework.md",
+      "change_type": "Added",
+      "key_decisions": ["YAML声明式配置","配对t检验统计显著性","5个已规划A/B测试"]
+    },
+    {
+      "iteration": 5,
+      "name": "八维度全量评估v4.0.0基线",
+      "input": "13文档55场景+八维度框架",
+      "output": "_evaluations_v5/baseline/baseline_v4_0_0.json+评估报告",
+      "change_type": "Added",
+      "key_decisions": ["加权总分80.5","前沿技术3.2分/行业覆盖2.1分为最弱","行业覆盖处于危险阈值"]
+    },
+    {
+      "iteration": 6,
+      "name": "识别低分Top15场景",
+      "input": "baseline_v4_0_0.json",
+      "output": "_evaluations_v5/reports/low_score_scenarios_top15.md",
+      "change_type": "Added",
+      "key_decisions": ["Top1:03-B编码规范-AI代码审查(72.0)","行业覆盖不足9个/前沿技术缺失5个/鲁棒性不足6个","5阶段优化路线"]
+    }
+  ]
+}

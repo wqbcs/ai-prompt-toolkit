@@ -1,0 +1,83 @@
+name: "需求→测试计划→部署配置"
+version: "v1.0.0"
+description: "需求分析输出PRD和优先级→测试策略生成测试计划和用例→CI/CD生成部署配置和流水线"
+chain: "01→05→06"
+steps:
+  - id: requirement
+    document: "01_需求分析与产品规划"
+    action: "执行需求分析，输出PRD、用户故事和优先级矩阵"
+    input_from: external
+    output_to: test_plan
+    interface_mapping:
+      input:
+        business_context: "external.business_context"
+        requirement_scope: "external.requirement_scope"
+      output:
+        prd_document: "test_plan.requirement_description"
+        priority_matrix: "test_plan.priority_matrix"
+        user_story_list: "test_plan.user_story_list"
+    transformation_rules:
+      requirement_to_test:
+        description: "PRD→测试计划输入映射"
+        field_mapping:
+          - source: "prd_document.functional_requirements[]"
+            target: "test_input.requirement_description"
+            transform: "format_as_test_scope"
+          - source: "priority_matrix.P0_features"
+            target: "test_input.critical_test_scope"
+            transform: "direct"
+          - source: "prd_document.acceptance_criteria"
+            target: "test_input.acceptance_criteria"
+            transform: "derive_test_acceptance"
+          - source: "user_story_list"
+            target: "test_input.user_story_coverage"
+            transform: "map_to_test_scenarios"
+  - id: test_plan
+    document: "05_全维度测试策略"
+    action: "基于PRD生成测试计划、测试用例和自动化脚本"
+    input_from: requirement
+    output_to: deploy
+    interface_mapping:
+      input:
+        requirement_description: "requirement.prd_document"
+        code_files: "external.code_files"
+      output:
+        test_plan: "deploy.test_plan"
+        test_cases: "deploy.test_cases"
+        automation_scripts: "deploy.automation_scripts"
+    transformation_rules:
+      test_to_deploy:
+        description: "测试计划→部署配置输入映射"
+        field_mapping:
+          - source: "test_plan.test_phases[]"
+            target: "deploy_input.pipeline_stages"
+            transform: "map_test_to_pipeline_stages"
+          - source: "test_plan.entry_criteria"
+            target: "deploy_input.quality_gates"
+            transform: "derive_quality_gates"
+          - source: "automation_scripts"
+            target: "deploy_input.ci_test_commands"
+            transform: "extract_test_commands"
+          - source: "test_plan.exit_criteria"
+            target: "deploy_input.release_criteria"
+            transform: "direct"
+  - id: deploy
+    document: "06_CI_CD与自动化部署"
+    action: "基于测试计划生成CI/CD流水线和部署配置"
+    input_from: test_plan
+    output_to: external
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_environment: "external.deploy_environment"
+        test_plan: "test_plan.test_plan"
+      output:
+        pipeline_config: "external.pipeline_config"
+        deploy_manifest: "external.deploy_manifest"
+        rollback_plan: "external.rollback_plan"
+    deployment_validation:
+      - rule: "流水线包含测试阶段且质量门禁与测试计划准入准出对齐"
+      - rule: "部署配置包含回滚方案"
+      - rule: "测试自动化脚本集成到CI流水线"
+      - rule: "发布策略与测试覆盖度匹配(覆盖率>=80%才允许灰度)"
+validation: "PRD完整→测试计划覆盖所有P0功能→部署配置通过质量门禁"

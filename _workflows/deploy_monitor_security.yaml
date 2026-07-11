@@ -1,0 +1,44 @@
+name: "部署→监控→安全"
+description: "CI/CD部署上线→监控告警配置→安全审计加固"
+steps:
+  - id: deploy
+    document: "06_CI_CD与自动化部署"
+    action: "构建CI/CD流水线并部署"
+    input_from: external
+    output_to: monitor
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_environment: "external.deploy_environment"
+      output:
+        pipeline_config: "external.pipeline_config"
+        deploy_manifest: "monitor.deploy_topology"
+        monitor_metrics_config: "monitor.monitor_metrics_config"
+  - id: monitor
+    document: "07_监控告警与运维保障"
+    action: "配置监控告警体系"
+    input_from: deploy
+    output_to: security
+    interface_mapping:
+      input:
+        architecture_design: "external.architecture_design"
+        deploy_topology: "deploy.deploy_manifest"
+        monitor_metrics_config: "deploy.monitor_metrics_config"
+      output:
+        monitor_plan: "external.monitor_plan"
+        alert_rules: "external.alert_rules"
+        ops_manual: "external.ops_manual"
+  - id: security
+    document: "08_安全审计与合规检查"
+    action: "执行安全审计和合规检查"
+    input_from: monitor
+    output_to: external
+    interface_mapping:
+      input:
+        system_architecture: "external.architecture_design"
+        code_files: "external.code_files"
+        deploy_config: "deploy.deploy_manifest"
+      output:
+        vulnerability_list: "external.vulnerability_list"
+        security_hardening_plan: "external.security_hardening_plan"
+validation: "流水线通过质量门禁→监控四大黄金指标覆盖→安全审计无P0/P1漏洞"

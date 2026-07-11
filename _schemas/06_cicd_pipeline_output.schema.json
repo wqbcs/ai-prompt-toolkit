@@ -1,0 +1,188 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://prompt-system.local/schemas/06_cicd_pipeline_output.schema.json",
+  "title": "CI/CD流水线配置输出Schema",
+  "description": "定义06_CI/CD与自动化部署提示词中L1级场景（场景A/C）的输出结构化格式，适用于流水线自动化解析和配置生成",
+  "type": "object",
+  "required": ["pipelineName", "stages", "triggers", "secretsManagement"],
+  "properties": {
+    "pipelineName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "流水线名称"
+    },
+    "pipelineType": {
+      "type": "string",
+      "enum": ["github_actions", "gitlab_ci", "jenkins", "argocd", "custom"],
+      "description": "流水线类型/引擎"
+    },
+    "triggers": {
+      "type": "object",
+      "description": "触发条件",
+      "required": ["events"],
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["push", "pull_request", "schedule", "manual", "tag"]
+          },
+          "description": "触发事件列表"
+        },
+        "branches": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "触发的分支列表（可选）"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stages": {
+      "type": "array",
+      "description": "流水线阶段列表",
+      "items": {
+        "type": "object",
+        "required": ["name", "steps", "timeoutMinutes"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "阶段名称，如lint/test/build/deploy等"
+          },
+          "parallel": {
+            "type": "boolean",
+            "default": false,
+            "description": "是否与其他阶段并行执行"
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "依赖的前置阶段名称列表"
+          },
+          "timeoutMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 120,
+            "description": "超时时间（分钟）"
+          },
+          "retryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5,
+            "default": 0,
+            "description": "失败后自动重试次数"
+          },
+          "failureAction": {
+            "type": "string",
+            "enum": ["block", "warn", "skip"],
+            "default": "block",
+            "description": "失败处理：block=阻断流水线, warn=警告继续, skip=跳过"
+          },
+          "steps": {
+            "type": "array",
+            "description": "阶段内步骤列表",
+            "items": {
+              "type": "object",
+              "required": ["name", "command"],
+              "properties": {
+                "name": {"type": "string", "description": "步骤名称"},
+                "command": {"type": "string", "description": "执行命令"},
+                "environment": {
+                  "type": "object",
+                  "additionalProperties": {"type": "string"},
+                  "description": "步骤级环境变量"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "qualityGate": {
+            "type": "object",
+            "description": "质量门禁配置（可选）",
+            "properties": {
+              "testCoverageMin": {"type": "number", "minimum": 0, "maximum": 100, "description": "最低测试覆盖率(%)"},
+              "maxNewIssues": {"type": "integer", "minimum": 0, "description": "允许新增静态扫描问题数"},
+              "blockOnCriticalCve": {"type": "boolean", "default": true, "description": "高危CVE是否阻断"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "cacheStrategy": {
+      "type": "object",
+      "description": "缓存策略",
+      "properties": {
+        "dependencyCache": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "key"],
+            "properties": {
+              "path": {"type": "string", "description": "缓存路径"},
+              "key": {"type": "string", "description": "缓存键模板"}
+            },
+            "additionalProperties": false
+          },
+          "description": "依赖缓存配置列表"
+        },
+        "buildCache": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "构建缓存路径列表"
+        }
+      },
+      "additionalProperties": false
+    },
+    "secretsManagement": {
+      "type": "object",
+      "required": ["provider"],
+      "description": "密钥管理方案",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "enum": ["vault", "aws_secrets_manager", "azure_keyvault", "gcp_secret_manager", "ci_variables", "env_vars"],
+          "description": "密钥管理服务类型"
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "usage"],
+            "properties": {
+              "name": {"type": "string", "description": "密钥名称/引用"},
+              "usage": {"type": "string", "description": "用途说明"}
+            },
+            "additionalProperties": false
+          },
+          "description": "所需密钥清单（不含值）"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rollbackStrategy": {
+      "type": "object",
+      "description": "回滚策略",
+      "required": ["method", "maxRollbackTimeMinutes"],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": ["previous_image", "blue_green", "canary_revert", "git_revert"],
+          "description": "回滚方式"
+        },
+        "maxRollbackTimeMinutes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "最大回滚时间（分钟）"
+        },
+        "autoRollbackConditions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "自动回滚触发条件"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

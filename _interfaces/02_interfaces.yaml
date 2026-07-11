@@ -1,0 +1,42 @@
+# 02_interfaces.yaml
+document: "02_架构设计与技术选型提示词"
+version: "v1.3.0"
+input:
+  required:
+    - name: prd_document
+      type: object
+      description: "产品需求文档(PRD)，由01文档输出传递"
+    - name: non_functional_requirements
+      type: object
+      description: "非功能性需求，包含用户量、响应时间、可用性、数据量预估"
+  optional:
+    - name: existing_architecture
+      type: string
+      description: "现有系统架构描述，用于架构评审与优化"
+    - name: tech_constraints
+      type: object
+      description: "技术约束条件，包含后端语言偏好、部署环境、团队规模、合规要求"
+output:
+  required:
+    - name: architecture_design
+      type: object
+      description: "架构设计文档，包含架构风格、核心组件、通信方式、部署架构"
+    - name: tech_selection_matrix
+      type: object
+      description: "技术选型对比矩阵，每项至少3选1含推荐理由"
+    - name: data_model
+      type: object
+      description: "核心数据模型，包含实体关系、索引策略、分片策略"
+  optional:
+    - name: architecture_diagram
+      type: string
+      description: "架构图(Mermaid格式)"
+    - name: adr_list
+      type: array
+      description: "架构决策记录清单(ADR)"
+    - name: risk_list
+      type: array
+      description: "架构风险清单Top5及应对策略"
+    - name: evolution_roadmap
+      type: string
+      description: "分阶段架构演进路线图"

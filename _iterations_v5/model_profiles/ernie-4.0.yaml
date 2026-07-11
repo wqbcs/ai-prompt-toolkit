@@ -1,0 +1,80 @@
+model: "ERNIE-4.0"
+provider: "Baidu"
+version: "ernie-4.0"
+date: "2026-05-29"
+
+context_window: 128000
+max_output_tokens: 8192
+
+capabilities:
+  instruction_following: 86
+  chinese_understanding: 93
+  code_generation: 82
+  structured_output: 80
+  reasoning_depth: 84
+  multi_modal: 70
+  function_calling: 82
+  json_mode: false
+  long_context_utilization: 80
+  knowledge_graph: 90
+
+strengths:
+  - "知识图谱增强，事实性强，合规/标准类知识丰富"
+  - "中文理解优秀，百度搜索数据加持"
+  - "千帆平台Agent开发能力完善"
+  - "支持MCP协议调用外部服务"
+  - "国内合规知识(等保/网安法/数据安全法)覆盖好"
+
+weaknesses:
+  - "代码生成能力弱于DeepSeek/Qwen"
+  - "结构化输出稳定性一般"
+  - "推理深度中等，复杂多步推理不如DeepSeek-R1"
+  - "指令遵循在复杂约束下可能遗漏"
+
+best_scenarios:
+  - id: "08-A"
+    reason: "安全审计，合规知识+知识图谱优势"
+    priority: "S"
+  - id: "08-B"
+    reason: "合规检查，国内法规标准覆盖好"
+    priority: "S"
+  - id: "08-F"
+    reason: "ESG合规评估，百度ESG知识"
+    priority: "A"
+  - id: "01-A"
+    reason: "需求分析(中文业务理解)"
+    priority: "A"
+  - id: "10-A"
+    reason: "技术文档(中文写作)"
+    priority: "A"
+  - id: "12-A"
+    reason: "AI安全(内容安全/合规审计)"
+    priority: "A"
+
+adaptation_instructions:
+  structured_output: |
+    请按以下格式输出结果（注意格式严格性）：
+    {format_example}
+    确保每个字段都有值，空值请填写"无"或"不适用"。
+
+  compliance_enhanced: |
+    【合规增强指令】
+    在进行安全/合规分析时，请同时参考以下国内法规标准：
+    - 《网络安全法》
+    - 《数据安全法》
+    - 《个人信息保护法》
+    - 等保2.0标准
+    - 行业特定合规要求
+    
+    对每个合规检查项，标注适用的法规条款。
+
+limitations_handling:
+  code_scenes: "代码生成/审查场景建议搭配DeepSeek-V3使用。"
+  structured_output: "结构化输出后处理：使用正则/JSON修复工具规范化。"
+
+api_config:
+  platform: "百度千帆"
+  base_url: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+  supports_agent: true
+  supports_mcp: true
+  supports_rag: true
