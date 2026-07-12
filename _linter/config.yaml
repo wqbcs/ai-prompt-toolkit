@@ -1,0 +1,286 @@
+# Prompt Linter 配置文件
+# 参考 ESLint / Ruff 的配置架构设计
+
+version: "1.0.0"
+
+# 根目录提示词文件匹配模式
+root: ./_scenarios
+
+# 全局忽略模式
+ignore:
+  - "**/node_modules/**"
+  - "**/.git/**"
+  - "**/_linter/**"
+  - "**/README.md"
+  - "**/CHANGELOG.md"
+
+# 默认严重级别覆盖
+# 可将特定规则的 error 降级为 warning 或 info
+severityOverrides: {}
+
+# 规则配置
+rules:
+  # ========== 结构类 ==========
+  P001:
+    enabled: true
+    severity: error
+    options:
+      # 角色声明的关键字模式
+      rolePatterns:
+        - "你是"
+        - "作为"
+        - "角色"
+        - "Role"
+        - "You are"
+        - "Act as"
+
+  P002:
+    enabled: true
+    severity: warning
+    options:
+      formatPatterns:
+        - "输出格式"
+        - "Output Format"
+        - "返回格式"
+        - "JSON"
+        - "Markdown"
+        - "表格"
+
+  P003:
+    enabled: true
+    severity: warning
+    options:
+      constraintPatterns:
+        - "约束"
+        - "Constraints"
+        - "限制"
+        - "不要"
+        - "禁止"
+        - "务必"
+        - "必须"
+
+  P004:
+    enabled: true
+    severity: warning
+    options:
+      # Token上限阈值
+      maxTokens: 4000
+
+  P005:
+    enabled: true
+    severity: info
+    options:
+      # Token下限阈值
+      minTokens: 50
+
+  # ========== 安全类 ==========
+  P006:
+    enabled: true
+    severity: error
+    options:
+      # 敏感信息正则模式（可扩展）
+      sensitivePatterns:
+        - pattern: "sk-[a-zA-Z0-9]{20,}"
+          description: "OpenAI API Key"
+        - pattern: "AKIA[0-9A-Z]{16}"
+          description: "AWS Access Key"
+        - pattern: "password\\s*[:=]\\s*\\S+"
+          description: "明文密码"
+        - pattern: "Bearer\\s+[a-zA-Z0-9\\-._~+/]+=*"
+          description: "Bearer Token"
+        - pattern: "-----BEGIN (RSA |EC )?PRIVATE KEY-----"
+          description: "私钥"
+        - pattern: "(mysql|postgres|mongodb)://\\S+:\\S+@"
+          description: "数据库连接串"
+
+  P007:
+    enabled: true
+    severity: warning
+    options:
+      # 用户输入占位符模式
+      inputPlaceholders:
+        - "{{user_input}}"
+        - "{input}"
+        - "$1"
+        - "{query}"
+        - "{user_query}"
+      # 分隔符标签
+      separatorTags:
+        - "<user_input>"
+        - "<input>"
+        - "```user"
+
+  P008:
+    enabled: true
+    severity: warning
+    options:
+      overPermissivePatterns:
+        - "可以做任何"
+        - "不限"
+        - "没有限制"
+        - "任何领域"
+        - "all topics"
+        - "no restrictions"
+
+  P009:
+    enabled: true
+    severity: info
+    options:
+      auditPatterns:
+        - "推理过程"
+        - "chain of thought"
+        - "引用"
+        - "来源"
+        - "依据"
+        - "references"
+
+  P010:
+    enabled: true
+    severity: info
+    options:
+      fallbackPatterns:
+        - "不确定"
+        - "无法回答"
+        - "不知道"
+        - "I don't know"
+        - "fallback"
+
+  # ========== 性能类 ==========
+  P011:
+    enabled: true
+    severity: warning
+    options:
+      # 指令相似度阈值（超过此值视为重复）
+      similarityThreshold: 0.85
+      # 背景描述占Token比例上限
+      maxContextRatio: 0.3
+
+  P012:
+    enabled: true
+    severity: warning
+    options:
+      similarityThreshold: 0.85
+
+  P013:
+    enabled: true
+    severity: info
+    options:
+      # 最少示例数
+      minExamples: 2
+
+  P014:
+    enabled: true
+    severity: warning
+    options:
+      # 最大嵌套深度
+      maxNestingDepth: 3
+
+  P015:
+    enabled: true
+    severity: info
+    options:
+      # 最大约束条件数
+      maxConstraints: 15
+
+  # ========== 质量类 ==========
+  P016:
+    enabled: true
+    severity: warning
+    options:
+      ambiguousPatterns:
+        - pattern: "一些|少量|适当|some|a few"
+          description: "模糊量化"
+        - pattern: "尽量|尽可能|最好|try to|as much as possible"
+          description: "模糊程度"
+        - pattern: "相关|等等|etc\\.|and so on"
+          description: "模糊范围"
+
+  P017:
+    enabled: true
+    severity: error
+    options:
+      contradictionPairs:
+        - ["简洁", "详细"]
+        - ["简短", "全面"]
+        - ["中文", "English"]
+        - ["不要解释", "请解释"]
+        - ["concise", "detailed"]
+        - ["只回答", "也需要"]
+
+  P018:
+    enabled: true
+    severity: info
+    options:
+      examplePatterns:
+        - "示例"
+        - "Example"
+        - "例如"
+        - "如："
+      # 简单任务类型豁免（无需Few-shot）
+      exemptTaskTypes:
+        - "翻译"
+        - "translate"
+        - "改写"
+        - "rewrite"
+
+  P019:
+    enabled: true
+    severity: info
+    options:
+      # 触发CoT检查的推理关键字
+      reasoningKeywords:
+        - "分析"
+        - "推理"
+        - "判断"
+        - "诊断"
+        - "investigate"
+        - "diagnose"
+      cotPatterns:
+        - "分步"
+        - "step by step"
+        - "推理过程"
+        - "思考链"
+        - "逐步"
+
+  P020:
+    enabled: true
+    severity: warning
+    options:
+      evaluationPatterns:
+        - "评估"
+        - "Evaluation"
+        - "评分"
+        - "标准"
+        - "criteria"
+        - "metrics"
+        - "合格"
+
+# 文件级覆盖规则
+# 对特定文件路径应用不同的规则配置
+overrides:
+  - files:
+      - "**/e1_deh.md"
+      - "**/e2_bms.md"
+    rules:
+      P004:
+        options:
+          maxTokens: 5000
+
+  - files:
+      - "**/_security/**"
+    rules:
+      P006:
+        severity: error
+      P007:
+        severity: error
+
+# 输出配置
+output:
+  # 默认输出格式: terminal / json / markdown
+  format: terminal
+  # 是否显示修复建议
+  showFix: true
+  # 最大问题数（0=不限制）
+  maxProblems: 0
+  # 终端输出颜色
+  color: true
