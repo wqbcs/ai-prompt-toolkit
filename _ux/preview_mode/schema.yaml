@@ -1,0 +1,80 @@
+# 模板预览模式Schema
+
+version: "1.0.0"
+description: "模板预览模式配置，不消耗API额度"
+
+preview:
+  enabled: true
+  stages:
+    - id: "input_params"
+      name: "输入参数"
+      description: "用户填写模板所需的输入参数"
+      fields:
+        - name: "param_name"
+          type: "string"        # string | number | boolean | select | multi-select
+          label: "参数名称"
+          example: "示例值"
+          required: true
+          description: "参数说明"
+        - name: "target_model"
+          type: "select"
+          label: "目标模型"
+          options: ["gpt-4o", "claude-3.5-sonnet", "qwen-max", "pangu-large"]
+          required: true
+        - name: "language"
+          type: "select"
+          label: "输出语言"
+          options: ["zh", "en", "ja", "ko"]
+          default: "zh"
+
+    - id: "rendered_prompt"
+      name: "渲染后提示词"
+      description: "模板渲染后的完整提示词（本地渲染，不调用API）"
+      rendering:
+        engine: "local"
+        template_engine: "handlebars"
+        no_api_call: true
+      display:
+        syntax_highlight: true
+        line_numbers: true
+        copy_button: true
+        word_count: true
+        token_estimate: true
+
+    - id: "expected_output"
+      name: "预期输出样例"
+      description: "基于模板类型生成的预期输出格式样例"
+      sample_generation: "static"
+      display:
+        format_highlight: true
+        quality_indicators:
+          - "结构完整性"
+          - "格式正确性"
+          - "内容覆盖度"
+
+  interactions:
+    real_time_switch: true
+    edit_mode_toggle: true
+    parameter_validation: "instant"
+    preview_debounce_ms: 300
+
+  input_params:
+    type: "object"
+    properties:
+      name:
+        type: "string"
+        description: "参数名称"
+      type:
+        type: "string"
+        enum: ["string", "number", "boolean", "select", "multi-select"]
+      example:
+        type: "string"
+        description: "参数示例值"
+      required:
+        type: "boolean"
+        default: false
+
+  performance:
+    render_time_target_ms: 500
+    parameter_change_delay_ms: 300
+    no_api_calls: true

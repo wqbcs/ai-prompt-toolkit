@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码片段一键复制组件</title>
+<style>
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  opacity: 0;
+}
+.code-block:hover .copy-btn {
+  opacity: 1;
+}
+.copy-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+.copy-btn.copied {
+  background: #d1fae5;
+  border-color: #34d399;
+  color: #065f46;
+}
+.copy-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.code-block {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.code-block pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.code-block .line-numbers {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 16px 8px 16px 16px;
+  color: #9ca3af;
+  text-align: right;
+  user-select: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  border-right: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+.no-js-fallback {
+  display: none;
+  padding: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+</style>
+</head>
+<body>
+
+<div class="code-block" data-code-id="example-1">
+  <noscript>
+    <div class="no-js-fallback">请手动选中代码进行复制</div>
+  </noscript>
+  <button class="copy-btn" onclick="copyCode(this)" aria-label="复制代码">复制</button>
+  <pre><code class="language-yaml"># A/B测试v2配置示例
+test_id: "ab-test-001"
+test_name: "多模型提示词效果对比"
+models:
+  - id: "gpt-4o"
+    provider: "openai"
+  - id: "claude-3.5-sonnet"
+    provider: "anthropic"
+evaluation:
+  dimensions: [accuracy, relevance, coherence]
+  significance_level: 0.05</code></pre>
+</div>
+
+<script>
+async function copyCode(button) {
+  const codeBlock = button.closest('.code-block');
+  const code = codeBlock.querySelector('code').textContent;
+
+  const startTime = performance.now();
+
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(code);
+    } else {
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+
+    const elapsed = performance.now() - startTime;
+
+    button.textContent = '已复制';
+    button.classList.add('copied');
+    button.disabled = true;
+
+    setTimeout(() => {
+      button.textContent = '复制';
+      button.classList.remove('copied');
+      button.disabled = false;
+    }, 2000);
+
+    if (elapsed > 100) {
+      console.warn(`复制响应时间 ${elapsed.toFixed(1)}ms 超出目标 100ms`);
+    }
+  } catch (err) {
+    button.textContent = '复制失败';
+    setTimeout(() => {
+      button.textContent = '复制';
+    }, 2000);
+  }
+}
+</script>
+
+</body>
+</html>

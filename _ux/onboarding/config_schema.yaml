@@ -1,0 +1,120 @@
+# 交互式模板引导配置Schema
+
+version: "1.0.0"
+description: "新用户3步交互式引导，生成个性化模板清单"
+
+onboarding:
+  version: "1.0.0"
+
+  steps:
+    - id: "step-1"
+      order: 1
+      title: "项目类型"
+      description: "选择你的项目类型，我们将推荐最适合的提示词模板"
+      type: "select"
+      options:
+        - value: "web-app"
+          label: "Web应用"
+          icon: "🌐"
+          description: "React/Vue/Angular等前端框架+后端API"
+        - value: "mobile-app"
+          label: "移动应用"
+          icon: "📱"
+          description: "Flutter/React Native/鸿蒙原生"
+        - value: "microservice"
+          label: "微服务架构"
+          icon: "🔧"
+          description: "云原生/K8s/Service Mesh"
+        - value: "data-pipeline"
+          label: "数据管道"
+          icon: "📊"
+          description: "ETL/数据仓库/实时计算"
+        - value: "ai-application"
+          label: "AI应用"
+          icon: "🤖"
+          description: "LLM/RAG/Agent应用"
+        - value: "iot-system"
+          label: "IoT系统"
+          icon: "📡"
+          description: "设备管理/边缘计算/数据采集"
+
+    - id: "step-2"
+      order: 2
+      title: "行业领域"
+      description: "选择你的行业，我们将提供行业专属提示词"
+      type: "select"
+      options:
+        - value: "financial"
+          label: "金融"
+          description: "银行/保险/证券/支付"
+        - value: "healthcare"
+          label: "医疗"
+          description: "医院/药企/医疗设备"
+        - value: "education"
+          label: "教育"
+          description: "在线教育/培训/学术"
+        - value: "manufacturing"
+          label: "制造"
+          description: "工业/汽车/电子"
+        - value: "government"
+          label: "政务"
+          description: "电子政务/公共服务"
+        - value: "other"
+          label: "其他"
+          description: "零售/能源/物流等"
+
+    - id: "step-3"
+      order: 3
+      title: "场景需求"
+      description: "选择你需要关注的场景（可多选）"
+      type: "multi-select"
+      dynamic_options: true
+      options_rule: "根据step-1和step-2动态生成"
+      default_options:
+        - value: "code-quality"
+          label: "代码质量"
+        - value: "security"
+          label: "安全合规"
+        - value: "performance"
+          label: "性能优化"
+        - value: "observability"
+          label: "可观测性"
+        - value: "ci-cd"
+          label: "CI/CD"
+        - value: "testing"
+          label: "测试策略"
+
+  completion:
+    title: "你的个性化模板清单"
+    description: "基于你的选择，我们推荐以下模板"
+    template_list:
+      required: []
+      recommended: []
+      optional: []
+    actions:
+      - label: "开始使用"
+        type: "primary"
+      - label: "自定义清单"
+        type: "secondary"
+
+  skip:
+    enabled: true
+    label: "跳过引导"
+    position: "bottom-right"
+    storage_key: "ai-prompt-onboarding-skipped"
+
+  retrigger:
+    enabled: true
+    trigger: "settings_page"
+    label: "重新开始引导"
+    storage_key: "ai-prompt-onboarding-reset"
+
+  persistence:
+    storage: "localStorage"
+    key: "ai-prompt-onboarding-state"
+    ttl_days: 365
+    fields:
+      - "completed_steps"
+      - "selected_options"
+      - "generated_template_list"
+      - "skipped"

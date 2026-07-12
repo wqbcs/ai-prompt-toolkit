@@ -1,0 +1,98 @@
+# 使用效率热力图数据Schema
+
+version: "1.0.0"
+description: "模板使用频次和效果评分可视化"
+
+heatmap:
+  data_schema:
+    type: "object"
+    properties:
+      template_id:
+        type: "string"
+        description: "模板唯一标识"
+      template_name:
+        type: "string"
+        description: "模板名称"
+      category:
+        type: "string"
+        description: "模板分类"
+      time_range:
+        type: "string"
+        enum: ["7d", "30d", "90d", "all"]
+        description: "时间范围筛选"
+      usage_count:
+        type: "integer"
+        description: "使用频次"
+      avg_effectiveness:
+        type: "number"
+        minimum: 0
+        maximum: 5
+        description: "平均效果评分(1-5)"
+      trend:
+        type: "string"
+        enum: ["up", "down", "stable"]
+        description: "使用趋势"
+      last_used:
+        type: "string"
+        format: "date-time"
+        description: "最后使用时间(ISO 8601)"
+
+  color_mapping:
+    description: "基于使用频次和效果评分的颜色映射规则"
+    rules:
+      - condition: "usage_count > 50 AND avg_effectiveness >= 4.0"
+        color: "#15803d"
+        label: "高频高效果"
+        bg_class: "heatmap-high-high"
+      - condition: "usage_count > 50 AND avg_effectiveness < 3.0"
+        color: "#dc2626"
+        label: "高频低效果"
+        bg_class: "heatmap-high-low"
+      - condition: "usage_count > 10 AND avg_effectiveness >= 3.0"
+        color: "#65a30d"
+        label: "中频中高效果"
+        bg_class: "heatmap-mid-mid"
+      - condition: "usage_count > 10 AND avg_effectiveness < 3.0"
+        color: "#f97316"
+        label: "中频低效果"
+        bg_class: "heatmap-mid-low"
+      - condition: "usage_count <= 10"
+        color: "#e5e7eb"
+        label: "低频"
+        bg_class: "heatmap-low"
+      - condition: "usage_count == 0"
+        color: "#f3f4f6"
+        label: "未使用"
+        bg_class: "heatmap-unused"
+
+  time_ranges:
+    - id: "7d"
+      label: "近7天"
+      default: false
+    - id: "30d"
+      label: "近30天"
+      default: true
+    - id: "90d"
+      label: "近90天"
+      default: false
+    - id: "all"
+      label: "全部"
+      default: false
+
+  interactions:
+    click_to_detail: true
+    hover_tooltip: true
+    filter_by_category: true
+    sort_by_usage: true
+    sort_by_effectiveness: true
+    export_csv: true
+
+  data_sources:
+    usage_frequency:
+      type: "log"
+      description: "使用频次来源于使用日志"
+      fields: ["template_id", "timestamp", "user_id"]
+    effectiveness_score:
+      type: "ab_test"
+      description: "效果评分来源于A/B测试v2结果"
+      fields: ["template_id", "model_id", "avg_score", "win_rate"]

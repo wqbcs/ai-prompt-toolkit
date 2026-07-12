@@ -1,0 +1,93 @@
+# 搜索增强v2索引Schema
+
+version: "1.0.0"
+description: "支持自然语言搜索、匹配原因高亮和多维度筛选"
+
+search_index:
+  schema:
+    type: "object"
+    properties:
+      template_id:
+        type: "string"
+        description: "模板唯一标识"
+      keywords:
+        type: "array"
+        items:
+          type: "string"
+        description: "关键词列表"
+      semantic_vector:
+        type: "array"
+        items:
+          type: "number"
+        description: "语义向量(768维)"
+      tags:
+        type: "array"
+        items:
+          type: "string"
+        description: "标签列表"
+      applicable_models:
+        type: "array"
+        items:
+          type: "string"
+        description: "适用模型列表"
+      industry:
+        type: "string"
+        description: "行业代码"
+      category:
+        type: "string"
+        description: "场景分类"
+      search_boost:
+        type: "number"
+        minimum: 0
+        maximum: 10
+        default: 1.0
+        description: "搜索权重加成"
+      last_indexed:
+        type: "string"
+        format: "date-time"
+        description: "最后索引时间(ISO 8601)"
+
+  search_capabilities:
+    natural_language:
+      enabled: true
+      description: "输入自然语言描述，返回匹配模板"
+      examples:
+        - query: "如何排查分布式系统链路追踪断链"
+          expected_results: ["c1.1_distributed_tracing", "c1.4_observability_design"]
+        - query: "Go语言代码审查有哪些陷阱"
+          expected_results: ["go-code-review", "base-code-review"]
+    match_highlight:
+      enabled: true
+      description: "标注匹配字段和匹配度"
+      fields:
+        - "keywords"
+        - "tags"
+        - "category"
+        - "semantic_similarity"
+      display:
+        highlight_color: "#fbbf24"
+        match_reason_label: true
+        confidence_score: true
+    multi_dimension_filter:
+      enabled: true
+      dimensions:
+        - id: "category"
+          label: "场景分类"
+          type: "select"
+          options: ["observability", "chaos-engineering", "gitops", "platform-engineering", "huawei-cloud"]
+        - id: "tags"
+          label: "标签"
+          type: "multi-select"
+        - id: "applicable_models"
+          label: "适用模型"
+          type: "multi-select"
+          options: ["gpt-4o", "claude-3.5-sonnet", "qwen-max", "pangu-large"]
+        - id: "industry"
+          label: "行业"
+          type: "select"
+          options: ["financial", "healthcare", "education", "manufacturing", "government"]
+
+  performance:
+    max_results: 20
+    response_time_target_ms: 200
+    index_update_frequency: "daily"
