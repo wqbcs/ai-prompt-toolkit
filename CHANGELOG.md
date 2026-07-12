@@ -2,6 +2,77 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v27.0.0] - 2026-07-13
+
+### Added (第十轮成熟度循环 R10: v26→v27)
+
+#### 核心质变：设计完备→工具链可运行
+
+- 包名从 `prompt-toolkit` 重命名为 `ai-prompt-toolkit`（修复与第三方库冲突）
+- 修复 `pyproject.toml` build-backend（`setuptools.build_meta`）
+
+#### 条件编译引擎 (F1) — 7个Python文件
+- `compiler/types.py`: Token/ASTNode/CompileResult/CompileContext类型
+- `compiler/lexer.py`: Lexer词法分析器（5种Token类型）
+- `compiler/parser.py`: Parser语法分析器（递归下降，嵌套深度≤3）
+- `compiler/evaluator.py`: Evaluator条件求值器（10种运算符+副作用检测）
+- `compiler/renderer.py`: Renderer渲染器
+- `compiler/cache.py`: CompileCache（LRUCache+SHA-256键+TTL 1h）
+
+#### 安全扫描器 (F3) — 5个Python文件
+- `security/types.py`: Finding/ScanResult/RiskLevel类型
+- `security/injection_detector.py`: 8条注入规则（INJ-001~008）
+- `security/inheritance_auditor.py`: 继承链审计（6类问题检测）
+- `security/scanner.py`: Scanner主入口+增量扫描+3种输出格式
+
+#### Prompt Linter (F4) — 4个Python文件
+- `linter/rules.py`: 20条质量规则（P001-P020，4大类）
+- `linter/linter.py`: PromptLinter主类+LintResult+FixAction
+- `linter/rule_loader.py`: RuleLoader（3种规则集+自定义规则+冲突处理）
+- `linter/fixer.py`: Fixer自动修复（P005/P006/P016+dry-run+diff）
+
+#### A/B测试框架 (F2) — 6个Python文件
+- `ab_test/types.py`: TestConfig/ModelResult/StatReport类型
+- `ab_test/provider.py`: 4个Provider（OpenAI/Anthropic/HuaweiCloud/DeepSeek）
+- `ab_test/engine.py`: ParallelEngine并行执行引擎
+- `ab_test/statistics.py`: 5种统计方法（Shapiro-Wilk/t-test/Mann-Whitney U/Cohen's d/CI）
+- `ab_test/recommender.py`: Recommender推荐器
+
+#### i18n国际化框架 (F5) — 6个Python文件
+- `i18n/types.py`: BCP 47 Locale+TranslationEntry+CoverageReport
+- `i18n/glossary.py`: 术语表（YAML+华为云18个领域术语）
+- `i18n/fallback.py`: 回退链（10语言+PROMPT_LANGUAGE环境变量）
+- `i18n/resource.py`: JSON资源文件管理+覆盖率统计
+- `i18n/translation.py`: 翻译引擎+缓存+人工审校保护
+- `i18n/manager.py`: I18nManager主类+generate()+get_translation()
+
+#### 模板市场v2 (F6) — 4个Python文件
+- `market/types.py`: Template+Review+DeployConfig+LifecycleManager状态机
+- `market/review.py`: ReviewPipeline（门禁+14天提醒+21天关闭）
+- `market/deploy.py`: DeployManager（灰度5%→25%→50%→100%+自动回滚）
+- `market/service.py`: MarketService主服务+JSON持久化
+
+#### CLI统一入口
+- `cli.py`: 6个子命令（compile/ab-test/scan/lint/i18n/market）
+- `output.py`: rich集成（彩色输出+进度条）
+- `types.py`: 通用类型（Severity/Finding/BaseReport）
+
+#### 评估框架升级
+- 52维度→54维度（新增D53 Lint前置质量+D54 国际化完备度）
+- `evaluator.py`: evaluate_template()函数+EvaluationReport
+
+#### 测试
+- 164个单元测试全通过（compiler 47+security 23+linter 47+i18n 22+market 15+evaluator 10）
+- 测试覆盖率：compiler≥80%, security≥80%, linter≥80%
+
+#### 数据文件
+- `_i18n/locales/zh-CN/templates.json`: 10个中文模板
+- `_i18n/locales/en-US/templates.json`: 10个英文模板
+
+### Changed
+- Linter中文正则修复：P001角色检测/P005长度/P008权限/P012冗余/P016歧义
+- 包名 `prompt-toolkit` → `ai-prompt-toolkit`（避免与Jonathan Slenders的终端UI库冲突）
+
 ## [v15.0.0] - 2026-05-29
 
 ### Added (第十三轮深度迭代M1-M10批次 2026-05-29)

@@ -1,4 +1,4 @@
-"""52维度评估框架 v8——D1-D52维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+"""54维度评估框架 v8——D1-D54维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
 import time
@@ -61,6 +61,8 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D50", "name": "文档完备", "category": "toolchain", "weight": 0.5, "description": "Prompt是否有完备文档"},
     {"id": "D51", "name": "CI/CD集成", "category": "toolchain", "weight": 0.6, "description": "Prompt是否集成CI/CD流程"},
     {"id": "D52", "name": "监控就绪", "category": "toolchain", "weight": 0.5, "description": "Prompt是否具备监控能力"},
+    {"id": "D53", "name": "Lint前置质量", "category": "toolchain", "weight": 0.9, "description": "Prompt是否经过Lint检查并达到质量门禁"},
+    {"id": "D54", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt是否具备多语言翻译和i18n支持"},
 ]
 
 
