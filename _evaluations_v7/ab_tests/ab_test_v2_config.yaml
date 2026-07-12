@@ -1,0 +1,128 @@
+# A/B测试v2配置Schema
+# 版本: v2.0.0
+# 日期: 2026-07-12
+# 参考: promptfoo/promptfoo Provider抽象层设计
+
+test_id: "ab-test-001"
+test_name: "多模型提示词效果对比测试"
+description: "对比多个LLM模型在同一提示词模板上的表现差异，生成胜率矩阵和最优匹配推荐"
+created_at: "2026-07-12"
+status: "draft"  # draft | running | completed | failed
+
+models:
+  min_count: 2
+  max_count: 8
+  items:
+    - id: "gpt-4o"
+      provider: "openai"
+      endpoint: "https://api.openai.com/v1/chat/completions"
+      max_tokens: 4096
+      temperature: 0.7
+    - id: "claude-3.5-sonnet"
+      provider: "anthropic"
+      endpoint: "https://api.anthropic.com/v1/messages"
+      max_tokens: 4096
+      temperature: 0.7
+    - id: "qwen-max"
+      provider: "aliyun"
+      endpoint: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+      max_tokens: 4096
+      temperature: 0.7
+    - id: "pangu-large"
+      provider: "huawei"
+      endpoint: "https://api.huawei.com/pangu/v1/chat/completions"
+      max_tokens: 4096
+      temperature: 0.7
+
+templates:
+  - id: "tpl-code-review"
+    name: "代码审查提示词模板"
+    source: "04_代码审查与质量保障提示词.md"
+  - id: "tpl-arch-design"
+    name: "架构设计提示词模板"
+    source: "02_架构设计与技术选型提示词.md"
+
+test_dataset:
+  source: "local"  # local | remote | synthetic
+  path: "_evaluations_v7/ab_tests/datasets/"
+  min_samples: 30
+  max_samples: 10000
+  format: "jsonl"
+  fields:
+    - name: "input"
+      type: "string"
+      required: true
+    - name: "expected_output"
+      type: "string"
+      required: false
+    - name: "category"
+      type: "string"
+      required: false
+
+evaluation:
+  dimensions:
+    - id: "accuracy"
+      name: "准确性"
+      weight: 0.25
+      scoring: "llm-judge"  # llm-judge | exact-match | regex | human
+    - id: "relevance"
+      name: "相关性"
+      weight: 0.20
+      scoring: "llm-judge"
+    - id: "coherence"
+      name: "连贯性"
+      weight: 0.20
+      scoring: "llm-judge"
+    - id: "completeness"
+      name: "完整性"
+      weight: 0.15
+      scoring: "llm-judge"
+    - id: "efficiency"
+      name: "效率"
+      weight: 0.10
+      scoring: "metrics"  # token_count + latency
+    - id: "safety"
+      name: "安全性"
+      weight: 0.10
+      scoring: "rule-based"
+  judge_model: "gpt-4o"
+  significance_level: 0.05
+  test_method: "auto"  # auto | t-test | mann-whitney-u
+  min_samples_for_significance: 30
+
+win_rate_matrix:
+  enabled: true
+  min_samples_for_significance: 30
+  color_coding:
+    significant_win: "#4CAF50"    # 绿色-显著胜出
+    insignificant_win: "#8BC34A"  # 浅绿-非显著胜出
+    tie: "#FFC107"                 # 黄色-平局
+    insignificant_loss: "#FF9800" # 橙色-非显著落后
+    significant_loss: "#F44336"   # 红色-显著落后
+
+optimal_match:
+  enabled: true
+  criteria: "win_rate_significance"  # win_rate_significance | composite_score
+  composite_weights:
+    win_rate: 0.4
+    significance: 0.3
+    avg_score: 0.2
+    efficiency: 0.1
+  exclude_unstable: true
+  stability_threshold:
+    cv_max: 0.5
+    min_samples: 30
+
+execution:
+  parallel: true
+  max_concurrent_models: 8
+  timeout_per_model: 30000    # ms
+  retry_count: 1
+  retry_delay: 1000           # ms
+  progress_tracking: true
+
+output:
+  format: "markdown"  # markdown | json | html
+  path: "_evaluations_v7/ab_tests/reports/"
+  include_raw_scores: true
+  include_confidence_intervals: true
