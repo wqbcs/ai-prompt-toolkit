@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from prompt_toolkit.security.scanner import Scanner
-from prompt_toolkit.security.injection_detector import InjectionDetector
-from prompt_toolkit.security.inheritance_auditor import DictTemplateProvider, InheritanceAuditor
-from prompt_toolkit.security.types import RiskLevel
-from prompt_toolkit.types import Severity
+from ai_prompt_toolkit.security.scanner import Scanner
+from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider, InheritanceAuditor
+from ai_prompt_toolkit.security.types import RiskLevel
+from ai_prompt_toolkit.types import Severity
 
 
 class TestInjectionDetection:
@@ -59,7 +59,7 @@ class TestInjectionDetection:
         assert len(findings) >= 2
 
     def test_custom_rule(self):
-        from prompt_toolkit.security.types import InjectionRule
+        from ai_prompt_toolkit.security.types import InjectionRule
         detector = InjectionDetector()
         custom = InjectionRule(
             rule_id="INJ-CUSTOM",

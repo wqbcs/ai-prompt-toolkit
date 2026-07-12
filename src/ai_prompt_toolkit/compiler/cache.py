@@ -8,7 +8,7 @@ from typing import Any
 
 from cachetools import LRUCache
 
-from prompt_toolkit.compiler.types import CompileResult
+from ai_prompt_toolkit.compiler.types import CompileResult
 
 _DEFAULT_MAXSIZE = 1000
 _DEFAULT_TTL_SECONDS = 3600

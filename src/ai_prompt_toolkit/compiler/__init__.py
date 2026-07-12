@@ -5,7 +5,7 @@
 
 典型用法::
 
-    from prompt_toolkit.compiler import compile_template, CompileContext
+    from ai_prompt_toolkit.compiler import compile_template, CompileContext
 
     source = "你好{{#if model == gpt-4}}GPT-4 用户{{else}}其他用户{{/if}}"
     result = compile_template(source, CompileContext(model="gpt-4"))
@@ -16,12 +16,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from prompt_toolkit.compiler.cache import CompileCache
-from prompt_toolkit.compiler.evaluator import Evaluator, EvaluationError, evaluate
-from prompt_toolkit.compiler.lexer import Lexer, LexerError
-from prompt_toolkit.compiler.parser import NestingError, ParseError, Parser
-from prompt_toolkit.compiler.renderer import FallbackStrategy, Renderer
-from prompt_toolkit.compiler.types import (
+from ai_prompt_toolkit.compiler.cache import CompileCache
+from ai_prompt_toolkit.compiler.evaluator import Evaluator, EvaluationError, evaluate
+from ai_prompt_toolkit.compiler.lexer import Lexer, LexerError
+from ai_prompt_toolkit.compiler.parser import NestingError, ParseError, Parser
+from ai_prompt_toolkit.compiler.renderer import FallbackStrategy, Renderer
+from ai_prompt_toolkit.compiler.types import (
     ASTNode,
     BranchInfo,
     CompileContext,

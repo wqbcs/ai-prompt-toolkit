@@ -1,19 +1,19 @@
 """安全扫描引擎。"""
 
-from prompt_toolkit.security.types import (
+from ai_prompt_toolkit.security.types import (
     Finding,
     InheritanceFinding,
     InjectionRule,
     RiskLevel,
     ScanResult,
 )
-from prompt_toolkit.security.injection_detector import InjectionDetector
-from prompt_toolkit.security.inheritance_auditor import (
+from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+from ai_prompt_toolkit.security.inheritance_auditor import (
     DictTemplateProvider,
     InheritanceAuditor,
     TemplateProvider,
 )
-from prompt_toolkit.security.scanner import Scanner
+from ai_prompt_toolkit.security.scanner import Scanner
 
 
 def scan_template(

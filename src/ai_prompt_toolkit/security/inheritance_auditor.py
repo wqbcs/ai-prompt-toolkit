@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from prompt_toolkit.security.types import InheritanceFinding, RiskLevel
+from ai_prompt_toolkit.security.types import InheritanceFinding, RiskLevel
 
 
 MAX_INHERITANCE_DEPTH = 5

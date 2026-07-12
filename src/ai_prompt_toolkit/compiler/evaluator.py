@@ -4,7 +4,7 @@ from __future__ import annotations
 import operator
 from typing import Any
 
-from prompt_toolkit.compiler.types import CompileContext, Condition
+from ai_prompt_toolkit.compiler.types import CompileContext, Condition
 
 _DANGEROUS_NAMES = frozenset({
     "eval", "exec", "compile", "open", "input", "globals",

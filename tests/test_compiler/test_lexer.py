@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from prompt_toolkit.compiler.lexer import Lexer, LexerError
-from prompt_toolkit.compiler.types import Token, TokenKind
+from ai_prompt_toolkit.compiler.lexer import Lexer, LexerError
+from ai_prompt_toolkit.compiler.types import Token, TokenKind
 
 
 class TestTokenKind:

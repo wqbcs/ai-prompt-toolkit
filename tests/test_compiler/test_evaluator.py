@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from prompt_toolkit.compiler.evaluator import EvaluationError, Evaluator, evaluate
-from prompt_toolkit.compiler.types import CompileContext, Condition
+from ai_prompt_toolkit.compiler.evaluator import EvaluationError, Evaluator, evaluate
+from ai_prompt_toolkit.compiler.types import CompileContext, Condition
 
 
 class TestEqualityOperator:

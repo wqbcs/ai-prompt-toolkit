@@ -1,6 +1,6 @@
 """A/B测试引擎。"""
 
-from prompt_toolkit.ab_test.types import (
+from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
     EvaluationDimension,
     ModelConfig,
@@ -13,7 +13,7 @@ from prompt_toolkit.ab_test.types import (
     TestStatus,
     WinRateCell,
 )
-from prompt_toolkit.ab_test.provider import (
+from ai_prompt_toolkit.ab_test.provider import (
     AliyunProvider,
     AnthropicProvider,
     BaseProvider,
@@ -22,15 +22,15 @@ from prompt_toolkit.ab_test.provider import (
     ProviderError,
     create_provider,
 )
-from prompt_toolkit.ab_test.engine import ParallelEngine, TaskOutput, TaskProgress
-from prompt_toolkit.ab_test.statistics import (
+from ai_prompt_toolkit.ab_test.engine import ParallelEngine, TaskOutput, TaskProgress
+from ai_prompt_toolkit.ab_test.statistics import (
     auto_select_test,
     cohens_d,
     confidence_interval,
     mann_whitney_u_test,
     t_test,
 )
-from prompt_toolkit.ab_test.recommender import Recommender
+from ai_prompt_toolkit.ab_test.recommender import Recommender
 
 
 async def run_ab_test(

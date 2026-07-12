@@ -6,8 +6,8 @@ import re
 import time
 from typing import Any
 
-from prompt_toolkit.types import Finding, Severity
-from prompt_toolkit.security.types import InjectionRule
+from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.security.types import InjectionRule
 
 
 _BUILTIN_RULES: list[InjectionRule] = [

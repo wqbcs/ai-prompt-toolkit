@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from prompt_toolkit.linter.linter import FixAction, LintResult, PromptLinter
-from prompt_toolkit.linter.rules import (
+from ai_prompt_toolkit.linter.linter import FixAction, LintResult, PromptLinter
+from ai_prompt_toolkit.linter.rules import (
     LintRule,
     check_p001,
     check_p002,
@@ -30,7 +30,7 @@ from prompt_toolkit.linter.rules import (
     get_rule,
     run_all_checks,
 )
-from prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestStructureRules:
@@ -81,7 +81,7 @@ class TestStructureRules:
         assert result.rule_id == "P005"
 
     def test_p005_normal_length(self):
-        result = check_p005("这是一个正常长度的Prompt，包含了足够的上下文信息")
+        result = check_p005("这是一个正常长度的Prompt，包含了足够的上下文信息和详细的指令描述，确保模型能够准确理解用户的需求并给出高质量回复")
         assert result is None
 
 

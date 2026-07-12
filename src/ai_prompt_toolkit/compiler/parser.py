@@ -1,7 +1,7 @@
 """条件编译语法分析器，将 Token 流解析为 AST。"""
 from __future__ import annotations
 
-from prompt_toolkit.compiler.types import (
+from ai_prompt_toolkit.compiler.types import (
     ASTNode,
     Condition,
     NodeType,

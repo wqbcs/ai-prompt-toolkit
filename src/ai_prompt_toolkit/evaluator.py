@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 _DIMENSIONS: list[dict[str, Any]] = [

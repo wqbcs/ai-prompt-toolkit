@@ -5,7 +5,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any
 
-from prompt_toolkit.ab_test.types import ModelConfig, ModelResult, ProviderType, TestStatus
+from ai_prompt_toolkit.ab_test.types import ModelConfig, ModelResult, ProviderType, TestStatus
 
 
 class ProviderError(Exception):

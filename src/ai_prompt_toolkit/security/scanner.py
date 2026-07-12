@@ -7,14 +7,14 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Iterable
 
-from prompt_toolkit.types import Finding, Severity
-from prompt_toolkit.security.types import (
+from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.security.types import (
     InheritanceFinding,
     RiskLevel,
     ScanResult,
 )
-from prompt_toolkit.security.injection_detector import InjectionDetector
-from prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
+from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
 
 
 def _compute_hash(text: str) -> str:

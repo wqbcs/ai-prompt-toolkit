@@ -6,7 +6,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from prompt_toolkit.ab_test.types import (
+from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
     EvaluationDimension,
     ModelConfig,
@@ -15,7 +15,7 @@ from prompt_toolkit.ab_test.types import (
     TestResult,
     TestStatus,
 )
-from prompt_toolkit.ab_test.provider import BaseProvider, create_provider
+from ai_prompt_toolkit.ab_test.provider import BaseProvider, create_provider
 
 
 @dataclass

@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 @dataclass
@@ -106,12 +106,13 @@ _SENSITIVE_PATTERNS = [
 ]
 
 _AMBIGUOUS_WORDS = re.compile(
-    r"\b(?:可能|大概|也许|maybe|perhaps|possibly|some|somehow|sort\s+of|kind\s+of|差不多|左右|大概)\b",
+    r"(?:可能|大概|也许|maybe|perhaps|possibly|some|somehow|sort\s+of|kind\s+of|差不多|左右|或许|似乎|不一定)",
     re.IGNORECASE,
 )
 
 _ROLE_PATTERNS = [
-    re.compile(r"你(?:是|作为|扮演)\s+.{2,}", re.UNICODE),
+    re.compile(r"你(?:是一?(?:个|名|位))?(?:是|作为|扮演)\s*.{1,}", re.UNICODE),
+    re.compile(r"你是一?(?:个|名|位)\s*.{2,}", re.UNICODE),
     re.compile(r"(?:you\s+are|act\s+as|role[:：])\s+.{2,}", re.IGNORECASE),
     re.compile(r"(?:作为|角色|role)\s*[:：]", re.IGNORECASE),
 ]
@@ -210,9 +211,15 @@ def check_p007(text: str) -> Finding | None:
 def check_p008(text: str) -> Finding | None:
     rule = _RULE_MAP["P008"]
     broad_perms = re.findall(
-        r"(?:可以|能|may|can|allowed)\s+.*(?:任何|任意|所有|anything|everything|all|any)\b",
+        r"(?:可以|能|may|can|allowed)\s+.*(?:任何|任意|所有|anything|everything|all|any)",
         text, re.IGNORECASE,
     )
+    if not broad_perms:
+        broad_zh = re.findall(r"(?:任何|任意|所有)", text)
+        if broad_zh:
+            has_restriction = bool(re.search(r"(?:仅|只|只能|仅限|限制|limit|only|restrict)", text, re.IGNORECASE))
+            if not has_restriction:
+                broad_perms = broad_zh
     if not broad_perms:
         return None
     return Finding(rule_id=rule.rule_id, severity=rule.severity,
@@ -256,7 +263,7 @@ def check_p011(text: str) -> Finding | None:
 def check_p012(text: str) -> Finding | None:
     rule = _RULE_MAP["P012"]
     sentences = re.split(r"[。.!！\n]", text)
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 4]
     seen: dict[str, int] = {}
     for s in sentences:
         normalized = re.sub(r"\s+", " ", s.lower())

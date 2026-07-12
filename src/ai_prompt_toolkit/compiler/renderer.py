@@ -4,8 +4,8 @@ from __future__ import annotations
 import time
 from typing import Literal
 
-from prompt_toolkit.compiler.evaluator import evaluate
-from prompt_toolkit.compiler.types import (
+from ai_prompt_toolkit.compiler.evaluator import evaluate
+from ai_prompt_toolkit.compiler.types import (
     ASTNode,
     BranchInfo,
     CompileContext,

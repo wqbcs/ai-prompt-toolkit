@@ -7,8 +7,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from prompt_toolkit.types import Finding, Severity
-from prompt_toolkit.linter.rules import (
+from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.linter.rules import (
     LintRule,
     get_all_rules,
     get_rule,

@@ -1,7 +1,7 @@
 """Prompt Linter 引擎。"""
 
-from prompt_toolkit.linter.rules import LintRule, get_all_rules, get_rule, run_all_checks
-from prompt_toolkit.linter.linter import FixAction, LintResult, PromptLinter
+from ai_prompt_toolkit.linter.rules import LintRule, get_all_rules, get_rule, run_all_checks
+from ai_prompt_toolkit.linter.linter import FixAction, LintResult, PromptLinter
 
 
 def lint_template(

@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from prompt_toolkit.ab_test.statistics import auto_select_test, cohens_d
-from prompt_toolkit.ab_test.types import (
+from ai_prompt_toolkit.ab_test.statistics import auto_select_test, cohens_d
+from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
     EvaluationDimension,
     ModelConfig,

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from prompt_toolkit.compiler.lexer import Lexer
-from prompt_toolkit.compiler.parser import NestingError, ParseError, Parser
-from prompt_toolkit.compiler.types import ASTNode, Condition, NodeType, Token, TokenKind
+from ai_prompt_toolkit.compiler.lexer import Lexer
+from ai_prompt_toolkit.compiler.parser import NestingError, ParseError, Parser
+from ai_prompt_toolkit.compiler.types import ASTNode, Condition, NodeType, Token, TokenKind
 
 
 class TestASTConstruction:

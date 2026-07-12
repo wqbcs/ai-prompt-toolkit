@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import click
 
-from prompt_toolkit import __version__
+from ai_prompt_toolkit import __version__
 
 
 @click.group()

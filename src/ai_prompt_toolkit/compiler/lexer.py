@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from typing import NoReturn
 
-from prompt_toolkit.compiler.types import Token, TokenKind
+from ai_prompt_toolkit.compiler.types import Token, TokenKind
 
 _IF_OPEN_RE = re.compile(r"\{\{#if\s+(.+?)\s*\}\}")
 _ELSE_IF_RE = re.compile(r"\{\{#else\s+if\s+(.+?)\s*\}\}")
