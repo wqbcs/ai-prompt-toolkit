@@ -1,0 +1,64 @@
+# compilation_context_schema.yaml
+# 条件编译上下文Schema v1.0.0
+
+version: "1.0.0"
+
+compilation_context:
+  model:
+    type: "string"
+    required: true
+    enum:
+      - "gpt-4o"
+      - "gpt-4o-mini"
+      - "claude-3.5-sonnet"
+      - "claude-3-haiku"
+      - "qwen-max"
+      - "qwen-plus"
+      - "pangu-large"
+      - "pangu-medium"
+      - "deepseek-v3"
+      - "glm-4"
+    description: "目标AI模型ID"
+
+  language:
+    type: "string"
+    required: true
+    enum:
+      - "zh"
+      - "en"
+      - "ja"
+      - "ko"
+      - "fr"
+      - "de"
+      - "es"
+      - "pt"
+      - "ru"
+      - "ar"
+    description: "输出语言代码(ISO 639-1)"
+
+  industry:
+    type: "string"
+    required: false
+    enum:
+      - "financial"
+      - "healthcare"
+      - "education"
+      - "manufacturing"
+      - "government"
+      - "retail"
+      - "energy"
+      - "telecom"
+      - "logistics"
+      - "media"
+    description: "目标行业代码"
+
+  flags:
+    type: "object"
+    required: false
+    properties:
+      strict_compliance:
+        type: "boolean"
+        default: false
+      verbose_output:
+        type: "boolean"
+        default: false
