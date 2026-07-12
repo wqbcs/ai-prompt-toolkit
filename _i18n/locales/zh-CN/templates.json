@@ -1,0 +1,56 @@
+{
+  "locale": "zh-CN",
+  "version": "1.0",
+  "templates": {
+    "basic_role": {
+      "value": "你是一个专业的AI助手，专注于{domain}领域。",
+      "status": "native",
+      "source": "initial"
+    },
+    "output_format": {
+      "value": "请以{format}格式输出结果。",
+      "status": "native",
+      "source": "initial"
+    },
+    "constraint_template": {
+      "value": "约束条件：\n1. 不要{forbidden}\n2. 限制{limit}\n3. 必须{required}",
+      "status": "native",
+      "source": "initial"
+    },
+    "fewshot_header": {
+      "value": "以下是几个示例：",
+      "status": "native",
+      "source": "initial"
+    },
+    "cot_prompt": {
+      "value": "让我们一步步思考：",
+      "status": "native",
+      "source": "initial"
+    },
+    "eval_criteria": {
+      "value": "评估标准：准确性、完整性、一致性",
+      "status": "native",
+      "source": "initial"
+    },
+    "safety_notice": {
+      "value": "安全提示：请勿在输出中包含任何敏感信息。",
+      "status": "native",
+      "source": "initial"
+    },
+    "huawei_cloud_context": {
+      "value": "你正在华为云平台上工作，请使用华为云的产品名称和术语。",
+      "status": "native",
+      "source": "initial"
+    },
+    "conditional_if": {
+      "value": "{{#if condition}}满足条件时输出{{else}}不满足条件时输出{{/if}}",
+      "status": "native",
+      "source": "initial"
+    },
+    "error_handling": {
+      "value": "如果遇到错误或无法处理的情况，请说明原因并提供替代方案。",
+      "status": "native",
+      "source": "initial"
+    }
+  }
+}

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+import sys
+
 import click
 
 from ai_prompt_toolkit import __version__
@@ -69,6 +72,37 @@ def lint(target: str, config: str | None, fmt: str, fix: bool) -> None:
     click.echo(f"Lint: {target}")
     if fix:
         click.echo("自动修复模式")
+
+
+@main.command()
+@click.option("--source-locale", "-s", default="zh-CN", help="源语言(BCP 47)")
+@click.option("--target-locale", "-t", default="en-US", help="目标语言(BCP 47)")
+@click.option("--output", "-o", help="输出目录")
+@click.option("--base-dir", help="i18n资源基础目录")
+def i18n(source_locale: str, target_locale: str, output: str | None,
+         base_dir: str | None) -> None:
+    """国际化：多语言翻译和质量报告"""
+    from ai_prompt_toolkit.i18n.manager import I18nManager
+    mgr = I18nManager(base_dir=base_dir)
+    click.echo(f"翻译: {source_locale} → {target_locale}")
+    report = mgr.generate(source_locale, target_locale, output)
+    click.echo(f"覆盖率: {report.coverage_pct:.1f}%")
+    click.echo(f"质量: {report.quality_pct:.1f}%")
+    click.echo(f"已翻译: {report.translated}/{report.total_keys}")
+    if report.missing > 0:
+        click.echo(f"缺失: {report.missing}")
+
+
+@main.command()
+@click.option("--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]),
+              required=True, help="市场操作")
+@click.option("--template", "-t", help="模板ID或文件路径")
+@click.option("--config", help="市场配置YAML文件路径")
+def market(action: str, template: str | None, config: str | None) -> None:
+    """模板市场：提交、评审、灰度发布"""
+    click.echo(f"市场操作: {action}")
+    if template:
+        click.echo(f"模板: {template}")
 
 
 if __name__ == "__main__":

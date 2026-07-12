@@ -1,0 +1,57 @@
+{
+  "locale": "en-US",
+  "source_locale": "zh-CN",
+  "version": "1.0",
+  "templates": {
+    "basic_role": {
+      "value": "You are a professional AI assistant specializing in {domain}.",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "output_format": {
+      "value": "Please output the result in {format} format.",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "constraint_template": {
+      "value": "Constraints:\n1. Do not {forbidden}\n2. Limit {limit}\n3. Must {required}",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "fewshot_header": {
+      "value": "Here are some examples:",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "cot_prompt": {
+      "value": "Let's think step by step:",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "eval_criteria": {
+      "value": "Evaluation criteria: accuracy, completeness, consistency",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "safety_notice": {
+      "value": "Safety notice: Do not include any sensitive information in the output.",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "huawei_cloud_context": {
+      "value": "You are working on Huawei Cloud platform. Please use Huawei Cloud product names and terminology.",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "conditional_if": {
+      "value": "{{#if condition}}Output when condition is met{{else}}Output when condition is not met{{/if}}",
+      "status": "human_reviewed",
+      "source": "manual"
+    },
+    "error_handling": {
+      "value": "If you encounter an error or cannot process the request, please explain the reason and provide an alternative.",
+      "status": "human_reviewed",
+      "source": "manual"
+    }
+  }
+}
