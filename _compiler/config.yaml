@@ -1,0 +1,17 @@
+max_nesting_depth: 3
+cache_ttl_seconds: 3600
+cache_max_size: 1000
+allowed_operators:
+  - if
+  - unless
+  - each
+  - with
+  - include
+  - extends
+  - block
+  - override
+fallback_strategy:
+  on_compile_error: passthrough
+  on_missing_variable: empty_string
+  on_circular_reference: abort
+  on_depth_exceeded: truncate_at_limit

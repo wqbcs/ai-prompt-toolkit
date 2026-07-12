@@ -1,0 +1,26 @@
+anomaly_threshold_sigma: 2.0
+min_sample_for_trend: 10
+moving_average_window: 7
+refresh_interval_seconds: 60
+data_retention_days: 90
+metrics_sources:
+  - engine: _compiler
+    metrics:
+      - compile_success_rate
+      - compile_time_ms
+      - cache_hit_rate
+  - engine: _ab_tests
+    metrics:
+      - test_completion_rate
+      - recommendation_adoption_rate
+  - engine: _security
+    metrics:
+      - scan_pass_rate
+      - high_severity_block_count
+  - engine: _versions
+    metrics:
+      - version_publish_frequency
+      - lock_duration_hours
+alert_channels:
+  - type: log
+    min_severity: warn

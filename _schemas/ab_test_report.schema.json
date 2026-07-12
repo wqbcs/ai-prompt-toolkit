@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ABTestReport",
+  "type": "object",
+  "required": ["test_id", "model_results", "statistical_report", "recommendation"],
+  "properties": {
+    "test_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "model_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["variant_id", "sample_size", "metrics"],
+        "properties": {
+          "variant_id": {"type": "string"},
+          "sample_size": {"type": "integer"},
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "mean": {"type": "number"},
+              "std_dev": {"type": "number"},
+              "conversion_rate": {"type": "number"},
+              "confidence_interval": {
+                "type": "object",
+                "properties": {
+                  "lower": {"type": "number"},
+                  "upper": {"type": "number"},
+                  "level": {"type": "number"}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "statistical_report": {
+      "type": "object",
+      "required": ["test_type", "p_value", "significant"],
+      "properties": {
+        "test_type": {"type": "string", "enum": ["t_test", "chi_squared", "mann_whitney", "proportion_z"]},
+        "p_value": {"type": "number"},
+        "significant": {"type": "boolean"},
+        "effect_size": {"type": "number"},
+        "power": {"type": "number"}
+      }
+    },
+    "recommendation": {
+      "type": "object",
+      "required": ["action", "variant_id"],
+      "properties": {
+        "action": {"type": "string", "enum": ["adopt", "iterate", "inconclusive", "discard"]},
+        "variant_id": {"type": "string"},
+        "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
+        "reasoning": {"type": "string"}
+      }
+    }
+  }
+}

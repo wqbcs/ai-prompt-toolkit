@@ -1,0 +1,14 @@
+scan_timeout_seconds: 60
+max_inheritance_depth: 5
+high_severity_block: true
+scan_mode: full
+report_format: json
+rule_sources:
+  - rules/injection_rules.yaml
+  - rules/inheritance_rules.yaml
+whitelist_source: whitelist.yaml
+severity_actions:
+  critical: block_and_alert
+  high: block
+  medium: warn
+  low: log

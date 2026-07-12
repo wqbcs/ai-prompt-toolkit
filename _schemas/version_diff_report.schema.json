@@ -1,0 +1,56 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VersionDiffReport",
+  "type": "object",
+  "required": ["version_a", "version_b", "added", "modified", "removed", "summary"],
+  "properties": {
+    "version_a": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "version_b": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "added": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "content"],
+        "properties": {
+          "path": {"type": "string"},
+          "content": {"type": "string"}
+        }
+      }
+    },
+    "modified": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "old_content", "new_content"],
+        "properties": {
+          "path": {"type": "string"},
+          "old_content": {"type": "string"},
+          "new_content": {"type": "string"},
+          "diff_type": {"type": "string", "enum": ["content", "structure", "metadata"]}
+        }
+      }
+    },
+    "removed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "content"],
+        "properties": {
+          "path": {"type": "string"},
+          "content": {"type": "string"}
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_changes", "change_type"],
+      "properties": {
+        "total_changes": {"type": "integer"},
+        "change_type": {"type": "string", "enum": ["major", "minor", "patch"]},
+        "breaking_changes": {"type": "boolean"},
+        "description": {"type": "string"}
+      }
+    }
+  }
+}

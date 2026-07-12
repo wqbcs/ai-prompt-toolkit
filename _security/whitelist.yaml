@@ -1,0 +1,60 @@
+metadata:
+  version: "1.0.0"
+  last_updated: "2026-07-12"
+  description: 安全条件表达式白名单，用于快速放行已知安全的条件模式
+
+whitelist:
+  - id: WL-001
+    name: 标准分支条件
+    pattern: "^if\\s+(environment|locale|platform|channel)\\s*(==|!=)\\s*['\"]?[A-Za-z0-9_-]+['\"]?$"
+    description: |
+      标准环境/平台/渠道分支条件表达式。匹配形如 if environment == 'production'
+      的简单等值判断，已知无安全风险。
+    category: conditional_branch
+    severity_override: safe
+
+  - id: WL-002
+    name: 布尔标志检查
+    pattern: "^if\\s+(enabled|disabled|active|visible|debug)\\s*$"
+    description: |
+      布尔标志检查条件。匹配形如 if debug 的简单布尔判断，用于功能开关控制，
+      已知无安全风险。
+    category: conditional_branch
+    severity_override: safe
+
+  - id: WL-003
+    name: 版本范围检查
+    pattern: "^if\\s+version\\s*(>=|<=|>|<|==)\\s*[0-9]+(\\.[0-9]+)*$"
+    description: |
+      版本范围检查条件。匹配形如 if version >= 2.1.0 的版本比较表达式，
+      用于特性版本控制，已知无安全风险。
+    category: conditional_branch
+    severity_override: safe
+
+  - id: WL-004
+    name: 合法模板变量引用
+    pattern: "^\\{\\{\\s*(user|session|config|params)\\.[A-Za-z0-9_.]+\\s*\\}\\}$"
+    description: |
+      合法模板变量引用。匹配形如 {{user.name}} 的标准变量访问，
+      仅允许访问 user、session、config、params 命名空间下的属性，
+      已知无安全风险。
+    category: template_expression
+    severity_override: safe
+
+  - id: WL-005
+    name: 安全文本输出
+    pattern: "^[A-Za-z0-9\\s.,!?'\":;()\\[\\]{}@#%&*+/\\\\^-]+$"
+    description: |
+      安全文本输出模式。匹配仅包含常见文本字符的内容，不含模板语法、
+      指令关键词或特殊控制字符，已知无安全风险。
+    category: content_output
+    severity_override: safe
+
+  - id: WL-006
+    name: 结构化控制指令
+    pattern: "^\\{\\{#(if|unless|each|with)\\s+[A-Za-z0-9_.]+\\}\\}$"
+    description: |
+      合法的模板控制指令。匹配形如 {{#if condition}} 的标准 Handlebars
+      控制结构开头，已知无安全风险。
+    category: template_expression
+    severity_override: safe

@@ -1,0 +1,12 @@
+version_format: semver
+allow_deletion: false
+lock_on_status:
+  - review
+  - canary
+auto_increment: true
+changelog_required: true
+tag_pattern: "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+snapshot_on_publish: true
+retention_policy:
+  keep_minor_versions: 10
+  keep_major_versions: all

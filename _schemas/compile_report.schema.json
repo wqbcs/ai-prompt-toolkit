@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CompileReport",
+  "type": "object",
+  "required": ["timestamp", "template_id", "status", "details", "warnings"],
+  "properties": {
+    "timestamp": {"type": "string", "format": "date-time"},
+    "template_id": {"type": "string", "pattern": "^[A-Za-z0-9_-]+$"},
+    "status": {"type": "string", "enum": ["success", "partial", "failed", "blocked"]},
+    "details": {
+      "type": "object",
+      "properties": {
+        "activated_branches": {"type": "array", "items": {"type": "string"}},
+        "ignored_branches": {"type": "array", "items": {"type": "string"}},
+        "uncovered_conditions": {"type": "array", "items": {"type": "string"}},
+        "compilation_time_ms": {"type": "number"},
+        "cache_hit": {"type": "boolean"}
+      }
+    },
+    "warnings": {"type": "array", "items": {"type": "string"}}
+  }
+}

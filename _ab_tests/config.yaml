@@ -1,0 +1,13 @@
+min_sample_size: 30
+max_retries: 3
+retry_backoff_base: 2
+timeout_seconds: 30
+credential_encryption: aes-256-gcm
+split_strategy:
+  method: random_hash
+  seed: 42
+  traffic_allocation:
+    control: 50
+    treatment: 50
+significance_level: 0.05
+statistical_test: proportion_z

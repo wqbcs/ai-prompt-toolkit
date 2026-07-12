@@ -1,0 +1,74 @@
+rules:
+  - id: INH-001
+    name: 继承链最大深度限制
+    category: inheritance
+    type: depth_check
+    max_depth: 5
+    severity: high
+    description: |
+      限制提示词模板继承链的最大深度为 5 层。过深的继承链会导致编译性能下降、
+      调试困难，且增加不可预期行为的风险。当继承链深度超过阈值时，应阻断编译
+      并提示用户简化继承结构。
+    remediation: |
+      1. 将深层继承链拆分为更扁平的组合结构
+      2. 使用混入（Mixin）模式替代深层继承
+      3. 在中间层引入合并节点减少嵌套深度
+    validation:
+      check_type: depth
+      threshold: 5
+      on_exceed: block
+
+  - id: INH-002
+    name: 循环继承检测
+    category: inheritance
+    type: circular_check
+    severity: critical
+    description: |
+      检测继承链中的循环依赖。当模板 A 继承模板 B，模板 B 又继承模板 A
+      （或通过中间模板间接形成环）时，编译器将陷入无限递归。循环继承是严重错误，
+      必须在编译前阻断。
+    remediation: |
+      1. 检查继承图中的环路并断开循环依赖
+      2. 使用有向无环图（DAG）验证继承结构
+      3. 引入编译前依赖图分析阶段
+    validation:
+      check_type: circular
+      on_detect: block
+      algorithm: tarjan_scc
+
+  - id: INH-003
+    name: 链路断裂检测
+    category: inheritance
+    type: broken_chain_check
+    severity: high
+    description: |
+      检测继承链中引用了不存在或不可访问的父模板。当模板声明继承一个已被删除、
+      未发布或无权限访问的模板时，继承链断裂，编译将失败。此规则确保所有继承
+      引用在编译前可解析。
+    remediation: |
+      1. 确认被引用的父模板存在且已发布
+      2. 检查访问权限配置
+      3. 为关键模板设置删除保护
+    validation:
+      check_type: reference_resolution
+      on_detect: block
+      resolution_scope: [published, accessible]
+
+  - id: INH-004
+    name: 风险传播检测
+    category: inheritance
+    type: risk_propagation_check
+    severity: medium
+    description: |
+      检测安全风险在继承链中的传播。当父模板存在安全扫描标记（如注入风险、
+      越权操作等）时，子模板将自动继承这些风险。此规则追踪风险标记在继承链
+      中的传播路径，确保子模板对继承的风险有明确感知。
+    remediation: |
+      1. 在子模板中显式声明已知的继承风险
+      2. 通过覆盖（Override）消除继承的风险标记
+      3. 在安全扫描报告中标注风险传播路径
+    validation:
+      check_type: risk_trace
+      on_detect: warn
+      risk_severity_threshold: medium
+      propagation_mode: transitive
