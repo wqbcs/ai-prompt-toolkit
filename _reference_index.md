@@ -129,3 +129,41 @@
 | 日期 | 变更内容 |
 |------|---------|
 | 2026-05-28 | v1.0.0 初始生成：修复00总览附录C锚点引用；为01-12核心文档添加反向引用标注；生成全量引用索引 |
+| 2026-07-12 | v2.0.0 新增v25引用：A/B测试v2(7文件)、模板继承(4文件)、条件编译(4文件)、可观测性5场景、混沌工程5场景、GitOps 5场景、平台工程5场景、华为云4场景、UX 5项、脚本5个 |
+
+---
+
+## 七、v25新增引用条目
+
+### 7.1 功能引擎引用
+
+| 源文档 | 目标文档 | 引用类型 |
+|--------|---------|---------|
+| evaluation_framework_v7 | ab_test_v2_config | A/B测试配置 |
+| evaluation_framework_v7 | parallel_executor | 并行调度 |
+| evaluation_framework_v7 | statistical_engine | 统计评估 |
+| evaluation_framework_v7 | win_rate_matrix_template | 胜率矩阵 |
+| evaluation_framework_v7 | optimal_match_template | 最优匹配 |
+| evaluation_framework_v7 | comparison_report_template | 对比报告 |
+| inheritance_schema | inheritance_graph | 继承图谱 |
+| inheritance_schema | merge_engine | 合并引擎 |
+| inheritance_schema | propagation_report_template | 变更传播 |
+| syntax_spec | cache_design | 缓存设计 |
+| syntax_spec | compilation_report_template | 编译报告 |
+
+### 7.2 场景模板引用
+
+| 场景分类 | 模板数 | 与核心文档关联 |
+|----------|--------|---------------|
+| 可观测性(C1) | 5 | 07_监控运维 |
+| 混沌工程(C2) | 5 | 07_监控运维, 05_测试策略 |
+| GitOps(C3) | 5 | 06_CI_CD |
+| 平台工程(C4) | 5 | 02_架构设计, 11_项目管理 |
+| 华为云(E1-E4) | 4 | 02_架构设计, 07_监控运维 |
+
+### 7.3 UX和脚本引用
+
+| 类别 | 文件数 | 引用类型 |
+|------|--------|---------|
+| UX组件 | 5 | 00_总览使用指南 |
+| 校验脚本 | 5 | 自动化工具 |
