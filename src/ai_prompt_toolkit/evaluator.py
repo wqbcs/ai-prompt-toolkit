@@ -319,7 +319,7 @@ def evaluate_template(
     dimensions: list[str] | None = None,
     categories: list[str] | None = None,
 ) -> EvaluationReport:
-    """52维度模板评估函数。
+    """62维度模板评估函数。
 
     Args:
         template_id: 模板标识。

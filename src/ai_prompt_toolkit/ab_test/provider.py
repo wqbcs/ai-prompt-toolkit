@@ -52,6 +52,22 @@ class CostTracker:
 
 _global_cost_tracker = CostTracker()
 
+_shared_http_client: Any = None
+
+
+def _get_shared_http_client() -> Any:
+    global _shared_http_client
+    if _shared_http_client is None:
+        try:
+            import httpx
+            _shared_http_client = httpx.AsyncClient(
+                timeout=30.0,
+                limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+            )
+        except ImportError:
+            raise ProviderError("system", "httpx未安装，请运行: pip install httpx")
+    return _shared_http_client
+
 
 class ProviderError(Exception):
     def __init__(self, provider: str, message: str) -> None:
@@ -99,27 +115,36 @@ class BaseProvider(ABC):
             status=TestStatus.FAILED, error_message=error,
         )
 
+    def _make_simulated_result(self, prompt: str, start: float, provider: str) -> ModelResult:
+        latency = (time.perf_counter() - start) * 1000
+        return ModelResult(
+            model_config=self._config, prompt_template=prompt,
+            response=f"[{provider} {self._config.model_name} simulated]",
+            latency_ms=round(latency, 2), token_count=len(prompt.split()) + 50,
+            cost=0.0, status=TestStatus.COMPLETED,
+        )
+
     async def _http_post(self, url: str, headers: dict[str, str], payload: dict[str, Any]) -> dict[str, Any]:
         try:
             import httpx
         except ImportError:
             raise ProviderError(self._config.provider.value, "httpx未安装，请运行: pip install httpx")
 
+        client = _get_shared_http_client()
         delay = _RETRY_BASE_DELAY
         last_error: Exception | None = None
         for attempt in range(_MAX_RETRIES):
             try:
-                async with httpx.AsyncClient(timeout=30.0) as client:
-                    resp = await client.post(url, json=payload, headers=headers)
-                    if resp.status_code == 429:
-                        retry_after = float(resp.headers.get("retry-after", delay))
-                        logger.warning("429 Rate Limit, 等待 %.1fs (attempt %d/%d)", retry_after, attempt + 1, _MAX_RETRIES)
-                        import asyncio
-                        await asyncio.sleep(retry_after)
-                        delay *= 2
-                        continue
-                    resp.raise_for_status()
-                    return resp.json()
+                resp = await client.post(url, json=payload, headers=headers)
+                if resp.status_code == 429:
+                    retry_after = float(resp.headers.get("retry-after", delay))
+                    logger.warning("429 Rate Limit, 等待 %.1fs (attempt %d/%d)", retry_after, attempt + 1, _MAX_RETRIES)
+                    import asyncio
+                    await asyncio.sleep(retry_after)
+                    delay *= 2
+                    continue
+                resp.raise_for_status()
+                return resp.json()
             except Exception as e:
                 last_error = e
                 if attempt < _MAX_RETRIES - 1:
@@ -180,15 +205,6 @@ class OpenAIProvider(BaseProvider):
         except Exception as e:
             return self._make_error_result(prompt, str(e))
 
-    def _make_simulated_result(self, prompt: str, start: float, provider: str) -> ModelResult:
-        latency = (time.perf_counter() - start) * 1000
-        return ModelResult(
-            model_config=self._config, prompt_template=prompt,
-            response=f"[{provider} {self._config.model_name} simulated]",
-            latency_ms=round(latency, 2), token_count=len(prompt.split()) + 50,
-            cost=0.0, status=TestStatus.COMPLETED,
-        )
-
     def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
         rates = self._PRICING.get(self._config.model_name, (0.001, 0.002))
         return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
@@ -211,10 +227,10 @@ class AnthropicProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "Anthropic")
+            return self._make_simulated_result(prompt, start, "Anthropic")
 
         if SIMULATED_MODE:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "Anthropic")
+            return self._make_simulated_result(prompt, start, "Anthropic")
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
@@ -269,10 +285,10 @@ class DeepSeekProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "DeepSeek")
+            return self._make_simulated_result(prompt, start, "DeepSeek")
 
         if SIMULATED_MODE:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "DeepSeek")
+            return self._make_simulated_result(prompt, start, "DeepSeek")
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
@@ -325,10 +341,10 @@ class HuaweiProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "HuaweiCloud")
+            return self._make_simulated_result(prompt, start, "HuaweiCloud")
 
         if SIMULATED_MODE:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "HuaweiCloud")
+            return self._make_simulated_result(prompt, start, "HuaweiCloud")
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
@@ -388,10 +404,10 @@ class AliyunProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "Aliyun")
+            return self._make_simulated_result(prompt, start, "Aliyun")
 
         if SIMULATED_MODE:
-            return OpenAIProvider._make_simulated_result(self, prompt, start, "Aliyun")
+            return self._make_simulated_result(prompt, start, "Aliyun")
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
