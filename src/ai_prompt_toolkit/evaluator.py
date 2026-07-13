@@ -1,4 +1,4 @@
-"""58维度评估框架 v9——D1-D58维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+"""62维度评估框架 v10——D1-D62维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
 import time
@@ -67,6 +67,10 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D56", "name": "CLI完备度", "category": "toolchain", "weight": 0.9, "description": "CLI子命令是否端到端可用(非骨架echo)"},
     {"id": "D57", "name": "Playground可用性", "category": "toolchain", "weight": 0.8, "description": "条件编译Playground Web UI是否可交互使用"},
     {"id": "D58", "name": "CI/CD集成度", "category": "toolchain", "weight": 0.7, "description": "是否集成CI/CD流水线质量门禁"},
+    {"id": "D59", "name": "模板类型感知", "category": "toolchain", "weight": 0.8, "description": "Linter是否区分知识型/提示词型模板并调整规则"},
+    {"id": "D60", "name": "Front Matter v3合规", "category": "toolchain", "weight": 0.9, "description": "模板是否使用v3 Schema(i18n_status/market_status/lint_score)"},
+    {"id": "D61", "name": "VS Code扩展集成", "category": "toolchain", "weight": 0.7, "description": "是否提供VS Code Lint扩展实现编辑器内实时检查"},
+    {"id": "D62", "name": "新用户引导可用性", "category": "toolchain", "weight": 0.6, "description": "是否提供3步引导(init命令)帮助新用户快速上手"},
 ]
 
 
