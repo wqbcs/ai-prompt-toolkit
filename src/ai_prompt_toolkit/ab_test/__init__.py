@@ -14,13 +14,15 @@ from ai_prompt_toolkit.ab_test.types import (
     WinRateCell,
 )
 from ai_prompt_toolkit.ab_test.provider import (
-    AliyunProvider,
     AnthropicProvider,
     BaseProvider,
+    CostTracker,
+    DeepSeekProvider,
     HuaweiProvider,
     OpenAIProvider,
     ProviderError,
     create_provider,
+    get_cost_tracker,
 )
 from ai_prompt_toolkit.ab_test.engine import ParallelEngine, TaskOutput, TaskProgress
 from ai_prompt_toolkit.ab_test.statistics import (
@@ -89,10 +91,13 @@ __all__ = [
     "AliyunProvider",
     "AnthropicProvider",
     "BaseProvider",
+    "CostTracker",
+    "DeepSeekProvider",
     "HuaweiProvider",
     "OpenAIProvider",
     "ProviderError",
     "create_provider",
+    "get_cost_tracker",
     "ParallelEngine",
     "TaskOutput",
     "TaskProgress",
