@@ -310,6 +310,8 @@ class DeepSeekProvider(BaseProvider):
 class HuaweiProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
         "pangu-large": (0.012, 0.036), "pangu-medium": (0.004, 0.012),
+        "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
+        "qwen-72b": (0.006, 0.018),
     }
 
     def validate(self) -> bool:
@@ -321,14 +323,103 @@ class HuaweiProvider(BaseProvider):
     async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
         start = time.perf_counter()
         try:
-            self._load_credential()
+            key = self._load_credential()
         except ProviderError:
             return OpenAIProvider._make_simulated_result(self, prompt, start, "HuaweiCloud")
 
         if SIMULATED_MODE:
             return OpenAIProvider._make_simulated_result(self, prompt, start, "HuaweiCloud")
 
-        return OpenAIProvider._make_simulated_result(self, prompt, start, "HuaweiCloud")
+        if _global_cost_tracker.limit_reached:
+            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
+
+        try:
+            api_base = self._config.api_base or "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+            if "modelarts" in api_base.lower() or "huawei" in api_base.lower():
+                url = api_base.rstrip("/") + "/chat/completions"
+                headers = {"X-Auth-Token": key, "Content-Type": "application/json"}
+            else:
+                url = api_base.rstrip("/") + "/chat/completions"
+                headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+            payload = {
+                "model": self._config.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": self._config.temperature,
+                "max_tokens": self._config.max_tokens,
+            }
+            data = await self._http_post(url, headers, payload)
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            if not content:
+                content = data.get("result", data.get("output", {}).get("text", ""))
+            usage = data.get("usage", {})
+            input_tokens = usage.get("prompt_tokens", usage.get("input_tokens", 0))
+            output_tokens = usage.get("completion_tokens", usage.get("output_tokens", 0))
+            cost = self.estimate_cost(input_tokens, output_tokens)
+            _global_cost_tracker.record(cost)
+            latency = (time.perf_counter() - start) * 1000
+            return ModelResult(
+                model_config=self._config, prompt_template=prompt, response=content,
+                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
+                cost=cost, status=TestStatus.COMPLETED,
+            )
+        except Exception as e:
+            return self._make_error_result(prompt, str(e))
+
+    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        rates = self._PRICING.get(self._config.model_name, (0.004, 0.012))
+        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
+
+
+class AliyunProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "qwen-max": (0.004, 0.012), "qwen-plus": (0.0008, 0.002),
+        "qwen-turbo": (0.0003, 0.0006), "qwen-long": (0.0005, 0.002),
+    }
+
+    def validate(self) -> bool:
+        try:
+            return self._load_credential().startswith("sk-") and len(self._load_credential()) > 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        start = time.perf_counter()
+        try:
+            key = self._load_credential()
+        except ProviderError:
+            return OpenAIProvider._make_simulated_result(self, prompt, start, "Aliyun")
+
+        if SIMULATED_MODE:
+            return OpenAIProvider._make_simulated_result(self, prompt, start, "Aliyun")
+
+        if _global_cost_tracker.limit_reached:
+            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
+
+        try:
+            url = (self._config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1") + "/chat/completions"
+            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+            payload = {
+                "model": self._config.model_name,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": self._config.temperature,
+                "max_tokens": self._config.max_tokens,
+            }
+            data = await self._http_post(url, headers, payload)
+            content = data["choices"][0]["message"]["content"]
+            usage = data.get("usage", {})
+            input_tokens = usage.get("prompt_tokens", 0)
+            output_tokens = usage.get("completion_tokens", 0)
+            cost = self.estimate_cost(input_tokens, output_tokens)
+            _global_cost_tracker.record(cost)
+            latency = (time.perf_counter() - start) * 1000
+            return ModelResult(
+                model_config=self._config, prompt_template=prompt, response=content,
+                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
+                cost=cost, status=TestStatus.COMPLETED,
+            )
+        except Exception as e:
+            return self._make_error_result(prompt, str(e))
 
     def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
         rates = self._PRICING.get(self._config.model_name, (0.004, 0.012))
@@ -338,7 +429,8 @@ class HuaweiProvider(BaseProvider):
 _PROVIDER_REGISTRY: dict[ProviderType, type[BaseProvider]] = {
     ProviderType.OPENAI: OpenAIProvider,
     ProviderType.ANTHROPIC: AnthropicProvider,
-    ProviderType.ALIYUN: DeepSeekProvider,
+    ProviderType.ALIYUN: AliyunProvider,
+    ProviderType.DEEPSEEK: DeepSeekProvider,
     ProviderType.HUAWEI: HuaweiProvider,
 }
 

@@ -10,6 +10,7 @@ class ProviderType(Enum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
     ALIYUN = "aliyun"
+    DEEPSEEK = "deepseek"
     HUAWEI = "huawei"
 
 
