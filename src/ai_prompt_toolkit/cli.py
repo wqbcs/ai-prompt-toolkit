@@ -278,5 +278,26 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
         click.echo("(dry-run模式，未写入文件)")
 
 
+@main.command(name="init")
+@click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
+@click.option("--non-interactive", is_flag=True, help="非交互模式")
+def init_project(target: str, non_interactive: bool) -> None:
+    """新用户引导：3步创建AI提示词项目"""
+    from ai_prompt_toolkit.onboarding import run_onboarding
+
+    result = run_onboarding(target, non_interactive=non_interactive)
+    steps = result["steps_completed"]
+    errors = result.get("errors", [])
+
+    if steps == 3:
+        click.echo(f"\n引导完成! 创建了 {result['files_created']} 个文件，3步全部成功")
+    else:
+        click.echo(f"\n引导完成 {steps}/3 步")
+        for e in errors:
+            click.echo(f"  错误: {e}", err=True)
+
+    sys.exit(0 if steps == 3 else 1)
+
+
 if __name__ == "__main__":
     main()
