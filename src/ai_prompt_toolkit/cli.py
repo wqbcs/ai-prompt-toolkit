@@ -117,7 +117,15 @@ def scan(target: str, config: str | None, incremental: bool,
                f"(高:{high_count} 中:{medium_count} 低:{low_count})")
 
     if output and all_findings:
-        report_data = {"scan_target": target, "total_files": total, "findings": all_findings}
+        report_data = {
+            "scan_target": target,
+            "total_files": total,
+            "findings": all_findings,
+            "risk_level": "critical" if high_count > 0 and any(f.get("severity") == "critical" for f in all_findings)
+                         else "high" if high_count > 0
+                         else "medium" if medium_count > 0
+                         else "low" if low_count > 0 else "none",
+        }
         write_report(report_data, output, fmt=fmt)
         click.echo(f"报告: {output}")
 
@@ -128,10 +136,11 @@ def scan(target: str, config: str | None, incremental: bool,
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option("--config", help="Lint配置YAML文件路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "cli"]),
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
-def lint(target: str, config: str | None, fmt: str, fix: bool) -> None:
+@click.option("--output", "-o", help="报告输出路径")
+def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -166,8 +175,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool) -> None:
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
         click.echo(f"自动修复: {fixed} 处")
 
-    if output := config:
+    if output:
         report_data = {
+            "_report_type": "lint",
             "lint_target": target,
             "total_files": len(templates),
             "average_score": round(avg_score, 1),
@@ -175,6 +185,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool) -> None:
             "results": [r.to_dict() for r in all_results],
         }
         write_report(report_data, output, fmt=fmt)
+        click.echo(f"报告: {output}")
 
     has_errors = any(r.has_errors for r in all_results)
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))

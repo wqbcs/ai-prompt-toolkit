@@ -68,23 +68,8 @@ def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> N
 
 
 def _generate_html_report(data: dict[str, Any]) -> str:
-    title = data.get("template_id", data.get("scan_target", "Report"))
-    findings = data.get("findings", [])
-    rows = ""
-    for f in findings:
-        sev = f.get("severity", "info")
-        color = {"high": "#ef4444", "medium": "#f59e0b", "low": "#22c55e"}.get(sev, "#3b82f6")
-        rows += f'<tr><td style="color:{color};font-weight:bold">{sev.upper()}</td>'
-        rows += f'<td>{f.get("rule_id", "")}</td><td>{f.get("description", "")}</td>'
-        rows += f'<td>{f.get("remediation", "")}</td></tr>\n'
-    return f"""<!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="utf-8"><title>{title} - 扫描报告</title>
-<style>body{{font-family:system-ui;max-width:960px;margin:2rem auto;padding:0 1rem}}
-table{{width:100%;border-collapse:collapse}}th,td{{text-align:left;padding:8px;border:1px solid #e5e7eb}}
-th{{background:#f9fafb}}h1{{color:#1e293b}}</style></head>
-<body><h1>扫描报告: {title}</h1>
-<table><thead><tr><th>严重级别</th><th>规则ID</th><th>描述</th><th>修复建议</th></tr></thead>
-<tbody>{rows}</tbody></table></body></html>"""
+    from ai_prompt_toolkit.report.html_reporter import generate_html_report
+    return generate_html_report(data)
 
 
 def determine_exit_code(
