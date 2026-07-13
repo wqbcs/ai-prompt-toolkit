@@ -2,6 +2,55 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v29.0.0] - 2026-07-13
+
+### Added (第十一轮成熟度循环 R11完成 + R11补充)
+
+#### 专业级HTML报告生成器
+- `report/html_reporter.py`: 安全扫描+Lint双模HTML报告
+- SVG圆环图(风险分布)+评分仪表盘+暗色/亮色主题切换
+- 按严重级别分组折叠面板+详情展开+修复建议
+- XSS安全转义+响应式布局
+
+#### 条件编译性能基准测试
+- `benchmarks/__init__.py`: 11项微基准(Lexer/Parser/Evaluator/Renderer/端到端)
+- LRU缓存命中vs未命中对比+5种模板复杂度缩放测试
+- BenchSuite+BenchResult数据结构+JSON序列化
+- CLI入口: `python -m ai_prompt_toolkit.benchmarks.compile_benchmark`
+
+#### 鸿蒙4个新场景模板
+- `harmonyos/e1_arkts_ui.md`: @State/LazyForEach/生命周期/@Builder/多设备适配
+- `harmonyos/e2_distributed.md`: 分布式数据同步/任务调度/设备发现/流转状态
+- `harmonyos/e3_performance.md`: 渲染优化/内存泄漏/启动优化/图片优化/线程模型
+- `harmonyos/e4_security.md`: 权限管理/HUKS加密/沙箱/网络安全
+
+#### YAML Front Matter v3升级
+- `frontmatter/__init__.py`: FrontMatterV3 Schema + v2→v3升级工具
+- v3新增: i18n_status(6枚举)/market_status(7枚举)/lint_score(0-100)/locale/translation_key
+- CLI新增 `upgrade-fm` 命令: `prompt-cli upgrade-fm -t _scenarios --dry-run`
+- 38个场景模板全部升级至v3
+
+#### VS Code Prompt Lint扩展
+- `vscode-prompt-lint/`: VS Code扩展完整项目(TypeScript)
+- 3个命令: lintActiveFile/scanActiveFile/compileActiveFile
+- 自动Lint: onSave + onType(可选)触发
+- 参考vscode-markdownlint轻量模式架构
+
+#### 新用户3步引导v3
+- `onboarding/__init__.py`: Step1初始化→Step2编译→Step3检查
+- CLI新增 `init` 命令: `prompt-cli init -t ./my-project`
+- 零配置启动+幂等设计+即时反馈
+
+### Fixed
+- 修复renderer.py else分支bug: CONDITIONAL节点else-body未正确展开
+- 修复parser.py `in`关键字误匹配: `industry`被解析为`in`+`dustry`，改用`\b`词边界
+- 修复lint命令HTML输出格式支持(--format html)和--output选项
+
+### Changed
+- lint命令新增`--output`选项和`html`格式支持
+- scan命令HTML报告现在使用专业级报告器(SVG圆环图+主题切换)
+- 测试总数: 164→294个
+
 ## [v28.0.0] - 2026-07-13
 
 ### Added (第十一轮成熟度循环 R11: v27→v28 — "代码→产品"质变)
