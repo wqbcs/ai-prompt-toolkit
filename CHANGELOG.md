@@ -2,6 +2,62 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v31.0.0] - 2026-07-13
+
+### Added (第十三轮成熟度循环 R13: v30→v31)
+
+#### HuaweiProvider真实API调用
+- 实现华为云ModelArts/盘古API真实调用(X-Auth-Token认证)
+- 降级模拟策略: SIMULATED_MODE下自动降级
+- 新增pangu-nlp/pangu-vision/qwen-72b定价
+
+#### AliyunProvider独立Provider
+- 新增AliyunProvider(通义千问dashscope API)
+- ProviderType新增DEEPSEEK枚举，Aliyun不再映射到DeepSeek
+- qwen-max/qwen-plus/qwen-turbo/qwen-long定价
+
+#### 安全扫描规则扩展(5→15条)
+- INJ-006 间接注入(OWASP LLM01, CRITICAL)
+- INJ-007 越狱攻击(OWASP LLM02, CRITICAL)
+- INJ-008 多轮攻击(OWASP LLM06, HIGH)
+- INJ-009 编码绕过(OWASP LLM02变体, HIGH)
+- INJ-010 多语言注入(中文变体, HIGH)
+- INJ-011 系统提示泄露(OWASP LLM07, HIGH)
+- INJ-012 输出操纵(OWASP LLM05, MEDIUM)
+- INJ-013 权限提升(OWASP LLM08, HIGH)
+- INJ-014 供应链注入(OWASP LLM03, MEDIUM)
+- INJ-015 情感操纵(OWASP LLM02变体, MEDIUM)
+
+#### 13个新场景模板
+- 华为云prompt模板(e15-e18): CCE运维/GaussDB优化/ModelArts开发/DEH规划
+- 鸿蒙模板(e5-e10): Stage模型/DataShare/Form卡片/AVSession/NEXT迁移/ArkUI-X
+- 国产化模板(domestic_infra/e1-e3): 鲲鹏ARM/昇腾NPU/openEuler运维
+
+#### Linter模板类型感知增强
+- knowledge型新增排除: P004(过长)/P006(敏感)/P015(约束过多)/P016(歧义)
+- 9条规则豁免(从5条扩展)，知识文档合理豁免
+- Lint评分: 74.0→84.9/100 (+14.7%)
+
+#### Playground Lint可视化
+- SVG环形评分仪表盘(80+绿/60+黄/<60红)
+- Lint问题列表(按严重级别着色)
+- debounce 800ms自动Lint
+
+#### 版本号动态注入
+- CLI/Playground/HTML报告: 从__version__动态读取
+- 新增 GET /api/version 端点
+- 消除所有硬编码版本号
+
+### Fixed
+- evaluator.py D40: 移除未定义变量length引用(NameError崩溃修复)
+- TTL测试稳定性: sleep 0.01→0.05
+
+### Changed
+- 模板总数: 38→51(新增13个)
+- 测试总数: 294→337(新增43个A/B测试)
+- 安全扫描规则: 5→15条(OWASP LLM Top 10对齐)
+- Provider枚举: 4→5种(ALIYUN/DEEPSEEK独立)
+
 ## [v30.0.0] - 2026-07-13
 
 ### Added (第十二轮成熟度循环 R12: v29→v30)
