@@ -309,6 +309,26 @@ class _DimensionEvaluator:
             return 5.0
         elif dim_id == "D52":
             return 5.0
+        elif dim_id == "D53":
+            return 8.0 if self._has_pattern(r"lint_score|lint") else 3.0
+        elif dim_id == "D54":
+            return 8.0 if self._has_pattern(r"i18n_status|locale|translation") else 3.0
+        elif dim_id == "D55":
+            return 8.0 if self._has_pattern(r"provider|api_key|PROMPT_CLI_REAL_API") else 3.0
+        elif dim_id == "D56":
+            return 7.0 if self._has_pattern(r"compile|scan|lint|ab-test|redteam|serve") else 3.0
+        elif dim_id == "D57":
+            return 7.0 if self._has_pattern(r"playground|/api/compile|WebSocket") else 3.0
+        elif dim_id == "D58":
+            return 7.0 if self._has_pattern(r"github|workflows|quality-gate|CI") else 3.0
+        elif dim_id == "D59":
+            return 8.0 if self._has_pattern(r"template_type|knowledge|prompt") else 4.0
+        elif dim_id == "D60":
+            return 8.0 if self._has_pattern(r"market_status|i18n_status|lint_score") else 3.0
+        elif dim_id == "D61":
+            return 7.0 if self._has_pattern(r"vscode|extension|CodeActions") else 3.0
+        elif dim_id == "D62":
+            return 7.0 if self._has_pattern(r"init|onboarding|引导") else 3.0
         return 5.0
 
 
