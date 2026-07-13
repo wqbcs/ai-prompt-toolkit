@@ -6,17 +6,23 @@
 <title>AI Prompt Toolkit Playground</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
+:root{--bg:#ffffff;--surface:#f8fafc;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--primary:#3b82f6;--editor-bg:#1e293b;--editor-fg:#e2e8f0}
+[data-theme="dark"]{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;--primary:#818cf8;--editor-bg:#0f172a;--editor-fg:#a5f3fc}
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;background:var(--bg);color:var(--text)}
 .editor{font-family:'Fira Code',monospace;font-size:13px;line-height:1.6;resize:none;
-  border:1px solid #e5e7eb;border-radius:6px;padding:12px;width:100%;
-  background:#1e293b;color:#e2e8f0;tab-size:2}
-.editor:focus{outline:none;border-color:#3b82f6}
-.panel-header{background:#f1f5f9;padding:8px 12px;border-bottom:1px solid #e5e7f0;
-  font-weight:600;font-size:14px;color:#334155;display:flex;justify-content:space-between;align-items:center}
+  border:1px solid var(--border);border-radius:6px;padding:12px;width:100%;
+  background:var(--editor-bg);color:var(--editor-fg);tab-size:2}
+.editor:focus{outline:none;border-color:var(--primary)}
+.panel-header{background:var(--surface);padding:8px 12px;border-bottom:1px solid var(--border);
+  font-weight:600;font-size:14px;color:var(--text);display:flex;justify-content:space-between;align-items:center}
 .status-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
 .status-ok{background:#dcfce7;color:#166534}
 .status-err{background:#fee2e2;color:#991b1b}
-.branch-info{font-size:11px;color:#64748b;padding:4px 12px;background:#f8fafc;border-top:1px solid #e5e7f0}
+.branch-info{font-size:11px;color:var(--text2);padding:4px 12px;background:var(--surface);border-top:1px solid var(--border)}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border)}
+.tab{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;background:var(--surface)}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab:hover{color:var(--text)}
 .lint-gauge{width:48px;height:48px;position:relative;display:inline-block}
 .lint-gauge svg{transform:rotate(-90deg)}
 .lint-gauge-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700}
@@ -24,32 +30,35 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
 .lint-high{background:#fef2f2;color:#991b1b;border-left:3px solid #ef4444}
 .lint-medium{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b}
 .lint-low{background:#f0fdf4;color:#166534;border-left:3px solid #22c55e}
+.scan-critical{background:#fef2f2;color:#991b1b;border-left:3px solid #dc2626}
+.scan-high{background:#fef2f2;color:#991b1b;border-left:3px solid #ef4444}
+.scan-medium{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b}
+.scan-low{background:#f0fdf4;color:#166534;border-left:3px solid #22c55e}
+.theme-btn{font-size:14px;padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text)}
 </style>
 </head>
-<body class="bg-gray-50">
+<body>
 <div class="flex flex-col h-screen">
-  <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+  <header style="background:var(--surface);border-bottom:1px solid var(--border);padding:4px 16px;display:flex;align-items:center;justify-content:space-between">
     <div class="flex items-center gap-3">
-      <h1 class="text-lg font-bold text-gray-800">AI Prompt Toolkit Playground</h1>
-      <span class="text-xs text-gray-400" id="version-badge"></span>
+      <h1 style="font-size:16px;font-weight:700;color:var(--text)">AI Prompt Toolkit Playground</h1>
+      <span style="font-size:11px;color:var(--text2)" id="version-badge"></span>
     </div>
     <div class="flex items-center gap-2">
-      <label class="text-xs text-gray-500">模型:</label>
-      <input id="ctx-model" type="text" value="gpt-4o" class="border rounded px-2 py-1 text-xs w-24">
-      <label class="text-xs text-gray-500">语言:</label>
-      <input id="ctx-lang" type="text" value="zh-CN" class="border rounded px-2 py-1 text-xs w-16">
-      <label class="text-xs text-gray-500">行业:</label>
-      <input id="ctx-industry" type="text" value="" placeholder="可选" class="border rounded px-2 py-1 text-xs w-20">
-      <button id="btn-compile" class="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">编译</button>
+      <label style="font-size:11px;color:var(--text2)">模型:</label>
+      <input id="ctx-model" type="text" value="gpt-4o" style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;width:80px;background:var(--bg);color:var(--text)">
+      <label style="font-size:11px;color:var(--text2)">语言:</label>
+      <input id="ctx-lang" type="text" value="zh-CN" style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;width:60px;background:var(--bg);color:var(--text)">
+      <label style="font-size:11px;color:var(--text2)">行业:</label>
+      <input id="ctx-industry" type="text" value="" placeholder="可选" style="border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:11px;width:70px;background:var(--bg);color:var(--text)">
+      <button id="btn-compile" style="background:var(--primary);color:#fff;font-size:11px;padding:3px 10px;border-radius:4px;border:none;cursor:pointer">编译</button>
+      <button class="theme-btn" id="btn-theme">🌙</button>
     </div>
   </header>
   <div class="flex flex-1 overflow-hidden">
-    <div class="flex-1 flex flex-col border-r border-gray-200">
-      <div class="panel-header">
-        <span>模板源码</span>
-        <span class="text-xs text-gray-400">{{#if expr}}...{{else}}...{{/if}}</span>
-      </div>
-      <textarea id="source-editor" class="editor" style="height:calc(100vh - 140px)" spellcheck="false" placeholder="输入模板内容">{{#if model=="gpt-4o"}}
+    <div class="flex-1 flex flex-col" style="border-right:1px solid var(--border)">
+      <div class="panel-header"><span>模板源码</span><span style="font-size:11px;color:var(--text2)">{{#if expr}}...{{else}}...{{/if}}</span></div>
+      <textarea id="source-editor" class="editor" style="height:calc(100vh - 100px)" spellcheck="false" placeholder="输入模板内容">{{#if model=="gpt-4o"}}
 你正在使用GPT-4o模型，请发挥其多模态优势。
 {{#if language=="en-US"}}
 Please leverage GPT-4o's multimodal capabilities.
@@ -61,39 +70,60 @@ Please leverage GPT-4o's multimodal capabilities.
 {{/if}}</textarea>
     </div>
     <div class="flex-1 flex flex-col">
-      <div class="panel-header">
-        <span>编译结果</span>
-        <span id="compile-status" class="status-badge status-ok">就绪</span>
+      <div class="tab-bar">
+        <div class="tab active" data-tab="compile">编译</div>
+        <div class="tab" data-tab="lint">Lint</div>
+        <div class="tab" data-tab="scan">安全扫描</div>
       </div>
-      <pre id="result-editor" class="editor" style="height:calc(50vh - 90px);background:#0f172a;color:#a5f3fc">点击"编译"或修改模板后自动编译...</pre>
-      <div id="branch-info" class="branch-info"></div>
-      <div class="panel-header">
-        <div class="flex items-center gap-2">
-          <span>Lint检查</span>
-          <div id="lint-gauge" class="lint-gauge" style="display:none">
-            <svg width="48" height="48" viewBox="0 0 48 48">
-              <circle cx="24" cy="24" r="20" fill="none" stroke="#e5e7eb" stroke-width="4"/>
-              <circle id="lint-gauge-arc" cx="24" cy="24" r="20" fill="none" stroke="#22c55e" stroke-width="4" stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round"/>
-            </svg>
-            <span id="lint-gauge-text" class="lint-gauge-text">0</span>
+      <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
+        <div class="panel-header"><span>编译结果</span><span id="compile-status" class="status-badge status-ok">就绪</span></div>
+        <pre id="result-editor" class="editor" style="height:calc(50vh - 110px)">点击"编译"或修改模板后自动编译...</pre>
+        <div id="branch-info" class="branch-info"></div>
+      </div>
+      <div id="tab-lint" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header">
+          <div class="flex items-center gap-2"><span>Lint检查</span>
+            <div id="lint-gauge" class="lint-gauge" style="display:none">
+              <svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="none" stroke="var(--border)" stroke-width="4"/><circle id="lint-gauge-arc" cx="24" cy="24" r="20" fill="none" stroke="#22c55e" stroke-width="4" stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round"/></svg>
+              <span id="lint-gauge-text" class="lint-gauge-text">0</span>
+            </div>
           </div>
+          <span id="lint-count" style="font-size:11px;color:var(--text2)"></span>
         </div>
-        <span id="lint-count" class="text-xs text-gray-400"></span>
+        <div id="lint-findings" style="flex:1;overflow:auto;background:var(--surface);padding:8px"><p style="font-size:11px;color:var(--text2)">Lint结果将在此显示...</p></div>
       </div>
-      <div id="lint-findings" class="overflow-auto" style="height:calc(50vh - 90px);background:#f8fafc;padding:8px">
-        <p class="text-xs text-gray-400">Lint结果将在此显示...</p>
+      <div id="tab-scan" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header"><span>安全扫描</span><span id="scan-status" style="font-size:11px;color:var(--text2)"></span></div>
+        <div id="scan-findings" style="flex:1;overflow:auto;background:var(--surface);padding:8px"><p style="font-size:11px;color:var(--text2)">安全扫描结果将在此显示...</p></div>
       </div>
     </div>
   </div>
 </div>
 <script>
-let debounceTimer=null;
-let lintTimer=null;
+let debounceTimer=null,lintTimer=null,scanTimer=null;
 const srcEditor=document.getElementById('source-editor');
 const resultEditor=document.getElementById('result-editor');
 const statusBadge=document.getElementById('compile-status');
 const branchInfo=document.getElementById('branch-info');
 const btnCompile=document.getElementById('btn-compile');
+const btnTheme=document.getElementById('btn-theme');
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  document.querySelectorAll('.tab-content').forEach(c=>c.style.display='none');
+  document.getElementById('tab-'+name).style.display='flex';
+}
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme');
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('theme',next);
+  btnTheme.textContent=next==='dark'?'☀️':'🌙';
+}
+(function(){const s=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',s);btnTheme.textContent=s==='dark'?'☀️':'🌙'})();
+btnTheme.addEventListener('click',toggleTheme);
 
 async function compile(){
   const template=srcEditor.value;
@@ -103,75 +133,65 @@ async function compile(){
     const data=await resp.json();
     if(data.status==='success'){
       resultEditor.textContent=data.compiled_text;
-      statusBadge.textContent='编译成功';
-      statusBadge.className='status-badge status-ok';
+      statusBadge.textContent='编译成功';statusBadge.className='status-badge status-ok';
       const r=data.report||{};
       branchInfo.textContent=`激活分支: ${r.activated_branches?.length||0} | 忽略分支: ${r.ignored_branches?.length||0} | 警告: ${r.warnings?.length||0}`;
     }else{
-      resultEditor.textContent='错误: '+(data.error||'未知错误');
-      statusBadge.textContent='编译失败';
-      statusBadge.className='status-badge status-err';
-      branchInfo.textContent='';
+      resultEditor.textContent='错误: '+(data.error||'未知错误');statusBadge.textContent='编译失败';statusBadge.className='status-badge status-err';branchInfo.textContent='';
     }
-  }catch(e){
-    resultEditor.textContent='网络错误: '+e.message;
-    statusBadge.textContent='连接失败';
-    statusBadge.className='status-badge status-err';
-  }
+  }catch(e){resultEditor.textContent='网络错误: '+e.message;statusBadge.textContent='连接失败';statusBadge.className='status-badge status-err'}
 }
 
 async function runLint(){
   const template=srcEditor.value;
-  const templateType=document.querySelector('input[name="template_type"]:checked')?.value||'prompt';
   try{
-    const resp=await fetch('/api/lint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:templateType})});
+    const resp=await fetch('/api/lint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
     const data=await resp.json();
-    if(data.status==='success'){
-      updateLintUI(data.score,data.findings);
-    }
+    if(data.status==='success')updateLintUI(data.score,data.findings);
   }catch(e){console.error('Lint error:',e)}
 }
 
+async function runScan(){
+  const template=srcEditor.value;
+  try{
+    const resp=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template})});
+    const data=await resp.json();
+    if(data.status==='success')updateScanUI(data.total_findings,data.findings);
+  }catch(e){console.error('Scan error:',e)}
+}
+
 function updateLintUI(score,findings){
-  const gauge=document.getElementById('lint-gauge');
-  const arc=document.getElementById('lint-gauge-arc');
-  const text=document.getElementById('lint-gauge-text');
-  const count=document.getElementById('lint-count');
-  const container=document.getElementById('lint-findings');
+  const gauge=document.getElementById('lint-gauge'),arc=document.getElementById('lint-gauge-arc'),text=document.getElementById('lint-gauge-text'),count=document.getElementById('lint-count'),container=document.getElementById('lint-findings');
   gauge.style.display='inline-block';
-  const pct=score/100;
-  const circ=2*Math.PI*20;
+  const pct=score/100,circ=2*Math.PI*20;
   arc.setAttribute('stroke-dashoffset',circ*(1-pct));
   arc.setAttribute('stroke',score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444');
   text.textContent=Math.round(score);
   text.style.color=score>=80?'#166534':score>=60?'#92400e':'#991b1b';
   count.textContent=findings.length+'个问题';
-  if(!findings.length){
-    container.innerHTML='<p class="text-xs text-green-600 font-medium">所有检查通过！</p>';
-    return;
-  }
+  if(!findings.length){container.innerHTML='<p style="font-size:11px;color:#22c55e;font-weight:600">所有检查通过！</p>';return}
   const sevMap={high:'lint-high',medium:'lint-medium',low:'lint-low',info:'lint-low',critical:'lint-high'};
-  container.innerHTML=findings.map(f=>{
-    const cls=sevMap[f.severity]||'lint-low';
-    return `<div class="lint-finding ${cls}"><strong>${f.rule_id}</strong> ${f.description}</div>`;
-  }).join('');
+  container.innerHTML=findings.map(f=>`<div class="lint-finding ${sevMap[f.severity]||'lint-low'}"><strong>${f.rule_id}</strong> ${f.description}</div>`).join('');
+}
+
+function updateScanUI(total,findings){
+  const status=document.getElementById('scan-status'),container=document.getElementById('scan-findings');
+  status.textContent=total+'个发现';
+  if(!total){container.innerHTML='<p style="font-size:11px;color:#22c55e;font-weight:600">安全扫描通过！未发现注入风险。</p>';return}
+  const sevMap={critical:'scan-critical',high:'scan-high',medium:'scan-medium',low:'scan-low',info:'scan-low'};
+  container.innerHTML=findings.map(f=>`<div class="lint-finding ${sevMap[f.severity]||'scan-low'}"><strong>${f.rule_id}</strong> ${f.description}</div>`).join('');
 }
 
 btnCompile.addEventListener('click',compile);
 srcEditor.addEventListener('input',()=>{
-  clearTimeout(debounceTimer);
-  clearTimeout(lintTimer);
+  clearTimeout(debounceTimer);clearTimeout(lintTimer);clearTimeout(scanTimer);
   debounceTimer=setTimeout(compile,500);
   lintTimer=setTimeout(runLint,800);
+  scanTimer=setTimeout(runScan,1200);
 });
-['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{
-  document.getElementById(id).addEventListener('change',compile);
-});
-fetch('/api/version').then(r=>r.json()).then(d=>{
-  document.getElementById('version-badge').textContent='v'+d.version;
-}).catch(()=>{});
-compile();
-runLint();
+['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{document.getElementById(id).addEventListener('change',compile)});
+fetch('/api/version').then(r=>r.json()).then(d=>{document.getElementById('version-badge').textContent='v'+d.version}).catch(()=>{});
+compile();runLint();runScan();
 </script>
 </body>
 </html>

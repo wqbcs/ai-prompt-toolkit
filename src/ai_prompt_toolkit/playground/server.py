@@ -111,6 +111,19 @@ async def api_lint(body: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+@app.post("/api/scan")
+async def api_scan(body: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    template = body.get("template", "")
+    detector = InjectionDetector()
+    findings = detector.detect(template, template_id="playground")
+    return {
+        "status": "success",
+        "total_findings": len(findings),
+        "findings": [f.to_dict() for f in findings],
+    }
+
+
 @app.websocket("/ws/compile")
 async def ws_compile(websocket: WebSocket) -> None:
     await websocket.accept()
