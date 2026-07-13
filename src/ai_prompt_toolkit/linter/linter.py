@@ -85,18 +85,25 @@ class PromptLinter:
     def active_rules(self) -> list[LintRule]:
         return list(self._active_rules)
 
-    def lint(self, template_id: str, text: str, *, fix: bool = False) -> LintResult:
+    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P018", "P019", "P020"})
+
+    def lint(self, template_id: str, text: str, *, fix: bool = False,
+            template_type: str = "prompt") -> LintResult:
         start = time.perf_counter()
 
+        rule_ids = self._rule_ids
+        if template_type == "knowledge":
+            rule_ids = rule_ids - self._KNOWLEDGE_EXCLUDED_RULES
+
         all_findings = run_all_checks(text)
-        findings = [f for f in all_findings if f.rule_id in self._rule_ids]
+        findings = [f for f in all_findings if f.rule_id in rule_ids]
 
         fixed_findings: list[Finding] = []
         if fix:
             text, fixed_findings = self._apply_fixes(text, findings)
             findings = [f for f in findings if f not in fixed_findings]
 
-        rule_count = len(self._active_rules)
+        rule_count = len(rule_ids)
         failed_count = len(findings) + len(fixed_findings)
         passed_count = rule_count - len(findings)
 

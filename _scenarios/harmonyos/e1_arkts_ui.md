@@ -18,7 +18,8 @@ locale: zh-CN
 i18n_status: untranslated
 market_status: draft
 lint_score: 65.0
-lint_last_checked: '2026-07-13T05:35:03Z'
+lint_last_checked: '2026-07-13T06:57:46Z'
+template_type: prompt
 ---
 # 鸿蒙ArkTS UI组件开发场景模板
 

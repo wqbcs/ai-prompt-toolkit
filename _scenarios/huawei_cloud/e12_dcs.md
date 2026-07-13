@@ -18,8 +18,9 @@ inheritance:
 locale: zh-CN
 i18n_status: untranslated
 market_status: draft
-lint_score: 60.0
-lint_last_checked: '2026-07-13T05:35:03Z'
+lint_score: 80.0
+lint_last_checked: '2026-07-13T06:57:46Z'
+template_type: knowledge
 ---
 # 华为云DCS（分布式缓存）场景模板
 

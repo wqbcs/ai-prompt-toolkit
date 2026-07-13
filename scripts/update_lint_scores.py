@@ -20,7 +20,8 @@ def update_lint_scores(target_dir: str = "_scenarios") -> dict[str, float]:
         if parsed is None:
             continue
 
-        result = linter.lint(p.name, body if body else text)
+        template_type = parsed.get("template_type", "prompt")
+        result = linter.lint(p.name, body if body else text, template_type=template_type)
         score = result.score
 
         parsed["lint_score"] = round(score, 1)

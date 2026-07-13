@@ -10,6 +10,22 @@ import click
 from ai_prompt_toolkit import __version__
 
 
+def _detect_template_type(text: str) -> str:
+    if not text.startswith("---"):
+        return "prompt"
+    import yaml as _yaml
+    end = text.find("---", 3)
+    if end == -1:
+        return "prompt"
+    try:
+        data = _yaml.safe_load(text[3:end].strip())
+        if isinstance(data, dict) and data.get("template_type"):
+            return data["template_type"]
+    except _yaml.YAMLError:
+        pass
+    return "prompt"
+
+
 @click.group()
 @click.version_option(version=__version__, prog_name="prompt-cli")
 def main() -> None:
@@ -157,7 +173,8 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
 
     for tpl_path in templates:
         text = tpl_path.read_text(encoding="utf-8")
-        result = linter.lint(tpl_path.name, text, fix=fix)
+        template_type = _detect_template_type(text)
+        result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
         all_results.append(result)
         total_findings += result.failed_count
         total_score += result.score
