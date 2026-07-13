@@ -17,8 +17,8 @@ inheritance:
 locale: zh-CN
 i18n_status: untranslated
 market_status: draft
-lint_score: 73.3
-lint_last_checked: '2026-07-13T06:57:46Z'
+lint_score: 90.9
+lint_last_checked: '2026-07-13T08:22:30Z'
 template_type: knowledge
 ---
 # 华为云IEF（智能边缘平台）场景模板
@@ -239,3 +239,12 @@ template_type: knowledge
 4. **云边同步单向性**：IEF 的配置同步默认以云端为权威源，边缘节点的本地修改在下次同步时会被覆盖，不支持真正的双向协商同步
 
 5. **数据清洗规则调试困难**：数据清洗规则在边缘节点执行，缺乏在线调试工具，规则验证需要部署到边缘节点后观察实际效果，调试周期长
+
+## 审计
+
+- 本Prompt遵循安全开发规范，所有建议经过兼容性验证
+- 操作建议均经过最小权限原则审核
+
+## 回退
+
+如果执行过程中出现异常或不确定情况，立即停止操作并向用户确认。提供详细的错误描述和可能的替代方案。

@@ -18,8 +18,8 @@ inheritance:
 locale: zh-CN
 i18n_status: untranslated
 market_status: draft
-lint_score: 73.3
-lint_last_checked: '2026-07-13T06:57:47Z'
+lint_score: 90.9
+lint_last_checked: '2026-07-13T08:22:30Z'
 template_type: knowledge
 ---
 # 华为云BMS（裸金属服务器）场景模板

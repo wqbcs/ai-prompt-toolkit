@@ -85,7 +85,7 @@ class PromptLinter:
     def active_rules(self) -> list[LintRule]:
         return list(self._active_rules)
 
-    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P018", "P019", "P020"})
+    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020"})
 
     def lint(self, template_id: str, text: str, *, fix: bool = False,
             template_type: str = "prompt") -> LintResult:

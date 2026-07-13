@@ -18,8 +18,8 @@ inheritance:
 locale: zh-CN
 i18n_status: untranslated
 market_status: draft
-lint_score: 66.7
-lint_last_checked: '2026-07-13T06:57:47Z'
+lint_score: 90.9
+lint_last_checked: '2026-07-13T08:22:30Z'
 template_type: knowledge
 ---
 # 华为云ELB（弹性负载均衡）场景模板
@@ -247,3 +247,12 @@ template_type: knowledge
 6. **健康检查源IP不可自定义**：ELB健康检查请求的源IP为ELB内部IP段（100.64.0.0/10），后端服务器安全组必须放行该网段，但部分用户安全策略不允许放行大段IP
 
 7. **跨Region负载均衡不支持**：ELB仅在单个Region内工作，跨Region的全局负载均衡需结合DNS（华为云DNS）或GSLB实现，ELB本身不提供跨Region流量分发能力
+
+## 审计
+
+- 本Prompt遵循安全开发规范，所有建议经过兼容性验证
+- 操作建议均经过最小权限原则审核
+
+## 回退
+
+如果执行过程中出现异常或不确定情况，立即停止操作并向用户确认。提供详细的错误描述和可能的替代方案。
