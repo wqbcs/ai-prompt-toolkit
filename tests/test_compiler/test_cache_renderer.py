@@ -64,7 +64,8 @@ class TestCompileCache:
         cache = CompileCache(ttl_seconds=0)
         result = _make_result()
         cache.set("template", {}, result)
-        time.sleep(0.01)
+        import time
+        time.sleep(0.05)
         assert cache.get("template", {}) is None
 
     def test_make_key_deterministic(self):

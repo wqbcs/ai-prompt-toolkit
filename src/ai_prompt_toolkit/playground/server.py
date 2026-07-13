@@ -70,6 +70,41 @@ async def api_context_schema() -> dict[str, Any]:
     }
 
 
+@app.get("/api/templates")
+async def api_templates() -> list[dict[str, Any]]:
+    from ai_prompt_toolkit.frontmatter import parse_front_matter
+    base = Path.cwd() / "_scenarios"
+    if not base.exists():
+        return []
+    templates = []
+    for p in sorted(base.rglob("*.md")):
+        text = p.read_text(encoding="utf-8")
+        fm, _ = parse_front_matter(text)
+        if fm:
+            templates.append({
+                "id": p.stem,
+                "name": fm.get("author", p.stem),
+                "tags": fm.get("tags", []),
+                "template_type": fm.get("template_type", "prompt"),
+                "lint_score": fm.get("lint_score", 0),
+            })
+    return templates
+
+
+@app.post("/api/lint")
+async def api_lint(body: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    template = body.get("template", "")
+    template_type = body.get("template_type", "prompt")
+    linter = PromptLinter()
+    result = linter.lint("playground", template, template_type=template_type)
+    return {
+        "status": "success",
+        "score": result.score,
+        "findings": [f.to_dict() for f in result.findings],
+    }
+
+
 @app.websocket("/ws/compile")
 async def ws_compile(websocket: WebSocket) -> None:
     await websocket.accept()
