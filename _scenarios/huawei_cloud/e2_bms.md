@@ -1,13 +1,25 @@
 ---
-version: "1.0.0"
-author: "AI提示词体系"
-updated_at: "2026-07-12"
-tags: [huawei-cloud, bms, bare-metal, hpc, gpu]
-applicable_models: [gpt-4o, claude-3.5-sonnet, qwen-max, pangu-large]
+version: 3.0.0
+author: AI提示词体系
+updated_at: '2026-07-12'
+tags:
+- huawei-cloud
+- bms
+- bare-metal
+- hpc
+- gpu
+applicable_models:
+- gpt-4o
+- claude-3.5-sonnet
+- qwen-max
+- pangu-large
 inheritance:
   enabled: false
+locale: zh-CN
+i18n_status: untranslated
+market_status: draft
+lint_score: 0.0
 ---
-
 # 华为云BMS（裸金属服务器）场景模板
 
 ## 概述

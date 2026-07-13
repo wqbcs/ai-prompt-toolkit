@@ -238,5 +238,45 @@ def market(action: str, template: str | None, config: str | None) -> None:
             click.echo(f"模板: {template}")
 
 
+@main.command(name="upgrade-fm")
+@click.option("--target", "-t", required=True, help="目标目录或文件")
+@click.option("--dry-run", is_flag=True, help="仅预览变更不写入")
+@click.option("--locale", "-l", default="zh-CN", help="默认语言标签(BCP 47)")
+def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
+    """Front Matter升级：v2→v3(新增i18n_status/market_status/lint_score)"""
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.frontmatter import upgrade_markdown_file
+
+    templates = discover_templates(target)
+    if not templates:
+        click.echo("未发现.md模板文件")
+        sys.exit(0)
+
+    upgraded = 0
+    errors_total = 0
+
+    for tpl_path in templates:
+        text = tpl_path.read_text(encoding="utf-8")
+        new_text, errors = upgrade_markdown_file(text)
+
+        if errors and errors[0].startswith("No front matter"):
+            continue
+
+        errors_total += len(errors)
+        for e in errors:
+            click.echo(f"  ⚠ [{tpl_path.name}] {e}")
+
+        if dry_run:
+            click.echo(f"  预览: {tpl_path.name} (i18n/market/lint_score字段已添加)")
+        else:
+            tpl_path.write_text(new_text, encoding="utf-8")
+            click.echo(f"  升级: {tpl_path.name}")
+        upgraded += 1
+
+    click.echo(f"\nFront Matter升级完成 | 文件: {upgraded} | 验证问题: {errors_total}")
+    if dry_run:
+        click.echo("(dry-run模式，未写入文件)")
+
+
 if __name__ == "__main__":
     main()

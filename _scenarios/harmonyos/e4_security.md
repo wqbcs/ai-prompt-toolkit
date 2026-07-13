@@ -1,13 +1,24 @@
 ---
-version: "1.0.0"
-author: "AI提示词体系"
-updated_at: "2026-07-13"
-tags: [harmonyos, security, access-control, encryption]
-applicable_models: [gpt-4o, claude-3.5-sonnet, qwen-max, pangu-large]
+version: 3.0.0
+author: AI提示词体系
+updated_at: '2026-07-13'
+tags:
+- harmonyos
+- security
+- access-control
+- encryption
+applicable_models:
+- gpt-4o
+- claude-3.5-sonnet
+- qwen-max
+- pangu-large
 inheritance:
   enabled: false
+locale: zh-CN
+i18n_status: untranslated
+market_status: draft
+lint_score: 0.0
 ---
-
 # 鸿蒙安全与权限管理场景模板
 
 ## 概述
