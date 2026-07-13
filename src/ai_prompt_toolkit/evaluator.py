@@ -1,4 +1,4 @@
-"""54维度评估框架 v8——D1-D54维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+"""58维度评估框架 v9——D1-D58维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
 import time
@@ -63,6 +63,10 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D52", "name": "监控就绪", "category": "toolchain", "weight": 0.5, "description": "Prompt是否具备监控能力"},
     {"id": "D53", "name": "Lint前置质量", "category": "toolchain", "weight": 0.9, "description": "Prompt是否经过Lint检查并达到质量门禁"},
     {"id": "D54", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt是否具备多语言翻译和i18n支持"},
+    {"id": "D55", "name": "真实API调用能力", "category": "toolchain", "weight": 1.0, "description": "Provider是否能真实调用LLM API并获取响应"},
+    {"id": "D56", "name": "CLI完备度", "category": "toolchain", "weight": 0.9, "description": "CLI子命令是否端到端可用(非骨架echo)"},
+    {"id": "D57", "name": "Playground可用性", "category": "toolchain", "weight": 0.8, "description": "条件编译Playground Web UI是否可交互使用"},
+    {"id": "D58", "name": "CI/CD集成度", "category": "toolchain", "weight": 0.7, "description": "是否集成CI/CD流水线质量门禁"},
 ]
 
 

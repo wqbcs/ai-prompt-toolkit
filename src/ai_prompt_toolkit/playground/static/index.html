@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Prompt Toolkit Playground</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
+.editor{font-family:'Fira Code',monospace;font-size:13px;line-height:1.6;resize:none;
+  border:1px solid #e5e7eb;border-radius:6px;padding:12px;width:100%;height:calc(100vh - 140px);
+  background:#1e293b;color:#e2e8f0;tab-size:2}
+.editor:focus{outline:none;border-color:#3b82f6}
+.panel-header{background:#f1f5f9;padding:8px 12px;border-bottom:1px solid #e5e7f0;
+  font-weight:600;font-size:14px;color:#334155;display:flex;justify-content:space-between;align-items:center}
+.status-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.status-ok{background:#dcfce7;color:#166534}
+.status-err{background:#fee2e2;color:#991b1b}
+.branch-info{font-size:11px;color:#64748b;padding:4px 12px;background:#f8fafc;border-top:1px solid #e5e7f0}
+</style>
+</head>
+<body class="bg-gray-50">
+<div class="flex flex-col h-screen">
+  <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <h1 class="text-lg font-bold text-gray-800">AI Prompt Toolkit Playground</h1>
+      <span class="text-xs text-gray-400">v28.0.0</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="text-xs text-gray-500">模型:</label>
+      <input id="ctx-model" type="text" value="gpt-4o" class="border rounded px-2 py-1 text-xs w-24">
+      <label class="text-xs text-gray-500">语言:</label>
+      <input id="ctx-lang" type="text" value="zh-CN" class="border rounded px-2 py-1 text-xs w-16">
+      <label class="text-xs text-gray-500">行业:</label>
+      <input id="ctx-industry" type="text" value="" placeholder="可选" class="border rounded px-2 py-1 text-xs w-20">
+      <button id="btn-compile" class="bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700">编译</button>
+    </div>
+  </header>
+  <div class="flex flex-1 overflow-hidden">
+    <div class="flex-1 flex flex-col border-r border-gray-200">
+      <div class="panel-header">
+        <span>模板源码</span>
+        <span class="text-xs text-gray-400">{{#if expr}}...{{else}}...{{/if}}</span>
+      </div>
+      <textarea id="source-editor" class="editor" spellcheck="false" placeholder="输入模板内容，如：&#10;{{#if model==&quot;gpt-4&quot;}}&#10;GPT-4专用提示&#10;{{else}}&#10;通用提示&#10;{{/if}}">{{#if model=="gpt-4o"}}
+你正在使用GPT-4o模型，请发挥其多模态优势。
+{{#if language=="en-US"}}
+Please leverage GPT-4o's multimodal capabilities.
+{{else}}
+请发挥GPT-4o的多模态能力优势。
+{{/if}}
+{{else}}
+你正在使用通用模型，请提供准确、有帮助的回答。
+{{/if}}</textarea>
+    </div>
+    <div class="flex-1 flex flex-col">
+      <div class="panel-header">
+        <span>编译结果</span>
+        <span id="compile-status" class="status-badge status-ok">就绪</span>
+      </div>
+      <pre id="result-editor" class="editor" style="background:#0f172a;color:#a5f3fc">点击"编译"或修改模板后自动编译...</pre>
+      <div id="branch-info" class="branch-info"></div>
+    </div>
+  </div>
+</div>
+<script>
+let debounceTimer=null;
+const srcEditor=document.getElementById('source-editor');
+const resultEditor=document.getElementById('result-editor');
+const statusBadge=document.getElementById('compile-status');
+const branchInfo=document.getElementById('branch-info');
+const btnCompile=document.getElementById('btn-compile');
+
+async function compile(){
+  const template=srcEditor.value;
+  const context={
+    model:document.getElementById('ctx-model').value,
+    language:document.getElementById('ctx-lang').value,
+    industry:document.getElementById('ctx-industry').value,
+  };
+  try{
+    const resp=await fetch('/api/compile',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({template,context})
+    });
+    const data=await resp.json();
+    if(data.status==='success'){
+      resultEditor.textContent=data.compiled_text;
+      statusBadge.textContent='编译成功';
+      statusBadge.className='status-badge status-ok';
+      const r=data.report||{};
+      branchInfo.textContent=`激活分支: ${r.activated_branches?.length||0} | 忽略分支: ${r.ignored_branches?.length||0} | 警告: ${r.warnings?.length||0}`;
+    }else{
+      resultEditor.textContent='错误: '+(data.error||'未知错误');
+      statusBadge.textContent='编译失败';
+      statusBadge.className='status-badge status-err';
+      branchInfo.textContent='';
+    }
+  }catch(e){
+    resultEditor.textContent='网络错误: '+e.message;
+    statusBadge.textContent='连接失败';
+    statusBadge.className='status-badge status-err';
+  }
+}
+
+btnCompile.addEventListener('click',compile);
+srcEditor.addEventListener('input',()=>{
+  clearTimeout(debounceTimer);
+  debounceTimer=setTimeout(compile,500);
+});
+['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',compile);
+});
+compile();
+</script>
+</body>
+</html>
