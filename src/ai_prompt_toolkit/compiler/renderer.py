@@ -68,6 +68,65 @@ class Renderer:
         self._output.append(node.value)
 
     def _render_conditional(self, node: ASTNode, nesting: int = 0) -> None:
+        if node.condition is not None:
+            self._render_single_conditional(node, nesting)
+        else:
+            self._render_multi_conditional(node, nesting)
+
+    def _render_single_conditional(self, node: ASTNode, nesting: int) -> None:
+        result, warnings = evaluate(node.condition, self._ctx)
+        for w in warnings:
+            self._report.add_warning(w)
+
+        bi = self._branch_info(
+            node.condition,
+            node.line_start,
+            node.line_end,
+            nesting,
+            self._preview_children(node.children),
+        )
+
+        if_body: list[ASTNode] = []
+        else_body: list[ASTNode] = []
+        current = if_body
+
+        for child in node.children:
+            if child.type == NodeType.BLOCK and child.condition is None:
+                current = else_body
+                for sub in child.children:
+                    else_body.append(sub)
+                continue
+            current.append(child)
+
+        if result:
+            self._report.activated_branches.append(bi)
+            self._render_children(if_body, nesting + 1)
+            if else_body:
+                else_bi = self._branch_info(
+                    Condition(dimension="__else__", operator="==", value="true"),
+                    node.line_start,
+                    node.line_end,
+                    nesting,
+                    self._preview_children(else_body),
+                )
+                self._report.ignored_branches.append(else_bi)
+        else:
+            self._report.ignored_branches.append(bi)
+            if else_body:
+                self._report.has_fallback = True
+                else_bi = self._branch_info(
+                    Condition(dimension="__else__", operator="==", value="true"),
+                    node.line_start,
+                    node.line_end,
+                    nesting,
+                    self._preview_children(else_body),
+                )
+                self._report.activated_branches.append(else_bi)
+                self._render_children(else_body, nesting + 1)
+            else:
+                self._handle_no_match(node, nesting)
+
+    def _render_multi_conditional(self, node: ASTNode, nesting: int) -> None:
         """渲染条件节点。
 
         children 布局:

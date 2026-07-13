@@ -90,15 +90,20 @@ class Parser:
     def _parse_single_condition(expr: str) -> Condition:
         """解析单个条件表达式。"""
         for op in ("not_in", "in", ">=", "<=", "!=", "==", ">", "<"):
-            if op in expr:
+            if op in ("in", "not_in"):
+                import re
+                pattern = r'\bin\b' if op == "in" else r'\bnot_in\b'
+                match = re.search(pattern, expr)
+                if match:
+                    dimension = expr[:match.start()].strip()
+                    raw_value = expr[match.end():].strip()
+                    value: str | list[str] = [v.strip() for v in raw_value.split(",") if v.strip()]
+                    return Condition(dimension=dimension, operator=op, value=value)
+            elif op in expr:
                 parts = expr.split(op, 1)
                 dimension = parts[0].strip()
                 raw_value = parts[1].strip()
-                if op in ("in", "not_in"):
-                    value: str | list[str] = [v.strip() for v in raw_value.split(",") if v.strip()]
-                else:
-                    value = raw_value
-                return Condition(dimension=dimension, operator=op, value=value)
+                return Condition(dimension=dimension, operator=op, value=raw_value)
         return Condition(dimension=expr, operator="==", value="true")
 
     def parse(self) -> ASTNode:
