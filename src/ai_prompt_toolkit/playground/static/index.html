@@ -8,7 +8,7 @@
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
 .editor{font-family:'Fira Code',monospace;font-size:13px;line-height:1.6;resize:none;
-  border:1px solid #e5e7eb;border-radius:6px;padding:12px;width:100%;height:calc(100vh - 140px);
+  border:1px solid #e5e7eb;border-radius:6px;padding:12px;width:100%;
   background:#1e293b;color:#e2e8f0;tab-size:2}
 .editor:focus{outline:none;border-color:#3b82f6}
 .panel-header{background:#f1f5f9;padding:8px 12px;border-bottom:1px solid #e5e7f0;
@@ -17,6 +17,13 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
 .status-ok{background:#dcfce7;color:#166534}
 .status-err{background:#fee2e2;color:#991b1b}
 .branch-info{font-size:11px;color:#64748b;padding:4px 12px;background:#f8fafc;border-top:1px solid #e5e7f0}
+.lint-gauge{width:48px;height:48px;position:relative;display:inline-block}
+.lint-gauge svg{transform:rotate(-90deg)}
+.lint-gauge-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;font-weight:700}
+.lint-finding{font-size:11px;padding:3px 8px;margin:2px 0;border-radius:4px;display:flex;align-items:center;gap:4px}
+.lint-high{background:#fef2f2;color:#991b1b;border-left:3px solid #ef4444}
+.lint-medium{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b}
+.lint-low{background:#f0fdf4;color:#166534;border-left:3px solid #22c55e}
 </style>
 </head>
 <body class="bg-gray-50">
@@ -42,7 +49,7 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
         <span>模板源码</span>
         <span class="text-xs text-gray-400">{{#if expr}}...{{else}}...{{/if}}</span>
       </div>
-      <textarea id="source-editor" class="editor" spellcheck="false" placeholder="输入模板内容，如：&#10;{{#if model==&quot;gpt-4&quot;}}&#10;GPT-4专用提示&#10;{{else}}&#10;通用提示&#10;{{/if}}">{{#if model=="gpt-4o"}}
+      <textarea id="source-editor" class="editor" style="height:calc(100vh - 140px)" spellcheck="false" placeholder="输入模板内容">{{#if model=="gpt-4o"}}
 你正在使用GPT-4o模型，请发挥其多模态优势。
 {{#if language=="en-US"}}
 Please leverage GPT-4o's multimodal capabilities.
@@ -58,13 +65,30 @@ Please leverage GPT-4o's multimodal capabilities.
         <span>编译结果</span>
         <span id="compile-status" class="status-badge status-ok">就绪</span>
       </div>
-      <pre id="result-editor" class="editor" style="background:#0f172a;color:#a5f3fc">点击"编译"或修改模板后自动编译...</pre>
+      <pre id="result-editor" class="editor" style="height:calc(50vh - 90px);background:#0f172a;color:#a5f3fc">点击"编译"或修改模板后自动编译...</pre>
       <div id="branch-info" class="branch-info"></div>
+      <div class="panel-header">
+        <div class="flex items-center gap-2">
+          <span>Lint检查</span>
+          <div id="lint-gauge" class="lint-gauge" style="display:none">
+            <svg width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="#e5e7eb" stroke-width="4"/>
+              <circle id="lint-gauge-arc" cx="24" cy="24" r="20" fill="none" stroke="#22c55e" stroke-width="4" stroke-dasharray="125.66" stroke-dashoffset="125.66" stroke-linecap="round"/>
+            </svg>
+            <span id="lint-gauge-text" class="lint-gauge-text">0</span>
+          </div>
+        </div>
+        <span id="lint-count" class="text-xs text-gray-400"></span>
+      </div>
+      <div id="lint-findings" class="overflow-auto" style="height:calc(50vh - 90px);background:#f8fafc;padding:8px">
+        <p class="text-xs text-gray-400">Lint结果将在此显示...</p>
+      </div>
     </div>
   </div>
 </div>
 <script>
 let debounceTimer=null;
+let lintTimer=null;
 const srcEditor=document.getElementById('source-editor');
 const resultEditor=document.getElementById('result-editor');
 const statusBadge=document.getElementById('compile-status');
@@ -73,16 +97,9 @@ const btnCompile=document.getElementById('btn-compile');
 
 async function compile(){
   const template=srcEditor.value;
-  const context={
-    model:document.getElementById('ctx-model').value,
-    language:document.getElementById('ctx-lang').value,
-    industry:document.getElementById('ctx-industry').value,
-  };
+  const context={model:document.getElementById('ctx-model').value,language:document.getElementById('ctx-lang').value,industry:document.getElementById('ctx-industry').value};
   try{
-    const resp=await fetch('/api/compile',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({template,context})
-    });
+    const resp=await fetch('/api/compile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,context})});
     const data=await resp.json();
     if(data.status==='success'){
       resultEditor.textContent=data.compiled_text;
@@ -103,10 +120,49 @@ async function compile(){
   }
 }
 
+async function runLint(){
+  const template=srcEditor.value;
+  const templateType=document.querySelector('input[name="template_type"]:checked')?.value||'prompt';
+  try{
+    const resp=await fetch('/api/lint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:templateType})});
+    const data=await resp.json();
+    if(data.status==='success'){
+      updateLintUI(data.score,data.findings);
+    }
+  }catch(e){console.error('Lint error:',e)}
+}
+
+function updateLintUI(score,findings){
+  const gauge=document.getElementById('lint-gauge');
+  const arc=document.getElementById('lint-gauge-arc');
+  const text=document.getElementById('lint-gauge-text');
+  const count=document.getElementById('lint-count');
+  const container=document.getElementById('lint-findings');
+  gauge.style.display='inline-block';
+  const pct=score/100;
+  const circ=2*Math.PI*20;
+  arc.setAttribute('stroke-dashoffset',circ*(1-pct));
+  arc.setAttribute('stroke',score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444');
+  text.textContent=Math.round(score);
+  text.style.color=score>=80?'#166534':score>=60?'#92400e':'#991b1b';
+  count.textContent=findings.length+'个问题';
+  if(!findings.length){
+    container.innerHTML='<p class="text-xs text-green-600 font-medium">所有检查通过！</p>';
+    return;
+  }
+  const sevMap={high:'lint-high',medium:'lint-medium',low:'lint-low',info:'lint-low',critical:'lint-high'};
+  container.innerHTML=findings.map(f=>{
+    const cls=sevMap[f.severity]||'lint-low';
+    return `<div class="lint-finding ${cls}"><strong>${f.rule_id}</strong> ${f.description}</div>`;
+  }).join('');
+}
+
 btnCompile.addEventListener('click',compile);
 srcEditor.addEventListener('input',()=>{
   clearTimeout(debounceTimer);
+  clearTimeout(lintTimer);
   debounceTimer=setTimeout(compile,500);
+  lintTimer=setTimeout(runLint,800);
 });
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{
   document.getElementById(id).addEventListener('change',compile);
@@ -115,6 +171,7 @@ fetch('/api/version').then(r=>r.json()).then(d=>{
   document.getElementById('version-badge').textContent='v'+d.version;
 }).catch(()=>{});
 compile();
+runLint();
 </script>
 </body>
 </html>
