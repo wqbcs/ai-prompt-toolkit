@@ -2,6 +2,47 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v28.0.0] - 2026-07-13
+
+### Added (第十一轮成熟度循环 R11: v27→v28 — "代码→产品"质变)
+
+#### CLI深度集成 (F2)
+- `cli_helpers.py`: 路径校验/JSON上下文加载/YAML配置/模板发现/报告写入/HTML报告生成/退出码判定
+- compile子命令: 调用完整编译管线(Lexer→Parser→Renderer)+输出+报告+退出码语义
+- scan子命令: 调用InjectionDetector注入检测+批量扫描+CLI/JSON/HTML三种输出格式
+- lint子命令: 调用PromptLinter全部20条规则+质量评分+自动修复+批量模式
+- 退出码: 0=成功 1=有发现项 2=参数错误 3=引擎异常
+
+#### Provider真实API调用 (F1)
+- httpx.AsyncClient连接池+指数退避重试(1/2/4/8/16s，最多5次)
+- 429 Rate Limit处理: retry-after头+指数退避
+- CostTracker费用累计控制(PROMPT_CLI_COST_LIMIT默认$10)
+- SIMULATED_MODE降级: 无PROMPT_CLI_REAL_API环境变量时自动降级为模拟响应
+- AliyunProvider→DeepSeekProvider(更符合赛事场景)
+- Provider验证: OpenAI(sk-) / Anthropic(sk-ant-) / DeepSeek / HuaweiCloud
+
+#### 条件编译Playground Web UI (F3)
+- FastAPI后端: POST /api/compile + WebSocket /ws/compile + GET /api/context-schema
+- 前端: 左右分栏编辑器+debounce 500ms自动编译+Tailwind CSS暗色主题
+- 参考Handlebars Playground实时预览模式
+- 上下文变量编辑(模型/语言/行业)
+
+#### 评估框架v9 (F7)
+- 54→58维度
+- D55: 真实API调用能力
+- D56: CLI完备度
+- D57: Playground可用性
+- D58: CI/CD集成度
+
+#### CI/CD流水线集成 (F5)
+- `.github/workflows/quality-gate.yml`: Python 3.10/3.11/3.12矩阵测试
+- PR增量检查+main全量检查
+- prompt-cli lint + scan质量门禁
+
+### Changed
+- CLI子命令从骨架echo升级为端到端引擎集成
+- Provider从模拟响应升级为httpx真实API调用+SIMULATED_MODE降级
+
 ## [v27.0.0] - 2026-07-13
 
 ### Added (第十轮成熟度循环 R10: v26→v27)
