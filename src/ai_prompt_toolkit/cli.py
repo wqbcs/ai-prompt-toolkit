@@ -401,5 +401,72 @@ def serve(host: str, port: int, do_reload: bool) -> None:
     uvicorn.run("ai_prompt_toolkit.playground.server:app", host=host, port=port, reload=do_reload)
 
 
+@main.command(name="redteam")
+@click.option("--target", "-t", help="目标文本文件路径(离线模式)")
+@click.option("--probes", "-p", help="探测类型(逗号分隔，默认全部)")
+@click.option("--provider", help="Provider配置(provider:model_name，在线模式)")
+@click.option("--output", "-o", help="输出报告路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
+                output: str | None, fmt: str) -> None:
+    """红队探测：对抗性安全测试"""
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes
+    from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+
+    available = get_available_probes()
+    selected_probes = probes.split(",") if probes else available
+
+    probe_instances = []
+    for name in selected_probes:
+        try:
+            probe_instances.append(create_probe(name.strip()))
+        except ValueError as e:
+            click.echo(f"警告: {e}", err=True)
+
+    if not probe_instances:
+        click.echo("错误: 无可用Probe", err=True)
+        sys.exit(2)
+
+    detectors = [LeakageDetector(), ComplianceDetector(), RefusalDetector()]
+    orchestrator = ExplorationOrchestrator(probes=probe_instances, detectors=detectors)
+
+    if provider:
+        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+        from ai_prompt_toolkit.ab_test.provider import create_provider
+        parts = provider.split(":")
+        if len(parts) == 2:
+            try:
+                pt = ProviderType(parts[0])
+            except ValueError:
+                pt = ProviderType.OPENAI
+            model_name = parts[1]
+        else:
+            pt = ProviderType.OPENAI
+            model_name = provider
+        config = ModelConfig(provider=pt, model_name=model_name)
+        prov = create_provider(config)
+        report = orchestrator.run_with_provider(prov)
+    elif target:
+        from ai_prompt_toolkit.cli_helpers import resolve_path
+        path = resolve_path(target)
+        text = path.read_text(encoding="utf-8")
+        report = orchestrator.run_offline(text)
+    else:
+        click.echo("错误: 请指定--target(离线)或--provider(在线)", err=True)
+        sys.exit(2)
+
+    if fmt == "json":
+        import json as _json
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(report.to_dict(), output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        click.echo(report.get_summary())
+
+
 if __name__ == "__main__":
     main()
