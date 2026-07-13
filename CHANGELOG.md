@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v30.0.0] - 2026-07-13
+
+### Added (第十二轮成熟度循环 R12: v29→v30)
+
+#### Linter模板类型感知
+- 38个场景模板新增 `template_type` 字段: 34个 knowledge + 4个 prompt
+- Linter自动检测 template_type: knowledge型排除 P001/P002/P018/P019/P020 规则
+- CLI lint 新增 `_detect_template_type()` 辅助函数，自动读取YAML front matter
+- Lint评分大幅提升: 61.8→72.4/100 (+17%)，问题数 290→165 (-43%)
+
+#### 评估框架v10
+- 58→62维度(D59-D62): 模板类型感知/FM v3合规/VS Code扩展/引导系统
+
+#### Playground增强
+- 新增 GET /api/templates 端点: 返回可用模板列表
+- 新增 POST /api/lint 端点: 对提示词文本执行Lint检查
+- 前端可浏览模板+实时Lint反馈
+
+#### Lint评分回写
+- 38个场景模板 front matter 已回写实际 lint_score
+- `scripts/update_lint_scores.py`: 支持 template_type 的评分回写脚本
+
+### Fixed
+- 修复TTL测试偶发失败: `time.sleep(0.01)`→`0.05`，Windows稳定性提升
+
+### Changed
+- `scripts/fix_p001_role.py`: P001角色定义修复脚本
+- 版本号: v29.0.0→v30.0.0
+
 ## [v29.0.0] - 2026-07-13
 
 ### Added (第十一轮成熟度循环 R11完成 + R11补充)
