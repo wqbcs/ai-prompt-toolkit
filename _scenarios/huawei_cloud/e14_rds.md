@@ -18,7 +18,8 @@ inheritance:
 locale: zh-CN
 i18n_status: untranslated
 market_status: draft
-lint_score: 0.0
+lint_score: 50.0
+lint_last_checked: '2026-07-13T05:35:03Z'
 ---
 # 华为云RDS（关系型数据库）场景模板
 
