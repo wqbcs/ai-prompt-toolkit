@@ -2,6 +2,45 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v32.0.0] - 2026-07-13
+
+### Added (第十四轮成熟度循环 R14: v31→v32)
+
+#### 对抗性红队探测引擎
+- 新增 `redteam/` 模块: Probe/Detector/Exploration/Report 四层架构
+- 5种Probe探测器: 提示注入/越狱/编码绕过/多轮诱导/敏感泄露(各5个探测输入)
+- 3种Detector检测器: 泄露检测(密钥/连接串/系统提示)/合规检测/拒绝检测
+- ExplorationOrchestrator: 离线模式(run_offline)+在线模式(run_with_provider)
+- RedTeamReport: 漏洞率/风险等级(4级)/详细探测结果/摘要
+- CLI `redteam` 命令: --target(离线)/--provider(在线)/--probes/--format json
+- 参考: garak probe/detector架构 + promptfoo redteam策略
+
+#### D53-D62评估器真实评分逻辑
+- 10个维度从固定值(5.0)改为基于文本特征的真实计算
+- D53 Lint前置质量/D54 国际化/D55 真实API/D56 CLI完备度
+- D57 Playground/D58 CI/CD/D59 模板类型感知/D60 FM v3/D61 VS Code/D62 引导
+
+#### Playground生产级改造
+- CSS变量暗色/亮色主题系统(localStorage+系统偏好检测)
+- Compile/Lint/Scan三Tab切换
+- Scan Tab: 安全扫描面板(15条INJ规则可视化)
+- 后端新增 POST /api/scan 端点(InjectionDetector集成)
+- 主题切换按钮(🌙/☀️)
+
+#### Provider基础设施
+- httpx共享AsyncClient连接池(max_connections=100)，消除每次新建Client
+- `_make_simulated_result` 从OpenAIProvider上移至BaseProvider，消除跨类调用
+- A/B测试CLI端到端打通: ParallelEngine.run()+结果表格+JSON输出
+- 新增 `prompt-cli serve` 命令(--host/--port/--reload)
+
+### Fixed
+- evaluator.py文档修正: "52维度"→"62维度"
+
+### Changed
+- CLI子命令: 8→10个(新增redteam/serve)
+- 测试总数: 337→367(新增30个红队测试)
+- Provider: httpx连接池复用(性能提升)
+
 ## [v31.0.0] - 2026-07-13
 
 ### Added (第十三轮成熟度循环 R13: v30→v31)
