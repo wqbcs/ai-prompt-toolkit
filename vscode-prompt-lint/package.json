@@ -1,0 +1,87 @@
+{
+  "name": "vscode-prompt-lint",
+  "displayName": "Prompt Lint",
+  "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、Front Matter验证",
+  "version": "0.1.0",
+  "publisher": "ai-prompt-toolkit",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Linters",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "prompt",
+    "ai",
+    "lint",
+    "security",
+    "markdown"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptLint.lintActiveFile",
+        "title": "Prompt Lint: 检查当前文件"
+      },
+      {
+        "command": "promptLint.scanActiveFile",
+        "title": "Prompt Lint: 安全扫描当前文件"
+      },
+      {
+        "command": "promptLint.compileActiveFile",
+        "title": "Prompt Lint: 条件编译当前文件"
+      }
+    ],
+    "configuration": {
+      "title": "Prompt Lint",
+      "properties": {
+        "promptLint.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用/禁用Prompt Lint"
+        },
+        "promptLint.lintOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "保存时自动执行Lint"
+        },
+        "promptLint.lintOnType": {
+          "type": "boolean",
+          "default": false,
+          "description": "输入时实时Lint（可能影响性能）"
+        },
+        "promptLint.securityScan": {
+          "type": "boolean",
+          "default": true,
+          "description": "同时执行安全扫描（注入检测）"
+        },
+        "promptLint.frontMatterValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "验证YAML Front Matter v3 Schema"
+        },
+        "promptLint.severityOverrides": {
+          "type": "object",
+          "default": {},
+          "description": "规则严重级别覆盖 {\"P001\": \"warning\", \"INJ-001\": \"error\"}"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}
