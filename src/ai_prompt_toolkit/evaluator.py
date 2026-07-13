@@ -281,7 +281,7 @@ class _DimensionEvaluator:
         elif dim_id == "D39":
             return 5.0
         elif dim_id == "D40":
-            return 7.0 if length and self._has_pattern(r"请|帮我") else 4.0
+            return 7.0 if self._has_pattern(r"请|帮我") else 4.0
         return 5.0
 
     def _eval_toolchain(self, dim_id: str) -> float:

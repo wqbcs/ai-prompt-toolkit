@@ -1,4 +1,4 @@
-"""prompt-cli统一入口 — v28.0.0 CLI深度集成版"""
+"""prompt-cli统一入口"""
 from __future__ import annotations
 
 import json
@@ -29,7 +29,7 @@ def _detect_template_type(text: str) -> str:
 @click.group()
 @click.version_option(version=__version__, prog_name="prompt-cli")
 def main() -> None:
-    """AI提示词体系工具链 v28.0.0"""
+    """AI提示词体系工具链"""
     pass
 
 

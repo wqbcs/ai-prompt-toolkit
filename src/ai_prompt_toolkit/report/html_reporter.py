@@ -14,6 +14,8 @@ import html as html_mod
 from datetime import datetime, timezone
 from typing import Any
 
+from ai_prompt_toolkit import __version__
+
 
 def generate_html_report(data: dict[str, Any]) -> str:
     report_type = data.get("_report_type", "scan")
@@ -68,6 +70,7 @@ def generate_scan_html(data: dict[str, Any]) -> str:
         summary=summary_cards,
         body="\n".join(grouped_sections),
         timestamp=now,
+        version=__version__,
     )
 
 
@@ -142,6 +145,7 @@ def generate_lint_html(data: dict[str, Any]) -> str:
         summary=summary,
         body="\n".join(file_sections),
         timestamp=now,
+        version=__version__,
     )
 
 
@@ -285,7 +289,7 @@ def _findings_section(label: str, items: list[dict[str, Any]], color: str,
 
 
 def _wrap_template(title: str, risk_badge: str, subtitle: str, donut: str,
-                   summary: str, body: str, timestamp: str) -> str:
+                   summary: str, body: str, timestamp: str, version: str = "0.0.0") -> str:
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -366,7 +370,7 @@ font-size:.8rem;color:var(--text2)}}
 
 {body}
 
-<footer>生成时间: {timestamp} | ai-prompt-toolkit v28.0.0</footer>
+<footer>生成时间: {timestamp} | ai-prompt-toolkit v{version}</footer>
 </div>
 
 <script>

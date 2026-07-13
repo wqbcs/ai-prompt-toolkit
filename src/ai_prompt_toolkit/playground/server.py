@@ -18,8 +18,9 @@ from pathlib import Path
 
 from ai_prompt_toolkit.compiler import compile_template, CompileContext
 from ai_prompt_toolkit.compiler.types import CompileReport
+from ai_prompt_toolkit import __version__
 
-app = FastAPI(title="AI Prompt Toolkit Playground", version="1.0.0")
+app = FastAPI(title="AI Prompt Toolkit Playground", version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -68,6 +69,11 @@ async def api_context_schema() -> dict[str, Any]:
         },
         "additionalProperties": {"type": "boolean"},
     }
+
+
+@app.get("/api/version")
+async def api_version() -> dict[str, str]:
+    return {"version": __version__}
 
 
 @app.get("/api/templates")

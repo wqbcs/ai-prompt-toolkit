@@ -24,7 +24,7 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0}
   <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
     <div class="flex items-center gap-3">
       <h1 class="text-lg font-bold text-gray-800">AI Prompt Toolkit Playground</h1>
-      <span class="text-xs text-gray-400">v28.0.0</span>
+      <span class="text-xs text-gray-400" id="version-badge"></span>
     </div>
     <div class="flex items-center gap-2">
       <label class="text-xs text-gray-500">模型:</label>
@@ -111,6 +111,9 @@ srcEditor.addEventListener('input',()=>{
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{
   document.getElementById(id).addEventListener('change',compile);
 });
+fetch('/api/version').then(r=>r.json()).then(d=>{
+  document.getElementById('version-badge').textContent='v'+d.version;
+}).catch(()=>{});
 compile();
 </script>
 </body>

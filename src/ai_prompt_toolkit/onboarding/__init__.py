@@ -24,7 +24,7 @@ import yaml
 _PROJECT_FILES = {
     "README.md": """# AI提示词项目
 
-由 ai-prompt-toolkit v28.0.0 引导创建。
+由 ai-prompt-toolkit 引导创建。
 
 ## 快速开始
 
