@@ -8,6 +8,9 @@ from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
 
+_LOW_SCORE_THRESHOLD = 4.0
+_VERY_LOW_SCORE_THRESHOLD = 2.0
+
 
 _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D01", "name": "角色清晰度", "category": "structure", "weight": 1.0, "description": "Prompt是否定义了明确的角色"},
@@ -386,11 +389,11 @@ def evaluate_template(
 
     findings: list[Finding] = []
     for s in scores:
-        if s.score < 4.0:
+        if s.score < _LOW_SCORE_THRESHOLD:
             findings.append(
                 Finding(
                     rule_id=f"EVAL-{s.dimension_id}",
-                    severity=Severity.HIGH if s.score < 2.0 else Severity.MEDIUM,
+                    severity=Severity.HIGH if s.score < _VERY_LOW_SCORE_THRESHOLD else Severity.MEDIUM,
                     description=f"维度 {s.name}({s.dimension_id}) 评分偏低: {s.score}/{s.max_score}",
                     remediation=f"建议优化 {s.name} 相关内容",
                 )

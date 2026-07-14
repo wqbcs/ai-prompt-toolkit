@@ -23,6 +23,9 @@ SIMULATED_MODE = not bool(os.environ.get("PROMPT_CLI_REAL_API", ""))
 _MAX_RETRIES = 5
 _RETRY_BASE_DELAY = 1.0
 _COST_LIMIT_USD = float(os.environ.get("PROMPT_CLI_COST_LIMIT", "10.0"))
+_HTTP_TIMEOUT = 30.0
+_HTTP_MAX_CONNECTIONS = 100
+_HTTP_MAX_KEEPALIVE = 20
 
 _total_cost: float = 0.0
 
@@ -65,8 +68,8 @@ def _get_shared_http_client() -> Any:
                 try:
                     import httpx
                     _shared_http_client = httpx.AsyncClient(
-                        timeout=30.0,
-                        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+                        timeout=_HTTP_TIMEOUT,
+                        limits=httpx.Limits(max_connections=_HTTP_MAX_CONNECTIONS, max_keepalive_connections=_HTTP_MAX_KEEPALIVE),
                     )
                 except ImportError:
                     raise ProviderError("system", "httpx未安装，请运行: pip install httpx")

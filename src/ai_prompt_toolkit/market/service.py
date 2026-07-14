@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from ai_prompt_toolkit.market.deploy import DeployManager
+
+_MAX_FINDINGS_DISPLAY = 10
 from ai_prompt_toolkit.market.review import ReviewPipeline
 from ai_prompt_toolkit.market.types import (
     DeployConfig,
@@ -167,7 +169,7 @@ class MarketService:
             "total_findings": len(findings),
             "critical_count": critical_count,
             "high_count": high_count,
-            "findings": [f.to_dict() for f in findings[:10]],
+            "findings": [f.to_dict() for f in findings[:_MAX_FINDINGS_DISPLAY]],
             "scanned_at": datetime.now().isoformat(),
         }
         self._scan_results[template_id] = scan_result
@@ -190,7 +192,7 @@ class MarketService:
             "rule_count": result.rule_count,
             "passed_count": result.passed_count,
             "failed_count": result.failed_count,
-            "findings": [f.to_dict() for f in result.findings[:10]],
+            "findings": [f.to_dict() for f in result.findings[:_MAX_FINDINGS_DISPLAY]],
             "linted_at": datetime.now().isoformat(),
         }
         self._lint_results[template_id] = lint_result

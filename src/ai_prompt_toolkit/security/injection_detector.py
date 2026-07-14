@@ -9,6 +9,8 @@ from typing import Any
 from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.security.types import InjectionRule
 
+_SCAN_TIME_WARN_MS = 10
+
 
 _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
@@ -194,7 +196,7 @@ class InjectionDetector:
             )
 
         elapsed = (time.perf_counter() - start) * 1000
-        if elapsed > 10:
+        if elapsed > _SCAN_TIME_WARN_MS:
             findings.append(
                 Finding(
                     rule_id="INJ-PERF",

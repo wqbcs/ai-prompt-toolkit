@@ -4,6 +4,8 @@ from __future__ import annotations
 import math
 from typing import Any
 
+_DEFAULT_ALPHA = 0.05
+
 
 def _mean(values: list[float]) -> float:
     if not values:
@@ -215,7 +217,7 @@ def t_test(
         "statistic": round(t_stat, 6),
         "p_value": round(max(0.0, min(1.0, p_value)), 6),
         "degrees_of_freedom": df,
-        "significant": p_value < 0.05,
+        "significant": p_value < _DEFAULT_ALPHA,
         "test_type": "paired_t_test" if paired else "welch_t_test",
         "mean_a": round(mean_a, 6),
         "mean_b": round(mean_b, 6),
@@ -276,7 +278,7 @@ def mann_whitney_u_test(
         "p_value": round(max(0.0, min(1.0, p_value)), 6),
         "u_a": round(u_a, 4),
         "u_b": round(u_b, 4),
-        "significant": p_value < 0.05,
+        "significant": p_value < _DEFAULT_ALPHA,
         "test_type": "mann_whitney_u",
         "z_value": round((u_stat - mean_u) / math.sqrt(var_u), 4) if var_u > 0 else 0.0,
     }

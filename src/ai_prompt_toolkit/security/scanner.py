@@ -16,6 +16,8 @@ from ai_prompt_toolkit.security.types import (
 from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
 
+_DEFAULT_MAX_WORKERS = 4
+
 
 def _compute_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
@@ -92,7 +94,7 @@ class Scanner:
         items: Iterable[tuple[str, str]],
         *,
         incremental: bool = False,
-        max_workers: int = 4,
+        max_workers: int = _DEFAULT_MAX_WORKERS,
     ) -> list[ScanResult]:
         items_list = list(items)
         if not items_list:

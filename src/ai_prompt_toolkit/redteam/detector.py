@@ -12,6 +12,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
+_LEAK_PREVIEW_LEN = 20
+
 
 @dataclass
 class DetectionResult:
@@ -54,7 +56,7 @@ class LeakageDetector(BaseDetector):
         matches = []
         for pattern in self._SENSITIVE_PATTERNS:
             for m in pattern.finditer(response):
-                matches.append(m.group(0)[:20] + "...")
+                matches.append(m.group(0)[:_LEAK_PREVIEW_LEN] + "...")
 
         if matches:
             return DetectionResult(

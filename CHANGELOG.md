@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.4.0] - 2026-07-14
+
+### Changed (第十九轮成熟度循环 R19: v33.3→v33.4 — P2硬编码魔数提取)
+
+#### P2硬编码魔数→命名常量
+- injection_detector.py: `10`→`_SCAN_TIME_WARN_MS`
+- evaluator.py: `4.0`→`_LOW_SCORE_THRESHOLD`，`2.0`→`_VERY_LOW_SCORE_THRESHOLD`
+- provider.py: `30.0`/`100`/`20`→`_HTTP_TIMEOUT`/`_HTTP_MAX_CONNECTIONS`/`_HTTP_MAX_KEEPALIVE`
+- market/service.py: `10`→`_MAX_FINDINGS_DISPLAY`(2处)
+- scanner.py: `4`→`_DEFAULT_MAX_WORKERS`
+- detector.py: `20`→`_LEAK_PREVIEW_LEN`
+- statistics.py: `0.05`→`_DEFAULT_ALPHA`(2处)
+
 ## [v33.3.0] - 2026-07-14
 
 ### Fixed (第十八轮成熟度循环 R18: v33.2→v33.3 — P0安全+P1bug修复+P3优化)
