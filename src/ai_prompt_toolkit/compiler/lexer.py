@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import re
-from typing import NoReturn
 
 from ai_prompt_toolkit.compiler.types import Token, TokenKind
 

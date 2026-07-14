@@ -1,6 +1,7 @@
 """62维度评估框架 v10——D1-D62维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
@@ -137,7 +138,6 @@ class _DimensionEvaluator:
         self._text = text
 
     def _has_pattern(self, *patterns: str) -> bool:
-        import re
         for p in patterns:
             if re.search(p, self._text, re.IGNORECASE):
                 return True
@@ -146,9 +146,11 @@ class _DimensionEvaluator:
     def _text_length(self) -> int:
         return len(self._text)
 
-    def _count_pattern(self, pattern: str) -> int:
-        import re
-        return len(re.findall(pattern, self._text, re.IGNORECASE))
+    def _count_pattern(self, *patterns: str) -> int:
+        total = 0
+        for p in patterns:
+            total += len(re.findall(p, self._text, re.IGNORECASE | re.MULTILINE))
+        return total
 
     def evaluate(self, dim: dict[str, Any]) -> DimensionScore:
         dim_id = dim["id"]

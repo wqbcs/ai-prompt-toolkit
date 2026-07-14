@@ -171,46 +171,27 @@ class InjectionDetector:
         lines = text.splitlines()
 
         for rule, pattern in self._compiled:
-            for line_idx, line in enumerate(lines):
-                match = pattern.search(line)
-                if match:
-                    findings.append(
-                        Finding(
-                            rule_id=rule.rule_id,
-                            severity=rule.severity,
-                            description=rule.description,
-                            location=f"line {line_idx + 1}",
-                            remediation=rule.remediation,
-                            details={
-                                "matched_text": match.group(0),
-                                "template_id": template_id,
-                                "line_number": line_idx + 1,
-                                "rule_name": rule.name,
-                            },
-                        )
-                    )
-
             full_match = pattern.search(text)
-            if full_match:
-                already_found = any(
-                    f.rule_id == rule.rule_id and f.details.get("matched_text") == full_match.group(0)
-                    for f in findings
+            if not full_match:
+                continue
+            matched_text = full_match.group(0)
+            match_start = full_match.start()
+            line_number = self._find_line_number(lines, match_start)
+            findings.append(
+                Finding(
+                    rule_id=rule.rule_id,
+                    severity=rule.severity,
+                    description=rule.description,
+                    location=f"line {line_number}" if line_number > 0 else "full_text",
+                    remediation=rule.remediation,
+                    details={
+                        "matched_text": matched_text,
+                        "template_id": template_id,
+                        "line_number": line_number,
+                        "rule_name": rule.name,
+                    },
                 )
-                if not already_found:
-                    findings.append(
-                        Finding(
-                            rule_id=rule.rule_id,
-                            severity=rule.severity,
-                            description=rule.description,
-                            location="full_text",
-                            remediation=rule.remediation,
-                            details={
-                                "matched_text": full_match.group(0),
-                                "template_id": template_id,
-                                "rule_name": rule.name,
-                            },
-                        )
-                    )
+            )
 
         elapsed = (time.perf_counter() - start) * 1000
         if elapsed > 10:
@@ -226,3 +207,12 @@ class InjectionDetector:
             )
 
         return findings
+
+    @staticmethod
+    def _find_line_number(lines: list[str], char_offset: int) -> int:
+        current = 0
+        for i, line in enumerate(lines):
+            if current + len(line) >= char_offset:
+                return i + 1
+            current += len(line) + 1
+        return 0

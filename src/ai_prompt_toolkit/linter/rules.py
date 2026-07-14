@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable
 
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -224,10 +224,11 @@ def check_p006(text: str) -> Finding | None:
             matches.append(m.group(0))
     if not matches:
         return None
+    redacted = [m[:15] + "***REDACTED***" if len(m) > 15 else m[:5] + "***" for m in matches[:5]]
     return Finding(rule_id=rule.rule_id, severity=rule.severity,
                    description=f"{rule.description} (发现 {len(matches)} 处)",
                    remediation=rule.remediation,
-                   details={"matches": matches[:5]})
+                   details={"matches": redacted, "total_count": len(matches)})
 
 
 def check_p007(text: str) -> Finding | None:
@@ -413,7 +414,9 @@ def check_p020(text: str) -> Finding | None:
                    description=rule.description, remediation=rule.remediation)
 
 
-_CHECKERS: list[Any] = [
+_CheckerFn = Callable[[str], Finding | None]
+
+_CHECKERS: list[_CheckerFn] = [
     check_p001, check_p002, check_p003, check_p004, check_p005,
     check_p006, check_p007, check_p008, check_p009, check_p010,
     check_p011, check_p012, check_p013, check_p014, check_p015,
@@ -426,7 +429,7 @@ from ai_prompt_toolkit.linter.rules_p021_p030 import (  # noqa: E402
     run_checks_p021_p030,
 )
 
-_CHECKERS_EXTENDED: list[Any] = _CHECKERS + [
+_CHECKERS_EXTENDED: list[_CheckerFn] = _CHECKERS + [
     check_p021, check_p022, check_p023, check_p024, check_p025,
     check_p026, check_p027, check_p028, check_p029, check_p030,
 ]

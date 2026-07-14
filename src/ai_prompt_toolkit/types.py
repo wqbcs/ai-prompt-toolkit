@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 
 class Severity(Enum):
@@ -15,19 +15,28 @@ class Severity(Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
-    def __ge__(self, other: "Severity") -> bool:
-        order = [Severity.INFO, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
-        return order.index(self) >= order.index(other)
+    _RANK: ClassVar[dict[Severity, int]]
 
-    def __gt__(self, other: "Severity") -> bool:
-        order = [Severity.INFO, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
-        return order.index(self) > order.index(other)
+    def __ge__(self, other: Severity) -> bool:
+        return self._RANK[self] >= self._RANK[other]
 
-    def __le__(self, other: "Severity") -> bool:
+    def __gt__(self, other: Severity) -> bool:
+        return self._RANK[self] > self._RANK[other]
+
+    def __le__(self, other: Severity) -> bool:
         return not self.__gt__(other)
 
-    def __lt__(self, other: "Severity") -> bool:
+    def __lt__(self, other: Severity) -> bool:
         return not self.__ge__(other)
+
+
+Severity._RANK = {
+    Severity.INFO: 0,
+    Severity.LOW: 1,
+    Severity.MEDIUM: 2,
+    Severity.HIGH: 3,
+    Severity.CRITICAL: 4,
+}
 
 
 class ReportStatus(Enum):

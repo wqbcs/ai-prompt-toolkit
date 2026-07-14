@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Callable
 
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -274,7 +274,9 @@ def check_p030(text: str) -> Finding | None:
     )
 
 
-_CHECKERS_P021_P030: list[Any] = [
+_CheckerFn = Callable[[str], Finding | None]
+
+_CHECKERS_P021_P030: list[_CheckerFn] = [
     check_p021, check_p022, check_p023, check_p024, check_p025,
     check_p026, check_p027, check_p028, check_p029, check_p030,
 ]

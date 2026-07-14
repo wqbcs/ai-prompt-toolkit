@@ -56,7 +56,7 @@ class RuleLoader:
             for rule in custom:
                 if rule.rule_id in rules:
                     existing = rules[rule.rule_id]
-                    if rule.severity.value > existing.severity.value:
+                    if rule.severity > existing.severity:
                         rules[rule.rule_id] = rule
                         logger.info("规则冲突 %s: 使用更严格级别 %s → %s",
                                     rule.rule_id, existing.severity.value, rule.severity.value)

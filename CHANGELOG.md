@@ -2,6 +2,28 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.2.0] - 2026-07-14
+
+### Fixed (第十七轮成熟度循环 R17: v33.1→v33.2 — P2/P3级别改进+测试覆盖)
+
+#### P2增强
+- evaluator正则预编译: 内部`import re`移到模块级
+- evaluator `_count_pattern` bug修复: 单参数→`*patterns`可变参数
+- P006敏感信息脱敏: findings.details.matches中API Key明文→REDACTED
+- Severity比较O(n)→O(1): `__ge__`/`__gt__`预计算_RANK字典替代每次构建order列表
+- InjectionDetector双重扫描优化: 逐行+全文→单次全文扫描+_find_line_number定位
+- RuleLoader Severity比较bug修复: `rule.severity.value > existing.severity.value`(字符串比较)→`rule.severity > existing.severity`(枚举比较)
+
+#### P3优化
+- 清理未使用import: compiler/lexer.py移除`from typing import NoReturn`
+- 精确化类型标注: `_CHECKERS`/`_CHECKERS_EXTENDED`/`_CHECKERS_P021_P030`从`list[Any]`→`list[_CheckerFn]`(Callable[[str], Finding | None])
+
+### Added
+- 新增test_evaluator.py: 17个evaluator测试(评估模板/评估报告/维度分数/维度API)
+- 新增test_fixer.py: 18个fixer测试(P005/P006/P016修复逻辑+FixResult+dry_run)
+- 新增test_rule_loader.py: 22个rule_loader测试(规则集/加载/过滤/自定义规则/冲突处理)
+- 测试总数从497→554(新增57个测试)
+
 ## [v33.1.0] - 2026-07-14
 
 ### Fixed (第十六轮成熟度循环 R16: v33.0→v33.1 — P0崩溃+安全修复)
