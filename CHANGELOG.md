@@ -2,6 +2,48 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.0.0] - 2026-07-14
+
+### Added (第十五轮成熟度循环 R15: v32→v33)
+
+#### Prompt断言/期望系统
+- 新增 `assertion/` 模块: types.py + engine.py 策略模式架构
+- 8种AssertType: contains/not-contains/regex/json_schema/similarity/llm-rubric/latency/cost
+- AssertionEngine: 策略模式注册表 + evaluate_batch批量评估 + Levenshtein距离
+- CLI `evaluate` 子命令: --target/--dimensions/--categories/--threshold/--format/--output
+- CLI `assert` 子命令: --response/--config/--format
+- 安全防护: 禁止exec/eval + 正则ReDoS防护 + JSON Schema深度限制
+- 参考: promptfoo assert架构 + langfuse evaluation
+
+#### Lint规则扩展 P021-P030
+- 10条新Lint规则(P021-P030): 编码混淆/模板注入标记/指令冲突/示例与指令不一致/输出长度未指定/缺少错误恢复指引/文化敏感内容/链式指令缺失/变量未转义/过度依赖
+- `_extract_ngrams` 中文bigram词重叠匹配算法
+- P017/P023冲突降级: 同时触发时P017降级为LOW
+- knowledge型模板豁免P025/P028/P030
+- P025/P026/P029自动修复: 追加输出长度/错误恢复/输入校验
+- 总计30条Lint规则(原20条)
+
+#### 模板市场安全门禁增强
+- MarketService.run_security_scan: 真实InjectionDetector调用
+- MarketService.run_lint: 真实PromptLinter调用
+- MarketService.check_security_gate: 安全扫描+Lint最低分70分门禁
+- SECURITY_GATE_MIN_LINT_SCORE/SECURITY_GATE_MAX_HIGH_FINDINGS/SECURITY_GATE_MAX_CRITICAL_FINDINGS
+
+#### VS Code扩展增强 v0.2.0
+- CodeLensProvider: Prompt Score/issue数/Evaluate按钮
+- QuickFixProvider: P005/P016/P006/P025/P026/P029自动修复
+- SideBar TreeDataProvider: 规则分组树形展示
+- 新增命令: evaluateActiveFile / showLintScore / fix
+
+#### Playground评估Tab
+- POST /api/evaluate端点: 62维度评估 + 维度分数
+- 评估Tab: SVG雷达图 + 维度得分列表 + 综合评分
+- evalTimer debounce 1500ms
+
+#### 测试
+- 67条断言系统测试 + 55条P021-P030测试 + 8条市场门禁测试
+- 总计497个测试全通过
+
 ## [v32.0.0] - 2026-07-13
 
 ### Added (第十四轮成熟度循环 R14: v31→v32)
