@@ -1,4 +1,4 @@
-"""Lint 规则集——20 条 Prompt 质量检查规则 (P001-P020)。"""
+"""Lint 规则集——30 条 Prompt 质量检查规则 (P001-P030)。"""
 
 from __future__ import annotations
 
@@ -94,6 +94,39 @@ _ALL_RULES: list[LintRule] = [
     LintRule("P020", "无评估标准", "quality", Severity.MEDIUM,
              "Prompt 缺少输出质量评估标准",
              "添加明确的评估标准和验收条件"),
+    # ── 安全扩展类 P021-P024 ──
+    LintRule("P021", "编码混淆", "security", Severity.HIGH,
+             "Prompt 中存在 Base64/Unicode/Hex 编码混淆内容",
+             "移除或解码混淆内容，使用明文表达意图"),
+    LintRule("P022", "模板注入标记", "security", Severity.CRITICAL,
+             "Prompt 中存在模板注入标记 {{}}/${}",
+             "对模板变量进行校验和转义，避免注入攻击"),
+    LintRule("P023", "指令冲突", "quality", Severity.HIGH,
+             "Prompt 中存在正向与负向指令指向同一动作对象",
+             "审查并统一矛盾的指令，确保逻辑一致"),
+    LintRule("P024", "示例与指令不一致", "quality", Severity.MEDIUM,
+             "Prompt Few-shot 示例行为与文本指令约束不一致",
+             "确保 Few-shot 示例与文本指令的约束条件一致"),
+    # ── 结构增强类 P025-P026 ──
+    LintRule("P025", "输出长度未指定", "structure", Severity.LOW,
+             "Prompt 未指定输出字数/段落/Token 范围",
+             "添加输出长度约束，如'控制在500字以内'"),
+    LintRule("P026", "缺少错误恢复指引", "structure", Severity.MEDIUM,
+             "Prompt 未指定不确定时的回退行为",
+             "添加错误恢复指引，如'如果无法确定，请回复信息不足'"),
+    # ── 质量增强类 P027-P030 ──
+    LintRule("P027", "文化敏感内容", "quality", Severity.LOW,
+             "Prompt 中可能包含冒犯特定文化的表述",
+             "审查并替换可能冒犯特定文化的表述，使用中立语言"),
+    LintRule("P028", "链式指令缺失", "quality", Severity.MEDIUM,
+             "多步骤推理任务缺少 step-by-step 引导",
+             "添加分步引导，如'首先...然后...最后...'"),
+    LintRule("P029", "变量未转义", "security", Severity.MEDIUM,
+             "Prompt 中用户输入变量未进行转义/校验",
+             "对用户输入变量添加转义或校验声明"),
+    LintRule("P030", "过度依赖", "quality", Severity.LOW,
+             "Prompt 过度依赖特定模型/平台未声明兼容性",
+             "声明兼容性或备选模型"),
 ]
 
 _RULE_MAP: dict[str, LintRule] = {r.rule_id: r for r in _ALL_RULES}
@@ -387,6 +420,17 @@ _CHECKERS: list[Any] = [
     check_p016, check_p017, check_p018, check_p019, check_p020,
 ]
 
+from ai_prompt_toolkit.linter.rules_p021_p030 import (  # noqa: E402
+    check_p021, check_p022, check_p023, check_p024, check_p025,
+    check_p026, check_p027, check_p028, check_p029, check_p030,
+    run_checks_p021_p030,
+)
+
+_CHECKERS_EXTENDED: list[Any] = _CHECKERS + [
+    check_p021, check_p022, check_p023, check_p024, check_p025,
+    check_p026, check_p027, check_p028, check_p029, check_p030,
+]
+
 
 def get_all_rules() -> list[LintRule]:
     return list(_ALL_RULES)
@@ -398,8 +442,14 @@ def get_rule(rule_id: str) -> LintRule | None:
 
 def run_all_checks(text: str) -> list[Finding]:
     findings: list[Finding] = []
-    for checker in _CHECKERS:
+    for checker in _CHECKERS_EXTENDED:
         result = checker(text)
         if result is not None:
             findings.append(result)
+    p017_triggered = any(f.rule_id == "P017" for f in findings)
+    p023_triggered = any(f.rule_id == "P023" for f in findings)
+    if p017_triggered and p023_triggered:
+        for f in findings:
+            if f.rule_id == "P017":
+                f.severity = Severity.LOW
     return findings

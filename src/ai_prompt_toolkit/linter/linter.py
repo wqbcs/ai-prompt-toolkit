@@ -85,7 +85,7 @@ class PromptLinter:
     def active_rules(self) -> list[LintRule]:
         return list(self._active_rules)
 
-    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020"})
+    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020", "P025", "P028", "P030"})
 
     def lint(self, template_id: str, text: str, *, fix: bool = False,
             template_type: str = "prompt") -> LintResult:
@@ -178,5 +178,29 @@ class PromptLinter:
                         else match.group(0).split(":")[0] + ":***REDACTED***",
                         description="遮蔽敏感信息",
                     )
+
+        if rule_id == "P025":
+            return FixAction(
+                rule_id=rule_id,
+                original=text[-30:] if len(text) > 30 else text,
+                replacement=text + "\n\n请将回答控制在500字以内。",
+                description="追加输出长度建议",
+            )
+
+        if rule_id == "P026":
+            return FixAction(
+                rule_id=rule_id,
+                original=text[-30:] if len(text) > 30 else text,
+                replacement=text + "\n\n如果无法确定，请回复'信息不足，无法判断'而不编造。",
+                description="追加错误恢复指引",
+            )
+
+        if rule_id == "P029":
+            return FixAction(
+                rule_id=rule_id,
+                original=text[-30:] if len(text) > 30 else text,
+                replacement=text + "\n\n（请对输入进行校验）",
+                description="追加输入校验声明",
+            )
 
         return None

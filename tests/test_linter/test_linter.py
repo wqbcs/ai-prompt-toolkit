@@ -261,7 +261,7 @@ class TestAutoFix:
 class TestRuleRegistry:
     def test_get_all_rules_count(self):
         rules = get_all_rules()
-        assert len(rules) == 20
+        assert len(rules) == 30
 
     def test_get_rule_exists(self):
         rule = get_rule("P001")

@@ -19,6 +19,10 @@ from ai_prompt_toolkit.market.types import (
 
 logger = logging.getLogger(__name__)
 
+SECURITY_GATE_MIN_LINT_SCORE = 70.0
+SECURITY_GATE_MAX_HIGH_FINDINGS = 0
+SECURITY_GATE_MAX_CRITICAL_FINDINGS = 0
+
 
 class MarketService:
     def __init__(self, data_dir: str | Path | None = None) -> None:
@@ -27,6 +31,8 @@ class MarketService:
         self._lifecycle = LifecycleManager()
         self._review_pipeline = ReviewPipeline()
         self._deploy_mgr = DeployManager(self._lifecycle)
+        self._scan_results: dict[str, dict[str, Any]] = {}
+        self._lint_results: dict[str, dict[str, Any]] = {}
         self._load()
 
     def _load(self) -> None:
@@ -136,4 +142,75 @@ class MarketService:
         deploy_config = self._deploy_mgr.get_config(template_id)
         if deploy_config:
             result["deploy"] = deploy_config.to_dict()
+        if template_id in self._scan_results:
+            result["security_scan"] = self._scan_results[template_id]
+        if template_id in self._lint_results:
+            result["lint"] = self._lint_results[template_id]
         return result
+
+    def run_security_scan(self, template_id: str, content: str) -> dict[str, Any]:
+        template = self._templates.get(template_id)
+        if not template:
+            raise ValueError(f"模板 {template_id} 不存在")
+        from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+        detector = InjectionDetector()
+        findings = detector.detect(content)
+        critical_count = sum(1 for f in findings if f.severity.value == "critical")
+        high_count = sum(1 for f in findings if f.severity.value == "high")
+        passed = (
+            critical_count <= SECURITY_GATE_MAX_CRITICAL_FINDINGS
+            and high_count <= SECURITY_GATE_MAX_HIGH_FINDINGS
+        )
+        template.security_scan_passed = passed
+        scan_result = {
+            "passed": passed,
+            "total_findings": len(findings),
+            "critical_count": critical_count,
+            "high_count": high_count,
+            "findings": [f.to_dict() for f in findings[:10]],
+            "scanned_at": datetime.now().isoformat(),
+        }
+        self._scan_results[template_id] = scan_result
+        self._save()
+        logger.info("安全扫描: %s passed=%s findings=%d", template_id, passed, len(findings))
+        return scan_result
+
+    def run_lint(self, template_id: str, content: str, *,
+                 template_type: str = "prompt") -> dict[str, Any]:
+        template = self._templates.get(template_id)
+        if not template:
+            raise ValueError(f"模板 {template_id} 不存在")
+        from ai_prompt_toolkit.linter.linter import PromptLinter
+        linter = PromptLinter()
+        result = linter.lint(template_id, content, template_type=template_type)
+        template.lint_score = result.score
+        lint_result = {
+            "score": result.score,
+            "passed": result.score >= SECURITY_GATE_MIN_LINT_SCORE,
+            "rule_count": result.rule_count,
+            "passed_count": result.passed_count,
+            "failed_count": result.failed_count,
+            "findings": [f.to_dict() for f in result.findings[:10]],
+            "linted_at": datetime.now().isoformat(),
+        }
+        self._lint_results[template_id] = lint_result
+        self._save()
+        logger.info("Lint检查: %s score=%.1f", template_id, result.score)
+        return lint_result
+
+    def check_security_gate(self, template_id: str) -> dict[str, Any]:
+        template = self._templates.get(template_id)
+        if not template:
+            raise ValueError(f"模板 {template_id} 不存在")
+        scan = self._scan_results.get(template_id, {})
+        lint = self._lint_results.get(template_id, {})
+        scan_passed = scan.get("passed", template.security_scan_passed)
+        lint_passed = lint.get("passed", template.lint_score >= SECURITY_GATE_MIN_LINT_SCORE)
+        gate: dict[str, Any] = {
+            "security_scan_passed": scan_passed,
+            "lint_score": template.lint_score,
+            "lint_passed": lint_passed,
+            "lint_threshold": SECURITY_GATE_MIN_LINT_SCORE,
+            "overall_passed": scan_passed and lint_passed,
+        }
+        return gate
