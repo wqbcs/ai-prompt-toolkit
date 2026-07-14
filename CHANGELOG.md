@@ -2,6 +2,20 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.5.0] - 2026-07-14
+
+### Changed (第二十轮成熟度循环 R20: v33.4→v33.5 — Provider重构+代码清理)
+
+#### P1重构
+- provider.py 5个Provider invoke方法重构: 提取`_invoke_openai_compatible()`到BaseProvider
+  - OpenAI/DeepSeek/Aliyun: invoke方法从30+行→2行(调用通用方法)
+  - Anthropic/Huawei: 保持自定义invoke(自有API格式)，但使用`_PROVIDER_LABEL`
+- provider.py estimate_cost提升到BaseProvider: 5个重复方法→1个通用实现+_PRICING/_DEFAULT_RATES
+- BaseProvider新增类属性: `_PRICING`, `_DEFAULT_RATES`, `_PROVIDER_LABEL`
+
+#### P3清理
+- cli.py: 移除evaluate命令中未使用的`from pathlib import Path as _Path`
+
 ## [v33.4.0] - 2026-07-14
 
 ### Changed (第十九轮成熟度循环 R19: v33.3→v33.4 — P2硬编码魔数提取)

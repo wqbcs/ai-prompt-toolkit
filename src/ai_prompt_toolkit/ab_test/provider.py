@@ -83,6 +83,10 @@ class ProviderError(Exception):
 
 
 class BaseProvider(ABC):
+    _PRICING: dict[str, tuple[float, float]] = {}
+    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.002)
+    _PROVIDER_LABEL: str = "Base"
+
     def __init__(self, config: ModelConfig) -> None:
         self._config = config
         self._api_key: str | None = None
@@ -101,8 +105,9 @@ class BaseProvider(ABC):
     @abstractmethod
     def validate(self) -> bool: ...
 
-    @abstractmethod
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float: ...
+    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
+        rates = self._PRICING.get(self._config.model_name, self._DEFAULT_RATES)
+        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
 
     def _load_credential(self) -> str:
         if self._api_key is not None:
@@ -161,41 +166,38 @@ class BaseProvider(ABC):
                     delay *= 2
         raise ProviderError(self._config.provider.value, f"重试{_MAX_RETRIES}次后仍失败: {last_error}")
 
-
-class OpenAIProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "gpt-4o": (0.005, 0.015), "gpt-4o-mini": (0.00015, 0.0006),
-        "gpt-4-turbo": (0.01, 0.03), "gpt-3.5-turbo": (0.0005, 0.0015),
-    }
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("sk-")
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+    async def _invoke_openai_compatible(
+        self,
+        prompt: str,
+        api_base: str,
+        extra_headers: dict[str, str] | None = None,
+        max_tokens_default: int | None = None,
+    ) -> ModelResult:
         start = time.perf_counter()
         try:
             key = self._load_credential()
         except ProviderError:
-            return self._make_simulated_result(prompt, start, "OpenAI")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, "OpenAI")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
 
         try:
-            url = (self._config.api_base or "https://api.openai.com/v1") + "/chat/completions"
+            url = api_base.rstrip("/") + "/chat/completions"
             headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-            payload = {
+            if extra_headers:
+                headers.update(extra_headers)
+            payload: dict[str, Any] = {
                 "model": self._config.model_name,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": self._config.temperature,
-                "max_tokens": self._config.max_tokens,
             }
+            mt = self._config.max_tokens or max_tokens_default
+            if mt:
+                payload["max_tokens"] = mt
             data = await self._http_post(url, headers, payload)
             content = data["choices"][0]["message"]["content"]
             usage = data.get("usage", {})
@@ -212,9 +214,24 @@ class OpenAIProvider(BaseProvider):
         except Exception as e:
             return self._make_error_result(prompt, str(e))
 
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        rates = self._PRICING.get(self._config.model_name, (0.001, 0.002))
-        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
+
+class OpenAIProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "gpt-4o": (0.005, 0.015), "gpt-4o-mini": (0.00015, 0.0006),
+        "gpt-4-turbo": (0.01, 0.03), "gpt-3.5-turbo": (0.0005, 0.0015),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.002)
+    _PROVIDER_LABEL: str = "OpenAI"
+
+    def validate(self) -> bool:
+        try:
+            return self._load_credential().startswith("sk-")
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.openai.com/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
 
 
 class AnthropicProvider(BaseProvider):
@@ -222,6 +239,8 @@ class AnthropicProvider(BaseProvider):
         "claude-3-opus": (0.015, 0.075), "claude-3-sonnet": (0.003, 0.015),
         "claude-3-haiku": (0.00025, 0.00125),
     }
+    _DEFAULT_RATES: tuple[float, float] = (0.003, 0.015)
+    _PROVIDER_LABEL: str = "Anthropic"
 
     def validate(self) -> bool:
         try:
@@ -234,10 +253,10 @@ class AnthropicProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return self._make_simulated_result(prompt, start, "Anthropic")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, "Anthropic")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
@@ -269,16 +288,14 @@ class AnthropicProvider(BaseProvider):
         except Exception as e:
             return self._make_error_result(prompt, str(e))
 
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        rates = self._PRICING.get(self._config.model_name, (0.003, 0.015))
-        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
-
 
 class DeepSeekProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
         "deepseek-chat": (0.00014, 0.00028),
         "deepseek-reasoner": (0.00055, 0.00219),
     }
+    _DEFAULT_RATES: tuple[float, float] = (0.00014, 0.00028)
+    _PROVIDER_LABEL: str = "DeepSeek"
 
     def validate(self) -> bool:
         try:
@@ -288,46 +305,8 @@ class DeepSeekProvider(BaseProvider):
             return False
 
     async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        start = time.perf_counter()
-        try:
-            key = self._load_credential()
-        except ProviderError:
-            return self._make_simulated_result(prompt, start, "DeepSeek")
-
-        if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, "DeepSeek")
-
-        if _global_cost_tracker.limit_reached:
-            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
-
-        try:
-            url = (self._config.api_base or "https://api.deepseek.com/v1") + "/chat/completions"
-            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-            payload = {
-                "model": self._config.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self._config.temperature,
-                "max_tokens": self._config.max_tokens,
-            }
-            data = await self._http_post(url, headers, payload)
-            content = data["choices"][0]["message"]["content"]
-            usage = data.get("usage", {})
-            input_tokens = usage.get("prompt_tokens", 0)
-            output_tokens = usage.get("completion_tokens", 0)
-            cost = self.estimate_cost(input_tokens, output_tokens)
-            _global_cost_tracker.record(cost)
-            latency = (time.perf_counter() - start) * 1000
-            return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
-            )
-        except Exception as e:
-            return self._make_error_result(prompt, str(e))
-
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        rates = self._PRICING.get(self._config.model_name, (0.00014, 0.00028))
-        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
+        api_base = self._config.api_base or "https://api.deepseek.com/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
 
 
 class HuaweiProvider(BaseProvider):
@@ -336,6 +315,8 @@ class HuaweiProvider(BaseProvider):
         "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
         "qwen-72b": (0.006, 0.018),
     }
+    _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
+    _PROVIDER_LABEL: str = "HuaweiCloud"
 
     def validate(self) -> bool:
         try:
@@ -348,21 +329,20 @@ class HuaweiProvider(BaseProvider):
         try:
             key = self._load_credential()
         except ProviderError:
-            return self._make_simulated_result(prompt, start, "HuaweiCloud")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, "HuaweiCloud")
+            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if _global_cost_tracker.limit_reached:
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
 
         try:
             api_base = self._config.api_base or "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+            url = api_base.rstrip("/") + "/chat/completions"
             if "modelarts" in api_base.lower() or "huawei" in api_base.lower():
-                url = api_base.rstrip("/") + "/chat/completions"
                 headers = {"X-Auth-Token": key, "Content-Type": "application/json"}
             else:
-                url = api_base.rstrip("/") + "/chat/completions"
                 headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 
             payload = {
@@ -389,16 +369,14 @@ class HuaweiProvider(BaseProvider):
         except Exception as e:
             return self._make_error_result(prompt, str(e))
 
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        rates = self._PRICING.get(self._config.model_name, (0.004, 0.012))
-        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
-
 
 class AliyunProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
         "qwen-max": (0.004, 0.012), "qwen-plus": (0.0008, 0.002),
         "qwen-turbo": (0.0003, 0.0006), "qwen-long": (0.0005, 0.002),
     }
+    _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
+    _PROVIDER_LABEL: str = "Aliyun"
 
     def validate(self) -> bool:
         try:
@@ -407,46 +385,8 @@ class AliyunProvider(BaseProvider):
             return False
 
     async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        start = time.perf_counter()
-        try:
-            key = self._load_credential()
-        except ProviderError:
-            return self._make_simulated_result(prompt, start, "Aliyun")
-
-        if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, "Aliyun")
-
-        if _global_cost_tracker.limit_reached:
-            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
-
-        try:
-            url = (self._config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1") + "/chat/completions"
-            headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-            payload = {
-                "model": self._config.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self._config.temperature,
-                "max_tokens": self._config.max_tokens,
-            }
-            data = await self._http_post(url, headers, payload)
-            content = data["choices"][0]["message"]["content"]
-            usage = data.get("usage", {})
-            input_tokens = usage.get("prompt_tokens", 0)
-            output_tokens = usage.get("completion_tokens", 0)
-            cost = self.estimate_cost(input_tokens, output_tokens)
-            _global_cost_tracker.record(cost)
-            latency = (time.perf_counter() - start) * 1000
-            return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
-            )
-        except Exception as e:
-            return self._make_error_result(prompt, str(e))
-
-    def estimate_cost(self, input_tokens: int, output_tokens: int) -> float:
-        rates = self._PRICING.get(self._config.model_name, (0.004, 0.012))
-        return (input_tokens * rates[0] + output_tokens * rates[1]) / 1000
+        api_base = self._config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
 
 
 _PROVIDER_REGISTRY: dict[ProviderType, type[BaseProvider]] = {

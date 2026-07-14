@@ -174,7 +174,6 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     """62维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template
-    from pathlib import Path as _Path
 
     target_path = resolve_path(target)
     dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
