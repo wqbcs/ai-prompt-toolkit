@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from abc import ABC, abstractmethod
 from typing import Any
@@ -53,19 +54,22 @@ class CostTracker:
 _global_cost_tracker = CostTracker()
 
 _shared_http_client: Any = None
+_client_lock = threading.Lock()
 
 
 def _get_shared_http_client() -> Any:
     global _shared_http_client
     if _shared_http_client is None:
-        try:
-            import httpx
-            _shared_http_client = httpx.AsyncClient(
-                timeout=30.0,
-                limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
-            )
-        except ImportError:
-            raise ProviderError("system", "httpx未安装，请运行: pip install httpx")
+        with _client_lock:
+            if _shared_http_client is None:
+                try:
+                    import httpx
+                    _shared_http_client = httpx.AsyncClient(
+                        timeout=30.0,
+                        limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
+                    )
+                except ImportError:
+                    raise ProviderError("system", "httpx未安装，请运行: pip install httpx")
     return _shared_http_client
 
 

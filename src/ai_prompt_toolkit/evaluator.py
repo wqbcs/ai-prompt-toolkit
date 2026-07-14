@@ -1,4 +1,4 @@
-"""62维度评估框架 v10——D1-D62维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+"""62维度评估框架——D01-D62维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
 import re
@@ -346,7 +346,8 @@ def evaluate_template(
     Args:
         template_id: 模板标识。
         text: 模板文本。
-        dimensions: 指定评估的维度ID列表（None=全部）。
+        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D62"。
+                    也接受"D1"-"D9"格式（自动补零为"D01"-"D09"）。
         categories: 指定评估的维度类别（None=全部）。
 
     Returns:
@@ -356,8 +357,13 @@ def evaluate_template(
 
     dims = list(_DIMENSIONS)
     if dimensions:
-        dim_set = set(dimensions)
-        dims = [d for d in dims if d["id"] in dim_set]
+        normalized = set()
+        for d in dimensions:
+            if d.startswith("D") and len(d) == 2 and d[1].isdigit():
+                normalized.add(f"D0{d[1]}")
+            else:
+                normalized.add(d)
+        dims = [d for d in dims if d["id"] in normalized]
     if categories:
         cat_set = set(categories)
         dims = [d for d in dims if d["category"] in cat_set]

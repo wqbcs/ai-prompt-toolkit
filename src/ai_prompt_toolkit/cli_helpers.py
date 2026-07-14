@@ -82,7 +82,9 @@ def determine_exit_code(
     if has_findings:
         if error_severity in ("high", "critical"):
             return 1
-        return 1
+        if error_severity == "medium":
+            return 2
+        return 0
     return 0
 
 

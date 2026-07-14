@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -16,19 +16,28 @@ class RiskLevel(Enum):
     HIGH = "high"
     CRITICAL = "critical"
 
+    _RANK: ClassVar[dict[RiskLevel, int]]
+
     def __ge__(self, other: RiskLevel) -> bool:
-        order = [RiskLevel.NONE, RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.CRITICAL]
-        return order.index(self) >= order.index(other)
+        return self._RANK[self] >= self._RANK[other]
 
     def __gt__(self, other: RiskLevel) -> bool:
-        order = [RiskLevel.NONE, RiskLevel.LOW, RiskLevel.MEDIUM, RiskLevel.HIGH, RiskLevel.CRITICAL]
-        return order.index(self) > order.index(other)
+        return self._RANK[self] > self._RANK[other]
 
     def __le__(self, other: RiskLevel) -> bool:
         return not self.__gt__(other)
 
     def __lt__(self, other: RiskLevel) -> bool:
         return not self.__ge__(other)
+
+
+RiskLevel._RANK = {
+    RiskLevel.NONE: 0,
+    RiskLevel.LOW: 1,
+    RiskLevel.MEDIUM: 2,
+    RiskLevel.HIGH: 3,
+    RiskLevel.CRITICAL: 4,
+}
 
 
 @dataclass

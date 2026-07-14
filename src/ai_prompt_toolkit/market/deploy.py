@@ -43,7 +43,7 @@ class DeployManager:
     def promote(self, template: Template, canary_score: float) -> DeployConfig:
         config = self._deployments.get(template.id)
         if not config:
-            raise ValueError(f"模板 %s 不在灰度发布中", template.id)
+            raise ValueError(f"模板 {template.id} 不在灰度发布中")
         config.canary_score = canary_score
         if config.performance_delta <= ROLLBACK_THRESHOLD:
             logger.warning("性能下降 %.1f%% 超过阈值，触发自动回滚: %s",
@@ -66,7 +66,7 @@ class DeployManager:
     def rollback(self, template: Template, reason: str = "manual") -> DeployConfig:
         config = self._deployments.get(template.id)
         if not config:
-            raise ValueError(f"模板 %s 不在灰度发布中", template.id)
+            raise ValueError(f"模板 {template.id} 不在灰度发布中")
         try:
             template = self._lifecycle.transition(template, TemplateStatus.DRAFT)
             logger.info("灰度回滚: %s (原因: %s)", template.id, reason)

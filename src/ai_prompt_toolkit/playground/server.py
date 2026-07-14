@@ -3,11 +3,17 @@
 参考: Handlebars Playground 左右分栏实时预览模式
 - POST /api/compile: 条件编译接口
 - GET /api/context-schema: 上下文JSON Schema
+- POST /api/lint: Prompt Lint接口
+- POST /api/scan: 安全扫描接口
+- POST /api/evaluate: 评估接口
+- GET /api/templates: 场景模板列表
+- GET /api/version: 版本信息
 - WebSocket /ws/compile: 实时编译
 """
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -20,15 +26,34 @@ from ai_prompt_toolkit.compiler import compile_template, CompileContext
 from ai_prompt_toolkit.compiler.types import CompileReport
 from ai_prompt_toolkit import __version__
 
+logger = logging.getLogger(__name__)
+
+_PLAYGROUND_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8080",
+]
+
 app = FastAPI(title="AI Prompt Toolkit Playground", version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:*", "http://127.0.0.1:*"],
+    allow_origins=_PLAYGROUND_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _build_context(ctx_data: dict[str, Any]) -> CompileContext:
+    model = ctx_data.get("model", "")
+    language = ctx_data.get("language", "")
+    industry = ctx_data.get("industry", "")
+    flags = {k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)}
+    return CompileContext(model=model, language=language, industry=industry, flags=flags)
 
 
 class CompileRequest:
@@ -41,21 +66,18 @@ class CompileRequest:
 async def api_compile(body: dict[str, Any]) -> dict[str, Any]:
     template = body.get("template", "")
     ctx_data = body.get("context", {})
-    model = ctx_data.get("model", "")
-    language = ctx_data.get("language", "")
-    industry = ctx_data.get("industry", "")
-    flags = {k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)}
 
     try:
-        ctx = CompileContext(model=model, language=language, industry=industry, flags=flags)
+        ctx = _build_context(ctx_data)
         result = compile_template(template, ctx)
         return {
             "status": "success",
             "compiled_text": result.compiled_text,
             "report": result.report.to_dict(),
         }
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+    except Exception:
+        logger.exception("compile error")
+        return {"status": "error", "error": "编译失败，请检查模板语法"}
 
 
 @app.get("/api/context-schema")
@@ -141,8 +163,9 @@ async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
             "dimension_scores": dim_scores,
             "summary": result.summary if hasattr(result, "summary") else "",
         }
-    except Exception as e:
-        return {"status": "error", "error": str(e)}
+    except Exception:
+        logger.exception("evaluate error")
+        return {"status": "error", "error": "评估失败，请检查输入内容"}
 
 
 @app.websocket("/ws/compile")
@@ -155,11 +178,7 @@ async def ws_compile(websocket: WebSocket) -> None:
                 body = json.loads(data)
                 template = body.get("template", "")
                 ctx_data = body.get("context", {})
-                model = ctx_data.get("model", "")
-                language = ctx_data.get("language", "")
-                industry = ctx_data.get("industry", "")
-                flags = {k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)}
-                ctx = CompileContext(model=model, language=language, industry=industry, flags=flags)
+                ctx = _build_context(ctx_data)
                 result = compile_template(template, ctx)
                 await websocket.send_json({
                     "status": "success",
@@ -168,8 +187,9 @@ async def ws_compile(websocket: WebSocket) -> None:
                 })
             except json.JSONDecodeError:
                 await websocket.send_json({"status": "error", "error": "Invalid JSON"})
-            except Exception as e:
-                await websocket.send_json({"status": "error", "error": str(e)})
+            except Exception:
+                logger.exception("ws compile error")
+                await websocket.send_json({"status": "error", "error": "编译失败，请检查模板语法"})
     except WebSocketDisconnect:
         pass
 

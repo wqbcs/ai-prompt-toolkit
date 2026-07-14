@@ -43,6 +43,14 @@ class TestEvaluateTemplate:
         assert result.dimension_count == 3
         assert len(result.scores) == 3
 
+    def test_with_dimensions_short_id_normalized(self):
+        result = evaluate_template("test", "你是一个专业的助手", dimensions=["D1", "D2", "D3"])
+        assert result.dimension_count == 3
+        score_ids = {s.dimension_id for s in result.scores}
+        assert "D01" in score_ids
+        assert "D02" in score_ids
+        assert "D03" in score_ids
+
     def test_with_categories_filter(self):
         result = evaluate_template("test", "测试", categories=["structure"])
         assert result.dimension_count > 0

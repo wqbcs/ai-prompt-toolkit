@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.3.0] - 2026-07-14
+
+### Fixed (第十八轮成熟度循环 R18: v33.2→v33.3 — P0安全+P1bug修复+P3优化)
+
+#### P0安全修复
+- Playground API异常信息泄露: `str(e)`→通用错误消息+`logger.exception()`记录详情
+- Playground CORS通配符: `localhost:*`→固定端口列表(5173/3000/8080)
+
+#### P1核心修复
+- market/deploy.py ValueError格式化bug: `f"模板 %s 不在灰度发布中", id`→`f"模板 {id} 不在灰度发布中"`(2处)
+- cli_helpers.py determine_exit_code逻辑bug: error_severity无作用→high/critical=1, medium=2, low/info=0
+- provider.py全局状态线程安全: httpx AsyncClient延迟初始化添加双重检查锁(threading.Lock)
+- evaluator.py维度ID格式: "D1"→"D01"自动补零匹配+文档明确ID格式
+- evaluator.py docstring版本号: "v10"→移除过时版本号+"D1-D62"→"D01-D62"
+
+#### P3优化
+- RiskLevel比较O(n)→O(1): 预计算_RANK字典替代每次构建order列表(与Severity保持一致)
+- server.py重复代码: 提取`_build_context()`消除api_compile和ws_compile中CompileContext构造重复
+- server.py docstring更新: 补充lint/scan/evaluate/templates/version端点说明
+
+### Added
+- 新增evaluator维度ID短格式测试: "D1"/"D2"/"D3"自动补零为"D01"/"D02"/"D03"
+- 新增determine_exit_code medium/critical场景测试
+- 测试总数从554→557(+3)
+
 ## [v33.2.0] - 2026-07-14
 
 ### Fixed (第十七轮成熟度循环 R17: v33.1→v33.2 — P2/P3级别改进+测试覆盖)

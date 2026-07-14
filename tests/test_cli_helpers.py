@@ -136,14 +136,20 @@ class TestDetermineExitCode:
     def test_success(self):
         assert determine_exit_code() == 0
 
-    def test_has_findings(self):
-        assert determine_exit_code(has_findings=True) == 1
+    def test_has_findings_no_severity(self):
+        assert determine_exit_code(has_findings=True) == 0
+
+    def test_has_findings_medium_severity(self):
+        assert determine_exit_code(has_findings=True, error_severity="medium") == 2
 
     def test_has_errors(self):
         assert determine_exit_code(has_errors=True) == 3
 
     def test_critical_severity(self):
         assert determine_exit_code(has_findings=True, error_severity="high") == 1
+
+    def test_critical_severity_explicit(self):
+        assert determine_exit_code(has_findings=True, error_severity="critical") == 1
 
 
 class TestFormatFindingsTable:
