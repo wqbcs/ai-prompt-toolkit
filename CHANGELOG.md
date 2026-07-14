@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v33.1.0] - 2026-07-14
+
+### Fixed (第十六轮成熟度循环 R16: v33.0→v33.1 — P0崩溃+安全修复)
+
+#### P0紧急修复
+- 修复CLI `ab-test`命令NameError: `get_cost_tracker()`未导入导致崩溃
+- 修复CLI `evaluate`命令AttributeError: `dimension_scores`属性不存在(应为`scores`)
+- 修复Playground `/api/evaluate`接口字段不匹配: `result.dimensions`→`result.scores`
+- 修复Playground CORS安全: 限制为localhost源+关闭`allow_credentials`(修复CSRF风险)
+- 实现断言引擎ReDoS防护: 响应长度截断50000字符+RecursionError捕获+移除未使用signal import
+- Levenshtein距离长度保护: max_len=5000截断
+
+#### P1核心修复
+- RuleLoader规则集(recommended/strict/huawei-cloud)补充P021-P030规则
+- evaluator.py文档注释修正: "52个维度"→"62个维度"
+
 ## [v33.0.0] - 2026-07-14
 
 ### Added (第十五轮成熟度循环 R15: v32→v33)
