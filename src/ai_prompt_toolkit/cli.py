@@ -162,6 +162,84 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 
 
 @main.command()
+@click.option("--target", "-t", required=True, help="评估目标(文件或目录)")
+@click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
+@click.option("--categories", help="指定类别(逗号分隔，如structure,security)")
+@click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+def evaluate(target: str, dimensions: str | None, categories: str | None,
+             threshold: float, fmt: str, output: str | None) -> None:
+    """62维度质量评估：全面评估Prompt质量"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.evaluator import evaluate_template
+    from pathlib import Path as _Path
+
+    target_path = resolve_path(target)
+    dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
+    cat_list = [c.strip() for c in categories.split(",")] if categories else None
+
+    if target_path.is_dir():
+        files = sorted(target_path.rglob("*.md"))
+    else:
+        files = [target_path]
+
+    if not files:
+        click.echo("错误: 未找到.md文件", err=True)
+        sys.exit(2)
+
+    reports = []
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        report = evaluate_template(
+            str(f), text, dimensions=dim_list, categories=cat_list
+        )
+        reports.append(report)
+
+    if fmt == "json":
+        import json as _json
+        data = {"reports": [r.to_dict() for r in reports]}
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        total_score = 0.0
+        total_count = 0
+        low_items = []
+        for report in reports:
+            scores = report.dimension_scores if hasattr(report, 'dimension_scores') else []
+            if not scores:
+                continue
+            avg = sum(s.score for s in scores) / len(scores) if scores else 0
+            total_score += avg
+            total_count += 1
+            tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+            click.echo(f"  {tid}: 均分 {avg:.1f}/10 ({len(scores)}维度)")
+            if threshold > 0 and avg < threshold:
+                low_items.append((tid, avg))
+
+        if total_count > 0:
+            click.echo(f"\n总均分: {total_score / total_count:.1f}/10")
+
+        if low_items:
+            click.echo(f"\n低于阈值({threshold})的模板({len(low_items)}个):")
+            for tid, score in low_items[:5]:
+                click.echo(f"  {tid}: {score:.1f}/10")
+
+    exit_code = 0
+    if threshold > 0:
+        for report in reports:
+            scores = report.dimension_scores if hasattr(report, 'dimension_scores') else []
+            avg = sum(s.score for s in scores) / len(scores) if scores else 0
+            if avg < threshold:
+                exit_code = 1
+                break
+    sys.exit(exit_code)
+
+
+@main.command()
 @click.option("--target", "-t", required=True, help="扫描目标(文件或目录)")
 @click.option("--config", help="安全扫描配置YAML文件路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
@@ -383,6 +461,54 @@ def init_project(target: str, non_interactive: bool) -> None:
             click.echo(f"  错误: {e}", err=True)
 
     sys.exit(0 if steps == 3 else 1)
+
+
+@main.command(name="assert")
+@click.option("--response", "-r", required=True, help="待验证的响应文本文件路径")
+@click.option("--config", "-c", required=True, help="断言配置YAML文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def assert_cmd(response: str, config: str, fmt: str) -> None:
+    """断言验证：对LLM响应执行质量断言检查"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report
+    from ai_prompt_toolkit.assertion.types import AssertType, AssertionConfig
+    from ai_prompt_toolkit.assertion.engine import AssertionEngine
+
+    resp_path = resolve_path(response)
+    resp_text = resp_path.read_text(encoding="utf-8")
+    cfg = load_config(config)
+
+    assertions_cfg = cfg.get("assertions", [])
+    configs = []
+    for item in assertions_cfg:
+        atype = AssertType(item.get("type", "contains"))
+        configs.append(AssertionConfig(
+            assert_type=atype,
+            value=item.get("value", ""),
+            threshold=item.get("threshold", 0.8),
+            weight=item.get("weight", 1.0),
+        ))
+
+    if not configs:
+        click.echo("错误: 未配置任何断言", err=True)
+        sys.exit(2)
+
+    engine = AssertionEngine()
+    results = engine.evaluate_batch(configs, response=resp_text)
+
+    passed = sum(1 for r in results if r.passed)
+    total = len(results)
+
+    if fmt == "json":
+        import json as _json
+        data = {"passed": passed, "total": total, "results": [r.to_dict() for r in results]}
+        click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        for r in results:
+            icon = "✓" if r.passed else "✗"
+            click.echo(f"  {icon} [{r.assert_type.value}] {r.reason} (分数: {r.score:.2f})")
+        click.echo(f"\n断言结果: {passed}/{total} 通过")
+
+    sys.exit(0 if passed == total else 1)
 
 
 @main.command()
