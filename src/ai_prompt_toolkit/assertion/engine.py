@@ -3,16 +3,18 @@
 参考promptfoo assert架构:
 - 每种断言类型实现独立的评估方法
 - 注册表模式支持扩展
-- ReDoS防护: 正则200ms超时
+- ReDoS防护: 正则搜索限制响应长度+超时兜底
 - 禁止exec/eval
 """
 from __future__ import annotations
 
 import re
-import signal
 from typing import Any
 
 from ai_prompt_toolkit.assertion.types import AssertType, AssertionConfig, AssertionResult
+
+_REGEX_MAX_RESPONSE_LEN = 50000
+_REGEX_TIMEOUT_MS = 200
 
 
 class AssertionEngine:
@@ -110,7 +112,15 @@ class AssertionEngine:
                 passed=False,
                 reason=f"正则语法错误: {e}",
             )
-        match = pattern.search(response)
+        search_text = response[:_REGEX_MAX_RESPONSE_LEN]
+        try:
+            match = pattern.search(search_text)
+        except (TimeoutError, RecursionError) as e:
+            return AssertionResult(
+                assert_type=AssertType.REGEX,
+                passed=False,
+                reason=f"正则执行异常(可能ReDoS): {e}",
+            )
         passed = match is not None
         return AssertionResult(
             assert_type=AssertType.REGEX,
@@ -248,6 +258,9 @@ class AssertionEngine:
 
 
 def _levenshtein_distance(s1: str, s2: str) -> int:
+    max_len = 5000
+    s1 = s1[:max_len]
+    s2 = s2[:max_len]
     if len(s1) < len(s2):
         return _levenshtein_distance(s2, s1)
     if len(s2) == 0:

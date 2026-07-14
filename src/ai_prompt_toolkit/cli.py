@@ -156,6 +156,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
             click.echo(f"    总费用: ${stats['total_cost']:.4f}")
             click.echo(f"    平均Token: {stats['avg_token_count']:.0f}")
 
+    from ai_prompt_toolkit.ab_test.provider import get_cost_tracker
     cost_tracker = get_cost_tracker()
     if cost_tracker.spent > 0:
         click.echo(f"\n总费用: ${cost_tracker.spent:.4f} (剩余: ${cost_tracker.remaining:.2f})")
@@ -209,7 +210,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         total_count = 0
         low_items = []
         for report in reports:
-            scores = report.dimension_scores if hasattr(report, 'dimension_scores') else []
+            scores = report.scores
             if not scores:
                 continue
             avg = sum(s.score for s in scores) / len(scores) if scores else 0
@@ -231,7 +232,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     exit_code = 0
     if threshold > 0:
         for report in reports:
-            scores = report.dimension_scores if hasattr(report, 'dimension_scores') else []
+            scores = report.scores
             avg = sum(s.score for s in scores) / len(scores) if scores else 0
             if avg < threshold:
                 exit_code = 1

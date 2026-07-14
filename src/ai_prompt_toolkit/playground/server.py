@@ -24,8 +24,8 @@ app = FastAPI(title="AI Prompt Toolkit Playground", version=__version__)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:*", "http://127.0.0.1:*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -133,7 +133,7 @@ async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
     try:
         result = evaluate_template("playground", template, dimensions=dimensions or None)
         dim_scores = {}
-        for dim in result.dimensions:
+        for dim in result.scores:
             dim_scores[dim.name] = round(dim.score, 2)
         return {
             "status": "success",

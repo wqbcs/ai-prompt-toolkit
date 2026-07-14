@@ -404,7 +404,7 @@ def evaluate_template(
 
 
 def get_all_dimensions() -> list[dict[str, Any]]:
-    """获取全部52个维度定义。"""
+    """获取全部62个维度定义。"""
     return list(_DIMENSIONS)
 
 
