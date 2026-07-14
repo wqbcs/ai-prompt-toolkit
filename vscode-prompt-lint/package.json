@@ -1,8 +1,8 @@
 {
   "name": "vscode-prompt-lint",
   "displayName": "Prompt Lint",
-  "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、Front Matter验证",
-  "version": "0.1.0",
+  "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、评估、Front Matter验证",
+  "version": "0.2.0",
   "publisher": "ai-prompt-toolkit",
   "engines": {
     "vscode": "^1.80.0"
@@ -16,7 +16,8 @@
     "ai",
     "lint",
     "security",
-    "markdown"
+    "markdown",
+    "evaluate"
   ],
   "activationEvents": [
     "onLanguage:markdown"
@@ -35,8 +36,25 @@
       {
         "command": "promptLint.compileActiveFile",
         "title": "Prompt Lint: 条件编译当前文件"
+      },
+      {
+        "command": "promptLint.evaluateActiveFile",
+        "title": "Prompt Lint: 评估当前文件"
+      },
+      {
+        "command": "promptLint.showLintScore",
+        "title": "Prompt Lint: 显示评分"
       }
     ],
+    "views": {
+      "explorer": [
+        {
+          "id": "promptLintSidebar",
+          "name": "Prompt Lint",
+          "icon": "$(checklist)"
+        }
+      ]
+    },
     "configuration": {
       "title": "Prompt Lint",
       "properties": {

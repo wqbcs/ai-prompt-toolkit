@@ -34,6 +34,9 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;backgroun
 .scan-high{background:#fef2f2;color:#991b1b;border-left:3px solid #ef4444}
 .scan-medium{background:#fffbeb;color:#92400e;border-left:3px solid #f59e0b}
 .scan-low{background:#f0fdf4;color:#166534;border-left:3px solid #22c55e}
+.radar-chart{max-width:320px;max-height:320px;margin:0 auto}
+.eval-score{font-size:36px;font-weight:700;text-align:center;margin:8px 0}
+.eval-dim{font-size:11px;padding:2px 8px;margin:1px 0;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)}
 .theme-btn{font-size:14px;padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text)}
 </style>
 </head>
@@ -74,6 +77,7 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab active" data-tab="compile">编译</div>
         <div class="tab" data-tab="lint">Lint</div>
         <div class="tab" data-tab="scan">安全扫描</div>
+        <div class="tab" data-tab="evaluate">评估</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
         <div class="panel-header"><span>编译结果</span><span id="compile-status" class="status-badge status-ok">就绪</span></div>
@@ -96,11 +100,19 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="panel-header"><span>安全扫描</span><span id="scan-status" style="font-size:11px;color:var(--text2)"></span></div>
         <div id="scan-findings" style="flex:1;overflow:auto;background:var(--surface);padding:8px"><p style="font-size:11px;color:var(--text2)">安全扫描结果将在此显示...</p></div>
       </div>
+      <div id="tab-evaluate" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header"><span>质量评估</span><span id="eval-status" style="font-size:11px;color:var(--text2)"></span></div>
+        <div style="flex:1;overflow:auto;background:var(--surface);padding:12px">
+          <div id="eval-score" class="eval-score">--</div>
+          <svg id="eval-radar" class="radar-chart" viewBox="0 0 300 300"></svg>
+          <div id="eval-dims" style="margin-top:8px"><p style="font-size:11px;color:var(--text2)">评估结果将在此显示...</p></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 <script>
-let debounceTimer=null,lintTimer=null,scanTimer=null;
+let debounceTimer=null,lintTimer=null,scanTimer=null,evalTimer=null;
 const srcEditor=document.getElementById('source-editor');
 const resultEditor=document.getElementById('result-editor');
 const statusBadge=document.getElementById('compile-status');
@@ -182,16 +194,58 @@ function updateScanUI(total,findings){
   container.innerHTML=findings.map(f=>`<div class="lint-finding ${sevMap[f.severity]||'scan-low'}"><strong>${f.rule_id}</strong> ${f.description}</div>`).join('');
 }
 
+async function runEvaluate(){
+  const template=srcEditor.value;
+  try{
+    const resp=await fetch('/api/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
+    const data=await resp.json();
+    if(data.status==='success')updateEvalUI(data.overall_score,data.dimension_scores);
+  }catch(e){console.error('Evaluate error:',e)}
+}
+
+function updateEvalUI(score,dimScores){
+  const scoreEl=document.getElementById('eval-score'),dimsEl=document.getElementById('eval-dims'),radarEl=document.getElementById('eval-radar'),statusEl=document.getElementById('eval-status');
+  scoreEl.textContent=score.toFixed(1);
+  scoreEl.style.color=score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444';
+  statusEl.textContent='62维度评估';
+  const entries=Object.entries(dimScores);
+  if(!entries.length){dimsEl.innerHTML='<p style="font-size:11px;color:var(--text2)">无维度数据</p>';return}
+  dimsEl.innerHTML=entries.map(([k,v])=>`<div class="eval-dim"><span>${k}</span><span style="font-weight:600;color:${v>=8?'#22c55e':v>=5?'#f59e0b':'#ef4444'}">${v.toFixed(1)}</span></div>`).join('');
+  drawRadar(entries);
+}
+
+function drawRadar(entries){
+  const svg=document.getElementById('eval-radar');
+  const n=Math.min(entries.length,12);
+  const items=entries.slice(0,n);
+  const cx=150,cy=150,r=110;
+  const angleStep=2*Math.PI/n;
+  let paths='';
+  for(let ring=1;ring<=5;ring++){
+    const rr=r*ring/5;
+    let pts=[];
+    for(let i=0;i<n;i++){const a=angleStep*i-Math.PI/2;pts.push(`${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`)}
+    paths+=`<polygon points="${pts.join(' ')}" fill="none" stroke="var(--border)" stroke-width="0.5"/>`;
+  }
+  for(let i=0;i<n;i++){const a=angleStep*i-Math.PI/2;paths+=`<line x1="${cx}" y1="${cy}" x2="${cx+r*Math.cos(a)}" y2="${cy+r*Math.sin(a)}" stroke="var(--border)" stroke-width="0.5"/>`}
+  let dataPts=[];
+  for(let i=0;i<n;i++){const v=items[i][1]/10;const a=angleStep*i-Math.PI/2;dataPts.push(`${cx+r*v*Math.cos(a)},${cy+r*v*Math.sin(a)}`)}
+  paths+=`<polygon points="${dataPts.join(' ')}" fill="rgba(59,130,246,0.25)" stroke="#3b82f6" stroke-width="1.5"/>`;
+  for(let i=0;i<n;i++){const a=angleStep*i-Math.PI/2;const v=items[i][1]/10;paths+=`<circle cx="${cx+r*v*Math.cos(a)}" cy="${cy+r*v*Math.sin(a)}" r="3" fill="#3b82f6"/>`;paths+=`<text x="${cx+(r+16)*Math.cos(a)}" y="${cy+(r+16)*Math.sin(a)}" text-anchor="middle" dominant-baseline="middle" fill="var(--text2)" font-size="9">${items[i][0]}</text>`}
+  svg.innerHTML=paths;
+}
+
 btnCompile.addEventListener('click',compile);
 srcEditor.addEventListener('input',()=>{
-  clearTimeout(debounceTimer);clearTimeout(lintTimer);clearTimeout(scanTimer);
+  clearTimeout(debounceTimer);clearTimeout(lintTimer);clearTimeout(scanTimer);clearTimeout(evalTimer);
   debounceTimer=setTimeout(compile,500);
   lintTimer=setTimeout(runLint,800);
   scanTimer=setTimeout(runScan,1200);
+  evalTimer=setTimeout(runEvaluate,1500);
 });
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{document.getElementById(id).addEventListener('change',compile)});
 fetch('/api/version').then(r=>r.json()).then(d=>{document.getElementById('version-badge').textContent='v'+d.version}).catch(()=>{});
-compile();runLint();runScan();
+compile();runLint();runScan();runEvaluate();
 </script>
 </body>
 </html>

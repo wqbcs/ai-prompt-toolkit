@@ -124,6 +124,27 @@ async def api_scan(body: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+@app.post("/api/evaluate")
+async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.evaluator import evaluate_template
+    template = body.get("template", "")
+    template_type = body.get("template_type", "prompt")
+    dimensions = body.get("dimensions", [])
+    try:
+        result = evaluate_template("playground", template, dimensions=dimensions or None)
+        dim_scores = {}
+        for dim in result.dimensions:
+            dim_scores[dim.name] = round(dim.score, 2)
+        return {
+            "status": "success",
+            "overall_score": round(result.overall_score, 2),
+            "dimension_scores": dim_scores,
+            "summary": result.summary if hasattr(result, "summary") else "",
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
 @app.websocket("/ws/compile")
 async def ws_compile(websocket: WebSocket) -> None:
     await websocket.accept()
