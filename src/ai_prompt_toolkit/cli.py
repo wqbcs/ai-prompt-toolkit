@@ -169,14 +169,17 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 @click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
+@click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 def evaluate(target: str, dimensions: str | None, categories: str | None,
-             threshold: float, fmt: str, output: str | None) -> None:
+             threshold: float, fmt: str, output: str | None, quick: bool) -> None:
     """62维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template
 
     target_path = resolve_path(target)
     dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
+    if quick and dim_list is None:
+        dim_list = [f"D{i:02d}" for i in range(1, 11)]
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
 
     if target_path.is_dir():
@@ -275,9 +278,28 @@ def scan(target: str, config: str | None, incremental: bool,
     high_count = sum(1 for f in all_findings if f.get("severity") in ("high", "critical"))
     medium_count = sum(1 for f in all_findings if f.get("severity") == "medium")
     low_count = sum(1 for f in all_findings if f.get("severity") == "low")
+    critical_count = sum(1 for f in all_findings if f.get("severity") == "critical")
 
-    click.echo(f"\n扫描完成 | 文件: {total} | 发现: {len(all_findings)} "
-               f"(高:{high_count} 中:{medium_count} 低:{low_count})")
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.text import Text
+        console = Console()
+        risk_label = "CRITICAL" if critical_count > 0 else "HIGH" if high_count > 0 else "MEDIUM" if medium_count > 0 else "LOW" if low_count > 0 else "SAFE"
+        risk_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green", "SAFE": "green"}[risk_label]
+        top3 = sorted(all_findings, key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3))[:3]
+        summary_lines = [f"[bold]风险等级: [{risk_color}]{risk_label}[/{risk_color}][/bold]",
+                         f"文件: {total} | 发现: {len(all_findings)}",
+                         f"CRITICAL: {critical_count} | HIGH: {high_count - critical_count} | MEDIUM: {medium_count} | LOW: {low_count}"]
+        if top3:
+            summary_lines.append("[bold]TOP3风险:[/bold]")
+            for idx, f in enumerate(top3, 1):
+                summary_lines.append(f"  {idx}. [{f.get('rule_id', '?')}] {f.get('description', '')[:60]}")
+        console.print(Panel("\n".join(summary_lines), title="安全扫描摘要", border_style=risk_color))
+    except ImportError:
+        click.echo(f"\n=== 安全扫描摘要 ===")
+        click.echo(f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}")
+        click.echo(f"文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})")
 
     if output and all_findings:
         report_data = {
@@ -318,19 +340,42 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
     total_findings = 0
     total_score = 0.0
 
-    for tpl_path in templates:
-        text = tpl_path.read_text(encoding="utf-8")
-        template_type = _detect_template_type(text)
-        result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
-        all_results.append(result)
-        total_findings += result.failed_count
-        total_score += result.score
+    try:
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.console import Console
+        _has_rich = True
+        console = Console()
+    except ImportError:
+        _has_rich = False
 
-        if fmt == "cli" and result.findings:
-            for f in result.findings:
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
-                marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
-                click.echo(f"  {marker} [{tpl_path.name}] {f.rule_id}: {f.description}")
+    if _has_rich:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+                      BarColumn(), TaskProgressColumn(), console=console) as progress:
+            task = progress.add_task("Lint扫描中...", total=len(templates))
+            for tpl_path in templates:
+                text = tpl_path.read_text(encoding="utf-8")
+                template_type = _detect_template_type(text)
+                result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+                all_results.append(result)
+                total_findings += result.failed_count
+                total_score += result.score
+                progress.advance(task)
+    else:
+        for tpl_path in templates:
+            text = tpl_path.read_text(encoding="utf-8")
+            template_type = _detect_template_type(text)
+            result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+            all_results.append(result)
+            total_findings += result.failed_count
+            total_score += result.score
+
+    if fmt == "cli":
+        for result in all_results:
+            if result.findings:
+                for f in result.findings:
+                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                    marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
+                    click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
 
     avg_score = total_score / max(len(all_results), 1)
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
