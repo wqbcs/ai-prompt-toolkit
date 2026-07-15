@@ -389,12 +389,258 @@ class AliyunProvider(BaseProvider):
         return await self._invoke_openai_compatible(prompt, api_base)
 
 
+class GoogleProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "gemini-1.5-pro": (0.0035, 0.0105), "gemini-1.5-flash": (0.000075, 0.0003),
+        "gemini-pro": (0.0005, 0.0015),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0015)
+    _PROVIDER_LABEL: str = "Google"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://generativelanguage.googleapis.com/v1beta/openai"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class MistralProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "mistral-large-latest": (0.004, 0.012), "mistral-medium-latest": (0.0027, 0.0081),
+        "mistral-small-latest": (0.0002, 0.0006),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0002, 0.0006)
+    _PROVIDER_LABEL: str = "Mistral"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.mistral.ai/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class CohereProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "command-r-plus": (0.0025, 0.01), "command-r": (0.0005, 0.0015),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0015)
+    _PROVIDER_LABEL: str = "Cohere"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.cohere.com/v2"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class GroqProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "llama-3.3-70b-versatile": (0.00059, 0.00079),
+        "mixtral-8x7b-32768": (0.00024, 0.00024),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.00024, 0.00024)
+    _PROVIDER_LABEL: str = "Groq"
+
+    def validate(self) -> bool:
+        try:
+            return self._load_credential().startswith("gsk_")
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.groq.com/openai/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class TogetherProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "meta-llama/Llama-3-70b-chat-hf": (0.0008, 0.0008),
+        "mistralai/Mixtral-8x7B-Instruct-v0.1": (0.0006, 0.0006),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0006, 0.0006)
+    _PROVIDER_LABEL: str = "Together"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.together.xyz/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class FireworksProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "accounts/fireworks/models/llama-v3p1-70b-instruct": (0.0009, 0.0009),
+        "accounts/fireworks/models/mixtral-8x7b-instruct": (0.0005, 0.0005),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0005)
+    _PROVIDER_LABEL: str = "Fireworks"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.fireworks.ai/inference/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class PerplexityProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "llama-3.1-sonar-large-128k-online": (0.001, 0.001),
+        "llama-3.1-sonar-small-128k-online": (0.0002, 0.0002),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0002, 0.0002)
+    _PROVIDER_LABEL: str = "Perplexity"
+
+    def validate(self) -> bool:
+        try:
+            return self._load_credential().startswith("pplx-")
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.perplexity.ai"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class OllamaProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {}
+    _DEFAULT_RATES: tuple[float, float] = (0.0, 0.0)
+    _PROVIDER_LABEL: str = "Ollama"
+
+    def validate(self) -> bool:
+        return True
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "http://localhost:11434/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class LMStudioProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {}
+    _DEFAULT_RATES: tuple[float, float] = (0.0, 0.0)
+    _PROVIDER_LABEL: str = "LMStudio"
+
+    def validate(self) -> bool:
+        return True
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "http://localhost:1234/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class ZhipuProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "glm-4": (0.001, 0.001), "glm-4-flash": (0.0001, 0.0001),
+        "glm-4-plus": (0.005, 0.005),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
+    _PROVIDER_LABEL: str = "Zhipu"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://open.bigmodel.cn/api/paas/v4"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class MoonshotProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "moonshot-v1-8k": (0.001, 0.001), "moonshot-v1-32k": (0.001, 0.001),
+        "moonshot-v1-128k": (0.001, 0.001),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
+    _PROVIDER_LABEL: str = "Moonshot"
+
+    def validate(self) -> bool:
+        try:
+            return self._load_credential().startswith("sk-") and len(self._load_credential()) > 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.moonshot.cn/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class BaiduProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "ernie-4.0-8k": (0.012, 0.012), "ernie-3.5-8k": (0.0012, 0.0012),
+        "ernie-speed-8k": (0.0, 0.0),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.0012, 0.0012)
+    _PROVIDER_LABEL: str = "Baidu"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://qianfan.baidubce.com/v2"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
+class MiniMaxProvider(BaseProvider):
+    _PRICING: dict[str, tuple[float, float]] = {
+        "MiniMax-Text-01": (0.001, 0.001), "abab6.5s-chat": (0.001, 0.001),
+    }
+    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
+    _PROVIDER_LABEL: str = "MiniMax"
+
+    def validate(self) -> bool:
+        try:
+            return len(self._load_credential()) >= 20
+        except ProviderError:
+            return False
+
+    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
+        api_base = self._config.api_base or "https://api.minimax.chat/v1"
+        return await self._invoke_openai_compatible(prompt, api_base)
+
+
 _PROVIDER_REGISTRY: dict[ProviderType, type[BaseProvider]] = {
     ProviderType.OPENAI: OpenAIProvider,
     ProviderType.ANTHROPIC: AnthropicProvider,
     ProviderType.ALIYUN: AliyunProvider,
     ProviderType.DEEPSEEK: DeepSeekProvider,
     ProviderType.HUAWEI: HuaweiProvider,
+    ProviderType.GOOGLE: GoogleProvider,
+    ProviderType.MISTRAL: MistralProvider,
+    ProviderType.COHERE: CohereProvider,
+    ProviderType.GROQ: GroqProvider,
+    ProviderType.TOGETHER: TogetherProvider,
+    ProviderType.FIREWORKS: FireworksProvider,
+    ProviderType.PERPLEXITY: PerplexityProvider,
+    ProviderType.OLLAMA: OllamaProvider,
+    ProviderType.LMSTUDIO: LMStudioProvider,
+    ProviderType.ZHIPU: ZhipuProvider,
+    ProviderType.MOONSHOT: MoonshotProvider,
+    ProviderType.BAIDU: BaiduProvider,
+    ProviderType.MINIMAX: MiniMaxProvider,
 }
 
 

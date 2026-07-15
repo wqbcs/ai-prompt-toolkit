@@ -12,6 +12,19 @@ class ProviderType(Enum):
     ALIYUN = "aliyun"
     DEEPSEEK = "deepseek"
     HUAWEI = "huawei"
+    GOOGLE = "google"
+    MISTRAL = "mistral"
+    COHERE = "cohere"
+    GROQ = "groq"
+    TOGETHER = "together"
+    FIREWORKS = "fireworks"
+    PERPLEXITY = "perplexity"
+    OLLAMA = "ollama"
+    LMSTUDIO = "lmstudio"
+    ZHIPU = "zhipu"
+    MOONSHOT = "moonshot"
+    BAIDU = "baidu"
+    MINIMAX = "minimax"
 
 
 class TestStatus(Enum):

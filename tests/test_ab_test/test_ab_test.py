@@ -40,9 +40,22 @@ class TestProviderType:
         assert ProviderType.ALIYUN.value == "aliyun"
         assert ProviderType.DEEPSEEK.value == "deepseek"
         assert ProviderType.HUAWEI.value == "huawei"
+        assert ProviderType.GOOGLE.value == "google"
+        assert ProviderType.MISTRAL.value == "mistral"
+        assert ProviderType.COHERE.value == "cohere"
+        assert ProviderType.GROQ.value == "groq"
+        assert ProviderType.TOGETHER.value == "together"
+        assert ProviderType.FIREWORKS.value == "fireworks"
+        assert ProviderType.PERPLEXITY.value == "perplexity"
+        assert ProviderType.OLLAMA.value == "ollama"
+        assert ProviderType.LMSTUDIO.value == "lmstudio"
+        assert ProviderType.ZHIPU.value == "zhipu"
+        assert ProviderType.MOONSHOT.value == "moonshot"
+        assert ProviderType.BAIDU.value == "baidu"
+        assert ProviderType.MINIMAX.value == "minimax"
 
     def test_provider_type_count(self):
-        assert len(ProviderType) == 5
+        assert len(ProviderType) == 18
 
 
 class TestCostTracker:
