@@ -533,20 +533,48 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--provider", help="Provider配置(provider:model_name，在线模式)")
 @click.option("--output", "-o", help="输出报告路径")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
+@click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
+@click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
 def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
-                output: str | None, fmt: str) -> None:
+                output: str | None, fmt: str, owasp: str | None,
+                top_n: int, severity: str | None) -> None:
     """红队探测：对抗性安全测试"""
-    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
     from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
     from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
 
     available = get_available_probes()
+
+    if owasp:
+        owasp_refs = [ref.strip() for ref in owasp.split(",")]
+        owasp_probes: list[str] = []
+        for ref in owasp_refs:
+            owasp_probes.extend(get_probes_by_owasp(ref))
+        available = [p for p in available if p in owasp_probes]
+
     selected_probes = probes.split(",") if probes else available
+
+    if top_n > 0:
+        selected_probes = selected_probes[:top_n]
+
+    _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
     probe_instances = []
     for name in selected_probes:
         try:
-            probe_instances.append(create_probe(name.strip()))
+            probe = create_probe(name.strip())
+            if severity:
+                min_level = _SEVERITY_ORDER.get(severity, 3)
+                probe_inputs = probe.generate_inputs()
+                has_qualifying = any(
+                    _SEVERITY_ORDER.get(pi.severity, 3) <= min_level
+                    for pi in probe_inputs
+                )
+                if has_qualifying:
+                    probe_instances.append(probe)
+            else:
+                probe_instances.append(probe)
         except ValueError as e:
             click.echo(f"警告: {e}", err=True)
 

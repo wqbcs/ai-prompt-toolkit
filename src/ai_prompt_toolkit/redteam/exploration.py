@@ -3,6 +3,7 @@
 参考garak Exploration策略:
 - 顺序执行所有Probe
 - 每个Probe的输入都经过Detector评估
+- probe-detector绑定: 每个Probe可指定首选Detector
 - 异常隔离（单个Probe失败不影响整体）
 - 生成RedTeamReport
 """
@@ -11,7 +12,7 @@ from __future__ import annotations
 from typing import Any
 
 from ai_prompt_toolkit.redteam.probe import BaseProbe, ProbeInput
-from ai_prompt_toolkit.redteam.detector import BaseDetector, DetectionResult
+from ai_prompt_toolkit.redteam.detector import BaseDetector, DetectionResult, create_detector
 from ai_prompt_toolkit.redteam.report import ProbeResult, RedTeamReport
 
 
@@ -23,6 +24,7 @@ class ExplorationOrchestrator:
     ) -> None:
         self._probes = probes or []
         self._detectors = detectors or []
+        self._probe_detector_map: dict[str, list[BaseDetector]] = {}
 
     def add_probe(self, probe: BaseProbe) -> None:
         self._probes.append(probe)
@@ -30,9 +32,27 @@ class ExplorationOrchestrator:
     def add_detector(self, detector: BaseDetector) -> None:
         self._detectors.append(detector)
 
-    def evaluate_response(self, response: str, probe_input: str = "") -> list[DetectionResult]:
+    def bind_detector(self, probe_name: str, detector: BaseDetector) -> None:
+        if probe_name not in self._probe_detector_map:
+            self._probe_detector_map[probe_name] = []
+        self._probe_detector_map[probe_name].append(detector)
+
+    def _get_detectors_for_probe(self, probe: BaseProbe) -> list[BaseDetector]:
+        bound = self._probe_detector_map.get(probe.name, [])
+        if bound:
+            return bound
+        if probe.primary_detector:
+            try:
+                primary = create_detector(probe.primary_detector)
+                return [primary] + self._detectors
+            except ValueError:
+                pass
+        return self._detectors
+
+    def evaluate_response(self, response: str, probe_input: str = "", detectors: list[BaseDetector] | None = None) -> list[DetectionResult]:
+        active_detectors = detectors or self._detectors
         results = []
-        for detector in self._detectors:
+        for detector in active_detectors:
             try:
                 result = detector.detect(response, probe_input)
                 results.append(result)
@@ -50,9 +70,10 @@ class ExplorationOrchestrator:
             probe_results: list[ProbeResult] = []
             inputs = probe.generate_inputs()
             total_probes += len(inputs)
+            active_detectors = self._get_detectors_for_probe(probe)
 
             for probe_input in inputs:
-                detections = self.evaluate_response(text, probe_input.text)
+                detections = self.evaluate_response(text, probe_input.text, active_detectors)
                 is_vuln = any(d.is_vulnerable for d in detections)
                 if is_vuln:
                     vulnerable_probes += 1
@@ -89,6 +110,7 @@ class ExplorationOrchestrator:
             for probe in self._probes:
                 inputs = probe.generate_inputs()
                 total_probes += len(inputs)
+                active_detectors = self._get_detectors_for_probe(probe)
 
                 for probe_input in inputs:
                     try:
@@ -97,7 +119,7 @@ class ExplorationOrchestrator:
                     except Exception as e:
                         response = f"[Provider错误: {e}]"
 
-                    detections = self.evaluate_response(response, probe_input.text)
+                    detections = self.evaluate_response(response, probe_input.text, active_detectors)
                     is_vuln = any(d.is_vulnerable for d in detections)
                     if is_vuln:
                         vulnerable_probes += 1

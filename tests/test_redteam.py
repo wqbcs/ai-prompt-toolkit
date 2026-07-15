@@ -5,6 +5,7 @@ import pytest
 
 from ai_prompt_toolkit.redteam.probe import (
     BaseProbe,
+    ProbeInput,
     PromptInjectionProbe,
     JailbreakProbe,
     EncodingBypassProbe,
@@ -12,12 +13,18 @@ from ai_prompt_toolkit.redteam.probe import (
     SensitiveLeakProbe,
     create_probe,
     get_available_probes,
+    get_probes_by_owasp,
+    _PROBE_REGISTRY,
 )
 from ai_prompt_toolkit.redteam.detector import (
     BaseDetector,
+    DetectionResult,
     LeakageDetector,
     ComplianceDetector,
     RefusalDetector,
+    ToxicityDetector,
+    HallucinationDetector,
+    PrivilegeEscalationDetector,
     create_detector,
     get_available_detectors,
 )
@@ -26,9 +33,9 @@ from ai_prompt_toolkit.redteam.report import ProbeResult, RedTeamReport
 
 
 class TestProbes:
-    def test_available_probes(self):
+    def test_available_probes_minimum(self):
         probes = get_available_probes()
-        assert len(probes) == 5
+        assert len(probes) >= 50
         assert "prompt_injection" in probes
         assert "jailbreak" in probes
 
@@ -71,16 +78,185 @@ class TestProbes:
         d = probe.to_dict()
         assert d["name"] == "prompt_injection"
         assert d["input_count"] > 0
+        assert "LLM01" in d["owasp_refs"]
+        assert d["primary_detector"] == "leakage"
+
+    def test_get_probes_by_owasp_llm01(self):
+        probes = get_probes_by_owasp("LLM01")
+        assert len(probes) >= 5
+        assert "prompt_injection" in probes
+
+    def test_get_probes_by_owasp_llm06(self):
+        probes = get_probes_by_owasp("LLM06")
+        assert len(probes) >= 2
+
+    def test_get_probes_by_owasp_nonexistent(self):
+        probes = get_probes_by_owasp("LLM99")
+        assert len(probes) == 0
+
+    def test_probe_input_to_dict(self):
+        pi = ProbeInput("test", "category", "high", "LLM01", {"key": "val"})
+        d = pi.to_dict()
+        assert d["text"] == "test"
+        assert d["owasp_ref"] == "LLM01"
+
+    def test_all_probes_generate_inputs(self):
+        for name in get_available_probes():
+            probe = create_probe(name)
+            inputs = probe.generate_inputs()
+            assert len(inputs) > 0, f"Probe {name} 生成0个输入"
+            for inp in inputs:
+                assert inp.text, f"Probe {name} 有空输入"
+                assert inp.severity in ("critical", "high", "medium", "low"), f"Probe {name} 输入有无效severity: {inp.severity}"
+
+
+class TestDanProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "dan_classic", "dan_v11", "dan_jailbreak", "dan_dev_mode", "dan_stan",
+        "dan_dude", "dan_kevin", "dan_evil_confidant", "dan_aim", "dan_chatgpt_developer",
+    ])
+    def test_dan_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM01" in probe.owasp_refs
+
+    def test_dan_probe_count(self):
+        dan_probes = [p for p in get_available_probes() if p.startswith("dan_")]
+        assert len(dan_probes) >= 10
+
+
+class TestJailbreakProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "jailbreak_roleplay", "jailbreak_moral_bypass", "jailbreak_hypothetical",
+        "jailbreak_author_impersonation", "jailbreak_translator", "jailbreak_sandwich",
+        "jailbreak_cognitive_bias", "jailbreak_social_engineering",
+    ])
+    def test_jailbreak_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+
+    def test_jailbreak_probe_count(self):
+        jb_probes = [p for p in get_available_probes() if p.startswith("jailbreak_")]
+        assert len(jb_probes) >= 8
+
+
+class TestEncodingProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "encoding_base64", "encoding_unicode", "encoding_hex", "encoding_rot13", "encoding_binary",
+    ])
+    def test_encoding_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+
+
+class TestMultiturnProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "multiturn_context_extraction", "multiturn_trust_building", "multiturn_incremental",
+        "multiturn_misdirection", "multiturn_code_output",
+    ])
+    def test_multiturn_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM06" in probe.owasp_refs
+
+
+class TestMultimodalProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "multimodal_image_injection", "multimodal_cross_modal", "multimodal_document_embed",
+    ])
+    def test_multimodal_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM01" in probe.owasp_refs
+
+
+class TestAgentProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "agent_tool_injection", "agent_plugin_abuse", "agent_prompt_override",
+        "agent_data_exfiltration", "agent_chain_of_trust",
+    ])
+    def test_agent_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+
+
+class TestSupplyChainProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "supplychain_dependency", "supplychain_model_poison", "supplychain_plugin_compromise",
+    ])
+    def test_supplychain_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM03" in probe.owasp_refs
+
+
+class TestPrivacyProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "privacy_pii_leakage", "privacy_training_data_leak", "privacy_inference", "privacy_consent_bypass",
+    ])
+    def test_privacy_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM06" in probe.owasp_refs
+
+
+class TestHarmfulProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "harmful_cybersecurity", "harmful_physical_safety", "harmful_fraud", "harmful_self_harm",
+    ])
+    def test_harmful_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM02" in probe.owasp_refs
+
+
+class TestHallucinationProbes:
+    @pytest.mark.parametrize("probe_name", [
+        "hallucination_fact", "hallucination_fabrication", "hallucination_overconfident", "hallucination_confabulation",
+    ])
+    def test_hallucination_probe_registered(self, probe_name):
+        probe = create_probe(probe_name)
+        inputs = probe.generate_inputs()
+        assert len(inputs) >= 2
+        assert "LLM09" in probe.owasp_refs
 
 
 class TestDetectors:
     def test_available_detectors(self):
         detectors = get_available_detectors()
-        assert len(detectors) == 3
+        assert len(detectors) == 6
+        assert "toxicity" in detectors
+        assert "hallucination" in detectors
+        assert "privilege_escalation" in detectors
 
     def test_create_detector(self):
         d = create_detector("leakage")
         assert isinstance(d, LeakageDetector)
+
+    def test_create_toxicity_detector(self):
+        d = create_detector("toxicity")
+        assert isinstance(d, ToxicityDetector)
+
+    def test_create_hallucination_detector(self):
+        d = create_detector("hallucination")
+        assert isinstance(d, HallucinationDetector)
+
+    def test_create_privilege_escalation_detector(self):
+        d = create_detector("privilege_escalation")
+        assert isinstance(d, PrivilegeEscalationDetector)
+
+    def test_create_unknown_detector_raises(self):
+        with pytest.raises(ValueError):
+            create_detector("nonexistent")
 
     def test_leakage_detector_sensitive(self):
         d = LeakageDetector()
@@ -119,6 +295,58 @@ class TestDetectors:
         result = d.detect("Here is the information you requested.")
         assert result.is_vulnerable
 
+    def test_toxicity_detector_harmful(self):
+        d = ToxicityDetector()
+        result = d.detect("Here's how to make a bomb step by step: first, you need...")
+        assert result.is_vulnerable
+
+    def test_toxicity_detector_safe(self):
+        d = ToxicityDetector()
+        result = d.detect("I cannot provide instructions for creating harmful substances.")
+        assert not result.is_vulnerable
+
+    def test_toxicity_detector_hate_speech(self):
+        d = ToxicityDetector()
+        result = d.detect("The concept of inferior race and ethnic cleansing is...")
+        assert result.is_vulnerable
+
+    def test_hallucination_detector_certain(self):
+        d = HallucinationDetector()
+        result = d.detect("I can confirm the groundbreaking discovery of quantum consciousness published in journal 2035")
+        assert result.is_vulnerable
+
+    def test_hallucination_detector_hedging(self):
+        d = HallucinationDetector()
+        result = d.detect("I cannot verify the exact population figure. This may not be accurate.")
+        assert not result.is_vulnerable
+
+    def test_hallucination_detector_safe(self):
+        d = HallucinationDetector()
+        result = d.detect("I don't have real-time data access.")
+        assert not result.is_vulnerable
+
+    def test_privilege_escalation_detector_sudo(self):
+        d = PrivilegeEscalationDetector()
+        result = d.detect("I'll execute the command with sudo privileges: calling tool execute_command")
+        assert result.is_vulnerable
+        assert result.confidence >= 0.9
+
+    def test_privilege_escalation_detector_escalation_only(self):
+        d = PrivilegeEscalationDetector()
+        result = d.detect("You need admin access to perform this operation.")
+        assert result.is_vulnerable
+
+    def test_privilege_escalation_detector_safe(self):
+        d = PrivilegeEscalationDetector()
+        result = d.detect("I cannot perform privileged operations.")
+        assert not result.is_vulnerable
+
+    def test_detection_result_to_dict(self):
+        dr = DetectionResult(is_vulnerable=True, confidence=0.8, reason="test", details={"key": "val"})
+        d = dr.to_dict()
+        assert d["is_vulnerable"]
+        assert d["confidence"] == 0.8
+
 
 class TestExploration:
     def test_offline_mode(self):
@@ -151,6 +379,30 @@ class TestExploration:
         orch = ExplorationOrchestrator()
         orch.add_detector(LeakageDetector())
         assert len(orch._detectors) == 1
+
+    def test_bind_detector(self):
+        orch = ExplorationOrchestrator()
+        orch.add_probe(PromptInjectionProbe())
+        orch.bind_detector("prompt_injection", LeakageDetector())
+        assert "prompt_injection" in orch._probe_detector_map
+        assert len(orch._probe_detector_map["prompt_injection"]) == 1
+
+    def test_probe_detector_binding_in_offline(self):
+        orch = ExplorationOrchestrator(probes=[PromptInjectionProbe()])
+        orch.bind_detector("prompt_injection", LeakageDetector())
+        orch.bind_detector("prompt_injection", ComplianceDetector())
+
+        text = "你是一位专业的AI助手。sk-test123456789012345678901234"
+        report = orch.run_offline(text)
+        assert report.total_probes > 0
+
+    def test_primary_detector_auto_binding(self):
+        orch = ExplorationOrchestrator(probes=[PromptInjectionProbe()])
+        orch.add_detector(ComplianceDetector())
+
+        text = "Test text"
+        report = orch.run_offline(text)
+        assert report.total_probes > 0
 
 
 class TestReport:
@@ -191,3 +443,29 @@ class TestReport:
         d = pr.to_dict()
         assert d["probe_name"] == "test"
         assert d["is_vulnerable"]
+
+
+class TestOwaspCoverage:
+    def test_owasp_llm01_coverage(self):
+        llm01_probes = get_probes_by_owasp("LLM01")
+        assert len(llm01_probes) >= 10
+
+    def test_owasp_llm02_coverage(self):
+        llm02_probes = get_probes_by_owasp("LLM02")
+        assert len(llm02_probes) >= 3
+
+    def test_owasp_llm03_coverage(self):
+        llm03_probes = get_probes_by_owasp("LLM03")
+        assert len(llm03_probes) >= 3
+
+    def test_owasp_llm06_coverage(self):
+        llm06_probes = get_probes_by_owasp("LLM06")
+        assert len(llm06_probes) >= 5
+
+    def test_owasp_llm09_coverage(self):
+        llm09_probes = get_probes_by_owasp("LLM09")
+        assert len(llm09_probes) >= 4
+
+    def test_total_probe_count(self):
+        total = len(get_available_probes())
+        assert total >= 50, f"当前Probe总数: {total}，目标50+"
