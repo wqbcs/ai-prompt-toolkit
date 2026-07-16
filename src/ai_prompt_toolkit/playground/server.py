@@ -39,6 +39,12 @@ _PLAYGROUND_ORIGINS = [
 
 app = FastAPI(title="AI Prompt Toolkit Playground", version=__version__)
 
+try:
+    from ai_prompt_toolkit.market.api import router as market_router
+    app.include_router(market_router)
+except Exception:
+    logger.warning("Market API router failed to load")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_PLAYGROUND_ORIGINS,
