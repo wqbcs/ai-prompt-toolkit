@@ -1039,5 +1039,15 @@ def doctor_cmd(provider: str | None, as_json: bool) -> None:
     sys.exit(0 if healthy == total else 1)
 
 
+@main.command(name="wizard")
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "ab-test", "redteam"]),
+              help="直接指定命令(跳过功能选择)")
+def wizard_cmd(command: str | None) -> None:
+    """交互式向导：5步引导你完成Prompt工具链操作"""
+    from ai_prompt_toolkit.wizard import run_wizard
+    exit_code = run_wizard(command)
+    sys.exit(exit_code)
+
+
 if __name__ == "__main__":
     main()
