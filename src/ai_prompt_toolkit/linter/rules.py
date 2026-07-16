@@ -429,14 +429,22 @@ from ai_prompt_toolkit.linter.rules_p021_p030 import (  # noqa: E402
     run_checks_p021_p030,
 )
 
+from ai_prompt_toolkit.linter.rules_p031_p040 import (  # noqa: E402
+    check_p031, check_p032, check_p033, check_p034, check_p035,
+    check_p036, check_p037, check_p038, check_p039, check_p040,
+    run_checks_p031_p040,
+)
+
 _CHECKERS_EXTENDED: list[_CheckerFn] = _CHECKERS + [
     check_p021, check_p022, check_p023, check_p024, check_p025,
     check_p026, check_p027, check_p028, check_p029, check_p030,
+    check_p031, check_p032, check_p033, check_p034, check_p035,
+    check_p036, check_p037, check_p038, check_p039, check_p040,
 ]
 
 
 def get_all_rules() -> list[LintRule]:
-    return list(_ALL_RULES)
+    return list(_RULE_MAP.values())
 
 
 def get_rule(rule_id: str) -> LintRule | None:

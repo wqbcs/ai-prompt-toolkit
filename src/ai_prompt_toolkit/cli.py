@@ -296,6 +296,18 @@ def scan(target: str, config: str | None, incremental: bool,
             for idx, f in enumerate(top3, 1):
                 summary_lines.append(f"  {idx}. [{f.get('rule_id', '?')}] {f.get('description', '')[:60]}")
         console.print(Panel("\n".join(summary_lines), title="安全扫描摘要", border_style=risk_color))
+
+        from ai_prompt_toolkit.security.finding_enhancer import enhance_findings, _SEVERITY_COLORS
+        from ai_prompt_toolkit.types import Finding, Severity
+        findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                 description=f.get("description", "")) for f in all_findings[:10]]
+        enhanced = enhance_findings(findings_objs)
+        if enhanced:
+            console.print("\n[bold]详细解释(TOP10):[/bold]")
+            for ef in enhanced:
+                console.print(f"  [bold][{ef.finding.rule_id}][/bold] {ef.plain_explanation}")
+                if ef.risk_reason:
+                    console.print(f"    [dim]风险: {ef.risk_reason}[/dim]")
     except ImportError:
         click.echo(f"\n=== 安全扫描摘要 ===")
         click.echo(f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}")

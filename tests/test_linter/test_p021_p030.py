@@ -287,7 +287,7 @@ class TestP021ToP030Integration:
 
     def test_all_30_rules_registered(self):
         rules = get_all_rules()
-        assert len(rules) == 30
+        assert len(rules) >= 40
         rule_ids = {r.rule_id for r in rules}
         for i in range(1, 31):
             assert f"P{i:03d}" in rule_ids
