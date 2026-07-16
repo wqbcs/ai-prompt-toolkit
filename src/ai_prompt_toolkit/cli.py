@@ -170,8 +170,10 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
+@click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
 def evaluate(target: str, dimensions: str | None, categories: str | None,
-             threshold: float, fmt: str, output: str | None, quick: bool) -> None:
+             threshold: float, fmt: str, output: str | None, quick: bool,
+             save_history: bool) -> None:
     """62维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template
@@ -239,6 +241,19 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
             if avg < threshold:
                 exit_code = 1
                 break
+
+    if save_history:
+        from ai_prompt_toolkit.eval_store import EvalStore
+        store = EvalStore()
+        for report in reports:
+            snapshot = store.save(report)
+            click.echo(f"  已保存: #{snapshot.snapshot_id} ({report.template_id})")
+            alerts = store.get_alerts(template_id=report.template_id, limit=5)
+            if alerts:
+                for a in alerts:
+                    click.echo(f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+        store.close()
+
     sys.exit(exit_code)
 
 
@@ -677,6 +692,117 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
             click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
     else:
         click.echo(report.get_summary())
+
+
+@main.command(name="eval-history")
+@click.option("--template", "-t", help="模板ID(过滤)")
+@click.option("--limit", "-n", type=int, default=10, help="显示条数(默认10)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
+    """评估历史：查看评估结果趋势和回归告警"""
+    from ai_prompt_toolkit.eval_store import EvalStore
+
+    store = EvalStore()
+
+    if template:
+        snapshots = store.get_snapshots(template, limit=limit)
+        trend = store.get_trend(template, limit=limit)
+        alerts = store.get_alerts(template_id=template, limit=10)
+    else:
+        snapshots = []
+        trend = []
+        alerts = store.get_alerts(limit=10)
+
+    if fmt == "json":
+        import json as _json
+        click.echo(_json.dumps({
+            "snapshots": [s.to_dict() for s in snapshots],
+            "trend": [t.to_dict() for t in trend],
+            "alerts": [a.to_dict() for a in alerts],
+        }, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+
+        if snapshots:
+            table = Table(title=f"评估历史 (模板: {template})", show_lines=True)
+            table.add_column("#", style="dim", width=5)
+            table.add_column("时间", width=20)
+            table.add_column("总分", width=8)
+            table.add_column("百分位", width=8)
+            table.add_column("维度数", width=6)
+            for s in snapshots:
+                table.add_row(
+                    str(s.snapshot_id), s.created_at,
+                    f"{s.overall_score:.2f}", f"{s.percentage:.1f}%",
+                    str(s.dimension_count),
+                )
+            console.print(table)
+
+        if trend and len(trend) > 1:
+            console.print("\n[bold]趋势线[/bold]")
+            for tp in trend:
+                bar_len = int(tp.percentage / 5)
+                bar = "█" * bar_len + "░" * (20 - bar_len)
+                console.print(f"  #{tp.snapshot_id} {tp.created_at} {bar} {tp.percentage:.1f}%")
+
+        if alerts:
+            console.print(f"\n[bold red]回归告警 ({len(alerts)}条)[/bold red]")
+            for a in alerts:
+                icon = "🔴" if a.severity == "critical" else "🟡"
+                console.print(f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+
+    store.close()
+
+
+@main.command(name="eval-compare")
+@click.argument("snapshot_a", type=int)
+@click.argument("snapshot_b", type=int)
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
+    """评估对比：对比两次评估结果的维度差异"""
+    from ai_prompt_toolkit.eval_store import EvalStore
+
+    store = EvalStore()
+    result = store.compare(snapshot_a, snapshot_b)
+    store.close()
+
+    if "error" in result:
+        click.echo(f"错误: {result['error']}", err=True)
+        sys.exit(2)
+
+    if fmt == "json":
+        import json as _json
+        click.echo(_json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        table = Table(title=f"评估对比: #{snapshot_a} vs #{snapshot_b}", show_lines=True)
+        table.add_column("维度", style="bold", width=10)
+        table.add_column(f"#{snapshot_a}", width=8)
+        table.add_column(f"#{snapshot_b}", width=8)
+        table.add_column("差异", width=8)
+        table.add_column("趋势", width=10)
+
+        for d in result["dimension_diffs"]:
+            diff = d["diff"]
+            if diff > 0:
+                trend_icon = "[green]↑ +{:.1f}[/green]".format(diff)
+            elif diff < 0:
+                trend_icon = "[red]↓ {:.1f}[/red]".format(diff)
+            else:
+                trend_icon = "[dim]= 0[/dim]"
+            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]),
+                         f"{diff:+.1f}", trend_icon)
+
+        console.print(table)
+        overall = result["overall_diff"]
+        icon = "↑" if overall > 0 else "↓" if overall < 0 else "="
+        console.print(f"\n总分变化: {icon} {overall:+.4f}")
 
 
 @main.command(name="doctor")
