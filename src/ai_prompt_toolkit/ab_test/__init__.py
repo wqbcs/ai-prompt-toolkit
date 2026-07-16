@@ -25,9 +25,13 @@ from ai_prompt_toolkit.ab_test.provider import (
 from ai_prompt_toolkit.ab_test.engine import ParallelEngine, TaskOutput, TaskProgress
 from ai_prompt_toolkit.ab_test.statistics import (
     auto_select_test,
+    bayesian_ab_test,
     cohens_d,
     confidence_interval,
     mann_whitney_u_test,
+    recommend_statistical_method,
+    sequential_analysis,
+    thompson_sampling,
     t_test,
 )
 from ai_prompt_toolkit.ab_test.recommender import Recommender
@@ -129,5 +133,9 @@ __all__ = [
     "mann_whitney_u_test",
     "t_test",
     "Recommender",
+    "bayesian_ab_test",
     "run_ab_test",
+    "recommend_statistical_method",
+    "sequential_analysis",
+    "thompson_sampling",
 ]

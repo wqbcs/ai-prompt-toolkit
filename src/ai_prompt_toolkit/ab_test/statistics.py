@@ -405,3 +405,292 @@ def auto_select_test(
         "significant": result.get("significant", False),
         "p_value": result.get("p_value", 1.0),
     }
+
+
+def bayesian_ab_test(
+    successes_a: int,
+    trials_a: int,
+    successes_b: int,
+    trials_b: int,
+    *,
+    prior_alpha: float = 1.0,
+    prior_beta: float = 1.0,
+    n_samples: int = 50000,
+) -> dict[str, Any]:
+    """贝叶斯A/B测试 — Beta后验+蒙特卡洛采样
+
+    适用于转化率/成功率等二项分布场景。
+    小样本(<30)时比频率学派更稳定。
+
+    Args:
+        successes_a: A组成功次数
+        trials_a: A组总试验次数
+        successes_b: B组成功次数
+        trials_b: B组总试验次数
+        prior_alpha: Beta先验alpha(默认1.0=均匀先验)
+        prior_beta: Beta先验beta(默认1.0=均匀先验)
+        n_samples: 蒙特卡洛采样次数
+    """
+    import random
+
+    if trials_a <= 0 or trials_b <= 0:
+        return {
+            "test_type": "bayesian_ab",
+            "error": "试验次数必须>0",
+            "prob_b_better": 0.0,
+            "expected_loss_a": 0.0,
+            "expected_loss_b": 0.0,
+        }
+
+    alpha_a = prior_alpha + successes_a
+    beta_a = prior_beta + trials_a - successes_a
+    alpha_b = prior_alpha + successes_b
+    beta_b = prior_beta + trials_b - successes_b
+
+    b_better = 0
+    total_diff = 0.0
+    loss_a = 0.0
+    loss_b = 0.0
+
+    random.seed(42)
+
+    for _ in range(n_samples):
+        p_a = _beta_sample(alpha_a, beta_a)
+        p_b = _beta_sample(alpha_b, beta_b)
+
+        if p_b > p_a:
+            b_better += 1
+            loss_a += p_b - p_a
+        else:
+            loss_b += p_a - p_b
+
+        total_diff += p_b - p_a
+
+    prob_b_better = b_better / n_samples
+    mean_diff = total_diff / n_samples
+
+    rate_a = successes_a / trials_a
+    rate_b = successes_b / trials_b
+
+    return {
+        "test_type": "bayesian_ab",
+        "prob_b_better": round(prob_b_better, 6),
+        "prob_a_better": round(1.0 - prob_b_better, 6),
+        "expected_loss_a": round(loss_a / n_samples, 6),
+        "expected_loss_b": round(loss_b / n_samples, 6),
+        "mean_diff": round(mean_diff, 6),
+        "rate_a": round(rate_a, 6),
+        "rate_b": round(rate_b, 6),
+        "credible_interval_diff": _compute_credible_interval(
+            alpha_a, beta_a, alpha_b, beta_b, n_samples,
+        ),
+        "significant": prob_b_better > 0.95 or prob_b_better < 0.05,
+        "recommendation": "B" if prob_b_better > 0.95 else "A" if prob_b_better < 0.05 else "insufficient_evidence",
+    }
+
+
+def _beta_sample(alpha: float, beta: float) -> float:
+    import random
+    if alpha <= 0 or beta <= 0:
+        return 0.5
+    x = random.gammavariate(alpha, 1.0)
+    y = random.gammavariate(beta, 1.0)
+    return x / (x + y) if (x + y) > 0 else 0.5
+
+
+def _compute_credible_interval(
+    alpha_a: float, beta_a: float,
+    alpha_b: float, beta_b: float,
+    n_samples: int,
+) -> dict[str, float]:
+    import random
+    random.seed(42)
+    diffs = []
+    for _ in range(n_samples):
+        p_a = _beta_sample(alpha_a, beta_a)
+        p_b = _beta_sample(alpha_b, beta_b)
+        diffs.append(p_b - p_a)
+    diffs.sort()
+    lower_idx = int(0.025 * n_samples)
+    upper_idx = int(0.975 * n_samples)
+    return {
+        "lower_95": round(diffs[lower_idx], 6) if diffs else 0.0,
+        "upper_95": round(diffs[min(upper_idx, n_samples - 1)], 6) if diffs else 0.0,
+    }
+
+
+def thompson_sampling(
+    arms: list[dict[str, int]],
+    *,
+    n_rounds: int = 1000,
+) -> dict[str, Any]:
+    """Thompson Sampling多臂老虎机 — 自适应A/B测试
+
+    每轮根据后验分布采样选择臂，自动平衡探索与利用。
+    适用于持续运行的在线A/B测试。
+
+    Args:
+        arms: 每个臂的统计 [{"successes": int, "trials": int}, ...]
+        n_rounds: 模拟轮次
+    """
+    import random
+
+    if not arms:
+        return {"test_type": "thompson_sampling", "error": "无臂数据", "recommendation": None}
+
+    random.seed(42)
+    n_arms = len(arms)
+    alphas = [1.0 + a.get("successes", 0) for a in arms]
+    betas = [1.0 + a.get("trials", 0) - a.get("successes", 0) for a in arms]
+
+    arm_pulls = [0] * n_arms
+    arm_successes = [0] * n_arms
+
+    for _ in range(n_rounds):
+        samples = [_beta_sample(alphas[i], betas[i]) for i in range(n_arms)]
+        best_arm = samples.index(max(samples))
+        arm_pulls[best_arm] += 1
+
+        true_rate = arms[best_arm].get("successes", 0) / max(arms[best_arm].get("trials", 1), 1)
+        if random.random() < true_rate:
+            arm_successes[best_arm] += 1
+            alphas[best_arm] += 1
+        else:
+            betas[best_arm] += 1
+
+    rates = [s / max(p, 1) for s, p in zip(arm_successes, arm_pulls)]
+    best_idx = rates.index(max(rates))
+
+    return {
+        "test_type": "thompson_sampling",
+        "n_rounds": n_rounds,
+        "n_arms": n_arms,
+        "arm_pulls": arm_pulls,
+        "arm_successes": arm_successes,
+        "arm_rates": [round(r, 6) for r in rates],
+        "recommendation": f"arm_{best_idx}",
+        "allocation_pct": [round(p / n_rounds * 100, 1) for p in arm_pulls],
+    }
+
+
+def sequential_analysis(
+    successes_a: int,
+    trials_a: int,
+    successes_b: int,
+    trials_b: int,
+    *,
+    alpha: float = 0.05,
+    beta: float = 0.2,
+) -> dict[str, Any]:
+    """序贯概率比检验(SPRT) — 边收集数据边检验
+
+    可在数据收集过程中随时停止检验，减少不必要的样本量。
+    适用于持续监控的在线A/B测试。
+
+    Args:
+        successes_a/trials_a: A组数据
+        successes_b/trials_b: B组数据
+        alpha: 第一类错误率
+        beta: 第二类错误率
+    """
+    if trials_a <= 0 or trials_b <= 0:
+        return {"test_type": "sprt", "error": "试验次数必须>0", "decision": "continue"}
+
+    rate_a = successes_a / trials_a
+    rate_b = successes_b / trials_b
+
+    p0 = rate_a
+    p1 = rate_b if rate_b > rate_a else rate_a + 0.01
+
+    if p0 <= 0 or p0 >= 1 or p1 <= 0 or p1 >= 1:
+        return {
+            "test_type": "sprt",
+            "decision": "continue",
+            "reason": "转化率在边界值，无法计算SPRT",
+            "rate_a": round(rate_a, 6),
+            "rate_b": round(rate_b, 6),
+        }
+
+    upper_bound = (1 - beta) / alpha
+    lower_bound = beta / (1 - alpha)
+
+    n = min(trials_a, trials_b)
+    log_likelihood_ratio = 0.0
+
+    for k in range(n):
+        s_a = min(successes_a, k + 1)
+        s_b = min(successes_b, k + 1)
+        obs_rate = (s_a + s_b) / (2 * (k + 1))
+
+        if obs_rate > 0 and obs_rate < 1:
+            ll_p1 = obs_rate * math.log(p1 / p0) if p0 > 0 and p1 > 0 else 0
+            ll_p0 = (1 - obs_rate) * math.log((1 - p1) / (1 - p0)) if (1 - p0) > 0 and (1 - p1) > 0 else 0
+            log_likelihood_ratio += ll_p1 + ll_p0
+
+    likelihood_ratio = math.exp(min(log_likelihood_ratio, 500))
+
+    if likelihood_ratio >= upper_bound:
+        decision = "reject_h0"
+        reason = f"B显著优于A (LR={likelihood_ratio:.2f}>={upper_bound:.2f})"
+    elif likelihood_ratio <= lower_bound:
+        decision = "accept_h0"
+        reason = f"A与B无显著差异 (LR={likelihood_ratio:.2f}<={lower_bound:.2f})"
+    else:
+        decision = "continue"
+        reason = f"证据不足，继续收集数据 (LR={likelihood_ratio:.2f})"
+
+    return {
+        "test_type": "sprt",
+        "decision": decision,
+        "reason": reason,
+        "likelihood_ratio": round(likelihood_ratio, 6),
+        "upper_bound": round(upper_bound, 6),
+        "lower_bound": round(lower_bound, 6),
+        "rate_a": round(rate_a, 6),
+        "rate_b": round(rate_b, 6),
+        "n_observed": n,
+    }
+
+
+def recommend_statistical_method(
+    sample_size: int,
+    data_type: str = "binary",
+) -> dict[str, Any]:
+    """根据样本量和数据类型推荐统计方法
+
+    Args:
+        sample_size: 当前/预期样本量
+        data_type: 数据类型("binary"=转化率, "continuous"=连续值)
+    """
+    if data_type == "binary":
+        if sample_size < 30:
+            return {
+                "recommended": "bayesian_ab",
+                "reason": f"样本量{n=}<30，贝叶斯方法更稳定",
+                "alternatives": ["thompson_sampling", "sprt"],
+            }
+        elif sample_size < 100:
+            return {
+                "recommended": "bayesian_ab",
+                "reason": f"样本量{n=}中等，贝叶斯方法可提供后验概率",
+                "alternatives": ["t_test", "sprt"],
+            }
+        else:
+            return {
+                "recommended": "t_test",
+                "reason": f"样本量{n=}>=100，频率学派方法稳健",
+                "alternatives": ["bayesian_ab", "mann_whitney_u"],
+            }
+    else:
+        if sample_size < 30:
+            return {
+                "recommended": "mann_whitney_u",
+                "reason": f"样本量{n=}<30，非参数检验更安全",
+                "alternatives": ["bayesian_ab"],
+            }
+        else:
+            return {
+                "recommended": "t_test",
+                "reason": f"样本量{n=}>=30，参数检验适用",
+                "alternatives": ["mann_whitney_u", "bayesian_ab"],
+            }
