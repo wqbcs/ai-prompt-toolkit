@@ -694,6 +694,97 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo(report.get_summary())
 
 
+@main.command(name="version")
+@click.option("--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]),
+              required=True, help="版本操作")
+@click.option("--template", "-t", help="模板ID")
+@click.option("--source", "-s", help="源文件路径(create时读取)")
+@click.option("--version", "ver", type=int, help="版本号(show/diff/rollback)")
+@click.option("--version-a", type=int, help="对比版本A(diff)")
+@click.option("--version-b", type=int, help="对比版本B(diff)")
+@click.option("--author", help="作者")
+@click.option("--message", "-m", help="变更说明")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def version_cmd(action: str, template: str | None, source: str | None, ver: int | None,
+                version_a: int | None, version_b: int | None, author: str | None,
+                message: str | None, fmt: str) -> None:
+    """Prompt版本管理：版本创建/列表/diff/回滚"""
+    from ai_prompt_toolkit.version_store import VersionStore
+
+    store = VersionStore()
+
+    try:
+        if action == "create":
+            if not template:
+                click.echo("错误: 请指定--template", err=True)
+                sys.exit(2)
+            content = ""
+            if source:
+                from ai_prompt_toolkit.cli_helpers import resolve_path
+                content = resolve_path(source).read_text(encoding="utf-8")
+            elif not click.get_text_stream("stdin").isatty():
+                content = click.get_text_stream("stdin").read()
+            else:
+                click.echo("错误: 请指定--source或通过管道传入内容", err=True)
+                sys.exit(2)
+
+            v = store.create_version(template, content, author=author or "", message=message or "")
+            click.echo(f"版本已创建: {template} v{v.version_number} ({v.content_hash})")
+
+        elif action == "list":
+            if not template:
+                click.echo("错误: 请指定--template", err=True)
+                sys.exit(2)
+            versions = store.list_versions(template)
+            if fmt == "json":
+                import json as _json
+                click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
+            else:
+                for v in versions:
+                    click.echo(f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}")
+
+        elif action == "show":
+            if not template or not ver:
+                click.echo("错误: 请指定--template和--version", err=True)
+                sys.exit(2)
+            v = store.get_version(template, ver)
+            if not v:
+                click.echo(f"版本不存在: {template} v{ver}", err=True)
+                sys.exit(2)
+            click.echo(v.content)
+
+        elif action == "diff":
+            if not template or not version_a or not version_b:
+                click.echo("错误: 请指定--template --version-a --version-b", err=True)
+                sys.exit(2)
+            result = store.diff(template, version_a, version_b)
+            if fmt == "json":
+                import json as _json
+                click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                click.echo(f"Diff: {template} v{version_a} → v{version_b}")
+                click.echo(f"变更: {result.change_summary}")
+                for line in result.unified_diff:
+                    if line.startswith("+") and not line.startswith("+++"):
+                        click.echo(f"[green]{line}[/green]")
+                    elif line.startswith("-") and not line.startswith("---"):
+                        click.echo(f"[red]{line}[/red]")
+                    elif line.startswith("@@"):
+                        click.echo(f"[cyan]{line}[/cyan]")
+                    else:
+                        click.echo(line)
+
+        elif action == "rollback":
+            if not template or not ver:
+                click.echo("错误: 请指定--template和--version", err=True)
+                sys.exit(2)
+            v = store.rollback(template, ver, author=author or "")
+            click.echo(f"已回滚: {template} v{v.version_number} (回滚到v{ver})")
+
+    finally:
+        store.close()
+
+
 @main.command(name="eval-history")
 @click.option("--template", "-t", help="模板ID(过滤)")
 @click.option("--limit", "-n", type=int, default=10, help="显示条数(默认10)")
