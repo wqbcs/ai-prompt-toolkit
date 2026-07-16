@@ -14,15 +14,13 @@ from ai_prompt_toolkit.ab_test.types import (
     WinRateCell,
 )
 from ai_prompt_toolkit.ab_test.provider import (
-    AnthropicProvider,
     BaseProvider,
     CostTracker,
-    DeepSeekProvider,
-    HuaweiProvider,
-    OpenAIProvider,
+    HealthCheckResult,
     ProviderError,
     create_provider,
     get_cost_tracker,
+    run_health_check,
 )
 from ai_prompt_toolkit.ab_test.engine import ParallelEngine, TaskOutput, TaskProgress
 from ai_prompt_toolkit.ab_test.statistics import (
@@ -34,6 +32,25 @@ from ai_prompt_toolkit.ab_test.statistics import (
 )
 from ai_prompt_toolkit.ab_test.recommender import Recommender
 
+from ai_prompt_toolkit.ab_test.providers.openai import OpenAIProvider
+from ai_prompt_toolkit.ab_test.providers.anthropic import AnthropicProvider
+from ai_prompt_toolkit.ab_test.providers.deepseek import DeepSeekProvider
+from ai_prompt_toolkit.ab_test.providers.huawei import HuaweiProvider
+from ai_prompt_toolkit.ab_test.providers.aliyun import AliyunProvider
+from ai_prompt_toolkit.ab_test.providers.google import GoogleProvider
+from ai_prompt_toolkit.ab_test.providers.mistral import MistralProvider
+from ai_prompt_toolkit.ab_test.providers.cohere import CohereProvider
+from ai_prompt_toolkit.ab_test.providers.groq import GroqProvider
+from ai_prompt_toolkit.ab_test.providers.together import TogetherProvider
+from ai_prompt_toolkit.ab_test.providers.fireworks import FireworksProvider
+from ai_prompt_toolkit.ab_test.providers.perplexity import PerplexityProvider
+from ai_prompt_toolkit.ab_test.providers.ollama import OllamaProvider
+from ai_prompt_toolkit.ab_test.providers.lmstudio import LMStudioProvider
+from ai_prompt_toolkit.ab_test.providers.zhipu import ZhipuProvider
+from ai_prompt_toolkit.ab_test.providers.moonshot import MoonshotProvider
+from ai_prompt_toolkit.ab_test.providers.baidu import BaiduProvider
+from ai_prompt_toolkit.ab_test.providers.minimax import MiniMaxProvider
+
 
 async def run_ab_test(
     config: ABTestConfig,
@@ -41,16 +58,6 @@ async def run_ab_test(
     max_concurrency: int = 10,
     mode: str = "win_rate",
 ) -> StatisticalReport:
-    """SDK 入口：运行完整的 A/B 测试流程。
-
-    Args:
-        config: A/B 测试配置。
-        max_concurrency: 最大并发数。
-        mode: 推荐模式（win_rate / composite）。
-
-    Returns:
-        StatisticalReport 统计报告。
-    """
     engine = ParallelEngine(config)
     outputs = await engine.run(max_concurrency=max_concurrency)
 
@@ -91,13 +98,28 @@ __all__ = [
     "AliyunProvider",
     "AnthropicProvider",
     "BaseProvider",
+    "BaiduProvider",
+    "CohereProvider",
     "CostTracker",
     "DeepSeekProvider",
+    "FireworksProvider",
+    "GoogleProvider",
+    "GroqProvider",
+    "HealthCheckResult",
     "HuaweiProvider",
+    "LMStudioProvider",
+    "MiniMaxProvider",
+    "MistralProvider",
+    "MoonshotProvider",
+    "OllamaProvider",
     "OpenAIProvider",
+    "PerplexityProvider",
     "ProviderError",
+    "TogetherProvider",
+    "ZhipuProvider",
     "create_provider",
     "get_cost_tracker",
+    "run_health_check",
     "ParallelEngine",
     "TaskOutput",
     "TaskProgress",

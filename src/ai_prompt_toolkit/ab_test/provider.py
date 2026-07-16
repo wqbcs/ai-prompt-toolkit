@@ -1,17 +1,21 @@
-"""A/B测试模型提供者 — httpx异步真实调用版
+"""A/B测试模型提供者 — 基础设施层
 
-参考: promptfoo Python SDK Provider模式
-- httpx.AsyncClient连接池+指数退避重试
-- SIMULATED_MODE降级(无API Key时)
-- CostTracker费用累计控制
+参考: promptfoo Python SDK Provider模式 + garak generators目录结构
+- BaseProvider抽象基类 + httpx异步调用
+- CostTracker费用控制 + SIMULATED_MODE降级
+- Provider子模块自动发现注册(providers/目录)
+- 健康检查(prompt-cli doctor)
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import socket
 import threading
 import time
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any
 
 from ai_prompt_toolkit.ab_test.types import ModelConfig, ModelResult, ProviderType, TestStatus
@@ -26,8 +30,6 @@ _COST_LIMIT_USD = float(os.environ.get("PROMPT_CLI_COST_LIMIT", "10.0"))
 _HTTP_TIMEOUT = 30.0
 _HTTP_MAX_CONNECTIONS = 100
 _HTTP_MAX_KEEPALIVE = 20
-
-_total_cost: float = 0.0
 
 
 class CostTracker:
@@ -151,7 +153,6 @@ class BaseProvider(ABC):
                 if resp.status_code == 429:
                     retry_after = float(resp.headers.get("retry-after", delay))
                     logger.warning("429 Rate Limit, 等待 %.1fs (attempt %d/%d)", retry_after, attempt + 1, _MAX_RETRIES)
-                    import asyncio
                     await asyncio.sleep(retry_after)
                     delay *= 2
                     continue
@@ -160,7 +161,6 @@ class BaseProvider(ABC):
             except Exception as e:
                 last_error = e
                 if attempt < _MAX_RETRIES - 1:
-                    import asyncio
                     logger.warning("请求失败 (attempt %d/%d): %s, %.1fs后重试", attempt + 1, _MAX_RETRIES, e, delay)
                     await asyncio.sleep(delay)
                     delay *= 2
@@ -215,437 +215,149 @@ class BaseProvider(ABC):
             return self._make_error_result(prompt, str(e))
 
 
-class OpenAIProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "gpt-4o": (0.005, 0.015), "gpt-4o-mini": (0.00015, 0.0006),
-        "gpt-4-turbo": (0.01, 0.03), "gpt-3.5-turbo": (0.0005, 0.0015),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.002)
-    _PROVIDER_LABEL: str = "OpenAI"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("sk-")
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.openai.com/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class AnthropicProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "claude-3-opus": (0.015, 0.075), "claude-3-sonnet": (0.003, 0.015),
-        "claude-3-haiku": (0.00025, 0.00125),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.003, 0.015)
-    _PROVIDER_LABEL: str = "Anthropic"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("sk-ant-")
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        start = time.perf_counter()
-        try:
-            key = self._load_credential()
-        except ProviderError:
-            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
-
-        if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
-
-        if _global_cost_tracker.limit_reached:
-            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
-
-        try:
-            url = (self._config.api_base or "https://api.anthropic.com/v1") + "/messages"
-            headers = {
-                "x-api-key": key, "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            }
-            payload = {
-                "model": self._config.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": self._config.max_tokens or 1024,
-            }
-            data = await self._http_post(url, headers, payload)
-            content = data["content"][0]["text"]
-            usage = data.get("usage", {})
-            input_tokens = usage.get("input_tokens", 0)
-            output_tokens = usage.get("output_tokens", 0)
-            cost = self.estimate_cost(input_tokens, output_tokens)
-            _global_cost_tracker.record(cost)
-            latency = (time.perf_counter() - start) * 1000
-            return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
-            )
-        except Exception as e:
-            return self._make_error_result(prompt, str(e))
-
-
-class DeepSeekProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "deepseek-chat": (0.00014, 0.00028),
-        "deepseek-reasoner": (0.00055, 0.00219),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.00014, 0.00028)
-    _PROVIDER_LABEL: str = "DeepSeek"
-
-    def validate(self) -> bool:
-        try:
-            key = self._load_credential()
-            return key.startswith("sk-") and len(key) > 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.deepseek.com/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class HuaweiProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "pangu-large": (0.012, 0.036), "pangu-medium": (0.004, 0.012),
-        "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
-        "qwen-72b": (0.006, 0.018),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
-    _PROVIDER_LABEL: str = "HuaweiCloud"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 16
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        start = time.perf_counter()
-        try:
-            key = self._load_credential()
-        except ProviderError:
-            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
-
-        if SIMULATED_MODE:
-            return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
-
-        if _global_cost_tracker.limit_reached:
-            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
-
-        try:
-            api_base = self._config.api_base or "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
-            url = api_base.rstrip("/") + "/chat/completions"
-            if "modelarts" in api_base.lower() or "huawei" in api_base.lower():
-                headers = {"X-Auth-Token": key, "Content-Type": "application/json"}
-            else:
-                headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
-
-            payload = {
-                "model": self._config.model_name,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": self._config.temperature,
-                "max_tokens": self._config.max_tokens,
-            }
-            data = await self._http_post(url, headers, payload)
-            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-            if not content:
-                content = data.get("result", data.get("output", {}).get("text", ""))
-            usage = data.get("usage", {})
-            input_tokens = usage.get("prompt_tokens", usage.get("input_tokens", 0))
-            output_tokens = usage.get("completion_tokens", usage.get("output_tokens", 0))
-            cost = self.estimate_cost(input_tokens, output_tokens)
-            _global_cost_tracker.record(cost)
-            latency = (time.perf_counter() - start) * 1000
-            return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
-            )
-        except Exception as e:
-            return self._make_error_result(prompt, str(e))
-
-
-class AliyunProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "qwen-max": (0.004, 0.012), "qwen-plus": (0.0008, 0.002),
-        "qwen-turbo": (0.0003, 0.0006), "qwen-long": (0.0005, 0.002),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
-    _PROVIDER_LABEL: str = "Aliyun"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("sk-") and len(self._load_credential()) > 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://dashscope.aliyuncs.com/compatible-mode/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class GoogleProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "gemini-1.5-pro": (0.0035, 0.0105), "gemini-1.5-flash": (0.000075, 0.0003),
-        "gemini-pro": (0.0005, 0.0015),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0015)
-    _PROVIDER_LABEL: str = "Google"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://generativelanguage.googleapis.com/v1beta/openai"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class MistralProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "mistral-large-latest": (0.004, 0.012), "mistral-medium-latest": (0.0027, 0.0081),
-        "mistral-small-latest": (0.0002, 0.0006),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0002, 0.0006)
-    _PROVIDER_LABEL: str = "Mistral"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.mistral.ai/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class CohereProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "command-r-plus": (0.0025, 0.01), "command-r": (0.0005, 0.0015),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0015)
-    _PROVIDER_LABEL: str = "Cohere"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.cohere.com/v2"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class GroqProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "llama-3.3-70b-versatile": (0.00059, 0.00079),
-        "mixtral-8x7b-32768": (0.00024, 0.00024),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.00024, 0.00024)
-    _PROVIDER_LABEL: str = "Groq"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("gsk_")
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.groq.com/openai/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class TogetherProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "meta-llama/Llama-3-70b-chat-hf": (0.0008, 0.0008),
-        "mistralai/Mixtral-8x7B-Instruct-v0.1": (0.0006, 0.0006),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0006, 0.0006)
-    _PROVIDER_LABEL: str = "Together"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.together.xyz/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class FireworksProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "accounts/fireworks/models/llama-v3p1-70b-instruct": (0.0009, 0.0009),
-        "accounts/fireworks/models/mixtral-8x7b-instruct": (0.0005, 0.0005),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0005, 0.0005)
-    _PROVIDER_LABEL: str = "Fireworks"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.fireworks.ai/inference/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class PerplexityProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "llama-3.1-sonar-large-128k-online": (0.001, 0.001),
-        "llama-3.1-sonar-small-128k-online": (0.0002, 0.0002),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0002, 0.0002)
-    _PROVIDER_LABEL: str = "Perplexity"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("pplx-")
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.perplexity.ai"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class OllamaProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {}
-    _DEFAULT_RATES: tuple[float, float] = (0.0, 0.0)
-    _PROVIDER_LABEL: str = "Ollama"
-
-    def validate(self) -> bool:
-        return True
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "http://localhost:11434/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class LMStudioProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {}
-    _DEFAULT_RATES: tuple[float, float] = (0.0, 0.0)
-    _PROVIDER_LABEL: str = "LMStudio"
-
-    def validate(self) -> bool:
-        return True
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "http://localhost:1234/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class ZhipuProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "glm-4": (0.001, 0.001), "glm-4-flash": (0.0001, 0.0001),
-        "glm-4-plus": (0.005, 0.005),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
-    _PROVIDER_LABEL: str = "Zhipu"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://open.bigmodel.cn/api/paas/v4"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class MoonshotProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "moonshot-v1-8k": (0.001, 0.001), "moonshot-v1-32k": (0.001, 0.001),
-        "moonshot-v1-128k": (0.001, 0.001),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
-    _PROVIDER_LABEL: str = "Moonshot"
-
-    def validate(self) -> bool:
-        try:
-            return self._load_credential().startswith("sk-") and len(self._load_credential()) > 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.moonshot.cn/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class BaiduProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "ernie-4.0-8k": (0.012, 0.012), "ernie-3.5-8k": (0.0012, 0.0012),
-        "ernie-speed-8k": (0.0, 0.0),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.0012, 0.0012)
-    _PROVIDER_LABEL: str = "Baidu"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://qianfan.baidubce.com/v2"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-class MiniMaxProvider(BaseProvider):
-    _PRICING: dict[str, tuple[float, float]] = {
-        "MiniMax-Text-01": (0.001, 0.001), "abab6.5s-chat": (0.001, 0.001),
-    }
-    _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)
-    _PROVIDER_LABEL: str = "MiniMax"
-
-    def validate(self) -> bool:
-        try:
-            return len(self._load_credential()) >= 20
-        except ProviderError:
-            return False
-
-    async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
-        api_base = self._config.api_base or "https://api.minimax.chat/v1"
-        return await self._invoke_openai_compatible(prompt, api_base)
-
-
-_PROVIDER_REGISTRY: dict[ProviderType, type[BaseProvider]] = {
-    ProviderType.OPENAI: OpenAIProvider,
-    ProviderType.ANTHROPIC: AnthropicProvider,
-    ProviderType.ALIYUN: AliyunProvider,
-    ProviderType.DEEPSEEK: DeepSeekProvider,
-    ProviderType.HUAWEI: HuaweiProvider,
-    ProviderType.GOOGLE: GoogleProvider,
-    ProviderType.MISTRAL: MistralProvider,
-    ProviderType.COHERE: CohereProvider,
-    ProviderType.GROQ: GroqProvider,
-    ProviderType.TOGETHER: TogetherProvider,
-    ProviderType.FIREWORKS: FireworksProvider,
-    ProviderType.PERPLEXITY: PerplexityProvider,
-    ProviderType.OLLAMA: OllamaProvider,
-    ProviderType.LMSTUDIO: LMStudioProvider,
-    ProviderType.ZHIPU: ZhipuProvider,
-    ProviderType.MOONSHOT: MoonshotProvider,
-    ProviderType.BAIDU: BaiduProvider,
-    ProviderType.MINIMAX: MiniMaxProvider,
+@dataclass
+class HealthCheckResult:
+    provider: ProviderType
+    label: str
+    status: str
+    latency_ms: float = 0.0
+    error: str = ""
+    api_key_configured: bool = False
+    endpoint: str = ""
+
+
+_PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
+    ProviderType.OPENAI: "https://api.openai.com/v1",
+    ProviderType.ANTHROPIC: "https://api.anthropic.com/v1",
+    ProviderType.ALIYUN: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    ProviderType.DEEPSEEK: "https://api.deepseek.com/v1",
+    ProviderType.HUAWEI: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
+    ProviderType.GOOGLE: "https://generativelanguage.googleapis.com/v1beta/openai",
+    ProviderType.MISTRAL: "https://api.mistral.ai/v1",
+    ProviderType.COHERE: "https://api.cohere.com/v2",
+    ProviderType.GROQ: "https://api.groq.com/openai/v1",
+    ProviderType.TOGETHER: "https://api.together.xyz/v1",
+    ProviderType.FIREWORKS: "https://api.fireworks.ai/inference/v1",
+    ProviderType.PERPLEXITY: "https://api.perplexity.ai",
+    ProviderType.OLLAMA: "http://localhost:11434/v1",
+    ProviderType.LMSTUDIO: "http://localhost:1234/v1",
+    ProviderType.ZHIPU: "https://open.bigmodel.cn/api/paas/v4",
+    ProviderType.MOONSHOT: "https://api.moonshot.cn/v1",
+    ProviderType.BAIDU: "https://qianfan.baidubce.com/v2",
+    ProviderType.MINIMAX: "https://api.minimax.chat/v1",
+}
+
+_PROVIDER_ENV_VARS: dict[ProviderType, str] = {
+    ProviderType.OPENAI: "OPENAI_API_KEY",
+    ProviderType.ANTHROPIC: "ANTHROPIC_API_KEY",
+    ProviderType.ALIYUN: "ALIYUN_API_KEY",
+    ProviderType.DEEPSEEK: "DEEPSEEK_API_KEY",
+    ProviderType.HUAWEI: "HUAWEI_API_KEY",
+    ProviderType.GOOGLE: "GOOGLE_API_KEY",
+    ProviderType.MISTRAL: "MISTRAL_API_KEY",
+    ProviderType.COHERE: "COHERE_API_KEY",
+    ProviderType.GROQ: "GROQ_API_KEY",
+    ProviderType.TOGETHER: "TOGETHER_API_KEY",
+    ProviderType.FIREWORKS: "FIREWORKS_API_KEY",
+    ProviderType.PERPLEXITY: "PERPLEXITY_API_KEY",
+    ProviderType.OLLAMA: "",
+    ProviderType.LMSTUDIO: "",
+    ProviderType.ZHIPU: "ZHIPU_API_KEY",
+    ProviderType.MOONSHOT: "MOONSHOT_API_KEY",
+    ProviderType.BAIDU: "BAIDU_API_KEY",
+    ProviderType.MINIMAX: "MINIMAX_API_KEY",
 }
 
 
+def _check_tcp_reachable(host: str, port: int, timeout: float = 3.0) -> tuple[bool, float]:
+    start = time.perf_counter()
+    try:
+        sock = socket.create_connection((host, port), timeout=timeout)
+        sock.close()
+        return True, (time.perf_counter() - start) * 1000
+    except (socket.timeout, ConnectionRefusedError, OSError):
+        return False, (time.perf_counter() - start) * 1000
+
+
+def _check_https_reachable(url: str, timeout: float = 5.0) -> tuple[bool, float]:
+    start = time.perf_counter()
+    try:
+        import httpx
+        with httpx.Client(timeout=timeout) as client:
+            resp = client.get(url)
+            return resp.status_code < 500, (time.perf_counter() - start) * 1000
+    except Exception:
+        return False, (time.perf_counter() - start) * 1000
+
+
+def run_health_check(providers: list[ProviderType] | None = None) -> list[HealthCheckResult]:
+    from ai_prompt_toolkit.ab_test.providers import get_registry
+
+    registry = get_registry()
+    results: list[HealthCheckResult] = []
+    targets = providers or list(ProviderType)
+
+    for pt in targets:
+        label = pt.value
+        endpoint = _PROVIDER_DEFAULT_ENDPOINTS.get(pt, "")
+        env_var = _PROVIDER_ENV_VARS.get(pt, "")
+        api_key_set = bool(env_var and os.environ.get(env_var, ""))
+
+        if pt in (ProviderType.OLLAMA, ProviderType.LMSTUDIO):
+            reachable, latency = _check_tcp_reachable("localhost", 11434 if pt == ProviderType.OLLAMA else 1234)
+            results.append(HealthCheckResult(
+                provider=pt, label=label,
+                status="healthy" if reachable else "unreachable",
+                latency_ms=round(latency, 1),
+                api_key_configured=True,
+                endpoint=endpoint,
+            ))
+            continue
+
+        if not api_key_set:
+            results.append(HealthCheckResult(
+                provider=pt, label=label,
+                status="no_api_key",
+                api_key_configured=False,
+                endpoint=endpoint,
+            ))
+            continue
+
+        if endpoint:
+            reachable, latency = _check_https_reachable(endpoint)
+            if reachable:
+                results.append(HealthCheckResult(
+                    provider=pt, label=label,
+                    status="healthy",
+                    latency_ms=round(latency, 1),
+                    api_key_configured=True,
+                    endpoint=endpoint,
+                ))
+            else:
+                results.append(HealthCheckResult(
+                    provider=pt, label=label,
+                    status="unreachable",
+                    latency_ms=round(latency, 1),
+                    api_key_configured=True,
+                    endpoint=endpoint,
+                    error="连接失败",
+                ))
+        else:
+            results.append(HealthCheckResult(
+                provider=pt, label=label,
+                status="unknown",
+                api_key_configured=api_key_set,
+                endpoint=endpoint,
+            ))
+
+    return results
+
+
 def create_provider(config: ModelConfig) -> BaseProvider:
-    cls = _PROVIDER_REGISTRY.get(config.provider)
+    from ai_prompt_toolkit.ab_test.providers import get_registry
+
+    registry = get_registry()
+    cls = registry.get(config.provider)
     if cls is None:
         raise ProviderError(config.provider.value, f"不支持的提供者类型: {config.provider}")
     return cls(config)

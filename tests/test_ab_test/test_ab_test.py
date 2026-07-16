@@ -19,7 +19,7 @@ from ai_prompt_toolkit.ab_test.types import (
     TestStatus,
     WinRateCell,
 )
-from ai_prompt_toolkit.ab_test.provider import (
+from ai_prompt_toolkit.ab_test import (
     AliyunProvider,
     AnthropicProvider,
     BaseProvider,
@@ -111,8 +111,8 @@ class TestProviderRegistry:
         assert isinstance(provider, HuaweiProvider)
 
     def test_create_unsupported_provider_raises(self):
+        from ai_prompt_toolkit.ab_test.providers import _PROVIDER_REGISTRY
         config = ModelConfig(provider=ProviderType.OPENAI, model_name="test")
-        from ai_prompt_toolkit.ab_test.provider import _PROVIDER_REGISTRY
         original = _PROVIDER_REGISTRY.pop(ProviderType.OPENAI)
         try:
             with pytest.raises(ProviderError):

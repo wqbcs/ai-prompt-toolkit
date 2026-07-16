@@ -679,5 +679,70 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo(report.get_summary())
 
 
+@main.command(name="doctor")
+@click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def doctor_cmd(provider: str | None, as_json: bool) -> None:
+    """健康检查：检测Provider连接状态和API Key配置"""
+    from ai_prompt_toolkit.ab_test.provider import run_health_check
+    from ai_prompt_toolkit.ab_test.types import ProviderType
+
+    targets = None
+    if provider:
+        try:
+            pt = ProviderType(provider.lower())
+            targets = [pt]
+        except ValueError:
+            click.echo(f"错误: 不支持的Provider '{provider}'", err=True)
+            click.echo(f"可选: {', '.join(p.value for p in ProviderType)}")
+            sys.exit(2)
+
+    click.echo("正在检查Provider健康状态...")
+    results = run_health_check(targets)
+
+    if as_json:
+        import json as _json
+        click.echo(_json.dumps([
+            {"provider": r.provider.value, "label": r.label, "status": r.status,
+             "latency_ms": r.latency_ms, "error": r.error,
+             "api_key_configured": r.api_key_configured, "endpoint": r.endpoint}
+            for r in results
+        ], ensure_ascii=False, indent=2))
+        return
+
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+    table = Table(title="Provider 健康检查报告", show_lines=True)
+    table.add_column("Provider", style="bold")
+    table.add_column("状态", width=12)
+    table.add_column("API Key", width=8)
+    table.add_column("延迟(ms)", width=10)
+    table.add_column("端点", width=40)
+    table.add_column("错误", width=20)
+
+    status_styles = {
+        "healthy": "[green]✓ healthy[/green]",
+        "unreachable": "[red]✗ unreachable[/red]",
+        "no_api_key": "[yellow]⚠ no_api_key[/yellow]",
+        "unknown": "[dim]? unknown[/dim]",
+    }
+
+    for r in results:
+        status_str = status_styles.get(r.status, r.status)
+        key_str = "[green]✓[/green]" if r.api_key_configured else "[red]✗[/red]"
+        latency_str = f"{r.latency_ms:.0f}" if r.latency_ms > 0 else "-"
+        table.add_row(r.label, status_str, key_str, latency_str, r.endpoint or "-", r.error or "-")
+
+    console.print(table)
+
+    healthy = sum(1 for r in results if r.status == "healthy")
+    total = len(results)
+    console.print(f"\n[bold]总计: {healthy}/{total} Provider 正常[/bold]")
+
+    sys.exit(0 if healthy == total else 1)
+
+
 if __name__ == "__main__":
     main()
