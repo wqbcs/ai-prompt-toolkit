@@ -1049,5 +1049,25 @@ def wizard_cmd(command: str | None) -> None:
     sys.exit(exit_code)
 
 
+@main.command(name="lsp")
+@click.option("--mode", type=click.Choice(["stdio", "tcp"]), default="stdio", help="LSP传输模式")
+@click.option("--host", default="127.0.0.1", help="TCP模式监听地址")
+@click.option("--port", type=int, default=2087, help="TCP模式监听端口")
+def lsp_cmd(mode: str, host: str, port: int) -> None:
+    """LSP服务：VS Code实时Prompt Lint(debounce 300ms)"""
+    try:
+        from ai_prompt_toolkit.linter.lsp_server import run_lsp_stdio, run_lsp_tcp
+    except ImportError:
+        click.echo("错误: LSP功能需要安装pygls: pip install pygls lsprotocol", err=True)
+        sys.exit(1)
+
+    click.echo(f"启动Prompt LSP服务({mode}模式)...")
+    if mode == "tcp":
+        click.echo(f"监听: {host}:{port}")
+        run_lsp_tcp(host, port)
+    else:
+        run_lsp_stdio()
+
+
 if __name__ == "__main__":
     main()
