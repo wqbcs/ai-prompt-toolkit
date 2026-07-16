@@ -676,9 +676,10 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
 @click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
+@click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm"]), help="合规报告框架")
 def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
                 output: str | None, fmt: str, owasp: str | None,
-                top_n: int, severity: str | None) -> None:
+                top_n: int, severity: str | None, compliance: str | None) -> None:
     """红队探测：对抗性安全测试"""
     from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
     from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
@@ -750,7 +751,16 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo("错误: 请指定--target(离线)或--provider(在线)", err=True)
         sys.exit(2)
 
-    if fmt == "json":
+    if compliance:
+        import json as _json
+        compliance_data = report.generate_compliance_report(framework=compliance)
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(compliance_data, output, fmt="json")
+            click.echo(f"合规报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(compliance_data, ensure_ascii=False, indent=2))
+    elif fmt == "json":
         import json as _json
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report

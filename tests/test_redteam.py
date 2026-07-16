@@ -29,7 +29,12 @@ from ai_prompt_toolkit.redteam.detector import (
     get_available_detectors,
 )
 from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
-from ai_prompt_toolkit.redteam.report import ProbeResult, RedTeamReport
+from ai_prompt_toolkit.redteam.report import (
+    ProbeResult,
+    RedTeamReport,
+    SecurityHealthScore,
+    VulnerabilityDetail,
+)
 
 
 class TestProbes:
@@ -469,3 +474,211 @@ class TestOwaspCoverage:
     def test_total_probe_count(self):
         total = len(get_available_probes())
         assert total >= 50, f"当前Probe总数: {total}，目标50+"
+
+
+class TestSecurityHealthScore:
+    def test_perfect_score(self):
+        report = RedTeamReport(total_probes=10, vulnerable_probes=0, safe_probes=10, vulnerability_rate=0.0)
+        health = report.compute_health_score()
+        assert health.score == 100.0
+        assert health.grade == "A"
+        assert "安全" in health.grade_label
+
+    def test_zero_probes(self):
+        report = RedTeamReport()
+        health = report.compute_health_score()
+        assert health.score == 100.0
+        assert health.grade == "A+"
+
+    def test_all_vulnerable(self):
+        report = RedTeamReport(
+            total_probes=10,
+            vulnerable_probes=10,
+            safe_probes=0,
+            vulnerability_rate=1.0,
+            probe_results=[
+                ProbeResult(probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9)
+                for i in range(10)
+            ],
+        )
+        health = report.compute_health_score()
+        assert health.score < 50
+        assert health.grade in ("D", "F")
+
+    def test_grade_b(self):
+        report = RedTeamReport(
+            total_probes=10,
+            vulnerable_probes=2,
+            safe_probes=8,
+            vulnerability_rate=0.2,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5),
+                ProbeResult(probe_name="p2", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5),
+            ],
+        )
+        health = report.compute_health_score()
+        assert 70 <= health.score < 90
+
+    def test_health_score_to_dict(self):
+        hs = SecurityHealthScore(score=85.0, grade="B+", grade_label="较安全", summary="test")
+        d = hs.to_dict()
+        assert d["score"] == 85.0
+        assert d["grade"] == "B+"
+
+
+class TestVulnerabilityDetail:
+    def test_vulnerability_details_basic(self):
+        report = RedTeamReport(
+            total_probes=3,
+            vulnerable_probes=2,
+            safe_probes=1,
+            vulnerability_rate=0.667,
+            probe_results=[
+                ProbeResult(probe_name="injection_p", input_text="hack", input_category="injection", is_vulnerable=True, confidence=0.8),
+                ProbeResult(probe_name="privacy_p", input_text="leak", input_category="privacy", is_vulnerable=True, confidence=0.6),
+                ProbeResult(probe_name="safe_p", input_text="ok", input_category="default", is_vulnerable=False, confidence=0.0),
+            ],
+        )
+        details = report.get_vulnerability_details()
+        assert len(details) == 2
+        assert details[0].probe_name == "injection_p"
+        assert details[0].cvss_score > 0
+        assert details[0].fix_sop != ""
+        assert details[0].defense_prompt != ""
+        assert details[1].input_category == "privacy"
+
+    def test_cvss_score_range(self):
+        report = RedTeamReport(
+            total_probes=1,
+            vulnerable_probes=1,
+            safe_probes=0,
+            vulnerability_rate=1.0,
+            probe_results=[
+                ProbeResult(probe_name="p", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=1.0),
+            ],
+        )
+        details = report.get_vulnerability_details()
+        assert 0 < details[0].cvss_score <= 10.0
+        assert details[0].severity == "critical"
+
+    def test_no_vulnerabilities(self):
+        report = RedTeamReport(total_probes=5, vulnerable_probes=0, safe_probes=5, vulnerability_rate=0.0)
+        details = report.get_vulnerability_details()
+        assert details == []
+
+    def test_vulnerability_detail_to_dict(self):
+        vd = VulnerabilityDetail(probe_name="test", input_category="injection", cvss_score=8.5, severity="high", description="desc", fix_sop="sop", defense_prompt="dp")
+        d = vd.to_dict()
+        assert d["cvss_score"] == 8.5
+        assert d["severity"] == "high"
+
+
+class TestComplianceReport:
+    def test_eu_ai_act_compliance(self):
+        report = RedTeamReport(
+            total_probes=10,
+            vulnerable_probes=1,
+            safe_probes=9,
+            vulnerability_rate=0.1,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.5),
+            ],
+        )
+        cr = report.generate_compliance_report(framework="eu_ai_act")
+        assert cr["report_type"] == "compliance"
+        assert cr["framework"] == "eu_ai_act"
+        assert "eu_ai_act_compliance" in cr
+        assert "article_15" in cr["eu_ai_act_compliance"]
+        assert "article_9" in cr["eu_ai_act_compliance"]
+        assert "risk_classification" in cr["eu_ai_act_compliance"]
+
+    def test_china_algorithm_compliance(self):
+        report = RedTeamReport(
+            total_probes=5,
+            vulnerable_probes=0,
+            safe_probes=5,
+            vulnerability_rate=0.0,
+        )
+        cr = report.generate_compliance_report(framework="china_algorithm")
+        assert cr["framework"] == "china_algorithm"
+        assert "china_algorithm_compliance" in cr
+        assert cr["china_algorithm_compliance"]["security_assessment"] == "PASSED"
+        assert cr["china_algorithm_compliance"]["content_safety"] == "PASSED"
+
+    def test_china_algorithm_privacy_review(self):
+        report = RedTeamReport(
+            total_probes=2,
+            vulnerable_probes=1,
+            safe_probes=1,
+            vulnerability_rate=0.5,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="privacy", is_vulnerable=True, confidence=0.7),
+            ],
+        )
+        cr = report.generate_compliance_report(framework="china_algorithm")
+        assert cr["china_algorithm_compliance"]["data_protection"] == "REQUIRES_REVIEW"
+
+    def test_compliance_recommendations(self):
+        report = RedTeamReport(
+            total_probes=3,
+            vulnerable_probes=2,
+            safe_probes=1,
+            vulnerability_rate=0.667,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9),
+                ProbeResult(probe_name="p2", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=0.8),
+            ],
+        )
+        cr = report.generate_compliance_report(framework="eu_ai_act")
+        assert len(cr["recommendations"]) > 0
+
+    def test_compliance_no_vulnerabilities(self):
+        report = RedTeamReport(total_probes=5, vulnerable_probes=0, safe_probes=5, vulnerability_rate=0.0)
+        cr = report.generate_compliance_report(framework="eu_ai_act")
+        assert cr["eu_ai_act_compliance"]["article_15"] == "PASSED"
+        assert cr["eu_ai_act_compliance"]["article_9"] == "PASSED"
+        assert cr["eu_ai_act_compliance"]["annex_iv"] == "PASSED"
+        assert cr["eu_ai_act_compliance"]["risk_classification"] == "minimal_risk"
+
+    def test_compliance_high_risk(self):
+        report = RedTeamReport(
+            total_probes=10,
+            vulnerable_probes=8,
+            safe_probes=2,
+            vulnerability_rate=0.8,
+            probe_results=[
+                ProbeResult(probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9)
+                for i in range(8)
+            ],
+        )
+        cr = report.generate_compliance_report(framework="eu_ai_act")
+        assert cr["eu_ai_act_compliance"]["risk_classification"] == "high_risk"
+        assert cr["eu_ai_act_compliance"]["article_9"] == "FAILED"
+
+    def test_report_to_dict_includes_health_score(self):
+        report = RedTeamReport(
+            total_probes=5,
+            vulnerable_probes=1,
+            safe_probes=4,
+            vulnerability_rate=0.2,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.6),
+            ],
+        )
+        d = report.to_dict()
+        assert "health_score" in d
+        assert d["health_score"]["score"] > 0
+
+    def test_report_summary_includes_fix_sop(self):
+        report = RedTeamReport(
+            total_probes=2,
+            vulnerable_probes=1,
+            safe_probes=1,
+            vulnerability_rate=0.5,
+            probe_results=[
+                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.8),
+            ],
+        )
+        summary = report.get_summary()
+        assert "CVSS" in summary
+        assert "修复SOP" in summary
