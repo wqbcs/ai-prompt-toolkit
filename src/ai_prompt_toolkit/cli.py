@@ -432,10 +432,50 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
 @click.option("--target-locale", "-t", default="en-US", help="目标语言(BCP 47)")
 @click.option("--output", "-o", help="输出目录")
 @click.option("--base-dir", help="i18n资源基础目录")
+@click.option("--llm", is_flag=True, help="启用LLM辅助翻译(需配置Provider)")
+@click.option("--provider", help="LLM Provider(provider:model_name)")
 def i18n(source_locale: str, target_locale: str, output: str | None,
-         base_dir: str | None) -> None:
+         base_dir: str | None, llm: bool, provider: str | None) -> None:
     """国际化：多语言翻译和质量报告"""
     from ai_prompt_toolkit.i18n.manager import I18nManager
+
+    if llm:
+        from ai_prompt_toolkit.i18n.llm_translator import LLMTranslator
+        from ai_prompt_toolkit.i18n.glossary import Glossary
+        from ai_prompt_toolkit.i18n.translation import TranslationEngine
+
+        prov = None
+        if provider:
+            from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+            from ai_prompt_toolkit.ab_test.provider import create_provider
+            parts = provider.split(":")
+            if len(parts) == 2:
+                try:
+                    pt = ProviderType(parts[0])
+                except ValueError:
+                    pt = ProviderType.OPENAI
+                model_name = parts[1]
+            else:
+                pt = ProviderType.OPENAI
+                model_name = provider
+            config = ModelConfig(provider=pt, model_name=model_name)
+            prov = create_provider(config)
+
+        translator = LLMTranslator(
+            glossary=Glossary.default(),
+            engine=TranslationEngine(),
+            provider=prov,
+        )
+        click.echo(f"LLM辅助翻译: {source_locale} → {target_locale}")
+        if not prov:
+            click.echo("警告: 未指定Provider，仅使用术语表+缓存翻译")
+        result = translator.translate_template(
+            "你是一个专业的AI助手。", source_locale, target_locale
+        )
+        click.echo(f"翻译结果: {result['translated']}")
+        click.echo(f"术语命中: {result['glossary_hit']} | 一致性: {result['consistency_ok']}")
+        return
+
     mgr = I18nManager(base_dir=base_dir)
     click.echo(f"翻译: {source_locale} → {target_locale}")
     report = mgr.generate(source_locale, target_locale, output)
@@ -1067,6 +1107,65 @@ def lsp_cmd(mode: str, host: str, port: int) -> None:
         run_lsp_tcp(host, port)
     else:
         run_lsp_stdio()
+
+
+@main.command(name="benchmark")
+@click.option("--case", "-c", help="指定测试用例(默认全部)")
+@click.option("--save", is_flag=True, help="保存结果到数据库")
+@click.option("--threshold", type=float, default=20.0, help="回归告警阈值(%)")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def benchmark_cmd(case: str | None, save: bool, threshold: float, as_json: bool) -> None:
+    """性能基准：Lint/Scan/Evaluate执行时间基准"""
+    from ai_prompt_toolkit.benchmark import run_benchmark, run_full_benchmark, BenchmarkDB
+
+    if save:
+        report = run_full_benchmark(threshold_pct=threshold)
+        if as_json:
+            import json as _json
+            click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            click.echo("性能基准测试结果:")
+            for r in report["results"]:
+                click.echo(f"  {r['name']}: {r['duration_ms']:.2f}ms")
+            if report["regression_alerts"]:
+                click.echo("\n回归告警:")
+                for a in report["regression_alerts"]:
+                    click.echo(f"  [{a['case_id']}] {a['regression_pct']:.1f}% 回归 (基线: {a['baseline_ms']:.2f}ms)")
+            click.echo(f"\n平均耗时: {report['summary']['avg_duration_ms']:.2f}ms | 回归数: {report['summary']['regressions']}")
+    else:
+        results = run_benchmark(case)
+        if as_json:
+            import json as _json
+            click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
+        else:
+            click.echo("性能基准测试:")
+            for r in results:
+                click.echo(f"  {r.name}: {r.duration_ms:.2f}ms")
+
+
+@main.command(name="recommend")
+@click.option("--category", "-c", help="场景分类(如general,development,translation)")
+@click.option("--industry", "-i", help="行业(如科技,金融,华为云)")
+@click.option("--model", "-m", help="模型(如gpt-4,qwen,deepseek)")
+@click.option("--top-n", type=int, default=5, help="推荐数量")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def recommend_cmd(category: str | None, industry: str | None, model: str | None,
+                  top_n: int, as_json: bool) -> None:
+    """智能推荐：基于场景/行业/模型推荐最佳Prompt模板"""
+    from ai_prompt_toolkit.template_recommender import TemplateRecommender
+
+    recommender = TemplateRecommender()
+    results = recommender.recommend(category=category, industry=industry, model=model, top_n=top_n)
+
+    if as_json:
+        import json as _json
+        click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"模板推荐(Top {len(results)}):")
+        for r in results:
+            click.echo(f"  {r.priority_rank if hasattr(r, 'priority_rank') else results.index(r)+1}. {r.name} ({r.template_id})")
+            click.echo(f"     Lint: {r.lint_score}/100 | 评分: {r.market_rating}/5 | 下载: {r.download_count}")
+            click.echo(f"     相关度: {r.relevance_score:.1f} | 原因: {r.reason}")
 
 
 if __name__ == "__main__":
