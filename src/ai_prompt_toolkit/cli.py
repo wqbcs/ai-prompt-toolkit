@@ -1162,10 +1162,42 @@ def recommend_cmd(category: str | None, industry: str | None, model: str | None,
         click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
     else:
         click.echo(f"模板推荐(Top {len(results)}):")
-        for r in results:
-            click.echo(f"  {r.priority_rank if hasattr(r, 'priority_rank') else results.index(r)+1}. {r.name} ({r.template_id})")
+        for i, r in enumerate(results, 1):
+            click.echo(f"  {i}. {r.name} ({r.template_id})")
             click.echo(f"     Lint: {r.lint_score}/100 | 评分: {r.market_rating}/5 | 下载: {r.download_count}")
             click.echo(f"     相关度: {r.relevance_score:.1f} | 原因: {r.reason}")
+
+
+@main.command(name="optimize")
+@click.option("--source", "-s", required=True, help="源Prompt文件路径")
+@click.option("--max-iterations", type=int, default=5, help="最大优化轮次")
+@click.option("--min-improvement", type=float, default=1.0, help="最小改进阈值(分)")
+@click.option("--output", "-o", help="输出优化后文件路径")
+def optimize_cmd(source: str, max_iterations: int, min_improvement: float, output: str | None) -> None:
+    """Prompt自动优化：基于Lint评估的迭代式自动优化"""
+    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+
+    path = resolve_path(source)
+    text = path.read_text(encoding="utf-8")
+
+    click.echo(f"优化Prompt: {path.name} (最大{max_iterations}轮)")
+    result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
+
+    click.echo(f"\n优化完成:")
+    click.echo(f"  原始评分: {result.original_score:.1f}/100")
+    click.echo(f"  优化评分: {result.final_score:.1f}/100")
+    click.echo(f"  提升: +{result.total_improvement:.1f}分 ({result.iterations}步)")
+
+    for step in result.steps:
+        status = "✓" if step.improvement > 0 else "✗"
+        click.echo(f"  {status} {step.strategy_name}: {step.score_before:.1f} → {step.score_after:.1f}")
+
+    if output:
+        from ai_prompt_toolkit.cli_helpers import resolve_path as rp
+        out_path = rp(output)
+        out_path.write_text(result.optimized_text, encoding="utf-8")
+        click.echo(f"\n已保存: {output}")
 
 
 if __name__ == "__main__":
