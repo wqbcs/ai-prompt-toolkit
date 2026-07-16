@@ -517,8 +517,13 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 @main.command(name="init")
 @click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
 @click.option("--non-interactive", is_flag=True, help="非交互模式")
-def init_project(target: str, non_interactive: bool) -> None:
+@click.option("--ci", is_flag=True, help="生成CI/CD配置(GitHub Action+Docker+pre-commit)")
+def init_project(target: str, non_interactive: bool, ci: bool) -> None:
     """新用户引导：3步创建AI提示词项目"""
+    if ci:
+        _generate_ci_config(target)
+        return
+
     from ai_prompt_toolkit.onboarding import run_onboarding
 
     result = run_onboarding(target, non_interactive=non_interactive)
@@ -533,6 +538,69 @@ def init_project(target: str, non_interactive: bool) -> None:
             click.echo(f"  错误: {e}", err=True)
 
     sys.exit(0 if steps == 3 else 1)
+
+
+def _generate_ci_config(target: str) -> None:
+    from pathlib import Path as _Path
+    project_dir = _Path(target).resolve()
+
+    github_dir = project_dir / ".github" / "workflows"
+    github_dir.mkdir(parents=True, exist_ok=True)
+
+    lint_action = """name: Prompt Lint & Scan
+
+on:
+  push:
+    paths: ['**/*.md', '_scenarios/**']
+  pull_request:
+    paths: ['**/*.md', '_scenarios/**']
+
+jobs:
+  prompt-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      - run: prompt-cli lint -t ./_scenarios
+      - run: prompt-cli scan -t ./_scenarios
+      - run: prompt-cli evaluate -t ./_scenarios --quick
+"""
+    (github_dir / "prompt-lint.yml").write_text(lint_action, encoding="utf-8")
+    click.echo(f"  ✓ GitHub Action: {github_dir / 'prompt-lint.yml'}")
+
+    pre_commit = """repos:
+  - repo: local
+    hooks:
+      - id: prompt-lint
+        name: Prompt Lint
+        entry: prompt-cli lint -t
+        language: system
+        files: '\\.md$'
+      - id: prompt-scan
+        name: Prompt Security Scan
+        entry: prompt-cli scan -t
+        language: system
+        files: '\\.md$'
+"""
+    (project_dir / ".pre-commit-config.yaml").write_text(pre_commit, encoding="utf-8")
+    click.echo(f"  ✓ pre-commit hook: {project_dir / '.pre-commit-config.yaml'}")
+
+    dockerfile = """FROM python:3.12-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir ".[full]"
+ENTRYPOINT ["prompt-cli"]
+"""
+    (project_dir / "Dockerfile").write_text(dockerfile, encoding="utf-8")
+    click.echo(f"  ✓ Dockerfile: {project_dir / 'Dockerfile'}")
+
+    click.echo("\nCI/CD配置生成完成! 下一步:")
+    click.echo("  1. git add .github/ .pre-commit-config.yaml Dockerfile")
+    click.echo("  2. pre-commit install")
+    click.echo("  3. docker build -t ai-prompt-toolkit .")
 
 
 @main.command(name="assert")

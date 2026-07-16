@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        language_version: python3.12
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  - repo: local
+    hooks:
+      - id: prompt-lint
+        name: Prompt Lint
+        entry: prompt-cli lint -t
+        language: system
+        files: '\.md$'
+        pass_filenames: true
+
+      - id: prompt-scan
+        name: Prompt Security Scan
+        entry: prompt-cli scan -t
+        language: system
+        files: '\.md$'
+        pass_filenames: true
