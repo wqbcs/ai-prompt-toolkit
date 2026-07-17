@@ -1,4 +1,4 @@
-"""安全扫描器主入口——编排注入检测、PII检测与继承审计。"""
+"""安全扫描器主入口——编排注入检测、PII检测、供应链检测与继承审计。"""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
 from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 from ai_prompt_toolkit.security.pii_detector import PIIDetector
+from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
 
 _DEFAULT_MAX_WORKERS = 4
 
@@ -54,6 +55,7 @@ class Scanner:
         hash_cache: dict[str, str] | None = None,
         enable_zh_injection: bool = True,
         enable_pii: bool = True,
+        enable_supply_chain: bool = True,
     ) -> None:
         self._provider = provider
         if detector is not None:
@@ -65,6 +67,7 @@ class Scanner:
         self._auditor = InheritanceAuditor(provider, max_depth=max_depth)
         self._hash_cache: dict[str, str] = hash_cache or {}
         self._pii_detector = PIIDetector() if enable_pii else None
+        self._supply_chain_detector = SupplyChainDetector() if enable_supply_chain else None
 
     def scan(self, template_id: str, text: str, *, incremental: bool = False) -> ScanResult:
         start = time.perf_counter()
@@ -88,6 +91,11 @@ class Scanner:
             pii_finding = self._pii_detector.check(preprocessed)
             if pii_finding:
                 injection_findings.append(pii_finding)
+
+        if self._supply_chain_detector:
+            sc_finding = self._supply_chain_detector.check(preprocessed)
+            if sc_finding:
+                injection_findings.append(sc_finding)
 
         risk_level = _assess_risk(injection_findings, inheritance_findings)
 

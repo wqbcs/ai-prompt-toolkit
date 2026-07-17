@@ -1,2 +1,2 @@
 [console_scripts]
-prompt-cli = ai_prompt_toolkit.cli:main
+prompt-cli = ai_prompt_toolkit.cli_core:main

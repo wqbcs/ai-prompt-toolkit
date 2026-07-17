@@ -1,0 +1,1280 @@
+"""prompt-cli统一入口"""
+from __future__ import annotations
+
+import json
+import sys
+import time
+from pathlib import Path
+
+import click
+
+from ai_prompt_toolkit import __version__
+
+
+def _detect_template_type(text: str) -> str:
+    if not text.startswith("---"):
+        return "prompt"
+    import yaml as _yaml
+    end = text.find("---", 3)
+    if end == -1:
+        return "prompt"
+    try:
+        data = _yaml.safe_load(text[3:end].strip())
+        if isinstance(data, dict) and data.get("template_type"):
+            return data["template_type"]
+    except _yaml.YAMLError:
+        pass
+    return "prompt"
+
+
+def _generate_sarif(results: list, target: str) -> dict:
+    import json as _json
+    sarif = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "ai-prompt-toolkit",
+                    "version": __version__,
+                    "informationUri": "https://github.com/ai-prompt-toolkit",
+                    "rules": [],
+                }
+            },
+            "results": [],
+        }]
+    }
+    rules_seen = set()
+    for result in results:
+        for f in result.findings:
+            if f.rule_id not in rules_seen:
+                rules_seen.add(f.rule_id)
+                sarif["runs"][0]["tool"]["driver"]["rules"].append({
+                    "id": f.rule_id,
+                    "shortDescription": {"text": f.description},
+                    "properties": {"severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity)},
+                })
+            sev_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
+            sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+            sarif["runs"][0]["results"].append({
+                "ruleId": f.rule_id,
+                "level": sev_map.get(sev, "warning"),
+                "message": {"text": f.description},
+                "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.template_id}}}],
+            })
+    return sarif
+
+
+@click.group()
+@click.version_option(version=__version__, prog_name="prompt-cli")
+def main() -> None:
+    """AI提示词体系工具链"""
+    pass
+
+
+@main.command()
+@click.option("--source", "-s", required=True, help="源模板文件路径")
+@click.option("--context", "-c", help="编译上下文JSON文件路径")
+@click.option("--config", help="编译配置YAML文件路径")
+@click.option("--output", "-o", help="输出文件路径")
+@click.option("--report", help="编译报告输出路径(JSON)")
+def compile(source: str, context: str | None, config: str | None,
+            output: str | None, report: str | None) -> None:
+    """条件编译：按模型/语言/行业条件编译提示词模板"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, load_context, write_report, determine_exit_code
+    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+
+    src_path = resolve_path(source)
+    template_text = src_path.read_text(encoding="utf-8")
+    ctx_data = load_context(context) if context else {}
+
+    try:
+        model = ctx_data.get("model", "")
+        language = ctx_data.get("language", "")
+        industry = ctx_data.get("industry", "")
+        flags = {k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)}
+        ctx = CompileContext(model=model, language=language, industry=industry, flags=flags)
+        result = compile_template(template_text, ctx)
+    except Exception as e:
+        click.echo(f"编译错误: {e}", err=True)
+        sys.exit(3)
+
+    if output:
+        Path(output).write_text(result.compiled_text, encoding="utf-8")
+        click.echo(f"已输出: {output}")
+
+    click.echo(f"编译完成 | 激活分支: {len(result.report.activated_branches)} "
+               f"| 忽略分支: {len(result.report.ignored_branches)} "
+               f"| 警告: {len(result.report.warnings)}")
+
+    if report:
+        write_report(result.report.to_dict(), report, fmt="json")
+        click.echo(f"报告: {report}")
+
+    sys.exit(determine_exit_code(has_errors=False, has_findings=len(result.report.warnings) > 0))
+
+
+@main.command(name="ab-test")
+@click.option("--config", "-c", required=True, help="A/B测试配置YAML文件路径")
+@click.option("--models", "-m", help="模型列表(逗号分隔)")
+@click.option("--dataset", "-d", help="测试数据集路径")
+@click.option("--output", "-o", help="输出报告路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def ab_test(config: str, models: str | None, dataset: str | None,
+            output: str | None, fmt: str) -> None:
+    """A/B测试：多模型并行对比提示词效果"""
+    import asyncio
+    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report
+    from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
+    from ai_prompt_toolkit.ab_test.engine import ParallelEngine
+    from ai_prompt_toolkit.ab_test.statistics import StatisticalAnalyzer
+    from ai_prompt_toolkit.ab_test.recommender import Recommender
+
+    cfg = load_config(config)
+    model_list = models.split(",") if models else cfg.get("models", [])
+
+    parsed_models = []
+    for m in model_list:
+        parts = m.strip().split(":")
+        if len(parts) == 2:
+            provider_str, model_name = parts
+            try:
+                provider = ProviderType(provider_str)
+            except ValueError:
+                click.echo(f"警告: 未知Provider '{provider_str}'，使用openai", err=True)
+                provider = ProviderType.OPENAI
+        else:
+            provider = ProviderType.OPENAI
+            model_name = m.strip()
+        parsed_models.append(ModelConfig(provider=provider, model_name=model_name))
+
+    if not parsed_models:
+        click.echo("错误: 未指定任何模型", err=True)
+        sys.exit(2)
+
+    items = [{"input": "测试输入"}]
+    if dataset:
+        import json as _json
+        ds_path = resolve_path(dataset)
+        with open(ds_path, encoding="utf-8") as f:
+            data = _json.load(f)
+            items = data if isinstance(data, list) else data.get("items", [{"input": str(data)}])
+
+    ds = TestDataset(dataset_id="cli-ds", name="CLI数据集", items=items)
+    templates = cfg.get("prompt_templates", ["请根据以下内容生成回复：{input}"])
+
+    ab_config = ABTestConfig(
+        test_id=f"cli-ab-{int(time.time())}",
+        models=parsed_models,
+        datasets=[ds],
+        prompt_templates=templates,
+    )
+
+    engine = ParallelEngine(ab_config)
+
+    click.echo(f"A/B测试 | 模型: {', '.join(m.provider.value + ':' + m.model_name for m in parsed_models)}")
+    click.echo(f"数据集: {len(items)}条 | 模板: {len(templates)}个")
+
+    results = asyncio.run(engine.run())
+
+    summary = engine.get_summary()
+
+    if fmt == "json":
+        report_data = {"summary": summary, "results": [r.model_result.to_dict() for r in results]}
+        if output:
+            write_report(report_data, output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(report_data, ensure_ascii=False, indent=2))
+    else:
+        for name, stats in summary.items():
+            click.echo(f"\n  {name}:")
+            click.echo(f"    成功: {stats['success']}/{stats['total']}")
+            click.echo(f"    平均延迟: {stats['avg_latency_ms']:.1f}ms")
+            click.echo(f"    总费用: ${stats['total_cost']:.4f}")
+            click.echo(f"    平均Token: {stats['avg_token_count']:.0f}")
+
+    from ai_prompt_toolkit.ab_test.provider import get_cost_tracker
+    cost_tracker = get_cost_tracker()
+    if cost_tracker.spent > 0:
+        click.echo(f"\n总费用: ${cost_tracker.spent:.4f} (剩余: ${cost_tracker.remaining:.2f})")
+
+
+@main.command()
+@click.option("--target", "-t", required=True, help="评估目标(文件或目录)")
+@click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
+@click.option("--categories", help="指定类别(逗号分隔，如structure,security)")
+@click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+@click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
+@click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
+def evaluate(target: str, dimensions: str | None, categories: str | None,
+             threshold: float, fmt: str, output: str | None, quick: bool,
+             save_history: bool) -> None:
+    """62维度质量评估：全面评估Prompt质量"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.evaluator import evaluate_template
+
+    target_path = resolve_path(target)
+    dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
+    if quick and dim_list is None:
+        dim_list = [f"D{i:02d}" for i in range(1, 11)]
+    cat_list = [c.strip() for c in categories.split(",")] if categories else None
+
+    if target_path.is_dir():
+        files = sorted(target_path.rglob("*.md"))
+    else:
+        files = [target_path]
+
+    if not files:
+        click.echo("错误: 未找到.md文件", err=True)
+        sys.exit(2)
+
+    reports = []
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        report = evaluate_template(
+            str(f), text, dimensions=dim_list, categories=cat_list
+        )
+        reports.append(report)
+
+    if fmt == "json":
+        import json as _json
+        data = {"reports": [r.to_dict() for r in reports]}
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        total_score = 0.0
+        total_count = 0
+        low_items = []
+        for report in reports:
+            scores = report.scores
+            if not scores:
+                continue
+            avg = sum(s.score for s in scores) / len(scores) if scores else 0
+            total_score += avg
+            total_count += 1
+            tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+            click.echo(f"  {tid}: 均分 {avg:.1f}/10 ({len(scores)}维度)")
+            if threshold > 0 and avg < threshold:
+                low_items.append((tid, avg))
+
+        if total_count > 0:
+            click.echo(f"\n总均分: {total_score / total_count:.1f}/10")
+
+        if low_items:
+            click.echo(f"\n低于阈值({threshold})的模板({len(low_items)}个):")
+            for tid, score in low_items[:5]:
+                click.echo(f"  {tid}: {score:.1f}/10")
+
+    exit_code = 0
+    if threshold > 0:
+        for report in reports:
+            scores = report.scores
+            avg = sum(s.score for s in scores) / len(scores) if scores else 0
+            if avg < threshold:
+                exit_code = 1
+                break
+
+    if save_history:
+        from ai_prompt_toolkit.eval_store import EvalStore
+        store = EvalStore()
+        for report in reports:
+            snapshot = store.save(report)
+            click.echo(f"  已保存: #{snapshot.snapshot_id} ({report.template_id})")
+            alerts = store.get_alerts(template_id=report.template_id, limit=5)
+            if alerts:
+                for a in alerts:
+                    click.echo(f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+        store.close()
+
+    sys.exit(exit_code)
+
+
+@main.command()
+@click.option("--target", "-t", required=True, help="扫描目标(文件或目录)")
+@click.option("--config", help="安全扫描配置YAML文件路径")
+@click.option("--incremental", is_flag=True, help="增量扫描模式")
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli"]),
+              default="cli", help="输出格式")
+@click.option("--output", "-o", help="报告输出路径")
+def scan(target: str, config: str | None, incremental: bool,
+         fmt: str, output: str | None) -> None:
+    """安全扫描：注入检测+继承链审计"""
+    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
+    templates = discover_templates(target)
+    if not templates:
+        click.echo("未发现.md模板文件")
+        sys.exit(0)
+
+    detector = InjectionDetector()
+    all_findings = []
+    total = len(templates)
+
+    for i, tpl_path in enumerate(templates, 1):
+        text = tpl_path.read_text(encoding="utf-8")
+        findings = detector.detect(text)
+        findings_data = [f.to_dict() for f in findings]
+        all_findings.extend(findings_data)
+        if fmt == "cli" and findings_data:
+            for f in findings_data:
+                sev = f.get("severity", "info")
+                marker = {"high": "✗", "critical": "✗✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
+                click.echo(f"  {marker} [{tpl_path.name}] {f.get('rule_id', '')}: {f.get('description', '')}")
+
+    high_count = sum(1 for f in all_findings if f.get("severity") in ("high", "critical"))
+    medium_count = sum(1 for f in all_findings if f.get("severity") == "medium")
+    low_count = sum(1 for f in all_findings if f.get("severity") == "low")
+    critical_count = sum(1 for f in all_findings if f.get("severity") == "critical")
+
+    try:
+        from rich.console import Console
+        from rich.panel import Panel
+        from rich.text import Text
+        console = Console()
+        risk_label = "CRITICAL" if critical_count > 0 else "HIGH" if high_count > 0 else "MEDIUM" if medium_count > 0 else "LOW" if low_count > 0 else "SAFE"
+        risk_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green", "SAFE": "green"}[risk_label]
+        top3 = sorted(all_findings, key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3))[:3]
+        summary_lines = [f"[bold]风险等级: [{risk_color}]{risk_label}[/{risk_color}][/bold]",
+                         f"文件: {total} | 发现: {len(all_findings)}",
+                         f"CRITICAL: {critical_count} | HIGH: {high_count - critical_count} | MEDIUM: {medium_count} | LOW: {low_count}"]
+        if top3:
+            summary_lines.append("[bold]TOP3风险:[/bold]")
+            for idx, f in enumerate(top3, 1):
+                summary_lines.append(f"  {idx}. [{f.get('rule_id', '?')}] {f.get('description', '')[:60]}")
+        console.print(Panel("\n".join(summary_lines), title="安全扫描摘要", border_style=risk_color))
+
+        from ai_prompt_toolkit.security.finding_enhancer import enhance_findings, _SEVERITY_COLORS
+        from ai_prompt_toolkit.types import Finding, Severity
+        findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                 description=f.get("description", "")) for f in all_findings[:10]]
+        enhanced = enhance_findings(findings_objs)
+        if enhanced:
+            console.print("\n[bold]详细解释(TOP10):[/bold]")
+            for ef in enhanced:
+                console.print(f"  [bold][{ef.finding.rule_id}][/bold] {ef.plain_explanation}")
+                if ef.risk_reason:
+                    console.print(f"    [dim]风险: {ef.risk_reason}[/dim]")
+    except ImportError:
+        click.echo(f"\n=== 安全扫描摘要 ===")
+        click.echo(f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}")
+        click.echo(f"文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})")
+
+    if output and all_findings:
+        report_data = {
+            "scan_target": target,
+            "total_files": total,
+            "findings": all_findings,
+            "risk_level": "critical" if high_count > 0 and any(f.get("severity") == "critical" for f in all_findings)
+                         else "high" if high_count > 0
+                         else "medium" if medium_count > 0
+                         else "low" if low_count > 0 else "none",
+        }
+        write_report(report_data, output, fmt=fmt)
+        click.echo(f"报告: {output}")
+
+    sys.exit(determine_exit_code(has_findings=len(all_findings) > 0,
+                                  error_severity="high" if high_count > 0 else None))
+
+
+@main.command()
+@click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
+@click.option("--config", help="Lint配置YAML文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
+              default="cli", help="输出格式")
+@click.option("--fix", is_flag=True, help="自动修复可修复的问题")
+@click.option("--output", "-o", help="报告输出路径")
+@click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None, gate: bool) -> None:
+    """Prompt Linter：静态检查提示词质量"""
+    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+
+    templates = discover_templates(target)
+    if not templates:
+        click.echo("未发现.md模板文件")
+        sys.exit(0)
+
+    linter = PromptLinter()
+    all_results = []
+    total_findings = 0
+    total_score = 0.0
+
+    try:
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.console import Console
+        _has_rich = True
+        console = Console()
+    except ImportError:
+        _has_rich = False
+
+    if _has_rich:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+                      BarColumn(), TaskProgressColumn(), console=console) as progress:
+            task = progress.add_task("Lint扫描中...", total=len(templates))
+            for tpl_path in templates:
+                text = tpl_path.read_text(encoding="utf-8")
+                template_type = _detect_template_type(text)
+                result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+                all_results.append(result)
+                total_findings += result.failed_count
+                total_score += result.score
+                progress.advance(task)
+    else:
+        for tpl_path in templates:
+            text = tpl_path.read_text(encoding="utf-8")
+            template_type = _detect_template_type(text)
+            result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+            all_results.append(result)
+            total_findings += result.failed_count
+            total_score += result.score
+
+    if fmt == "cli":
+        for result in all_results:
+            if result.findings:
+                for f in result.findings:
+                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                    marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
+                    click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
+
+    avg_score = total_score / max(len(all_results), 1)
+    click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
+
+    if fix and any(r.auto_fixed for r in all_results):
+        fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
+        click.echo(f"自动修复: {fixed} 处")
+
+    if output:
+        report_data = {
+            "_report_type": "lint",
+            "lint_target": target,
+            "total_files": len(templates),
+            "average_score": round(avg_score, 1),
+            "total_findings": total_findings,
+            "results": [r.to_dict() for r in all_results],
+        }
+        write_report(report_data, output, fmt=fmt)
+        click.echo(f"报告: {output}")
+
+    has_errors = any(r.has_errors for r in all_results)
+
+    if gate:
+        from ai_prompt_toolkit.linter.quality_gate import QualityGate, Verdict
+        qg = QualityGate()
+        all_findings_flat = []
+        for r in all_results:
+            all_findings_flat.extend(r.findings)
+        gate_result = qg.evaluate(all_findings_flat, score=avg_score)
+        verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
+        click.echo(f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}")
+        if output:
+            report_data["quality_gate"] = gate_result.to_dict()
+        if gate_result.verdict == Verdict.FAIL:
+            sys.exit(2)
+        elif gate_result.verdict == Verdict.WARN:
+            sys.exit(1)
+        else:
+            sys.exit(0)
+
+    if fmt == "sarif" and output:
+        sarif_data = _generate_sarif(all_results, target)
+        import json as _json
+        Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        click.echo(f"SARIF报告: {output}")
+    else:
+        if output:
+            report_data = {
+                "_report_type": "lint",
+                "lint_target": target,
+                "total_files": len(templates),
+                "average_score": round(avg_score, 1),
+                "total_findings": total_findings,
+                "results": [r.to_dict() for r in all_results],
+            }
+            write_report(report_data, output, fmt=fmt)
+            click.echo(f"报告: {output}")
+
+    sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
+
+
+@main.command()
+@click.option("--source-locale", "-s", default="zh-CN", help="源语言(BCP 47)")
+@click.option("--target-locale", "-t", default="en-US", help="目标语言(BCP 47)")
+@click.option("--output", "-o", help="输出目录")
+@click.option("--base-dir", help="i18n资源基础目录")
+@click.option("--llm", is_flag=True, help="启用LLM辅助翻译(需配置Provider)")
+@click.option("--provider", help="LLM Provider(provider:model_name)")
+def i18n(source_locale: str, target_locale: str, output: str | None,
+         base_dir: str | None, llm: bool, provider: str | None) -> None:
+    """国际化：多语言翻译和质量报告"""
+    from ai_prompt_toolkit.i18n.manager import I18nManager
+
+    if llm:
+        from ai_prompt_toolkit.i18n.llm_translator import LLMTranslator
+        from ai_prompt_toolkit.i18n.glossary import Glossary
+        from ai_prompt_toolkit.i18n.translation import TranslationEngine
+
+        prov = None
+        if provider:
+            from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+            from ai_prompt_toolkit.ab_test.provider import create_provider
+            parts = provider.split(":")
+            if len(parts) == 2:
+                try:
+                    pt = ProviderType(parts[0])
+                except ValueError:
+                    pt = ProviderType.OPENAI
+                model_name = parts[1]
+            else:
+                pt = ProviderType.OPENAI
+                model_name = provider
+            config = ModelConfig(provider=pt, model_name=model_name)
+            prov = create_provider(config)
+
+        translator = LLMTranslator(
+            glossary=Glossary.default(),
+            engine=TranslationEngine(),
+            provider=prov,
+        )
+        click.echo(f"LLM辅助翻译: {source_locale} → {target_locale}")
+        if not prov:
+            click.echo("警告: 未指定Provider，仅使用术语表+缓存翻译")
+        result = translator.translate_template(
+            "你是一个专业的AI助手。", source_locale, target_locale
+        )
+        click.echo(f"翻译结果: {result['translated']}")
+        click.echo(f"术语命中: {result['glossary_hit']} | 一致性: {result['consistency_ok']}")
+        return
+
+    mgr = I18nManager(base_dir=base_dir)
+    click.echo(f"翻译: {source_locale} → {target_locale}")
+    report = mgr.generate(source_locale, target_locale, output)
+    click.echo(f"覆盖率: {report.coverage_pct:.1f}%")
+    click.echo(f"质量: {report.quality_pct:.1f}%")
+    click.echo(f"已翻译: {report.translated}/{report.total_keys}")
+    if report.missing > 0:
+        click.echo(f"缺失: {report.missing}")
+
+
+@main.command()
+@click.option("--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]),
+              required=True, help="市场操作")
+@click.option("--template", "-t", help="模板ID或文件路径")
+@click.option("--config", help="市场配置YAML文件路径")
+def market(action: str, template: str | None, config: str | None) -> None:
+    """模板市场：提交、评审、灰度发布"""
+    from ai_prompt_toolkit.market.service import MarketService
+    svc = MarketService()
+
+    if action == "status" and template:
+        status = svc.get_status(template)
+        click.echo(json.dumps(status, ensure_ascii=False, indent=2))
+    elif action == "submit" and template:
+        from ai_prompt_toolkit.market.types import Template
+        tpl = Template(id=template, name=template, version="1.0")
+        try:
+            svc.submit(tpl)
+            click.echo(f"模板提交成功: {template}")
+        except ValueError as e:
+            click.echo(f"错误: {e}", err=True)
+            sys.exit(1)
+    else:
+        click.echo(f"市场操作: {action}")
+        if template:
+            click.echo(f"模板: {template}")
+
+
+@main.command(name="upgrade-fm")
+@click.option("--target", "-t", required=True, help="目标目录或文件")
+@click.option("--dry-run", is_flag=True, help="仅预览变更不写入")
+@click.option("--locale", "-l", default="zh-CN", help="默认语言标签(BCP 47)")
+def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
+    """Front Matter升级：v2→v3(新增i18n_status/market_status/lint_score)"""
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.frontmatter import upgrade_markdown_file
+
+    templates = discover_templates(target)
+    if not templates:
+        click.echo("未发现.md模板文件")
+        sys.exit(0)
+
+    upgraded = 0
+    errors_total = 0
+
+    for tpl_path in templates:
+        text = tpl_path.read_text(encoding="utf-8")
+        new_text, errors = upgrade_markdown_file(text)
+
+        if errors and errors[0].startswith("No front matter"):
+            continue
+
+        errors_total += len(errors)
+        for e in errors:
+            click.echo(f"  ⚠ [{tpl_path.name}] {e}")
+
+        if dry_run:
+            click.echo(f"  预览: {tpl_path.name} (i18n/market/lint_score字段已添加)")
+        else:
+            tpl_path.write_text(new_text, encoding="utf-8")
+            click.echo(f"  升级: {tpl_path.name}")
+        upgraded += 1
+
+    click.echo(f"\nFront Matter升级完成 | 文件: {upgraded} | 验证问题: {errors_total}")
+    if dry_run:
+        click.echo("(dry-run模式，未写入文件)")
+
+
+@main.command(name="init")
+@click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
+@click.option("--non-interactive", is_flag=True, help="非交互模式")
+@click.option("--ci", is_flag=True, help="生成CI/CD配置(GitHub Action+Docker+pre-commit)")
+def init_project(target: str, non_interactive: bool, ci: bool) -> None:
+    """新用户引导：3步创建AI提示词项目"""
+    if ci:
+        _generate_ci_config(target)
+        return
+
+    from ai_prompt_toolkit.onboarding import run_onboarding
+
+    result = run_onboarding(target, non_interactive=non_interactive)
+    steps = result["steps_completed"]
+    errors = result.get("errors", [])
+
+    if steps == 3:
+        click.echo(f"\n引导完成! 创建了 {result['files_created']} 个文件，3步全部成功")
+    else:
+        click.echo(f"\n引导完成 {steps}/3 步")
+        for e in errors:
+            click.echo(f"  错误: {e}", err=True)
+
+    sys.exit(0 if steps == 3 else 1)
+
+
+def _generate_ci_config(target: str) -> None:
+    from pathlib import Path as _Path
+    project_dir = _Path(target).resolve()
+
+    github_dir = project_dir / ".github" / "workflows"
+    github_dir.mkdir(parents=True, exist_ok=True)
+
+    lint_action = """name: Prompt Lint & Scan
+
+on:
+  push:
+    paths: ['**/*.md', '_scenarios/**']
+  pull_request:
+    paths: ['**/*.md', '_scenarios/**']
+
+jobs:
+  prompt-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e ".[dev]"
+      - run: prompt-cli lint -t ./_scenarios
+      - run: prompt-cli scan -t ./_scenarios
+      - run: prompt-cli evaluate -t ./_scenarios --quick
+"""
+    (github_dir / "prompt-lint.yml").write_text(lint_action, encoding="utf-8")
+    click.echo(f"  ✓ GitHub Action: {github_dir / 'prompt-lint.yml'}")
+
+    pre_commit = """repos:
+  - repo: local
+    hooks:
+      - id: prompt-lint
+        name: Prompt Lint
+        entry: prompt-cli lint -t
+        language: system
+        files: '\\.md$'
+      - id: prompt-scan
+        name: Prompt Security Scan
+        entry: prompt-cli scan -t
+        language: system
+        files: '\\.md$'
+"""
+    (project_dir / ".pre-commit-config.yaml").write_text(pre_commit, encoding="utf-8")
+    click.echo(f"  ✓ pre-commit hook: {project_dir / '.pre-commit-config.yaml'}")
+
+    dockerfile = """FROM python:3.12-slim
+WORKDIR /app
+COPY . .
+RUN pip install --no-cache-dir ".[full]"
+ENTRYPOINT ["prompt-cli"]
+"""
+    (project_dir / "Dockerfile").write_text(dockerfile, encoding="utf-8")
+    click.echo(f"  ✓ Dockerfile: {project_dir / 'Dockerfile'}")
+
+    click.echo("\nCI/CD配置生成完成! 下一步:")
+    click.echo("  1. git add .github/ .pre-commit-config.yaml Dockerfile")
+    click.echo("  2. pre-commit install")
+    click.echo("  3. docker build -t ai-prompt-toolkit .")
+
+
+@main.command(name="assert")
+@click.option("--response", "-r", required=True, help="待验证的响应文本文件路径")
+@click.option("--config", "-c", required=True, help="断言配置YAML文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def assert_cmd(response: str, config: str, fmt: str) -> None:
+    """断言验证：对LLM响应执行质量断言检查"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report
+    from ai_prompt_toolkit.assertion.types import AssertType, AssertionConfig
+    from ai_prompt_toolkit.assertion.engine import AssertionEngine
+
+    resp_path = resolve_path(response)
+    resp_text = resp_path.read_text(encoding="utf-8")
+    cfg = load_config(config)
+
+    assertions_cfg = cfg.get("assertions", [])
+    configs = []
+    for item in assertions_cfg:
+        atype = AssertType(item.get("type", "contains"))
+        configs.append(AssertionConfig(
+            assert_type=atype,
+            value=item.get("value", ""),
+            threshold=item.get("threshold", 0.8),
+            weight=item.get("weight", 1.0),
+        ))
+
+    if not configs:
+        click.echo("错误: 未配置任何断言", err=True)
+        sys.exit(2)
+
+    engine = AssertionEngine()
+    results = engine.evaluate_batch(configs, response=resp_text)
+
+    passed = sum(1 for r in results if r.passed)
+    total = len(results)
+
+    if fmt == "json":
+        import json as _json
+        data = {"passed": passed, "total": total, "results": [r.to_dict() for r in results]}
+        click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        for r in results:
+            icon = "✓" if r.passed else "✗"
+            click.echo(f"  {icon} [{r.assert_type.value}] {r.reason} (分数: {r.score:.2f})")
+        click.echo(f"\n断言结果: {passed}/{total} 通过")
+
+    sys.exit(0 if passed == total else 1)
+
+
+@main.command()
+@click.option("--host", default="127.0.0.1", help="绑定主机(默认127.0.0.1)")
+@click.option("--port", "-p", default=8000, type=int, help="端口(默认8000)")
+@click.option("--reload", "do_reload", is_flag=True, help="开发模式(自动重载)")
+def serve(host: str, port: int, do_reload: bool) -> None:
+    """启动Playground Web UI"""
+    try:
+        import uvicorn
+    except ImportError:
+        click.echo("错误: uvicorn未安装，请运行: pip install uvicorn", err=True)
+        sys.exit(2)
+
+    click.echo(f"启动 Playground: http://{host}:{port}")
+    uvicorn.run("ai_prompt_toolkit.playground.server:app", host=host, port=port, reload=do_reload)
+
+
+@main.command(name="redteam")
+@click.option("--target", "-t", help="目标文本文件路径(离线模式)")
+@click.option("--probes", "-p", help="探测类型(逗号分隔，默认全部)")
+@click.option("--provider", help="Provider配置(provider:model_name，在线模式)")
+@click.option("--output", "-o", help="输出报告路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
+@click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
+@click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
+@click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm"]), help="合规报告框架")
+def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
+                output: str | None, fmt: str, owasp: str | None,
+                top_n: int, severity: str | None, compliance: str | None) -> None:
+    """红队探测：对抗性安全测试"""
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
+    from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+
+    available = get_available_probes()
+
+    if owasp:
+        owasp_refs = [ref.strip() for ref in owasp.split(",")]
+        owasp_probes: list[str] = []
+        for ref in owasp_refs:
+            owasp_probes.extend(get_probes_by_owasp(ref))
+        available = [p for p in available if p in owasp_probes]
+
+    selected_probes = probes.split(",") if probes else available
+
+    if top_n > 0:
+        selected_probes = selected_probes[:top_n]
+
+    _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
+    probe_instances = []
+    for name in selected_probes:
+        try:
+            probe = create_probe(name.strip())
+            if severity:
+                min_level = _SEVERITY_ORDER.get(severity, 3)
+                probe_inputs = probe.generate_inputs()
+                has_qualifying = any(
+                    _SEVERITY_ORDER.get(pi.severity, 3) <= min_level
+                    for pi in probe_inputs
+                )
+                if has_qualifying:
+                    probe_instances.append(probe)
+            else:
+                probe_instances.append(probe)
+        except ValueError as e:
+            click.echo(f"警告: {e}", err=True)
+
+    if not probe_instances:
+        click.echo("错误: 无可用Probe", err=True)
+        sys.exit(2)
+
+    detectors = [LeakageDetector(), ComplianceDetector(), RefusalDetector()]
+    orchestrator = ExplorationOrchestrator(probes=probe_instances, detectors=detectors)
+
+    if provider:
+        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+        from ai_prompt_toolkit.ab_test.provider import create_provider
+        parts = provider.split(":")
+        if len(parts) == 2:
+            try:
+                pt = ProviderType(parts[0])
+            except ValueError:
+                pt = ProviderType.OPENAI
+            model_name = parts[1]
+        else:
+            pt = ProviderType.OPENAI
+            model_name = provider
+        config = ModelConfig(provider=pt, model_name=model_name)
+        prov = create_provider(config)
+        report = orchestrator.run_with_provider(prov)
+    elif target:
+        from ai_prompt_toolkit.cli_helpers import resolve_path
+        path = resolve_path(target)
+        text = path.read_text(encoding="utf-8")
+        report = orchestrator.run_offline(text)
+    else:
+        click.echo("错误: 请指定--target(离线)或--provider(在线)", err=True)
+        sys.exit(2)
+
+    if compliance:
+        import json as _json
+        compliance_data = report.generate_compliance_report(framework=compliance)
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(compliance_data, output, fmt="json")
+            click.echo(f"合规报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(compliance_data, ensure_ascii=False, indent=2))
+    elif fmt == "json":
+        import json as _json
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(report.to_dict(), output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        click.echo(report.get_summary())
+
+
+@main.command(name="version")
+@click.option("--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]),
+              required=True, help="版本操作")
+@click.option("--template", "-t", help="模板ID")
+@click.option("--source", "-s", help="源文件路径(create时读取)")
+@click.option("--version", "ver", type=int, help="版本号(show/diff/rollback)")
+@click.option("--version-a", type=int, help="对比版本A(diff)")
+@click.option("--version-b", type=int, help="对比版本B(diff)")
+@click.option("--author", help="作者")
+@click.option("--message", "-m", help="变更说明")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def version_cmd(action: str, template: str | None, source: str | None, ver: int | None,
+                version_a: int | None, version_b: int | None, author: str | None,
+                message: str | None, fmt: str) -> None:
+    """Prompt版本管理：版本创建/列表/diff/回滚"""
+    from ai_prompt_toolkit.version_store import VersionStore
+
+    store = VersionStore()
+
+    try:
+        if action == "create":
+            if not template:
+                click.echo("错误: 请指定--template", err=True)
+                sys.exit(2)
+            content = ""
+            if source:
+                from ai_prompt_toolkit.cli_helpers import resolve_path
+                content = resolve_path(source).read_text(encoding="utf-8")
+            elif not click.get_text_stream("stdin").isatty():
+                content = click.get_text_stream("stdin").read()
+            else:
+                click.echo("错误: 请指定--source或通过管道传入内容", err=True)
+                sys.exit(2)
+
+            v = store.create_version(template, content, author=author or "", message=message or "")
+            click.echo(f"版本已创建: {template} v{v.version_number} ({v.content_hash})")
+
+        elif action == "list":
+            if not template:
+                click.echo("错误: 请指定--template", err=True)
+                sys.exit(2)
+            versions = store.list_versions(template)
+            if fmt == "json":
+                import json as _json
+                click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
+            else:
+                for v in versions:
+                    click.echo(f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}")
+
+        elif action == "show":
+            if not template or not ver:
+                click.echo("错误: 请指定--template和--version", err=True)
+                sys.exit(2)
+            v = store.get_version(template, ver)
+            if not v:
+                click.echo(f"版本不存在: {template} v{ver}", err=True)
+                sys.exit(2)
+            click.echo(v.content)
+
+        elif action == "diff":
+            if not template or not version_a or not version_b:
+                click.echo("错误: 请指定--template --version-a --version-b", err=True)
+                sys.exit(2)
+            result = store.diff(template, version_a, version_b)
+            if fmt == "json":
+                import json as _json
+                click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                click.echo(f"Diff: {template} v{version_a} → v{version_b}")
+                click.echo(f"变更: {result.change_summary}")
+                for line in result.unified_diff:
+                    if line.startswith("+") and not line.startswith("+++"):
+                        click.echo(f"[green]{line}[/green]")
+                    elif line.startswith("-") and not line.startswith("---"):
+                        click.echo(f"[red]{line}[/red]")
+                    elif line.startswith("@@"):
+                        click.echo(f"[cyan]{line}[/cyan]")
+                    else:
+                        click.echo(line)
+
+        elif action == "rollback":
+            if not template or not ver:
+                click.echo("错误: 请指定--template和--version", err=True)
+                sys.exit(2)
+            v = store.rollback(template, ver, author=author or "")
+            click.echo(f"已回滚: {template} v{v.version_number} (回滚到v{ver})")
+
+    finally:
+        store.close()
+
+
+@main.command(name="eval-history")
+@click.option("--template", "-t", help="模板ID(过滤)")
+@click.option("--limit", "-n", type=int, default=10, help="显示条数(默认10)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
+    """评估历史：查看评估结果趋势和回归告警"""
+    from ai_prompt_toolkit.eval_store import EvalStore
+
+    store = EvalStore()
+
+    if template:
+        snapshots = store.get_snapshots(template, limit=limit)
+        trend = store.get_trend(template, limit=limit)
+        alerts = store.get_alerts(template_id=template, limit=10)
+    else:
+        snapshots = []
+        trend = []
+        alerts = store.get_alerts(limit=10)
+
+    if fmt == "json":
+        import json as _json
+        click.echo(_json.dumps({
+            "snapshots": [s.to_dict() for s in snapshots],
+            "trend": [t.to_dict() for t in trend],
+            "alerts": [a.to_dict() for a in alerts],
+        }, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+
+        if snapshots:
+            table = Table(title=f"评估历史 (模板: {template})", show_lines=True)
+            table.add_column("#", style="dim", width=5)
+            table.add_column("时间", width=20)
+            table.add_column("总分", width=8)
+            table.add_column("百分位", width=8)
+            table.add_column("维度数", width=6)
+            for s in snapshots:
+                table.add_row(
+                    str(s.snapshot_id), s.created_at,
+                    f"{s.overall_score:.2f}", f"{s.percentage:.1f}%",
+                    str(s.dimension_count),
+                )
+            console.print(table)
+
+        if trend and len(trend) > 1:
+            console.print("\n[bold]趋势线[/bold]")
+            for tp in trend:
+                bar_len = int(tp.percentage / 5)
+                bar = "█" * bar_len + "░" * (20 - bar_len)
+                console.print(f"  #{tp.snapshot_id} {tp.created_at} {bar} {tp.percentage:.1f}%")
+
+        if alerts:
+            console.print(f"\n[bold red]回归告警 ({len(alerts)}条)[/bold red]")
+            for a in alerts:
+                icon = "🔴" if a.severity == "critical" else "🟡"
+                console.print(f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+
+    store.close()
+
+
+@main.command(name="eval-compare")
+@click.argument("snapshot_a", type=int)
+@click.argument("snapshot_b", type=int)
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
+    """评估对比：对比两次评估结果的维度差异"""
+    from ai_prompt_toolkit.eval_store import EvalStore
+
+    store = EvalStore()
+    result = store.compare(snapshot_a, snapshot_b)
+    store.close()
+
+    if "error" in result:
+        click.echo(f"错误: {result['error']}", err=True)
+        sys.exit(2)
+
+    if fmt == "json":
+        import json as _json
+        click.echo(_json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        table = Table(title=f"评估对比: #{snapshot_a} vs #{snapshot_b}", show_lines=True)
+        table.add_column("维度", style="bold", width=10)
+        table.add_column(f"#{snapshot_a}", width=8)
+        table.add_column(f"#{snapshot_b}", width=8)
+        table.add_column("差异", width=8)
+        table.add_column("趋势", width=10)
+
+        for d in result["dimension_diffs"]:
+            diff = d["diff"]
+            if diff > 0:
+                trend_icon = "[green]↑ +{:.1f}[/green]".format(diff)
+            elif diff < 0:
+                trend_icon = "[red]↓ {:.1f}[/red]".format(diff)
+            else:
+                trend_icon = "[dim]= 0[/dim]"
+            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]),
+                         f"{diff:+.1f}", trend_icon)
+
+        console.print(table)
+        overall = result["overall_diff"]
+        icon = "↑" if overall > 0 else "↓" if overall < 0 else "="
+        console.print(f"\n总分变化: {icon} {overall:+.4f}")
+
+
+@main.command(name="doctor")
+@click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def doctor_cmd(provider: str | None, as_json: bool) -> None:
+    """健康检查：检测Provider连接状态和API Key配置"""
+    from ai_prompt_toolkit.ab_test.provider import run_health_check
+    from ai_prompt_toolkit.ab_test.types import ProviderType
+
+    targets = None
+    if provider:
+        try:
+            pt = ProviderType(provider.lower())
+            targets = [pt]
+        except ValueError:
+            click.echo(f"错误: 不支持的Provider '{provider}'", err=True)
+            click.echo(f"可选: {', '.join(p.value for p in ProviderType)}")
+            sys.exit(2)
+
+    click.echo("正在检查Provider健康状态...")
+    results = run_health_check(targets)
+
+    if as_json:
+        import json as _json
+        click.echo(_json.dumps([
+            {"provider": r.provider.value, "label": r.label, "status": r.status,
+             "latency_ms": r.latency_ms, "error": r.error,
+             "api_key_configured": r.api_key_configured, "endpoint": r.endpoint}
+            for r in results
+        ], ensure_ascii=False, indent=2))
+        return
+
+    from rich.console import Console
+    from rich.table import Table
+
+    console = Console()
+    table = Table(title="Provider 健康检查报告", show_lines=True)
+    table.add_column("Provider", style="bold")
+    table.add_column("状态", width=12)
+    table.add_column("API Key", width=8)
+    table.add_column("延迟(ms)", width=10)
+    table.add_column("端点", width=40)
+    table.add_column("错误", width=20)
+
+    status_styles = {
+        "healthy": "[green]✓ healthy[/green]",
+        "unreachable": "[red]✗ unreachable[/red]",
+        "no_api_key": "[yellow]⚠ no_api_key[/yellow]",
+        "unknown": "[dim]? unknown[/dim]",
+    }
+
+    for r in results:
+        status_str = status_styles.get(r.status, r.status)
+        key_str = "[green]✓[/green]" if r.api_key_configured else "[red]✗[/red]"
+        latency_str = f"{r.latency_ms:.0f}" if r.latency_ms > 0 else "-"
+        table.add_row(r.label, status_str, key_str, latency_str, r.endpoint or "-", r.error or "-")
+
+    console.print(table)
+
+    healthy = sum(1 for r in results if r.status == "healthy")
+    total = len(results)
+    console.print(f"\n[bold]总计: {healthy}/{total} Provider 正常[/bold]")
+
+    sys.exit(0 if healthy == total else 1)
+
+
+@main.command(name="wizard")
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "ab-test", "redteam"]),
+              help="直接指定命令(跳过功能选择)")
+def wizard_cmd(command: str | None) -> None:
+    """交互式向导：5步引导你完成Prompt工具链操作"""
+    from ai_prompt_toolkit.wizard import run_wizard
+    exit_code = run_wizard(command)
+    sys.exit(exit_code)
+
+
+@main.command(name="lsp")
+@click.option("--mode", type=click.Choice(["stdio", "tcp"]), default="stdio", help="LSP传输模式")
+@click.option("--host", default="127.0.0.1", help="TCP模式监听地址")
+@click.option("--port", type=int, default=2087, help="TCP模式监听端口")
+def lsp_cmd(mode: str, host: str, port: int) -> None:
+    """LSP服务：VS Code实时Prompt Lint(debounce 300ms)"""
+    try:
+        from ai_prompt_toolkit.linter.lsp_server import run_lsp_stdio, run_lsp_tcp
+    except ImportError:
+        click.echo("错误: LSP功能需要安装pygls: pip install pygls lsprotocol", err=True)
+        sys.exit(1)
+
+    click.echo(f"启动Prompt LSP服务({mode}模式)...")
+    if mode == "tcp":
+        click.echo(f"监听: {host}:{port}")
+        run_lsp_tcp(host, port)
+    else:
+        run_lsp_stdio()
+
+
+@main.command(name="benchmark")
+@click.option("--case", "-c", help="指定测试用例(默认全部)")
+@click.option("--save", is_flag=True, help="保存结果到数据库")
+@click.option("--threshold", type=float, default=20.0, help="回归告警阈值(%)")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def benchmark_cmd(case: str | None, save: bool, threshold: float, as_json: bool) -> None:
+    """性能基准：Lint/Scan/Evaluate执行时间基准"""
+    from ai_prompt_toolkit.benchmark import run_benchmark, run_full_benchmark, BenchmarkDB
+
+    if save:
+        report = run_full_benchmark(threshold_pct=threshold)
+        if as_json:
+            import json as _json
+            click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
+        else:
+            click.echo("性能基准测试结果:")
+            for r in report["results"]:
+                click.echo(f"  {r['name']}: {r['duration_ms']:.2f}ms")
+            if report["regression_alerts"]:
+                click.echo("\n回归告警:")
+                for a in report["regression_alerts"]:
+                    click.echo(f"  [{a['case_id']}] {a['regression_pct']:.1f}% 回归 (基线: {a['baseline_ms']:.2f}ms)")
+            click.echo(f"\n平均耗时: {report['summary']['avg_duration_ms']:.2f}ms | 回归数: {report['summary']['regressions']}")
+    else:
+        results = run_benchmark(case)
+        if as_json:
+            import json as _json
+            click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
+        else:
+            click.echo("性能基准测试:")
+            for r in results:
+                click.echo(f"  {r.name}: {r.duration_ms:.2f}ms")
+
+
+@main.command(name="recommend")
+@click.option("--category", "-c", help="场景分类(如general,development,translation)")
+@click.option("--industry", "-i", help="行业(如科技,金融,华为云)")
+@click.option("--model", "-m", help="模型(如gpt-4,qwen,deepseek)")
+@click.option("--top-n", type=int, default=5, help="推荐数量")
+@click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
+def recommend_cmd(category: str | None, industry: str | None, model: str | None,
+                  top_n: int, as_json: bool) -> None:
+    """智能推荐：基于场景/行业/模型推荐最佳Prompt模板"""
+    from ai_prompt_toolkit.template_recommender import TemplateRecommender
+
+    recommender = TemplateRecommender()
+    results = recommender.recommend(category=category, industry=industry, model=model, top_n=top_n)
+
+    if as_json:
+        import json as _json
+        click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"模板推荐(Top {len(results)}):")
+        for i, r in enumerate(results, 1):
+            click.echo(f"  {i}. {r.name} ({r.template_id})")
+            click.echo(f"     Lint: {r.lint_score}/100 | 评分: {r.market_rating}/5 | 下载: {r.download_count}")
+            click.echo(f"     相关度: {r.relevance_score:.1f} | 原因: {r.reason}")
+
+
+@main.command(name="optimize")
+@click.option("--source", "-s", required=True, help="源Prompt文件路径")
+@click.option("--max-iterations", type=int, default=5, help="最大优化轮次")
+@click.option("--min-improvement", type=float, default=1.0, help="最小改进阈值(分)")
+@click.option("--output", "-o", help="输出优化后文件路径")
+def optimize_cmd(source: str, max_iterations: int, min_improvement: float, output: str | None) -> None:
+    """Prompt自动优化：基于Lint评估的迭代式自动优化"""
+    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+
+    path = resolve_path(source)
+    text = path.read_text(encoding="utf-8")
+
+    click.echo(f"优化Prompt: {path.name} (最大{max_iterations}轮)")
+    result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
+
+    click.echo(f"\n优化完成:")
+    click.echo(f"  原始评分: {result.original_score:.1f}/100")
+    click.echo(f"  优化评分: {result.final_score:.1f}/100")
+    click.echo(f"  提升: +{result.total_improvement:.1f}分 ({result.iterations}步)")
+
+    for step in result.steps:
+        status = "✓" if step.improvement > 0 else "✗"
+        click.echo(f"  {status} {step.strategy_name}: {step.score_before:.1f} → {step.score_after:.1f}")
+
+    if output:
+        from ai_prompt_toolkit.cli_helpers import resolve_path as rp
+        out_path = rp(output)
+        out_path.write_text(result.optimized_text, encoding="utf-8")
+        click.echo(f"\n已保存: {output}")
+
+
+if __name__ == "__main__":
+    main()
