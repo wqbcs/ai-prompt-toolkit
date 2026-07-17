@@ -19,6 +19,7 @@ from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 from ai_prompt_toolkit.security.pii_detector import PIIDetector
 from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
 from ai_prompt_toolkit.security.unicode_guard import scan_unicode_and_canary
+from ai_prompt_toolkit.security.defender import PromptDefender
 
 _DEFAULT_MAX_WORKERS = 4
 
@@ -100,6 +101,11 @@ class Scanner:
 
         unicode_findings = scan_unicode_and_canary(preprocessed)
         injection_findings.extend(unicode_findings)
+
+        defender = PromptDefender()
+        defense_result = defender.defend(preprocessed)
+        if defense_result.findings:
+            injection_findings.extend(defense_result.findings)
 
         risk_level = _assess_risk(injection_findings, inheritance_findings)
 
