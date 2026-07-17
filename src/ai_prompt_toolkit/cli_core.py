@@ -1284,6 +1284,48 @@ def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | 
         sys.exit(2)
 
 
+@main.command(name="token")
+@click.option("--target", "-t", required=True, help="Prompt文件路径")
+@click.option("--model", "-m", default="gpt-4o", help="目标模型(gpt-4o/claude-3/deepseek/qwen等)")
+@click.option("--output", "-o", help="输出报告路径")
+def token_cmd(target: str, model: str, output: str | None) -> None:
+    """Token压缩分析：估算Token消耗+检测冗余+优化建议"""
+    from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, estimate_tokens
+
+    target_path = Path(target)
+    if not target_path.exists():
+        click.echo(f"错误: 文件不存在 — {target}", err=True)
+        sys.exit(2)
+
+    text = target_path.read_text(encoding="utf-8")
+    result = analyze_prompt_tokens(text, model)
+
+    click.echo(f"Token分析 | 文件: {target_path.name} | 模型: {model}")
+    click.echo(f"  字符数: {result.estimate.char_count}")
+    click.echo(f"  估算Tokens: {result.original_tokens}")
+    click.echo(f"  输入成本: ${result.estimate.estimated_input_cost_usd:.6f}/次")
+    click.echo(f"  输出成本: ${result.estimate.estimated_output_cost_usd:.6f}/次")
+
+    if result.suggestions:
+        click.echo(f"\n优化建议({len(result.suggestions)}条):")
+        for s in result.suggestions:
+            priority_marker = "🔴" if s.priority == "high" else "🟡" if s.priority == "medium" else "🟢"
+            click.echo(f"  {priority_marker} [{s.suggestion_id}] {s.description}")
+            click.echo(f"     预计节省: {s.estimated_savings_tokens} tokens ({s.estimated_savings_percent:.1f}%)")
+
+    if result.findings:
+        click.echo(f"\n警告:")
+        for f in result.findings:
+            click.echo(f"  ⚠ [{f.rule_id}] {f.description}")
+
+    click.echo(f"\n优化后: {result.optimized_tokens} tokens | 节省: {result.savings_tokens} ({result.savings_percent:.1f}%)")
+
+    if output:
+        from ai_prompt_toolkit.cli_helpers import write_report
+        write_report(result.to_dict(), output, fmt="json")
+        click.echo(f"报告: {output}")
+
+
 @main.command(name="watch")
 @click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
 @click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate"]),
