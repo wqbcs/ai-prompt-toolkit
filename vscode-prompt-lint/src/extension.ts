@@ -195,7 +195,7 @@ function updateStatusBarForDoc(doc: vscode.TextDocument) {
 }
 
 function isMarkdownFile(doc: vscode.TextDocument): boolean {
-  return doc.languageId === 'markdown' || doc.fileName.endsWith('.md');
+  return doc.languageId === 'markdown' || doc.languageId === 'prompt-markdown' || doc.fileName.endsWith('.md') || doc.fileName.endsWith('.prompt.md');
 }
 
 function severityToVscode(severity: string): vscode.DiagnosticSeverity {

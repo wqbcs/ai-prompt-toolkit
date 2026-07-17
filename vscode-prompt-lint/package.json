@@ -20,10 +20,30 @@
     "evaluate"
   ],
   "activationEvents": [
-    "onLanguage:markdown"
+    "onLanguage:markdown",
+    "onLanguage:prompt-markdown"
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "languages": [
+      {
+        "id": "prompt-markdown",
+        "extensions": [".prompt.md", ".prompt"],
+        "aliases": ["Prompt Markdown", "prompt-markdown"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "prompt-markdown",
+        "scopeName": "markdown.prompt-template",
+        "path": "./syntaxes/prompt.tmLanguage.json",
+        "injectTo": ["text.html.markdown"],
+        "embeddedLanguages": {
+          "meta.embedded.block.frontmatter": "yaml"
+        }
+      }
+    ],
     "commands": [
       {
         "command": "promptLint.lintActiveFile",

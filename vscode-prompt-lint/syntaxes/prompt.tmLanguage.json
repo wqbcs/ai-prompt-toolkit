@@ -1,0 +1,108 @@
+{
+  "name": "Prompt Template Markdown",
+  "scopeName": "markdown.prompt-template",
+  "injectionSelector": "L:text.html.markdown",
+  "patterns": [
+    { "include": "#promptVariable" },
+    { "include": "#promptTag" },
+    { "include": "#promptComment" },
+    { "include": "#promptRoleTag" },
+    { "include": "#promptSystemDirective" }
+  ],
+  "repository": {
+    "promptVariable": {
+      "patterns": [
+        {
+          "name": "variable.other.prompt-template",
+          "match": "(\\{\\{)([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)?)(\\}\\})",
+          "captures": {
+            "1": { "name": "punctuation.definition.variable.begin.prompt-template" },
+            "2": { "name": "variable.parameter.prompt-template" },
+            "3": { "name": "punctuation.definition.variable.end.prompt-template" }
+          }
+        },
+        {
+          "name": "variable.other.prompt-template",
+          "match": "(\\$\\{)([a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)?)(\\})",
+          "captures": {
+            "1": { "name": "punctuation.definition.variable.begin.prompt-template" },
+            "2": { "name": "variable.parameter.prompt-template" },
+            "3": { "name": "punctuation.definition.variable.end.prompt-template" }
+          }
+        }
+      ]
+    },
+    "promptTag": {
+      "patterns": [
+        {
+          "name": "meta.tag.template.control.prompt-template",
+          "match": "(\\{%)[-\\s]*(if|elif|else|endif|for|endfor|block|endblock|include|set|macro|endmacro|raw|endraw|compile|endcompile|condition|endcondition)\\b(?:\\s+[^%]*?)?[-\\s]*(%\\})",
+          "captures": {
+            "1": { "name": "punctuation.definition.tag.begin.prompt-template" },
+            "2": { "name": "keyword.control.prompt-template" },
+            "3": { "name": "punctuation.definition.tag.end.prompt-template" }
+          }
+        },
+        {
+          "name": "meta.tag.template.expression.prompt-template",
+          "begin": "(\\{%-?\\s*)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.begin.prompt-template" }
+          },
+          "end": "(\\s*-?%\\})",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.end.prompt-template" }
+          },
+          "patterns": [
+            { "include": "#promptExpression" }
+          ]
+        }
+      ]
+    },
+    "promptExpression": {
+      "patterns": [
+        {
+          "name": "keyword.operator.prompt-template",
+          "match": "\\b(and|or|not|in|is|defined|undefined|none|true|false)\\b"
+        },
+        {
+          "name": "variable.other.prompt-template",
+          "match": "[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)*"
+        }
+      ]
+    },
+    "promptComment": {
+      "patterns": [
+        {
+          "name": "comment.block.prompt-template",
+          "begin": "(\\{#)",
+          "beginCaptures": { "1": { "name": "punctuation.definition.comment.begin.prompt-template" } },
+          "end": "(#\\})",
+          "endCaptures": { "1": { "name": "punctuation.definition.comment.end.prompt-template" } }
+        }
+      ]
+    },
+    "promptRoleTag": {
+      "patterns": [
+        {
+          "name": "meta.tag.role.prompt-template",
+          "match": "^[ \\t]*(system|user|assistant|function|tool|developer)[ \\t]*:",
+          "captures": {
+            "1": { "name": "entity.name.tag.role.prompt-template" }
+          }
+        }
+      ]
+    },
+    "promptSystemDirective": {
+      "patterns": [
+        {
+          "name": "keyword.other.directive.prompt-template",
+          "match": "\\[:(system|instruction|context|constraint|example|output_format|tone|language|persona)\\]",
+          "captures": {
+            "1": { "name": "entity.name.function.directive.prompt-template" }
+          }
+        }
+      ]
+    }
+  }
+}
