@@ -1208,6 +1208,122 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
         console.print(f"\n总分变化: {icon} {overall:+.4f}")
 
 
+@main.command(name="watch")
+@click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate"]),
+              default="lint", help="文件变更时执行的命令")
+@click.option("--interval", type=float, default=1.0, help="轮询间隔(秒)")
+@click.option("--debounce", type=float, default=0.5, help="变更防抖延迟(秒)")
+@click.option("--gate", is_flag=True, help="lint模式启用Quality Gate")
+def watch_cmd(target: str, command: str, interval: float, debounce: float, gate: bool) -> None:
+    """文件监视：检测变更时自动执行Lint/Scan/Evaluate"""
+    import hashlib
+
+    target_path = Path(target).resolve()
+    if not target_path.exists():
+        click.echo(f"错误: 目标不存在 — {target_path}", err=True)
+        sys.exit(2)
+
+    files_to_watch: list[Path] = []
+    if target_path.is_file():
+        files_to_watch = [target_path]
+    else:
+        files_to_watch = sorted(target_path.rglob("*.md"))
+
+    if not files_to_watch:
+        click.echo("未发现.md文件，正在监视目录...")
+    else:
+        click.echo(f"监视 {len(files_to_watch)} 个文件 (命令: {command}, 间隔: {interval}s)")
+
+    file_hashes: dict[str, str] = {}
+    for f in files_to_watch:
+        try:
+            file_hashes[str(f)] = hashlib.md5(f.read_bytes()).hexdigest()
+        except OSError:
+            pass
+
+    last_triggered = 0.0
+
+    def run_command_on_target(t: str) -> None:
+        if command == "lint":
+            from ai_prompt_toolkit.linter.linter import PromptLinter
+            from ai_prompt_toolkit.cli_helpers import discover_templates
+            templates = discover_templates(t)
+            linter = PromptLinter()
+            total_findings = 0
+            for tpl in templates:
+                text = tpl.read_text(encoding="utf-8")
+                result = linter.lint(tpl.name, text)
+                total_findings += result.failed_count
+            click.echo(f"[lint] {len(templates)} 文件 | {total_findings} 问题")
+            if gate and total_findings > 0:
+                click.echo("[gate] WARN: 发现Lint问题")
+        elif command == "scan":
+            from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+            from ai_prompt_toolkit.cli_helpers import discover_templates
+            templates = discover_templates(t)
+            detector = InjectionDetector()
+            total_findings = 0
+            for tpl in templates:
+                text = tpl.read_text(encoding="utf-8")
+                findings = detector.detect(text)
+                total_findings += len(findings)
+            click.echo(f"[scan] {len(templates)} 文件 | {total_findings} 风险")
+        elif command == "evaluate":
+            from ai_prompt_toolkit.evaluator import evaluate_template
+            from ai_prompt_toolkit.cli_helpers import resolve_path
+            tp = resolve_path(t, must_exist=False)
+            if tp.is_file():
+                text = tp.read_text(encoding="utf-8")
+                report = evaluate_template(str(tp), text)
+                scores = report.scores
+                avg = sum(s.score for s in scores) / len(scores) if scores else 0
+                click.echo(f"[evaluate] {tp.name} | 均分: {avg:.1f}/10")
+
+    try:
+        click.echo("按 Ctrl+C 停止监视")
+        while True:
+            import time as _time
+            _time.sleep(interval)
+
+            current_files: list[Path] = []
+            if target_path.is_file():
+                current_files = [target_path]
+            else:
+                current_files = sorted(target_path.rglob("*.md"))
+
+            changed = False
+            for f in current_files:
+                key = str(f)
+                try:
+                    new_hash = hashlib.md5(f.read_bytes()).hexdigest()
+                except OSError:
+                    continue
+                old_hash = file_hashes.get(key)
+                if old_hash != new_hash:
+                    file_hashes[key] = new_hash
+                    changed = True
+
+            removed = set(file_hashes.keys()) - {str(f) for f in current_files}
+            for r in removed:
+                del file_hashes[r]
+                changed = True
+
+            if changed:
+                now = _time.time()
+                if now - last_triggered < debounce:
+                    continue
+                last_triggered = now
+                ts = _time.strftime("%H:%M:%S")
+                click.echo(f"\n[{ts}] 检测到变更，执行 {command}...")
+                try:
+                    run_command_on_target(target)
+                except Exception as e:
+                    click.echo(f"[error] {e}", err=True)
+    except KeyboardInterrupt:
+        click.echo("\n监视已停止")
+
+
 @main.command(name="doctor")
 @click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
