@@ -412,7 +412,8 @@ def scan(target: str, config: str | None, incremental: bool,
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None, gate: bool) -> None:
+@click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None, gate: bool, multimodal: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -460,13 +461,25 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
             total_findings += result.failed_count
             total_score += result.score
 
+    mm_findings_total: list = []
+    if multimodal:
+        from ai_prompt_toolkit.linter.multimodal import check_multimodal_prompt
+        for i, tpl_path in enumerate(templates):
+            text = tpl_path.read_text(encoding="utf-8")
+            mm_findings = check_multimodal_prompt(text)
+            if mm_findings:
+                mm_findings_total.extend(mm_findings)
+                all_results[i].findings.extend(mm_findings)
+                total_findings += len(mm_findings)
+
     if fmt == "cli":
         for result in all_results:
             if result.findings:
                 for f in result.findings:
                     sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
                     marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
-                    click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
+                    prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
+                    click.echo(f"  {marker} [{result.template_id}] {prefix}{f.rule_id}: {f.description}")
 
     avg_score = total_score / max(len(all_results), 1)
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
