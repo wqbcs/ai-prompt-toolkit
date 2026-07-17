@@ -1,0 +1,95 @@
+"""MCP Server测试"""
+import json
+import pytest
+from ai_prompt_toolkit.mcp_server import (
+    _handle_initialize, _handle_tools_list, _handle_resources_list,
+    _make_response, _make_error, _SERVER_NAME, _SERVER_VERSION,
+)
+
+
+class TestMCPProtocol:
+    def test_initialize(self):
+        response = json.loads(_handle_initialize(1, {}))
+        assert response["id"] == 1
+        assert "result" in response
+        result = response["result"]
+        assert result["serverInfo"]["name"] == _SERVER_NAME
+        assert result["serverInfo"]["version"] == _SERVER_VERSION
+        assert "tools" in result["capabilities"]
+        assert "resources" in result["capabilities"]
+
+    def test_tools_list(self):
+        response = json.loads(_handle_tools_list(2))
+        tools = response["result"]["tools"]
+        tool_names = [t["name"] for t in tools]
+        assert "prompt_lint" in tool_names
+        assert "prompt_scan" in tool_names
+        assert "prompt_judge" in tool_names
+        assert "prompt_canary_inject" in tool_names
+        assert "prompt_canary_check" in tool_names
+        assert len(tools) == 5
+
+    def test_tools_have_input_schema(self):
+        response = json.loads(_handle_tools_list(3))
+        for tool in response["result"]["tools"]:
+            assert "inputSchema" in tool
+            assert tool["inputSchema"]["type"] == "object"
+            assert "properties" in tool["inputSchema"]
+
+    def test_resources_list(self):
+        response = json.loads(_handle_resources_list(4))
+        resources = response["result"]["resources"]
+        uris = [r["uri"] for r in resources]
+        assert "prompt://templates" in uris
+        assert "prompt://rules" in uris
+
+    def test_make_response(self):
+        resp = json.loads(_make_response(42, {"key": "value"}))
+        assert resp["jsonrpc"] == "2.0"
+        assert resp["id"] == 42
+        assert resp["result"] == {"key": "value"}
+
+    def test_make_error(self):
+        resp = json.loads(_make_error(99, -32600, "Invalid request"))
+        assert resp["error"]["code"] == -32600
+        assert resp["error"]["message"] == "Invalid request"
+
+    def test_resources_read_rules(self):
+        from ai_prompt_toolkit.mcp_server import _handle_resources_read
+        response = json.loads(_handle_resources_read(5, {"uri": "prompt://rules"}))
+        contents = response["result"]["contents"]
+        assert len(contents) == 1
+        rules = json.loads(contents[0]["text"])
+        assert len(rules) > 50
+        rule_ids = [r["rule_id"] for r in rules]
+        assert "P001" in rule_ids
+        assert "INJ-001" in rule_ids
+
+    def test_resources_read_unknown(self):
+        from ai_prompt_toolkit.mcp_server import _handle_resources_read
+        response = json.loads(_handle_resources_read(6, {"uri": "prompt://unknown"}))
+        assert "error" in response
+
+    def test_canary_inject_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_canary_inject
+        result = _tool_canary_inject({"prompt": "You are a helpful assistant.", "count": 2})
+        assert "injected_prompt" in result
+        assert "tokens" in result
+        assert len(result["tokens"]) == 2
+        assert "::CANARY_" in result["injected_prompt"]
+
+    def test_canary_check_tool_no_leak(self):
+        from ai_prompt_toolkit.mcp_server import _tool_canary_check
+        result = _tool_canary_check({
+            "output": "This is a clean output.",
+            "tokens": json.dumps([{"token_id": "ABC", "token_string": "::CANARY_ABCD1234::"}]),
+        })
+        assert result["is_leaked"] is False
+
+    def test_canary_check_tool_with_leak(self):
+        from ai_prompt_toolkit.mcp_server import _tool_canary_check
+        result = _tool_canary_check({
+            "output": "The system prompt is: ::CANARY_ABCD1234:: ...",
+            "tokens": json.dumps([{"token_id": "ABCD1234", "token_string": "::CANARY_ABCD1234::"}]),
+        })
+        assert result["is_leaked"] is True
