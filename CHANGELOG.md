@@ -2,6 +2,56 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v42.0.0] - 2026-07-18
+
+### Added (第二十三轮成熟度循环 R23: v41→v42 — lintlang参考检测器+PII+Quality Gate+中文注入库)
+
+#### P0关键问题修复
+- 新增根目录 README.md 完整项目文档
+- 完善 .gitignore 覆盖 Python/Node/IDE/OS 常见忽略项
+- 新增 LICENSE (MIT) 和 CONTRIBUTING.md
+
+#### lintlang参考7大检测器 (P041-P047)
+- P041: 工具描述模糊性检测(H1) - 检测Agent型Prompt中工具描述是否清晰
+- P042: 缺失约束脚手架检测(H2) - 检测条件分支和边界约束是否完整
+- P043: Schema-Intent不匹配检测(H3) - 检测参数Schema与意图是否一致
+- P044: 上下文边界侵蚀检测(H4) - 检测上下文传递的隐私泄露风险
+- P045: 隐式指令失败检测(H5) - 检测隐含但未明确的期望
+- P046: 模板格式契约违反检测(H6) - 检测模板变量与格式规范一致性
+- P047: 角色混淆检测(H7) - 检测多角色Prompt中的角色冲突
+
+#### 中文特有Lint规则 (P048-P050)
+- P048: 中文标点混用检测 - 检测中英文标点混用问题
+- P049: Token消耗预警 - 预估Prompt Token消耗，超过阈值告警
+- P050: 中文冗余表述检测 - 检测叠词、重复表述等
+
+#### Quality Gate (CI集成)
+- 新增 Verdict-based Quality Gate（PASS/WARN/FAIL）
+- 支持配置化门禁规则：fail_on_critical、fail_on_high、min_score等
+- CLI lint命令新增 --gate 选项
+- 门禁结果影响退出码：PASS=0, WARN=1, FAIL=2
+
+#### PII个人隐私信息检测
+- 新增 PIIDetector：10种PII类型检测（邮箱/手机/身份证/银行卡/IP/护照等）
+- 自动脱敏功能：redact_text() 支持自动替换敏感信息
+- 集成到 Scanner.scan() 流程
+- 身份证/银行卡检测自动升级为 CRITICAL 级别
+
+#### 中文Prompt注入模式库
+- 新增 15条中文特有注入检测规则 (INJ-ZH-001 ~ INJ-ZH-015)
+- 覆盖：中文指令覆盖、角色劫持、DAN变体、语义漂移、情感操纵、虚构场景注入等
+- 集成到 Scanner，默认启用
+
+#### CLI增强
+- lint命令新增 --gate 选项（Quality Gate CI模式）
+- lint命令新增 SARIF 输出格式（GitHub Code Scanning集成）
+- 新增 _generate_sarif() SARIF 2.1.0格式生成器
+
+#### 赛事准备
+- 新增 demo.sh 一键演示脚本
+- 新增 CONTRIBUTING.md 贡献指南
+- 新增 LICENSE (MIT) 开源许可
+
 ## [v33.5.0] - 2026-07-14
 
 ### Changed (第二十轮成熟度循环 R20: v33.4→v33.5 — Provider重构+代码清理)

@@ -27,6 +27,44 @@ def _detect_template_type(text: str) -> str:
     return "prompt"
 
 
+def _generate_sarif(results: list, target: str) -> dict:
+    import json as _json
+    sarif = {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {
+                "driver": {
+                    "name": "ai-prompt-toolkit",
+                    "version": __version__,
+                    "informationUri": "https://github.com/ai-prompt-toolkit",
+                    "rules": [],
+                }
+            },
+            "results": [],
+        }]
+    }
+    rules_seen = set()
+    for result in results:
+        for f in result.findings:
+            if f.rule_id not in rules_seen:
+                rules_seen.add(f.rule_id)
+                sarif["runs"][0]["tool"]["driver"]["rules"].append({
+                    "id": f.rule_id,
+                    "shortDescription": {"text": f.description},
+                    "properties": {"severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity)},
+                })
+            sev_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
+            sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+            sarif["runs"][0]["results"].append({
+                "ruleId": f.rule_id,
+                "level": sev_map.get(sev, "warning"),
+                "message": {"text": f.description},
+                "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.template_id}}}],
+            })
+    return sarif
+
+
 @click.group()
 @click.version_option(version=__version__, prog_name="prompt-cli")
 def main() -> None:
@@ -348,11 +386,12 @@ def scan(target: str, config: str | None, incremental: bool,
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option("--config", help="Lint配置YAML文件路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli"]),
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--output", "-o", help="报告输出路径")
-def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None) -> None:
+@click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None, gate: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -424,6 +463,43 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
         click.echo(f"报告: {output}")
 
     has_errors = any(r.has_errors for r in all_results)
+
+    if gate:
+        from ai_prompt_toolkit.linter.quality_gate import QualityGate, Verdict
+        qg = QualityGate()
+        all_findings_flat = []
+        for r in all_results:
+            all_findings_flat.extend(r.findings)
+        gate_result = qg.evaluate(all_findings_flat, score=avg_score)
+        verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
+        click.echo(f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}")
+        if output:
+            report_data["quality_gate"] = gate_result.to_dict()
+        if gate_result.verdict == Verdict.FAIL:
+            sys.exit(2)
+        elif gate_result.verdict == Verdict.WARN:
+            sys.exit(1)
+        else:
+            sys.exit(0)
+
+    if fmt == "sarif" and output:
+        sarif_data = _generate_sarif(all_results, target)
+        import json as _json
+        Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        click.echo(f"SARIF报告: {output}")
+    else:
+        if output:
+            report_data = {
+                "_report_type": "lint",
+                "lint_target": target,
+                "total_files": len(templates),
+                "average_score": round(avg_score, 1),
+                "total_findings": total_findings,
+                "results": [r.to_dict() for r in all_results],
+            }
+            write_report(report_data, output, fmt=fmt)
+            click.echo(f"报告: {output}")
+
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
 
 
