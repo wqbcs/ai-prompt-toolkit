@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-41.0.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-42.0.0-orange.svg)](CHANGELOG.md)
 
 ## 项目简介
 
@@ -14,8 +14,9 @@
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
-| **Prompt Linter** | `prompt-cli lint` | 40+条Lint规则(P001-P040)，涵盖结构/安全/性能/质量/Agent/RAG/多模态7大类 |
-| **安全扫描** | `prompt-cli scan` | Prompt注入检测、敏感信息泄露、越权检测、红队对抗(56+ Probe) |
+| **Prompt Linter** | `prompt-cli lint` | 50条Lint规则(P001-P050)，涵盖结构/安全/性能/质量/Agent/RAG/多模态/lintlang/中文9大类 |
+| **安全扫描** | `prompt-cli scan` | 注入检测(30条含中文)、PII隐私检测(10种)、供应链攻击检测、红队对抗(56+ Probe) |
+| **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2 |
 | **条件编译** | `prompt-cli compile` | 按模型/语言/行业条件编译提示词模板（类C预处理器语法） |
 | **A/B测试** | `prompt-cli ab-test` | 贝叶斯统计(Thompson Sampling+SPRT)，18种LLM Provider支持 |
 | **评估引擎** | `prompt-cli evaluate` | 62个评估维度(D01-D62)，快速/完整双模式 |
@@ -28,10 +29,12 @@
 ### 差异化优势
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Security→Test→Version→Deploy 全链路的Prompt工具
-- **零LLM调用Lint**：40+条静态分析规则，无需消耗Token即可检测Prompt质量
+- **零LLM调用Lint**：50条静态分析规则，无需消耗Token即可检测Prompt质量
 - **18种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
+- **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
+- **PII+供应链防护**：10种隐私信息自动检测+脱敏、可疑URL/包名typosquat/资源注入检测
+- **Quality Gate CI**：Verdict门禁(PASS/WARN/FAIL)，SARIF输出，GitHub Code Scanning集成
 - **鸿蒙适配**：内置10个HarmonyOS场景模板，覆盖ArkTS UI/分布式/Stage模型
-- **中文优先**：中文特有检测规则、中文注入模式库、中文Prompt最佳实践
 
 ## 快速开始
 
@@ -91,24 +94,43 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 
 ```
 src/ai_prompt_toolkit/
-├── cli.py              # CLI统一入口
+├── cli.py              # CLI兼容层
+├── cli_core.py         # CLI实际实现(20+命令)
 ├── linter/             # Prompt Linter引擎
 │   ├── linter.py       # Lint核心引擎
 │   ├── rules.py        # P001-P020规则
 │   ├── rules_p021_p030.py  # P021-P030规则
-│   ├── rules_p031_p040.py  # P031-P040 Agent/RAG/多模态规则
+│   ├── rules_p031_p040.py  # P031-P040 Agent/RAG/多模态
+│   ├── rules_p041_p050.py  # P041-P050 lintlang参考+中文特有
+│   ├── quality_gate.py # Verdict-based Quality Gate
+│   ├── friendly_descriptions.py  # 人话翻译
 │   ├── fixer.py        # 自动修复
 │   └── lsp_server.py   # LSP协议服务
-├── compiler/           # 条件编译引擎
 ├── security/           # 安全扫描引擎
-├── redteam/            # 红队对抗引擎
+│   ├── scanner.py      # 扫描编排器
+│   ├── injection_detector.py  # 注入检测(15条)
+│   ├── zh_injection_rules.py  # 中文注入(15条)
+│   ├── pii_detector.py # PII隐私检测(10种)
+│   ├── supply_chain_detector.py  # 供应链检测
+│   ├── scorer.py       # CVSS-like安全评分
+│   └── inheritance_auditor.py  # 继承审计
+├── compiler/           # 条件编译引擎
+├── redteam/            # 红队对抗引擎(11种探针)
 ├── ab_test/            # A/B测试引擎(18种Provider)
 ├── i18n/               # 国际化引擎
 ├── market/             # 模板市场(FastAPI)
-├── evaluator.py        # 评估引擎
-├── version_store.py    # 版本管理
+├── evaluator.py        # 评估引擎(62维度)
+├── version_store.py    # 版本管理(Git-like)
 ├── playground/         # Playground UI
 └── onboarding/         # 交互式向导
+```
+
+### 全生命周期流程图
+
+```
+编写 → Lint(50规则) → Security Scan(30+检测) → Quality Gate(CI) → A/B Test → Deploy
+  │         │                    │                      │              │          │
+  └─ compile ─┘           PII/供应链检测          PASS/WARN/FAIL    18种Provider  模板市场
 ```
 
 ## 场景模板
@@ -127,9 +149,11 @@ src/ai_prompt_toolkit/
 
 项目包含VSCode扩展 `vscode-prompt-lint/`，提供：
 
-- 实时Lint诊断
+- 实时Lint诊断(50条规则)
 - 保存时自动检查
-- 安全扫描集成
+- 安全扫描集成(30条含中文注入)
+- PII隐私检测
+- Quality Gate检查
 - Front Matter验证
 - 严重级别覆盖配置
 
@@ -138,12 +162,16 @@ src/ai_prompt_toolkit/
 ## CI/CD集成
 
 ```yaml
-# GitHub Actions示例
-- name: Prompt Lint
-  run: prompt-cli lint -s ./prompts/
+# GitHub Actions示例 - Quality Gate
+- name: Prompt Lint with Quality Gate
+  run: prompt-cli lint -t ./prompts/ --gate
+
+# SARIF输出 - GitHub Code Scanning
+- name: Prompt Lint (SARIF)
+  run: prompt-cli lint -t ./prompts/ --format sarif --output results.sarif
 
 - name: Prompt Security Scan
-  run: prompt-cli scan -s ./prompts/
+  run: prompt-cli scan -t ./prompts/
 ```
 
 项目内置3个GitHub Actions Workflow：
