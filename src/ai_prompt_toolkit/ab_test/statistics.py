@@ -694,3 +694,199 @@ def recommend_statistical_method(
                 "reason": f"样本量{n=}>=30，参数检验适用",
                 "alternatives": ["mann_whitney_u", "bayesian_ab"],
             }
+
+
+def power_analysis(
+    *,
+    effect_size: float = 0.5,
+    alpha: float = 0.05,
+    power: float = 0.8,
+    n_per_group: int | None = None,
+    test_type: str = "two_sample",
+) -> dict[str, Any]:
+    """统计功效分析 — 计算所需样本量或检验功效
+
+    F17: 支持A/B测试前的样本量规划和事后功效评估
+
+    Args:
+        effect_size: 期望效应量(Cohen's d, 小=0.2/中=0.5/大=0.8)
+        alpha: 显著性水平(第一类错误率)
+        power: 统计功效(1-β, 通常0.8)
+        n_per_group: 每组样本量(None=计算所需样本量)
+        test_type: 检验类型("two_sample"/"paired")
+
+    Returns:
+        包含样本量、功效、效应量等信息的字典
+    """
+    if effect_size <= 0:
+        return {
+            "error": "效应量必须>0",
+            "effect_size": effect_size,
+            "required_n_per_group": None,
+            "achieved_power": None,
+        }
+
+    z_alpha = _normal_ppf(1.0 - alpha / 2.0)
+    z_beta = _normal_ppf(power)
+
+    if test_type == "paired":
+        adjustment = 1.0
+    else:
+        adjustment = 2.0
+
+    if n_per_group is None:
+        n_required = math.ceil(
+            adjustment * ((z_alpha + z_beta) / effect_size) ** 2
+        )
+        achieved_power = _compute_power(n_required, effect_size, alpha, test_type)
+        return {
+            "effect_size": effect_size,
+            "effect_magnitude": _classify_effect_size(effect_size),
+            "alpha": alpha,
+            "target_power": power,
+            "required_n_per_group": n_required,
+            "required_total": n_required * 2 if test_type == "two_sample" else n_required,
+            "achieved_power": round(achieved_power, 6),
+            "test_type": test_type,
+            "z_alpha": round(z_alpha, 4),
+            "z_beta": round(z_beta, 4),
+        }
+
+    achieved_power = _compute_power(n_per_group, effect_size, alpha, test_type)
+
+    n_required = math.ceil(
+        adjustment * ((z_alpha + z_beta) / effect_size) ** 2
+    )
+    n_deficit = max(0, n_required - n_per_group)
+
+    return {
+        "effect_size": effect_size,
+        "effect_magnitude": _classify_effect_size(effect_size),
+        "alpha": alpha,
+        "current_n_per_group": n_per_group,
+        "achieved_power": round(achieved_power, 6),
+        "target_power": power,
+        "power_sufficient": achieved_power >= power,
+        "required_n_per_group": n_required,
+        "n_deficit": n_deficit,
+        "required_total": n_required * 2 if test_type == "two_sample" else n_required,
+        "test_type": test_type,
+    }
+
+
+def _compute_power(
+    n: int,
+    effect_size: float,
+    alpha: float,
+    test_type: str,
+) -> float:
+    if n < 2 or effect_size <= 0:
+        return 0.0
+
+    z_alpha = _normal_ppf(1.0 - alpha / 2.0)
+    adjustment = 1.0 if test_type == "paired" else 2.0
+    ncp = effect_size / math.sqrt(adjustment / n)
+
+    z_power = ncp - z_alpha
+    power = _normal_cdf(z_power)
+
+    return max(0.0, min(1.0, power))
+
+
+def _classify_effect_size(d: float) -> str:
+    abs_d = abs(d)
+    if abs_d < 0.2:
+        return "negligible"
+    elif abs_d < 0.5:
+        return "small"
+    elif abs_d < 0.8:
+        return "medium"
+    else:
+        return "large"
+
+
+def power_curve(
+    *,
+    effect_size: float = 0.5,
+    alpha: float = 0.05,
+    max_n: int = 200,
+    test_type: str = "two_sample",
+) -> dict[str, Any]:
+    """功效曲线 — 不同样本量下的检验功效变化
+
+    Args:
+        effect_size: 效应量
+        alpha: 显著性水平
+        max_n: 最大样本量(每组)
+        test_type: 检验类型
+
+    Returns:
+        包含功效曲线数据的字典
+    """
+    sample_sizes = list(range(5, max_n + 1, 5))
+    powers = []
+    for n in sample_sizes:
+        p = _compute_power(n, effect_size, alpha, test_type)
+        powers.append(round(p, 6))
+
+    min_80_n = None
+    for n, p in zip(sample_sizes, powers):
+        if p >= 0.8:
+            min_80_n = n
+            break
+
+    return {
+        "effect_size": effect_size,
+        "effect_magnitude": _classify_effect_size(effect_size),
+        "alpha": alpha,
+        "test_type": test_type,
+        "sample_sizes": sample_sizes,
+        "powers": powers,
+        "n_for_80_power": min_80_n,
+        "data_points": [
+            {"n_per_group": n, "power": p}
+            for n, p in zip(sample_sizes, powers)
+        ],
+    }
+
+
+def min_detectable_effect(
+    *,
+    n_per_group: int,
+    alpha: float = 0.05,
+    power: float = 0.8,
+    test_type: str = "two_sample",
+) -> dict[str, Any]:
+    """最小可检测效应量(MDE) — 给定样本量能检测的最小效应
+
+    Args:
+        n_per_group: 每组样本量
+        alpha: 显著性水平
+        power: 统计功效
+        test_type: 检验类型
+
+    Returns:
+        包含MDE信息的字典
+    """
+    if n_per_group < 2:
+        return {
+            "error": "样本量需>=2",
+            "n_per_group": n_per_group,
+            "mde": None,
+        }
+
+    z_alpha = _normal_ppf(1.0 - alpha / 2.0)
+    z_beta = _normal_ppf(power)
+
+    adjustment = 1.0 if test_type == "paired" else 2.0
+    mde = (z_alpha + z_beta) * math.sqrt(adjustment / n_per_group)
+
+    return {
+        "n_per_group": n_per_group,
+        "alpha": alpha,
+        "power": power,
+        "test_type": test_type,
+        "mde": round(mde, 6),
+        "mde_magnitude": _classify_effect_size(mde),
+        "interpretation": f"在{n_per_group}人/组、α={alpha}、power={power}条件下，可检测≥{mde:.3f}的效应量(Cohen's d)",
+    }
