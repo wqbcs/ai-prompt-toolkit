@@ -383,7 +383,7 @@ class PromptCodeLensProvider implements vscode.CodeLensProvider {
   provideCodeLenses(document: vscode.TextDocument): vscode.CodeLens[] {
     const lenses: vscode.CodeLens[] = [];
     const findings = lintResultsCache.get(document.uri.toString()) || [];
-    const total = 30;
+    const total = 50;
     const passed = total - findings.length;
     const score = Math.round((passed / total) * 100);
 
@@ -476,8 +476,9 @@ class PromptLintTreeDataProvider implements vscode.TreeDataProvider<PromptTreeIt
   getChildren(element?: PromptTreeItem): PromptTreeItem[] {
     if (!element) {
       return [
-        new PromptTreeItem('Lint 规则 (30条)', vscode.TreeItemCollapsibleState.Collapsed, 'rules'),
-        new PromptTreeItem('安全扫描 (15条)', vscode.TreeItemCollapsibleState.Collapsed, 'security'),
+        new PromptTreeItem('Lint 规则 (50条)', vscode.TreeItemCollapsibleState.Collapsed, 'rules'),
+        new PromptTreeItem('安全扫描 (30条)', vscode.TreeItemCollapsibleState.Collapsed, 'security'),
+        new PromptTreeItem('PII检测 (10种类型)', vscode.TreeItemCollapsibleState.Collapsed, 'pii'),
       ];
     }
     if (element.contextValue === 'rules') {
@@ -487,11 +488,21 @@ class PromptLintTreeDataProvider implements vscode.TreeDataProvider<PromptTreeIt
         new PromptTreeItem('性能类 P011-P015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
         new PromptTreeItem('质量类 P016-P020', vscode.TreeItemCollapsibleState.None, 'rule-group'),
         new PromptTreeItem('扩展类 P021-P030', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('Agent/RAG/多模态 P031-P040', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('lintlang参考 P041-P047', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('中文特有 P048-P050', vscode.TreeItemCollapsibleState.None, 'rule-group'),
       ];
     }
     if (element.contextValue === 'security') {
       return [
         new PromptTreeItem('注入检测 INJ-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('中文注入 INJ-ZH-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+      ];
+    }
+    if (element.contextValue === 'pii') {
+      return [
+        new PromptTreeItem('邮箱/手机/身份证/银行卡', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('IP/护照/地址/微信/QQ', vscode.TreeItemCollapsibleState.None, 'rule-group'),
       ];
     }
     return [];
@@ -510,6 +521,8 @@ class PromptTreeItem extends vscode.TreeItem {
       this.iconPath = new vscode.ThemeIcon('checklist');
     } else if (contextValue === 'security') {
       this.iconPath = new vscode.ThemeIcon('shield');
+    } else if (contextValue === 'pii') {
+      this.iconPath = new vscode.ThemeIcon('eye');
     } else if (contextValue === 'rule-group') {
       this.iconPath = new vscode.ThemeIcon('folder');
     }

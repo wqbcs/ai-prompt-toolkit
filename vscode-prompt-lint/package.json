@@ -2,7 +2,7 @@
   "name": "vscode-prompt-lint",
   "displayName": "Prompt Lint",
   "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、评估、Front Matter验证",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "ai-prompt-toolkit",
   "engines": {
     "vscode": "^1.80.0"
@@ -44,6 +44,14 @@
       {
         "command": "promptLint.showLintScore",
         "title": "Prompt Lint: 显示评分"
+      },
+      {
+        "command": "promptLint.qualityGate",
+        "title": "Prompt Lint: Quality Gate检查"
+      },
+      {
+        "command": "promptLint.piiScan",
+        "title": "Prompt Lint: PII隐私检测"
       }
     ],
     "views": {
@@ -87,6 +95,21 @@
           "type": "object",
           "default": {},
           "description": "规则严重级别覆盖 {\"P001\": \"warning\", \"INJ-001\": \"error\"}"
+        },
+        "promptLint.enablePiiDetection": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用PII个人隐私信息检测"
+        },
+        "promptLint.enableZhInjection": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用中文注入攻击检测"
+        },
+        "promptLint.qualityGateMinScore": {
+          "type": "number",
+          "default": 60,
+          "description": "Quality Gate最低通过分数"
         }
       }
     }
