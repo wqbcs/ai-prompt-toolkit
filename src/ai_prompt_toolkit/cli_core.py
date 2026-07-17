@@ -80,8 +80,26 @@ def _handle_result(result: Any, **kwargs: Any) -> None:
 
 def _install_exception_handler() -> None:
     import functools
+    import signal
 
     original_invoke = main.invoke
+
+    _graceful_exit_active = False
+
+    def _sigint_handler(signum: int, frame: Any) -> None:
+        nonlocal _graceful_exit_active
+        if _graceful_exit_active:
+            import sys
+            sys.exit(130)
+        _graceful_exit_active = True
+        click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
+        import sys
+        sys.exit(130)
+
+    try:
+        signal.signal(signal.SIGINT, _sigint_handler)
+    except (OSError, ValueError):
+        pass
 
     def _wrapped_invoke(ctx: click.Context) -> None:
         from ai_prompt_toolkit.errors import ToolkitError, format_error_for_cli, toolkit_exit_code
@@ -1482,7 +1500,7 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
                 except Exception as e:
                     click.echo(f"[error] {e}", err=True)
     except KeyboardInterrupt:
-        click.echo("\n监视已停止")
+        click.echo("\n\n⏹ 监视已停止。下次运行 'prompt-cli watch' 即可继续。")
 
 
 @main.command(name="doctor")
