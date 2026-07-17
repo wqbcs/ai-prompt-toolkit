@@ -18,6 +18,7 @@ from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, T
 from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 from ai_prompt_toolkit.security.pii_detector import PIIDetector
 from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+from ai_prompt_toolkit.security.unicode_guard import scan_unicode_and_canary
 
 _DEFAULT_MAX_WORKERS = 4
 
@@ -96,6 +97,9 @@ class Scanner:
             sc_finding = self._supply_chain_detector.check(preprocessed)
             if sc_finding:
                 injection_findings.append(sc_finding)
+
+        unicode_findings = scan_unicode_and_canary(preprocessed)
+        injection_findings.extend(unicode_findings)
 
         risk_level = _assess_risk(injection_findings, inheritance_findings)
 

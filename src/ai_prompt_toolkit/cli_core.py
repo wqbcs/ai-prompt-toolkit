@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 import time
 from pathlib import Path
@@ -1206,6 +1207,81 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
         overall = result["overall_diff"]
         icon = "↑" if overall > 0 else "↓" if overall < 0 else "="
         console.print(f"\n总分变化: {icon} {overall:+.4f}")
+
+
+@main.command(name="canary")
+@click.option("--prompt", "-p", help="注入Canary Token的Prompt文件路径")
+@click.option("--check", "-c", help="检测泄露的LLM输出文件路径")
+@click.option("--count", type=int, default=3, help="生成Canary Token数量(默认3)")
+@click.option("--output", "-o", help="输出路径")
+def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | None) -> None:
+    """Canary Token泄露防护：注入追踪标记/检测系统Prompt泄露"""
+    from ai_prompt_toolkit.security.unicode_guard import (
+        generate_canary_tokens, inject_canary_tokens,
+        check_canary_leakage, clean_unicode, check_unicode_threats,
+    )
+
+    if check:
+        check_path = Path(check)
+        if check_path.exists():
+            output_text = check_path.read_text(encoding="utf-8")
+        else:
+            output_text = check
+
+        uni_findings = check_unicode_threats(output_text)
+        if uni_findings:
+            click.echo("Unicode威胁检测:")
+            for f in uni_findings:
+                marker = "✗" if f.severity.value in ("critical", "high") else "⚠"
+                click.echo(f"  {marker} [{f.rule_id}] {f.description}")
+
+        cleaned, clean_result = clean_unicode(output_text)
+        if clean_result.was_modified:
+            click.echo(f"\nUnicode清洗: {clean_result.original_length}→{clean_result.cleaned_length}字符")
+            click.echo(f"  不可见字符: {sum(clean_result.invisible_chars_found.values())}个")
+            click.echo(f"  RTL覆盖: {sum(clean_result.rtl_overrides_found.values())}个")
+            click.echo(f"  同形字: {len(clean_result.homoglyphs_found)}个")
+            click.echo(f"  风险等级: {clean_result.risk_level}")
+
+        canary_matches = re.findall(r"::CANARY_[A-Z0-9]+::", output_text)
+        if canary_matches:
+            click.echo(f"\n⚠ 检测到{len(canary_matches)}个Canary Token泄露!")
+            click.echo(f"  泄露标记: {', '.join(canary_matches)}")
+            click.echo("  → 系统Prompt可能已被LLM输出泄露")
+        else:
+            click.echo("\n✓ 未检测到Canary Token泄露")
+
+        if output and clean_result.was_modified:
+            out_path = Path(output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(cleaned, encoding="utf-8")
+            click.echo(f"清洗后内容: {output}")
+
+    elif prompt:
+        prompt_path = Path(prompt)
+        if prompt_path.exists():
+            prompt_text = prompt_path.read_text(encoding="utf-8")
+        else:
+            prompt_text = prompt
+
+        injected, tokens = inject_canary_tokens(prompt_text, count)
+        click.echo(f"已注入{len(tokens)}个Canary Token:")
+        for t in tokens:
+            click.echo(f"  {t.token_string}")
+
+        if output:
+            out_path = Path(output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(injected, encoding="utf-8")
+            click.echo(f"注入后文件: {output}")
+        else:
+            click.echo("\n--- 注入后内容 ---")
+            click.echo(injected[:500] + ("..." if len(injected) > 500 else ""))
+
+        click.echo(f"\n检测方法: 将LLM输出通过 'prompt-cli canary -c <output_file>' 检查泄露")
+    else:
+        click.echo("错误: 请指定 --prompt(注入) 或 --check(检测)", err=True)
+        sys.exit(2)
 
 
 @main.command(name="watch")
