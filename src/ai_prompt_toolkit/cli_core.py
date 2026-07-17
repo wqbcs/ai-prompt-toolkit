@@ -912,6 +912,96 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo(report.get_summary())
 
 
+@main.command(name="judge")
+@click.option("--question", "-q", required=True, help="评估问题/输入")
+@click.option("--response", "-r", required=True, help="待评估的回答(文本或文件路径)")
+@click.option("--response-b", help="第二回答(成对比较模式)")
+@click.option("--reference", help="参考答案(可选)")
+@click.option("--judge-model", "-j", default="gpt-4o-mini", help="裁判模型(provider:model_name)")
+@click.option("--dimensions", "-d", help="评估维度(逗号分隔: relevance,accuracy,fluency,completeness,safety,helpfulness)")
+@click.option("--mode", type=click.Choice(["absolute", "pairwise"]), default="absolute", help="评估模式")
+@click.option("--aggregation", type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
+              default="majority_vote", help="多裁判集成方式")
+@click.option("--multi-judge", is_flag=True, help="启用多裁判模式(3个裁判)")
+@click.option("--output", "-o", help="输出报告路径")
+def judge_cmd(question: str, response: str, response_b: str | None, reference: str | None,
+              judge_model: str, dimensions: str | None, mode: str, aggregation: str,
+              multi_judge: bool, output: str | None) -> None:
+    """LLM-as-Judge评估：用LLM作为裁判评估Prompt回答质量"""
+    import asyncio
+    from ai_prompt_toolkit.ab_test.judge import (
+        create_judge, create_multi_judge, BUILTIN_DIMENSIONS,
+    )
+
+    resp_text = response
+    resp_path = Path(response)
+    if resp_path.exists() and resp_path.is_file():
+        resp_text = resp_path.read_text(encoding="utf-8")
+
+    resp_b_text: str | None = None
+    if response_b:
+        rb_path = Path(response_b)
+        resp_b_text = rb_path.read_text(encoding="utf-8") if rb_path.exists() else response_b
+
+    dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
+
+    if multi_judge:
+        parts = judge_model.split(":")
+        provider = parts[0] if len(parts) == 2 else "openai"
+        model = parts[1] if len(parts) == 2 else judge_model
+        judge_configs = [
+            {"provider": provider, "model": model},
+            {"provider": provider, "model": model},
+            {"provider": provider, "model": model},
+        ]
+        ensemble = create_multi_judge(judge_configs, dim_list, mode, aggregation)
+
+        if mode == "pairwise" and resp_b_text:
+            result = asyncio.run(ensemble.evaluate_pairwise(question, resp_text, resp_b_text))
+        else:
+            result = asyncio.run(ensemble.evaluate_absolute(question, resp_text, reference or ""))
+
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(result.to_dict(), output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            import json as _json
+            click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        judge = create_judge(judge_model, dimensions=dim_list, mode=mode)
+
+        if mode == "pairwise" and resp_b_text:
+            result = asyncio.run(judge.evaluate_pairwise(question, resp_text, resp_b_text))
+            click.echo(f"Winner: {result.winner}")
+            if result.reasoning:
+                click.echo(f"理由: {result.reasoning[:200]}")
+        else:
+            results = asyncio.run(judge.evaluate_absolute(question, resp_text, reference or ""))
+            for r in results:
+                marker = "✓" if r.score >= 4 else "⚠" if r.score >= 3 else "✗"
+                click.echo(f"  {marker} {r.dimension.name}: {r.score}/5")
+                if r.reasoning:
+                    click.echo(f"     {r.reasoning[:100]}")
+
+            if results:
+                overall = sum(r.score * r.dimension.weight for r in results) / max(
+                    sum(r.dimension.weight for r in results), 1
+                )
+                click.echo(f"\n综合评分: {overall:.2f}/5")
+
+            if output:
+                from ai_prompt_toolkit.cli_helpers import write_report
+                report_data = {
+                    "mode": mode,
+                    "question": question[:200],
+                    "results": [r.to_dict() for r in results],
+                    "overall_score": round(overall, 2) if results else 0,
+                }
+                write_report(report_data, output, fmt="json")
+                click.echo(f"报告已保存: {output}")
+
+
 @main.command(name="version")
 @click.option("--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]),
               required=True, help="版本操作")
