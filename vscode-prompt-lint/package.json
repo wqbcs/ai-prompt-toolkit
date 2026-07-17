@@ -147,7 +147,17 @@
           "description": "实时Lint防抖延迟(ms)，避免频繁调用CLI"
         }
       }
-    }
+    },
+    "snippets": [
+      {
+        "language": "markdown",
+        "path": "./snippets/prompt-snippets.json"
+      },
+      {
+        "language": "prompt-markdown",
+        "path": "./snippets/prompt-snippets.json"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
