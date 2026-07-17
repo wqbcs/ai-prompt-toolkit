@@ -83,6 +83,10 @@ class ProviderError(Exception):
         self.provider = provider
         super().__init__(f"[{provider}] {message}")
 
+    def to_ab_test_error(self) -> "AbTestError":
+        from ai_prompt_toolkit.errors import AbTestError
+        return AbTestError(self.args[0], provider=self.provider)
+
 
 class BaseProvider(ABC):
     _PRICING: dict[str, tuple[float, float]] = {}

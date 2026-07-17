@@ -73,6 +73,34 @@ def main() -> None:
     pass
 
 
+@main.result_callback()
+def _handle_result(result: Any, **kwargs: Any) -> None:
+    pass
+
+
+def _install_exception_handler() -> None:
+    import functools
+
+    original_invoke = main.invoke
+
+    def _wrapped_invoke(ctx: click.Context) -> None:
+        from ai_prompt_toolkit.errors import ToolkitError, format_error_for_cli, toolkit_exit_code
+        try:
+            original_invoke(ctx)
+        except ToolkitError as e:
+            click.echo(f"错误: {format_error_for_cli(e)}", err=True)
+            ctx.exit(toolkit_exit_code(e))
+        except click.exceptions.Exit:
+            raise
+        except click.exceptions.Abort:
+            click.echo("\n操作已取消", err=True)
+            ctx.exit(130)
+
+    main.invoke = _wrapped_invoke  # type: ignore[method-assign]
+
+_install_exception_handler()
+
+
 @main.command()
 @click.option("--source", "-s", required=True, help="源模板文件路径")
 @click.option("--context", "-c", help="编译上下文JSON文件路径")
@@ -97,8 +125,10 @@ def compile(source: str, context: str | None, config: str | None,
         ctx = CompileContext(model=model, language=language, industry=industry, flags=flags)
         result = compile_template(template_text, ctx)
     except Exception as e:
-        click.echo(f"编译错误: {e}", err=True)
-        sys.exit(3)
+        from ai_prompt_toolkit.errors import CompilerError
+        if isinstance(e, CompilerError):
+            raise
+        raise CompilerError(str(e)) from e
 
     if output:
         Path(output).write_text(result.compiled_text, encoding="utf-8")

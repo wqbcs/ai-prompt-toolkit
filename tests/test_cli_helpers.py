@@ -18,6 +18,7 @@ from ai_prompt_toolkit.cli_helpers import (
     determine_exit_code,
     format_findings_table,
 )
+from ai_prompt_toolkit.errors import ConfigError, ValidationError
 
 
 class TestResolvePath:
@@ -28,9 +29,9 @@ class TestResolvePath:
         assert result == f.resolve()
 
     def test_nonexistent_raises(self):
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ValidationError) as exc_info:
             resolve_path("/nonexistent/path/xyz.md")
-        assert exc_info.value.code == 2
+        assert "路径不存在" in str(exc_info.value)
 
     def test_nonexistent_allowed(self):
         result = resolve_path("/nonexistent/path/xyz.md", must_exist=False)
@@ -47,14 +48,14 @@ class TestLoadContext:
     def test_invalid_json(self, tmp_path):
         f = tmp_path / "bad.json"
         f.write_text("{invalid}")
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ConfigError) as exc_info:
             load_context(str(f))
-        assert exc_info.value.code == 2
+        assert "JSON格式错误" in str(exc_info.value)
 
     def test_nonexistent_file(self):
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ConfigError) as exc_info:
             load_context("/nonexistent/ctx.json")
-        assert exc_info.value.code == 2
+        assert "上下文文件不存在" in str(exc_info.value)
 
     def test_array_root(self, tmp_path):
         f = tmp_path / "arr.json"
@@ -73,14 +74,14 @@ class TestLoadConfig:
     def test_invalid_yaml(self, tmp_path):
         f = tmp_path / "bad.yaml"
         f.write_text(": : invalid")
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ConfigError) as exc_info:
             load_config(str(f))
-        assert exc_info.value.code == 2
+        assert "YAML格式错误" in str(exc_info.value)
 
     def test_nonexistent(self):
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(ConfigError) as exc_info:
             load_config("/nonexistent/cfg.yaml")
-        assert exc_info.value.code == 2
+        assert "配置文件不存在" in str(exc_info.value)
 
 
 class TestDiscoverTemplates:
@@ -104,8 +105,9 @@ class TestDiscoverTemplates:
         assert len(result) == 0
 
     def test_nonexistent(self):
-        with pytest.raises(SystemExit):
+        with pytest.raises(ValidationError) as exc_info:
             discover_templates("/nonexistent/dir")
+        assert "目标不存在" in str(exc_info.value)
 
 
 class TestWriteReport:

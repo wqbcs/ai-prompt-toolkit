@@ -8,40 +8,37 @@ from typing import Any, Sequence
 
 import yaml
 
+from ai_prompt_toolkit.errors import ConfigError, ValidationError
+
 
 def resolve_path(path_str: str, must_exist: bool = True) -> Path:
     p = Path(path_str).resolve()
     if must_exist and not p.exists():
-        print(f"错误: 路径不存在 — {p}", file=sys.stderr)
-        sys.exit(2)
+        raise ValidationError(f"路径不存在 — {p}", field="path")
     return p
 
 
 def load_context(path: str | Path) -> dict[str, Any]:
     p = Path(path) if not isinstance(path, Path) else path
     if not p.exists():
-        print(f"错误: 上下文文件不存在 — {p}", file=sys.stderr)
-        sys.exit(2)
+        raise ConfigError(f"上下文文件不存在 — {p}")
     try:
         with open(p, "r", encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
-        print(f"错误: JSON格式错误 — {p}:{e.lineno}:{e.colno} {e.msg}", file=sys.stderr)
-        sys.exit(2)
+        raise ConfigError(f"JSON格式错误 — {p}:{e.lineno}:{e.colno} {e.msg}") from e
     return data if isinstance(data, dict) else {"_root": data}
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
     p = Path(path) if not isinstance(path, Path) else path
     if not p.exists():
-        print(f"错误: 配置文件不存在 — {p}", file=sys.stderr)
-        sys.exit(2)
+        raise ConfigError(f"配置文件不存在 — {p}")
     try:
         with open(p, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        print(f"错误: YAML格式错误 — {p}: {e}", file=sys.stderr)
-        sys.exit(2)
+        raise ConfigError(f"YAML格式错误 — {p}: {e}") from e
     return data if isinstance(data, dict) else {}
 
 
@@ -51,8 +48,7 @@ def discover_templates(target: str | Path) -> list[Path]:
         return [p] if p.suffix == ".md" else []
     if p.is_dir():
         return sorted(p.rglob("*.md"))
-    print(f"错误: 目标不存在 — {p}", file=sys.stderr)
-    sys.exit(2)
+    raise ValidationError(f"目标不存在 — {p}", field="target")
 
 
 def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> None:

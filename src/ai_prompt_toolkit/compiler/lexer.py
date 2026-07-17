@@ -13,7 +13,7 @@ _IF_CLOSE_RE = re.compile(r"\{\{/if\}\}")
 _DELIMITER_RE = re.compile(r"\{\{(?:#if\s+.+?|/if|#else\s+if\s+.+?|else)\s*\}\}")
 
 
-class LexerError(SyntaxError):
+class LexerError(Exception):
     """词法分析错误。"""
 
     def __init__(self, message: str, line: int = 0, col: int = 0) -> None:
