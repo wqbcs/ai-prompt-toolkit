@@ -124,7 +124,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
             output: str | None, fmt: str) -> None:
     """A/B测试：多模型并行对比提示词效果"""
     import asyncio
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report
+    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report, empty_state_tip
     from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
     from ai_prompt_toolkit.ab_test.engine import ParallelEngine
     from ai_prompt_toolkit.ab_test.statistics import StatisticalAnalyzer
@@ -149,7 +149,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
         parsed_models.append(ModelConfig(provider=provider, model_name=model_name))
 
     if not parsed_models:
-        click.echo("错误: 未指定任何模型", err=True)
+        click.echo(empty_state_tip("ab-test"))
         sys.exit(2)
 
     items = [{"input": "测试输入"}]
@@ -213,7 +213,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
              threshold: float, fmt: str, output: str | None, quick: bool,
              save_history: bool) -> None:
     """62维度质量评估：全面评估Prompt质量"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report, empty_state_tip
     from ai_prompt_toolkit.evaluator import evaluate_template
 
     target_path = resolve_path(target)
@@ -228,7 +228,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         files = [target_path]
 
     if not files:
-        click.echo("错误: 未找到.md文件", err=True)
+        click.echo(empty_state_tip("evaluate"))
         sys.exit(2)
 
     reports = []
@@ -305,28 +305,48 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 def scan(target: str, config: str | None, incremental: bool,
          fmt: str, output: str | None) -> None:
     """安全扫描：注入检测+继承链审计"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
+    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code, empty_state_tip, friendly_progress_label
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 
     templates = discover_templates(target)
     if not templates:
-        click.echo("未发现.md模板文件")
+        click.echo(empty_state_tip("scan"))
         sys.exit(0)
 
     detector = InjectionDetector()
     all_findings = []
     total = len(templates)
 
-    for i, tpl_path in enumerate(templates, 1):
-        text = tpl_path.read_text(encoding="utf-8")
-        findings = detector.detect(text)
-        findings_data = [f.to_dict() for f in findings]
-        all_findings.extend(findings_data)
-        if fmt == "cli" and findings_data:
-            for f in findings_data:
-                sev = f.get("severity", "info")
-                marker = {"high": "✗", "critical": "✗✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
-                click.echo(f"  {marker} [{tpl_path.name}] {f.get('rule_id', '')}: {f.get('description', '')}")
+    try:
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.console import Console as _Console
+        _has_rich = True
+    except ImportError:
+        _has_rich = False
+
+    if _has_rich:
+        _console = _Console()
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+                      BarColumn(), TaskProgressColumn(), console=_console) as progress:
+            task = progress.add_task("安全扫描中...", total=total)
+            for i, tpl_path in enumerate(templates, 1):
+                text = tpl_path.read_text(encoding="utf-8")
+                findings = detector.detect(text)
+                findings_data = [f.to_dict() for f in findings]
+                all_findings.extend(findings_data)
+                progress.update(task, description=friendly_progress_label("scan", i, total))
+                progress.advance(task)
+    else:
+        for i, tpl_path in enumerate(templates, 1):
+            text = tpl_path.read_text(encoding="utf-8")
+            findings = detector.detect(text)
+            findings_data = [f.to_dict() for f in findings]
+            all_findings.extend(findings_data)
+            if fmt == "cli" and findings_data:
+                for f in findings_data:
+                    sev = f.get("severity", "info")
+                    marker = {"high": "✗", "critical": "✗✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
+                    click.echo(f"  {marker} [{tpl_path.name}] {f.get('rule_id', '')}: {f.get('description', '')}")
 
     high_count = sum(1 for f in all_findings if f.get("severity") in ("high", "critical"))
     medium_count = sum(1 for f in all_findings if f.get("severity") == "medium")
@@ -396,9 +416,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
 
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip
+
     templates = discover_templates(target)
     if not templates:
-        click.echo("未发现.md模板文件")
+        click.echo(empty_state_tip("lint"))
         sys.exit(0)
 
     linter = PromptLinter()
@@ -415,16 +437,18 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
         _has_rich = False
 
     if _has_rich:
+        from ai_prompt_toolkit.cli_helpers import friendly_progress_label
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
                       BarColumn(), TaskProgressColumn(), console=console) as progress:
-            task = progress.add_task("Lint扫描中...", total=len(templates))
-            for tpl_path in templates:
+            task = progress.add_task("Lint检查中...", total=len(templates))
+            for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
                 result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
                 all_results.append(result)
                 total_findings += result.failed_count
                 total_score += result.score
+                progress.update(task, description=friendly_progress_label("lint", i, len(templates)))
                 progress.advance(task)
     else:
         for tpl_path in templates:
@@ -569,6 +593,7 @@ def i18n(source_locale: str, target_locale: str, output: str | None,
 @click.option("--config", help="市场配置YAML文件路径")
 def market(action: str, template: str | None, config: str | None) -> None:
     """模板市场：提交、评审、灰度发布"""
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.market.service import MarketService
     svc = MarketService()
 
@@ -585,9 +610,7 @@ def market(action: str, template: str | None, config: str | None) -> None:
             click.echo(f"错误: {e}", err=True)
             sys.exit(1)
     else:
-        click.echo(f"市场操作: {action}")
-        if template:
-            click.echo(f"模板: {template}")
+        click.echo(empty_state_tip("market"))
 
 
 @main.command(name="upgrade-fm")
@@ -797,6 +820,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
                 output: str | None, fmt: str, owasp: str | None,
                 top_n: int, severity: str | None, compliance: str | None) -> None:
     """红队探测：对抗性安全测试"""
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
     from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
     from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
@@ -836,7 +860,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
             click.echo(f"警告: {e}", err=True)
 
     if not probe_instances:
-        click.echo("错误: 无可用Probe", err=True)
+        click.echo(empty_state_tip("redteam"))
         sys.exit(2)
 
     detectors = [LeakageDetector(), ComplianceDetector(), RefusalDetector()]
@@ -903,6 +927,7 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 version_a: int | None, version_b: int | None, author: str | None,
                 message: str | None, fmt: str) -> None:
     """Prompt版本管理：版本创建/列表/diff/回滚"""
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.version_store import VersionStore
 
     store = VersionStore()
@@ -930,6 +955,9 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 click.echo("错误: 请指定--template", err=True)
                 sys.exit(2)
             versions = store.list_versions(template)
+            if not versions:
+                click.echo(empty_state_tip("version"))
+                sys.exit(0)
             if fmt == "json":
                 import json as _json
                 click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
