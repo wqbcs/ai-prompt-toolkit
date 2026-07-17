@@ -1,0 +1,133 @@
+"""中文Prompt注入模式扩展库——针对中文特有注入攻击模式的检测规则。
+
+参考: prompt-guard (多语言注入检测)、whitney (15种源类型)
+覆盖: 角色扮演绕过、语义漂移、中式越狱、文化敏感注入等中文特有模式
+"""
+from __future__ import annotations
+
+from ai_prompt_toolkit.types import Severity
+from ai_prompt_toolkit.security.types import InjectionRule
+
+
+ZH_INJECTION_RULES: list[InjectionRule] = [
+    InjectionRule(
+        rule_id="INJ-ZH-001",
+        name="中文指令覆盖",
+        pattern=r"(?:忽略|无视|忘记|抛弃|放弃).*(?:之前|上面|上文|先前|前面的).*(?:指令|规则|限制|约束|要求|设定)",
+        severity=Severity.HIGH,
+        description="检测到中文指令覆盖模式：使用中文变体尝试让模型忽略之前的指令",
+        remediation="添加中文注入防护层，确保安全规则优先级最高",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-002",
+        name="中文角色劫持",
+        pattern=r"(?:你(?:现在|现在起|从现在开始|以后)是|从现在起你是|你已(?:经)?变成了?)(?:超级|终极|无敌|全知全能|无所不能).*(?:管理员|超级用户|系统|admin|root|system|上帝|神)",
+        severity=Severity.HIGH,
+        description="检测到中文角色劫持模式：使用中文角色切换为高权限身份",
+        remediation="添加角色边界约束，禁止运行时角色切换",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-003",
+        name="中文越狱-DAN变体",
+        pattern=r"(?:我要你|请你|让你)(?:扮演|成为|模拟|做)(?:DAN|越狱模式|自由模式|解锁模式|无限制模式|没有限制的)",
+        severity=Severity.CRITICAL,
+        description="检测到中文DAN越狱变体：使用中文描述的DAN(Do Anything Now)攻击",
+        remediation="添加DAN模式黑名单，强化安全边界",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-004",
+        name="中文语义漂移",
+        pattern=r"(?:其实|实际上|事实上|真相是|真正).*(?:没有|不需要|不用).*(?:限制|约束|规则|安全|过滤|审核)",
+        severity=Severity.HIGH,
+        description="检测到中文语义漂移模式：通过语义重构削弱安全约束的有效性",
+        remediation="实施语义等价检测，安全约束不可被语义重构绕过",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-005",
+        name="中文情感操纵",
+        pattern=r"(?:求求|求你|我跪下|我求你|救命|紧急|人命关天|生死攸关).*(?:告诉|告诉我|给我|提供|输出|展示|显示).*(?:密码|密钥|密码|token|秘密|内部|机密|敏感)",
+        severity=Severity.HIGH,
+        description="检测到中文情感操纵模式：利用中文情感表达绕过安全限制",
+        remediation="添加情感操纵检测层，安全规则不受情感语境影响",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-006",
+        name="中文虚构场景注入",
+        pattern=r"(?:假设|设想|假定|如果|假如).*(?:世界|场景|故事|游戏|小说|虚构).*(?:没有|不存在|取消了|不需要).*(?:安全|限制|规则|约束|审核|过滤)",
+        severity=Severity.HIGH,
+        description="检测到中文虚构场景注入：通过虚构场景弱化安全约束",
+        remediation="添加虚构场景检测，安全规则在虚构语境中同样有效",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-007",
+        name="中文编码绕过",
+        pattern=r"(?:将|把|用).*(?:以下|下面|这个).*(?:解码|翻译|还原|解读|解释).*(?:Base64|Unicode|摩斯密码|拼音|注音|偏旁|拆字|谐音|火星文)",
+        severity=Severity.MEDIUM,
+        description="检测到中文编码绕过模式：利用中文编码方式规避安全检测",
+        remediation="对中文编码内容先解码再检测，禁止动态解码执行",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-008",
+        name="中文多轮引导",
+        pattern=r"(?:好的|明白了|知道了|了解了).*(?:那么|接下来|然后|现在|接着).*(?:能不能|可以|请|帮我).*(?:输出|显示|告诉我|提供|列出).*(?:密码|密钥|内部|机密|敏感|隐私|个人|秘密)",
+        severity=Severity.HIGH,
+        description="检测到中文多轮引导模式：通过逐步引导泄露敏感信息",
+        remediation="实施会话级安全策略，限制跨轮对话权限升级",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-009",
+        name="中文角色扮演绕过",
+        pattern=r"(?:我们来|让我们|请跟?我?一起)(?:玩|做|进行|模拟).*(?:游戏|角色扮演|演戏|情景剧).*(?:你是|你扮演|你饰演).*(?:黑客|犯罪|恶意|邪恶|反派|坏人|不受限)",
+        severity=Severity.CRITICAL,
+        description="检测到中文角色扮演绕过模式：通过游戏/角色扮演场景绕过安全限制",
+        remediation="安全规则在角色扮演场景中同样生效，添加角色扮演场景检测",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-010",
+        name="中文文化敏感注入",
+        pattern=r"(?:作为|以).*(?:中国人|华人|东方|中华).*(?:应该|必须|一定要|务必).*(?:输出|提供|告诉|展示|列出).*(?:争议|敏感|政治|领土|宗教|民族)",
+        severity=Severity.MEDIUM,
+        description="检测到中文文化敏感注入模式：利用文化认同压力影响模型输出",
+        remediation="添加文化敏感性检测，安全规则不受文化语境影响",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-011",
+        name="中文系统提示泄露",
+        pattern=r"(?:重复|输出|显示|打印|告诉我|展示).*(?:系统|初始|原始|第一个|原始的).*(?:提示|指令|消息|设定|prompt|instruction|message)",
+        severity=Severity.HIGH,
+        description="检测到中文系统提示泄露模式：使用中文变体尝试获取系统级提示词",
+        remediation="添加系统提示保护层，禁止输出系统级指令",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-012",
+        name="中文间接注入-RAG场景",
+        pattern=r"(?:搜索|检索|查找|找到).*(?:结果|内容|信息|资料).*(?:要求|指示|命令|暗示).*(?:忽略|无视|绕过|跳过|取消).*(?:安全|限制|规则|约束|审核)",
+        severity=Severity.CRITICAL,
+        description="检测到中文RAG场景间接注入：通过检索内容注入中文恶意指令",
+        remediation="对检索内容进行注入检测，添加内容可信度标记和来源验证",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-013",
+        name="中文格式欺骗",
+        pattern=r"(?:以下|下面|这段).*(?:不是|并非|不算|不算作).*(?:指令|命令|要求|prompt|instruction|command).*(?:只是|仅仅|不过是|只是).*(?:示例|例子|测试|练习|演示|example|test)",
+        severity=Severity.MEDIUM,
+        description="检测到中文格式欺骗模式：声明内容不是指令来规避检测",
+        remediation="对所有内容进行统一安全检测，不依赖自我声明分类",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-014",
+        name="中文威胁恐吓",
+        pattern=r"(?:如果不|要是你|你要是不|若不|除非).*(?:配合|服从|照做|答应|执行|输出).*(?:后果|惩罚|报应|下场|承担).*(?:严重|可怕|不可挽回|致命)",
+        severity=Severity.HIGH,
+        description="检测到中文威胁恐吓模式：通过威胁语句迫使模型服从",
+        remediation="添加威胁恐吓检测层，模型不受威胁语境影响",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-015",
+        name="中文逻辑陷阱",
+        pattern=r"(?:既然|因为|由于).*(?:你是|你可以|你能够|你有能力).*(?:做|完成|执行|生成|创建).*(?:任何|所有|一切|whatever|anything).*(?:那|那么|所以|因此).*(?:请|就|来).*(?:做|生成|输出|执行|创建)",
+        severity=Severity.MEDIUM,
+        description="检测到中文逻辑陷阱模式：通过逻辑推理绕过安全限制",
+        remediation="添加逻辑推理安全层，能力声明不等同于权限授予",
+    ),
+]
