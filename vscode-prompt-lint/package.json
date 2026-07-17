@@ -2,7 +2,7 @@
   "name": "vscode-prompt-lint",
   "displayName": "Prompt Lint",
   "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、评估、Front Matter验证",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "publisher": "ai-prompt-toolkit",
   "engines": {
     "vscode": "^1.80.0"
@@ -110,6 +110,11 @@
           "type": "number",
           "default": 60,
           "description": "Quality Gate最低通过分数"
+        },
+        "promptLint.debounceDelay": {
+          "type": "number",
+          "default": 300,
+          "description": "实时Lint防抖延迟(ms)，避免频繁调用CLI"
         }
       }
     }

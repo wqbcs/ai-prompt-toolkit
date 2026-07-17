@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 
 const DIAGNOSTIC_SOURCE = 'prompt-lint';
+const DEBOUNCE_MS = 300;
 
 interface LintFinding {
   rule_id: string;
@@ -26,10 +27,17 @@ interface EvaluateResult {
 
 let diagnosticCollection: vscode.DiagnosticCollection;
 let lintResultsCache: Map<string, LintFinding[]> = new Map();
+let debounceTimers: Map<string, NodeJS.Timeout> = new Map();
+let statusBarItem: vscode.StatusBarItem;
 
 export function activate(context: vscode.ExtensionContext) {
   diagnosticCollection = vscode.languages.createDiagnosticCollection('prompt-lint');
   context.subscriptions.push(diagnosticCollection);
+
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  statusBarItem.command = 'promptLint.lintActiveFile';
+  context.subscriptions.push(statusBarItem);
+  updateStatusBarIdle();
 
   context.subscriptions.push(
     vscode.commands.registerCommand('promptLint.lintActiveFile', () => {
@@ -62,6 +70,18 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.qualityGate', () => {
+      runQualityGateOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.piiScan', () => {
+      runPiiScanOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('promptLint.fix', (docUri: vscode.Uri, ruleId: string) => {
       applyQuickFix(docUri, ruleId);
     })
@@ -87,24 +107,91 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerTreeDataProvider('promptLintSidebar', treeProvider)
   );
 
-  vscode.workspace.onDidSaveTextDocument((doc) => {
-    const config = vscode.workspace.getConfiguration('promptLint');
-    if (config.get<boolean>('lintOnSave') && isMarkdownFile(doc)) {
-      runLint(doc);
-      treeProvider.refresh();
-      if (config.get<boolean>('securityScan')) {
-        runScan(doc);
+  context.subscriptions.push(
+    vscode.workspace.onDidSaveTextDocument((doc) => {
+      const config = vscode.workspace.getConfiguration('promptLint');
+      if (config.get<boolean>('lintOnSave') && isMarkdownFile(doc)) {
+        runLint(doc);
+        treeProvider.refresh();
+        if (config.get<boolean>('securityScan')) {
+          runScan(doc);
+        }
       }
-    }
-  });
+    })
+  );
 
-  vscode.workspace.onDidChangeTextDocument((e) => {
-    const config = vscode.workspace.getConfiguration('promptLint');
-    if (config.get<boolean>('lintOnType') && isMarkdownFile(e.document)) {
-      runLint(e.document);
-      treeProvider.refresh();
-    }
-  });
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      const config = vscode.workspace.getConfiguration('promptLint');
+      if (config.get<boolean>('lintOnType') && isMarkdownFile(e.document)) {
+        debouncedLint(e.document, treeProvider);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      const config = vscode.workspace.getConfiguration('promptLint');
+      if (config.get<boolean>('lintOnSave') && isMarkdownFile(doc)) {
+        runLint(doc);
+        treeProvider.refresh();
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor((editor) => {
+      if (editor && isMarkdownFile(editor.document)) {
+        updateStatusBarForDoc(editor.document);
+      } else {
+        updateStatusBarIdle();
+      }
+    })
+  );
+}
+
+function debouncedLint(doc: vscode.TextDocument, treeProvider: PromptLintTreeDataProvider) {
+  const key = doc.uri.toString();
+  const existing = debounceTimers.get(key);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  debounceTimers.set(key, setTimeout(() => {
+    runLint(doc);
+    treeProvider.refresh();
+    debounceTimers.delete(key);
+  }, DEBOUNCE_MS));
+}
+
+function updateStatusBarIdle() {
+  statusBarItem.text = '$(check) Prompt Lint';
+  statusBarItem.tooltip = 'Prompt Lint — 就绪';
+  statusBarItem.show();
+}
+
+function updateStatusBarLinting() {
+  statusBarItem.text = '$(loading~spin) Prompt Lint...';
+  statusBarItem.tooltip = 'Prompt Lint — 检查中';
+}
+
+function updateStatusBarForDoc(doc: vscode.TextDocument) {
+  const findings = lintResultsCache.get(doc.uri.toString()) || [];
+  const total = 50;
+  const passed = total - findings.length;
+  const score = Math.round((passed / total) * 100);
+  const errorCount = findings.filter(f => f.severity === 'high' || f.severity === 'critical').length;
+  const warnCount = findings.filter(f => f.severity === 'medium').length;
+  if (errorCount > 0) {
+    statusBarItem.text = `$(error) Prompt: ${score}/100 (${errorCount} err, ${warnCount} warn)`;
+    statusBarItem.tooltip = `Prompt Lint Score: ${score}/100 — ${errorCount} 错误, ${warnCount} 警告`;
+  } else if (warnCount > 0) {
+    statusBarItem.text = `$(warning) Prompt: ${score}/100 (${warnCount} warn)`;
+    statusBarItem.tooltip = `Prompt Lint Score: ${score}/100 — ${warnCount} 警告`;
+  } else {
+    statusBarItem.text = `$(check) Prompt: ${score}/100`;
+    statusBarItem.tooltip = `Prompt Lint Score: ${score}/100 — 无问题`;
+  }
+  statusBarItem.show();
 }
 
 function isMarkdownFile(doc: vscode.TextDocument): boolean {
@@ -125,6 +212,10 @@ function severityToVscode(severity: string): vscode.DiagnosticSeverity {
   }
 }
 
+function applySeverityOverrides(severity: string, overrides: Record<string, string>): string {
+  return overrides[severity] || severity;
+}
+
 async function runLintOnActiveFile() {
   const editor = vscode.window.activeTextEditor;
   if (!editor || !isMarkdownFile(editor.document)) {
@@ -141,6 +232,68 @@ async function runScanOnActiveFile() {
     return;
   }
   await runScan(editor.document);
+}
+
+async function runQualityGateOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['lint', '-t', filePath, '--format', 'json', '--gate']);
+    vscode.window.showInformationMessage(`Quality Gate: ${output.trim()}`);
+  } catch (err: any) {
+    const msg = err.message || String(err);
+    if (msg.includes('FAIL') || msg.includes('exit code')) {
+      vscode.window.showErrorMessage(`Quality Gate: FAIL — ${msg}`);
+    } else {
+      vscode.window.showWarningMessage(`Quality Gate: ${msg}`);
+    }
+  }
+}
+
+async function runPiiScanOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['scan', '-t', filePath, '--format', 'json']);
+    const report = JSON.parse(output);
+    const findings: ScanFinding[] = report.findings || [];
+    const piiFindings = findings.filter(f => f.rule_id?.startsWith('PII'));
+    if (piiFindings.length === 0) {
+      vscode.window.showInformationMessage('PII隐私检测: 未发现个人隐私信息泄露');
+    } else {
+      vscode.window.showWarningMessage(`PII隐私检测: 发现 ${piiFindings.length} 处隐私信息泄露风险`);
+      const doc = editor.document;
+      const text = doc.getText();
+      const existing = diagnosticCollection.get(doc.uri) || [];
+      for (const finding of piiFindings) {
+        const line = findLineNumber(text, finding.description);
+        const range = new vscode.Range(
+          new vscode.Position(line, 0),
+          new vscode.Position(line, Math.min(finding.description.length, 80))
+        );
+        const diag = new vscode.Diagnostic(
+          range,
+          `[${finding.rule_id}] PII风险: ${finding.description}`,
+          vscode.DiagnosticSeverity.Error
+        );
+        diag.source = 'prompt-pii';
+        diag.code = finding.rule_id;
+        diag.tags = [vscode.DiagnosticTag.Unnecessary];
+        existing.push(diag);
+      }
+      diagnosticCollection.set(doc.uri, existing);
+    }
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`PII隐私检测失败: ${err.message}`);
+  }
 }
 
 async function runCompileOnActiveFile() {
@@ -188,7 +341,7 @@ async function showLintScore() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) { return; }
   const findings = lintResultsCache.get(editor.document.uri.toString()) || [];
-  const total = 30;
+  const total = 50;
   const passed = total - findings.length;
   const score = Math.round((passed / total) * 100);
   vscode.window.showInformationMessage(`Prompt Lint Score: ${score}/100 (${findings.length} issues)`);
@@ -252,8 +405,10 @@ async function runLint(doc: vscode.TextDocument) {
     return;
   }
 
+  updateStatusBarLinting();
   const filePath = doc.uri.fsPath;
   const text = doc.getText();
+  const severityOverrides = config.get<Record<string, string>>('severityOverrides') || {};
 
   try {
     const output = await executeCli(['lint', '-t', filePath, '--format', 'json']);
@@ -267,29 +422,71 @@ async function runLint(doc: vscode.TextDocument) {
       for (const finding of result.findings) {
         allFindings.push(finding);
         const line = findLineNumber(text, finding.description);
+        const endChar = Math.min(
+          finding.location ? parseInt(finding.location) : finding.description.length,
+          doc.lineAt(Math.min(line, doc.lineCount - 1)).text.length
+        );
         const range = new vscode.Range(
           new vscode.Position(line, 0),
-          new vscode.Position(line, finding.description.length)
+          new vscode.Position(line, endChar)
         );
 
+        const effectiveSeverity = applySeverityOverrides(finding.severity, severityOverrides);
         const diag = new vscode.Diagnostic(
           range,
           `[${finding.rule_id}] ${finding.description}${finding.remediation ? ` — 修复: ${finding.remediation}` : ''}`,
-          severityToVscode(finding.severity)
+          severityToVscode(effectiveSeverity)
         );
         diag.source = DIAGNOSTIC_SOURCE;
         diag.code = finding.rule_id;
+
+        if (finding.severity === 'info' || finding.severity === 'low') {
+          diag.tags = [vscode.DiagnosticTag.Unnecessary];
+        }
+
+        const relatedInfo = buildRelatedInfo(doc.uri, finding, text);
+        if (relatedInfo) {
+          diag.relatedInformation = [relatedInfo];
+        }
+
         diagnostics.push(diag);
       }
     }
 
     lintResultsCache.set(doc.uri.toString(), allFindings);
     diagnosticCollection.set(doc.uri, diagnostics);
+    updateStatusBarForDoc(doc);
   } catch (err: any) {
     if (err.message && !err.message.includes('ENOENT')) {
       vscode.window.showWarningMessage(`Prompt Lint: ${err.message}`);
     }
+    updateStatusBarIdle();
   }
+}
+
+function buildRelatedInfo(
+  uri: vscode.Uri,
+  finding: LintFinding,
+  text: string
+): vscode.DiagnosticRelatedInformation | undefined {
+  const ruleDescriptions: Record<string, string> = {
+    'P001': '提示词应包含明确的角色定义',
+    'P005': '缺少输出格式约束',
+    'P006': '可能存在注入风险',
+    'P016': '提示词过于模糊，建议增加具体约束',
+    'P025': '缺少长度限制',
+    'P026': '缺少幻觉防护',
+  };
+  const hint = ruleDescriptions[finding.rule_id];
+  if (!hint) {
+    return undefined;
+  }
+  const line = findLineNumber(text, finding.description);
+  const range = new vscode.Range(line, 0, line, 1);
+  return new vscode.DiagnosticRelatedInformation(
+    new vscode.Location(uri, range),
+    hint
+  );
 }
 
 async function runScan(doc: vscode.TextDocument) {
@@ -317,6 +514,9 @@ async function runScan(doc: vscode.TextDocument) {
       );
       diag.source = 'prompt-scan';
       diag.code = finding.rule_id;
+      if (finding.severity === 'critical') {
+        diag.tags = [vscode.DiagnosticTag.Deprecated];
+      }
       existing.push(diag);
     }
 
@@ -413,6 +613,14 @@ class PromptCodeLensProvider implements vscode.CodeLensProvider {
       }
     ));
 
+    lenses.push(new vscode.CodeLens(
+      new vscode.Range(0, 0, 0, 0),
+      {
+        title: '$(shield) Quality Gate',
+        command: 'promptLint.qualityGate',
+      }
+    ));
+
     return lenses;
   }
 }
@@ -429,7 +637,7 @@ class PromptQuickFixProvider implements vscode.CodeActionsProvider {
     const autoFixRules = new Set(['P005', 'P016', 'P006', 'P025', 'P026', 'P029']);
 
     for (const diag of context.diagnostics) {
-      if (diag.source !== DIAGNOSTIC_SOURCE && diag.source !== 'prompt-scan') {
+      if (diag.source !== DIAGNOSTIC_SOURCE && diag.source !== 'prompt-scan' && diag.source !== 'prompt-pii') {
         continue;
       }
       const ruleId = typeof diag.code === 'string' ? diag.code : String(diag.code || '');
@@ -447,6 +655,19 @@ class PromptQuickFixProvider implements vscode.CodeActionsProvider {
         };
         action.isPreferred = true;
         actions.push(action);
+      }
+
+      if (diag.source === 'prompt-scan') {
+        const viewDetailAction = new vscode.CodeAction(
+          `查看 ${ruleId} 安全详情`,
+          vscode.CodeActionKind.QuickFix
+        );
+        viewDetailAction.diagnostics = [diag];
+        viewDetailAction.command = {
+          command: 'promptLint.scanActiveFile',
+          title: `查看安全扫描详情`,
+        };
+        actions.push(viewDetailAction);
       }
 
       const dismissAction = new vscode.CodeAction(
@@ -532,5 +753,10 @@ class PromptTreeItem extends vscode.TreeItem {
 const path = require('path');
 
 export function deactivate() {
+  for (const timer of debounceTimers.values()) {
+    clearTimeout(timer);
+  }
+  debounceTimers.clear();
   diagnosticCollection.dispose();
+  statusBarItem.dispose();
 }
