@@ -5,6 +5,10 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-42.0.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-953%20passed-brightgreen.svg)](tests/)
+[![Rules](https://img.shields.io/badge/Lint_Rules-50-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Security](https://img.shields.io/badge/Security_Rules-30%2B-red.svg)](src/ai_prompt_toolkit/security/)
+[![VSCode](https://img.shields.io/badge/VSCode-v0.4.0-purple.svg)](vscode-prompt-lint/)
 
 ## 项目简介
 
@@ -127,10 +131,71 @@ src/ai_prompt_toolkit/
 
 ### 全生命周期流程图
 
+```mermaid
+graph LR
+    A[编写 Prompt] --> B[Lint 检查]
+    B --> C[安全扫描]
+    C --> D[Quality Gate]
+    D --> E[A/B 测试]
+    E --> F[版本管理]
+    F --> G[部署上线]
+
+    B -->|50条规则| B1[结构/安全/性能/质量]
+    B -->|lintlang+中文| B2[P041-P050]
+    C -->|30+注入检测| C1[INJ-001~015+INJ-ZH]
+    C -->|PII检测| C2[10种隐私类型]
+    C -->|供应链| C3[URL/typosquat/资源]
+    D -->|PASS/WARN/FAIL| D1[CI退出码0/1/2]
+    D -->|SARIF输出| D2[GitHub Code Scanning]
+    E -->|18种Provider| E1[OpenAI/Claude/千问/盘古]
+    E -->|贝叶斯统计| E2[Thompson+SPRT]
+    F -->|Git-like| F1[diff/rollback/历史]
+    G -->|模板市场| G1[发布/评审/灰度]
 ```
-编写 → Lint(50规则) → Security Scan(30+检测) → Quality Gate(CI) → A/B Test → Deploy
-  │         │                    │                      │              │          │
-  └─ compile ─┘           PII/供应链检测          PASS/WARN/FAIL    18种Provider  模板市场
+
+### 系统架构图
+
+```mermaid
+graph TB
+    subgraph CLI["prompt-cli 命令行"]
+        LINT[lint] --> LSP[LSP Server]
+        SCAN[scan] --> SEC[Security Scanner]
+        COMPILE[compile] --> CMP[Compiler]
+        AB[ab-test] --> ENG[Parallel Engine]
+        EVAL[evaluate] --> EVL[Evaluator]
+        VER[version] --> VS[Version Store]
+        REDTEAM[redteam] --> PROBE[Probe Engine]
+    end
+
+    subgraph CORE["核心引擎"]
+        LINT_ENGINE[Linter Engine]
+        SEC_ENGINE[Security Engine]
+        COMPILER_ENGINE[Compiler Engine]
+        AB_ENGINE[A/B Test Engine]
+    end
+
+    subgraph RULES["规则体系"]
+        P001_P020[P001-P020 基础规则]
+        P021_P040[P021-P040 Agent/RAG/多模态]
+        P041_P050[P041-P050 lintlang+中文]
+        INJ[INJ-001~015 注入]
+        INJ_ZH[INJ-ZH-001~015 中文注入]
+        PII[PII 10种隐私类型]
+        SC[供应链检测]
+    end
+
+    subgraph INTEGRATION["集成"]
+        VSCODE[VSCode Extension v0.4.0]
+        GHA[GitHub Actions]
+        DOCKER[Docker]
+        SARIF[SARIF Output]
+    end
+
+    CLI --> CORE
+    CORE --> RULES
+    CLI --> INTEGRATION
+    LINT_ENGINE --> P001_P020 & P021_P040 & P041_P050
+    SEC_ENGINE --> INJ & INJ_ZH & PII & SC
 ```
 
 ## 场景模板
@@ -147,15 +212,19 @@ src/ai_prompt_toolkit/
 
 ## VSCode插件
 
-项目包含VSCode扩展 `vscode-prompt-lint/`，提供：
+项目包含VSCode扩展 `vscode-prompt-lint/` v0.4.0，提供：
 
-- 实时Lint诊断(50条规则)
-- 保存时自动检查
+- 实时Lint诊断(50条规则) + 防抖300ms
+- Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
+- 状态栏评分指示器
+- 保存时自动检查 + 打开文件自动Lint
 - 安全扫描集成(30条含中文注入)
 - PII隐私检测
 - Quality Gate检查
 - Front Matter验证
 - 严重级别覆盖配置
+- 快速修复Code Actions
+- CodeLens评分+Quality Gate入口
 
 详见 [vscode-prompt-lint/README.md](vscode-prompt-lint/README.md)
 
