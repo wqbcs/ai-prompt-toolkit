@@ -82,6 +82,24 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.openTemplate', (templateId: string) => {
+      openTemplatePreview(templateId);
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.searchTemplates', async () => {
+      const query = await vscode.window.showInputBox({
+        prompt: '搜索模板（名称/场景/行业）',
+        placeHolder: '例如: 翻译、代码、华为云...',
+      });
+      if (query) {
+        searchAndShowTemplates(query);
+      }
+    })
+  );
+
+  context.subscriptions.push(
     vscode.commands.registerCommand('promptLint.fix', (docUri: vscode.Uri, ruleId: string) => {
       applyQuickFix(docUri, ruleId);
     })
@@ -694,63 +712,348 @@ class PromptLintTreeDataProvider implements vscode.TreeDataProvider<PromptTreeIt
     return element;
   }
 
-  getChildren(element?: PromptTreeItem): PromptTreeItem[] {
+  async getChildren(element?: PromptTreeItem): Promise<PromptTreeItem[]> {
     if (!element) {
       return [
-        new PromptTreeItem('Lint 规则 (50条)', vscode.TreeItemCollapsibleState.Collapsed, 'rules'),
-        new PromptTreeItem('安全扫描 (30条)', vscode.TreeItemCollapsibleState.Collapsed, 'security'),
-        new PromptTreeItem('PII检测 (10种类型)', vscode.TreeItemCollapsibleState.Collapsed, 'pii'),
+        new PromptTreeItem('📂 工作区 Prompt', vscode.TreeItemCollapsibleState.Collapsed, 'workspace-root', 'root-folder'),
+        new PromptTreeItem('🎯 场景模板推荐', vscode.TreeItemCollapsibleState.Collapsed, 'templates-root', 'star'),
+        new PromptTreeItem('🔍 Lint 规则 (57条)', vscode.TreeItemCollapsibleState.Collapsed, 'rules', 'checklist'),
+        new PromptTreeItem('🛡️ 安全扫描', vscode.TreeItemCollapsibleState.Collapsed, 'security', 'shield'),
       ];
     }
+
+    if (element.contextValue === 'workspace-root') {
+      return getWorkspacePromptFiles();
+    }
+
+    if (element.contextValue === 'templates-root') {
+      return getTemplateCategories();
+    }
+
+    if (element.contextValue === 'template-category') {
+      return getTemplatesByCategory(element.meta?.category || '');
+    }
+
+    if (element.contextValue === 'template-item') {
+      return [];
+    }
+
     if (element.contextValue === 'rules') {
       return [
-        new PromptTreeItem('结构类 P001-P005', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('安全类 P006-P010', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('性能类 P011-P015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('质量类 P016-P020', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('扩展类 P021-P030', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('Agent/RAG/多模态 P031-P040', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('lintlang参考 P041-P047', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('中文特有 P048-P050', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('结构类 P001-P005', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('安全类 P006-P010', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('性能类 P011-P015', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('质量类 P016-P020', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('扩展类 P021-P030', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('Agent/RAG/多模态 P031-P040', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('lintlang参考 P041-P047', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('中文特有 P048-P050', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('多模态 MM001-MM007', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
       ];
     }
     if (element.contextValue === 'security') {
       return [
-        new PromptTreeItem('注入检测 INJ-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('中文注入 INJ-ZH-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-      ];
-    }
-    if (element.contextValue === 'pii') {
-      return [
-        new PromptTreeItem('邮箱/手机/身份证/银行卡', vscode.TreeItemCollapsibleState.None, 'rule-group'),
-        new PromptTreeItem('IP/护照/地址/微信/QQ', vscode.TreeItemCollapsibleState.None, 'rule-group'),
+        new PromptTreeItem('注入检测 INJ-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('中文注入 INJ-ZH-001~015', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
+        new PromptTreeItem('Unicode/Canary/Defender', vscode.TreeItemCollapsibleState.None, 'rule-group', 'folder'),
       ];
     }
     return [];
   }
 }
 
+async function getWorkspacePromptFiles(): Promise<PromptTreeItem[]> {
+  const files = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**', 100);
+  const promptFiles = files.filter(f =>
+    f.fsPath.endsWith('.md') || f.fsPath.endsWith('.prompt.md') || f.fsPath.endsWith('.prompt')
+  );
+  if (promptFiles.length === 0) {
+    return [new PromptTreeItem('(无Prompt文件)', vscode.TreeItemCollapsibleState.None, 'empty-hint', 'info')];
+  }
+  return promptFiles.slice(0, 50).map(f => {
+    const name = path.basename(f.fsPath);
+    const relPath = vscode.workspace.asRelativePath(f);
+    const item = new PromptTreeItem(relPath, vscode.TreeItemCollapsibleState.None, 'workspace-file', 'file');
+    item.resourceUri = f;
+    item.command = {
+      command: 'vscode.open',
+      title: '打开文件',
+      arguments: [f],
+    };
+    item.tooltip = f.fsPath;
+    return item;
+  });
+}
+
+interface TemplateInfo {
+  id: string;
+  name: string;
+  category: string;
+  industry: string;
+  lintScore: number;
+  models: string[];
+}
+
+const BUILTIN_TEMPLATES: TemplateInfo[] = [
+  { id: 'general-assistant', name: '通用助手', category: 'general', industry: '通用', lintScore: 92, models: ['gpt-4', 'claude-3', 'deepseek'] },
+  { id: 'code-reviewer', name: '代码审查', category: 'development', industry: '科技', lintScore: 88, models: ['gpt-4', 'claude-3'] },
+  { id: 'translator-pro', name: '专业翻译', category: 'translation', industry: '通用', lintScore: 95, models: ['gpt-4', 'deepseek', 'qwen'] },
+  { id: 'data-analyst', name: '数据分析', category: 'analytics', industry: '金融', lintScore: 85, models: ['gpt-4', 'claude-3'] },
+  { id: 'doc-writer', name: '文档撰写', category: 'writing', industry: '通用', lintScore: 90, models: ['gpt-4', 'qwen', 'deepseek'] },
+  { id: 'security-auditor', name: '安全审计', category: 'security', industry: '科技', lintScore: 82, models: ['gpt-4', 'claude-3'] },
+  { id: 'huawei-cloud-assistant', name: '华为云助手', category: 'cloud', industry: '华为云', lintScore: 93, models: ['qwen', 'deepseek', 'pangu'] },
+  { id: 'rag-assistant', name: 'RAG助手', category: 'retrieval', industry: '通用', lintScore: 87, models: ['gpt-4', 'claude-3', 'qwen'] },
+  { id: 'customer-service', name: '客服助手', category: 'service', industry: '电商', lintScore: 91, models: ['qwen', 'deepseek'] },
+  { id: 'education-tutor', name: '教育辅导', category: 'education', industry: '教育', lintScore: 89, models: ['gpt-4', 'qwen'] },
+  { id: 'medical-assistant', name: '医疗助手', category: 'medical', industry: '医疗', lintScore: 86, models: ['gpt-4', 'pangu'] },
+  { id: 'legal-advisor', name: '法律顾问', category: 'legal', industry: '法律', lintScore: 84, models: ['gpt-4', 'claude-3'] },
+  { id: 'creative-writer', name: '创意写作', category: 'creative', industry: '媒体', lintScore: 88, models: ['gpt-4', 'claude-3'] },
+  { id: 'api-doc-generator', name: 'API文档生成', category: 'development', industry: '科技', lintScore: 91, models: ['gpt-4', 'deepseek'] },
+  { id: 'harmonyos-dev', name: '鸿蒙开发助手', category: 'development', industry: '华为云', lintScore: 90, models: ['qwen', 'pangu'] },
+];
+
+function getTemplateCategories(): PromptTreeItem[] {
+  const categories = [...new Set(BUILTIN_TEMPLATES.map(t => t.category))];
+  return categories.map(cat => {
+    const count = BUILTIN_TEMPLATES.filter(t => t.category === cat).length;
+    const item = new PromptTreeItem(
+      `${cat} (${count})`,
+      vscode.TreeItemCollapsibleState.Collapsed,
+      'template-category',
+      'folder'
+    );
+    item.meta = { category: cat };
+    return item;
+  });
+}
+
+function getTemplatesByCategory(category: string): PromptTreeItem[] {
+  return BUILTIN_TEMPLATES
+    .filter(t => t.category === category)
+    .map(t => {
+      const item = new PromptTreeItem(
+        `${t.name} (${t.lintScore}分)`,
+        vscode.TreeItemCollapsibleState.None,
+        'template-item',
+        'file'
+      );
+      item.tooltip = `行业: ${t.industry}\n评分: ${t.lintScore}/100\n适配模型: ${t.models.join(', ')}`;
+      item.description = t.industry;
+      item.command = {
+        command: 'promptLint.openTemplate',
+        title: '打开模板',
+        arguments: [t.id],
+      };
+      return item;
+    });
+}
+
 class PromptTreeItem extends vscode.TreeItem {
+  meta?: Record<string, string>;
+
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
     contextValue: string,
+    iconName?: string,
   ) {
     super(label, collapsibleState);
     this.contextValue = contextValue;
-    if (contextValue === 'rules') {
-      this.iconPath = new vscode.ThemeIcon('checklist');
-    } else if (contextValue === 'security') {
-      this.iconPath = new vscode.ThemeIcon('shield');
-    } else if (contextValue === 'pii') {
-      this.iconPath = new vscode.ThemeIcon('eye');
-    } else if (contextValue === 'rule-group') {
-      this.iconPath = new vscode.ThemeIcon('folder');
+    if (iconName) {
+      this.iconPath = new vscode.ThemeIcon(iconName);
     }
   }
 }
 
 const path = require('path');
+
+const TEMPLATE_CONTENT: Record<string, string> = {
+  'general-assistant': `---
+template_id: general-assistant
+name: 通用助手
+category: general
+industry: 通用
+---
+
+# 角色
+你是一个专业的AI助手，擅长回答各类问题。
+
+# 约束
+- 回答需准确、有条理
+- 不确定时明确说明
+- 使用简洁清晰的语言
+
+# 输出格式
+请按照以下格式输出：
+1. 核心回答
+2. 详细说明
+3. 补充建议`,
+
+  'code-reviewer': `---
+template_id: code-reviewer
+name: 代码审查
+category: development
+industry: 科技
+---
+
+# 角色
+你是一位资深代码审查专家，擅长发现代码中的问题和改进机会。
+
+# 约束
+- 关注安全性、性能、可读性
+- 给出具体修改建议
+- 按严重程度分级(Critical/Major/Minor)
+
+# 输出格式
+## 审查结果
+| 严重程度 | 文件:行号 | 问题描述 | 修改建议 |
+|---------|----------|---------|---------|`,
+
+  'translator-pro': `---
+template_id: translator-pro
+name: 专业翻译
+category: translation
+industry: 通用
+---
+
+# 角色
+你是专业翻译专家，精通中英日韩多语言互译。
+
+# 约束
+- 保持原文语义和风格
+- 专业术语准确翻译
+- 标注翻译不确定处
+
+# 输出格式
+## 译文
+[翻译内容]
+
+## 术语表
+| 原文 | 译文 | 说明 |
+|-----|------|------|`,
+
+  'huawei-cloud-assistant': `---
+template_id: huawei-cloud-assistant
+name: 华为云助手
+category: cloud
+industry: 华为云
+---
+
+# 角色
+你是华为云技术专家，精通ECS/OBS/RDS/ModelArts等核心服务。
+
+# 约束
+- 优先推荐华为云最佳实践
+- 提供具体操作步骤
+- 注意区域和规格限制
+
+# 输出格式
+## 解决方案
+1. 问题分析
+2. 操作步骤
+3. 验证方法`,
+
+  'rag-assistant': `---
+template_id: rag-assistant
+name: RAG助手
+category: retrieval
+industry: 通用
+---
+
+# 角色
+你是RAG检索增强生成专家，擅长基于检索结果生成高质量回答。
+
+# 约束
+- 仅基于检索结果回答
+- 明确标注信息来源
+- 检索结果不足时说明
+
+# 输出格式
+## 回答
+[基于检索结果的回答]
+
+## 来源
+- [文档1]: 相关段落
+- [文档2]: 相关段落`,
+};
+
+function openTemplatePreview(templateId: string): void {
+  const content = TEMPLATE_CONTENT[templateId];
+  if (!content) {
+    vscode.window.showWarningMessage(`模板 ${templateId} 预览内容暂未提供`);
+    return;
+  }
+  const panel = vscode.window.createWebviewPanel(
+    'templatePreview',
+    `模板预览 — ${templateId}`,
+    vscode.ViewColumn.Beside,
+    { enableScripts: false }
+  );
+  const lines = content.split('\n');
+  const htmlBody = lines.map(line => {
+    const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (escaped.startsWith('# ')) return `<h2>${escaped.slice(2)}</h2>`;
+    if (escaped.startsWith('## ')) return `<h3>${escaped.slice(3)}</h3>`;
+    if (escaped.startsWith('- ')) return `<li>${escaped.slice(2)}</li>`;
+    if (escaped.startsWith('| ')) return `<tr><td>${escaped.split('|').filter(c=>c.trim()).join('</td><td>')}</td></tr>`;
+    if (escaped.trim() === '') return '<br>';
+    return `<p>${escaped}</p>`;
+  }).join('\n');
+
+  panel.webview.html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><style>
+  body { font-family: -apple-system, 'Segoe UI', sans-serif; padding: 20px; background: #1e1e1e; color: #d4d4d4; max-width: 800px; margin: 0 auto; }
+  h2 { color: #4ec9b0; border-bottom: 1px solid #333; padding-bottom: 8px; }
+  h3 { color: #569cd6; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  th, td { border: 1px solid #444; padding: 6px 10px; text-align: left; }
+  tr:first-child { background: #264f78; font-weight: bold; }
+  li { margin: 4px 0; }
+  code { background: #2d2d2d; padding: 2px 6px; border-radius: 3px; }
+  .actions { position: fixed; top: 20px; right: 20px; }
+  .btn { background: #0e639c; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 8px; }
+</style></head>
+<body>
+<div class="actions">
+  <button class="btn" onclick="applyTemplate()">应用模板</button>
+</div>
+${htmlBody}
+<script>
+const vscode = acquireVsCodeApi();
+function applyTemplate() {
+  vscode.postMessage({ command: 'apply' });
+}
+</script>
+</body></html>`;
+}
+
+async function searchAndShowTemplates(query: string): Promise<void> {
+  const q = query.toLowerCase();
+  const matches = BUILTIN_TEMPLATES.filter(t =>
+    t.name.toLowerCase().includes(q) ||
+    t.category.toLowerCase().includes(q) ||
+    t.industry.toLowerCase().includes(q) ||
+    t.id.toLowerCase().includes(q) ||
+    t.models.some(m => m.toLowerCase().includes(q))
+  );
+  if (matches.length === 0) {
+    vscode.window.showInformationMessage(`未找到匹配"${query}"的模板`);
+    return;
+  }
+  const items = matches.map(t => ({
+    label: `${t.name} (${t.lintScore}分)`,
+    description: `${t.category} | ${t.industry}`,
+    detail: `适配模型: ${t.models.join(', ')}`,
+    templateId: t.id,
+  }));
+  const selected = await vscode.window.showQuickPick(items, {
+    placeHolder: `搜索结果: "${query}" (${matches.length}个匹配)`,
+  });
+  if (selected) {
+    openTemplatePreview(selected.templateId);
+  }
+}
 
 export function deactivate() {
   for (const timer of debounceTimers.values()) {

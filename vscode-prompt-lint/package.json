@@ -2,7 +2,7 @@
   "name": "vscode-prompt-lint",
   "displayName": "Prompt Lint",
   "description": "AI提示词质量检查 — 安全扫描、条件编译、Prompt Lint、评估、Front Matter验证",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "publisher": "ai-prompt-toolkit",
   "engines": {
     "vscode": "^1.80.0"
@@ -72,13 +72,23 @@
       {
         "command": "promptLint.piiScan",
         "title": "Prompt Lint: PII隐私检测"
+      },
+      {
+        "command": "promptLint.openTemplate",
+        "title": "Prompt Lint: 打开模板预览",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "promptLint.searchTemplates",
+        "title": "Prompt Lint: 搜索模板",
+        "icon": "$(search)"
       }
     ],
     "views": {
       "explorer": [
         {
           "id": "promptLintSidebar",
-          "name": "Prompt Lint",
+          "name": "Prompt Explorer",
           "icon": "$(checklist)"
         }
       ]
