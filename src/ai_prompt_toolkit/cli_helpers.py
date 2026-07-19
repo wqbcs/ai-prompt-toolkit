@@ -80,11 +80,20 @@ def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> N
         html = _generate_html_report(data)
         with open(p, "w", encoding="utf-8") as f:
             f.write(html)
+    elif fmt == "markdown":
+        md = _generate_markdown_report(data)
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(md)
 
 
 def _generate_html_report(data: dict[str, Any]) -> str:
     from ai_prompt_toolkit.report.html_reporter import generate_html_report
     return generate_html_report(data)
+
+
+def _generate_markdown_report(data: dict[str, Any]) -> str:
+    from ai_prompt_toolkit.report.markdown_reporter import generate_markdown_report
+    return generate_markdown_report(data)
 
 
 def determine_exit_code(

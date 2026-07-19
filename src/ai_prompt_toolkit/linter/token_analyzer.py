@@ -117,14 +117,48 @@ class TokenAnalysisResult:
         }
 
 
+_TIKTOKEN_MODEL_MAP: dict[str, str] = {
+    "gpt-4": "cl100k_base",
+    "gpt-4o": "o200k_base",
+    "gpt-4o-mini": "o200k_base",
+    "gpt-4-turbo": "cl100k_base",
+    "gpt-3.5-turbo": "cl100k_base",
+}
+
+
+def _tiktoken_count(text: str, model: str) -> int | None:
+    try:
+        import tiktoken
+    except ImportError:
+        return None
+    encoding_name = _TIKTOKEN_MODEL_MAP.get(model)
+    if not encoding_name:
+        for key in _TIKTOKEN_MODEL_MAP:
+            if model.lower().startswith(key):
+                encoding_name = _TIKTOKEN_MODEL_MAP[key]
+                break
+    if not encoding_name:
+        return None
+    try:
+        enc = tiktoken.get_encoding(encoding_name)
+        return len(enc.encode(text))
+    except Exception:
+        return None
+
+
 def estimate_tokens(text: str, model: str = "default") -> TokenEstimate:
     char_count = len(text)
-    ratio = _TOKEN_RATIOS.get(model, _TOKEN_RATIOS["default"])
-    for key in _TOKEN_RATIOS:
-        if model.lower().startswith(key):
-            ratio = _TOKEN_RATIOS[key]
-            break
-    estimated_tokens = max(int(char_count * ratio), 1)
+    exact_count = _tiktoken_count(text, model)
+    if exact_count is not None:
+        estimated_tokens = exact_count
+        ratio = round(estimated_tokens / max(char_count, 1), 3)
+    else:
+        ratio = _TOKEN_RATIOS.get(model, _TOKEN_RATIOS["default"])
+        for key in _TOKEN_RATIOS:
+            if model.lower().startswith(key):
+                ratio = _TOKEN_RATIOS[key]
+                break
+        estimated_tokens = max(int(char_count * ratio), 1)
     pricing = _PRICING.get("default", (0.003, 0.015))
     for key in _PRICING:
         if model.lower().startswith(key):
@@ -169,14 +203,15 @@ def analyze_prompt_tokens(text: str, model: str = "default") -> TokenAnalysisRes
     optimized_tokens = max(original_tokens - total_savings, 1)
     savings_percent = (total_savings / max(original_tokens, 1)) * 100
 
-    if original_tokens > 8000:
+    char_count = len(text)
+    if original_tokens > 8000 or char_count > 12000:
         findings.append(Finding(
             rule_id="TOKEN-001",
             severity=Severity.MEDIUM,
-            description=f"Prompt过长({original_tokens} tokens), 建议压缩到4000 tokens以内",
+            description=f"Prompt过长({original_tokens} tokens, {char_count} chars), 建议压缩到4000 tokens以内",
         ))
 
-    if original_tokens > 4000:
+    if original_tokens > 4000 or char_count > 6000:
         suggestions.append(CompressionSuggestion(
             suggestion_id="COMP-STR-001",
             category="structure",

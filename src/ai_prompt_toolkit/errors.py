@@ -155,6 +155,23 @@ def toolkit_exit_code(exc: ToolkitError) -> int:
     return exc.error_code
 
 
+_REMEDIATION_HINTS: dict[str, str] = {
+    ErrorCategory.LINT: "运行 'prompt-cli lint --fix -t <file>' 自动修复",
+    ErrorCategory.SECURITY: "运行 'prompt-cli scan -t <file>' 查看详细安全报告",
+    ErrorCategory.COMPILER: "检查 {{#if}}...{{else}}...{{/if}} 语法是否正确",
+    ErrorCategory.CONFIG: "检查 .prompt-cli.toml 配置文件格式",
+    ErrorCategory.AB_TEST: "运行 'prompt-cli doctor' 检查Provider配置",
+    ErrorCategory.VERSION: "运行 'prompt-cli version list' 查看历史版本",
+    ErrorCategory.REDTEAM: "运行 'prompt-cli redteam -s <file>' 执行红队测试",
+    ErrorCategory.MCP: "检查MCP Server配置和连接",
+    ErrorCategory.MARKET: "运行 'prompt-cli market search' 查找模板",
+}
+
+
 def format_error_for_cli(exc: ToolkitError) -> str:
     """将ToolkitError格式化为CLI友好的错误信息"""
-    return str(exc)
+    base = str(exc)
+    hint = _REMEDIATION_HINTS.get(exc.category)
+    if hint:
+        base = f"{base}\n  提示: {hint}"
+    return base
