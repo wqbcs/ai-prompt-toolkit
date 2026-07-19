@@ -45,3 +45,6 @@ where = ["src"]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]

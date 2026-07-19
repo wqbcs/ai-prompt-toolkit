@@ -73,6 +73,23 @@ def main() -> None:
     pass
 
 
+@main.command()
+@click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
+def completion(shell: str) -> None:
+    """生成Shell自动补全脚本"""
+    import os
+    env_var = f"_PROMPT_CLI_COMPLETE={shell}_source"
+    prog = sys.argv[0]
+    if shell == "bash":
+        script = f'eval "$({env_var} {prog} 2>/dev/null)"'
+    elif shell == "zsh":
+        script = f'eval "$({env_var} {prog} 2>/dev/null)"'
+    else:
+        script = f'eval ({env_var} {prog} 2>/dev/null)'
+    click.echo(f"# 将以下内容添加到你的 ~/.{shell}rc:")
+    click.echo(script)
+
+
 @main.result_callback()
 def _handle_result(result: Any, **kwargs: Any) -> None:
     pass

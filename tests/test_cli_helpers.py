@@ -158,11 +158,12 @@ class TestFormatFindingsTable:
     def test_empty(self):
         assert format_findings_table([]) == "无发现项"
 
-    def test_with_findings(self):
+    def test_with_findings(self, capsys):
         findings = [
             {"severity": "high", "rule_id": "R1", "description": "问题1"},
             {"severity": "medium", "rule_id": "R2", "description": "问题2"},
         ]
-        result = format_findings_table(findings)
-        assert "R1" in result
-        assert "问题1" in result
+        format_findings_table(findings)
+        captured = capsys.readouterr()
+        assert "R1" in captured.out or "R1" in captured.out
+        assert "问题1" in captured.out or "问题1" in captured.out

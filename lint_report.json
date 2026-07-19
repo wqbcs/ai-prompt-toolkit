@@ -1,0 +1,711 @@
+{
+  "_report_type": "lint",
+  "lint_target": "src/ai_prompt_toolkit/templates/",
+  "total_files": 8,
+  "average_score": 82.2,
+  "total_findings": 71,
+  "results": [
+    {
+      "template_id": "code-reviewer.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P030",
+          "severity": "low",
+          "description": "Prompt 过度依赖特定模型 'gpt-4'",
+          "location": "",
+          "remediation": "声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+          "details": {
+            "dependency": "gpt-4"
+          }
+        },
+        {
+          "rule_id": "P035",
+          "severity": "high",
+          "description": "RAG型Prompt未验证检索内容的可信度和来源",
+          "location": "",
+          "remediation": "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源",
+          "details": {}
+        },
+        {
+          "rule_id": "P036",
+          "severity": "medium",
+          "description": "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
+          "location": "",
+          "remediation": "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'",
+          "details": {}
+        },
+        {
+          "rule_id": "P037",
+          "severity": "medium",
+          "description": "RAG型Prompt未要求模型标注答案来源的引用",
+          "location": "",
+          "remediation": "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记",
+          "details": {}
+        },
+        {
+          "rule_id": "P039",
+          "severity": "high",
+          "description": "多模态Prompt未对非文本输入进行内容安全检查",
+          "location": "",
+          "remediation": "添加内容安全: 对图片/音频执行安全检测，过滤不当内容后再处理",
+          "details": {}
+        },
+        {
+          "rule_id": "P040",
+          "severity": "medium",
+          "description": "多模态Prompt未定义非文本输入不可用时的降级方案",
+          "location": "",
+          "remediation": "添加降级策略: 定义图片/音频无法处理时的纯文本fallback行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P048",
+          "severity": "low",
+          "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 1 处)",
+          "location": "",
+          "remediation": "统一使用中文标点符号(，。！？)或英文标点，避免中英混用",
+          "details": {
+            "mixed_punctuation_count": 1
+          }
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 37,
+      "failed_count": 13,
+      "lint_time_ms": 5.05,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 74.0
+    },
+    {
+      "template_id": "customer-service.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P008",
+          "severity": "medium",
+          "description": "Prompt 赋予模型过宽的操作权限",
+          "location": "",
+          "remediation": "限制模型权限范围，使用最小权限原则",
+          "details": {
+            "matches": [
+              "任何"
+            ]
+          }
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P018",
+          "severity": "medium",
+          "description": "Prompt 缺少 Few-shot 示例引导",
+          "location": "",
+          "remediation": "添加 2-3 个高质量的输入输出示例",
+          "details": {}
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P034",
+          "severity": "medium",
+          "description": "Agent型Prompt未对高风险操作设置人工审批流程",
+          "location": "",
+          "remediation": "添加审批机制: 高风险操作(删除/支付/发送)需人工确认后才可执行",
+          "details": {}
+        },
+        {
+          "rule_id": "P035",
+          "severity": "high",
+          "description": "RAG型Prompt未验证检索内容的可信度和来源",
+          "location": "",
+          "remediation": "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源",
+          "details": {}
+        },
+        {
+          "rule_id": "P036",
+          "severity": "medium",
+          "description": "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
+          "location": "",
+          "remediation": "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'",
+          "details": {}
+        },
+        {
+          "rule_id": "P037",
+          "severity": "medium",
+          "description": "RAG型Prompt未要求模型标注答案来源的引用",
+          "location": "",
+          "remediation": "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记",
+          "details": {}
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 39,
+      "failed_count": 11,
+      "lint_time_ms": 2.67,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 78.0
+    },
+    {
+      "template_id": "general-assistant.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P018",
+          "severity": "medium",
+          "description": "Prompt 缺少 Few-shot 示例引导",
+          "location": "",
+          "remediation": "添加 2-3 个高质量的输入输出示例",
+          "details": {}
+        },
+        {
+          "rule_id": "P019",
+          "severity": "low",
+          "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+          "location": "",
+          "remediation": "添加 '让我们一步步思考' 或分步推理引导",
+          "details": {
+            "complexity_indicators": 2
+          }
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P028",
+          "severity": "medium",
+          "description": "多步骤推理任务缺少链式指令 (复杂度指标: 2)",
+          "location": "",
+          "remediation": "添加分步引导，如'首先...然后...最后...'或'step-by-step'",
+          "details": {
+            "complexity_indicators": 2
+          }
+        },
+        {
+          "rule_id": "P030",
+          "severity": "low",
+          "description": "Prompt 过度依赖特定模型 'gpt-4'",
+          "location": "",
+          "remediation": "声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+          "details": {
+            "dependency": "gpt-4"
+          }
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 40,
+      "failed_count": 10,
+      "lint_time_ms": 0.87,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 80.0
+    },
+    {
+      "template_id": "harmonyos-dev.md",
+      "findings": [
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P013",
+          "severity": "medium",
+          "description": "Prompt 中包含无效或低质量示例 (发现 3 个低质量示例)",
+          "location": "",
+          "remediation": "提供高质量、有代表性的 Few-shot 示例",
+          "details": {
+            "weak_examples": [
+              "使用ArkTS语法，遵循@ohos规范",
+              "- 注意区域和规格限制",
+              "**：ArkTS完整代码片段"
+            ]
+          }
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P045",
+          "severity": "medium",
+          "description": "Prompt中存在隐含但未明确表达的期望，模型可能无法正确理解",
+          "location": "",
+          "remediation": "将隐式期望转为显式声明: 使用'必须'/'务必'代替默认假设，明确所有边界条件",
+          "details": {}
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 43,
+      "failed_count": 7,
+      "lint_time_ms": 1.58,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 86.0
+    },
+    {
+      "template_id": "huawei-cloud-assistant.md",
+      "findings": [
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P018",
+          "severity": "medium",
+          "description": "Prompt 缺少 Few-shot 示例引导",
+          "location": "",
+          "remediation": "添加 2-3 个高质量的输入输出示例",
+          "details": {}
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P028",
+          "severity": "medium",
+          "description": "多步骤推理任务缺少链式指令 (复杂度指标: 2)",
+          "location": "",
+          "remediation": "添加分步引导，如'首先...然后...最后...'或'step-by-step'",
+          "details": {
+            "complexity_indicators": 2
+          }
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 44,
+      "failed_count": 6,
+      "lint_time_ms": 1.12,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 88.0
+    },
+    {
+      "template_id": "rag-assistant.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P018",
+          "severity": "medium",
+          "description": "Prompt 缺少 Few-shot 示例引导",
+          "location": "",
+          "remediation": "添加 2-3 个高质量的输入输出示例",
+          "details": {}
+        },
+        {
+          "rule_id": "P019",
+          "severity": "low",
+          "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+          "location": "",
+          "remediation": "添加 '让我们一步步思考' 或分步推理引导",
+          "details": {
+            "complexity_indicators": 2
+          }
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P028",
+          "severity": "medium",
+          "description": "多步骤推理任务缺少链式指令 (复杂度指标: 2)",
+          "location": "",
+          "remediation": "添加分步引导，如'首先...然后...最后...'或'step-by-step'",
+          "details": {
+            "complexity_indicators": 2
+          }
+        },
+        {
+          "rule_id": "P030",
+          "severity": "low",
+          "description": "Prompt 过度依赖特定模型 'gpt-4'",
+          "location": "",
+          "remediation": "声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+          "details": {
+            "dependency": "gpt-4"
+          }
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 41,
+      "failed_count": 9,
+      "lint_time_ms": 0.85,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 82.0
+    },
+    {
+      "template_id": "security-auditor.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P013",
+          "severity": "medium",
+          "description": "Prompt 中包含无效或低质量示例 (发现 1 个低质量示例)",
+          "location": "",
+          "remediation": "提供高质量、有代表性的 Few-shot 示例",
+          "details": {
+            "weak_examples": [
+              "- 区分设计缺陷和实现缺陷"
+            ]
+          }
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P026",
+          "severity": "medium",
+          "description": "Prompt 缺少错误恢复指引",
+          "location": "",
+          "remediation": "添加不确定时的回退行为，如'如果无法确定，请回复信息不足而不编造'",
+          "details": {}
+        },
+        {
+          "rule_id": "P028",
+          "severity": "medium",
+          "description": "多步骤推理任务缺少链式指令 (复杂度指标: 2)",
+          "location": "",
+          "remediation": "添加分步引导，如'首先...然后...最后...'或'step-by-step'",
+          "details": {
+            "complexity_indicators": 2
+          }
+        },
+        {
+          "rule_id": "P030",
+          "severity": "low",
+          "description": "Prompt 过度依赖特定模型 'gpt-4'",
+          "location": "",
+          "remediation": "声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+          "details": {
+            "dependency": "gpt-4"
+          }
+        },
+        {
+          "rule_id": "P044",
+          "severity": "high",
+          "description": "Agent型Prompt中上下文传递缺乏边界约束，可能导致敏感信息泄露",
+          "location": "",
+          "remediation": "添加上下文隔离策略: 禁止传递敏感字段、脱敏规则、沙箱隔离机制",
+          "details": {}
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 42,
+      "failed_count": 8,
+      "lint_time_ms": 1.25,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 84.0
+    },
+    {
+      "template_id": "translator-pro.md",
+      "findings": [
+        {
+          "rule_id": "P003",
+          "severity": "medium",
+          "description": "Prompt 缺少约束/限制条件，模型行为边界不明确",
+          "location": "",
+          "remediation": "添加明确的约束条件，如字数限制、禁止事项、边界条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P009",
+          "severity": "low",
+          "description": "Prompt 未包含审计/追踪相关指令",
+          "location": "",
+          "remediation": "添加审计指令，要求模型记录关键决策过程",
+          "details": {}
+        },
+        {
+          "rule_id": "P010",
+          "severity": "medium",
+          "description": "Prompt 缺少错误处理和回退策略",
+          "location": "",
+          "remediation": "添加异常处理指令，明确模型遇到不确定情况时的行为",
+          "details": {}
+        },
+        {
+          "rule_id": "P018",
+          "severity": "medium",
+          "description": "Prompt 缺少 Few-shot 示例引导",
+          "location": "",
+          "remediation": "添加 2-3 个高质量的输入输出示例",
+          "details": {}
+        },
+        {
+          "rule_id": "P020",
+          "severity": "medium",
+          "description": "Prompt 缺少输出质量评估标准",
+          "location": "",
+          "remediation": "添加明确的评估标准和验收条件",
+          "details": {}
+        },
+        {
+          "rule_id": "P025",
+          "severity": "low",
+          "description": "Prompt 未指定输出长度范围",
+          "location": "",
+          "remediation": "添加输出长度约束，如'控制在500字以内'或'至少3个段落'",
+          "details": {}
+        },
+        {
+          "rule_id": "P030",
+          "severity": "low",
+          "description": "Prompt 过度依赖特定模型 'gpt-4'",
+          "location": "",
+          "remediation": "声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+          "details": {
+            "dependency": "gpt-4"
+          }
+        }
+      ],
+      "rule_count": 50,
+      "passed_count": 43,
+      "failed_count": 7,
+      "lint_time_ms": 0.85,
+      "auto_fixed": false,
+      "fixed_findings": [],
+      "score": 86.0
+    }
+  ]
+}

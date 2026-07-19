@@ -45,10 +45,29 @@ def load_config(path: str | Path) -> dict[str, Any]:
 def discover_templates(target: str | Path) -> list[Path]:
     p = Path(target) if not isinstance(target, Path) else target
     if p.is_file():
-        return [p] if p.suffix == ".md" else []
+        return [p] if p.suffix in (".md", ".prompt") or p.name.endswith(".prompt.md") else []
     if p.is_dir():
-        return sorted(p.rglob("*.md"))
+        results: list[Path] = []
+        for pattern in ("*.md", "*.prompt", "*.prompt.md"):
+            results.extend(p.rglob(pattern))
+        return sorted(set(results))
     raise ValidationError(f"目标不存在 — {p}", field="target")
+
+
+def auto_discover_targets(target: str | None = None) -> list[Path]:
+    if target:
+        return discover_templates(target)
+    cwd = Path.cwd()
+    results: list[Path] = []
+    for pattern in ("*.prompt.md", "*.prompt", "*.md"):
+        results.extend(cwd.glob(pattern))
+    if not results:
+        for d in ("prompts", "templates", "_scenarios"):
+            dp = cwd / d
+            if dp.is_dir():
+                for pattern in ("*.md", "*.prompt", "*.prompt.md"):
+                    results.extend(dp.rglob(pattern))
+    return sorted(set(results))[:50]
 
 
 def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> None:
@@ -87,14 +106,9 @@ def determine_exit_code(
 def format_findings_table(findings: Sequence[dict[str, Any]]) -> str:
     if not findings:
         return "无发现项"
-    lines = []
-    for f in findings:
-        sev = f.get("severity", "info")
-        rid = f.get("rule_id", "")
-        desc = f.get("description", "")
-        marker = {"high": "✗", "medium": "⚠", "low": "ℹ", "info": "ℹ"}.get(sev, "•")
-        lines.append(f"  {marker} [{rid}] {desc}")
-    return "\n".join(lines)
+    from ai_prompt_toolkit.output import findings_list
+    findings_list(findings)
+    return ""
 
 
 _EMPTY_STATE_TIPS: dict[str, str] = {

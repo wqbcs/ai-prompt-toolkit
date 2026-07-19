@@ -1,14 +1,28 @@
 repos:
-  - repo: https://github.com/psf/black
-    rev: 24.4.2
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
     hooks:
-      - id: black
-        language_version: python3.12
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
 
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
     hooks:
-      - id: isort
+      - id: mypy
+        additional_dependencies: [types-PyYAML, types-jsonschema]
+        args: [--ignore-missing-imports]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements
 
   - repo: local
     hooks:
@@ -16,12 +30,19 @@ repos:
         name: Prompt Lint
         entry: prompt-cli lint -t
         language: system
-        files: '\.md$'
+        files: '\.prompt\.md$|\.prompt$'
         pass_filenames: true
 
       - id: prompt-scan
         name: Prompt Security Scan
         entry: prompt-cli scan -t
         language: system
-        files: '\.md$'
+        files: '\.prompt\.md$|\.prompt$'
         pass_filenames: true
+
+      - id: pytest-smoke
+        name: Pytest Smoke Test
+        entry: python -m pytest tests/ -x -q --tb=line -k "not slow"
+        language: system
+        pass_filenames: false
+        stages: [push]
