@@ -10,6 +10,7 @@ from __future__ import annotations
 import random
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -133,3 +134,41 @@ def _pick_message(category: str) -> str:
 def format_celebration(message: str) -> str:
     border = "=" * 50
     return f"\n{border}\n  {message}\n{border}\n"
+
+
+_WELCOME_ASCII = r"""
+  ___  _   _    ___  _  ___  ___ ___ ___
+ / _ \| \ | |  / _ \| |/ / |/ __/ __| _ \
+| (_) |  \| | | (_) | ' <| | (__\__ \   /
+ \___/|_|\__|  \___/|_|\_\_|\___|___/_|_\
+"""
+
+_FIRST_RUN_TIPS = [
+    "快速开始: prompt-cli lint -s your-prompt.md",
+    "安全扫描: prompt-cli scan -s your-prompt.md",
+    "交互向导: prompt-cli wizard",
+    "质量评估: prompt-cli evaluate -t your-prompt.md",
+    "查看帮助: prompt-cli --help",
+]
+
+
+def is_first_run() -> bool:
+    marker = Path.home() / ".ai-prompt-toolkit" / ".initialized"
+    if marker.exists():
+        return False
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.write_text(str(time.time()), encoding="utf-8")
+    return True
+
+
+def show_welcome() -> None:
+    from ai_prompt_toolkit.output import console
+    console.print(_WELCOME_ASCII, style="bold blue")
+    console.print("\n  欢迎使用 AI Prompt Toolkit!", style="bold")
+    console.print("  你的AI提示词质量工具链，让Prompt更安全、更优质。\n", style="dim")
+    console.print("  快速上手:", style="bold")
+    for tip in _FIRST_RUN_TIPS:
+        console.print(f"    {tip}", style="cyan")
+    time_egg = check_time_egg()
+    if time_egg:
+        console.print(f"\n  {time_egg}", style="bold yellow")

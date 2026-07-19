@@ -70,7 +70,9 @@ def _generate_sarif(results: list, target: str) -> dict:
 @click.version_option(version=__version__, prog_name="prompt-cli")
 def main() -> None:
     """AI提示词体系工具链"""
-    pass
+    from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
+    if is_first_run():
+        show_welcome()
 
 
 @main.command()
@@ -1708,3 +1710,59 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
 
 if __name__ == "__main__":
     main()
+
+
+@main.command()
+@click.option("--target", "-t", required=True, help="监听目标(文件或目录)")
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate"]), default="lint", help="变更时执行的命令")
+@click.option("--debounce", type=float, default=1.0, help="防抖延迟(秒)")
+def watch(target: str, command: str, debounce: float) -> None:
+    """Watch模式：文件变更自动重新检查"""
+    import hashlib
+
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.output import console, info, success
+
+    target_path = Path(target).resolve()
+    if not target_path.exists():
+        click.echo(f"目标不存在: {target}", err=True)
+        sys.exit(2)
+
+    info(f"Watch模式启动 — 监听: {target} | 命令: {command} | 防抖: {debounce}s")
+    info("按 Ctrl+C 退出")
+
+    file_hashes: dict[str, str] = {}
+
+    def _hash_files() -> dict[str, str]:
+        templates = discover_templates(target)
+        hashes = {}
+        for p in templates:
+            try:
+                hashes[str(p)] = hashlib.md5(p.read_bytes()).hexdigest()
+            except OSError:
+                pass
+        return hashes
+
+    file_hashes = _hash_files()
+
+    try:
+        while True:
+            time.sleep(debounce)
+            new_hashes = _hash_files()
+            changed = []
+            for path_str, h in new_hashes.items():
+                if file_hashes.get(path_str) != h:
+                    changed.append(path_str)
+            for path_str in set(file_hashes) - set(new_hashes):
+                changed.append(path_str)
+            if changed:
+                file_hashes = new_hashes
+                console.print(f"\n[bold]检测到 {len(changed)} 个文件变更[/bold]")
+                from click.testing import CliRunner
+                runner = CliRunner()
+                cmd_args = [command, "-t", target]
+                result = runner.invoke(main, cmd_args, catch_exceptions=False)
+                if result.output:
+                    console.print(result.output.rstrip())
+    except KeyboardInterrupt:
+        success("Watch模式已退出")

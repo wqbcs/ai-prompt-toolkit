@@ -12,6 +12,7 @@ class ProviderType(Enum):
     ALIYUN = "aliyun"
     DEEPSEEK = "deepseek"
     HUAWEI = "huawei"
+    PANGU = "pangu"
     GOOGLE = "google"
     MISTRAL = "mistral"
     COHERE = "cohere"

@@ -25,6 +25,7 @@ _PROVIDER_TYPE_MAP: dict[str, ProviderType] = {
     "AliyunProvider": ProviderType.ALIYUN,
     "DeepSeekProvider": ProviderType.DEEPSEEK,
     "HuaweiProvider": ProviderType.HUAWEI,
+    "PanguProvider": ProviderType.PANGU,
     "GoogleProvider": ProviderType.GOOGLE,
     "MistralProvider": ProviderType.MISTRAL,
     "CohereProvider": ProviderType.COHERE,
