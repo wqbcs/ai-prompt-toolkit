@@ -84,45 +84,74 @@ class MarketDB:
     def _ensure_schema(self) -> None:
         conn = self._connect()
         conn.executescript("""
-            CREATE TABLE IF NOT EXISTS market_templates (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL DEFAULT '',
-                version TEXT NOT NULL DEFAULT '1.0',
-                status TEXT NOT NULL DEFAULT 'draft',
-                author TEXT NOT NULL DEFAULT '',
-                description TEXT NOT NULL DEFAULT '',
-                tags TEXT NOT NULL DEFAULT '[]',
-                category TEXT NOT NULL DEFAULT '',
-                security_scan_passed INTEGER NOT NULL DEFAULT 0,
-                lint_score REAL NOT NULL DEFAULT 0,
-                avg_rating REAL NOT NULL DEFAULT 0,
-                rating_count INTEGER NOT NULL DEFAULT 0,
-                favorite_count INTEGER NOT NULL DEFAULT 0,
-                i18n_status TEXT NOT NULL DEFAULT 'zh_only',
-                created_at TEXT NOT NULL DEFAULT '',
-                updated_at TEXT NOT NULL DEFAULT ''
+            CREATE TABLE IF NOT EXISTS _schema_version (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL
             );
-
-            CREATE TABLE IF NOT EXISTS market_ratings (
-                rating_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                template_id TEXT NOT NULL,
-                user_id TEXT NOT NULL DEFAULT 'anonymous',
-                score REAL NOT NULL DEFAULT 0,
-                comment TEXT NOT NULL DEFAULT '',
-                created_at TEXT NOT NULL DEFAULT '',
-                FOREIGN KEY (template_id) REFERENCES market_templates(id)
-            );
-            CREATE INDEX IF NOT EXISTS idx_ratings_template ON market_ratings(template_id);
-
-            CREATE TABLE IF NOT EXISTS market_favorites (
-                favorite_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                template_id TEXT NOT NULL,
-                user_id TEXT NOT NULL DEFAULT 'anonymous',
-                created_at TEXT NOT NULL DEFAULT '',
-                UNIQUE(template_id, user_id)
-            );
-            CREATE INDEX IF NOT EXISTS idx_favorites_template ON market_favorites(template_id);
         """)
+        current = conn.execute("SELECT value FROM _schema_version WHERE key='version'").fetchone()
+        current_version = int(current[0]) if current else 0
+
+        if current_version < 1:
+            conn.executescript("""
+                CREATE TABLE IF NOT EXISTS market_templates (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL DEFAULT '',
+                    version TEXT NOT NULL DEFAULT '1.0',
+                    status TEXT NOT NULL DEFAULT 'draft',
+                    author TEXT NOT NULL DEFAULT '',
+                    description TEXT NOT NULL DEFAULT '',
+                    tags TEXT NOT NULL DEFAULT '[]',
+                    category TEXT NOT NULL DEFAULT '',
+                    security_scan_passed INTEGER NOT NULL DEFAULT 0,
+                    lint_score REAL NOT NULL DEFAULT 0,
+                    avg_rating REAL NOT NULL DEFAULT 0,
+                    rating_count INTEGER NOT NULL DEFAULT 0,
+                    favorite_count INTEGER NOT NULL DEFAULT 0,
+                    i18n_status TEXT NOT NULL DEFAULT 'zh_only',
+                    created_at TEXT NOT NULL DEFAULT '',
+                    updated_at TEXT NOT NULL DEFAULT ''
+                );
+
+                CREATE TABLE IF NOT EXISTS market_ratings (
+                    rating_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    template_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL DEFAULT 'anonymous',
+                    score REAL NOT NULL DEFAULT 0,
+                    comment TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL DEFAULT '',
+                    FOREIGN KEY (template_id) REFERENCES market_templates(id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_ratings_template ON market_ratings(template_id);
+
+                CREATE TABLE IF NOT EXISTS market_favorites (
+                    favorite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    template_id TEXT NOT NULL,
+                    user_id TEXT NOT NULL DEFAULT 'anonymous',
+                    created_at TEXT NOT NULL DEFAULT '',
+                    UNIQUE(template_id, user_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_favorites_template ON market_favorites(template_id);
+            """)
+
+        if current_version < 2:
+            try:
+                conn.execute("ALTER TABLE market_templates ADD COLUMN downloads INTEGER NOT NULL DEFAULT 0")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE market_templates ADD COLUMN license TEXT NOT NULL DEFAULT ''")
+            except sqlite3.OperationalError:
+                pass
+
+        if current_version < 2:
+            conn.execute(
+                "INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '2')"
+            )
+        elif current_version < 1:
+            conn.execute(
+                "INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '1')"
+            )
         conn.commit()
 
     def upsert_template(self, t: MarketTemplate) -> None:
