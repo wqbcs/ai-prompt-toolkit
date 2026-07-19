@@ -1,4 +1,4 @@
-"""新增模块测试 — schema验证 + output + npu_adapter"""
+"""新增模块测试 — schema验证 + output + npu_adapter + tracing + playground"""
 from __future__ import annotations
 
 import pytest
@@ -140,3 +140,100 @@ class TestMarkdownReporter:
         md = generate_markdown_report(data)
         assert "Evaluation" in md
         assert "D01" in md
+
+
+class TestTracing:
+    def test_tracer_create_trace(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        trace = tracer.start_trace("test_op")
+        assert trace.name == "test_op"
+        assert trace.trace_id
+
+    def test_tracer_end_trace(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        tracer.start_trace("test_op")
+        trace = tracer.end_trace()
+        assert trace is not None
+        assert trace.duration_ms >= 0
+
+    def test_tracer_span(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        tracer.start_trace("test_op")
+        with tracer.span("sub_op", {"key": "val"}) as s:
+            assert s.name == "sub_op"
+        trace = tracer.end_trace()
+        assert len(trace.spans) == 1
+        assert trace.spans[0].status == "ok"
+
+    def test_tracer_span_error(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        tracer.start_trace("test_op")
+        with pytest.raises(ValueError):
+            with tracer.span("bad_op") as s:
+                raise ValueError("test")
+        trace = tracer.end_trace()
+        assert trace.spans[0].status == "error"
+
+    def test_tracer_get_traces(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        for i in range(5):
+            tracer.start_trace(f"op_{i}")
+            tracer.end_trace()
+        traces = tracer.get_traces(limit=3)
+        assert len(traces) == 3
+
+    def test_tracer_export_json(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        tracer.start_trace("test")
+        tracer.end_trace()
+        json_str = tracer.export_json()
+        assert "test" in json_str
+        assert "trace_id" in json_str
+
+    def test_tracer_summary(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        tracer = Tracer()
+        summary = tracer.get_summary()
+        assert summary["total_traces"] == 0
+        tracer.start_trace("test")
+        tracer.end_trace()
+        summary = tracer.get_summary()
+        assert summary["total_traces"] == 1
+
+    def test_tracer_singleton(self):
+        from ai_prompt_toolkit.tracing import Tracer
+        Tracer.reset()
+        t1 = Tracer.get_instance()
+        t2 = Tracer.get_instance()
+        assert t1 is t2
+
+
+class TestPlaygroundServerAPIs:
+    def test_server_import(self):
+        from ai_prompt_toolkit.playground.server import app
+        assert app.title == "AI Prompt Toolkit Playground"
+
+    def test_traces_api_exists(self):
+        from ai_prompt_toolkit.playground.server import app
+        routes = [r.path for r in app.routes]
+        assert "/api/traces" in routes
+        assert "/api/traces/summary" in routes
+        assert "/api/traces/export" in routes
+
+    def test_market_router_included(self):
+        from ai_prompt_toolkit.playground.server import app
+        routes = [r.path for r in app.routes]
+        assert "/api/market/templates" in routes

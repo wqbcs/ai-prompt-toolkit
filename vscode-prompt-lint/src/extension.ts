@@ -106,6 +106,24 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.abTest', () => {
+      runAbTestOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.tokenAnalyze', () => {
+      runTokenAnalyzeOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.versionDiff', () => {
+      runVersionDiffOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
       { language: 'markdown', scheme: 'file' },
       new PromptCodeLensProvider()
@@ -415,6 +433,151 @@ async function applyQuickFix(docUri: vscode.Uri, ruleId: string) {
   });
 
   vscode.window.showInformationMessage(`Prompt Lint: 已应用 ${ruleId} 自动修复`);
+}
+
+async function runAbTestOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const providers = await vscode.window.showQuickPick(
+      ['openai', 'anthropic', 'deepseek', 'qwen', 'pangu', 'zhipu', 'moonshot', 'baichuan', 'minimax', 'all'],
+      { placeHolder: '选择A/B测试Provider', canPickMany: true }
+    );
+    if (!providers || providers.length === 0) { return; }
+    const providerStr = providers.includes('all') ? '' : providers.join(',');
+    const args = ['ab-test', '--target', filePath, '--format', 'json'];
+    if (providerStr) { args.push('--providers', providerStr); }
+    const output = await executeCli(args);
+    const report = JSON.parse(output);
+    const panel = vscode.window.createWebviewPanel(
+      'promptAbTest',
+      `A/B测试结果 — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: true }
+    );
+    panel.webview.html = renderAbTestHtml(report);
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: A/B测试失败 — ${err.message}`);
+  }
+}
+
+async function runTokenAnalyzeOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['lint', '-t', filePath, '--format', 'json']);
+    const report = JSON.parse(output);
+    const results = report.results || [];
+    const text = editor.document.getText();
+    const charCount = text.length;
+    const lineCount = editor.document.lineCount;
+    const cnCount = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+    const enWordCount = (text.match(/[a-zA-Z]+/g) || []).length;
+    const estimatedTokens = Math.ceil(cnCount * 1.5 + enWordCount * 1.3);
+    const panel = vscode.window.createWebviewPanel(
+      'promptTokenAnalyze',
+      `Token分析 — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: true }
+    );
+    panel.webview.html = renderTokenHtml(charCount, lineCount, cnCount, enWordCount, estimatedTokens);
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: Token分析失败 — ${err.message}`);
+  }
+}
+
+async function runVersionDiffOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['version', 'list', '--target', filePath, '--format', 'json']);
+    const versions = JSON.parse(output);
+    if (!versions.versions || versions.versions.length < 2) {
+      vscode.window.showInformationMessage('Prompt Lint: 需要至少2个版本才能对比');
+      return;
+    }
+    const items = versions.versions.map((v: any, i: number) => ({
+      label: `v${i + 1}: ${v.timestamp || v.created_at || 'unknown'}`,
+      description: v.hash ? v.hash.substring(0, 8) : '',
+    }));
+    const from = await vscode.window.showQuickPick(items, { placeHolder: '选择起始版本' });
+    if (!from) { return; }
+    const to = await vscode.window.showQuickPick(items, { placeHolder: '选择目标版本' });
+    if (!to) { return; }
+    const fromIdx = items.indexOf(from);
+    const toIdx = items.indexOf(to);
+    const diffOutput = await executeCli(['version', 'diff', '--target', filePath, '--from', String(fromIdx), '--to', String(toIdx)]);
+    const panel = vscode.window.createWebviewPanel(
+      'promptVersionDiff',
+      `版本Diff — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: true }
+    );
+    panel.webview.html = renderDiffHtml(diffOutput, from.label, to.label);
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: 版本Diff失败 — ${err.message}`);
+  }
+}
+
+function renderAbTestHtml(report: any): string {
+  const results = report.results || [];
+  const rows = results.map((r: any) =>
+    `<tr><td>${r.provider || ''}</td><td>${r.model || ''}</td><td>${r.score?.toFixed(2) || 'N/A'}</td><td>${r.latency_ms?.toFixed(0) || 'N/A'}ms</td><td>${r.tokens || 'N/A'}</td></tr>`
+  ).join('');
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+  body{font-family:-apple-system,sans-serif;padding:20px;background:#1e1e1e;color:#d4d4d4}
+  table{border-collapse:collapse;width:100%;margin-top:16px}
+  th,td{border:1px solid #444;padding:8px 12px;text-align:left}
+  th{background:#264f78}h2{color:#569cd6}
+  </style></head><body>
+  <h2>A/B测试结果</h2><table><tr><th>Provider</th><th>模型</th><th>评分</th><th>延迟</th><th>Tokens</th></tr>${rows}</table>
+  </body></html>`;
+}
+
+function renderTokenHtml(charCount: number, lineCount: number, cnCount: number, enWordCount: number, estTokens: number): string {
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+  body{font-family:-apple-system,sans-serif;padding:20px;background:#1e1e1e;color:#d4d4d4}
+  .metric{display:inline-block;margin:12px;padding:16px;background:#252526;border-radius:8px;min-width:120px;text-align:center}
+  .metric .val{font-size:28px;font-weight:700;color:#4ec9b0}.metric .label{font-size:11px;color:#858585;margin-top:4px}
+  h2{color:#569cd6}.note{margin-top:16px;padding:12px;background:#1a3a1a;border-radius:6px;color:#6a9955;font-size:12px}
+  </style></head><body>
+  <h2>Token用量分析</h2>
+  <div class="metric"><div class="val">${estTokens}</div><div class="label">预估Tokens</div></div>
+  <div class="metric"><div class="val">${charCount}</div><div class="label">总字符数</div></div>
+  <div class="metric"><div class="val">${lineCount}</div><div class="label">总行数</div></div>
+  <div class="metric"><div class="val">${cnCount}</div><div class="label">中文字符</div></div>
+  <div class="metric"><div class="val">${enWordCount}</div><div class="label">英文单词</div></div>
+  <div class="note">Token估算: 中文×1.5 + 英文×1.3（实际以tiktoken为准）</div>
+  </body></html>`;
+}
+
+function renderDiffHtml(diffText: string, fromLabel: string, toLabel: string): string {
+  const escaped = diffText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const lines = escaped.split('\n').map((line: string) => {
+    if (line.startsWith('+') && !line.startsWith('+++')) return `<span style="color:#6a9955">${line}</span>`;
+    if (line.startsWith('-') && !line.startsWith('---')) return `<span style="color:#f44747">${line}</span>`;
+    return line;
+  }).join('\n');
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+  body{font-family:'Fira Code',monospace;padding:20px;background:#1e1e1e;color:#d4d4d4;font-size:13px}
+  pre{white-space:pre-wrap;word-break:break-all}h2{color:#569cd6;font-family:-apple-system,sans-serif}
+  .header{font-family:-apple-system,sans-serif;margin-bottom:12px;font-size:12px;color:#858585}
+  </style></head><body>
+  <h2>版本Diff对比</h2>
+  <div class="header">${fromLabel} → ${toLabel}</div>
+  <pre>${lines}</pre></body></html>`;
 }
 
 async function runLint(doc: vscode.TextDocument) {

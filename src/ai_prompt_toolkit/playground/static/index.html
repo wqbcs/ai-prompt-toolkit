@@ -38,6 +38,18 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;backgroun
 .eval-score{font-size:36px;font-weight:700;text-align:center;margin:8px 0}
 .eval-dim{font-size:11px;padding:2px 8px;margin:1px 0;display:flex;justify-content:space-between;border-bottom:1px solid var(--border)}
 .theme-btn{font-size:14px;padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+.market-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s}
+.market-card:hover{border-color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.market-card h4{margin:0 0 4px;font-size:13px;color:var(--text)}
+.market-card p{margin:0;font-size:11px;color:var(--text2);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.market-card .card-meta{display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--text2)}
+.market-card .card-tag{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--surface);border:1px solid var(--border)}
+.market-card .card-score{font-weight:600;color:#22c55e}
+.trace-item{padding:8px 12px;border-left:3px solid var(--primary);margin:4px 0;background:var(--bg);border-radius:0 4px 4px 0;font-size:11px}
+.trace-item .trace-name{font-weight:600;color:var(--text)}
+.trace-item .trace-time{color:var(--text2);font-size:10px}
+.trace-item .trace-dur{color:var(--primary);font-weight:500}
+.trace-span{margin:2px 0 2px 16px;padding:4px 8px;border-left:2px solid var(--border);font-size:10px;color:var(--text2)}
 </style>
 </head>
 <body>
@@ -78,6 +90,8 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab" data-tab="lint">Lint</div>
         <div class="tab" data-tab="scan">安全扫描</div>
         <div class="tab" data-tab="evaluate">评估</div>
+        <div class="tab" data-tab="market">模板市场</div>
+        <div class="tab" data-tab="trace">追踪</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
         <div class="panel-header"><span>编译结果</span><span id="compile-status" class="status-badge status-ok">就绪</span></div>
@@ -107,6 +121,31 @@ Please leverage GPT-4o's multimodal capabilities.
           <svg id="eval-radar" class="radar-chart" viewBox="0 0 300 300"></svg>
           <div id="eval-dims" style="margin-top:8px"><p style="font-size:11px;color:var(--text2)">评估结果将在此显示...</p></div>
         </div>
+      </div>
+      <div id="tab-market" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header">
+          <span>模板市场</span>
+          <div class="flex items-center gap-2">
+            <input id="market-search" type="text" placeholder="搜索模板..." style="border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:11px;width:120px;background:var(--bg);color:var(--text)">
+            <select id="market-category" style="border:1px solid var(--border);border-radius:4px;padding:2px 4px;font-size:11px;background:var(--bg);color:var(--text)">
+              <option value="">全部分类</option>
+            </select>
+            <select id="market-sort" style="border:1px solid var(--border);border-radius:4px;padding:2px 4px;font-size:11px;background:var(--bg);color:var(--text)">
+              <option value="updated_at">最近更新</option>
+              <option value="avg_rating">最高评分</option>
+              <option value="favorite_count">最多收藏</option>
+              <option value="lint_score">Lint分数</option>
+            </select>
+          </div>
+        </div>
+        <div id="market-grid" style="flex:1;overflow:auto;background:var(--surface);padding:8px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;align-content:start">
+          <p style="font-size:11px;color:var(--text2);grid-column:1/-1">加载模板市场中...</p>
+        </div>
+        <div id="market-pagination" style="padding:6px 12px;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2)"></div>
+      </div>
+      <div id="tab-trace" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header"><span>操作追踪</span><span id="trace-status" style="font-size:11px;color:var(--text2)"></span></div>
+        <div id="trace-timeline" style="flex:1;overflow:auto;background:var(--surface);padding:8px"><p style="font-size:11px;color:var(--text2)">操作追踪将在此显示...</p></div>
       </div>
     </div>
   </div>
@@ -246,6 +285,113 @@ srcEditor.addEventListener('input',()=>{
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{document.getElementById(id).addEventListener('change',compile)});
 fetch('/api/version').then(r=>r.json()).then(d=>{document.getElementById('version-badge').textContent='v'+d.version}).catch(()=>{});
 compile();runLint();runScan();runEvaluate();
+
+let marketPage=1,marketTimer=null;
+async function loadMarket(){
+  const q=document.getElementById('market-search').value;
+  const cat=document.getElementById('market-category').value;
+  const sort=document.getElementById('market-sort').value;
+  const grid=document.getElementById('market-grid');
+  const pag=document.getElementById('market-pagination');
+  try{
+    const params=new URLSearchParams({q,category:cat,sort,page:marketPage,page_size:'12'});
+    const resp=await fetch('/api/market/templates?'+params);
+    const data=await resp.json();
+    const templates=data.templates||[];
+    if(!templates.length){grid.innerHTML='<p style="font-size:11px;color:var(--text2);grid-column:1/-1">暂无模板，可通过CLI提交: prompt-cli market submit</p>';pag.textContent='';return}
+    grid.innerHTML=templates.map(t=>{
+      const scoreColor=t.lint_score>=80?'#22c55e':t.lint_score>=60?'#f59e0b':'#ef4444';
+      const secIcon=t.security_scan_passed?'&#10003;':'&#10007;';
+      const secColor=t.security_scan_passed?'#22c55e':'#ef4444';
+      const tags=(t.tags||[]).slice(0,3).map(tg=>`<span class="card-tag">${tg}</span>`).join('');
+      return `<div class="market-card" data-id="${t.id}" onclick="loadTemplateToEditor('${t.id}')">
+        <h4>${t.name||t.id}</h4>
+        <p>${t.description||'暂无描述'}</p>
+        <div class="card-meta">
+          <span class="card-score" style="color:${scoreColor}">Lint:${t.lint_score}</span>
+          <span style="color:${secColor}">安全${secIcon}</span>
+          <span>&#9733;${t.avg_rating.toFixed(1)}</span>
+          <span>&#9829;${t.favorite_count}</span>
+        </div>
+        ${tags?'<div style="margin-top:4px;display:flex;gap:3px;flex-wrap:wrap">'+tags+'</div>':''}
+      </div>`;
+    }).join('');
+    const total=data.total||0;
+    const maxPage=Math.ceil(total/12);
+    pag.innerHTML=`<span>共${total}个模板</span><div style="display:flex;gap:4px;align-items:center">
+      <button onclick="marketPage=Math.max(1,marketPage-1);loadMarket()" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);cursor:pointer" ${marketPage<=1?'disabled':''}>&lt;</button>
+      <span>${marketPage}/${maxPage}</span>
+      <button onclick="marketPage=Math.min(${maxPage},marketPage+1);loadMarket()" style="font-size:10px;padding:2px 8px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--text);cursor:pointer" ${marketPage>=maxPage?'disabled':''}>&gt;</button>
+    </div>`;
+  }catch(e){grid.innerHTML='<p style="font-size:11px;color:#ef4444;grid-column:1/-1">加载失败: '+e.message+'</p>'}
+}
+async function loadCategories(){
+  try{
+    const resp=await fetch('/api/market/categories');
+    const data=await resp.json();
+    const sel=document.getElementById('market-category');
+    (data.categories||[]).forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o)});
+  }catch(e){}
+}
+async function loadTemplateToEditor(id){
+  try{
+    const resp=await fetch('/api/market/templates/'+id);
+    const t=await resp.json();
+    if(t.name){srcEditor.value=t.name+'\n\n'+(t.description||'');compile();runLint();runScan();runEvaluate();switchTab('compile')}
+  }catch(e){console.error('load template error:',e)}
+}
+document.getElementById('market-search').addEventListener('input',()=>{clearTimeout(marketTimer);marketTimer=setTimeout(()=>{marketPage=1;loadMarket()},300)});
+document.getElementById('market-category').addEventListener('change',()=>{marketPage=1;loadMarket()});
+document.getElementById('market-sort').addEventListener('change',()=>{marketPage=1;loadMarket()});
+
+let traceData=[];
+function recordTrace(name,durationMs,spans){
+  traceData.unshift({name,durationMs,spans:spans||[],time:new Date().toLocaleTimeString()});
+  if(traceData.length>50)traceData.length=50;
+  updateTraceUI();
+}
+function updateTraceUI(){
+  const el=document.getElementById('trace-timeline');
+  const status=document.getElementById('trace-status');
+  status.textContent=traceData.length+'条记录';
+  if(!traceData.length){el.innerHTML='<p style="font-size:11px;color:var(--text2)">执行操作后将自动记录追踪信息</p>';return}
+  el.innerHTML=traceData.map(t=>{
+    const spansHtml=(t.spans||[]).map(s=>`<div class="trace-span">${s.name} — ${s.duration_ms.toFixed(0)}ms ${s.status==='error'?'<span style="color:#ef4444">&#10007;</span>':''}</div>`).join('');
+    return `<div class="trace-item">
+      <div style="display:flex;justify-content:space-between"><span class="trace-name">${t.name}</span><span class="trace-dur">${t.durationMs.toFixed(0)}ms</span></div>
+      <div class="trace-time">${t.time}</div>
+      ${spansHtml}
+    </div>`;
+  }).join('');
+}
+
+const _origCompile=compile;
+const _origRunLint=runLint;
+const _origRunScan=runScan;
+const _origRunEvaluate=runEvaluate;
+
+compile=async function(){
+  const start=performance.now();
+  await _origCompile();
+  recordTrace('编译',performance.now()-start);
+};
+runLint=async function(){
+  const start=performance.now();
+  await _origRunLint();
+  recordTrace('Lint',performance.now()-start);
+};
+runScan=async function(){
+  const start=performance.now();
+  await _origRunScan();
+  recordTrace('安全扫描',performance.now()-start);
+};
+runEvaluate=async function(){
+  const start=performance.now();
+  await _origRunEvaluate();
+  recordTrace('评估',performance.now()-start);
+};
+
+loadCategories();loadMarket();
 </script>
 </body>
 </html>

@@ -174,6 +174,38 @@ async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
         return {"status": "error", "error": "评估失败，请检查输入内容"}
 
 
+@app.get("/api/traces")
+async def api_traces(limit: int = 50) -> dict[str, Any]:
+    from ai_prompt_toolkit.tracing import Tracer
+    try:
+        tracer = Tracer.get_instance()
+        traces = tracer.get_traces(limit=limit)
+        return {"status": "success", "traces": [t.to_dict() for t in traces], "summary": tracer.get_summary()}
+    except Exception:
+        return {"status": "success", "traces": [], "summary": {"total_traces": 0}}
+
+
+@app.get("/api/traces/summary")
+async def api_traces_summary() -> dict[str, Any]:
+    from ai_prompt_toolkit.tracing import Tracer
+    try:
+        tracer = Tracer.get_instance()
+        return {"status": "success", "summary": tracer.get_summary()}
+    except Exception:
+        return {"status": "success", "summary": {"total_traces": 0}}
+
+
+@app.post("/api/traces/export")
+async def api_traces_export() -> dict[str, Any]:
+    from ai_prompt_toolkit.tracing import Tracer
+    try:
+        tracer = Tracer.get_instance()
+        count = tracer.save_traces()
+        return {"status": "success", "exported": count}
+    except Exception:
+        return {"status": "error", "error": "导出失败"}
+
+
 @app.websocket("/ws/compile")
 async def ws_compile(websocket: WebSocket) -> None:
     await websocket.accept()

@@ -82,6 +82,21 @@
         "command": "promptLint.searchTemplates",
         "title": "Prompt Lint: 搜索模板",
         "icon": "$(search)"
+      },
+      {
+        "command": "promptLint.abTest",
+        "title": "Prompt Lint: A/B测试对比",
+        "icon": "$(compare-changes)"
+      },
+      {
+        "command": "promptLint.tokenAnalyze",
+        "title": "Prompt Lint: Token用量分析",
+        "icon": "$(symbol-numeric)"
+      },
+      {
+        "command": "promptLint.versionDiff",
+        "title": "Prompt Lint: 版本Diff对比",
+        "icon": "$(git-compare)"
       }
     ],
     "views": {
