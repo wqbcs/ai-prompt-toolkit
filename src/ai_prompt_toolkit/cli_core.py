@@ -477,10 +477,11 @@ def scan(target: str, config: str | None, incremental: bool,
 @click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
+@click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | None, gate: bool, multimodal: bool) -> None:
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -513,7 +514,12 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, output: str | Non
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+                result = linter.lint(tpl_path.name, text, fix=fix or interactive, template_type=template_type)
+                if interactive and result.fixes_applied:
+                    for fix_info in result.fixes_applied:
+                        click.echo(f"  修复: {fix_info}")
+                        if not click.confirm("  应用此修复?", default=True):
+                            pass
                 all_results.append(result)
                 total_findings += result.failed_count
                 total_score += result.score
@@ -1197,17 +1203,18 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 import json as _json
                 click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
             else:
-                click.echo(f"Diff: {template} v{version_a} → v{version_b}")
-                click.echo(f"变更: {result.change_summary}")
+                from ai_prompt_toolkit.output import console
+                console.print(f"[bold]Diff: {template} v{version_a} → v{version_b}[/bold]")
+                console.print(f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}")
                 for line in result.unified_diff:
                     if line.startswith("+") and not line.startswith("+++"):
-                        click.echo(f"[green]{line}[/green]")
+                        console.print(f"  [green]{line}[/green]")
                     elif line.startswith("-") and not line.startswith("---"):
-                        click.echo(f"[red]{line}[/red]")
+                        console.print(f"  [red]{line}[/red]")
                     elif line.startswith("@@"):
-                        click.echo(f"[cyan]{line}[/cyan]")
+                        console.print(f"  [cyan]{line}[/cyan]")
                     else:
-                        click.echo(line)
+                        console.print(f"  {line}")
 
         elif action == "rollback":
             if not template or not ver:
