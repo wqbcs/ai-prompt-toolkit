@@ -155,4 +155,40 @@ def load_config(project_dir: Path | None = None) -> PromptCliConfig:
     valid_keys = {f.name for f in PromptCliConfig.__dataclass_fields__.values()}
     filtered = {k: v for k, v in merged.items() if k in valid_keys}
 
+    unknown_keys = set(merged.keys()) - valid_keys
+    if unknown_keys and project_config:
+        import sys as _sys
+        print(f"警告: 配置文件 {project_config} 包含未知字段: {', '.join(sorted(unknown_keys))}", file=_sys.stderr)
+
+    validation_errors = _validate_config_values(filtered)
+    if validation_errors:
+        import sys as _sys
+        for err_msg in validation_errors:
+            print(f"配置错误: {err_msg}", file=_sys.stderr)
+
     return PromptCliConfig(**filtered)
+
+
+def _validate_config_values(data: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    qg_score = data.get("quality_gate_min_score")
+    if qg_score is not None and (not isinstance(qg_score, (int, float)) or qg_score < 0 or qg_score > 100):
+        errors.append(f"quality_gate_min_score 必须在 0-100 之间, 当前值: {qg_score}")
+
+    debounce = data.get("debounce_delay_ms")
+    if debounce is not None and (not isinstance(debounce, (int, float)) or debounce < 0):
+        errors.append(f"debounce_delay_ms 必须 >= 0, 当前值: {debounce}")
+
+    cost = data.get("cost_limit_usd")
+    if cost is not None and (not isinstance(cost, (int, float)) or cost < 0):
+        errors.append(f"cost_limit_usd 必须 >= 0, 当前值: {cost}")
+
+    timeout = data.get("timeout_seconds")
+    if timeout is not None and (not isinstance(timeout, (int, float)) or timeout <= 0):
+        errors.append(f"timeout_seconds 必须 > 0, 当前值: {timeout}")
+
+    retries = data.get("max_retries")
+    if retries is not None and (not isinstance(retries, int) or retries < 0):
+        errors.append(f"max_retries 必须 >= 0 整数, 当前值: {retries}")
+
+    return errors

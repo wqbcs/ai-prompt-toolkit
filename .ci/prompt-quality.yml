@@ -1,0 +1,32 @@
+# 华为云 CodeArts Pipeline 集成
+# 将此文件放置在 .ci/prompt-quality.yml
+# 在 CodeArts 流水线中添加"执行Shell"步骤，引用此脚本
+
+stages:
+  - name: prompt-quality-gate
+    display_name: Prompt质量门禁
+    tasks:
+      - name: install-toolkit
+        display_name: 安装AI Prompt Toolkit
+        inputs:
+          command: pip install ai-prompt-toolkit[full]
+
+      - name: lint-check
+        display_name: Prompt Lint检查
+        inputs:
+          command: prompt-cli lint -t prompts/ --gate --output lint-report.json
+
+      - name: security-scan
+        display_name: 安全扫描
+        inputs:
+          command: prompt-cli scan -t prompts/ --output scan-report.json
+
+      - name: quality-evaluate
+        display_name: 质量评估
+        inputs:
+          command: prompt-cli evaluate -t prompts/ --threshold 6.0 --save --output eval-report.json
+
+      - name: redteam-probe
+        display_name: 红队安全探测
+        inputs:
+          command: prompt-cli redteam -t prompts/ --output redteam-report.json
