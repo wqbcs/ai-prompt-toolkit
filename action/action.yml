@@ -1,0 +1,57 @@
+name: 'Prompt Lint Action'
+description: 'AI Prompt质量检查 — Lint、安全扫描、评估'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  target:
+    description: '检查目标(文件或目录)'
+    required: true
+    default: 'prompts/'
+  command:
+    description: '执行的命令(lint/scan/evaluate)'
+    required: false
+    default: 'lint'
+  gate:
+    description: '启用Quality Gate模式'
+    required: false
+    default: 'true'
+  threshold:
+    description: '评估阈值(0-10)'
+    required: false
+    default: '6.0'
+  fail-on-error:
+    description: '发现问题时是否失败'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install AI Prompt Toolkit
+      shell: bash
+      run: pip install ai-prompt-toolkit[full] 2>/dev/null || pip install -e ".[full]"
+
+    - name: Run Prompt Lint
+      shell: bash
+      run: |
+        ARGS="${{ inputs.target }}"
+        if [ "${{ inputs.gate }}" = "true" ] && [ "${{ inputs.command }}" = "lint" ]; then
+          ARGS="$ARGS --gate"
+        fi
+        if [ "${{ inputs.command }}" = "evaluate" ]; then
+          ARGS="$ARGS --threshold ${{ inputs.threshold }}"
+        fi
+        prompt-cli ${{ inputs.command }} -t $ARGS --output ${{ inputs.command }}-report.json || EXIT_CODE=$?
+        if [ "${{ inputs.fail-on-error }}" = "true" ] && [ "${EXIT_CODE:-0}" -ne 0 ]; then
+          echo "::error::Prompt ${{ inputs.command }} failed with exit code ${EXIT_CODE}"
+          exit ${EXIT_CODE}
+        fi
+
+    - name: Upload Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: prompt-${{ inputs.command }}-report
+        path: ${{ inputs.command }}-report.json

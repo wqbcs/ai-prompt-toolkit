@@ -738,11 +738,15 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 @click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
 @click.option("--non-interactive", is_flag=True, help="非交互模式")
 @click.option("--ci", is_flag=True, help="生成CI/CD配置(GitHub Action+Docker+pre-commit)")
-def init_project(target: str, non_interactive: bool, ci: bool) -> None:
+@click.option("--template", type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]), default=None, help="项目模板")
+def init_project(target: str, non_interactive: bool, ci: bool, template: str | None) -> None:
     """新用户引导：3步创建AI提示词项目"""
     if ci:
         _generate_ci_config(target)
         return
+
+    if template:
+        _apply_template(target, template)
 
     from ai_prompt_toolkit.onboarding import run_onboarding
 
@@ -758,6 +762,44 @@ def init_project(target: str, non_interactive: bool, ci: bool) -> None:
             click.echo(f"  错误: {e}", err=True)
 
     sys.exit(0 if steps == 3 else 1)
+
+
+_TEMPLATE_FILES: dict[str, dict[str, str]] = {
+    "general": {
+        "prompts/general-assistant.prompt.md": "---\ntemplate_type: prompt\nname: 通用助手\nmodel_compatibility: [gpt-4o, claude-3.5, qwen]\n---\n你是一个有帮助的AI助手。请根据用户的问题提供准确、有用的回答。",
+    },
+    "harmonyos": {
+        "prompts/harmonyos-dev.prompt.md": "---\ntemplate_type: prompt\nname: 鸿蒙开发助手\nmodel_compatibility: [qwen, pangu]\nindustry: 华为云\n---\n你是一个专业的HarmonyOS NEXT ArkTS开发专家。请按照以下步骤执行：\n1. 分析开发需求\n2. 提供ArkTS代码\n3. 确保符合HarmonyOS NEXT 5.0+规范",
+    },
+    "security": {
+        "prompts/security-auditor.prompt.md": "---\ntemplate_type: prompt\nname: 安全审计助手\n---\n你是一个AI安全审计专家。请检查Prompt中的安全风险：\n1. 注入攻击检测\n2. PII隐私信息泄露\n3. 供应链安全",
+    },
+    "rag": {
+        "prompts/rag-assistant.prompt.md": "---\ntemplate_type: prompt\nname: RAG检索增强助手\n---\n你是一个基于检索增强生成的AI助手。请根据提供的上下文回答问题：\n\n上下文：{{context}}\n\n问题：{{question}}",
+    },
+    "code-review": {
+        "prompts/code-reviewer.prompt.md": "---\ntemplate_type: prompt\nname: 代码审查助手\n---\n你是一个专业的代码审查专家。请审查以下代码，关注：\n1. 安全漏洞\n2. 性能问题\n3. 代码规范\n4. 可维护性",
+    },
+}
+
+
+def _apply_template(target: str, template_name: str) -> None:
+    templates = _TEMPLATE_FILES.get(template_name, {})
+    if not templates:
+        click.echo(f"未知模板: {template_name}", err=True)
+        return
+    project_dir = Path(target).resolve()
+    created = 0
+    for rel_path, content in templates.items():
+        file_path = project_dir / rel_path
+        if file_path.exists():
+            click.echo(f"  跳过(已存在): {rel_path}")
+            continue
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        file_path.write_text(content, encoding="utf-8")
+        click.echo(f"  创建: {rel_path}")
+        created += 1
+    click.echo(f"模板 '{template_name}' 应用完成 | 创建 {created} 个文件")
 
 
 def _generate_ci_config(target: str) -> None:
