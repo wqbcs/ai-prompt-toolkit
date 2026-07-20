@@ -190,6 +190,20 @@ Please leverage GPT-4o's multimodal capabilities.
     </div>
   </div>
 </div>
+<div id="shortcuts-panel" style="display:none;position:fixed;bottom:40px;right:20px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;z-index:1000;box-shadow:0 4px 16px rgba(0,0,0,.12);min-width:240px">
+  <h4 style="margin:0 0 8px;font-size:13px;color:var(--text)">键盘快捷键</h4>
+  <div style="font-size:11px;color:var(--text2);line-height:2">
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+Enter</kbd> 编译</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+L</kbd> Lint</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+K</kbd> 安全扫描</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+E</kbd> 评估</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+M</kbd> 模板市场</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+D</kbd> 数据集</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+T</kbd> 追踪</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+/</kbd> 快捷键帮助</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Esc</kbd> 聚焦编辑器</div>
+  </div>
+</div>
 <script>
 let debounceTimer=null,lintTimer=null,scanTimer=null,evalTimer=null;
 const srcEditor=document.getElementById('source-editor');
@@ -225,9 +239,16 @@ document.addEventListener('keydown',function(e){
     else if(e.key==='m'){e.preventDefault();switchTab('market')}
     else if(e.key==='d'){e.preventDefault();switchTab('dataset')}
     else if(e.key==='t'){e.preventDefault();switchTab('trace')}
+    else if(e.key==='/'){e.preventDefault();toggleShortcuts()}
   }
-  if(e.key==='Escape'){srcEditor.focus()}
+  if(e.key==='Escape'){srcEditor.focus();hideShortcuts()}
 });
+
+function toggleShortcuts(){
+  const el=document.getElementById('shortcuts-panel');
+  el.style.display=el.style.display==='none'?'block':'none';
+}
+function hideShortcuts(){document.getElementById('shortcuts-panel').style.display='none'}
 
 async function compile(){
   const template=srcEditor.value;
