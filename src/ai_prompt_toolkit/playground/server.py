@@ -45,6 +45,12 @@ try:
 except Exception:
     logger.warning("Market API router failed to load")
 
+try:
+    from ai_prompt_toolkit.dataset_api import router as dataset_router
+    app.include_router(dataset_router)
+except Exception:
+    logger.warning("Dataset API router failed to load")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_PLAYGROUND_ORIGINS,
@@ -204,6 +210,66 @@ async def api_traces_export() -> dict[str, Any]:
         return {"status": "success", "exported": count}
     except Exception:
         return {"status": "error", "error": "导出失败"}
+
+
+@app.post("/api/eval-matrix")
+async def api_eval_matrix(body: dict[str, Any]) -> dict[str, Any]:
+    templates = body.get("templates", [])
+    if not templates:
+        return {"status": "error", "error": "请提供templates数组"}
+    from ai_prompt_toolkit.evaluator import evaluate_template
+    matrix: list[dict[str, Any]] = []
+    for tpl in templates:
+        text = tpl.get("text", "")
+        tid = tpl.get("id", "unknown")
+        try:
+            result = evaluate_template(tid, text)
+            dim_map = {}
+            for s in result.scores:
+                dim_map[s.dimension_id] = round(s.score, 2)
+            matrix.append({
+                "id": tid,
+                "overall_score": round(result.overall_score, 2),
+                "category_scores": {k: round(v, 4) for k, v in result.category_scores.items()},
+                "dimension_scores": dim_map,
+                "status": "success",
+            })
+        except Exception:
+            matrix.append({"id": tid, "status": "error", "overall_score": 0, "category_scores": {}, "dimension_scores": {}})
+    return {"status": "success", "matrix": matrix}
+
+
+@app.get("/api/eval-history")
+async def api_eval_history(template_id: str = "", limit: int = 10) -> dict[str, Any]:
+    from ai_prompt_toolkit.eval_store import EvalStore
+    try:
+        store = EvalStore()
+        if template_id:
+            snapshots = store.get_snapshots(template_id, limit=limit)
+            trend = store.get_trend(template_id, limit=30)
+            alerts = store.get_alerts(template_id, limit=10)
+            return {
+                "status": "success",
+                "snapshots": [s.to_dict() for s in snapshots],
+                "trend": [t.to_dict() for t in trend],
+                "alerts": [a.to_dict() for a in alerts],
+            }
+        return {"status": "success", "snapshots": [], "trend": [], "alerts": []}
+    except Exception:
+        return {"status": "success", "snapshots": [], "trend": [], "alerts": []}
+
+
+@app.get("/api/eval-compare")
+async def api_eval_compare(a: int = 0, b: int = 0) -> dict[str, Any]:
+    from ai_prompt_toolkit.eval_store import EvalStore
+    if not a or not b:
+        return {"status": "error", "error": "请提供snapshot_id参数a和b"}
+    try:
+        store = EvalStore()
+        result = store.compare(a, b)
+        return {"status": "success", "comparison": result}
+    except Exception:
+        return {"status": "error", "error": "对比失败"}
 
 
 @app.websocket("/ws/compile")

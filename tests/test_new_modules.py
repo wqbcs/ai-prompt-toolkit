@@ -237,3 +237,91 @@ class TestPlaygroundServerAPIs:
         from ai_prompt_toolkit.playground.server import app
         routes = [r.path for r in app.routes]
         assert "/api/market/templates" in routes
+
+
+class TestDatasetModule:
+    def _make_store(self, td):
+        from ai_prompt_toolkit.dataset import DatasetStore
+        import os
+        return DatasetStore(db_path=os.path.join(td, "test.db"))
+
+    def test_create_dataset(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("test_ds", description="测试数据集", tags=["unit"])
+        assert ds.dataset_id
+        assert ds.name == "test_ds"
+        assert ds.tags == ["unit"]
+        store.close()
+
+    def test_add_and_get_cases(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("test_ds")
+        c = store.add_case(ds.dataset_id, "输入文本", "期望输出", tags=["t1"])
+        assert c.case_id
+        cases = store.get_cases(ds.dataset_id)
+        assert len(cases) == 1
+        assert cases[0].input_text == "输入文本"
+        store.close()
+
+    def test_list_datasets(self, tmp_path):
+        store = self._make_store(tmp_path)
+        store.create_dataset("ds1")
+        store.create_dataset("ds2")
+        datasets, total = store.list_datasets()
+        assert total == 2
+        store.close()
+
+    def test_delete_dataset(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("del_me")
+        assert store.delete_dataset(ds.dataset_id)
+        assert store.get_dataset(ds.dataset_id) is None
+        store.close()
+
+    def test_import_export_json(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("imp_ds")
+        count = store.import_json(ds.dataset_id, [{"input": "hello", "expected": "hi"}])
+        assert count == 1
+        exported = store.export_json(ds.dataset_id)
+        assert "hello" in exported
+        store.close()
+
+    def test_import_export_csv(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("csv_ds")
+        csv_text = "input,expected\nhello,hi\nworld,earth"
+        count = store.import_csv(ds.dataset_id, csv_text)
+        assert count == 2
+        store.close()
+
+    def test_run_dataset(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("run_ds")
+        store.add_case(ds.dataset_id, "你是一个专业助手", "帮助用户")
+        results = store.run_dataset(ds.dataset_id, run_type="lint")
+        assert len(results) == 1
+        assert results[0].status == "completed"
+        store.close()
+
+    def test_delete_case(self, tmp_path):
+        store = self._make_store(tmp_path)
+        ds = store.create_dataset("dc_ds")
+        c = store.add_case(ds.dataset_id, "text")
+        assert store.delete_case(c.case_id)
+        assert len(store.get_cases(ds.dataset_id)) == 0
+        store.close()
+
+
+class TestEvalMatrixAPI:
+    def test_eval_matrix_api_exists(self):
+        from ai_prompt_toolkit.playground.server import app
+        routes = [r.path for r in app.routes]
+        assert "/api/eval-matrix" in routes
+        assert "/api/eval-history" in routes
+        assert "/api/eval-compare" in routes
+
+    def test_dataset_router_included(self):
+        from ai_prompt_toolkit.playground.server import app
+        routes = [r.path for r in app.routes]
+        assert "/api/datasets" in routes
