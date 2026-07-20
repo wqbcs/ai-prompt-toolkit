@@ -92,6 +92,7 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab" data-tab="evaluate">评估</div>
         <div class="tab" data-tab="market">模板市场</div>
         <div class="tab" data-tab="dataset">数据集</div>
+        <div class="tab" data-tab="eval-matrix">评估矩阵</div>
         <div class="tab" data-tab="trace">追踪</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
@@ -163,6 +164,18 @@ Please leverage GPT-4o's multimodal capabilities.
           </div>
           <div id="ds-cases"></div>
           <button id="ds-add-case-btn" style="margin-top:8px;font-size:11px;padding:4px 12px;border-radius:4px;border:1px solid var(--primary);background:var(--surface);color:var(--primary);cursor:pointer">添加用例</button>
+        </div>
+      </div>
+      <div id="tab-eval-matrix" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header">
+          <span>评估矩阵</span>
+          <div class="flex items-center gap-2">
+            <button id="matrix-add-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--primary);color:#fff;cursor:pointer">添加模板</button>
+            <button id="matrix-run-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">运行评估</button>
+          </div>
+        </div>
+        <div id="matrix-container" style="flex:1;overflow:auto;background:var(--surface);padding:8px">
+          <p style="font-size:11px;color:var(--text2)">添加多个模板后点击"运行评估"查看对比矩阵</p>
         </div>
       </div>
       <div id="tab-trace" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
@@ -454,6 +467,61 @@ document.getElementById('ds-create-btn').addEventListener('click',async()=>{
   await fetch('/api/datasets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
   loadDatasets();
 });
+
+let matrixTemplates=[];
+document.getElementById('matrix-add-btn').addEventListener('click',()=>{
+  const text=srcEditor.value;
+  if(!text.trim()){return}
+  const name=prompt('模板名称:',`模板${matrixTemplates.length+1}`);
+  if(!name)return;
+  matrixTemplates.push({id:name,text});
+  updateMatrixList();
+});
+document.getElementById('matrix-run-btn').addEventListener('click',async()=>{
+  if(matrixTemplates.length<1){alert('请先添加至少1个模板');return}
+  const btn=document.getElementById('matrix-run-btn');btn.textContent='评估中...';btn.disabled=true;
+  try{
+    const resp=await fetch('/api/eval-matrix',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({templates:matrixTemplates})});
+    const data=await resp.json();
+    if(data.status==='success'&&data.matrix){
+      renderMatrix(data.matrix);
+    }
+  }catch(e){alert('评估失败')}finally{btn.textContent='运行评估';btn.disabled=false}
+});
+function updateMatrixList(){
+  const el=document.getElementById('matrix-container');
+  if(!matrixTemplates.length){el.innerHTML='<p style="font-size:11px;color:var(--text2)">添加多个模板后点击"运行评估"查看对比矩阵</p>';return}
+  let html='<div style="margin-bottom:8px;font-size:11px;color:var(--text2)">'+matrixTemplates.length+'个模板:</div>';
+  matrixTemplates.forEach((t,i)=>{
+    html+=`<div class="trace-item"><div style="display:flex;justify-content:space-between"><span class="trace-name">${t.id}</span><button onclick="matrixTemplates.splice(${i},1);updateMatrixList()" style="font-size:10px;color:#ef4444;background:none;border:none;cursor:pointer">移除</button></div></div>`;
+  });
+  html+=`<button onclick="matrixTemplates.push({id:'编辑器当前',text:srcEditor.value});updateMatrixList()" style="margin-top:6px;font-size:10px;padding:2px 8px;border-radius:3px;border:1px dashed var(--border);background:var(--surface);color:var(--text2);cursor:pointer">+ 添加编辑器当前内容</button>`;
+  el.innerHTML=html;
+}
+function renderMatrix(matrix){
+  const el=document.getElementById('matrix-container');
+  if(!matrix.length){el.innerHTML='<p style="font-size:11px;color:var(--text2)">无评估结果</p>';return}
+  const categories=['structure','security','performance','quality','toolchain'];
+  let html='<table style="border-collapse:collapse;width:100%;font-size:11px"><tr><th style="border:1px solid var(--border);padding:4px 8px;background:var(--bg);text-align:left">维度</th>';
+  matrix.forEach(m=>{html+=`<th style="border:1px solid var(--border);padding:4px 8px;background:var(--bg);text-align:center">${m.id}</th>`});
+  html+='</tr>';
+  html+='<tr><td style="border:1px solid var(--border);padding:4px 8px;font-weight:600">综合评分</td>';
+  matrix.forEach(m=>{
+    const s=m.overall_score;const c=s>=7?'#22c55e':s>=4?'#f59e0b':'#ef4444';
+    html+=`<td style="border:1px solid var(--border);padding:4px 8px;text-align:center;font-weight:700;color:${c}">${s.toFixed(1)}</td>`;
+  });
+  html+='</tr>';
+  categories.forEach(cat=>{
+    html+=`<tr><td style="border:1px solid var(--border);padding:4px 8px;font-weight:500">${cat}</td>`;
+    matrix.forEach(m=>{
+      const v=m.category_scores?.[cat]??0;const c=v>=0.7?'#22c55e':v>=0.4?'#f59e0b':'#ef4444';
+      html+=`<td style="border:1px solid var(--border);padding:4px 8px;text-align:center;color:${c}">${(v*100).toFixed(0)}%</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</table>';
+  el.innerHTML=html;
+}
 document.getElementById('ds-add-case-btn').addEventListener('click',async()=>{
   if(!currentDsId)return;
   const input=prompt('输入文本:');

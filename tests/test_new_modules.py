@@ -374,3 +374,69 @@ class TestI18nModule:
         from ai_prompt_toolkit.i18n.messages import get_current_locale
         loc = get_current_locale()
         assert loc in ("zh-CN", "en-US")
+
+
+class TestPluginSystem:
+    def test_register_plugin(self):
+        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        PluginManager.reset()
+        mgr = PluginManager()
+        meta = PluginMeta(name="test-plugin", version="1.0")
+        p = Plugin(meta)
+        mgr.register(p)
+        assert mgr.get_plugin("test-plugin") is not None
+
+    def test_unregister_plugin(self):
+        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        PluginManager.reset()
+        mgr = PluginManager()
+        meta = PluginMeta(name="rm-plugin")
+        mgr.register(Plugin(meta))
+        assert mgr.unregister("rm-plugin")
+        assert mgr.get_plugin("rm-plugin") is None
+
+    def test_enable_disable(self):
+        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        PluginManager.reset()
+        mgr = PluginManager()
+        meta = PluginMeta(name="toggle-plugin")
+        p = Plugin(meta)
+        mgr.register(p)
+        assert p.enabled
+        p.disable()
+        assert not p.enabled
+        assert len(mgr.get_enabled_plugins()) == 0
+        p.enable()
+        assert len(mgr.get_enabled_plugins()) == 1
+
+    def test_list_plugins(self):
+        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        PluginManager.reset()
+        mgr = PluginManager()
+        mgr.register(Plugin(PluginMeta(name="p1")))
+        mgr.register(Plugin(PluginMeta(name="p2")))
+        assert len(mgr.list_plugins()) == 2
+
+    def test_plugin_summary(self):
+        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        PluginManager.reset()
+        mgr = PluginManager()
+        mgr.register(Plugin(PluginMeta(name="s1", version="2.0")))
+        summary = mgr.get_summary()
+        assert summary["total_plugins"] == 1
+        assert summary["plugins"][0]["meta"]["version"] == "2.0"
+
+    def test_singleton(self):
+        from ai_prompt_toolkit.plugin import PluginManager
+        PluginManager.reset()
+        a = PluginManager.get_instance()
+        b = PluginManager.get_instance()
+        assert a is b
+
+    def test_plugin_to_dict(self):
+        from ai_prompt_toolkit.plugin import Plugin, PluginMeta
+        meta = PluginMeta(name="dict-test", version="3.0", description="测试")
+        p = Plugin(meta)
+        d = p.to_dict()
+        assert d["meta"]["name"] == "dict-test"
+        assert d["enabled"] is True
