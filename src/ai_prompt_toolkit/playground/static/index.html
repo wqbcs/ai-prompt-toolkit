@@ -72,6 +72,7 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;backgroun
         <option value="zh-CN">中文</option>
         <option value="en-US">English</option>
       </select>
+      <span title="Ctrl+Enter编译 Ctrl+L/K/E/M/D/T切换标签" style="font-size:11px;color:var(--text2);cursor:help">⌨</span>
     </div>
   </header>
   <div class="flex flex-1 overflow-hidden">
@@ -214,6 +215,19 @@ function toggleTheme(){
 }
 (function(){const s=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');document.documentElement.setAttribute('data-theme',s);btnTheme.textContent=s==='dark'?'☀️':'🌙'})();
 btnTheme.addEventListener('click',toggleTheme);
+
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='Enter'||e.key==='s'&&e.shiftKey){e.preventDefault();compile()}
+    else if(e.key==='l'){e.preventDefault();switchTab('lint');runLint()}
+    else if(e.key==='k'){e.preventDefault();switchTab('scan');runScan()}
+    else if(e.key==='e'){e.preventDefault();switchTab('evaluate');runEvaluate()}
+    else if(e.key==='m'){e.preventDefault();switchTab('market')}
+    else if(e.key==='d'){e.preventDefault();switchTab('dataset')}
+    else if(e.key==='t'){e.preventDefault();switchTab('trace')}
+  }
+  if(e.key==='Escape'){srcEditor.focus()}
+});
 
 async function compile(){
   const template=srcEditor.value;

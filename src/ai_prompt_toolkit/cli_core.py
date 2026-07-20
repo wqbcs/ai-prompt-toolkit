@@ -2061,3 +2061,24 @@ def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
     current = get_current_locale()
     click.echo(f"当前语言: {current}")
     click.echo(f"支持的语言: {', '.join(get_supported_locales())}")
+
+
+@main.command(name="feedback")
+@click.option("--message", "-m", required=True, help="反馈内容")
+@click.option("--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型")
+def feedback_cmd(message: str, type: str) -> None:
+    """提交用户反馈"""
+    import json
+    from ai_prompt_toolkit.output import success
+    feedback_dir = Path.home() / ".ai-prompt-toolkit" / "feedback"
+    feedback_dir.mkdir(parents=True, exist_ok=True)
+    import time
+    entry = {
+        "message": message,
+        "type": type,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "version": __version__,
+    }
+    fb_file = feedback_dir / f"fb_{int(time.time())}.json"
+    fb_file.write_text(json.dumps(entry, ensure_ascii=False, indent=2), encoding="utf-8")
+    success(f"感谢反馈! 已保存到 {fb_file}")
