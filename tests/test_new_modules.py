@@ -325,3 +325,52 @@ class TestEvalMatrixAPI:
         from ai_prompt_toolkit.playground.server import app
         routes = [r.path for r in app.routes]
         assert "/api/datasets" in routes
+
+
+class TestI18nModule:
+    def test_translate_zh(self):
+        from ai_prompt_toolkit.i18n.messages import t, set_locale, _MESSAGES
+        set_locale("zh-CN")
+        assert "Lint" in t("cli.lint.start")
+
+    def test_translate_en(self):
+        from ai_prompt_toolkit.i18n.messages import t, set_locale
+        set_locale("en-US")
+        assert "lint" in t("cli.lint.start").lower()
+
+    def test_translate_with_kwargs(self):
+        from ai_prompt_toolkit.i18n.messages import t, set_locale
+        set_locale("zh-CN")
+        result = t("cli.lint.findings_count", count=5)
+        assert "5" in result
+
+    def test_fallback_to_key(self):
+        from ai_prompt_toolkit.i18n.messages import t
+        assert t("nonexistent.key") == "nonexistent.key"
+
+    def test_supported_locales(self):
+        from ai_prompt_toolkit.i18n.messages import get_supported_locales
+        locales = get_supported_locales()
+        assert "zh-CN" in locales
+        assert "en-US" in locales
+
+    def test_set_unsupported_locale(self):
+        from ai_prompt_toolkit.i18n.messages import set_locale, get_current_locale
+        set_locale("fr-FR")
+        assert get_current_locale() == "zh-CN"
+
+    def test_add_custom_messages(self):
+        from ai_prompt_toolkit.i18n.messages import t, add_messages, set_locale
+        set_locale("zh-CN")
+        add_messages("zh-CN", {"custom.key": "自定义值"})
+        assert t("custom.key") == "自定义值"
+
+    def test_t_from_package(self):
+        from ai_prompt_toolkit.i18n import t
+        result = t("cli.lint.start")
+        assert result
+
+    def test_get_current_locale(self):
+        from ai_prompt_toolkit.i18n.messages import get_current_locale
+        loc = get_current_locale()
+        assert loc in ("zh-CN", "en-US")

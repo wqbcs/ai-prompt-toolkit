@@ -91,6 +91,7 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab" data-tab="scan">安全扫描</div>
         <div class="tab" data-tab="evaluate">评估</div>
         <div class="tab" data-tab="market">模板市场</div>
+        <div class="tab" data-tab="dataset">数据集</div>
         <div class="tab" data-tab="trace">追踪</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
@@ -142,6 +143,27 @@ Please leverage GPT-4o's multimodal capabilities.
           <p style="font-size:11px;color:var(--text2);grid-column:1/-1">加载模板市场中...</p>
         </div>
         <div id="market-pagination" style="padding:6px 12px;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text2)"></div>
+      </div>
+      <div id="tab-dataset" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header">
+          <span>数据集</span>
+          <div class="flex items-center gap-2">
+            <button id="ds-create-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--primary);color:#fff;cursor:pointer">新建</button>
+            <button id="ds-import-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">导入</button>
+            <button id="ds-run-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">运行</button>
+          </div>
+        </div>
+        <div id="ds-list" style="flex:1;overflow:auto;background:var(--surface);padding:8px">
+          <p style="font-size:11px;color:var(--text2)">加载数据集列表...</p>
+        </div>
+        <div id="ds-detail" style="display:none;flex:1;overflow:auto;background:var(--surface);padding:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3 id="ds-detail-name" style="margin:0;font-size:14px;color:var(--text)"></h3>
+            <button id="ds-back-btn" style="font-size:11px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">返回</button>
+          </div>
+          <div id="ds-cases"></div>
+          <button id="ds-add-case-btn" style="margin-top:8px;font-size:11px;padding:4px 12px;border-radius:4px;border:1px solid var(--primary);background:var(--surface);color:var(--primary);cursor:pointer">添加用例</button>
+        </div>
       </div>
       <div id="tab-trace" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
         <div class="panel-header"><span>操作追踪</span><span id="trace-status" style="font-size:11px;color:var(--text2)"></span></div>
@@ -392,6 +414,64 @@ runEvaluate=async function(){
 };
 
 loadCategories();loadMarket();
+
+let currentDsId=null;
+async function loadDatasets(){
+  const el=document.getElementById('ds-list');
+  try{
+    const resp=await fetch('/api/datasets');
+    const data=await resp.json();
+    const datasets=data.datasets||[];
+    if(!datasets.length){el.innerHTML='<p style="font-size:11px;color:var(--text2)">暂无数据集，点击"新建"创建</p>';return}
+    el.innerHTML=datasets.map(d=>`<div class="market-card" onclick="showDatasetDetail('${d.dataset_id}')">
+      <h4>${d.name}</h4><p>${d.description||'暂无描述'}</p>
+      <div class="card-meta"><span>${d.case_count}条用例</span><span>${d.updated_at.substring(0,10)}</span></div>
+    </div>`).join('');
+  }catch(e){el.innerHTML='<p style="font-size:11px;color:#ef4444">加载失败</p>'}
+}
+async function showDatasetDetail(id){
+  currentDsId=id;
+  document.getElementById('ds-list').style.display='none';
+  document.getElementById('ds-detail').style.display='block';
+  try{
+    const resp=await fetch('/api/datasets/'+id);
+    const data=await resp.json();
+    document.getElementById('ds-detail-name').textContent=data.name||id;
+    const cases=data.cases||[];
+    document.getElementById('ds-cases').innerHTML=cases.map(c=>`<div class="trace-item">
+      <div style="display:flex;justify-content:space-between"><span class="trace-name">${c.input_text.substring(0,50)}</span><span style="font-size:10px;color:var(--text2)">${c.case_id.substring(0,8)}</span></div>
+    </div>`).join('')||'<p style="font-size:11px;color:var(--text2)">暂无用例</p>';
+  }catch(e){}
+}
+document.getElementById('ds-back-btn').addEventListener('click',()=>{
+  document.getElementById('ds-list').style.display='block';
+  document.getElementById('ds-detail').style.display='none';
+  currentDsId=null;
+});
+document.getElementById('ds-create-btn').addEventListener('click',async()=>{
+  const name=prompt('数据集名称:');
+  if(!name)return;
+  await fetch('/api/datasets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  loadDatasets();
+});
+document.getElementById('ds-add-case-btn').addEventListener('click',async()=>{
+  if(!currentDsId)return;
+  const input=prompt('输入文本:');
+  if(!input)return;
+  await fetch('/api/datasets/'+currentDsId+'/cases',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input,expected:''})});
+  showDatasetDetail(currentDsId);
+});
+document.getElementById('ds-run-btn').addEventListener('click',async()=>{
+  if(!currentDsId){alert('请先选择数据集');return}
+  const btn=document.getElementById('ds-run-btn');btn.textContent='运行中...';btn.disabled=true;
+  try{
+    const resp=await fetch('/api/datasets/'+currentDsId+'/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({run_type:'all'})});
+    const data=await resp.json();
+    const results=data.results||[];
+    alert(`运行完成: ${results.filter(r=>r.status==='completed').length}/${results.length} 成功`);
+  }catch(e){alert('运行失败')}finally{btn.textContent='运行';btn.disabled=false}
+});
+loadDatasets();
 </script>
 </body>
 </html>
