@@ -378,9 +378,35 @@ srcEditor.addEventListener('input',()=>{
   lintTimer=setTimeout(runLint,800);
   scanTimer=setTimeout(runScan,1200);
   evalTimer=setTimeout(runEvaluate,1500);
+  if(ws&&ws.readyState===WebSocket.OPEN){
+    ws.send(JSON.stringify({template:srcEditor.value,context:{model:document.getElementById('ctx-model').value,language:document.getElementById('ctx-lang').value,industry:document.getElementById('ctx-industry').value}}));
+  }
 });
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{document.getElementById(id).addEventListener('change',compile)});
 fetch('/api/version').then(r=>r.json()).then(d=>{document.getElementById('version-badge').textContent='v'+d.version}).catch(()=>{});
+
+let ws=null;
+function connectWS(){
+  const proto=location.protocol==='https:'?'wss:':'ws:';
+  try{
+    ws=new WebSocket(`${proto}//${location.host}/ws/compile`);
+    ws.onmessage=function(ev){
+      try{
+        const data=JSON.parse(ev.data);
+        if(data.status==='success'){
+          resultEditor.textContent=data.compiled_text;
+          statusBadge.textContent='实时编译';statusBadge.className='status-badge status-ok';
+          const r=data.report||{};
+          branchInfo.textContent=`激活分支: ${r.activated_branches?.length||0} | 忽略分支: ${r.ignored_branches?.length||0}`;
+        }
+      }catch(e){}
+    };
+    ws.onclose=function(){setTimeout(connectWS,3000)};
+    ws.onerror=function(){};
+  }catch(e){}
+}
+connectWS();
+
 compile();runLint();runScan();runEvaluate();
 
 let marketPage=1,marketTimer=null;

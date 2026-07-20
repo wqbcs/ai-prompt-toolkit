@@ -47,6 +47,8 @@ _PII_PATTERNS: list[tuple[str, re.Pattern, float]] = [
     ("cn_name", re.compile(r"(?:姓名|名字|称呼|name)\s*[:：]\s*[\u4e00-\u9fff]{2,4}"), 0.6),
     ("address", re.compile(r"(?:地址|住址|addr)\s*[:：]\s*[\u4e00-\u9fff]{2,}(?:省|市|区|县|路|街|号|室|栋|单元)"), 0.6),
     ("social_media", re.compile(r"(?:微信号|WeChat|wechat|QQ号|qq)\s*[:：]\s*\S{5,}"), 0.7),
+    ("license_plate", re.compile(r"(?<![京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z])[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z][A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9挂学警港澳]"), 0.85),
+    ("api_key", re.compile(r"(?:sk|pk|ak|api_key|apikey|secret_key|access_key|private_key)\s*[:=]\s*[A-Za-z0-9_\-]{20,}"), 0.8),
 ]
 
 
