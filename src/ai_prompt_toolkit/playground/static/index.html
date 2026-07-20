@@ -51,6 +51,9 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;backgroun
 .trace-item .trace-time{color:var(--text2);font-size:10px}
 .trace-item .trace-dur{color:var(--primary);font-weight:500}
 .trace-span{margin:2px 0 2px 16px;padding:4px 8px;border-left:2px solid var(--border);font-size:10px;color:var(--text2)}
+.celebration-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#818cf8,#22c55e);color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:2000;animation:celebrateIn .3s ease-out,celebrateOut .3s ease-in 2.7s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+@keyframes celebrateIn{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes celebrateOut{from{opacity:1}to{opacity:0;transform:translateX(-50%) translateY(-10px)}}
 </style>
 </head>
 <body>
@@ -251,6 +254,14 @@ function toggleShortcuts(){
 }
 function hideShortcuts(){document.getElementById('shortcuts-panel').style.display='none'}
 
+function showCelebration(msg){
+  const toast=document.createElement('div');
+  toast.className='celebration-toast';
+  toast.textContent=msg;
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(),3000);
+}
+
 async function compile(){
   const template=srcEditor.value;
   if(!template.trim()){resultEditor.textContent='请输入模板内容...';return}
@@ -278,6 +289,7 @@ async function runLint(){
     const resp=await fetch('/api/lint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
     const data=await resp.json();
     if(data.status==='success')updateLintUI(data.score,data.findings);
+    if(data.status==='success'&&data.score===100){showCelebration('Lint满分! 这份Prompt堪称完美!')}
   }catch(e){console.error('Lint error:',e)}
 }
 
@@ -289,6 +301,7 @@ async function runScan(){
     const resp=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template})});
     const data=await resp.json();
     if(data.status==='success')updateScanUI(data.total_findings,data.findings);
+    if(data.status==='success'&&data.total_findings===0){showCelebration('0漏洞! 你的Prompt比银行金库还安全!')}
   }catch(e){console.error('Scan error:',e)}
 }
 
@@ -322,6 +335,7 @@ async function runEvaluate(){
     const resp=await fetch('/api/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
     const data=await resp.json();
     if(data.status==='success')updateEvalUI(data.overall_score,data.dimension_scores);
+    if(data.status==='success'&&data.overall_score>=9){showCelebration('评估9分+! 你的Prompt已经是行业标杆!')}
   }catch(e){console.error('Evaluate error:',e)}
 }
 
