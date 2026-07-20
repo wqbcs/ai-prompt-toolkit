@@ -105,11 +105,19 @@ def determine_exit_code(
         return 3
     if has_findings:
         if error_severity in ("high", "critical"):
-            return 1
-        if error_severity == "medium":
             return 2
+        if error_severity == "medium":
+            return 1
         return 0
     return 0
+
+
+EXIT_CODE_MEANINGS = {
+    0: "PASS — 通过，无问题",
+    1: "WARN — 警告，存在中等风险",
+    2: "FAIL — 失败，存在高危/严重风险",
+    3: "ERROR — 执行错误",
+}
 
 
 def format_findings_table(findings: Sequence[dict[str, Any]]) -> str:

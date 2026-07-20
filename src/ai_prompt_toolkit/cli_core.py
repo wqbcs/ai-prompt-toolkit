@@ -2170,3 +2170,66 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
         console.print(f"  🔍 Lint规则: [bold]55[/bold]条 | 安全规则: [bold]30+[/bold]条 | Provider: [bold]19[/bold]个")
 
+
+@main.command(name="score")
+@click.option("--target", "-t", required=True, help="目标Prompt文件")
+@click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
+def score_cmd(target: str, fmt: str) -> None:
+    """一键安全评分(0-100分)"""
+    from ai_prompt_toolkit.output import console
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    import json as _json
+
+    target_path = resolve_path(target)
+    if not target_path.exists():
+        click.echo(f"文件不存在: {target}", err=True)
+        sys.exit(3)
+
+    text = target_path.read_text(encoding="utf-8")
+
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard, Decision
+
+    linter = PromptLinter()
+    lint_result = linter.lint(target_path.name, text)
+    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+
+    detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
+    sec_findings = detector.detect(text)
+
+    pii = PIIDetector()
+    pii_finding = pii.check(text)
+    if pii_finding:
+        sec_findings.append(pii_finding)
+
+    struct_finding = check_structural(text)
+    if struct_finding:
+        sec_findings.append(struct_finding)
+
+    all_findings = list(lint_findings) + sec_findings
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+
+    if fmt == "json":
+        click.echo(_json.dumps(scorecard.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        grade_colors = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "bold red"}
+        gc = grade_colors.get(scorecard.grade.value, "white")
+        console.print(f"\n[bold]安全评分卡: [{gc}]{scorecard.overall_score}/100 ({scorecard.grade.value})[/{gc}][/bold]")
+        console.print(f"  决策: [bold]{scorecard.decision.value.upper()}[/bold] | {scorecard.summary}")
+        console.print(f"  发现: {scorecard.total_findings} (严重:{scorecard.critical_count} 高危:{scorecard.high_count} 中危:{scorecard.medium_count} 低危:{scorecard.low_count})")
+        console.print("\n  [bold]维度评分:[/bold]")
+        for dim in scorecard.dimensions:
+            bar_len = 20
+            filled = int(dim.ratio * bar_len)
+            bar = "█" * filled + "░" * (bar_len - filled)
+            console.print(f"  {dim.name:10s} [{bar}] {dim.earned}/{dim.max_points}")
+
+    if scorecard.decision == Decision.BLOCK:
+        sys.exit(2)
+    elif scorecard.decision == Decision.WARN:
+        sys.exit(1)
+

@@ -20,6 +20,7 @@ from ai_prompt_toolkit.security.pii_detector import PIIDetector
 from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
 from ai_prompt_toolkit.security.unicode_guard import scan_unicode_and_canary
 from ai_prompt_toolkit.security.defender import PromptDefender
+from ai_prompt_toolkit.security.structural_analyzer import check_structural
 
 _DEFAULT_MAX_WORKERS = 4
 
@@ -106,6 +107,10 @@ class Scanner:
         defense_result = defender.defend(preprocessed)
         if defense_result.findings:
             injection_findings.extend(defense_result.findings)
+
+        struct_finding = check_structural(preprocessed)
+        if struct_finding:
+            injection_findings.append(struct_finding)
 
         risk_level = _assess_risk(injection_findings, inheritance_findings)
 
