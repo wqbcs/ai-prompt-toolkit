@@ -373,6 +373,7 @@ function drawRadar(entries){
 
 btnCompile.addEventListener('click',compile);
 srcEditor.addEventListener('input',()=>{
+  localStorage.setItem('pg_source',srcEditor.value);
   clearTimeout(debounceTimer);clearTimeout(lintTimer);clearTimeout(scanTimer);clearTimeout(evalTimer);
   debounceTimer=setTimeout(compile,500);
   lintTimer=setTimeout(runLint,800);
@@ -383,6 +384,7 @@ srcEditor.addEventListener('input',()=>{
   }
 });
 ['ctx-model','ctx-lang','ctx-industry'].forEach(id=>{document.getElementById(id).addEventListener('change',compile)});
+(function(){const saved=localStorage.getItem('pg_source');if(saved&&saved.trim()){srcEditor.value=saved}})();
 fetch('/api/version').then(r=>r.json()).then(d=>{document.getElementById('version-badge').textContent='v'+d.version}).catch(()=>{});
 
 let ws=null;

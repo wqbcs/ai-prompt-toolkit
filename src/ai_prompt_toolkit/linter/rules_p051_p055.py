@@ -49,7 +49,7 @@ _AMBIGUOUS_ZH = [
 _HARMONYOS_ANDROID = [
     (re.compile(r'android\.(?:os|content|widget|app|intent)'), "Android专用API — 鸿蒙需替换为@ohos等效接口"),
     (re.compile(r'java\.(?:lang|util|io)'), "Java包引用 — 鸿蒙ArkTS/ETS需替换"),
-    (re.compile(r'\bActivity\b|\bFragment\b|\bService\b|\bBroadcastReceiver\b'), "Android四大组件 — 鸿蒙需替换为Ability"),
+    (re.compile(r'(?:Activity|Fragment|Service|BroadcastReceiver)', re.MULTILINE), "Android四大组件 — 鸿蒙需替换为Ability"),
 ]
 
 
@@ -100,9 +100,16 @@ def check_p053(text: str) -> Finding | None:
 def check_p054(text: str) -> Finding | None:
     rule = _RULE_MAP["P054"]
     found = []
+    is_android_context = bool(re.search(
+        r'(?:android|Android|安卓|apk|gradle|sdk|移动端|手机端|鸿蒙|harmony|ohos|Ability|ArkTS|ETS|app开发|移动应用)',
+        text, re.IGNORECASE,
+    ))
     for pattern, desc in _HARMONYOS_ANDROID:
         for m in pattern.finditer(text):
-            found.append({"match": m.group(), "hint": desc, "line": text[:m.start()].count("\n") + 1})
+            match_word = m.group()
+            if match_word == "Service" and not is_android_context:
+                continue
+            found.append({"match": match_word, "hint": desc, "line": text[:m.start()].count("\n") + 1})
     if not found:
         return None
     return Finding(

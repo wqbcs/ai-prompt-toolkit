@@ -2082,3 +2082,91 @@ def feedback_cmd(message: str, type: str) -> None:
     fb_file = feedback_dir / f"fb_{int(time.time())}.json"
     fb_file.write_text(json.dumps(entry, ensure_ascii=False, indent=2), encoding="utf-8")
     success(f"感谢反馈! 已保存到 {fb_file}")
+
+
+@main.command(name="stats")
+@click.option("--target", "-t", help="目标文件或目录")
+@click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
+def stats_cmd(target: str | None, fmt: str) -> None:
+    """查看项目/文件的Prompt统计数据"""
+    from ai_prompt_toolkit.output import console
+    import json as _json
+
+    target_path = Path(target) if target else Path(".")
+
+    prompt_files: list[Path] = []
+    if target_path.is_file():
+        prompt_files = [target_path]
+    elif target_path.is_dir():
+        for ext in ("*.md", "*.prompt", "*.txt"):
+            prompt_files.extend(target_path.rglob(ext))
+
+    prompt_files = [f for f in prompt_files if f.stat().st_size > 0]
+
+    total_size = sum(f.stat().st_size for f in prompt_files)
+    total_chars = 0
+    total_lines = 0
+    lang_dist: dict[str, int] = {}
+
+    for f in prompt_files:
+        try:
+            text = f.read_text(encoding="utf-8")
+            total_chars += len(text)
+            total_lines += text.count("\n") + 1
+            zh_chars = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
+            en_chars = sum(1 for c in text if c.isascii() and c.isalpha())
+            if zh_chars > en_chars:
+                lang_dist["中文"] = lang_dist.get("中文", 0) + 1
+            elif en_chars > 0:
+                lang_dist["英文"] = lang_dist.get("英文", 0) + 1
+        except Exception:
+            pass
+
+    from ai_prompt_toolkit.version_store import VersionStore
+    from ai_prompt_toolkit.dataset import DatasetStore
+
+    version_count = 0
+    try:
+        vs = VersionStore()
+        conn = vs._connect()
+        row = conn.execute("SELECT COUNT(DISTINCT template_id) as cnt FROM prompt_versions").fetchone()
+        version_count = row["cnt"] if row else 0
+        vs.close()
+    except Exception:
+        pass
+
+    dataset_count = 0
+    try:
+        ds = DatasetStore()
+        datasets, total = ds.list_datasets()
+        dataset_count = total
+        ds.close()
+    except Exception:
+        pass
+
+    stats_data = {
+        "prompt_files": len(prompt_files),
+        "total_chars": total_chars,
+        "total_lines": total_lines,
+        "total_size_kb": round(total_size / 1024, 1),
+        "language_distribution": lang_dist,
+        "versioned_templates": version_count,
+        "datasets": dataset_count,
+        "lint_rules": 55,
+        "security_rules": "30+",
+        "providers": 19,
+    }
+
+    if fmt == "json":
+        click.echo(_json.dumps(stats_data, ensure_ascii=False, indent=2))
+    else:
+        console.print("[bold cyan]Prompt 项目统计[/bold cyan]")
+        console.print(f"  📄 Prompt文件: [bold]{len(prompt_files)}[/bold] 个 ({total_size / 1024:.1f} KB)")
+        console.print(f"  📝 总字符数: [bold]{total_chars:,}[/bold] | 总行数: [bold]{total_lines:,}[/bold]")
+        if lang_dist:
+            for lang, cnt in lang_dist.items():
+                console.print(f"  🌐 语言分布: {lang} {cnt}个文件")
+        console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
+        console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
+        console.print(f"  🔍 Lint规则: [bold]55[/bold]条 | 安全规则: [bold]30+[/bold]条 | Provider: [bold]19[/bold]个")
+
