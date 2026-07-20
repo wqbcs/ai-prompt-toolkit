@@ -5,6 +5,7 @@
 - 运行时切换语言
 - 支持变量插值
 """
+
 from __future__ import annotations
 
 import locale as _locale

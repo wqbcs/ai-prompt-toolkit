@@ -5,6 +5,7 @@
 - 支持Python包和文件两种插件形式
 - 插件隔离: 每个插件独立命名空间
 """
+
 from __future__ import annotations
 
 import importlib
@@ -37,8 +38,7 @@ class PluginMeta:
 
 class PluginHook(ABC):
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     def on_lint(self, template: str, findings: list[Any]) -> list[Any]:
         return findings
@@ -139,6 +139,7 @@ class PluginManager:
             logger.warning("Plugin file not found: %s", file_path)
             return None
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(p.stem, str(p))
         if spec is None or spec.loader is None:
             return None
@@ -173,15 +174,25 @@ class PluginManager:
                 method = getattr(hook, f"on_{hook_name}", None)
                 if method:
                     if hook_name == "lint":
-                        result["findings"] = method(kwargs.get("template", ""), kwargs.get("findings", []))
+                        result["findings"] = method(
+                            kwargs.get("template", ""), kwargs.get("findings", [])
+                        )
                     elif hook_name == "scan":
-                        result["findings"] = method(kwargs.get("template", ""), kwargs.get("findings", []))
+                        result["findings"] = method(
+                            kwargs.get("template", ""), kwargs.get("findings", [])
+                        )
                     elif hook_name == "evaluate":
-                        result["report"] = method(kwargs.get("template", ""), kwargs.get("report"))
+                        result["report"] = method(
+                            kwargs.get("template", ""), kwargs.get("report")
+                        )
                     elif hook_name == "compile":
-                        result["compiled"] = method(kwargs.get("template", ""), kwargs.get("compiled", ""))
+                        result["compiled"] = method(
+                            kwargs.get("template", ""), kwargs.get("compiled", "")
+                        )
             except Exception:
-                logger.exception("Plugin %s hook %s failed", plugin.meta.name, hook_name)
+                logger.exception(
+                    "Plugin %s hook %s failed", plugin.meta.name, hook_name
+                )
         return result
 
     def get_summary(self) -> dict[str, Any]:

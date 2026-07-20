@@ -6,6 +6,7 @@
 - 运行: 对数据集批量执行lint/scan/evaluate
 - SQLite持久化
 """
+
 from __future__ import annotations
 
 import csv
@@ -130,64 +131,125 @@ class DatasetStore:
         """)
         conn.commit()
 
-    def create_dataset(self, name: str, description: str = "", tags: list[str] | None = None) -> Dataset:
+    def create_dataset(
+        self, name: str, description: str = "", tags: list[str] | None = None
+    ) -> Dataset:
         import uuid
+
         conn = self._connect()
         now = time.strftime("%Y-%m-%dT%H:%M:%S")
         ds_id = uuid.uuid4().hex[:12]
         conn.execute(
             "INSERT INTO datasets (dataset_id, name, description, tags, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (ds_id, name, description, json.dumps(tags or [], ensure_ascii=False), now, now),
+            (
+                ds_id,
+                name,
+                description,
+                json.dumps(tags or [], ensure_ascii=False),
+                now,
+                now,
+            ),
         )
         conn.commit()
-        return Dataset(dataset_id=ds_id, name=name, description=description, tags=tags or [], created_at=now, updated_at=now)
+        return Dataset(
+            dataset_id=ds_id,
+            name=name,
+            description=description,
+            tags=tags or [],
+            created_at=now,
+            updated_at=now,
+        )
 
-    def list_datasets(self, page: int = 1, page_size: int = 20) -> tuple[list[Dataset], int]:
+    def list_datasets(
+        self, page: int = 1, page_size: int = 20
+    ) -> tuple[list[Dataset], int]:
         conn = self._connect()
         total = conn.execute("SELECT COUNT(*) as cnt FROM datasets").fetchone()["cnt"]
         offset = (page - 1) * page_size
-        rows = conn.execute("SELECT * FROM datasets ORDER BY updated_at DESC LIMIT ? OFFSET ?", (page_size, offset)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM datasets ORDER BY updated_at DESC LIMIT ? OFFSET ?",
+            (page_size, offset),
+        ).fetchall()
         datasets = [self._row_to_dataset(r) for r in rows]
         return datasets, total
 
     def get_dataset(self, dataset_id: str) -> Dataset | None:
         conn = self._connect()
-        row = conn.execute("SELECT * FROM datasets WHERE dataset_id = ?", (dataset_id,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM datasets WHERE dataset_id = ?", (dataset_id,)
+        ).fetchone()
         return self._row_to_dataset(row) if row else None
 
     def delete_dataset(self, dataset_id: str) -> bool:
         conn = self._connect()
         conn.execute("DELETE FROM dataset_cases WHERE dataset_id = ?", (dataset_id,))
-        cursor = conn.execute("DELETE FROM datasets WHERE dataset_id = ?", (dataset_id,))
+        cursor = conn.execute(
+            "DELETE FROM datasets WHERE dataset_id = ?", (dataset_id,)
+        )
         conn.commit()
         return cursor.rowcount > 0
 
-    def add_case(self, dataset_id: str, input_text: str, expected_output: str = "", tags: list[str] | None = None, metadata: dict[str, Any] | None = None) -> DatasetCase:
+    def add_case(
+        self,
+        dataset_id: str,
+        input_text: str,
+        expected_output: str = "",
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> DatasetCase:
         import uuid
+
         conn = self._connect()
         now = time.strftime("%Y-%m-%dT%H:%M:%S")
         case_id = uuid.uuid4().hex[:12]
         conn.execute(
             "INSERT INTO dataset_cases (case_id, dataset_id, input_text, expected_output, tags, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (case_id, dataset_id, input_text, expected_output, json.dumps(tags or [], ensure_ascii=False), json.dumps(metadata or {}, ensure_ascii=False), now),
+            (
+                case_id,
+                dataset_id,
+                input_text,
+                expected_output,
+                json.dumps(tags or [], ensure_ascii=False),
+                json.dumps(metadata or {}, ensure_ascii=False),
+                now,
+            ),
         )
-        conn.execute("UPDATE datasets SET case_count = case_count + 1, updated_at = ? WHERE dataset_id = ?", (now, dataset_id))
+        conn.execute(
+            "UPDATE datasets SET case_count = case_count + 1, updated_at = ? WHERE dataset_id = ?",
+            (now, dataset_id),
+        )
         conn.commit()
-        return DatasetCase(case_id=case_id, dataset_id=dataset_id, input_text=input_text, expected_output=expected_output, tags=tags or [], metadata=metadata or {}, created_at=now)
+        return DatasetCase(
+            case_id=case_id,
+            dataset_id=dataset_id,
+            input_text=input_text,
+            expected_output=expected_output,
+            tags=tags or [],
+            metadata=metadata or {},
+            created_at=now,
+        )
 
     def get_cases(self, dataset_id: str) -> list[DatasetCase]:
         conn = self._connect()
-        rows = conn.execute("SELECT * FROM dataset_cases WHERE dataset_id = ? ORDER BY created_at", (dataset_id,)).fetchall()
+        rows = conn.execute(
+            "SELECT * FROM dataset_cases WHERE dataset_id = ? ORDER BY created_at",
+            (dataset_id,),
+        ).fetchall()
         return [self._row_to_case(r) for r in rows]
 
     def delete_case(self, case_id: str) -> bool:
         conn = self._connect()
-        case = conn.execute("SELECT dataset_id FROM dataset_cases WHERE case_id = ?", (case_id,)).fetchone()
+        case = conn.execute(
+            "SELECT dataset_id FROM dataset_cases WHERE case_id = ?", (case_id,)
+        ).fetchone()
         if not case:
             return False
         conn.execute("DELETE FROM dataset_cases WHERE case_id = ?", (case_id,))
         now = time.strftime("%Y-%m-%dT%H:%M:%S")
-        conn.execute("UPDATE datasets SET case_count = case_count - 1, updated_at = ? WHERE dataset_id = ?", (now, case["dataset_id"]))
+        conn.execute(
+            "UPDATE datasets SET case_count = case_count - 1, updated_at = ? WHERE dataset_id = ?",
+            (now, case["dataset_id"]),
+        )
         conn.commit()
         return True
 
@@ -218,7 +280,15 @@ class DatasetStore:
 
     def export_json(self, dataset_id: str) -> str:
         cases = self.get_cases(dataset_id)
-        data = [{"input": c.input_text, "expected": c.expected_output, "tags": c.tags, "metadata": c.metadata} for c in cases]
+        data = [
+            {
+                "input": c.input_text,
+                "expected": c.expected_output,
+                "tags": c.tags,
+                "metadata": c.metadata,
+            }
+            for c in cases
+        ]
         return json.dumps(data, ensure_ascii=False, indent=2)
 
     def export_csv(self, dataset_id: str) -> str:
@@ -227,10 +297,18 @@ class DatasetStore:
         writer = csv.DictWriter(output, fieldnames=["input", "expected", "tags"])
         writer.writeheader()
         for c in cases:
-            writer.writerow({"input": c.input_text, "expected": c.expected_output, "tags": ",".join(c.tags)})
+            writer.writerow(
+                {
+                    "input": c.input_text,
+                    "expected": c.expected_output,
+                    "tags": ",".join(c.tags),
+                }
+            )
         return output.getvalue()
 
-    def run_dataset(self, dataset_id: str, run_type: str = "all") -> list[DatasetRunResult]:
+    def run_dataset(
+        self, dataset_id: str, run_type: str = "all"
+    ) -> list[DatasetRunResult]:
         cases = self.get_cases(dataset_id)
         results: list[DatasetRunResult] = []
         for case in cases:
@@ -238,16 +316,23 @@ class DatasetStore:
             try:
                 if run_type in ("lint", "all"):
                     from ai_prompt_toolkit.linter.linter import PromptLinter
+
                     linter = PromptLinter()
                     lint_result = linter.lint(case.case_id, case.input_text)
                     r.lint_score = lint_result.score
                 if run_type in ("scan", "all"):
-                    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+                    from ai_prompt_toolkit.security.injection_detector import (
+                        InjectionDetector,
+                    )
+
                     detector = InjectionDetector()
-                    findings = detector.detect(case.input_text, template_id=case.case_id)
+                    findings = detector.detect(
+                        case.input_text, template_id=case.case_id
+                    )
                     r.scan_findings = len(findings)
                 if run_type in ("evaluate", "all"):
                     from ai_prompt_toolkit.evaluator import evaluate_template
+
                     eval_result = evaluate_template(case.case_id, case.input_text)
                     r.eval_score = eval_result.overall_score
                 r.status = "completed"
@@ -257,8 +342,11 @@ class DatasetStore:
             results.append(r)
         return results
 
-    async def run_dataset_async(self, dataset_id: str, run_type: str = "all") -> list[DatasetRunResult]:
+    async def run_dataset_async(
+        self, dataset_id: str, run_type: str = "all"
+    ) -> list[DatasetRunResult]:
         import asyncio
+
         cases = self.get_cases(dataset_id)
         results: list[DatasetRunResult] = []
         semaphore = asyncio.Semaphore(5)
@@ -269,17 +357,28 @@ class DatasetStore:
                 try:
                     if run_type in ("lint", "all"):
                         from ai_prompt_toolkit.linter.linter import PromptLinter
+
                         linter = PromptLinter()
-                        lint_result = await asyncio.to_thread(linter.lint, case.case_id, case.input_text)
+                        lint_result = await asyncio.to_thread(
+                            linter.lint, case.case_id, case.input_text
+                        )
                         r.lint_score = lint_result.score
                     if run_type in ("scan", "all"):
-                        from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+                        from ai_prompt_toolkit.security.injection_detector import (
+                            InjectionDetector,
+                        )
+
                         detector = InjectionDetector()
-                        findings = await asyncio.to_thread(detector.detect, case.input_text, case.case_id)
+                        findings = await asyncio.to_thread(
+                            detector.detect, case.input_text, case.case_id
+                        )
                         r.scan_findings = len(findings)
                     if run_type in ("evaluate", "all"):
                         from ai_prompt_toolkit.evaluator import evaluate_template
-                        eval_result = await asyncio.to_thread(evaluate_template, case.case_id, case.input_text)
+
+                        eval_result = await asyncio.to_thread(
+                            evaluate_template, case.case_id, case.input_text
+                        )
                         r.eval_score = eval_result.overall_score
                     r.status = "completed"
                 except Exception as e:

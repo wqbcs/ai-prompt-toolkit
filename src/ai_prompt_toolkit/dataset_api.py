@@ -6,6 +6,7 @@
 - 批量运行lint/scan/evaluate
 - 评估矩阵(多模板×多维度的评分网格)
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/api/datasets", tags=["datasets"])
 
 def _get_store():
     from ai_prompt_toolkit.dataset import DatasetStore
+
     return DatasetStore()
 
 
@@ -30,7 +32,12 @@ async def api_list_datasets(
 ):
     store = _get_store()
     datasets, total = store.list_datasets(page, page_size)
-    return {"datasets": [d.to_dict() for d in datasets], "total": total, "page": page, "page_size": page_size}
+    return {
+        "datasets": [d.to_dict() for d in datasets],
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+    }
 
 
 @router.post("")
@@ -39,7 +46,9 @@ async def api_create_dataset(body: dict[str, Any]):
     name = body.get("name", "")
     if not name:
         raise HTTPException(status_code=400, detail="缺少数据集名称")
-    ds = store.create_dataset(name, description=body.get("description", ""), tags=body.get("tags", []))
+    ds = store.create_dataset(
+        name, description=body.get("description", ""), tags=body.get("tags", [])
+    )
     return {"status": "created", "dataset_id": ds.dataset_id}
 
 
@@ -95,6 +104,7 @@ async def api_import_dataset(dataset_id: str, body: dict[str, Any]):
     data = body.get("data", "")
     if fmt == "json":
         import json
+
         items = json.loads(data) if isinstance(data, str) else data
         count = store.import_json(dataset_id, items)
     elif fmt == "csv":

@@ -2040,3 +2040,24 @@ def plugin_disable(name: str) -> None:
         return
     p.disable()
     success(f"插件已禁用: {name}")
+
+
+@main.command(name="locale")
+@click.option("--set", "-s", "set_locale", help="设置语言(zh-CN/en-US)")
+@click.option("--list", "-l", "list_locales", is_flag=True, help="列出支持的语言")
+def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
+    """查看/设置界面语言"""
+    from ai_prompt_toolkit.i18n.messages import t, set_locale as msg_set_locale, get_current_locale, get_supported_locales
+    if list_locales:
+        current = get_current_locale()
+        for loc in get_supported_locales():
+            marker = " (当前)" if loc == current else ""
+            click.echo(f"  {loc}{marker}")
+        return
+    if set_locale:
+        msg_set_locale(set_locale)
+        click.echo(f"语言已切换为: {set_locale}")
+        return
+    current = get_current_locale()
+    click.echo(f"当前语言: {current}")
+    click.echo(f"支持的语言: {', '.join(get_supported_locales())}")
