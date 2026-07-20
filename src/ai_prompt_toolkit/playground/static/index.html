@@ -103,6 +103,7 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab" data-tab="dataset">数据集</div>
         <div class="tab" data-tab="eval-matrix">评估矩阵</div>
         <div class="tab" data-tab="trace">追踪</div>
+        <div class="tab" data-tab="scorecard">评分卡</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
         <div class="panel-header"><span>编译结果</span><span id="compile-status" class="status-badge status-ok">就绪</span></div>
@@ -190,6 +191,10 @@ Please leverage GPT-4o's multimodal capabilities.
       <div id="tab-trace" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
         <div class="panel-header"><span>操作追踪</span><span id="trace-status" style="font-size:11px;color:var(--text2)"></span></div>
         <div id="trace-timeline" style="flex:1;overflow:auto;background:var(--surface);padding:8px"><p style="font-size:11px;color:var(--text2)">操作追踪将在此显示...</p></div>
+      </div>
+      <div id="tab-scorecard" class="tab-content" style="flex:1;flex-direction:column;display:none;overflow:hidden">
+        <div class="panel-header"><span>安全评分卡</span><button onclick="runScorecard()" style="font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid var(--primary);background:var(--surface);color:var(--primary);cursor:pointer;margin-left:8px">评分</button></div>
+        <div id="scorecard-container" style="flex:1;overflow:auto;background:var(--surface);padding:12px"><p style="font-size:11px;color:var(--text2)">点击"评分"获取安全评分卡...</p></div>
       </div>
     </div>
   </div>
@@ -557,6 +562,32 @@ document.getElementById('ds-create-btn').addEventListener('click',async()=>{
   await fetch('/api/datasets',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
   loadDatasets();
 });
+async function runScorecard(){
+  const el=document.getElementById('scorecard-container');
+  const template=srcEditor.value;
+  if(!template.trim()){el.innerHTML='<p style="font-size:11px;color:var(--text2)">请先输入模板内容</p>';return}
+  el.innerHTML='<p style="font-size:11px;color:var(--text2)">评分中...</p>';
+  try{
+    const resp=await fetch('/api/scorecard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template})});
+    const data=await resp.json();
+    if(data.status==='error'){el.innerHTML='<p style="font-size:11px;color:#ef4444">评分失败: '+data.error+'</p>';return}
+    const sc=data.scorecard;
+    const gc={'A':'#22c55e','B':'#3b82f6','C':'#f59e0b','D':'#ef4444','F':'#dc2626'}[sc.grade]||'#6b7280';
+    let html='<div style="text-align:center;margin-bottom:16px"><div style="font-size:48px;font-weight:800;color:'+gc+'">'+sc.overall_score+'</div><div style="font-size:18px;font-weight:600;color:'+gc+'">Grade '+sc.grade+'</div><div style="font-size:12px;color:var(--text2);margin-top:4px">'+sc.summary+'</div><div style="font-size:11px;color:var(--text2)">决策: <b>'+sc.decision.toUpperCase()+'</b></div></div>';
+    html+='<div style="margin-bottom:12px">';
+    sc.dimensions.forEach(d=>{
+      const pct=Math.round(d.ratio*100);const filled=Math.round(d.ratio*20);
+      const bar='█'.repeat(filled)+'░'.repeat(20-filled);
+      const c=pct>=80?'#22c55e':pct>=50?'#f59e0b':'#ef4444';
+      html+='<div style="margin-bottom:6px"><div style="font-size:11px;color:var(--text2);margin-bottom:2px">'+d.name+'</div><div style="font-family:monospace;font-size:10px;color:'+c+'">'+bar+' '+d.earned+'/'+d.max_points+'</div>';
+      if(d.findings.length){html+='<div style="font-size:10px;color:#ef4444;margin-top:2px">'+d.findings.slice(0,3).join('<br>')+'</div>'}
+      html+='</div>';
+    });
+    html+='</div>';
+    html+='<div style="font-size:10px;color:var(--text2)">发现: '+sc.total_findings+' (严重:'+sc.critical_count+' 高危:'+sc.high_count+' 中危:'+sc.medium_count+' 低危:'+sc.low_count+')</div>';
+    el.innerHTML=html;
+  }catch(e){el.innerHTML='<p style="font-size:11px;color:#ef4444">评分失败</p>'}
+}
 
 let currentLang='zh-CN';
 const _i18nCache={};

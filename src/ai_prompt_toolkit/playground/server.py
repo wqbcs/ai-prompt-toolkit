@@ -335,3 +335,40 @@ async def index() -> FileResponse:
     if index_file.exists():
         return FileResponse(str(index_file))
     return FileResponse(str(_STATIC_DIR.parent / "index.html")) if (_STATIC_DIR.parent / "index.html").exists() else {"message": "Playground UI not built yet. Run: npm run build"}
+
+
+@app.post("/api/scorecard")
+async def api_scorecard(request: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+
+    template = request.get("template", "")
+    if not template.strip():
+        return {"status": "error", "error": "模板为空"}
+
+    try:
+        linter = PromptLinter()
+        lint_result = linter.lint("playground", template)
+        lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+
+        detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
+        sec_findings = detector.detect(template)
+
+        pii = PIIDetector()
+        pii_finding = pii.check(template)
+        if pii_finding:
+            sec_findings.append(pii_finding)
+
+        struct_finding = check_structural(template)
+        if struct_finding:
+            sec_findings.append(struct_finding)
+
+        all_findings = list(lint_findings) + sec_findings
+        scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+        return {"status": "success", "scorecard": scorecard.to_dict()}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
