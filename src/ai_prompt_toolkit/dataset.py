@@ -257,6 +257,40 @@ class DatasetStore:
             results.append(r)
         return results
 
+    async def run_dataset_async(self, dataset_id: str, run_type: str = "all") -> list[DatasetRunResult]:
+        import asyncio
+        cases = self.get_cases(dataset_id)
+        results: list[DatasetRunResult] = []
+        semaphore = asyncio.Semaphore(5)
+
+        async def _run_case(case: DatasetCase) -> DatasetRunResult:
+            r = DatasetRunResult(case_id=case.case_id)
+            async with semaphore:
+                try:
+                    if run_type in ("lint", "all"):
+                        from ai_prompt_toolkit.linter.linter import PromptLinter
+                        linter = PromptLinter()
+                        lint_result = await asyncio.to_thread(linter.lint, case.case_id, case.input_text)
+                        r.lint_score = lint_result.score
+                    if run_type in ("scan", "all"):
+                        from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+                        detector = InjectionDetector()
+                        findings = await asyncio.to_thread(detector.detect, case.input_text, case.case_id)
+                        r.scan_findings = len(findings)
+                    if run_type in ("evaluate", "all"):
+                        from ai_prompt_toolkit.evaluator import evaluate_template
+                        eval_result = await asyncio.to_thread(evaluate_template, case.case_id, case.input_text)
+                        r.eval_score = eval_result.overall_score
+                    r.status = "completed"
+                except Exception as e:
+                    r.status = "error"
+                    r.error = str(e)
+            return r
+
+        tasks = [_run_case(c) for c in cases]
+        results = await asyncio.gather(*tasks)
+        return list(results)
+
     def _row_to_dataset(self, row: sqlite3.Row) -> Dataset:
         return Dataset(
             dataset_id=row["dataset_id"],
