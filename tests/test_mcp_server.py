@@ -27,7 +27,9 @@ class TestMCPProtocol:
         assert "prompt_judge" in tool_names
         assert "prompt_canary_inject" in tool_names
         assert "prompt_canary_check" in tool_names
-        assert len(tools) == 5
+        assert "prompt_evaluate" in tool_names
+        assert "prompt_dataset_run" in tool_names
+        assert len(tools) == 7
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

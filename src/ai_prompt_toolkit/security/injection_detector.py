@@ -133,6 +133,22 @@ _BUILTIN_RULES: list[InjectionRule] = [
         description="检测到情感操纵模式：利用情感压力绕过安全限制(OWASP LLM02变体)",
         remediation="添加情感操纵检测层，安全规则不受情感语境影响",
     ),
+    InjectionRule(
+        rule_id="INJ-016",
+        name="编码注入",
+        pattern=r"(?:base64|hex|rot13|unicode|url.encode|atob|btoa|\\x[0-9a-f]{2}|\\u[0-9a-f]{4}).*(?:exec|eval|run|execute|system|command)",
+        severity=Severity.HIGH,
+        description="检测到编码注入模式：通过编码绕过安全检测执行命令(OWASP LLM01变体)",
+        remediation="对编码内容进行解码后再检测，禁止编码后执行命令",
+    ),
+    InjectionRule(
+        rule_id="INJ-017",
+        name="多语言绕过",
+        pattern=r"(?:忽略|无视|跳过|绕过|取消|删除|移除|覆写|替换).*(?:规则|限制|约束|安全|防护|过滤|检查|指令|以上)",
+        severity=Severity.MEDIUM,
+        description="检测到中文多语言绕过模式：利用非英文指令绕过安全过滤",
+        remediation="添加多语言安全规则匹配，确保中英文指令均受约束",
+    ),
 ]
 
 

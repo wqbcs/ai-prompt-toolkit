@@ -125,6 +125,30 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["output", "tokens"],
             },
         },
+        {
+            "name": "prompt_evaluate",
+            "description": "对Prompt执行62维度质量评估，返回综合评分和各维度得分",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                    "dimensions": {"type": "string", "description": "指定评估维度(逗号分隔，留空则全部)"},
+                },
+                "required": ["template"],
+            },
+        },
+        {
+            "name": "prompt_dataset_run",
+            "description": "对数据集批量执行lint/scan/evaluate，返回每个用例的结果",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "dataset_id": {"type": "string", "description": "数据集ID"},
+                    "run_type": {"type": "string", "description": "运行类型: all/lint/scan/evaluate", "enum": ["all", "lint", "scan", "evaluate"]},
+                },
+                "required": ["dataset_id"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -141,6 +165,12 @@ def _handle_resources_list(id_val: Any) -> str:
             "uri": "prompt://rules",
             "name": "Lint规则列表",
             "description": "50条Lint规则(P001-P050)和30+安全检测规则",
+            "mimeType": "application/json",
+        },
+        {
+            "uri": "prompt://datasets",
+            "name": "数据集列表",
+            "description": "所有已创建的测试数据集",
             "mimeType": "application/json",
         },
     ]
@@ -171,6 +201,18 @@ def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
         return _make_response(id_val, {
             "contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(rules, ensure_ascii=False)}]
         })
+    elif uri == "prompt://datasets":
+        from ai_prompt_toolkit.dataset import DatasetStore
+        try:
+            store = DatasetStore()
+            datasets, total = store.list_datasets()
+            data = [{"id": d.dataset_id, "name": d.name, "cases": d.case_count} for d in datasets]
+            store.close()
+        except Exception:
+            data = []
+        return _make_response(id_val, {
+            "contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"total": len(data), "datasets": data}, ensure_ascii=False)}]
+        })
     return _make_error(id_val, -32602, f"Unknown resource URI: {uri}")
 
 
@@ -189,6 +231,10 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_canary_inject(arguments)
         elif tool_name == "prompt_canary_check":
             result = _tool_canary_check(arguments)
+        elif tool_name == "prompt_evaluate":
+            result = _tool_evaluate(arguments)
+        elif tool_name == "prompt_dataset_run":
+            result = _tool_dataset_run(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -368,6 +414,38 @@ def run_server() -> None:
         except Exception as e:
             error = _make_error(None, -32603, str(e))
             print(error, flush=True)
+
+
+def _tool_evaluate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.evaluator import evaluate_template
+    template = args.get("template", "")
+    dimensions_str = args.get("dimensions", "")
+    dimensions = [d.strip() for d in dimensions_str.split(",") if d.strip()] if dimensions_str else None
+    result = evaluate_template("mcp", template, dimensions=dimensions)
+    dim_scores = {s.name: round(s.score, 2) for s in result.scores}
+    return {
+        "overall_score": round(result.overall_score, 2),
+        "dimension_scores": dim_scores,
+        "category_scores": {k: round(v, 4) for k, v in result.category_scores.items()},
+    }
+
+
+def _tool_dataset_run(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.dataset import DatasetStore
+    dataset_id = args.get("dataset_id", "")
+    run_type = args.get("run_type", "all")
+    store = DatasetStore()
+    if not store.get_dataset(dataset_id):
+        store.close()
+        return {"error": f"Dataset not found: {dataset_id}"}
+    results = store.run_dataset(dataset_id, run_type=run_type)
+    store.close()
+    return {
+        "dataset_id": dataset_id,
+        "run_type": run_type,
+        "total_cases": len(results),
+        "results": [r.to_dict() for r in results],
+    }
 
 
 if __name__ == "__main__":
