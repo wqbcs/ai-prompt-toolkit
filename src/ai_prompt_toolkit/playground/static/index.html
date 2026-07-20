@@ -18,6 +18,7 @@ body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;backgroun
 .status-badge{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
 .status-ok{background:#dcfce7;color:#166534}
 .status-err{background:#fee2e2;color:#991b1b}
+.status-warn{background:#fef3c7;color:#92400e}
 .branch-info{font-size:11px;color:var(--text2);padding:4px 12px;background:var(--surface);border-top:1px solid var(--border)}
 .tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border)}
 .tab{padding:6px 14px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;background:var(--surface)}
@@ -252,6 +253,8 @@ function hideShortcuts(){document.getElementById('shortcuts-panel').style.displa
 
 async function compile(){
   const template=srcEditor.value;
+  if(!template.trim()){resultEditor.textContent='请输入模板内容...';return}
+  statusBadge.textContent='编译中...';statusBadge.className='status-badge status-warn';
   const context={model:document.getElementById('ctx-model').value,language:document.getElementById('ctx-lang').value,industry:document.getElementById('ctx-industry').value};
   try{
     const resp=await fetch('/api/compile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,context})});
@@ -269,6 +272,8 @@ async function compile(){
 
 async function runLint(){
   const template=srcEditor.value;
+  if(!template.trim()){document.getElementById('lint-results').innerHTML='<p style="font-size:11px;color:var(--text2)">请先输入模板内容</p>';return}
+  document.getElementById('lint-status').textContent='检查中...';
   try{
     const resp=await fetch('/api/lint',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
     const data=await resp.json();
@@ -278,6 +283,8 @@ async function runLint(){
 
 async function runScan(){
   const template=srcEditor.value;
+  if(!template.trim()){document.getElementById('scan-results').innerHTML='<p style="font-size:11px;color:var(--text2)">请先输入模板内容</p>';return}
+  document.getElementById('scan-status').textContent='扫描中...';
   try{
     const resp=await fetch('/api/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template})});
     const data=await resp.json();
@@ -309,6 +316,8 @@ function updateScanUI(total,findings){
 
 async function runEvaluate(){
   const template=srcEditor.value;
+  if(!template.trim()){document.getElementById('eval-dims').innerHTML='<p style="font-size:11px;color:var(--text2)">请先输入模板内容</p>';return}
+  document.getElementById('eval-status').textContent='评估中...';
   try{
     const resp=await fetch('/api/evaluate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,template_type:'prompt'})});
     const data=await resp.json();
