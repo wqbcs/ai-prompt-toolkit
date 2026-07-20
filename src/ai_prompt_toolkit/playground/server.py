@@ -60,6 +60,26 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def rate_limit_middleware(request: Any, call_next: Any) -> Any:
+    import time
+    from starlette.responses import JSONResponse
+    if request.url.path.startswith("/api/"):
+        if not hasattr(rate_limit_middleware, "_clients"):
+            rate_limit_middleware._clients = {}
+        client_id = request.client.host if request.client else "unknown"
+        now = time.time()
+        clients = rate_limit_middleware._clients
+        if client_id not in clients:
+            clients[client_id] = []
+        clients[client_id] = [t for t in clients[client_id] if now - t < 60]
+        if len(clients[client_id]) > 100:
+            return JSONResponse(status_code=429, content={"error": "请求过于频繁，请稍后再试"})
+        clients[client_id].append(now)
+    response = await call_next(request)
+    return response
+
+
 def _build_context(ctx_data: dict[str, Any]) -> CompileContext:
     model = ctx_data.get("model", "")
     language = ctx_data.get("language", "")
@@ -108,6 +128,14 @@ async def api_context_schema() -> dict[str, Any]:
 @app.get("/api/version")
 async def api_version() -> dict[str, str]:
     return {"version": __version__}
+
+
+@app.get("/api/i18n/{locale}")
+async def api_i18n(locale: str) -> dict[str, Any]:
+    from ai_prompt_toolkit.i18n.messages import _MESSAGES, get_supported_locales
+    if locale not in _MESSAGES:
+        return {"status": "error", "error": f"不支持的语言: {locale}"}
+    return {"status": "success", "locale": locale, "messages": _MESSAGES[locale], "supported_locales": get_supported_locales()}
 
 
 @app.get("/api/templates")
