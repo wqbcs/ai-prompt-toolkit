@@ -66,7 +66,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回50条规则的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回55条规则的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -164,7 +164,7 @@ def _handle_resources_list(id_val: Any) -> str:
         {
             "uri": "prompt://rules",
             "name": "Lint规则列表",
-            "description": "50条Lint规则(P001-P050)和30+安全检测规则",
+            "description": "55条Lint规则(P001-P055)和30+安全检测规则",
             "mimeType": "application/json",
         },
         {
@@ -191,7 +191,7 @@ def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
         })
     elif uri == "prompt://rules":
         rules = []
-        for i in range(1, 51):
+        for i in range(1, 56):
             rules.append({"rule_id": f"P{i:03d}", "category": "lint"})
         for i in range(1, 16):
             rules.append({"rule_id": f"INJ-{i:03d}", "category": "security"})
