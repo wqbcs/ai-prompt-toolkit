@@ -121,6 +121,7 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 @click.option("--template", type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]), default=None, help="项目模板")
 def init_project(target: str, non_interactive: bool, ci: bool, template: str | None) -> None:
     """初始化项目：创建项目结构和配置文件"""
+    from ai_prompt_toolkit.config import generate_config
     from ai_prompt_toolkit.output import success
 
     target_path = Path(target).resolve()
@@ -129,6 +130,13 @@ def init_project(target: str, non_interactive: bool, ci: bool, template: str | N
     dirs = ["prompts", "tests", "configs"]
     for d in dirs:
         (target_path / d).mkdir(exist_ok=True)
+
+    config_file = target_path / ".prompt-cli.toml"
+    if not config_file.exists():
+        generate_config(config_file)
+        click.echo(f"  配置文件已生成: {config_file}")
+    else:
+        click.echo(f"  配置文件已存在: {config_file}")
 
     if template:
         _apply_template(target, template)

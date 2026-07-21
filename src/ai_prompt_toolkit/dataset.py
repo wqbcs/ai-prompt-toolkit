@@ -128,6 +128,21 @@ class DatasetStore:
                 FOREIGN KEY (dataset_id) REFERENCES datasets(dataset_id)
             );
             CREATE INDEX IF NOT EXISTS idx_cases_dataset ON dataset_cases(dataset_id);
+
+            CREATE TABLE IF NOT EXISTS dataset_versions (
+                version_id TEXT PRIMARY KEY,
+                dataset_id TEXT NOT NULL,
+                version_number INTEGER NOT NULL DEFAULT 1,
+                snapshot TEXT NOT NULL DEFAULT '[]',
+                case_count INTEGER NOT NULL DEFAULT 0,
+                content_hash TEXT NOT NULL DEFAULT '',
+                author TEXT NOT NULL DEFAULT '',
+                message TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL DEFAULT '',
+                FOREIGN KEY (dataset_id) REFERENCES datasets(dataset_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_versions_dataset ON dataset_versions(dataset_id);
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_versions_did_num ON dataset_versions(dataset_id, version_number);
         """)
         conn.commit()
 
@@ -416,3 +431,120 @@ class DatasetStore:
         if self._conn:
             self._conn.close()
             self._conn = None
+
+    def create_version(
+        self, dataset_id: str, author: str = "", message: str = ""
+    ) -> dict[str, Any]:
+        import hashlib
+        import uuid
+
+        conn = self._connect()
+        cases = self.get_cases(dataset_id)
+        snapshot = json.dumps([c.to_dict() for c in cases], ensure_ascii=False)
+        content_hash = hashlib.sha256(snapshot.encode("utf-8")).hexdigest()[:16]
+
+        latest = conn.execute(
+            "SELECT MAX(version_number) as max_ver FROM dataset_versions WHERE dataset_id = ?",
+            (dataset_id,),
+        ).fetchone()
+        next_ver = (latest["max_ver"] or 0) + 1
+
+        now = time.strftime("%Y-%m-%dT%H:%M:%S")
+        version_id = uuid.uuid4().hex[:12]
+        conn.execute(
+            "INSERT INTO dataset_versions (version_id, dataset_id, version_number, snapshot, case_count, content_hash, author, message, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (version_id, dataset_id, next_ver, snapshot, len(cases), content_hash, author, message, now),
+        )
+        conn.commit()
+        return {
+            "version_id": version_id,
+            "dataset_id": dataset_id,
+            "version_number": next_ver,
+            "case_count": len(cases),
+            "content_hash": content_hash,
+            "created_at": now,
+        }
+
+    def list_versions(self, dataset_id: str) -> list[dict[str, Any]]:
+        conn = self._connect()
+        rows = conn.execute(
+            "SELECT version_id, dataset_id, version_number, case_count, content_hash, author, message, created_at FROM dataset_versions WHERE dataset_id = ? ORDER BY version_number DESC",
+            (dataset_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_version(self, dataset_id: str, version_number: int) -> dict[str, Any] | None:
+        conn = self._connect()
+        row = conn.execute(
+            "SELECT * FROM dataset_versions WHERE dataset_id = ? AND version_number = ?",
+            (dataset_id, version_number),
+        ).fetchone()
+        if not row:
+            return None
+        return dict(row)
+
+    def restore_version(self, dataset_id: str, version_number: int) -> int:
+        conn = self._connect()
+        row = conn.execute(
+            "SELECT snapshot FROM dataset_versions WHERE dataset_id = ? AND version_number = ?",
+            (dataset_id, version_number),
+        ).fetchone()
+        if not row:
+            return 0
+
+        cases_data = json.loads(row["snapshot"])
+        conn.execute("DELETE FROM dataset_cases WHERE dataset_id = ?", (dataset_id,))
+
+        count = 0
+        now = time.strftime("%Y-%m-%dT%H:%M:%S")
+        for case_dict in cases_data:
+            import uuid
+
+            case_id = uuid.uuid4().hex[:12]
+            conn.execute(
+                "INSERT INTO dataset_cases (case_id, dataset_id, input_text, expected_output, tags, metadata, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (
+                    case_id,
+                    dataset_id,
+                    case_dict.get("input_text", ""),
+                    case_dict.get("expected_output", ""),
+                    json.dumps(case_dict.get("tags", []), ensure_ascii=False),
+                    json.dumps(case_dict.get("metadata", {}), ensure_ascii=False),
+                    now,
+                ),
+            )
+            count += 1
+
+        conn.execute(
+            "UPDATE datasets SET case_count = ?, updated_at = ? WHERE dataset_id = ?",
+            (count, now, dataset_id),
+        )
+        conn.commit()
+        return count
+
+    def diff_versions(
+        self, dataset_id: str, version_a: int, version_b: int
+    ) -> dict[str, Any]:
+        va = self.get_version(dataset_id, version_a)
+        vb = self.get_version(dataset_id, version_b)
+        if not va or not vb:
+            return {"error": "版本不存在"}
+
+        cases_a = {c["input_text"]: c for c in json.loads(va["snapshot"])}
+        cases_b = {c["input_text"]: c for c in json.loads(vb["snapshot"])}
+
+        added = [k for k in cases_b if k not in cases_a]
+        removed = [k for k in cases_a if k not in cases_b]
+        common = [k for k in cases_a if k in cases_b]
+        modified = [k for k in common if cases_a[k] != cases_b[k]]
+
+        return {
+            "version_a": version_a,
+            "version_b": version_b,
+            "added": len(added),
+            "removed": len(removed),
+            "modified": len(modified),
+            "unchanged": len(common) - len(modified),
+            "added_inputs": added[:10],
+            "removed_inputs": removed[:10],
+        }

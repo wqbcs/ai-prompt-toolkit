@@ -33,6 +33,11 @@ _DEFAULTS: dict[str, Any] = {
     "sarif_schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
     "template_dirs": [],
     "severity_overrides": {},
+    "cache_enabled": True,
+    "cache_ttl_seconds": 86400,
+    "eval_config_path": "",
+    "npu_enabled": False,
+    "huawei_region": "cn-north-4",
 }
 
 _ENV_PREFIX = "PROMPT_CLI_"
@@ -59,6 +64,11 @@ class PromptCliConfig:
     sarif_schema: str = ""
     template_dirs: list[str] = field(default_factory=list)
     severity_overrides: dict[str, str] = field(default_factory=dict)
+    cache_enabled: bool = True
+    cache_ttl_seconds: int = 86400
+    eval_config_path: str = ""
+    npu_enabled: bool = False
+    huawei_region: str = "cn-north-4"
 
     def to_dict(self) -> dict[str, Any]:
         import dataclasses
@@ -192,3 +202,76 @@ def _validate_config_values(data: dict[str, Any]) -> list[str]:
         errors.append(f"max_retries 必须 >= 0 整数, 当前值: {retries}")
 
     return errors
+
+
+CONFIG_TEMPLATE_TOML = """\
+# AI Prompt Toolkit 项目配置
+# 参考: promptfoo promptfooconfig.yaml
+
+[tool.prompt-cli]
+# Lint配置
+lint_on_save = true
+lint_on_type = false
+quality_gate_min_score = 90
+
+# 安全配置
+security_scan = true
+pii_detection = true
+zh_injection = true
+
+# Provider配置
+default_provider = "openai"
+default_model = "gpt-4o-mini"
+
+# 性能配置
+cache_enabled = true
+cache_ttl_seconds = 86400
+max_retries = 3
+timeout_seconds = 30.0
+cost_limit_usd = 10.0
+
+# 华为云配置
+npu_enabled = false
+huawei_region = "cn-north-4"
+
+# 评估配置(声明式YAML评估配置文件路径)
+# eval_config_path = "prompt-eval.yaml"
+
+# 自定义模板目录
+# template_dirs = ["./prompts"]
+
+# 规则严重性覆盖
+# [tool.prompt-cli.severity_overrides]
+# P012 = "low"
+# P048 = "info"
+"""
+
+
+def generate_config(output_path: str | Path | None = None, fmt: str = "toml") -> Path:
+    if output_path is None:
+        if fmt == "yaml":
+            output_path = Path(".prompt-cli.yaml")
+        else:
+            output_path = Path(".prompt-cli.toml")
+    output_path = Path(output_path)
+
+    if fmt == "toml":
+        output_path.write_text(CONFIG_TEMPLATE_TOML, encoding="utf-8")
+    elif fmt == "yaml":
+        import yaml
+        config_data = {
+            "lint_on_save": True,
+            "lint_on_type": False,
+            "quality_gate_min_score": 90,
+            "security_scan": True,
+            "pii_detection": True,
+            "default_provider": "openai",
+            "default_model": "gpt-4o-mini",
+            "cache_enabled": True,
+            "cache_ttl_seconds": 86400,
+            "npu_enabled": False,
+            "huawei_region": "cn-north-4",
+        }
+        output_path.write_text(yaml.dump(config_data, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+
+    return output_path
