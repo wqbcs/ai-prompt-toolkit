@@ -2431,3 +2431,17 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
 
     click.echo("使用 --init 生成示例规则 或 --load 加载规则文件")
 
+
+from ai_prompt_toolkit.cli.commands import (  # noqa: E402,F401
+    lint_commands,
+    redteam_commands,
+    compile_commands,
+    abtest_commands,
+    eval_commands,
+    security_commands,
+    dev_commands,
+    dataset_commands,
+    plugin_commands,
+    template_commands,
+)
+

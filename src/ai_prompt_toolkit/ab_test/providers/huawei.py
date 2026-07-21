@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, SIMULATED_MODE, _global_cost_tracker
+from ai_prompt_toolkit.ab_test.provider import SIMULATED_MODE, BaseProvider, _global_cost_tracker
 from ai_prompt_toolkit.ab_test.types import ModelResult, TestStatus
 
 
@@ -11,12 +11,17 @@ class HuaweiProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
         "pangu-large": (0.012, 0.036), "pangu-medium": (0.004, 0.012),
         "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
-        "pangu-code": (0.006, 0.018), "qwen-72b": (0.006, 0.018),
+        "pangu-code": (0.006, 0.018), "pangu-search": (0.005, 0.015),
+        "pangu-nlp-65b": (0.004, 0.012), "pangu-nlp-7b": (0.001, 0.003),
+        "pangu-prediction": (0.005, 0.015), "pangu-multimodal": (0.008, 0.024),
+        "pangu-scientific": (0.010, 0.030),
+        "qwen-72b": (0.006, 0.018),
         "deepseek-v3": (0.0014, 0.0028),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
     _PROVIDER_LABEL: str = "HuaweiCloud"
     _HUAWEI_MODELARTS_BASE = "https://modelarts.cn-north-4.myhuaweicloud.com/v1"
+    _HUAWEI_MAAS_BASE = "https://maas.cn-north-4.myhuaweicloud.com/v1"
 
     def validate(self) -> bool:
         try:
@@ -40,7 +45,9 @@ class HuaweiProvider(BaseProvider):
         try:
             api_base = self._config.api_base or self._HUAWEI_MODELARTS_BASE
             url = api_base.rstrip("/") + "/chat/completions"
-            if "modelarts" in api_base.lower() or "huawei" in api_base.lower():
+            if "maas" in api_base.lower():
+                headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+            elif "modelarts" in api_base.lower() or "huawei" in api_base.lower():
                 headers = {"X-Auth-Token": key, "Content-Type": "application/json"}
             else:
                 headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}

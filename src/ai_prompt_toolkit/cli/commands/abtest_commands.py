@@ -23,9 +23,10 @@ def ab_test(config: str, models: str | None, dataset: str | None,
     """A/B测试：多模型并行对比提示词效果"""
     import asyncio
     import json as _json
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report, empty_state_tip
-    from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
+
     from ai_prompt_toolkit.ab_test.engine import ParallelEngine
+    from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip, load_config, resolve_path, write_report
 
     cfg = load_config(config)
     model_list = models.split(",") if models else cfg.get("models", [])

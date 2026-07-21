@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 
-from ai_prompt_toolkit.cli_core import main, _detect_template_type, _generate_sarif
+from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, main
 
 
 @main.command()
@@ -25,9 +25,8 @@ from ai_prompt_toolkit.cli_core import main, _detect_template_type, _generate_sa
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
-    from ai_prompt_toolkit.cli_helpers import empty_state_tip
 
     templates = discover_templates(target)
     if not templates:
@@ -40,8 +39,8 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     total_score = 0.0
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
         from rich.console import Console
+        from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
         _has_rich = True
         console = Console()
     except ImportError:
@@ -90,7 +89,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         for result in all_results:
             if result.findings:
                 for f in result.findings:
-                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                    sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                     marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                     prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
                     click.echo(f"  {marker} [{result.template_id}] {prefix}{f.rule_id}: {f.description}")
@@ -164,9 +163,8 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 def scan(target: str, provider: str | None, fmt: str, output: str | None,
          incremental: bool) -> None:
     """安全扫描：检测Prompt注入、敏感信息泄露等安全风险"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
-    from ai_prompt_toolkit.cli_helpers import empty_state_tip
-    from ai_prompt_toolkit.security import scan_template, DictTemplateProvider
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
+    from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
 
     templates = discover_templates(target)
     if not templates:
@@ -176,6 +174,7 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
     prov = DictTemplateProvider({})
     if provider:
         import yaml as _yaml
+
         from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider as DTP
         prov_data = _yaml.safe_load(Path(provider).read_text(encoding="utf-8"))
         prov = DTP(prov_data or {})
@@ -191,7 +190,7 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
 
         if fmt == "cli" and result.findings:
             for f in result.findings:
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 marker = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                 click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
 
@@ -223,8 +222,8 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
 @click.option("--output", "-o", help="报告输出路径")
 def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | None) -> None:
     """Token分析：估算Token消耗、成本和优化建议"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report
-    from ai_prompt_toolkit.linter.token_analyzer import estimate_tokens, analyze_prompt_tokens, compare_models
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, compare_models
 
     templates = discover_templates(target)
     if not templates:

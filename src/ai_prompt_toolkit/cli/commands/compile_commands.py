@@ -21,8 +21,8 @@ from ai_prompt_toolkit.cli_core import main
 def compile(source: str, context: str | None, config: str | None,
             output: str | None, report: str | None) -> None:
     """条件编译：按模型/语言/行业条件编译提示词模板"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_context, write_report, determine_exit_code
-    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, load_context, resolve_path, write_report
+    from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
     src_path = resolve_path(source)
     template_text = src_path.read_text(encoding="utf-8")

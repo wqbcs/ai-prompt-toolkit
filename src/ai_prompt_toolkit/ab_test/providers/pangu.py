@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, SIMULATED_MODE, _global_cost_tracker
+from ai_prompt_toolkit.ab_test.provider import SIMULATED_MODE, BaseProvider, _global_cost_tracker
 from ai_prompt_toolkit.ab_test.types import ModelResult, TestStatus
 
 
@@ -15,12 +15,19 @@ class PanguProvider(BaseProvider):
         "pangu-vision": (0.008, 0.024),
         "pangu-code": (0.006, 0.018),
         "pangu-search": (0.005, 0.015),
+        "pangu-nlp-65b": (0.004, 0.012),
+        "pangu-nlp-7b": (0.001, 0.003),
+        "pangu-vision-10b": (0.006, 0.018),
+        "pangu-prediction": (0.005, 0.015),
+        "pangu-multimodal": (0.008, 0.024),
+        "pangu-scientific": (0.010, 0.030),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
     _PROVIDER_LABEL: str = "Pangu"
 
     _MODELARTS_BASE = "https://modelarts.cn-north-4.myhuaweicloud.com/v1"
     _PANGU_API_BASE = "https://pangu-api.cn-north-4.myhuaweicloud.com/v1"
+    _MODELARTS_STUDIO_BASE = "https://maas.cn-north-4.myhuaweicloud.com/v1"
 
     def validate(self) -> bool:
         try:
@@ -44,11 +51,19 @@ class PanguProvider(BaseProvider):
         try:
             api_base = self._config.api_base or self._PANGU_API_BASE
             url = api_base.rstrip("/") + "/chat/completions"
-            headers = {
-                "Authorization": f"Bearer {key}",
-                "Content-Type": "application/json",
-                "X-SDK-Language": "Python",
-            }
+            if "maas" in api_base.lower():
+                headers = {
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                }
+            elif "modelarts" in api_base.lower() or "huawei" in api_base.lower():
+                headers = {"X-Auth-Token": key, "Content-Type": "application/json"}
+            else:
+                headers = {
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                    "X-SDK-Language": "Python",
+                }
             payload = {
                 "model": self._config.model_name,
                 "messages": [{"role": "user", "content": prompt}],

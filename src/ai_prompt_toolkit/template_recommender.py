@@ -8,7 +8,7 @@ P2-06: 智能推荐减少模板选择疲劳
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -55,6 +55,10 @@ _BUILTIN_TEMPLATES: list[TemplateRecommendation] = [
     TemplateRecommendation("creative-writer", "创意写作", "creative", "媒体", ["gpt-4", "claude-3"], 88.0, 4.6, 1100),
     TemplateRecommendation("api-doc-generator", "API文档生成", "development", "科技", ["gpt-4", "deepseek"], 91.0, 4.4, 680),
     TemplateRecommendation("harmonyos-dev", "鸿蒙开发助手", "development", "华为云", ["qwen", "pangu"], 90.0, 4.7, 1500),
+    TemplateRecommendation("pangu-nlp-assistant", "盘古NLP助手", "nlp", "华为云", ["pangu", "pangu-nlp", "pangu-nlp-65b"], 92.0, 4.6, 980),
+    TemplateRecommendation("harmonyos-arkts-codegen", "鸿蒙ArkTS代码生成", "development", "华为云", ["pangu-code", "qwen"], 97.0, 4.8, 760),
+    TemplateRecommendation("harmonyos-distributed", "鸿蒙分布式开发", "development", "华为云", ["pangu-code", "qwen"], 95.0, 4.5, 540),
+    TemplateRecommendation("huawei-modelarts-deploy", "ModelArts部署助手", "deployment", "华为云", ["pangu", "qwen"], 92.0, 4.7, 680),
 ]
 
 _WEIGHT_CONFIG = {

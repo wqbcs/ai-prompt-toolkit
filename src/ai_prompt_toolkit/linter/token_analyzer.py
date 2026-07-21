@@ -19,7 +19,6 @@ from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
 
-
 _TOKEN_RATIOS: dict[str, float] = {
     "gpt-4": 0.75,
     "gpt-4o": 0.75,
@@ -60,6 +59,14 @@ _PRICING: dict[str, tuple[float, float]] = {
     "qwen": (0.0004, 0.0012),
     "qwen-max": (0.002, 0.006),
     "pangu": (0.0012, 0.004),
+    "pangu-nlp": (0.003, 0.009),
+    "pangu-nlp-65b": (0.004, 0.012),
+    "pangu-nlp-7b": (0.001, 0.003),
+    "pangu-vision": (0.008, 0.024),
+    "pangu-multimodal": (0.008, 0.024),
+    "pangu-prediction": (0.005, 0.015),
+    "pangu-scientific": (0.010, 0.030),
+    "pangu-code": (0.006, 0.018),
     "ernie-4.0": (0.0012, 0.012),
     "glm-4": (0.001, 0.001),
     "kimi": (0.0012, 0.0012),

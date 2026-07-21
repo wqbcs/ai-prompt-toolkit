@@ -97,6 +97,17 @@ class AbTestError(ToolkitError):
         super().__init__(message, category=ErrorCategory.AB_TEST, error_code=1, details=d)
 
 
+class ProviderError(AbTestError):
+    """Provider连接/调用失败"""
+
+    def __init__(self, message: str, *, provider: str | None = None, endpoint: str | None = None,
+                 details: dict[str, Any] | None = None) -> None:
+        d = details or {}
+        if endpoint:
+            d["endpoint"] = endpoint
+        super().__init__(message, provider=provider, details=d)
+
+
 class ConfigError(ToolkitError):
     """配置相关错误"""
 
@@ -155,23 +166,28 @@ def toolkit_exit_code(exc: ToolkitError) -> int:
     return exc.error_code
 
 
-_REMEDIATION_HINTS: dict[str, str] = {
+_REMEDIATION_HINTS: dict[ErrorCategory, str] = {
     ErrorCategory.LINT: "运行 'prompt-cli lint --fix -t <file>' 自动修复",
     ErrorCategory.SECURITY: "运行 'prompt-cli scan -t <file>' 查看详细安全报告",
     ErrorCategory.COMPILER: "检查 {{#if}}...{{else}}...{{/if}} 语法是否正确",
     ErrorCategory.CONFIG: "检查 .prompt-cli.toml 配置文件格式",
     ErrorCategory.AB_TEST: "运行 'prompt-cli doctor' 检查Provider配置",
     ErrorCategory.VERSION: "运行 'prompt-cli version list' 查看历史版本",
-    ErrorCategory.REDTEAM: "运行 'prompt-cli redteam -s <file>' 执行红队测试",
+    ErrorCategory.REDTEAM: "运行 'prompt-cli redteam -t <file>' 执行红队测试",
     ErrorCategory.MCP: "检查MCP Server配置和连接",
     ErrorCategory.MARKET: "运行 'prompt-cli market search' 查找模板",
+    ErrorCategory.RUNTIME: "运行 'prompt-cli doctor' 诊断环境问题",
 }
 
 
 def format_error_for_cli(exc: ToolkitError) -> str:
-    """将ToolkitError格式化为CLI友好的错误信息"""
-    base = str(exc)
+    """将ToolkitError格式化为CLI友好的错误信息(三层: 用户消息+技术细节+修复建议)"""
+    parts = [f"[{exc.category.value}] {exc.args[0] if exc.args else '未知错误'}"]
+    if exc.details:
+        detail_items = ", ".join(f"{k}={v}" for k, v in exc.details.items() if v)
+        if detail_items:
+            parts.append(f"  详情: {detail_items}")
     hint = _REMEDIATION_HINTS.get(exc.category)
     if hint:
-        base = f"{base}\n  提示: {hint}"
-    return base
+        parts.append(f"  建议: {hint}")
+    return "\n".join(parts)

@@ -28,9 +28,13 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
                 scorecard: bool) -> None:
     """红队探测：对抗性安全测试"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
-    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
-    from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.detector import (
+        ComplianceDetector,
+        LeakageDetector,
+        RefusalDetector,
+    )
     from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
 
     available = get_available_probes()
 
@@ -74,8 +78,8 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
     orchestrator = ExplorationOrchestrator(probes=probe_instances, detectors=detectors)
 
     if provider:
-        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
         from ai_prompt_toolkit.ab_test.provider import create_provider
+        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
         parts = provider.split(":")
         if len(parts) == 2:
             try:
@@ -119,8 +123,9 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo(report.get_summary())
 
     if scorecard:
-        from ai_prompt_toolkit.security.badge import generate_scorecard_badge
         from pathlib import Path as _P
+
+        from ai_prompt_toolkit.security.badge import generate_scorecard_badge
         findings_count = sum(len(pr.findings) for pr in report.probe_results)
         total_probes = len(report.probe_results)
         passed = sum(1 for pr in report.probe_results if not pr.findings)
