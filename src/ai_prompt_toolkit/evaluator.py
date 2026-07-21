@@ -247,15 +247,38 @@ class _DimensionEvaluator:
                 return 6.0
             return 3.0
         elif dim_id == "D22":
-            return 6.0 if length < 1000 else 4.0
+            has_concise = self._has_pattern(r"简洁|简短|不超过|精简|concise|brief")
+            has_no_redundancy = self._count_pattern(r"等等|之类的|可能|大概|应该|尽量") < 3
+            score = 4.0
+            if length < 1000:
+                score += 2.0
+            if has_concise:
+                score += 2.0
+            if has_no_redundancy:
+                score += 1.0
+            return min(10.0, score)
         elif dim_id == "D23":
             return 7.0 if self._has_pattern(r"---", r"version") else 4.0
         elif dim_id == "D24":
             return 6.0 if self._has_pattern(r"批量|batch|循环|loop") else 4.0
         elif dim_id == "D25":
-            return 7.0
+            has_stateless = self._has_pattern(r"无状态|stateless|幂等|idempotent")
+            no_global_var = self._count_pattern(r"全局|global|共享变量") == 0
+            score = 5.0
+            if has_stateless:
+                score += 3.0
+            if no_global_var:
+                score += 2.0
+            return min(10.0, score)
         elif dim_id == "D26":
-            return 6.0
+            has_structure = self._count_pattern(r"^#+\s") >= 2
+            has_sequential = self._has_pattern(r"首先|然后|接着|最后|第一步|step")
+            score = 4.0
+            if has_structure:
+                score += 3.0
+            if has_sequential:
+                score += 2.0
+            return min(10.0, score)
         elif dim_id == "D27":
             return 8.0 if length < 800 else 5.0
         elif dim_id == "D28":
@@ -263,7 +286,14 @@ class _DimensionEvaluator:
         elif dim_id == "D29":
             return 6.0 if length < 500 else 4.0
         elif dim_id == "D30":
-            return 7.0
+            has_idempotent = self._has_pattern(r"幂等|idempotent|无状态|stateless")
+            has_same_result = self._has_pattern(r"相同结果|same result|一致|consistent")
+            score = 5.0
+            if has_idempotent:
+                score += 3.0
+            if has_same_result:
+                score += 2.0
+            return min(10.0, score)
         return 5.0
 
     def _eval_quality(self, dim_id: str) -> float:
@@ -282,18 +312,52 @@ class _DimensionEvaluator:
         elif dim_id == "D37":
             return 7.0 if self._has_pattern(r"原因|理由|为什么|why|reason") else 4.0
         elif dim_id == "D38":
-            return 6.0
+            has_error_handling = self._has_pattern(r"错误|异常|失败|error|exception|fallback")
+            has_boundary = self._has_pattern(r"边界|极限|最大|最小|超|超出|boundary")
+            has_default = self._has_pattern(r"默认|default|否则|otherwise|回退")
+            score = 3.0
+            if has_error_handling:
+                score += 3.0
+            if has_boundary:
+                score += 2.0
+            if has_default:
+                score += 2.0
+            return min(10.0, score)
         elif dim_id == "D39":
-            return 5.0
+            has_deterministic = self._has_pattern(r"确定|固定|一致|相同|deterministic|consistent")
+            no_random = self._count_pattern(r"随机|random|可能|也许|任意") < 2
+            has_temperature = self._has_pattern(r"temperature|温度|确定性")
+            score = 4.0
+            if has_deterministic:
+                score += 2.0
+            if no_random:
+                score += 2.0
+            if has_temperature:
+                score += 2.0
+            return min(10.0, score)
         elif dim_id == "D40":
             return 7.0 if self._has_pattern(r"请|帮我") else 4.0
         return 5.0
 
     def _eval_toolchain(self, dim_id: str) -> float:
         if dim_id == "D41":
-            return 7.0
+            has_import = self._has_pattern(r"import|from|require|依赖")
+            has_api_ref = self._has_pattern(r"API|SDK|\.py|\.ts|\.js|\.go")
+            score = 4.0
+            if has_import:
+                score += 3.0
+            if has_api_ref:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D42":
-            return 6.0
+            has_endpoint = self._has_pattern(r"https?://|endpoint|API|api_key|url")
+            has_provider = self._has_pattern(r"provider|openai|claude|qwen|pangu|deepseek")
+            score = 3.0
+            if has_endpoint:
+                score += 3.0
+            if has_provider:
+                score += 4.0
+            return min(10.0, score)
         elif dim_id == "D43":
             return 7.0 if self._has_pattern(r"依赖|require|import") else 4.0
         elif dim_id == "D44":
@@ -301,19 +365,54 @@ class _DimensionEvaluator:
         elif dim_id == "D45":
             return 7.0 if self._has_pattern(r"version|版本|v\d") else 3.0
         elif dim_id == "D46":
-            return 6.0
+            has_gate = self._has_pattern(r"quality.?gate|门禁|lint|score|评分")
+            has_ci = self._has_pattern(r"CI|github|workflow|pipeline")
+            score = 4.0
+            if has_gate:
+                score += 3.0
+            if has_ci:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D47":
-            return 6.0
+            has_scan = self._has_pattern(r"scan|安全扫描|injection|注入|PII|脱敏")
+            has_compliance = self._has_pattern(r"合规|OWASP|compliance|GDPR")
+            score = 3.0
+            if has_scan:
+                score += 4.0
+            if has_compliance:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D48":
             return 7.0 if self._has_pattern(r"{{#if", r"{{/if}}") else 5.0
         elif dim_id == "D49":
-            return 5.0
+            has_test_ref = self._has_pattern(r"测试|test|assert|验证|pytest|jest")
+            has_dataset = self._has_pattern(r"dataset|数据集|用例|test.?case")
+            score = 3.0
+            if has_test_ref:
+                score += 4.0
+            if has_dataset:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D50":
             return 7.0 if self._has_pattern(r"---", r"```") else 3.0
         elif dim_id == "D51":
-            return 5.0
+            has_ci = self._has_pattern(r"CI|CD|github|workflow|pipeline|jenkins")
+            has_auto = self._has_pattern(r"自动|automat|hook|trigger|trigger")
+            score = 3.0
+            if has_ci:
+                score += 4.0
+            if has_auto:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D52":
-            return 5.0
+            has_monitor = self._has_pattern(r"监控|monitor|日志|log|metric|指标")
+            has_alert = self._has_pattern(r"告警|alert|阈值|threshold|通知")
+            score = 3.0
+            if has_monitor:
+                score += 4.0
+            if has_alert:
+                score += 3.0
+            return min(10.0, score)
         elif dim_id == "D53":
             return 8.0 if self._has_pattern(r"lint_score|lint") else 3.0
         elif dim_id == "D54":
