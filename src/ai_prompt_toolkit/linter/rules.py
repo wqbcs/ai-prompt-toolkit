@@ -464,6 +464,16 @@ _CHECKERS_EXTENDED: list[_CheckerFn] = _CHECKERS + [
     check_p061, check_p062,
 ]
 
+from ai_prompt_toolkit.linter.rules_p063_p070 import (  # noqa: E402
+    check_p063, check_p064, check_p065, check_p066,
+    check_p067, check_p068, check_p069, check_p070,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p063, check_p064, check_p065, check_p066,
+    check_p067, check_p068, check_p069, check_p070,
+])
+
 
 def get_all_rules() -> list[LintRule]:
     return list(_RULE_MAP.values())
