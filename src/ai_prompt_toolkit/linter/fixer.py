@@ -19,7 +19,7 @@ from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053"}
+AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061"}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -32,6 +32,37 @@ AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "差不多": "精确",
     "左右": "具体",
 }
+
+FUZZY_REPLACEMENTS: dict[str, str] = {
+    "等等": "（完整列表见下文）",
+    "之类的": "（明确范围如下）",
+    "应该": "必须",
+    "尽量": "务必",
+    "适当": "具体",
+    "合理": "明确",
+    "一定": "指定",
+    "相关": "关联",
+}
+
+_ZH_PUNCT_TO_EN: dict[str, str] = {
+    "，": ", ", "。": ". ", "！": "! ", "？": "? ",
+    "；": "; ", "：": ": ", "（": " (", "）": ") ",
+}
+
+
+def _fix_p048_mixed_punctuation(text: str) -> str:
+    import re
+    has_zh_punct = bool(re.search(r"[，。！？；：""''（）【】《》]", text))
+    if not has_zh_punct:
+        return text
+    for zh, en in _ZH_PUNCT_TO_EN.items():
+        text = text.replace(zh, en)
+    return text
+
+
+def _fix_p061_blank_lines(text: str) -> str:
+    import re
+    return re.sub(r'\n{4,}', '\n\n', text)
 
 
 @dataclass
@@ -105,4 +136,23 @@ class Fixer:
                 replacement = AMBIGUOUS_REPLACEMENTS.get(word.lower())
                 if replacement:
                     return text.replace(word, replacement, 1)
+        elif rule_id == "P003":
+            if "约束" not in text and "# 约束" not in text:
+                return "# 约束\n\n- 仅执行指定任务，不涉及其他领域\n" + text
+        elif rule_id == "P010":
+            if "错误处理" not in text and "# 错误处理" not in text:
+                return text + "\n\n# 错误处理与回退\n\n- 信息不足时请求补充\n- 执行失败时提供备选方案"
+        elif rule_id == "P025":
+            import re
+            length_match = re.search(r'(\d+)\s*(?:字|词|words?)', text)
+            if not length_match:
+                return text + "\n- 回复不超过800字"
+        elif rule_id == "P053":
+            for fuzzy, replacement in FUZZY_REPLACEMENTS.items():
+                if fuzzy in text:
+                    return text.replace(fuzzy, replacement, 1)
+        elif rule_id == "P048":
+            return _fix_p048_mixed_punctuation(text)
+        elif rule_id == "P061":
+            return _fix_p061_blank_lines(text)
         return text
