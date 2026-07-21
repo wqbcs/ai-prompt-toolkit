@@ -33,6 +33,20 @@ _TOKEN_RATIOS: dict[str, float] = {
     "default": 0.70,
 }
 
+_TOKEN_RATIOS_V2: dict[str, float] = {
+    **_TOKEN_RATIOS,
+    "pangu": 0.55,
+    "ernie": 0.60,
+    "glm": 0.62,
+    "kimi": 0.60,
+    "minimax": 0.60,
+    "gemini-2.0": 0.72,
+    "llama-3": 0.75,
+    "mistral": 0.72,
+    "yi": 0.60,
+    "baichuan": 0.58,
+}
+
 _PRICING: dict[str, tuple[float, float]] = {
     "gpt-4": (0.03, 0.06),
     "gpt-4o": (0.005, 0.015),
@@ -40,8 +54,20 @@ _PRICING: dict[str, tuple[float, float]] = {
     "gpt-3.5-turbo": (0.0005, 0.0015),
     "claude-3": (0.003, 0.015),
     "claude-3.5": (0.003, 0.015),
+    "claude-4": (0.003, 0.015),
     "deepseek": (0.00014, 0.00028),
+    "deepseek-r1": (0.00055, 0.00219),
     "qwen": (0.0004, 0.0012),
+    "qwen-max": (0.002, 0.006),
+    "pangu": (0.0012, 0.004),
+    "ernie-4.0": (0.0012, 0.012),
+    "glm-4": (0.001, 0.001),
+    "kimi": (0.0012, 0.0012),
+    "minimax": (0.001, 0.001),
+    "gemini-pro": (0.000375, 0.0015),
+    "gemini-2.0": (0.0, 0.0),
+    "mistral-large": (0.002, 0.006),
+    "llama-3": (0.0, 0.0),
     "default": (0.003, 0.015),
 }
 
@@ -243,4 +269,39 @@ def analyze_prompt_tokens(text: str, model: str = "default") -> TokenAnalysisRes
         estimate=estimate,
         suggestions=suggestions,
         findings=findings,
+    )
+
+
+@dataclass
+class MultiModelComparison:
+    text_length: int
+    estimates: list[TokenEstimate]
+    cheapest_model: str
+    most_efficient_model: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "text_length": self.text_length,
+            "estimates": [e.to_dict() for e in self.estimates],
+            "cheapest_model": self.cheapest_model,
+            "most_efficient_model": self.most_efficient_model,
+        }
+
+
+_DEFAULT_COMPARE_MODELS = [
+    "gpt-4o", "claude-3.5", "deepseek", "qwen", "pangu", "glm-4", "kimi", "gemini-pro",
+]
+
+
+def compare_models(text: str, models: list[str] | None = None) -> MultiModelComparison:
+    if not models:
+        models = _DEFAULT_COMPARE_MODELS
+    estimates = [estimate_tokens(text, m) for m in models]
+    cheapest = min(estimates, key=lambda e: e.estimated_input_cost_usd)
+    most_efficient = min(estimates, key=lambda e: e.estimated_tokens)
+    return MultiModelComparison(
+        text_length=len(text),
+        estimates=estimates,
+        cheapest_model=cheapest.model,
+        most_efficient_model=most_efficient.model,
     )

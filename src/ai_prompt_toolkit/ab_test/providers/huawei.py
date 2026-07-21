@@ -11,10 +11,12 @@ class HuaweiProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
         "pangu-large": (0.012, 0.036), "pangu-medium": (0.004, 0.012),
         "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
-        "qwen-72b": (0.006, 0.018),
+        "pangu-code": (0.006, 0.018), "qwen-72b": (0.006, 0.018),
+        "deepseek-v3": (0.0014, 0.0028),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
     _PROVIDER_LABEL: str = "HuaweiCloud"
+    _HUAWEI_MODELARTS_BASE = "https://modelarts.cn-north-4.myhuaweicloud.com/v1"
 
     def validate(self) -> bool:
         try:
@@ -36,7 +38,7 @@ class HuaweiProvider(BaseProvider):
             return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
 
         try:
-            api_base = self._config.api_base or "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop"
+            api_base = self._config.api_base or self._HUAWEI_MODELARTS_BASE
             url = api_base.rstrip("/") + "/chat/completions"
             if "modelarts" in api_base.lower() or "huawei" in api_base.lower():
                 headers = {"X-Auth-Token": key, "Content-Type": "application/json"}

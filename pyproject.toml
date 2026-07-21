@@ -21,6 +21,9 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "pytest-asyncio>=0.21",
+    "ruff>=0.5.0",
+    "mypy>=1.10",
+    "pre-commit>=3.7",
 ]
 ab_test = [
     "httpx>=0.24",
@@ -48,3 +51,30 @@ addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::pytest.PytestCollectionWarning",
 ]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "TCH",
+    "RUF", "PERF", "PIE", "PYI", "Q",
+]
+ignore = ["E501", "SIM108", "RUF012"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ai_prompt_toolkit"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+strict_equality = true
