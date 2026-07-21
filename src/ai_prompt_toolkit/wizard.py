@@ -297,12 +297,55 @@ def wizard_redteam() -> int:
     return _build_and_execute("redteam", args)
 
 
+def wizard_recommend() -> int:
+    click.echo("\n" + "=" * 50)
+    click.echo("  智能模板推荐 向导")
+    click.echo("  根据你的场景推荐最佳Prompt模板")
+    click.echo("=" * 50)
+
+    category_choices = ["general", "development", "security", "translation", "service", "nlp", "optimization", "deployment"]
+    click.echo("\n选择场景分类:")
+    for i, c in enumerate(category_choices, 1):
+        click.echo(f"  {i}. {c}")
+    cat_idx = click.prompt("请选择(留空不限)", type=int, default=0)
+    category = category_choices[cat_idx - 1] if 1 <= cat_idx <= len(category_choices) else None
+
+    industry_choices = ["通用", "华为云", "科技", "金融", "教育", "电商", "媒体"]
+    click.echo("\n选择行业:")
+    for i, ind in enumerate(industry_choices, 1):
+        click.echo(f"  {i}. {ind}")
+    ind_idx = click.prompt("请选择(留空不限)", type=int, default=0)
+    industry = industry_choices[ind_idx - 1] if 1 <= ind_idx <= len(industry_choices) else None
+
+    model_choices = ["pangu", "qwen", "deepseek", "gpt-4", "claude-3"]
+    click.echo("\n选择目标模型:")
+    for i, m in enumerate(model_choices, 1):
+        click.echo(f"  {i}. {m}")
+    mod_idx = click.prompt("请选择(留空不限)", type=int, default=0)
+    model = model_choices[mod_idx - 1] if 1 <= mod_idx <= len(model_choices) else None
+
+    args: dict[str, Any] = {"top-n": 5}
+    if category:
+        args["category"] = category
+    if industry:
+        args["industry"] = industry
+    if model:
+        args["model"] = model
+
+    if not _confirm_step(4, "预览确认", {"命令": "recommend", **args}):
+        click.echo("已取消")
+        return 0
+
+    return _build_and_execute("recommend", args)
+
+
 _WIZARD_MAP = {
     "1": ("Prompt Linter — 静态检查提示词质量", wizard_lint),
     "2": ("安全扫描 — 注入检测+继承链审计", wizard_scan),
     "3": ("62维度评估 — 全面评估Prompt质量", wizard_evaluate),
     "4": ("A/B测试 — 多模型并行对比", wizard_ab_test),
     "5": ("红队探测 — 对抗性安全测试", wizard_redteam),
+    "6": ("智能推荐 — 根据场景推荐最佳模板", wizard_recommend),
 }
 
 
@@ -313,6 +356,7 @@ def run_wizard(command: str | None = None) -> int:
         "evaluate": wizard_evaluate,
         "ab-test": wizard_ab_test,
         "redteam": wizard_redteam,
+        "recommend": wizard_recommend,
     }
     if command:
         cmd_key = command.lower().strip()
@@ -331,7 +375,7 @@ def run_wizard(command: str | None = None) -> int:
     for k, (desc, _) in _WIZARD_MAP.items():
         click.echo(f"  {k}. {desc}")
 
-    choice = click.prompt("请选择(1-5)", type=str, default="1")
+    choice = click.prompt("请选择(1-6)", type=str, default="1")
     if choice not in _WIZARD_MAP:
         click.echo(f"无效选择: {choice}")
         return 1

@@ -50,9 +50,9 @@ class TestWizardHelpers:
             assert result == "my_input"
 
     def test_wizard_map_has_all_commands(self):
-        assert len(_WIZARD_MAP) == 5
+        assert len(_WIZARD_MAP) == 6
         keys = set(_WIZARD_MAP.keys())
-        assert keys == {"1", "2", "3", "4", "5"}
+        assert keys == {"1", "2", "3", "4", "5", "6"}
 
 
 class TestWizardCLI:
