@@ -44,14 +44,26 @@ runs:
           ARGS="$ARGS --threshold ${{ inputs.threshold }}"
         fi
         prompt-cli ${{ inputs.command }} -t $ARGS --output ${{ inputs.command }}-report.json || EXIT_CODE=$?
+        if [ "${{ inputs.command }}" = "scan" ] || [ "${{ inputs.command }}" = "lint" ]; then
+          prompt-cli scan -t ${{ inputs.target }} --sarif sarif-report.sarif 2>/dev/null || true
+        fi
         if [ "${{ inputs.fail-on-error }}" = "true" ] && [ "${EXIT_CODE:-0}" -ne 0 ]; then
           echo "::error::Prompt ${{ inputs.command }} failed with exit code ${EXIT_CODE}"
           exit ${EXIT_CODE}
         fi
+
+    - name: Upload SARIF to GitHub Code Scanning
+      uses: github/codeql-action/upload-sarif@v3
+      if: always() && hashFiles('sarif-report.sarif') != ''
+      with:
+        sarif_file: sarif-report.sarif
+        category: prompt-security
 
     - name: Upload Report
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: prompt-${{ inputs.command }}-report
-        path: ${{ inputs.command }}-report.json
+        path: |
+          ${{ inputs.command }}-report.json
+          sarif-report.sarif
