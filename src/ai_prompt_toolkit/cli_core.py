@@ -961,9 +961,11 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
 @click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm"]), help="合规报告框架")
+@click.option("--scorecard", is_flag=True, help="红队探测后自动运行安全评分卡")
 def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
                 output: str | None, fmt: str, owasp: str | None,
-                top_n: int, severity: str | None, compliance: str | None) -> None:
+                top_n: int, severity: str | None, compliance: str | None,
+                scorecard: bool) -> None:
     """红队探测：对抗性安全测试"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
