@@ -136,6 +136,22 @@ def format_celebration(message: str) -> str:
     return f"\n{border}\n  {message}\n{border}\n"
 
 
+_PERFECT_SCORE_ART = r"""
+   ★ ★ ★  PERFECT 100  ★ ★ ★
+  ╔═══════════════════════════════╗
+  ║   🏆 Lint满分！🏆           ║
+  ║   Prompt界的蒙娜丽莎！       ║
+  ╚═══════════════════════════════╝
+    ★  ★  ★  ★  ★  ★  ★  ★  ★
+"""
+
+
+def show_perfect_score_celebration(score: float) -> str | None:
+    if score < 100.0:
+        return None
+    return _PERFECT_SCORE_ART
+
+
 _WELCOME_ASCII = r"""
   ___  _   _    ___  _  ___  ___ ___ ___
  / _ \| \ | |  / _ \| |/ / |/ __/ __| _ \

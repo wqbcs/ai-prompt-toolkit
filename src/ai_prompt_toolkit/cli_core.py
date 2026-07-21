@@ -577,6 +577,12 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     fixed_count = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed) if fix else 0
     click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
 
+    if avg_score >= 100.0 and total_findings == 0:
+        from ai_prompt_toolkit.easter_eggs import show_perfect_score_celebration
+        celebration = show_perfect_score_celebration(avg_score)
+        if celebration:
+            click.echo(celebration)
+
     if output:
         report_data = {
             "_report_type": "lint",
