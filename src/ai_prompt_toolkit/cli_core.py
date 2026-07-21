@@ -2233,3 +2233,49 @@ def score_cmd(target: str, fmt: str) -> None:
     elif scorecard.decision == Decision.WARN:
         sys.exit(1)
 
+
+@main.command(name="rules-yaml")
+@click.option("--init", "init_path", help="生成示例YAML规则文件到指定路径")
+@click.option("--load", "load_path", help="加载YAML规则文件并检查")
+@click.option("--target", "-t", help="使用自定义规则检查的目标文件")
+def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | None) -> None:
+    """管理自定义Lint规则(YAML)"""
+    from ai_prompt_toolkit.output import console, success, error
+    from ai_prompt_toolkit.linter.rule_loader_yaml import load_rules_from_yaml, check_custom_rules, generate_sample_yaml
+
+    if init_path:
+        generate_sample_yaml(init_path)
+        success(f"示例规则文件已生成到 {init_path}")
+        return
+
+    if load_path:
+        try:
+            rules = load_rules_from_yaml(load_path)
+            if not rules:
+                error("未加载到任何启用的规则")
+                return
+            console.print(f"[bold]已加载 {len(rules)} 条自定义规则:[/bold]")
+            for r in rules:
+                sev_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green"}.get(r["severity"].value, "white")
+                console.print(f"  [{sev_color}]{r['rule_id']}[/{sev_color}] {r['name']} ({r['severity'].value}) — {r['description'][:50]}")
+
+            if target:
+                from ai_prompt_toolkit.cli_helpers import resolve_path
+                target_path = resolve_path(target)
+                if not target_path.exists():
+                    error(f"目标文件不存在: {target}")
+                    return
+                text = target_path.read_text(encoding="utf-8")
+                findings = check_custom_rules(text, rules)
+                if findings:
+                    console.print(f"\n[bold yellow]发现 {len(findings)} 个问题:[/bold yellow]")
+                    for f in findings:
+                        console.print(f"  [{f.rule_id}] {f.description}")
+                else:
+                    success("自定义规则检查通过，未发现问题")
+        except FileNotFoundError as e:
+            error(str(e))
+        return
+
+    click.echo("使用 --init 生成示例规则 或 --load 加载规则文件")
+

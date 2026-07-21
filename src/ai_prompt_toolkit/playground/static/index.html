@@ -587,6 +587,7 @@ async function runScorecard(){
     html+='<div style="font-size:10px;color:var(--text2)">发现: '+sc.total_findings+' (严重:'+sc.critical_count+' 高危:'+sc.high_count+' 中危:'+sc.medium_count+' 低危:'+sc.low_count+')</div>';
     el.innerHTML=html;
   }catch(e){el.innerHTML='<p style="font-size:11px;color:#ef4444">评分失败</p>'}
+  if(sc&&sc.grade==='A'){showCelebration('评分A级! 你的Prompt安全等级达到生产级!')}
 }
 
 let currentLang='zh-CN';

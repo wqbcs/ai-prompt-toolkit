@@ -124,6 +124,12 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.scorecard', () => {
+      runScorecardOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
       { language: 'markdown', scheme: 'file' },
       new PromptCodeLensProvider()
@@ -1215,6 +1221,44 @@ async function searchAndShowTemplates(query: string): Promise<void> {
   });
   if (selected) {
     openTemplatePreview(selected.templateId);
+  }
+}
+
+async function runScorecardOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['score', '--target', filePath, '--format', 'json']);
+    const card = JSON.parse(output);
+    const gc: Record<string,string> = {'A':'#22c55e','B':'#3b82f6','C':'#f59e0b','D':'#ef4444','F':'#dc2626'};
+    const color = gc[card.grade] || '#6b7280';
+    const dimRows = (card.dimensions || []).map((d: any) =>
+      `<tr><td>${d.name}</td><td style="color:${d.ratio>=0.8?'#22c55e':d.ratio>=0.5?'#f59e0b':'#ef4444'}">${d.earned}/${d.max_points}</td><td>${Math.round(d.ratio*100)}%</td></tr>`
+    ).join('');
+    const panel = vscode.window.createWebviewPanel(
+      'promptScorecard',
+      `安全评分卡 — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: false }
+    );
+    panel.webview.html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+    body{font-family:-apple-system,sans-serif;padding:20px;background:#1e1e1e;color:#d4d4d4;text-align:center}
+    .score{font-size:64px;font-weight:800;color:${color}}.grade{font-size:24px;font-weight:600;color:${color}}
+    .decision{font-size:14px;margin-top:8px}table{border-collapse:collapse;width:100%;margin-top:16px}
+    th,td{border:1px solid #444;padding:8px 12px;text-align:left}th{background:#264f78}
+    .summary{font-size:12px;color:#999;margin-top:12px}
+    </style></head><body>
+    <div class="score">${card.overall_score}</div><div class="grade">Grade ${card.grade}</div>
+    <div class="decision">决策: <b>${card.decision.toUpperCase()}</b></div>
+    <table><tr><th>维度</th><th>得分</th><th>比率</th></tr>${dimRows}</table>
+    <div class="summary">${card.summary || ''}</div>
+    </body></html>`;
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: 评分卡失败 — ${err.message}`);
   }
 }
 

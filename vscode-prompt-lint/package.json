@@ -97,6 +97,11 @@
         "command": "promptLint.versionDiff",
         "title": "Prompt Lint: 版本Diff对比",
         "icon": "$(git-compare)"
+      },
+      {
+        "command": "promptLint.scorecard",
+        "title": "Prompt Lint: 安全评分卡(0-100)",
+        "icon": "$(shield)"
       }
     ],
     "views": {
