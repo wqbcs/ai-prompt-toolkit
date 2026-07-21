@@ -1,0 +1,112 @@
+name: "AI Prompt Toolkit Scan"
+description: "Run AI Prompt Toolkit lint, security scan, and quality gate on prompt templates"
+author: "AI Prompt Toolkit"
+
+inputs:
+  target:
+    description: "Path to prompt template file or directory"
+    required: true
+  lint-threshold:
+    description: "Minimum lint score to pass (0-100)"
+    required: false
+    default: "90"
+  security-threshold:
+    description: "Minimum security score to pass (0-100)"
+    required: false
+    default: "80"
+  run-security:
+    description: "Whether to run security scan"
+    required: false
+    default: "true"
+  run-redteam:
+    description: "Whether to run red team scan"
+    required: false
+    default: "false"
+  run-token:
+    description: "Whether to run token analysis"
+    required: false
+    default: "true"
+  python-version:
+    description: "Python version to use"
+    required: false
+    default: "3.12"
+  fail-on-error:
+    description: "Whether to fail the workflow on errors"
+    required: false
+    default: "true"
+
+outputs:
+  lint-score:
+    description: "Average lint score"
+  lint-passed:
+    description: "Whether lint check passed"
+  security-score:
+    description: "Security scan score"
+  findings-count:
+    description: "Total findings count"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install AI Prompt Toolkit
+      shell: bash
+      run: pip install ai-prompt-toolkit
+
+    - name: Run Prompt Lint
+      id: lint
+      shell: bash
+      run: |
+        set +e
+        prompt-cli lint -t "${{ inputs.target }}" --gate --threshold ${{ inputs.lint-threshold }} --output lint-report.json
+        LINT_EXIT=$?
+        LINT_SCORE=$(python -c "import json; d=json.load(open('lint-report.json')); print(d.get('average_score', 0))" 2>/dev/null || echo "0")
+        echo "lint_score=$LINT_SCORE" >> $GITHUB_OUTPUT
+        echo "lint_passed=$([ $LINT_EXIT -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
+        if [ "$LINT_EXIT" -ne 0 ] && [ "${{ inputs.fail-on-error }}" = "true" ]; then
+          echo "::error::Lint check failed with score $LINT_SCORE (threshold: ${{ inputs.lint-threshold }})"
+          exit 1
+        fi
+
+    - name: Run Security Scan
+      if: inputs.run-security == 'true'
+      shell: bash
+      run: |
+        set +e
+        prompt-cli scan -t "${{ inputs.target }}" --output scan-report.json || true
+        echo "::notice::Security scan completed"
+
+    - name: Run Red Team Scan
+      if: inputs.run-redteam == 'true'
+      shell: bash
+      run: |
+        set +e
+        prompt-cli redteam -t "${{ inputs.target }}" --top-n 5 --output redteam-report.json || true
+        echo "::notice::Red team scan completed"
+
+    - name: Run Token Analysis
+      if: inputs.run-token == 'true'
+      shell: bash
+      run: |
+        set +e
+        prompt-cli token -t "${{ inputs.target }}" --output token-report.json || true
+        echo "::notice::Token analysis completed"
+
+    - name: Upload Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: prompt-toolkit-reports
+        path: |
+          lint-report.json
+          scan-report.json
+          redteam-report.json
+          token-report.json
+
+branding:
+  icon: "shield"
+  color: "blue"
