@@ -566,16 +566,16 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             if result.findings:
                 for f in result.findings:
                     sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
-                    marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
-                    prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
-                    click.echo(f"  {marker} [{result.template_id}] {prefix}{f.rule_id}: {f.description}")
+                    from ai_prompt_toolkit.cli_helpers import friendly_finding_line, friendly_fix_suggestion
+                    is_mm = f.rule_id.startswith("MM-")
+                    click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description, is_mm))
+                    if sev in ("high", "critical"):
+                        click.echo(f"    {friendly_fix_suggestion(f.rule_id, f.description)}")
 
     avg_score = total_score / max(len(all_results), 1)
-    click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
-
-    if fix and any(r.auto_fixed for r in all_results):
-        fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
-        click.echo(f"自动修复: {fixed} 处")
+    from ai_prompt_toolkit.cli_helpers import friendly_lint_summary
+    fixed_count = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed) if fix else 0
+    click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
 
     if output:
         report_data = {

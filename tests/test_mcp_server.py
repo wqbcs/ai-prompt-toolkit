@@ -32,7 +32,10 @@ class TestMCPProtocol:
         assert "prompt_scorecard" in tool_names
         assert "prompt_engine" in tool_names
         assert "prompt_badge" in tool_names
-        assert len(tools) == 10
+        assert "prompt_token_analyze" in tool_names
+        assert "prompt_redteam" in tool_names
+        assert "prompt_compile" in tool_names
+        assert len(tools) == 13
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
@@ -98,3 +101,25 @@ class TestMCPProtocol:
             "tokens": json.dumps([{"token_id": "ABCD1234", "token_string": "::CANARY_ABCD1234::"}]),
         })
         assert result["is_leaked"] is True
+
+    def test_token_analyze_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_token_analyze
+        result = _tool_token_analyze({"template": "You are a helpful assistant.", "model": "gpt-4o"})
+        assert "original_tokens" in result
+        assert "estimate" in result
+        assert result["estimate"]["model"] == "gpt-4o"
+
+    def test_token_analyze_compare_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_token_analyze
+        result = _tool_token_analyze({"template": "Hello world", "compare": True})
+        assert "estimates" in result
+        assert "cheapest_model" in result
+        assert len(result["estimates"]) > 0
+
+    def test_compile_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_compile
+        result = _tool_compile({
+            "template": "Hello {{#if model=='gpt-4'}}GPT-4{{/if}} world",
+            "model": "gpt-4",
+        })
+        assert "compiled_text" in result

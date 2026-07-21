@@ -189,6 +189,47 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template"],
             },
         },
+        {
+            "name": "prompt_token_analyze",
+            "description": "Token计数与成本估算: 估算Prompt在各模型(GPT-4o/Claude/DeepSeek/Qwen/Pangu等)的Token消耗和API调用成本，并提供压缩优化建议",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                    "model": {"type": "string", "description": "目标模型(如gpt-4o/deepseek/qwen/pangu)", "default": "default"},
+                    "compare": {"type": "boolean", "description": "多模型成本对比模式", "default": False},
+                },
+                "required": ["template"],
+            },
+        },
+        {
+            "name": "prompt_redteam",
+            "description": "红队对抗性安全测试: 对Prompt执行OWASP LLM Top 10覆盖的Probe探测，支持离线模式",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本(离线模式)"},
+                    "probes": {"type": "string", "description": "探测类型(逗号分隔，留空全部)"},
+                    "owasp": {"type": "string", "description": "按OWASP分类过滤(如LLM01,LLM06)"},
+                    "top_n": {"type": "integer", "description": "仅运行前N个Probe", "default": 10},
+                },
+                "required": ["template"],
+            },
+        },
+        {
+            "name": "prompt_compile",
+            "description": "条件编译: 按模型/语言/行业条件编译提示词模板，支持{{#if}}/{{#elif}}/{{#else}}分支",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                    "model": {"type": "string", "description": "目标模型(gpt-4/claude-3/deepseek等)"},
+                    "language": {"type": "string", "description": "目标语言(zh/en/ja等)"},
+                    "industry": {"type": "string", "description": "目标行业(fintech/healthcare等)"},
+                },
+                "required": ["template"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -281,6 +322,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_engine(arguments)
         elif tool_name == "prompt_badge":
             result = _tool_badge(arguments)
+        elif tool_name == "prompt_token_analyze":
+            result = _tool_token_analyze(arguments)
+        elif tool_name == "prompt_redteam":
+            result = _tool_redteam(arguments)
+        elif tool_name == "prompt_compile":
+            result = _tool_compile(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -579,6 +626,84 @@ def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
         "grade": scorecard.grade.value,
         "decision": scorecard.decision.value,
         "svg": svg,
+    }
+
+
+def _tool_token_analyze(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, compare_models
+
+    template = args["template"]
+    model = args.get("model", "default")
+    do_compare = args.get("compare", False)
+
+    if do_compare:
+        comp = compare_models(template)
+        return {
+            "text_length": comp.text_length,
+            "estimates": [e.to_dict() for e in comp.estimates],
+            "cheapest_model": comp.cheapest_model,
+            "most_efficient_model": comp.most_efficient_model,
+        }
+
+    result = analyze_prompt_tokens(template, model)
+    return result.to_dict()
+
+
+def _tool_redteam(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
+    from ai_prompt_toolkit.redteam.detector import LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+
+    template = args["template"]
+    probes_str = args.get("probes", "")
+    owasp = args.get("owasp", "")
+    top_n = args.get("top_n", 10)
+
+    available = get_available_probes()
+    if owasp:
+        owasp_refs = [ref.strip() for ref in owasp.split(",")]
+        owasp_probes: list[str] = []
+        for ref in owasp_refs:
+            owasp_probes.extend(get_probes_by_owasp(ref))
+        available = [p for p in available if p in owasp_probes]
+
+    selected = probes_str.split(",") if probes_str else available
+    if top_n > 0:
+        selected = selected[:top_n]
+
+    probe_instances = []
+    for name in selected:
+        try:
+            probe_instances.append(create_probe(name.strip()))
+        except ValueError:
+            pass
+
+    if not probe_instances:
+        return {"error": "No valid probes selected", "available_probes": available}
+
+    detectors = [LeakageDetector(), ComplianceDetector(), RefusalDetector()]
+    orchestrator = ExplorationOrchestrator(probes=probe_instances, detectors=detectors)
+    report = orchestrator.run_offline(template)
+
+    return report.to_dict()
+
+
+def _tool_compile(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+
+    template = args["template"]
+    model = args.get("model", "")
+    language = args.get("language", "")
+    industry = args.get("industry", "")
+
+    ctx = CompileContext(model=model, language=language, industry=industry)
+    result = compile_template(template, ctx)
+
+    return {
+        "compiled_text": result.compiled_text,
+        "activated_branches": result.report.activated_branches,
+        "ignored_branches": result.report.ignored_branches,
+        "warnings": result.report.warnings,
     }
 
 

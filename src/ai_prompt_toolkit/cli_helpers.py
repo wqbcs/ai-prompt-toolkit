@@ -163,3 +163,72 @@ def friendly_progress_label(stage: str, current: int, total: int, elapsed_ms: fl
         if remaining > 1000:
             eta_str = f" ~{remaining/1000:.0f}s剩余"
     return f"{label}: {current}/{total} ({pct}%){elapsed_str}{eta_str}"
+
+
+_SEVERITY_STYLING = {
+    "critical": ("🔴", "CRITICAL"),
+    "high": ("✗", "HIGH"),
+    "medium": ("⚠", "MEDIUM"),
+    "low": ("ℹ", "LOW"),
+    "info": ("💡", "INFO"),
+}
+
+_SCORE_EMOJI = {
+    (90, 101): "🌟",
+    (80, 90): "✅",
+    (70, 80): "⚠️",
+    (60, 70): "🔶",
+    (0, 60): "❌",
+}
+
+
+def friendly_severity(severity: str) -> tuple[str, str]:
+    key = severity.lower() if isinstance(severity, str) else str(severity).lower()
+    return _SEVERITY_STYLING.get(key, ("•", key.upper()))
+
+
+def friendly_score(score: float) -> str:
+    for (lo, hi), emoji in _SCORE_EMOJI.items():
+        if lo <= score < hi:
+            return f"{emoji} {score:.1f}/100"
+    return f"{score:.1f}/100"
+
+
+def friendly_finding_line(template_id: str, rule_id: str, severity: str, description: str, is_multimodal: bool = False) -> str:
+    marker, label = friendly_severity(severity)
+    prefix = "[MM] " if is_multimodal else ""
+    return f"  {marker} [{template_id}] {prefix}{rule_id} ({label}): {description}"
+
+
+def friendly_lint_summary(total_files: int, avg_score: float, total_findings: int, fixed: int = 0) -> str:
+    lines = [
+        f"\n{'='*50}",
+        f"  Lint完成 | 文件: {total_files} | 评分: {friendly_score(avg_score)} | 问题: {total_findings}",
+    ]
+    if fixed:
+        lines.append(f"  🔧 自动修复: {fixed} 处")
+    if avg_score >= 90:
+        lines.append(f"  🎉 优秀！Prompt质量超过90分")
+    elif avg_score >= 80:
+        lines.append(f"  👍 良好！小优化可达90+")
+    elif avg_score >= 70:
+        lines.append(f"  💡 建议关注标记问题，提升Prompt质量")
+    else:
+        lines.append(f"  ⚡ 建议优先修复HIGH/CRITICAL问题")
+    lines.append(f"{'='*50}")
+    return "\n".join(lines)
+
+
+def friendly_fix_suggestion(rule_id: str, description: str) -> str:
+    _QUICK_FIXES = {
+        "P001": "💡 在Prompt开头添加明确的# 角色定义",
+        "P003": "💡 添加'约束'章节，使用'必须/不得'等确定性表述",
+        "P009": "💡 添加'审计追踪'章节，记录关键决策点",
+        "P010": "💡 添加'错误处理'章节，覆盖空输入/异常/歧义场景",
+        "P018": "💡 添加Few-shot示例，展示期望的输入/输出格式",
+        "P020": "💡 添加'输出质量标准'，明确评分维度和合格线",
+        "P025": "💡 添加输出长度约束，如'控制在500字以内'",
+        "P051": "🔒 移除硬编码凭据，使用{{API_KEY}}占位符",
+        "P054": "📱 替换Android API为@ohos等效接口",
+    }
+    return _QUICK_FIXES.get(rule_id, f"💡 修复 {rule_id}: {description}")
