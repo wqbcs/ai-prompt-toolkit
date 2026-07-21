@@ -149,6 +149,17 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["dataset_id"],
             },
         },
+        {
+            "name": "prompt_scorecard",
+            "description": "对Prompt执行综合安全评分(0-100分,A-F等级,5维度评分,ALLOW/WARN/BLOCK决策)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                },
+                "required": ["template"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -235,6 +246,8 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_evaluate(arguments)
         elif tool_name == "prompt_dataset_run":
             result = _tool_dataset_run(arguments)
+        elif tool_name == "prompt_scorecard":
+            result = _tool_scorecard(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -446,6 +459,39 @@ def _tool_dataset_run(args: dict[str, Any]) -> dict[str, Any]:
         "total_cases": len(results),
         "results": [r.to_dict() for r in results],
     }
+
+
+def _tool_scorecard(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+
+    template = args.get("template", "")
+    if not template.strip():
+        return {"error": "模板为空"}
+
+    linter = PromptLinter()
+    lint_result = linter.lint("mcp", template)
+    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+
+    detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
+    sec_findings = detector.detect(template)
+
+    pii = PIIDetector()
+    pii_finding = pii.check(template)
+    if pii_finding:
+        sec_findings.append(pii_finding)
+
+    struct_finding = check_structural(template)
+    if struct_finding:
+        sec_findings.append(struct_finding)
+
+    all_findings = list(lint_findings) + sec_findings
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+    return scorecard.to_dict()
 
 
 if __name__ == "__main__":
