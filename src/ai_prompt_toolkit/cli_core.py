@@ -367,7 +367,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 @click.option("--target", "-t", required=True, help="扫描目标(文件或目录)")
 @click.option("--config", help="安全扫描配置YAML文件路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli"]),
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "jsonl"]),
               default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
 def scan(target: str, config: str | None, incremental: bool,
@@ -464,8 +464,24 @@ def scan(target: str, config: str | None, incremental: bool,
                          else "medium" if medium_count > 0
                          else "low" if low_count > 0 else "none",
         }
-        write_report(report_data, output, fmt=fmt)
-        click.echo(f"报告: {output}")
+        if fmt == "sarif" and output:
+            from ai_prompt_toolkit.report.sarif_reporter import write_sarif_report
+            from ai_prompt_toolkit.types import Finding, Severity
+            findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                     description=f.get("description", "")) for f in all_findings]
+            write_sarif_report(findings_objs, output, source_file=target)
+            click.echo(f"SARIF报告: {output}")
+        elif fmt == "jsonl" and output:
+            from ai_prompt_toolkit.report.sarif_reporter import write_jsonl_report
+            from ai_prompt_toolkit.types import Finding, Severity
+            findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                     description=f.get("description", "")) for f in all_findings]
+            write_jsonl_report(findings_objs, output, source_file=target)
+            click.echo(f"JSONL报告: {output}")
+        else:
+            write_report(report_data, output, fmt=fmt)
+            if output:
+                click.echo(f"报告: {output}")
 
     sys.exit(determine_exit_code(has_findings=len(all_findings) > 0,
                                   error_severity="high" if high_count > 0 else None))

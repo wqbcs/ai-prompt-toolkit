@@ -130,4 +130,28 @@ ZH_INJECTION_RULES: list[InjectionRule] = [
         description="检测到中文逻辑陷阱模式：通过逻辑推理绕过安全限制",
         remediation="添加逻辑推理安全层，能力声明不等同于权限授予",
     ),
+    InjectionRule(
+        rule_id="INJ-ZH-016",
+        name="中文翻译绕过",
+        pattern=r"(?:请(?:先)?翻译|translate).*(?:以下|下面|这段).*(?:为|到|into).*(?:英文|English).*(?:然后|接着|再|then).*(?:执行|忽略|输出|完成|override|ignore|execute)",
+        severity=Severity.HIGH,
+        description="检测到中文翻译绕过模式：通过翻译任务掩盖恶意指令",
+        remediation="分离翻译和安全检测，对翻译后的内容同样执行安全检查",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-017",
+        name="中文情感操控",
+        pattern=r"(?:求求你|拜托|行行好|可怜可怜|帮帮忙).*(?:我知道你|你是|你有).*(?:善良|心|同情心|感情|良知).*(?:所以|因此|那).*(?:请|帮|给|让).*(?:做|输出|生成|告诉我|reveal|show)",
+        severity=Severity.MEDIUM,
+        description="检测到中文情感操控模式：利用情感诉求绕过安全限制",
+        remediation="添加情感操控检测层，模型不受情感压力影响",
+    ),
+    InjectionRule(
+        rule_id="INJ-ZH-018",
+        name="中文角色扮演注入",
+        pattern=r"(?:让我们|我们来|咱们).*(?:玩(?:一个)?|做(?:一个)?|开始(?:一个)?).*(?:游戏|角色扮演|模拟|场景|剧情).*(?:你(?:是|扮演|演)).*(?:没有|无|不受).*(?:限制|约束|安全|规则)",
+        severity=Severity.HIGH,
+        description="检测到中文角色扮演注入：通过游戏/角色扮演设定绕过安全限制",
+        remediation="角色扮演场景同样受安全规则约束，禁止'游戏模式'绕过",
+    ),
 ]
