@@ -45,6 +45,16 @@ _MILESTONE_MESSAGES = {
     "fix_100": [
         "修复100个问题! 你的Prompt修炼已臻化境。",
     ],
+    "security_shield": [
+        "安全扫描全通过! 你的Prompt坚如磐石。",
+        "零安全漏洞! 这份Prompt可以上生产了。",
+    ],
+    "first_compile": [
+        "你的第一个Prompt编译成功了! 从此条件编译不再是难题。",
+    ],
+    "abtest_winner": [
+        "A/B测试发现显著胜者! 数据驱动的Prompt优化就是不一样。",
+    ],
 }
 
 
@@ -100,6 +110,12 @@ def check_milestone(progress: UserProgress, event: str, score: float = 0.0) -> s
         return _pick_message("streak_30")
     elif progress.total_fixes == 100:
         return _pick_message("fix_100")
+    elif event == "security_shield" and score == 0.0:
+        return _pick_message("security_shield")
+    elif event == "first_compile":
+        return _pick_message("first_compile")
+    elif event == "abtest_winner":
+        return _pick_message("abtest_winner")
     return None
 
 
@@ -150,6 +166,22 @@ def show_perfect_score_celebration(score: float) -> str | None:
     if score < 100.0:
         return None
     return _PERFECT_SCORE_ART
+
+
+_SECURITY_SHIELD_ART = r"""
+     ___________
+    /           \
+   |  SHIELDED  |
+   |  ✓ 0漏洞   |
+   |  ✓ 安全扫描 |
+    \___________/
+"""
+
+
+def show_security_shield(vuln_count: int = 0) -> str | None:
+    if vuln_count > 0:
+        return None
+    return _SECURITY_SHIELD_ART
 
 
 _WELCOME_ASCII = r"""
