@@ -1,4 +1,4 @@
-"""Fixer 模块测试 — 自动修复器 P005/P006/P016/P063-P068"""
+"""Fixer 模块测试 — 自动修复器 P005/P006/P016/P063-P068/P071-P080"""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from ai_prompt_toolkit.types import Finding, Severity
 
 class TestAutoFixableRules:
     def test_auto_fixable_rules_contains_expected(self):
-        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068"}
+        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080"}
 
     def test_ambiguous_replacements_keys(self):
         for key in AMBIGUOUS_REPLACEMENTS:
@@ -262,3 +262,151 @@ class TestFixer:
         fixed, results = self.fixer.fix(text, [finding])
         assert fixed == text
         assert results == []
+
+
+class TestFixerP071P080:
+    def setup_method(self):
+        self.fixer = Fixer()
+
+    def test_fix_p071_endpoint_maas(self):
+        text = "使用华为云maas服务进行模型推理"
+        finding = Finding(rule_id="P071", severity=Severity.MEDIUM, description="API Endpoint缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "maas.cn-north-4.myhuaweicloud.com" in fixed
+        assert "API Endpoint" in fixed
+        assert len(results) == 1
+
+    def test_fix_p071_endpoint_general(self):
+        text = "调用华为云API获取数据"
+        finding = Finding(rule_id="P071", severity=Severity.MEDIUM, description="API Endpoint缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "myhuaweicloud.com" in fixed
+        assert len(results) == 1
+
+    def test_fix_p072_npu_train(self):
+        text = "在华为云上进行模型训练任务"
+        finding = Finding(rule_id="P072", severity=Severity.MEDIUM, description="NPU适配缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "CANN" in fixed
+        assert "MindSpore" in fixed
+        assert "训练场景" in fixed
+        assert len(results) == 1
+
+    def test_fix_p072_npu_inference(self):
+        text = "使用模型推理服务进行预测"
+        finding = Finding(rule_id="P072", severity=Severity.MEDIUM, description="NPU适配缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "推理场景" in fixed
+        assert "MindSpore Lite" in fixed
+        assert len(results) == 1
+
+    def test_fix_p072_npu_general(self):
+        text = "GPU算力不足需要优化"
+        finding = Finding(rule_id="P072", severity=Severity.MEDIUM, description="NPU适配缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "昇腾NPU" in fixed
+        assert len(results) == 1
+
+    def test_fix_p073_iam_auth(self):
+        text = "使用华为云IAM认证调用服务密钥管理"
+        finding = Finding(rule_id="P073", severity=Severity.HIGH, description="IAM认证未指定")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "AK/SK" in fixed
+        assert "IAM Token" in fixed
+        assert "Agency委托" in fixed
+        assert len(results) == 1
+
+    def test_fix_p074_api_version_next(self):
+        text = "开发HarmonyOS NEXT应用使用ArkTS"
+        finding = Finding(rule_id="P074", severity=Severity.MEDIUM, description="API版本缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "HarmonyOS NEXT 5.0" in fixed
+        assert "API 12" in fixed
+        assert len(results) == 1
+
+    def test_fix_p074_api_version_general(self):
+        text = "使用鸿蒙ArkUI开发界面Ability组件"
+        finding = Finding(rule_id="P074", severity=Severity.MEDIUM, description="API版本缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "HarmonyOS 5.0" in fixed
+        assert "API 12" in fixed
+        assert len(results) == 1
+
+    def test_fix_p075_region(self):
+        text = "在华为云ecs上部署服务"
+        finding = Finding(rule_id="P075", severity=Severity.LOW, description="区域未指定")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "cn-north-4" in fixed
+        assert "cn-east-3" in fixed
+        assert "cn-south-1" in fixed
+        assert len(results) == 1
+
+    def test_fix_p076_modelarts_deploy_train(self):
+        text = "使用ModelArts进行训练作业"
+        finding = Finding(rule_id="P076", severity=Severity.MEDIUM, description="部署配置缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "Ascend 910" in fixed
+        assert "ModelArts部署配置" in fixed
+        assert len(results) == 1
+
+    def test_fix_p076_modelarts_deploy_infer(self):
+        text = "使用ModelArts在线服务部署模型"
+        finding = Finding(rule_id="P076", severity=Severity.MEDIUM, description="部署配置缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "V100" in fixed
+        assert len(results) == 1
+
+    def test_fix_p077_quota(self):
+        text = "调用华为云obs存储数据"
+        finding = Finding(rule_id="P077", severity=Severity.LOW, description="配额提示缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "100次/分钟" in fixed
+        assert "配额" in fixed
+        assert len(results) == 1
+
+    def test_fix_p078_sandbox_permission(self):
+        text = "开发鸿蒙HarmonyOS应用使用ArkUI"
+        finding = Finding(rule_id="P078", severity=Severity.MEDIUM, description="沙箱权限缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "ohos.permission.INTERNET" in fixed
+        assert "ohos.permission.FILE_READ" in fixed
+        assert "沙箱隔离" in fixed
+        assert len(results) == 1
+
+    def test_fix_p079_data_compliance(self):
+        text = "数据处理和存储需要满足合规要求跨境传输"
+        finding = Finding(rule_id="P079", severity=Severity.HIGH, description="数据合规缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "数据安全法" in fixed
+        assert "个人信息保护法" in fixed
+        assert "AES-256" in fixed
+        assert len(results) == 1
+
+    def test_fix_p080_sla(self):
+        text = "依赖华为云服务需要高可用SLA降级容灾"
+        finding = Finding(rule_id="P080", severity=Severity.LOW, description="SLA降级缺失")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "99.95%" in fixed
+        assert "降级策略" in fixed
+        assert "cn-east-3" in fixed
+        assert len(results) == 1
+
+    def test_fix_multiple_p07x(self):
+        findings = [
+            Finding(rule_id="P071", severity=Severity.MEDIUM, description="API Endpoint缺失"),
+            Finding(rule_id="P075", severity=Severity.LOW, description="区域未指定"),
+            Finding(rule_id="P077", severity=Severity.LOW, description="配额提示缺失"),
+        ]
+        text = "使用华为云API部署服务"
+        fixed, results = self.fixer.fix(text, findings)
+        assert len(results) == 3
+        assert "API Endpoint" in fixed
+        assert "部署区域" in fixed
+        assert "服务配额" in fixed
+
+    def test_fix_p071_dry_run(self):
+        text = "使用华为云maas服务"
+        finding = Finding(rule_id="P071", severity=Severity.MEDIUM, description="API Endpoint缺失")
+        result_text, results = self.fixer.fix(text, [finding], dry_run=True)
+        assert result_text == text
+        assert len(results) == 1

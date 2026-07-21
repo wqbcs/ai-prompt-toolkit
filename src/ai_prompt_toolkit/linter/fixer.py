@@ -19,7 +19,7 @@ from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068"}
+AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080"}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -62,7 +62,7 @@ def _fix_p048_mixed_punctuation(text: str) -> str:
 
 def _fix_p061_blank_lines(text: str) -> str:
     import re
-    return re.sub(r'\n{4,}', '\n\n', text)
+    return re.sub(r"\n{4,}", "\n\n", text)
 
 
 def _fix_p063_agent_leak(text: str) -> str:
@@ -88,15 +88,15 @@ def _fix_p064_version_migration(text: str) -> str:
     if "version:" in frontmatter.lower():
         return text
     import datetime
-    version_line = f"\nversion: \"1.0.0\""
-    updated_date = f"\nupdated: \"{datetime.date.today().isoformat()}\""
+    version_line = '\nversion: "1.0.0"'
+    updated_date = f'\nupdated: "{datetime.date.today().isoformat()}"'
     new_frontmatter = frontmatter.rstrip() + version_line + updated_date + "\n"
     return "---" + new_frontmatter + text[end:]
 
 
 def _fix_p065_chain_isolation(text: str) -> str:
     import re
-    chain_steps = re.findall(r'(第[一二三四五六七八九十]+步|Step\s*\d+|首先|然后|接着|最后)', text, re.IGNORECASE)
+    chain_steps = re.findall(r"(第[一二三四五六七八九十]+步|Step\s*\d+|首先|然后|接着|最后)", text, re.IGNORECASE)
     if len(chain_steps) < 2:
         return text
     isolation_block = (
@@ -129,11 +129,133 @@ def _fix_p067_knowledge_cutoff(text: str) -> str:
 def _fix_p068_hallucination_prevention(text: str) -> str:
     anti_hallucination_block = (
         "\n\n# 幻觉预防约束\n"
-        '- 如不确定信息准确性，必须明确说明「不确定」，不得编造或推测\n'
+        "- 如不确定信息准确性，必须明确说明「不确定」，不得编造或推测\n"
         "- 引用数据或事实时必须标注来源，无来源则不予引用\n"
-        '- 区分「已知事实」与「合理推断」，对推断内容标注[推测]'
+        "- 区分「已知事实」与「合理推断」，对推断内容标注[推测]"
     )
     return text + anti_hallucination_block
+
+
+def _fix_p071_endpoint(text: str) -> str:
+    import re
+    maas_match = re.search(r"maas", text, re.IGNORECASE)
+    if maas_match:
+        endpoint = "https://maas.cn-north-4.myhuaweicloud.com"
+    else:
+        endpoint = "https://myhuaweicloud.com"
+    block = (
+        "\n\n# API Endpoint\n"
+        f"- 服务端点: {endpoint}\n"
+        "- 请根据实际项目替换为正确的endpoint地址"
+    )
+    return text + block
+
+
+def _fix_p072_npu_adapt(text: str) -> str:
+    import re
+    has_train = bool(re.search(r"训练|train", text, re.IGNORECASE))
+    has_infer = bool(re.search(r"推理|inference", text, re.IGNORECASE))
+    if has_train:
+        detail = "训练场景: 使用CANN算子库, MindSpore框架, 支持自动混合精度(AMP)"
+    elif has_infer:
+        detail = "推理场景: 使用MindSpore Lite, 支持FP16/INT8量化, CANN推理引擎"
+    else:
+        detail = "本任务适配华为昇腾NPU, 使用CANN算子库, 支持MindSpore框架"
+    block = (
+        "\n\n# 昇腾NPU适配声明\n"
+        f"- {detail}\n"
+        "- 如需GPU回退, 请在部署配置中声明"
+    )
+    return text + block
+
+
+def _fix_p073_iam_auth(text: str) -> str:
+    block = (
+        "\n\n# IAM认证方式\n"
+        "- 认证方式: AK/SK (推荐)\n"
+        "- 备选: IAM Token / Agency委托\n"
+        "- 禁止在Prompt中硬编码密钥, 使用环境变量或密钥管理服务"
+    )
+    return text + block
+
+
+def _fix_p074_api_version(text: str) -> str:
+    import re
+    has_next = bool(re.search(r"NEXT", text))
+    version = "HarmonyOS NEXT 5.0" if has_next else "HarmonyOS 5.0"
+    block = (
+        "\n\n# 鸿蒙API版本兼容性\n"
+        f"- 目标版本: {version}\n"
+        "- 最低兼容: API 12\n"
+        "- 使用条件编译适配多版本差异"
+    )
+    return text + block
+
+
+def _fix_p075_region(text: str) -> str:
+    block = (
+        "\n\n# 部署区域\n"
+        "- 默认区域: cn-north-4 (华北-北京四)\n"
+        "- 可选区域: cn-east-3 (华东-上海一), cn-south-1 (华南-广州)\n"
+        "- 跨区域部署需配置VPC对等连接"
+    )
+    return text + block
+
+
+def _fix_p076_modelarts_deploy(text: str) -> str:
+    import re
+    has_train = bool(re.search(r"训练|train", text, re.IGNORECASE))
+    if has_train:
+        spec = "GPU: Ascend 910 1卡 | 内存: 64GB | 并发: 4"
+    else:
+        spec = "GPU: V100 1卡 | 内存: 32GB | 并发: 10"
+    block = (
+        "\n\n# ModelArts部署配置\n"
+        f"- 部署规格: {spec}\n"
+        "- 自动扩缩容: 最小1实例, 最大5实例\n"
+        "- 请根据实际业务负载调整配置"
+    )
+    return text + block
+
+
+def _fix_p077_quota(text: str) -> str:
+    block = (
+        "\n\n# 服务配额与限流\n"
+        "- API调用限流: 100次/分钟, 超限自动排队\n"
+        "- 资源配额: 按账户等级分配, 可提交工单提升配额\n"
+        "- 建议实现客户端限流和重试机制(指数退避)"
+    )
+    return text + block
+
+
+def _fix_p078_sandbox_permission(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙应用沙箱与权限\n"
+        "- 仅申请必要权限: 网络(ohos.permission.INTERNET) + 存储(ohos.permission.FILE_READ)\n"
+        "- 不申请敏感权限: 位置/通讯录/相机/麦克风\n"
+        "- 使用沙箱隔离, 禁止跨应用数据访问"
+    )
+    return text + block
+
+
+def _fix_p079_data_compliance(text: str) -> str:
+    block = (
+        "\n\n# 数据合规与跨境声明\n"
+        "- 数据存储于中国境内, 符合《数据安全法》和《个人信息保护法》要求\n"
+        "- 禁止跨境传输用户个人信息, 业务数据跨境需通过安全评估\n"
+        "- 敏感数据加密存储(AES-256), 传输使用TLS 1.2+"
+    )
+    return text + block
+
+
+def _fix_p080_sla(text: str) -> str:
+    block = (
+        "\n\n# SLA与降级策略\n"
+        "- 服务可用性: 99.95%\n"
+        "- 降级策略: 主区域故障时自动切换至备用区域(cn-east-3)\n"
+        "- 超时处理: 请求超时30s自动重试1次, 仍失败则返回降级响应"
+    )
+    return text + block
 
 
 @dataclass
@@ -215,7 +337,7 @@ class Fixer:
                 return text + "\n\n# 错误处理与回退\n\n- 信息不足时请求补充\n- 执行失败时提供备选方案"
         elif rule_id == "P025":
             import re
-            length_match = re.search(r'(\d+)\s*(?:字|词|words?)', text)
+            length_match = re.search(r"(\d+)\s*(?:字|词|words?)", text)
             if not length_match:
                 return text + "\n- 回复不超过800字"
         elif rule_id == "P053":
@@ -238,4 +360,24 @@ class Fixer:
             return _fix_p067_knowledge_cutoff(text)
         elif rule_id == "P068":
             return _fix_p068_hallucination_prevention(text)
+        elif rule_id == "P071":
+            return _fix_p071_endpoint(text)
+        elif rule_id == "P072":
+            return _fix_p072_npu_adapt(text)
+        elif rule_id == "P073":
+            return _fix_p073_iam_auth(text)
+        elif rule_id == "P074":
+            return _fix_p074_api_version(text)
+        elif rule_id == "P075":
+            return _fix_p075_region(text)
+        elif rule_id == "P076":
+            return _fix_p076_modelarts_deploy(text)
+        elif rule_id == "P077":
+            return _fix_p077_quota(text)
+        elif rule_id == "P078":
+            return _fix_p078_sandbox_permission(text)
+        elif rule_id == "P079":
+            return _fix_p079_data_compliance(text)
+        elif rule_id == "P080":
+            return _fix_p080_sla(text)
         return text
