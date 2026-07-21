@@ -106,7 +106,7 @@ Please leverage GPT-4o's multimodal capabilities.
         <div class="tab" data-tab="scorecard">评分卡</div>
       </div>
       <div id="tab-compile" class="tab-content" style="flex:1;flex-direction:column;display:flex;overflow:hidden">
-        <div class="panel-header"><span>编译结果</span><span id="compile-status" class="status-badge status-ok">就绪</span></div>
+        <div class="panel-header"><span>编译结果</span><div><button onclick="diffWithPrevious()" style="font-size:10px;padding:2px 8px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;margin-right:8px">对比上次</button><span id="compile-status" class="status-badge status-ok">就绪</span></div></div>
         <pre id="result-editor" class="editor" style="height:calc(50vh - 110px)">点击"编译"或修改模板后自动编译...</pre>
         <div id="branch-info" class="branch-info"></div>
       </div>
@@ -269,6 +269,7 @@ function showCelebration(msg){
   setTimeout(()=>toast.remove(),3000);
 }
 
+let _prevCompiled='';
 async function compile(){
   const template=srcEditor.value;
   if(!template.trim()){resultEditor.textContent='请输入模板内容...';return}
@@ -278,6 +279,7 @@ async function compile(){
     const resp=await fetch('/api/compile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template,context})});
     const data=await resp.json();
     if(data.status==='success'){
+      _prevCompiled=resultEditor.textContent;
       resultEditor.textContent=data.compiled_text;
       statusBadge.textContent='编译成功';statusBadge.className='status-badge status-ok';
       const r=data.report||{};
@@ -287,6 +289,27 @@ async function compile(){
     }
   }catch(e){resultEditor.textContent='网络错误: '+e.message;statusBadge.textContent='连接失败';statusBadge.className='status-badge status-err'}
 }
+function diffWithPrevious(){
+  const current=resultEditor.textContent;
+  if(!_prevCompiled||_prevCompiled==='点击"编译"或修改模板后自动编译...'){alert('没有上次编译结果可供对比');return}
+  const prevLines=_prevCompiled.split('\n');
+  const currLines=current.split('\n');
+  let html='<div style="font-family:monospace;font-size:12px;white-space:pre-wrap;line-height:1.6">';
+  const maxLen=Math.max(prevLines.length,currLines.length);
+  for(let i=0;i<maxLen;i++){
+    const p=prevLines[i]||'';const c=currLines[i]||'';
+    if(p===c){html+='<div style="color:var(--text2)">'+escHtml(c)+'</div>'}
+    else{
+      if(p)html+='<div style="background:rgba(239,68,68,0.15);color:#f87171">- '+escHtml(p)+'</div>';
+      if(c)html+='<div style="background:rgba(34,197,94,0.15);color:#4ade80">+ '+escHtml(c)+'</div>';
+    }
+  }
+  html+='</div>';
+  const panel=window.open('','_blank','width=800,height=600');
+  panel.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{background:#0f172a;color:#f1f5f9;padding:16px;margin:0}</style></head><body><h3 style="color:#818cf8">编译结果Diff</h3>'+html+'</body></html>');
+  panel.document.close();
+}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 async function runLint(){
   const template=srcEditor.value;

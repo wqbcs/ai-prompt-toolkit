@@ -175,7 +175,7 @@ def _handle_resources_list(id_val: Any) -> str:
         {
             "uri": "prompt://rules",
             "name": "Lint规则列表",
-            "description": "55条Lint规则(P001-P055)和30+安全检测规则",
+            "description": "55条Lint规则(P001-P055)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
             "mimeType": "application/json",
         },
         {
