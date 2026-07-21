@@ -962,7 +962,7 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--probes", "-p", help="探测类型(逗号分隔，默认全部)")
 @click.option("--provider", help="Provider配置(provider:model_name，在线模式)")
 @click.option("--output", "-o", help="输出报告路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli", "html"]), default="cli", help="输出格式")
 @click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
 @click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
@@ -1061,6 +1061,15 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
             click.echo(f"报告已保存: {output}")
         else:
             click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    elif fmt == "html":
+        framework = compliance or "owasp_llm_top10"
+        html_content = report.generate_html_report(framework=framework)
+        if output:
+            out_path = output if output.endswith(".html") else output + ".html"
+            Path(out_path).write_text(html_content, encoding="utf-8")
+            click.echo(f"HTML报告已保存: {out_path}")
+        else:
+            click.echo(html_content)
     else:
         click.echo(report.get_summary())
 

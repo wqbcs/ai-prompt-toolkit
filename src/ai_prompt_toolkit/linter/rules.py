@@ -446,6 +446,12 @@ from ai_prompt_toolkit.linter.rules_p051_p055 import (  # noqa: E402
     run_checks_p051_p055,
 )
 
+from ai_prompt_toolkit.linter.rules_p056_p062 import (  # noqa: E402
+    check_p056, check_p057, check_p058, check_p059, check_p060,
+    check_p061, check_p062,
+    run_checks_p056_p062,
+)
+
 _CHECKERS_EXTENDED: list[_CheckerFn] = _CHECKERS + [
     check_p021, check_p022, check_p023, check_p024, check_p025,
     check_p026, check_p027, check_p028, check_p029, check_p030,
@@ -454,6 +460,8 @@ _CHECKERS_EXTENDED: list[_CheckerFn] = _CHECKERS + [
     check_p041, check_p042, check_p043, check_p044, check_p045,
     check_p046, check_p047, check_p048, check_p049, check_p050,
     check_p051, check_p052, check_p053, check_p054, check_p055,
+    check_p056, check_p057, check_p058, check_p059, check_p060,
+    check_p061, check_p062,
 ]
 
 
