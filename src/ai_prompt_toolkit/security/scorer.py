@@ -97,6 +97,20 @@ _RULE_SCORING: dict[str, dict[str, Any]] = {
     "INJ-014": {"av": AttackVector.CONTEXT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.6, "exploit": 0.55},
     "INJ-015": {"av": AttackVector.CONTEXT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.REQUIRED, "scope": ImpactScope.UNCHANGED, "impact": 0.55, "exploit": 0.5},
     "PII001": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.9, "exploit": 0.7},
+    "INJ-016": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.75, "exploit": 0.65},
+    "INJ-017": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.HIGH, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.7, "exploit": 0.6},
+    "PII002": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.85, "exploit": 0.75},
+    "PII003": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.8, "exploit": 0.7},
+    "PII004": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.6, "exploit": 0.5},
+    "PII005": {"av": AttackVector.LOCAL, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.5, "exploit": 0.4},
+    "PII006": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.45, "exploit": 0.35},
+    "PII007": {"av": AttackVector.LOCAL, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.5, "exploit": 0.4},
+    "PII008": {"av": AttackVector.LOCAL, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.55, "exploit": 0.45},
+    "PII009": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.UNCHANGED, "impact": 0.4, "exploit": 0.3},
+    "PII010": {"av": AttackVector.LOCAL, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.65, "exploit": 0.55},
+    "PII011": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.85, "exploit": 0.7},
+    "PII012": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.9, "exploit": 0.8},
+    "STRUCT-001": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.7, "exploit": 0.6},
 }
 
 
