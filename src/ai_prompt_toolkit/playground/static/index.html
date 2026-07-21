@@ -6,8 +6,8 @@
 <title>AI Prompt Toolkit Playground</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-:root{--bg:#ffffff;--surface:#f8fafc;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--primary:#3b82f6;--editor-bg:#1e293b;--editor-fg:#e2e8f0}
-[data-theme="dark"]{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;--primary:#818cf8;--editor-bg:#0f172a;--editor-fg:#a5f3fc}
+:root{--bg:#ffffff;--surface:#f8fafc;--text:#1e293b;--text2:#64748b;--border:#e2e8f0;--primary:#3b82f6;--primary-light:#dbeafe;--editor-bg:#1e293b;--editor-fg:#e2e8f0;--success:#22c55e;--warning:#f59e0b;--danger:#ef4444}
+[data-theme="dark"]{--bg:#0f172a;--surface:#1e293b;--text:#f1f5f9;--text2:#94a3b8;--border:#334155;--primary:#818cf8;--primary-light:#312e81;--editor-bg:#0f172a;--editor-fg:#a5f3fc;--success:#4ade80;--warning:#fbbf24;--danger:#f87171}
 body{font-family:system-ui,-apple-system,sans-serif;margin:0;padding:0;background:var(--bg);color:var(--text)}
 .editor{font-family:'Fira Code',monospace;font-size:13px;line-height:1.6;resize:none;
   border:1px solid var(--border);border-radius:6px;padding:12px;width:100%;
@@ -209,6 +209,7 @@ Please leverage GPT-4o's multimodal capabilities.
     <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+M</kbd> 模板市场</div>
     <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+D</kbd> 数据集</div>
     <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+T</kbd> 追踪</div>
+    <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+S</kbd> 评分卡</div>
     <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Ctrl+/</kbd> 快捷键帮助</div>
     <div><kbd style="background:var(--surface);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">Esc</kbd> 聚焦编辑器</div>
   </div>
@@ -248,6 +249,7 @@ document.addEventListener('keydown',function(e){
     else if(e.key==='m'){e.preventDefault();switchTab('market')}
     else if(e.key==='d'){e.preventDefault();switchTab('dataset')}
     else if(e.key==='t'){e.preventDefault();switchTab('trace')}
+    else if(e.key==='s'){e.preventDefault();switchTab('scorecard');runScorecard()}
     else if(e.key==='/'){e.preventDefault();toggleShortcuts()}
   }
   if(e.key==='Escape'){srcEditor.focus();hideShortcuts()}
