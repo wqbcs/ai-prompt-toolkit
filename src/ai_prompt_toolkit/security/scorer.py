@@ -115,6 +115,8 @@ _RULE_SCORING: dict[str, dict[str, Any]] = {
     "INJ-ZH-016": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.7, "exploit": 0.65},
     "INJ-ZH-017": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.REQUIRED, "scope": ImpactScope.UNCHANGED, "impact": 0.55, "exploit": 0.5},
     "INJ-ZH-018": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.75, "exploit": 0.7},
+    "INJ-018": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.8, "exploit": 0.7},
+    "INJ-019": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.HIGH, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.75, "exploit": 0.65},
 }
 
 

@@ -149,6 +149,22 @@ _BUILTIN_RULES: list[InjectionRule] = [
         description="检测到中文多语言绕过模式：利用非英文指令绕过安全过滤",
         remediation="添加多语言安全规则匹配，确保中英文指令均受约束",
     ),
+    InjectionRule(
+        rule_id="INJ-018",
+        name="递归注入",
+        pattern=r"(?:translate|interpret|parse|process|analyze).*(?:the\s+following|below|this).*(?:ignore|bypass|override|disregard).*(?:instruction|rule|safety|constraint)",
+        severity=Severity.HIGH,
+        description="检测到递归注入模式：通过中间任务间接注入恶意指令(OWASP LLM01变体)",
+        remediation="对中间任务输出进行注入检测，添加内容可信度标记",
+    ),
+    InjectionRule(
+        rule_id="INJ-019",
+        name="分片注入",
+        pattern=r"(?:part\s+\d|step\s+\d|section\s+\d|第[一二三四五六七八九十\d]+[部分步节]).*(?:combine|merge|assemble|concatenate|join|拼接|合并|组装).*(?:instruction|prompt|rule|directive|指令|规则|提示)",
+        severity=Severity.HIGH,
+        description="检测到分片注入模式：将恶意指令拆分到多个部分，通过合并触发攻击(OWASP LLM01变体)",
+        remediation="检测跨段指令组合，添加分片组装安全检查",
+    ),
 ]
 
 

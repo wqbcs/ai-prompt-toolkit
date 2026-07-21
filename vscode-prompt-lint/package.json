@@ -102,6 +102,16 @@
         "command": "promptLint.scorecard",
         "title": "Prompt Lint: 安全评分卡(0-100)",
         "icon": "$(shield)"
+      },
+      {
+        "command": "promptLint.fusionEngine",
+        "title": "Prompt Lint: 融合引擎分析(5层+元分类器)",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "promptLint.badge",
+        "title": "Prompt Lint: 生成安全评分徽章",
+        "icon": "$(verified)"
       }
     ],
     "views": {

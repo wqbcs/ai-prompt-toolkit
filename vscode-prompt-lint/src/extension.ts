@@ -130,6 +130,18 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.fusionEngine', () => {
+      runFusionEngineOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('promptLint.badge', () => {
+      runBadgeOnActiveFile();
+    })
+  );
+
+  context.subscriptions.push(
     vscode.languages.registerCodeLensProvider(
       { language: 'markdown', scheme: 'file' },
       new PromptCodeLensProvider()
@@ -1259,6 +1271,70 @@ async function runScorecardOnActiveFile() {
     </body></html>`;
   } catch (err: any) {
     vscode.window.showErrorMessage(`Prompt Lint: 评分卡失败 — ${err.message}`);
+  }
+}
+
+async function runFusionEngineOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  try {
+    const output = await executeCli(['engine', '--target', filePath, '--format', 'json']);
+    const result = JSON.parse(output);
+    const dc: Record<string,string> = {'allow':'#22c55e','warn':'#f59e0b','block':'#dc2626'};
+    const color = dc[result.decision] || '#6b7280';
+    const layerRows = (result.layer_results || []).map((lr: any) =>
+      `<tr><td>${lr.layer}</td><td style="color:${lr.score<0.1?'#22c55e':lr.score<0.5?'#f59e0b':'#dc2626'}">${lr.score.toFixed(4)}</td><td>${lr.latency_ms.toFixed(2)}ms</td><td style="color:#999;font-size:11px">${(lr.evidence||[]).slice(0,2).join('; ')}</td></tr>`
+    ).join('');
+    const panel = vscode.window.createWebviewPanel(
+      'promptEngine',
+      `融合引擎分析 — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: false }
+    );
+    panel.webview.html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+    body{font-family:-apple-system,sans-serif;padding:20px;background:#1e1e1e;color:#d4d4d4;text-align:center}
+    .decision{font-size:48px;font-weight:800;color:${color}}
+    .scores{font-size:12px;color:#999;margin-top:8px}table{border-collapse:collapse;width:100%;margin-top:16px}
+    th,td{border:1px solid #444;padding:6px 10px;text-align:left}th{background:#264f78}
+    </style></head><body>
+    <div class="decision">${result.decision.toUpperCase()}</div>
+    <div class="scores">风险: ${result.risk_score.toFixed(4)} | 校准: ${result.calibrated_score.toFixed(4)} | 置信度: ${result.confidence.toFixed(4)} | 耗时: ${result.scan_time_ms.toFixed(2)}ms</div>
+    <table><tr><th>层</th><th>分数</th><th>延迟</th><th>证据</th></tr>${layerRows}</table>
+    </body></html>`;
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: 融合引擎分析失败 — ${err.message}`);
+  }
+}
+
+async function runBadgeOnActiveFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || !isMarkdownFile(editor.document)) {
+    vscode.window.showWarningMessage('Prompt Lint: 请打开一个Markdown文件');
+    return;
+  }
+  const filePath = editor.document.uri.fsPath;
+  const badgePath = filePath.replace(/\.md$/, '.badge.svg');
+  try {
+    await executeCli(['badge', '--target', filePath, '--output', badgePath]);
+    const panel = vscode.window.createWebviewPanel(
+      'promptBadge',
+      `安全评分徽章 — ${path.basename(filePath)}`,
+      vscode.ViewColumn.Beside,
+      { enableScripts: false }
+    );
+    panel.webview.html = `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><style>
+    body{font-family:-apple-system,sans-serif;padding:20px;background:#1e1e1e;color:#d4d4d4;text-align:center}
+    img{max-width:400px}
+    </style></head><body>
+    <img src="file:///${badgePath.replace(/\\/g,'/')}" alt="Security Badge">
+    <p style="font-size:11px;color:#999;margin-top:12px">徽章已保存到: ${badgePath}</p>
+    </body></html>`;
+  } catch (err: any) {
+    vscode.window.showErrorMessage(`Prompt Lint: 徽章生成失败 — ${err.message}`);
   }
 }
 
