@@ -572,3 +572,82 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
         console.print("  🔍 Lint规则: [bold]55[/bold]条 | 安全规则: [bold]30+[/bold]条 | Provider: [bold]19[/bold]个")
+
+
+@main.command(name="eval-config")
+@click.option("--config", "-c", required=True, help="YAML评估配置文件路径")
+@click.option("--base-dir", help="配置文件中相对路径的基准目录(默认配置文件所在目录)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+@click.option("--init", "init_config", is_flag=True, help="生成示例配置文件prompt-eval.yaml")
+def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | None,
+                    init_config: bool) -> None:
+    """YAML声明式评估：通过配置文件批量执行lint/安全/断言评估(参考promptfoo)"""
+    if init_config:
+        from ai_prompt_toolkit.eval_config import DEFAULT_EVAL_CONFIG_YAML
+        out_path = Path("prompt-eval.yaml")
+        out_path.write_text(DEFAULT_EVAL_CONFIG_YAML, encoding="utf-8")
+        click.echo(f"示例配置已生成: {out_path}")
+        return
+
+    from ai_prompt_toolkit.eval_config import EvalConfig, run_eval_config
+
+    config_path = Path(config)
+    if not config_path.exists():
+        click.echo(f"错误: 配置文件不存在: {config_path}", err=True)
+        sys.exit(2)
+
+    try:
+        eval_config = EvalConfig.from_yaml(config_path)
+    except Exception as e:
+        click.echo(f"错误: 配置文件解析失败: {e}", err=True)
+        sys.exit(2)
+
+    base = base_dir or str(config_path.parent)
+    results = run_eval_config(eval_config, base_dir=base)
+
+    if fmt == "json":
+        import json as _json
+        output_data = results
+        if output:
+            from ai_prompt_toolkit.cli_helpers import write_report
+            write_report(output_data, output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(output_data, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        console.print("[bold cyan]YAML声明式评估结果[/bold cyan]\n")
+
+        for target in results["targets"]:
+            if "error" in target:
+                console.print(f"  [red]✗ {target['path']}: {target['error']}[/red]")
+                continue
+
+            status = "[green]✓ PASS[/green]" if target["passed"] else "[red]✗ FAIL[/red]"
+            console.print(f"  {status} {target['path']} (provider: {target['provider']})")
+
+            for ev in target["evaluators"]:
+                ev_status = "[green]✓[/green]" if ev["passed"] else "[red]✗[/red]"
+                score_str = f" (分数: {ev.get('score', 'N/A')})" if "score" in ev else ""
+                threshold_str = f" 阈值: {ev['threshold']}" if ev["threshold"] > 0 else ""
+                console.print(f"    {ev_status} [{ev['type']}]{score_str}{threshold_str}")
+
+                if ev.get("details"):
+                    for detail in ev["details"]:
+                        if isinstance(detail, dict):
+                            d_status = "[green]✓[/green]" if detail.get("passed") else "[red]✗[/red]"
+                            console.print(f"      {d_status} {detail.get('name', 'assertion')}")
+                            for d in detail.get("details", []):
+                                console.print(f"        [dim]{d}[/dim]")
+
+        summary = results["summary"]
+        console.print(f"\n[bold]汇总: {summary['passed']}/{summary['total']} 通过, {summary['failed']} 失败[/bold]")
+
+    if eval_config.output.save_history:
+        click.echo("\n评估历史已保存")
+
+    sys.exit(0 if results["summary"]["failed"] == 0 else 1)
