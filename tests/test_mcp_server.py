@@ -30,7 +30,9 @@ class TestMCPProtocol:
         assert "prompt_evaluate" in tool_names
         assert "prompt_dataset_run" in tool_names
         assert "prompt_scorecard" in tool_names
-        assert len(tools) == 8
+        assert "prompt_engine" in tool_names
+        assert "prompt_badge" in tool_names
+        assert len(tools) == 10
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

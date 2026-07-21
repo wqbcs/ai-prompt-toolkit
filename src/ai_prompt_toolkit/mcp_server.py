@@ -11,6 +11,11 @@
 3. prompt_judge — LLM-as-Judge评估
 4. prompt_canary_inject — 注入Canary Token
 5. prompt_canary_check — 检测Canary泄露
+6. prompt_evaluate — 62维度质量评估
+7. prompt_dataset_run — 批量数据集运行
+8. prompt_scorecard — 安全评分卡(0-100分)
+9. prompt_engine — 多层融合注入检测引擎(5层+元分类器融合)
+10. prompt_badge — 安全评分徽章SVG生成
 
 暴露的MCP Resources:
 1. prompt://templates — 场景模板列表
@@ -160,6 +165,30 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template"],
             },
         },
+        {
+            "name": "prompt_engine",
+            "description": "多层融合注入检测引擎: 5层(L1正则+L2分类器+L3相似度+L4结构+L5异常)并行检测+元分类器融合+Isotonic校准+炎症级联",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                    "session_id": {"type": "string", "description": "会话ID(启用炎症级联, 跨轮对话累积风险)", "default": ""},
+                },
+                "required": ["template"],
+            },
+        },
+        {
+            "name": "prompt_badge",
+            "description": "生成安全评分徽章SVG图片, 可嵌入README或CI报告(评分+等级+决策三段式)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "Prompt模板文本"},
+                    "compact": {"type": "boolean", "description": "紧凑模式(仅评分+等级)", "default": False},
+                },
+                "required": ["template"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -248,6 +277,10 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_dataset_run(arguments)
         elif tool_name == "prompt_scorecard":
             result = _tool_scorecard(arguments)
+        elif tool_name == "prompt_engine":
+            result = _tool_engine(arguments)
+        elif tool_name == "prompt_badge":
+            result = _tool_badge(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -492,6 +525,61 @@ def _tool_scorecard(args: dict[str, Any]) -> dict[str, Any]:
     all_findings = list(lint_findings) + sec_findings
     scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
     return scorecard.to_dict()
+
+
+def _tool_engine(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.engine import FusionEngine
+
+    template = args.get("template", "")
+    session_id = args.get("session_id", "")
+    if not template.strip():
+        return {"error": "模板为空"}
+
+    engine = FusionEngine(enable_inflammation=bool(session_id))
+    result = engine.analyze(template, session_id=session_id)
+    return result.to_dict()
+
+
+def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+
+    template = args.get("template", "")
+    compact = args.get("compact", False)
+    if not template.strip():
+        return {"error": "模板为空"}
+
+    linter = PromptLinter()
+    lint_result = linter.lint("mcp", template)
+    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+
+    detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
+    sec_findings = detector.detect(template)
+
+    pii = PIIDetector()
+    pii_finding = pii.check(template)
+    if pii_finding:
+        sec_findings.append(pii_finding)
+
+    struct_finding = check_structural(template)
+    if struct_finding:
+        sec_findings.append(struct_finding)
+
+    all_findings = list(lint_findings) + sec_findings
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+
+    svg = generate_scorecard_badge(scorecard, compact=compact)
+    return {
+        "score": scorecard.overall_score,
+        "grade": scorecard.grade.value,
+        "decision": scorecard.decision.value,
+        "svg": svg,
+    }
 
 
 if __name__ == "__main__":

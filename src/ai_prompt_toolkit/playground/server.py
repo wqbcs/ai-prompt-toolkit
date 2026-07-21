@@ -372,3 +372,67 @@ async def api_scorecard(request: dict[str, Any]) -> dict[str, Any]:
         return {"status": "success", "scorecard": scorecard.to_dict()}
     except Exception as e:
         return {"status": "error", "error": str(e)}
+
+
+@app.post("/api/engine")
+async def api_engine(request: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.engine import FusionEngine
+
+    template = request.get("template", "")
+    session_id = request.get("session_id", "")
+    if not template.strip():
+        return {"status": "error", "error": "模板为空"}
+
+    try:
+        engine = FusionEngine(enable_inflammation=bool(session_id))
+        result = engine.analyze(template, session_id=session_id)
+        return {"status": "success", "engine_result": result.to_dict()}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+@app.post("/api/badge")
+async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+
+    template = request.get("template", "")
+    compact = request.get("compact", False)
+    if not template.strip():
+        return {"status": "error", "error": "模板为空"}
+
+    try:
+        linter = PromptLinter()
+        lint_result = linter.lint("playground", template)
+        lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+
+        detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
+        sec_findings = detector.detect(template)
+
+        pii = PIIDetector()
+        pii_finding = pii.check(template)
+        if pii_finding:
+            sec_findings.append(pii_finding)
+
+        struct_finding = check_structural(template)
+        if struct_finding:
+            sec_findings.append(struct_finding)
+
+        all_findings = list(lint_findings) + sec_findings
+        scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+        svg = generate_scorecard_badge(scorecard, compact=compact)
+
+        return {
+            "status": "success",
+            "score": scorecard.overall_score,
+            "grade": scorecard.grade.value,
+            "decision": scorecard.decision.value,
+            "svg": svg,
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
