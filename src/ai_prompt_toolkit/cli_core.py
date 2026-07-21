@@ -490,7 +490,7 @@ def scan(target: str, config: str | None, incremental: bool,
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option("--config", help="Lint配置YAML文件路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "table"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
@@ -560,6 +560,28 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 mm_findings_total.extend(mm_findings)
                 all_results[i].findings.extend(mm_findings)
                 total_findings += len(mm_findings)
+
+    if fmt == "table":
+        try:
+            from rich.console import Console
+            from rich.table import Table
+            console = Console()
+            for result in all_results:
+                table = Table(title=f"Lint: {result.template_id}", show_lines=False)
+                table.add_column("Rule", style="cyan", width=6)
+                table.add_column("Severity", width=10)
+                table.add_column("Description", style="white")
+                for f in result.findings:
+                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                    sev_style = "bold red" if sev in ("critical", "high") else "yellow" if sev == "medium" else "dim"
+                    table.add_row(f.rule_id, f"[{sev_style}]{sev.upper()}[/{sev_style}]", f.description[:80])
+                if result.findings:
+                    console.print(table)
+                else:
+                    console.print(f"[green]✓ {result.template_id}: No issues[/green]")
+        except ImportError:
+            click.echo("Table format requires 'rich' package. Install with: pip install rich")
+            fmt = "cli"
 
     if fmt == "cli":
         for result in all_results:
