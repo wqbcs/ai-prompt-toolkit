@@ -105,6 +105,7 @@ _INJECTION_RULE_PREFIXES = ("INJ-", "INJ-ZH-")
 _PII_RULE_IDS = {"PII001", "PII002", "PII003"}
 _STRUCTURE_RULE_IDS = {"P001", "P002", "P003", "P005", "P025", "P026"}
 _SUPPLY_CHAIN_RULE_PREFIXES = ("SC", "UNI", "CANARY")
+_ANOMALY_RULE_IDS = {"ANOMALY-001"}
 
 
 def _classify_rule(rule_id: str) -> str:
@@ -116,8 +117,12 @@ def _classify_rule(rule_id: str) -> str:
         return "injection"
     if rule_id in _PII_RULE_IDS or "PII" in rule_id:
         return "pii"
+    if rule_id in _ANOMALY_RULE_IDS:
+        return "injection"
     if any(rule_id.startswith(p) for p in _SUPPLY_CHAIN_RULE_PREFIXES):
         return "supply_chain"
+    if rule_id.startswith("STRUCT"):
+        return "structure"
     return "lint"
 
 

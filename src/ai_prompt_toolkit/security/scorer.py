@@ -111,6 +111,7 @@ _RULE_SCORING: dict[str, dict[str, Any]] = {
     "PII011": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.85, "exploit": 0.7},
     "PII012": {"av": AttackVector.LOCAL, "ac": AttackComplexity.LOW, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.9, "exploit": 0.8},
     "STRUCT-001": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.MEDIUM, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.7, "exploit": 0.6},
+    "ANOMALY-001": {"av": AttackVector.USER_INPUT, "ac": AttackComplexity.HIGH, "pr": PrivilegesRequired.NONE, "ui": UserInteraction.NONE, "scope": ImpactScope.CHANGED, "impact": 0.6, "exploit": 0.5},
 }
 
 
