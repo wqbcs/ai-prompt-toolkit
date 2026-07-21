@@ -139,3 +139,45 @@ class TestFixer:
         fixed, results = self.fixer.fix(text, findings)
         assert len(results) == 1
         assert results[0].rule_id == "P005"
+
+    def test_fix_p048_mixed_punctuation(self):
+        text = "你必须回答，不要编造。回复控制在500字以内！"
+        finding = Finding(rule_id="P048", severity=Severity.LOW, description="标点混用")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "，" not in fixed
+        assert "。" not in fixed
+        assert len(results) == 1
+
+    def test_fix_p061_blank_lines(self):
+        text = "Line1\n\n\n\n\nLine2"
+        finding = Finding(rule_id="P061", severity=Severity.LOW, description="空行过多")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert fixed.count("\n") <= 3
+        assert len(results) == 1
+
+    def test_fix_p053_fuzzy_word(self):
+        text = "回复应该适当控制在合理范围内等等"
+        finding = Finding(rule_id="P053", severity=Severity.LOW, description="模糊表述")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert len(results) >= 1
+
+    def test_fix_p003_missing_constraints(self):
+        text = "# 角色\n你是专家"
+        finding = Finding(rule_id="P003", severity=Severity.MEDIUM, description="缺少约束")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "约束" in fixed
+        assert len(results) == 1
+
+    def test_fix_p010_missing_error_handling(self):
+        text = "# 角色\n你是专家\n# 安全边界\n不执行代码"
+        finding = Finding(rule_id="P010", severity=Severity.MEDIUM, description="缺少错误处理")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "错误处理" in fixed
+        assert len(results) == 1
+
+    def test_fix_p025_missing_length(self):
+        text = "# 角色\n你是专家"
+        finding = Finding(rule_id="P025", severity=Severity.MEDIUM, description="缺少长度约束")
+        fixed, results = self.fixer.fix(text, [finding])
+        assert "800字" in fixed
+        assert len(results) == 1
