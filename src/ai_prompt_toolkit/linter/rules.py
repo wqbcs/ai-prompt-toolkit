@@ -474,6 +474,18 @@ _CHECKERS_EXTENDED.extend([
     check_p067, check_p068, check_p069, check_p070,
 ])
 
+from ai_prompt_toolkit.linter.rules_p071_p080 import (  # noqa: E402
+    check_p071, check_p072, check_p073, check_p074,
+    check_p075, check_p076, check_p077, check_p078,
+    check_p079, check_p080,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p071, check_p072, check_p073, check_p074,
+    check_p075, check_p076, check_p077, check_p078,
+    check_p079, check_p080,
+])
+
 
 def get_all_rules() -> list[LintRule]:
     return list(_RULE_MAP.values())
