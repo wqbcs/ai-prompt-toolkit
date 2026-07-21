@@ -966,7 +966,7 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
 @click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
-@click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm"]), help="合规报告框架")
+@click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm", "owasp_llm_top10"]), help="合规报告框架")
 @click.option("--scorecard", is_flag=True, help="红队探测后自动运行安全评分卡")
 def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
                 output: str | None, fmt: str, owasp: str | None,
