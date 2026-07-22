@@ -1352,3 +1352,86 @@ def registry_search_cmd(query: str, limit: int) -> None:
         for entry in results:
             click.echo(f"  {entry.name} v{entry.version} ({entry.category}) - {entry.description[:50]}")
         registry.close()
+
+
+@main.command(name="sarif-report")
+@click.option("--input", "-i", "input_path", required=True, help="输入JSON结果文件")
+@click.option("--type", "result_type", type=click.Choice(["lint", "scan", "eval"]), default="lint", help="结果类型")
+@click.option("--output", "-o", default="report.sarif", help="输出SARIF文件路径")
+def sarif_report_cmd(input_path: str, result_type: str, output: str) -> None:
+    """生成SARIF v2.1.0格式报告(GitHub Code Scanning兼容)"""
+    import json as _json
+    from ai_prompt_toolkit.sarif_report import lint_results_to_sarif, scan_results_to_sarif, eval_results_to_sarif
+
+    with open(input_path, encoding="utf-8") as f:
+        findings = _json.load(f)
+
+    if result_type == "scan":
+        report = scan_results_to_sarif(findings)
+    elif result_type == "eval":
+        report = eval_results_to_sarif(findings)
+    else:
+        report = lint_results_to_sarif(findings)
+
+    path = report.write(output)
+    click.echo(f"SARIF报告已生成: {path}")
+    click.echo(f"  结果数: {report.total_results} | 错误: {report.error_count} | 警告: {report.warning_count}")
+
+
+@main.command(name="prompt-diff")
+@click.option("--old", "-a", "old_path", required=True, help="旧版Prompt文件路径")
+@click.option("--new", "-b", "new_path", required=True, help="新版Prompt文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli", "unified"]), default="cli", help="输出格式")
+def prompt_diff_cmd(old_path: str, new_path: str, fmt: str) -> None:
+    """Prompt结构化Diff对比: 段级差异分析+语义相似度"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.prompt_diff import prompt_diff, prompt_hash
+
+    old_text = resolve_path(old_path).read_text(encoding="utf-8")
+    new_text = resolve_path(new_path).read_text(encoding="utf-8")
+
+    report = prompt_diff(old_text, new_text)
+
+    if fmt == "json":
+        click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    elif fmt == "unified":
+        click.echo(report.to_unified_diff())
+    else:
+        from ai_prompt_toolkit.output import console
+        console.print(f"[bold]Prompt Diff: {old_path} → {new_path}[/bold]")
+        console.print(f"  相似度: [cyan]{report.overall_similarity:.1%}[/cyan]")
+        console.print(f"  [green]+{report.total_added}[/green] [red]-{report.total_removed}[/red] [yellow]~{report.total_changed}[/yellow]")
+        if report.sections_added:
+            console.print(f"  新增段: [green]{', '.join(report.sections_added)}[/green]")
+        if report.sections_removed:
+            console.print(f"  删除段: [red]{', '.join(report.sections_removed)}[/red]")
+        for sd in report.section_diffs:
+            color = "green" if sd.similarity >= 0.9 else "yellow" if sd.similarity >= 0.5 else "red"
+            console.print(f"  [{color}]{sd.section_name}[/{color}]: 相似度 {sd.similarity:.1%} +{sd.added_lines} -{sd.removed_lines} ~{sd.changed_lines}")
+        click.echo(f"\nHash: {prompt_hash(old_text)[:8]} → {prompt_hash(new_text)[:8]}")
+
+
+@main.command(name="prompt-merge")
+@click.option("--ours", "-a", required=True, help="我方Prompt文件路径")
+@click.option("--theirs", "-b", required=True, help="他方Prompt文件路径")
+@click.option("--strategy", "-s", type=click.Choice(["prefer_newer", "prefer_longer", "union"]), default="prefer_newer", help="合并策略")
+@click.option("--output", "-o", help="输出合并结果路径")
+def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) -> None:
+    """Prompt结构感知合并: 基于7段解析的智能合并"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.prompt_diff import prompt_merge, prompt_hash
+
+    ours_text = resolve_path(ours).read_text(encoding="utf-8")
+    theirs_text = resolve_path(theirs).read_text(encoding="utf-8")
+
+    merged = prompt_merge("", ours_text, theirs_text, strategy=strategy)
+
+    if output:
+        out_path = resolve_path(output)
+        out_path.write_text(merged, encoding="utf-8")
+        click.echo(f"合并结果已保存: {output} (策略: {strategy})")
+    else:
+        click.echo(merged)
+
+    click.echo(f"合并策略: {strategy} | 结果Hash: {prompt_hash(merged)[:8]} | 长度: {len(merged)}")

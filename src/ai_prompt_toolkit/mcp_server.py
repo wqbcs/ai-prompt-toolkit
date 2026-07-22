@@ -357,6 +357,44 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "prompt_sarif_report",
+            "description": "生成SARIF v2.1.0格式报告(GitHub Code Scanning兼容)，支持lint/scan/eval结果转换",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "results": {"type": "string", "description": "JSON格式的lint/scan/eval结果"},
+                    "result_type": {"type": "string", "enum": ["lint", "scan", "eval"], "description": "结果类型", "default": "lint"},
+                    "output_path": {"type": "string", "description": "输出SARIF文件路径"},
+                },
+                "required": ["results"],
+            },
+        },
+        {
+            "name": "prompt_diff",
+            "description": "Prompt结构化Diff对比: 段级差异分析+语义相似度+合并策略(prefer_newer/prefer_longer/union)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "old_text": {"type": "string", "description": "旧版Prompt文本"},
+                    "new_text": {"type": "string", "description": "新版Prompt文本"},
+                },
+                "required": ["old_text", "new_text"],
+            },
+        },
+        {
+            "name": "prompt_merge",
+            "description": "Prompt结构感知合并: 基于7段解析的智能合并(prefer_newer/prefer_longer/union三种策略)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "ours_text": {"type": "string", "description": "我方Prompt文本"},
+                    "theirs_text": {"type": "string", "description": "他方Prompt文本"},
+                    "strategy": {"type": "string", "enum": ["prefer_newer", "prefer_longer", "union"], "description": "合并策略", "default": "prefer_newer"},
+                },
+                "required": ["ours_text", "theirs_text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -475,6 +513,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_notify(arguments)
         elif tool_name == "prompt_plugin_list":
             result = _tool_plugin_list(arguments)
+        elif tool_name == "prompt_sarif_report":
+            result = _tool_sarif_report(arguments)
+        elif tool_name == "prompt_diff":
+            result = _tool_prompt_diff(arguments)
+        elif tool_name == "prompt_merge":
+            result = _tool_prompt_merge(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1048,6 +1092,73 @@ def _tool_plugin_list(args: dict[str, Any]) -> dict[str, Any]:
 
     pm = PluginManager.get_instance()
     return pm.get_summary()
+
+
+def _tool_sarif_report(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.sarif_report import lint_results_to_sarif, scan_results_to_sarif, eval_results_to_sarif
+
+    results_json = args.get("results", "[]")
+    result_type = args.get("result_type", "lint")
+    output_path = args.get("output_path", "")
+
+    try:
+        findings = json.loads(results_json)
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON in results"}
+
+    if result_type == "scan":
+        report = scan_results_to_sarif(findings)
+    elif result_type == "eval":
+        report = eval_results_to_sarif(findings)
+    else:
+        report = lint_results_to_sarif(findings)
+
+    response = {
+        "total_results": report.total_results,
+        "error_count": report.error_count,
+        "warning_count": report.warning_count,
+        "runs": len(report.runs),
+    }
+
+    if output_path:
+        path = report.write(output_path)
+        response["output_path"] = str(path)
+    else:
+        response["sarif_json"] = report.to_dict()
+
+    return response
+
+
+def _tool_prompt_diff(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_diff import prompt_diff as do_diff
+
+    old_text = args.get("old_text", "")
+    new_text = args.get("new_text", "")
+
+    if not old_text or not new_text:
+        return {"error": "Both old_text and new_text are required"}
+
+    report = do_diff(old_text, new_text)
+    return report.to_dict()
+
+
+def _tool_prompt_merge(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_diff import prompt_merge as do_merge, prompt_hash
+
+    ours_text = args.get("ours_text", "")
+    theirs_text = args.get("theirs_text", "")
+    strategy = args.get("strategy", "prefer_newer")
+
+    if not ours_text or not theirs_text:
+        return {"error": "Both ours_text and theirs_text are required"}
+
+    merged = do_merge("", ours_text, theirs_text, strategy=strategy)
+    return {
+        "merged_text": merged,
+        "merged_hash": prompt_hash(merged),
+        "strategy": strategy,
+        "merged_length": len(merged),
+    }
 
 
 if __name__ == "__main__":
