@@ -1086,3 +1086,46 @@ def contest_eval_cmd(target: str, fmt: str) -> None:
             click.echo("\n改进建议:")
             for rec in result["recommendations"]:
                 click.echo(f"  - {rec}")
+
+
+@main.command(name="flow-run")
+@click.option("--flow", "-f", required=True, help="Flow DAG YAML文件路径或预设名称(lint-scan-flow/gepa-optimize-flow)")
+@click.option("--input-text", "-i", help="输入文本")
+@click.option("--input-file", help="输入文本文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt: str) -> None:
+    """Flow DAG编排: 运行声明式工作流(lint-scan-gepa等)"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.flow_dag import FlowDAG, FlowExecutor, create_lint_scan_flow, create_gepa_optimize_flow
+
+    presets = {
+        "lint-scan-flow": create_lint_scan_flow,
+        "gepa-optimize-flow": create_gepa_optimize_flow,
+    }
+
+    if flow in presets:
+        dag = presets[flow]()
+    else:
+        dag = FlowDAG.from_yaml(flow)
+
+    text = ""
+    if input_text:
+        text = input_text
+    elif input_file:
+        text = resolve_path(input_file).read_text(encoding="utf-8")
+    else:
+        click.echo("错误: 请指定--input-text或--input-file", err=True)
+        sys.exit(2)
+
+    executor = FlowExecutor(dag)
+    result = executor.execute(initial_inputs={"text": text})
+
+    if fmt == "json":
+        click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"Flow: {dag.name} | 状态: {result.status} | 耗时: {result.total_time_ms:.0f}ms")
+        for name, r in result.results.items():
+            click.echo(f"  [{r.status}] {name}: {r.execution_time_ms:.0f}ms")
+            if r.error:
+                click.echo(f"    错误: {r.error}")

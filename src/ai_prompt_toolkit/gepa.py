@@ -680,6 +680,8 @@ def gepa_optimize(
     predictor_names: list[str] | None = None,
     custom_metric: Callable[..., ScoreWithFeedback | float] | None = None,
     execute_fn: Callable[[dict[str, str], dict[str, Any]], dict[str, Any]] | None = None,
+    save_version: bool = False,
+    version_name: str = "",
 ) -> GEPAResult:
     feedback_fn = custom_metric or FEEDBACK_METRICS.get(metric, FeedbackMetric.lint_score)
 
@@ -705,7 +707,32 @@ def gepa_optimize(
 
     initial_instructions = {name: text for name in predictor_names}
 
-    return optimizer.optimize(
+    result = optimizer.optimize(
         initial_instructions=initial_instructions,
         trainset=trainset,
     )
+
+    if save_version:
+        try:
+            from ai_prompt_toolkit.prompt_version import PromptVersionStore
+            store = PromptVersionStore()
+            name = version_name or "gepa-optimized"
+            best_text = result.best_instructions.get("main", text)
+            store.save(
+                name, best_text,
+                score=result.best_score * 100,
+                source="gepa",
+                tags=["gepa", auto, metric],
+                metadata={
+                    "initial_score": result.initial_score,
+                    "best_score": result.best_score,
+                    "improvement": result.improvement,
+                    "candidates_explored": result.candidates_explored,
+                    "generations": result.generations,
+                },
+            )
+            store.close()
+        except Exception as e:
+            logger.debug("Version save failed: %s", e)
+
+    return result
