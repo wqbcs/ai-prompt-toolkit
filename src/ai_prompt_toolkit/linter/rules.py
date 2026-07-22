@@ -17,15 +17,19 @@ class LintRule:
     severity: Severity
     description: str
     remediation: str
+    description_en: str = ""
+    remediation_en: str = ""
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, lang: str = "zh") -> dict[str, Any]:
+        desc = self.description if lang == "zh" else (self.description_en or self.description)
+        rem = self.remediation if lang == "zh" else (self.remediation_en or self.remediation)
         return {
             "rule_id": self.rule_id,
             "name": self.name,
             "category": self.category,
             "severity": self.severity.value,
-            "description": self.description,
-            "remediation": self.remediation,
+            "description": desc,
+            "remediation": rem,
         }
 
 

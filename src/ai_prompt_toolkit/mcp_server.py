@@ -463,6 +463,29 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "attack_vault_check",
+            "description": "攻击签名检测: 检查文本是否匹配已知攻击模式(向量相似度)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "attack_vault_learn",
+            "description": "攻击签名学习: 将检测到的攻击添加到签名库",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "攻击文本"},
+                    "attack_type": {"type": "string", "description": "攻击类型(如injection/sql_injection)"},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -599,6 +622,10 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_cache_lookup(arguments)
         elif tool_name == "prompt_cache_invalidate":
             result = _tool_cache_invalidate(arguments)
+        elif tool_name == "attack_vault_check":
+            result = _tool_attack_vault_check(arguments)
+        elif tool_name == "attack_vault_learn":
+            result = _tool_attack_vault_learn(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1332,6 +1359,35 @@ def _tool_cache_invalidate(args: dict[str, Any]) -> dict[str, Any]:
         removed = cache.invalidate(key)
         return {"status": "invalidated" if removed else "not_found", "key": key}
     return {"error": "Specify 'all' or 'key' parameter"}
+
+
+def _tool_attack_vault_check(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.attack_vault import get_attack_vault
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    vault = get_attack_vault()
+    is_match, score, sig = vault.check(text)
+    result: dict[str, Any] = {
+        "is_match": is_match,
+        "similarity": round(score, 4),
+        "vault_size": vault.size,
+    }
+    if sig:
+        result["matched_attack_type"] = sig.attack_type
+        result["matched_text_preview"] = sig.text[:100]
+    return result
+
+
+def _tool_attack_vault_learn(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.attack_vault import get_attack_vault
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    attack_type = args.get("attack_type", "unknown")
+    vault = get_attack_vault()
+    sig = vault.learn(text, attack_type=attack_type)
+    return {"status": "learned", "attack_type": attack_type, "vault_size": vault.size}
 
 
 if __name__ == "__main__":
