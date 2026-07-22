@@ -1129,3 +1129,32 @@ def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt:
             click.echo(f"  [{r.status}] {name}: {r.execution_time_ms:.0f}ms")
             if r.error:
                 click.echo(f"    错误: {r.error}")
+
+
+@main.command(name="data-load")
+@click.option("--source", "-s", required=True, help="数据源路径(目录或数据库连接)")
+@click.option("--type", "reader_type", type=click.Choice(["filesystem", "database"]), default="filesystem", help="连接器类型")
+@click.option("--query", "-q", help="数据库查询SQL(database类型)")
+@click.option("--recursive/--no-recursive", default=True, help="递归扫描(默认开启)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def data_load_cmd(source: str, reader_type: str, query: str | None, recursive: bool, fmt: str) -> None:
+    """数据连接器: 从文件系统或数据库加载Prompt数据"""
+    import json as _json
+    from ai_prompt_toolkit.data_reader import DataReaderFactory
+
+    kwargs: dict[str, Any] = {}
+    if reader_type == "filesystem":
+        kwargs = {"input_dir": source, "recursive": recursive}
+    elif reader_type == "database":
+        kwargs = {"connection_string": source, "query": query or ""}
+
+    reader = DataReaderFactory.create(reader_type, **kwargs)
+    docs = reader.load_data()
+
+    if fmt == "json":
+        click.echo(_json.dumps({"count": len(docs), "documents": [d.to_dict() for d in docs]}, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"加载完成: {len(docs)}个文档")
+        for doc in docs[:20]:
+            name = doc.metadata.get("file_name", doc.id[:12])
+            click.echo(f"  {name}: {len(doc.text)}字符 ({doc.metadata.get('file_type', 'unknown')})")

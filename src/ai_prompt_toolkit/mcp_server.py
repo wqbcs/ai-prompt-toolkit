@@ -259,6 +259,67 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["name", "content"],
             },
         },
+        {
+            "name": "prompt_contest_eval",
+            "description": "华为云+鸿蒙赛事贴合度评估(5鸿蒙Agent维度+5华为云维度+赛事就绪度)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["prompt"],
+            },
+        },
+        {
+            "name": "prompt_flow_run",
+            "description": "执行Flow DAG工作流(lint-scan-flow/gepa-optimize-flow等预设或自定义YAML)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "flow_name": {"type": "string", "enum": ["lint-scan-flow", "gepa-optimize-flow"], "description": "预设Flow名称"},
+                    "text": {"type": "string", "description": "输入文本"},
+                },
+                "required": ["flow_name", "text"],
+            },
+        },
+        {
+            "name": "prompt_data_load",
+            "description": "数据连接器: 从文件系统(.md/.txt/.yaml/.json)或数据库加载Prompt数据",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "reader_type": {"type": "string", "enum": ["filesystem", "database"], "description": "连接器类型"},
+                    "path": {"type": "string", "description": "文件系统路径或数据库连接字符串"},
+                    "query": {"type": "string", "description": "数据库查询SQL(database类型)"},
+                    "recursive": {"type": "boolean", "description": "是否递归扫描(默认true)", "default": True},
+                },
+                "required": ["reader_type", "path"],
+            },
+        },
+        {
+            "name": "prompt_eval_matrix",
+            "description": "评估矩阵: 对Prompt执行多评估器评估并返回矩阵结果",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "Prompt文本"},
+                    "evaluators": {"type": "string", "description": "评估器(逗号分隔, 默认全部)"},
+                },
+                "required": ["prompt"],
+            },
+        },
+        {
+            "name": "prompt_version_list",
+            "description": "查询Prompt版本列表",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Prompt名称过滤"},
+                    "limit": {"type": "integer", "description": "返回条数(默认20)", "default": 20},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -361,6 +422,16 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_gepa_optimize(arguments)
         elif tool_name == "prompt_version_save":
             result = _tool_prompt_version_save(arguments)
+        elif tool_name == "prompt_contest_eval":
+            result = _tool_contest_eval(arguments)
+        elif tool_name == "prompt_flow_run":
+            result = _tool_flow_run(arguments)
+        elif tool_name == "prompt_data_load":
+            result = _tool_data_load(arguments)
+        elif tool_name == "prompt_eval_matrix":
+            result = _tool_eval_matrix(arguments)
+        elif tool_name == "prompt_version_list":
+            result = _tool_version_list(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -769,6 +840,66 @@ def _tool_prompt_version_save(args: dict[str, Any]) -> dict[str, Any]:
     try:
         v = store.save(name, content, score=score, source=source, tags=tags)
         return v.to_dict()
+    finally:
+        store.close()
+
+
+def _tool_contest_eval(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.huawei_eval import evaluate_contest_readiness
+    return evaluate_contest_readiness(args["prompt"])
+
+
+def _tool_flow_run(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.flow_dag import FlowExecutor, create_lint_scan_flow, create_gepa_optimize_flow
+
+    flow_name = args["flow_name"]
+    text = args["text"]
+
+    presets = {"lint-scan-flow": create_lint_scan_flow, "gepa-optimize-flow": create_gepa_optimize_flow}
+    dag = presets.get(flow_name, create_lint_scan_flow)()
+    executor = FlowExecutor(dag)
+    result = executor.execute(initial_inputs={"text": text})
+    return result.to_dict()
+
+
+def _tool_data_load(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.data_reader import DataReaderFactory
+
+    reader_type = args["reader_type"]
+    path = args["path"]
+
+    kwargs: dict[str, Any] = {}
+    if reader_type == "filesystem":
+        kwargs = {"input_dir": path, "recursive": args.get("recursive", True)}
+    elif reader_type == "database":
+        kwargs = {"connection_string": path, "query": args.get("query", "")}
+
+    reader = DataReaderFactory.create(reader_type, **kwargs)
+    docs = reader.load_data()
+    return {"document_count": len(docs), "documents": [d.to_dict() for d in docs[:20]]}
+
+
+def _tool_eval_matrix(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.eval_matrix import build_matrix_from_evaluator_results
+
+    prompt = args["prompt"]
+    evaluators_str = args.get("evaluators", "")
+    ev_list = [e.strip() for e in evaluators_str.split(",")] if evaluators_str else None
+
+    report = build_matrix_from_evaluator_results("mcp-eval", prompt, evaluator_names=ev_list)
+    return report.to_dict()
+
+
+def _tool_version_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_version import PromptVersionStore
+
+    name = args.get("name")
+    limit = args.get("limit", 20)
+
+    store = PromptVersionStore()
+    try:
+        versions = store.list_versions(name, limit=limit)
+        return {"count": len(versions), "versions": [v.to_dict() for v in versions]}
     finally:
         store.close()
 
