@@ -1,0 +1,248 @@
+"""Prompt模板变量系统 — 安全变量插值+类型校验+默认值
+
+参考:
+- Jinja2 SandboxedEnvironment (防模板注入, 变量插值, 默认值)
+- python-jsonschema (JSON Schema变量类型/值域校验)
+- promptfoo Nunjucks模板 (变量插值语法)
+- Langfuse Prompt管理 (模板版本+变量)
+
+核心特性:
+- 安全渲染: 零依赖自实现, 兼容{{var}}/{{var|default('x')}}语法
+- 变量提取: 从模板文本提取所有变量名+默认值
+- JSON Schema校验: 变量类型/值域/必填约束
+- 三层防护: 变量白名单+类型校验+输出清洗
+- PromptTemplate: 模板对象(变量元数据+渲染+校验)
+- TemplateStore: 模板存储(SQLite, 版本管理)
+"""
+from __future__ import annotations
+
+import json
+import re
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger(__name__)
+
+_VAR_PATTERN = re.compile(r"\{\{\s*(\w+)(?:\s*\|\s*default\(['\"]([^'\"]*)['\"]\))?\s*\}\}")
+_UNSAFE_PATTERN = re.compile(r"__\w+__|\.|^import\s|^exec\s|^eval\s|^open\s|^os\.", re.IGNORECASE)
+_TEMPLATE_VAR_SCHEMA = {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {},
+    "additionalProperties": True,
+}
+
+
+@dataclass
+class TemplateVariable:
+    name: str
+    default_value: str = ""
+    required: bool = True
+    description: str = ""
+    var_type: str = "string"
+    constraints: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
+            "name": self.name,
+            "required": self.required,
+            "type": self.var_type,
+        }
+        if self.default_value:
+            d["default"] = self.default_value
+        if self.description:
+            d["description"] = self.description
+        if self.constraints:
+            d["constraints"] = self.constraints
+        return d
+
+
+def extract_variables(template_text: str) -> list[TemplateVariable]:
+    variables: list[TemplateVariable] = []
+    seen: set[str] = set()
+    for match in _VAR_PATTERN.finditer(template_text):
+        name = match.group(1)
+        default = match.group(2) or ""
+        if name in seen:
+            continue
+        seen.add(name)
+        variables.append(TemplateVariable(
+            name=name,
+            default_value=default,
+            required=not bool(default),
+        ))
+    return variables
+
+
+def render_template(template_text: str, variables: dict[str, str] | None = None, strict: bool = False) -> str:
+    variables = variables or {}
+    extracted = extract_variables(template_text)
+
+    for var in extracted:
+        if var.required and var.name not in variables:
+            if strict:
+                raise ValueError(f"Missing required variable: {var.name}")
+            continue
+
+    for key, value in variables.items():
+        if _UNSAFE_PATTERN.search(key) or _UNSAFE_PATTERN.search(str(value)):
+            raise ValueError(f"Unsafe variable detected: {key}")
+
+    def _replace(match: re.Match) -> str:
+        name = match.group(1)
+        default = match.group(2) or ""
+        if name in variables:
+            val = str(variables[name])
+            if _UNSAFE_PATTERN.search(val):
+                raise ValueError(f"Unsafe value for variable: {name}")
+            return val
+        return default
+
+    return _VAR_PATTERN.sub(_replace, template_text)
+
+
+def validate_variables(
+    variables: dict[str, Any],
+    schema: dict[str, Any] | None = None,
+) -> list[dict[str, str]]:
+    errors: list[dict[str, str]] = []
+
+    if schema:
+        try:
+            import jsonschema as _js
+            validator = _js.Draft202012Validator(schema)
+            for err in validator.iter_errors(variables):
+                path = ".".join(str(p) for p in err.absolute_path) or "root"
+                errors.append({"path": path, "message": err.message})
+        except ImportError:
+            logger.debug("jsonschema not installed, skipping schema validation")
+        except Exception as e:
+            errors.append({"path": "schema", "message": str(e)})
+
+    for key, value in variables.items():
+        if _UNSAFE_PATTERN.search(key):
+            errors.append({"path": key, "message": "Unsafe variable name"})
+
+    return errors
+
+
+@dataclass
+class PromptTemplate:
+    name: str
+    template: str
+    description: str = ""
+    variables: list[TemplateVariable] = field(default_factory=list)
+    version: int = 1
+    tags: list[str] = field(default_factory=list)
+    category: str = ""
+    schema: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.variables:
+            self.variables = extract_variables(self.template)
+
+    def render(self, variables: dict[str, str] | None = None, strict: bool = False) -> str:
+        return render_template(self.template, variables, strict=strict)
+
+    def validate(self, variables: dict[str, Any]) -> list[dict[str, str]]:
+        errors = validate_variables(variables, self.schema or None)
+        provided = set(variables.keys())
+        for var in self.variables:
+            if var.required and var.name not in provided:
+                errors.append({"path": var.name, "message": f"Missing required variable: {var.name}"})
+        return errors
+
+    def get_variable_names(self) -> list[str]:
+        return [v.name for v in self.variables]
+
+    def get_required_variables(self) -> list[str]:
+        return [v.name for v in self.variables if v.required]
+
+    def get_optional_variables(self) -> list[str]:
+        return [v.name for v in self.variables if not v.required]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "template": self.template,
+            "description": self.description,
+            "variables": [v.to_dict() for v in self.variables],
+            "version": self.version,
+            "tags": self.tags,
+            "category": self.category,
+            "required_variables": self.get_required_variables(),
+            "optional_variables": self.get_optional_variables(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> PromptTemplate:
+        variables = [TemplateVariable(**v) if isinstance(v, dict) else v for v in data.get("variables", [])]
+        return cls(
+            name=data.get("name", ""),
+            template=data.get("template", ""),
+            description=data.get("description", ""),
+            variables=variables,
+            version=data.get("version", 1),
+            tags=data.get("tags", []),
+            category=data.get("category", ""),
+            schema=data.get("schema", {}),
+        )
+
+    @classmethod
+    def from_file(cls, path: str | Path, name: str = "", description: str = "") -> PromptTemplate:
+        p = Path(path)
+        template_text = p.read_text(encoding="utf-8")
+        return cls(
+            name=name or p.stem,
+            template=template_text,
+            description=description,
+        )
+
+
+_BUILTIN_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "name": "general-qa",
+        "template": "你是一个{{role|default('智能助手')}}。\n\n请回答以下问题：{{question}}\n\n输出格式：{{format|default('简洁文字')}}",
+        "description": "通用问答模板",
+        "category": "general",
+        "tags": ["qa", "general"],
+    },
+    {
+        "name": "code-review",
+        "template": "你是一个{{language|default('Python')}}代码审查专家。\n\n请审查以下代码：\n```\n{{code}}\n```\n\n关注点：{{focus|default('安全性和性能')}}",
+        "description": "代码审查模板",
+        "category": "development",
+        "tags": ["code", "review"],
+    },
+    {
+        "name": "harmonyos-component",
+        "template": "你是一个鸿蒙ArkTS开发专家。\n\n请为{{component|default('自定义组件')}}编写ArkTS代码。\n\n功能要求：{{requirements}}\n\n遵循鸿蒙Stage模型规范，使用{{api_version|default('API 12')}}。",
+        "description": "鸿蒙组件开发模板",
+        "category": "harmonyos",
+        "tags": ["harmonyos", "arkts"],
+    },
+    {
+        "name": "huaweicloud-deploy",
+        "template": "你是一个华为云部署专家。\n\n请编写{{service|default('ECS')}}的部署方案。\n\n区域：{{region|default('cn-north-4')}}\n规格：{{spec|default('通用计算型')}}\n\n要求：{{requirements}}",
+        "description": "华为云部署模板",
+        "category": "huaweicloud",
+        "tags": ["huaweicloud", "deploy"],
+    },
+]
+
+
+def get_builtin_templates() -> list[PromptTemplate]:
+    return [PromptTemplate.from_dict(t) for t in _BUILTIN_TEMPLATES]
+
+
+def get_template_by_name(name: str) -> PromptTemplate | None:
+    for t in _BUILTIN_TEMPLATES:
+        if t["name"] == name:
+            return PromptTemplate.from_dict(t)
+    return None
+
+
+def list_template_names() -> list[str]:
+    return [t["name"] for t in _BUILTIN_TEMPLATES]

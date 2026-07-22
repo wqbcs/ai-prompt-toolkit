@@ -48,7 +48,10 @@ class TestMCPProtocol:
         assert "prompt_sarif_report" in tool_names
         assert "prompt_diff" in tool_names
         assert "prompt_merge" in tool_names
-        assert len(tools) == 26
+        assert "prompt_template_render" in tool_names
+        assert "prompt_doctor" in tool_names
+        assert "prompt_trace_export" in tool_names
+        assert len(tools) == 29
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

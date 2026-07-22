@@ -395,6 +395,42 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["ours_text", "theirs_text"],
             },
         },
+        {
+            "name": "prompt_template_render",
+            "description": "Prompt模板变量渲染: 安全变量插值+默认值, 防模板注入",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template": {"type": "string", "description": "模板文本(含{{var}}变量)"},
+                    "variables": {"type": "string", "description": "JSON格式变量键值对"},
+                    "strict": {"type": "boolean", "description": "严格模式(缺少变量报错)", "default": False},
+                },
+                "required": ["template"],
+            },
+        },
+        {
+            "name": "prompt_doctor",
+            "description": "Prompt一键诊断: 15项健康检查(结构/安全/质量/赛事)+修复建议+健康分",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "prompt_trace_export",
+            "description": "导出OTLP格式Tracing数据(兼容Jaeger/华为云AOM)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "output_path": {"type": "string", "description": "输出OTLP JSON文件路径"},
+                    "format": {"type": "string", "enum": ["otlp", "json", "tree"], "description": "导出格式", "default": "otlp"},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -519,6 +555,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_prompt_diff(arguments)
         elif tool_name == "prompt_merge":
             result = _tool_prompt_merge(arguments)
+        elif tool_name == "prompt_template_render":
+            result = _tool_template_render(arguments)
+        elif tool_name == "prompt_doctor":
+            result = _tool_prompt_doctor(arguments)
+        elif tool_name == "prompt_trace_export":
+            result = _tool_trace_export(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1159,6 +1201,67 @@ def _tool_prompt_merge(args: dict[str, Any]) -> dict[str, Any]:
         "strategy": strategy,
         "merged_length": len(merged),
     }
+
+
+def _tool_template_render(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_template import render_template, extract_variables
+
+    template = args.get("template", "")
+    variables_json = args.get("variables", "{}")
+    strict = args.get("strict", False)
+
+    if not template:
+        return {"error": "Template text is required"}
+
+    try:
+        variables = json.loads(variables_json) if isinstance(variables_json, str) else variables_json
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON in variables"}
+
+    extracted = extract_variables(template)
+    try:
+        rendered = render_template(template, variables, strict=strict)
+    except ValueError as e:
+        return {"error": str(e)}
+
+    return {
+        "rendered": rendered,
+        "variables_found": [v.to_dict() for v in extracted],
+        "variables_provided": list(variables.keys()),
+    }
+
+
+def _tool_prompt_doctor(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_doctor import run_doctor
+
+    text = args.get("text", "")
+    if not text:
+        return {"error": "Prompt text is required"}
+
+    report = run_doctor(text)
+    return report.to_dict()
+
+
+def _tool_trace_export(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.tracing import Tracer, print_trace_tree
+
+    output_path = args.get("output_path", "")
+    fmt = args.get("format", "otlp")
+
+    tracer = Tracer.get_instance()
+    summary = tracer.get_summary()
+
+    if summary.get("total_traces", 0) == 0:
+        return {"status": "no_data", "message": "No trace data available"}
+
+    if fmt == "otlp" and output_path:
+        path = tracer.save_otlp(output_path)
+        return {"status": "exported", "path": str(path), "total_spans": summary.get("total_spans", 0)}
+    elif fmt == "tree":
+        return {"status": "ok", "tree": print_trace_tree(tracer)}
+    else:
+        otlp = tracer.export_otlp_json()
+        return {"status": "ok", "format": "otlp_json", "data": json.loads(otlp)}
 
 
 if __name__ == "__main__":

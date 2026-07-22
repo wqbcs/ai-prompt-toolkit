@@ -1435,3 +1435,129 @@ def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) 
         click.echo(merged)
 
     click.echo(f"合并策略: {strategy} | 结果Hash: {prompt_hash(merged)[:8]} | 长度: {len(merged)}")
+
+
+@main.command(name="trace")
+@click.option("--output", "-o", default="traces.json", help="输出OTLP JSON路径")
+@click.option("--format", "fmt", type=click.Choice(["otlp", "tree", "json"]), default="tree", help="输出格式")
+def trace_cmd(output: str, fmt: str) -> None:
+    """查看和导出Tracing数据(OTLP格式)"""
+    from ai_prompt_toolkit.tracing import Tracer, print_trace_tree
+    tracer = Tracer.get_instance()
+    if not tracer.get_traces():
+        click.echo("暂无Tracing数据。先执行lint/scan/eval等操作以收集trace。")
+        return
+    if fmt == "otlp":
+        path = tracer.save_otlp(output)
+        click.echo(f"OTLP数据已导出: {path} ({tracer.get_summary()['total_spans']}个Span)")
+    elif fmt == "tree":
+        click.echo(print_trace_tree(tracer))
+    else:
+        import json as _json
+        click.echo(_json.dumps([t.to_dict() for t in tracer.get_traces()], ensure_ascii=False, indent=2))
+
+
+@main.command(name="prompt-template")
+@click.option("--action", "-a", type=click.Choice(["list", "render", "extract", "info"]), required=True, help="模板操作")
+@click.option("--name", "-n", help="模板名称")
+@click.option("--template", "-t", help="模板文件路径(render/extract时)")
+@click.option("--var", "-v", multiple=True, help="变量(key=value格式, 可多次指定)")
+@click.option("--strict", is_flag=True, help="严格模式(缺少变量报错)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def prompt_template_cmd(action: str, name: str | None, template: str | None,
+                        var: tuple[str, ...], strict: bool, fmt: str) -> None:
+    """Prompt模板变量系统: 渲染/提取变量/查看信息"""
+    import json as _json
+    from ai_prompt_toolkit.prompt_template import (
+        PromptTemplate, extract_variables, render_template,
+        get_builtin_templates, get_template_by_name, list_template_names,
+    )
+
+    if action == "list":
+        templates = get_builtin_templates()
+        if fmt == "json":
+            click.echo(_json.dumps([{"name": t.name, "description": t.description, "variables": t.get_variable_names()} for t in templates], ensure_ascii=False, indent=2))
+        else:
+            click.echo(f"内置模板 ({len(templates)}个):")
+            for t in templates:
+                click.echo(f"  {t.name}: {t.description} (变量: {', '.join(t.get_variable_names()) or '无'})")
+        return
+
+    pt = None
+    if name:
+        pt = get_template_by_name(name)
+        if not pt:
+            click.echo(f"模板不存在: {name}", err=True)
+            sys.exit(2)
+    elif template:
+        from ai_prompt_toolkit.cli_helpers import resolve_path
+        text = resolve_path(template).read_text(encoding="utf-8")
+        pt = PromptTemplate(name=Path(template).stem, template=text)
+    else:
+        click.echo("错误: 请指定--name或--template", err=True)
+        sys.exit(2)
+
+    if action == "render":
+        variables: dict[str, str] = {}
+        for v in var:
+            if "=" in v:
+                k, val = v.split("=", 1)
+                variables[k] = val
+        result = pt.render(variables, strict=strict)
+        click.echo(result)
+
+    elif action == "extract":
+        vars_list = pt.variables
+        if fmt == "json":
+            click.echo(_json.dumps([v.to_dict() for v in vars_list], ensure_ascii=False, indent=2))
+        else:
+            click.echo(f"变量 ({len(vars_list)}个):")
+            for v in vars_list:
+                req = "必填" if v.required else "可选"
+                default = f" (默认: {v.default_value})" if v.default_value else ""
+                click.echo(f"  {v.name} [{req}]{default}")
+
+    elif action == "info":
+        if fmt == "json":
+            click.echo(_json.dumps(pt.to_dict(), ensure_ascii=False, indent=2))
+        else:
+            click.echo(f"模板: {pt.name}")
+            click.echo(f"描述: {pt.description}")
+            click.echo(f"变量: {len(pt.variables)}个 (必填: {len(pt.get_required_variables())}, 可选: {len(pt.get_optional_variables())})")
+            click.echo(f"分类: {pt.category}")
+
+
+@main.command(name="prompt-doctor")
+@click.option("--target", "-t", required=True, help="Prompt文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def prompt_doctor_cmd(target: str, fmt: str) -> None:
+    """Prompt一键诊断: 15项健康检查+修复建议"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.prompt_doctor import run_doctor
+
+    text = resolve_path(target).read_text(encoding="utf-8")
+    report = run_doctor(text, name=Path(target).stem)
+
+    if fmt == "json":
+        click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        from ai_prompt_toolkit.output import console
+        grade_color = "green" if report.grade in ("A", "B") else "yellow" if report.grade == "C" else "red"
+        console.print(f"\n[bold]Prompt Doctor: {report.prompt_name}[/bold]")
+        console.print(f"健康分: [{grade_color}]{report.health_score:.1f}/100 ({report.grade})[/{grade_color}]")
+        console.print(f"检查: {report.total_checks}项 | 通过: [green]{report.passed}[/green] | 失败: [red]{report.failed}[/red] | 警告: [yellow]{report.warnings}[/yellow]")
+
+        for r in report.results:
+            if r.status == "pass":
+                icon = "[green]+[/green]"
+            elif r.status == "fail":
+                icon = "[red]x[/red]"
+            else:
+                icon = "[yellow]![/yellow]"
+            console.print(f"  {icon} [{r.check_id}] {r.name}: {r.message}")
+
+        if report.recommendations:
+            console.print(f"\n[bold]修复建议 ({len(report.recommendations)}条):[/bold]")
+            for rec in report.recommendations:
+                console.print(f"  - {rec}")
