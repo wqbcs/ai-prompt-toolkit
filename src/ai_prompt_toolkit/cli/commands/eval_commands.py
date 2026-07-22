@@ -809,3 +809,221 @@ def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float
         click.echo(f"已应用优化结果: {target}")
 
     sys.exit(0)
+
+
+@main.command(name="gepa-optimize")
+@click.option("--target", "-t", required=True, help="Prompt文件路径")
+@click.option("--metric", "-m", type=click.Choice(["exact_match", "contains_match", "regex_match", "lint_score", "llm_judge", "pangu_judge"]),
+              default="lint_score", help="Feedback metric(默认lint_score)")
+@click.option("--auto", type=click.Choice(["light", "medium", "heavy"]), default="light",
+              help="优化预算(light=6候选/medium=12/heavy=18)")
+@click.option("--predictors", "-p", help="预测器名称(逗号分隔, 默认main)")
+@click.option("--trainset", help="训练集JSON文件路径")
+@click.option("--reflection-model", help="反射模型(如gpt-4o, pangu-nlp)")
+@click.option("--dry-run", is_flag=True, help="模拟运行(不实际调用LLM)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | None,
+                      trainset: str | None, reflection_model: str | None,
+                      dry_run: bool, fmt: str, output: str | None) -> None:
+    """GEPA反射式Prompt进化优化: 基于DSPy GEPA算法的迭代进化优化"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.gepa import gepa_optimize, FEEDBACK_METRICS
+
+    target_path = resolve_path(target)
+    text = target_path.read_text(encoding="utf-8")
+
+    predictor_names = [p.strip() for p in predictors.split(",")] if predictors else ["main"]
+
+    train_data = None
+    if trainset:
+        train_path = resolve_path(trainset)
+        train_data = _json.loads(train_path.read_text(encoding="utf-8"))
+
+    reflection_lm = None
+    if reflection_model and not dry_run:
+        try:
+            from ai_prompt_toolkit.ab_test.providers import get_provider
+            provider = get_provider(reflection_model)
+            if provider:
+                reflection_lm = lambda prompt: provider.call(prompt, model=reflection_model).get("text", "")
+        except Exception:
+            click.echo(f"警告: 无法加载反射模型 '{reflection_model}', 将使用启发式提议", err=True)
+
+    if dry_run:
+        click.echo("=== GEPA Dry Run ===")
+        click.echo(f"目标: {target}")
+        click.echo(f"Metric: {metric}")
+        click.echo(f"预算: {auto}")
+        click.echo(f"预测器: {predictor_names}")
+        click.echo(f"训练集: {trainset or '(默认)'}")
+        click.echo(f"反射模型: {reflection_model or '(启发式)'}")
+        click.echo(f"Prompt长度: {len(text)} 字符")
+
+        from ai_prompt_toolkit.linter.linter import PromptLinter
+        linter = PromptLinter()
+        lint_result = linter.lint("gepa-dry-run", text)
+        click.echo(f"当前Lint分数: {lint_result.score:.1f}/100")
+        sys.exit(0)
+
+    result = gepa_optimize(
+        text,
+        metric=metric,
+        auto=auto,
+        trainset=train_data,
+        reflection_lm=reflection_lm,
+        predictor_names=predictor_names,
+    )
+
+    if fmt == "json":
+        data = result.to_dict()
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"GEPA优化报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"初始分数: {result.initial_score:.4f}")
+        click.echo(f"最优分数: {result.best_score:.4f}")
+        click.echo(f"提升: +{result.improvement:.4f}")
+        click.echo(f"探索候选: {result.candidates_explored}")
+        click.echo(f"进化代数: {result.generations}")
+        click.echo(f"Pareto前沿: {result.frontier_size}")
+        for h in result.history[-5:]:
+            click.echo(f"  [{h['event']}] #{h['candidate_id']} score={h.get('score', 0):.4f}")
+
+    if output and fmt != "json":
+        data = result.to_dict()
+        write_report(data, output, fmt="json")
+        click.echo(f"报告已保存: {output}")
+
+    sys.exit(0)
+
+
+@main.command(name="prompt-version")
+@click.option("--action", "-a", type=click.Choice(["save", "load", "list", "diff", "rollback", "ab-compare", "delete"]),
+              required=True, help="版本操作")
+@click.option("--name", "-n", help="Prompt名称")
+@click.option("--source", "-s", help="源文件路径(save时读取)")
+@click.option("--version-id", "-v", help="版本ID(load/diff/rollback/delete)")
+@click.option("--version-a", help="版本A ID(diff/ab-compare)")
+@click.option("--version-b", help="版本B ID(diff/ab-compare)")
+@click.option("--score", type=float, help="Lint分数(save时)")
+@click.option("--source-type", help="来源(manual/gepa/optimize/lint)")
+@click.option("--tags", help="标签(逗号分隔)")
+@click.option("--limit", "-l", type=int, default=20, help="列表条数")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def prompt_version_cmd(action: str, name: str | None, source: str | None,
+                      version_id: str | None, version_a: str | None, version_b: str | None,
+                      score: float, source_type: str, tags: str | None,
+                      limit: int, fmt: str) -> None:
+    """Prompt版本管理: 版本树/diff/回滚/A-B对比"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path, empty_state_tip
+    from ai_prompt_toolkit.prompt_version import PromptVersionStore
+
+    store = PromptVersionStore()
+
+    try:
+        if action == "save":
+            if not name:
+                click.echo("错误: 请指定--name", err=True)
+                sys.exit(2)
+            content = ""
+            if source:
+                content = resolve_path(source).read_text(encoding="utf-8")
+            elif not click.get_text_stream("stdin").isatty():
+                content = click.get_text_stream("stdin").read()
+            else:
+                click.echo("错误: 请指定--source或通过管道传入内容", err=True)
+                sys.exit(2)
+
+            if score == 0.0:
+                try:
+                    from ai_prompt_toolkit.linter.linter import PromptLinter
+                    linter = PromptLinter()
+                    result = linter.lint(name, content)
+                    score = result.score
+                except Exception:
+                    pass
+
+            tag_list = [t.strip() for t in tags.split(",")] if tags else []
+            v = store.save(name, content, score=score, source=source_type or "manual", tags=tag_list)
+            click.echo(f"版本已保存: {name} #{v.version_id} (分数: {v.score:.1f})")
+
+        elif action == "load":
+            if not version_id:
+                click.echo("错误: 请指定--version-id", err=True)
+                sys.exit(2)
+            v = store.load(version_id)
+            if not v:
+                click.echo(f"版本不存在: {version_id}", err=True)
+                sys.exit(2)
+            click.echo(v.content)
+
+        elif action == "list":
+            versions = store.list_versions(name, limit=limit)
+            if not versions:
+                click.echo(empty_state_tip("prompt-version"))
+                sys.exit(0)
+            if fmt == "json":
+                click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
+            else:
+                for v in versions:
+                    click.echo(f"  #{v.version_id} | {v.prompt_name} | {v.score:.1f} | {v.source} | {v.created_at}")
+
+        elif action == "diff":
+            if not version_a or not version_b:
+                click.echo("错误: 请指定--version-a和--version-b", err=True)
+                sys.exit(2)
+            diff_result = store.diff(version_a, version_b)
+            if fmt == "json":
+                click.echo(_json.dumps(diff_result.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                click.echo(f"Diff: #{version_a} → #{version_b}")
+                click.echo(f"  +{diff_result.added_lines} -{diff_result.removed_lines} | 相似度: {diff_result.similarity:.2%}")
+                if diff_result.diff_text:
+                    for line in diff_result.diff_text.splitlines()[:30]:
+                        if line.startswith("+") and not line.startswith("+++"):
+                            click.echo(f"  [green]{line}[/green]")
+                        elif line.startswith("-") and not line.startswith("---"):
+                            click.echo(f"  [red]{line}[/red]")
+                        else:
+                            click.echo(f"  {line}")
+
+        elif action == "rollback":
+            if not version_id:
+                click.echo("错误: 请指定--version-id", err=True)
+                sys.exit(2)
+            v = store.rollback(version_id)
+            if not v:
+                click.echo(f"回滚失败: 版本 {version_id} 不存在", err=True)
+                sys.exit(2)
+            click.echo(f"已回滚到: #{version_id} → 新版本 #{v.version_id} (分数: {v.score:.1f})")
+
+        elif action == "ab-compare":
+            if not version_a or not version_b:
+                click.echo("错误: 请指定--version-a和--version-b", err=True)
+                sys.exit(2)
+            result = store.ab_compare(version_a, version_b)
+            if fmt == "json":
+                click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            else:
+                click.echo(f"A/B对比: #{version_a} vs #{version_b}")
+                click.echo(f"  版本A: {result.score_a:.1f}")
+                click.echo(f"  版本B: {result.score_b:.1f}")
+                click.echo(f"  胜出: {result.winner} (差异: {result.score_diff:+.1f})")
+
+        elif action == "delete":
+            if not version_id:
+                click.echo("错误: 请指定--version-id", err=True)
+                sys.exit(2)
+            if store.delete_version(version_id):
+                click.echo(f"已删除: #{version_id}")
+            else:
+                click.echo(f"版本不存在: {version_id}", err=True)
+                sys.exit(2)
+
+    finally:
+        store.close()

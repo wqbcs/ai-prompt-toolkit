@@ -230,6 +230,35 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template"],
             },
         },
+        {
+            "name": "prompt_gepa_optimize",
+            "description": "GEPA反射式Prompt进化优化: 基于DSPy GEPA算法的迭代进化优化(反射提议+Pareto前沿+合并)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "prompt": {"type": "string", "description": "待优化的Prompt文本"},
+                    "metric": {"type": "string", "enum": ["exact_match", "contains_match", "regex_match", "lint_score", "llm_judge", "pangu_judge"], "description": "Feedback metric类型", "default": "lint_score"},
+                    "auto": {"type": "string", "enum": ["light", "medium", "heavy"], "description": "优化预算(light=6/medium=12/heavy=18候选)", "default": "light"},
+                    "predictors": {"type": "string", "description": "预测器名称(逗号分隔)", "default": "main"},
+                },
+                "required": ["prompt"],
+            },
+        },
+        {
+            "name": "prompt_version_save",
+            "description": "保存Prompt版本到版本管理引擎(版本树/diff/回滚/A-B对比)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string", "description": "Prompt名称"},
+                    "content": {"type": "string", "description": "Prompt内容"},
+                    "score": {"type": "number", "description": "Lint分数", "default": 0},
+                    "source": {"type": "string", "description": "来源(manual/gepa/optimize)", "default": "manual"},
+                    "tags": {"type": "string", "description": "标签(逗号分隔)"},
+                },
+                "required": ["name", "content"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -328,6 +357,10 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_redteam(arguments)
         elif tool_name == "prompt_compile":
             result = _tool_compile(arguments)
+        elif tool_name == "prompt_gepa_optimize":
+            result = _tool_gepa_optimize(arguments)
+        elif tool_name == "prompt_version_save":
+            result = _tool_prompt_version_save(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -705,6 +738,39 @@ def _tool_compile(args: dict[str, Any]) -> dict[str, Any]:
         "ignored_branches": result.report.ignored_branches,
         "warnings": result.report.warnings,
     }
+
+
+def _tool_gepa_optimize(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.gepa import gepa_optimize
+
+    prompt = args["prompt"]
+    metric = args.get("metric", "lint_score")
+    auto = args.get("auto", "light")
+    predictors_str = args.get("predictors", "main")
+    predictor_names = [p.strip() for p in predictors_str.split(",")]
+
+    result = gepa_optimize(
+        prompt, metric=metric, auto=auto, predictor_names=predictor_names,
+    )
+    return result.to_dict()
+
+
+def _tool_prompt_version_save(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_version import PromptVersionStore
+
+    name = args["name"]
+    content = args["content"]
+    score = args.get("score", 0.0)
+    source = args.get("source", "manual")
+    tags_str = args.get("tags", "")
+    tags = [t.strip() for t in tags_str.split(",")] if tags_str else []
+
+    store = PromptVersionStore()
+    try:
+        v = store.save(name, content, score=score, source=source, tags=tags)
+        return v.to_dict()
+    finally:
+        store.close()
 
 
 if __name__ == "__main__":

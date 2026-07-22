@@ -35,7 +35,9 @@ class TestMCPProtocol:
         assert "prompt_token_analyze" in tool_names
         assert "prompt_redteam" in tool_names
         assert "prompt_compile" in tool_names
-        assert len(tools) == 13
+        assert "prompt_gepa_optimize" in tool_names
+        assert "prompt_version_save" in tool_names
+        assert len(tools) == 15
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
