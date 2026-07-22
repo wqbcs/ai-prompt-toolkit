@@ -509,6 +509,41 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "prompt_sanitize",
+            "description": "Prompt消毒: 检测并清理编码混淆/模板注入/敏感信息/指令注入",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待消毒的Prompt文本"},
+                    "level": {"type": "string", "description": "消毒级别(none/standard/strict)", "default": "standard"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "prompt_auto_optimize",
+            "description": "Prompt自动优化: 基于Lint评分迭代优化Prompt质量",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待优化的Prompt文本"},
+                    "max_iterations": {"type": "integer", "description": "最大优化迭代次数(默认3)", "default": 3},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "eval_matrix",
+            "description": "评估矩阵: 多Prompt评估对比矩阵",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "prompts": {"type": "string", "description": "JSON格式的Prompt字典 {name: content}"},
+                },
+                "required": ["prompts"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -653,6 +688,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_pangu_compat_check(arguments)
         elif tool_name == "pangu_safety_audit":
             result = _tool_pangu_safety_audit(arguments)
+        elif tool_name == "prompt_sanitize":
+            result = _tool_prompt_sanitize(arguments)
+        elif tool_name == "prompt_auto_optimize":
+            result = _tool_prompt_auto_optimize(arguments)
+        elif tool_name == "eval_matrix":
+            result = _tool_eval_matrix(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1472,6 +1513,52 @@ def _tool_pangu_safety_audit(args: dict[str, Any]) -> dict[str, Any]:
             "remediation": finding.remediation,
         } if finding else None,
     }
+
+
+def _tool_prompt_sanitize(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_sanitizer import sanitize_prompt
+    text = args.get("text", "")
+    level = args.get("level", "standard")
+    if not text:
+        return {"error": "text is required"}
+    result = sanitize_prompt(text, level=level)
+    return {
+        "sanitized_text": result.sanitized_text,
+        "risk_level": result.risk_level,
+        "is_safe": result.is_safe,
+        "actions": result.actions,
+        "action_count": result.action_count,
+    }
+
+
+def _tool_prompt_auto_optimize(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+    text = args.get("text", "")
+    max_iter = args.get("max_iterations", 3)
+    if not text:
+        return {"error": "text is required"}
+    result = optimize_prompt(text, max_iterations=max_iter)
+    return result.to_dict()
+
+
+def _tool_eval_matrix(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.eval_matrix import build_matrix_from_evaluator_results
+    prompts_json = args.get("prompts", "")
+    if not prompts_json:
+        return {"error": "prompts is required"}
+    try:
+        prompts = json.loads(prompts_json)
+    except json.JSONDecodeError:
+        return {"error": "prompts must be valid JSON {name: content}"}
+    if not isinstance(prompts, dict) or not prompts:
+        return {"error": "prompts must be a non-empty JSON object"}
+    from ai_prompt_toolkit.linter.linter import PromptLinter
+    linter = PromptLinter()
+    cells = []
+    for name, content in prompts.items():
+        result = linter.lint(f"{name}.prompt", content)
+        cells.append({"name": name, "score": result.score, "findings": len(result.findings)})
+    return {"prompts": list(prompts.keys()), "results": cells, "total": len(cells)}
 
 
 if __name__ == "__main__":

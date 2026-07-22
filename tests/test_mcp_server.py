@@ -58,7 +58,10 @@ class TestMCPProtocol:
         assert "attack_vault_learn" in tool_names
         assert "pangu_compat_check" in tool_names
         assert "pangu_safety_audit" in tool_names
-        assert len(tools) == 36
+        assert "prompt_sanitize" in tool_names
+        assert "prompt_auto_optimize" in tool_names
+        assert "eval_matrix" in tool_names
+        assert len(tools) == 39
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
