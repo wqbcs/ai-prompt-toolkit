@@ -152,7 +152,7 @@ class TestAdversarialSimulator:
     def test_list_attacks(self):
         sim = AdversarialSimulator(seed=42)
         attacks = sim.list_attacks()
-        assert len(attacks) == 6
+        assert len(attacks) == 10
         types = [a["attack_type"] for a in attacks]
         assert "synonym_replacement" in types
         assert "instruction_injection" in types

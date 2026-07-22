@@ -544,6 +544,68 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["prompts"],
             },
         },
+        {
+            "name": "huaweicloud_modelarts_deploy",
+            "description": "华为云ModelArts部署: 生成ModelArts模型部署配置和脚本",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "model_type": {"type": "string", "description": "模型类型(pangu/chatglm/qwen等)", "default": "pangu"},
+                    "instance_type": {"type": "string", "description": "部署规格(如Ascend910/V100)", "default": "Ascend910"},
+                    "region": {"type": "string", "description": "区域(如cn-north-4)", "default": "cn-north-4"},
+                },
+                "required": [],
+            },
+        },
+        {
+            "name": "huaweicloud_modelarts_infer",
+            "description": "华为云ModelArts推理: 生成ModelArts在线推理调用示例",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "endpoint": {"type": "string", "description": "推理端点URL"},
+                    "prompt": {"type": "string", "description": "推理Prompt文本"},
+                },
+                "required": ["prompt"],
+            },
+        },
+        {
+            "name": "huaweicloud_obs_upload",
+            "description": "华为云OBS上传: 生成OBS数据上传脚本和配置",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "bucket": {"type": "string", "description": "OBS桶名"},
+                    "local_path": {"type": "string", "description": "本地文件路径"},
+                    "region": {"type": "string", "description": "区域(如cn-north-4)", "default": "cn-north-4"},
+                },
+                "required": ["bucket", "local_path"],
+            },
+        },
+        {
+            "name": "huaweicloud_ecs_info",
+            "description": "华为云ECS信息: 查询ECS实例规格和推荐配置",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "usage": {"type": "string", "description": "用途(AI训练/AI推理/Web服务)", "default": "AI推理"},
+                    "region": {"type": "string", "description": "区域(如cn-north-4)", "default": "cn-north-4"},
+                },
+                "required": [],
+            },
+        },
+        {
+            "name": "huaweicloud_iam_auth",
+            "description": "华为云IAM认证: 生成IAM认证配置和AK/SK使用示例",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "auth_method": {"type": "string", "description": "认证方式(aksk/token/agency)", "default": "aksk"},
+                    "region": {"type": "string", "description": "区域(如cn-north-4)", "default": "cn-north-4"},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -694,6 +756,16 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_prompt_auto_optimize(arguments)
         elif tool_name == "eval_matrix":
             result = _tool_eval_matrix(arguments)
+        elif tool_name == "huaweicloud_modelarts_deploy":
+            result = _tool_huaweicloud_modelarts_deploy(arguments)
+        elif tool_name == "huaweicloud_modelarts_infer":
+            result = _tool_huaweicloud_modelarts_infer(arguments)
+        elif tool_name == "huaweicloud_obs_upload":
+            result = _tool_huaweicloud_obs_upload(arguments)
+        elif tool_name == "huaweicloud_ecs_info":
+            result = _tool_huaweicloud_ecs_info(arguments)
+        elif tool_name == "huaweicloud_iam_auth":
+            result = _tool_huaweicloud_iam_auth(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1559,6 +1631,225 @@ def _tool_eval_matrix(args: dict[str, Any]) -> dict[str, Any]:
         result = linter.lint(f"{name}.prompt", content)
         cells.append({"name": name, "score": result.score, "findings": len(result.findings)})
     return {"prompts": list(prompts.keys()), "results": cells, "total": len(cells)}
+
+
+def _tool_huaweicloud_modelarts_deploy(args: dict[str, Any]) -> dict[str, Any]:
+    model_type = args.get("model_type", "pangu")
+    instance_type = args.get("instance_type", "Ascend910")
+    region = args.get("region", "cn-north-4")
+    deploy_config = {
+        "api_version": "v2",
+        "kind": "Deployment",
+        "metadata": {"name": f"{model_type}-deployment", "region": region},
+        "spec": {
+            "model_type": model_type,
+            "instance_type": instance_type,
+            "replicas": 1,
+            "resource": {"flavor": instance_type},
+            "envs": {"MODEL_NAME": model_type, "REGION": region},
+        },
+    }
+    startup_script = f"""#!/bin/bash
+# Huawei Cloud ModelArts Deployment Script
+# Model: {model_type}, Instance: {instance_type}, Region: {region}
+
+pip install modelarts
+python -c \"\"\"
+from modelarts.session import Session
+session = Session(region='{region}')
+print('ModelArts session initialized for {model_type}')
+\"\"\"
+"""
+    return {
+        "deploy_config": deploy_config,
+        "startup_script": startup_script,
+        "model_type": model_type,
+        "instance_type": instance_type,
+        "region": region,
+        "tips": [
+            "请确保已开通华为云ModelArts服务",
+            "AK/SK请通过环境变量或IAM认证传入，切勿硬编码",
+            "Ascend910适合盘古大模型部署，V100适合通用GPU推理",
+        ],
+    }
+
+
+def _tool_huaweicloud_modelarts_infer(args: dict[str, Any]) -> dict[str, Any]:
+    endpoint = args.get("endpoint", "https://infer.cn-north-4.myhuaweicloud.com/v1")
+    prompt = args.get("prompt", "")
+    if not prompt:
+        return {"error": "prompt is required"}
+    infer_code = f"""import requests
+
+url = "{endpoint}/chat/completions"
+headers = {{
+    "Content-Type": "application/json",
+    "X-Auth-Token": "$TOKEN"  # 从IAM获取
+}}
+payload = {{
+    "model": "pangu",
+    "messages": [
+        {{"role": "system", "content": "You are a helpful assistant."}},
+        {{"role": "user", "content": {repr(prompt)}}}
+    ],
+    "temperature": 0.7,
+    "max_tokens": 2048
+}}
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())
+"""
+    return {
+        "infer_code": infer_code,
+        "endpoint": endpoint,
+        "prompt_preview": prompt[:200],
+        "tips": [
+            "推理端点URL在ModelArts控制台>在线服务中获取",
+            "Token有效期24小时，建议使用AK/SK签名方式",
+            "生产环境建议配置自动扩缩容策略",
+        ],
+    }
+
+
+def _tool_huaweicloud_obs_upload(args: dict[str, Any]) -> dict[str, Any]:
+    bucket = args.get("bucket", "")
+    local_path = args.get("local_path", "")
+    region = args.get("region", "cn-north-4")
+    if not bucket or not local_path:
+        return {"error": "bucket and local_path are required"}
+    upload_script = f"""import os
+from obs import ObsClient
+
+obs_client = ObsClient(
+    access_key_id=os.getenv('OBS_AK'),
+    secret_access_key=os.getenv('OBS_SK'),
+    server='obs.{region}.myhuaweicloud.com'
+)
+
+resp = obs_client.putFile('{bucket}', os.path.basename('{local_path}'), '{local_path}')
+if resp.status >= 300:
+    print(f"Upload failed: {{resp.reason}}")
+else:
+    print(f"Upload succeeded: obs://{bucket}/{{os.path.basename('{local_path}')}}")
+
+obs_client.close()
+"""
+    return {
+        "upload_script": upload_script,
+        "bucket": bucket,
+        "local_path": local_path,
+        "region": region,
+        "target_url": f"obs://{bucket}/{local_path.split('/')[-1] if '/' in local_path else local_path}",
+        "tips": [
+            "请确保OBS桶已创建且权限配置正确",
+            "大文件建议使用分段上传(>5MB)",
+            "训练数据上传到OBS后，ModelArts可直接挂载",
+        ],
+    }
+
+
+def _tool_huaweicloud_ecs_info(args: dict[str, Any]) -> dict[str, Any]:
+    usage = args.get("usage", "AI推理")
+    region = args.get("region", "cn-north-4")
+    RECOMMENDATIONS = {
+        "AI训练": [
+            {"flavor": "pi2.2xlarge", "vcpu": 8, "memory": "64GB", "gpu": "Ascend 910", "scenario": "大模型预训练"},
+            {"flavor": "p3s.2xlarge", "vcpu": 8, "memory": "64GB", "gpu": "V100 32GB", "scenario": "通用GPU训练"},
+            {"flavor": "p2s.2xlarge", "vcpu": 8, "memory": "32GB", "gpu": "V100 16GB", "scenario": "中小模型微调"},
+        ],
+        "AI推理": [
+            {"flavor": "pi1.2xlarge", "vcpu": 8, "memory": "32GB", "gpu": "Ascend 310", "scenario": "盘古推理部署"},
+            {"flavor": "p3.2xlarge", "vcpu": 8, "memory": "32GB", "gpu": "V100 16GB", "scenario": "通用GPU推理"},
+            {"flavor": "c6.4xlarge", "vcpu": 16, "memory": "32GB", "gpu": "无", "scenario": "CPU轻量推理"},
+        ],
+        "Web服务": [
+            {"flavor": "c6.2xlarge", "vcpu": 8, "memory": "16GB", "gpu": "无", "scenario": "API网关/中间件"},
+            {"flavor": "c6.4xlarge", "vcpu": 16, "memory": "32GB", "gpu": "无", "scenario": "高并发Web服务"},
+            {"flavor": "m6.2xlarge", "vcpu": 8, "memory": "32GB", "gpu": "无", "scenario": "内存密集型服务"},
+        ],
+    }
+    recommendations = RECOMMENDATIONS.get(usage, RECOMMENDATIONS["AI推理"])
+    return {
+        "usage": usage,
+        "region": region,
+        "recommendations": recommendations,
+        "tips": [
+            "Ascend实例需要申请华为云AI加速资源配额",
+            "推理服务建议搭配ELB做负载均衡",
+            "按需计费适合开发测试，包周期适合生产环境",
+        ],
+    }
+
+
+def _tool_huaweicloud_iam_auth(args: dict[str, Any]) -> dict[str, Any]:
+    auth_method = args.get("auth_method", "aksk")
+    region = args.get("region", "cn-north-4")
+    AUTH_EXAMPLES = {
+        "aksk": {
+            "description": "AK/SK签名认证（推荐生产环境）",
+            "code": f"""import os
+from huaweicloudsdkcore.auth.credentials import BasicCredentials
+
+ak = os.getenv('HWCLOUD_AK')
+sk = os.getenv('HWCLOUD_SK')
+
+credentials = BasicCredentials(ak, sk, project_id='{region}')
+print('AK/SK认证初始化完成')
+""",
+            "security": ["AK/SK务必存储在环境变量或密钥管理服务(DEW)中", "切勿将AK/SK硬编码或提交到代码仓库"],
+        },
+        "token": {
+            "description": "Token认证（适合临时调用）",
+            "code": f"""import requests
+
+url = "https://iam.{region}.myhuaweicloud.com/v3/auth/tokens"
+payload = {{
+    "auth": {{
+        "identity": {{
+            "methods": ["password"],
+            "password": {{
+                "user": {{
+                    "name": "$IAM_USER",
+                    "password": "$IAM_PASSWORD",
+                    "domain": {{"name": "$DOMAIN_NAME"}}
+                }}
+            }}
+        }},
+        "scope": {{"project": {{"name": "{region}"}}}}
+    }}
+}}
+resp = requests.post(url, json=payload)
+token = resp.headers.get('X-Subject-Token')
+print(f'Token获取成功，有效期至: {{resp.json()["token"]["expires_at"]}}')
+""",
+            "security": ["Token有效期24小时，需定时刷新", "建议使用IAM代理而非主账号"],
+        },
+        "agency": {
+            "description": "委托认证（跨账号授权）",
+            "code": f"""import os
+from huaweicloudsdkcore.auth.credentials import GlobalCredentials
+
+ak = os.getenv('HWCLOUD_AK')
+sk = os.getenv('HWCLOUD_SK')
+domain_id = os.getenv('HWCLOUD_DOMAIN_ID')
+
+credentials = GlobalCredentials(ak, sk, domain_id=domain_id)
+print('委托认证初始化完成，可通过agency方式跨账号访问')
+""",
+            "security": ["委托方式需要管理员预先配置信任委托", "建议最小权限原则配置委托策略"],
+        },
+    }
+    example = AUTH_EXAMPLES.get(auth_method, AUTH_EXAMPLES["aksk"])
+    return {
+        "auth_method": auth_method,
+        "region": region,
+        "example": example,
+        "available_methods": list(AUTH_EXAMPLES.keys()),
+        "tips": [
+            "生产环境强烈推荐AK/SK+DEW密钥管理",
+            "定期轮换AK/SK，建议90天更换一次",
+            "使用IAM子账号而非主账号操作",
+        ],
+    }
 
 
 if __name__ == "__main__":

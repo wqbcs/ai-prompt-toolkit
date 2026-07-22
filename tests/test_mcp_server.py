@@ -61,7 +61,12 @@ class TestMCPProtocol:
         assert "prompt_sanitize" in tool_names
         assert "prompt_auto_optimize" in tool_names
         assert "eval_matrix" in tool_names
-        assert len(tools) == 39
+        assert "huaweicloud_modelarts_deploy" in tool_names
+        assert "huaweicloud_modelarts_infer" in tool_names
+        assert "huaweicloud_obs_upload" in tool_names
+        assert "huaweicloud_ecs_info" in tool_names
+        assert "huaweicloud_iam_auth" in tool_names
+        assert len(tools) == 44
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
@@ -149,3 +154,79 @@ class TestMCPProtocol:
             "model": "gpt-4",
         })
         assert "compiled_text" in result
+
+    def test_huaweicloud_modelarts_deploy(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_modelarts_deploy
+        result = _tool_huaweicloud_modelarts_deploy({
+            "model_type": "pangu",
+            "instance_type": "Ascend910",
+            "region": "cn-north-4",
+        })
+        assert "deploy_config" in result
+        assert "startup_script" in result
+        assert result["model_type"] == "pangu"
+        assert result["instance_type"] == "Ascend910"
+        assert "tips" in result
+
+    def test_huaweicloud_modelarts_infer(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_modelarts_infer
+        result = _tool_huaweicloud_modelarts_infer({"prompt": "你好，盘古"})
+        assert "infer_code" in result
+        assert result["prompt_preview"] == "你好，盘古"
+
+    def test_huaweicloud_modelarts_infer_no_prompt(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_modelarts_infer
+        result = _tool_huaweicloud_modelarts_infer({})
+        assert "error" in result
+
+    def test_huaweicloud_obs_upload(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_obs_upload
+        result = _tool_huaweicloud_obs_upload({
+            "bucket": "my-bucket",
+            "local_path": "/data/train.jsonl",
+            "region": "cn-north-4",
+        })
+        assert "upload_script" in result
+        assert result["bucket"] == "my-bucket"
+        assert "obs://my-bucket/train.jsonl" == result["target_url"]
+
+    def test_huaweicloud_obs_upload_missing_params(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_obs_upload
+        result = _tool_huaweicloud_obs_upload({"bucket": "my-bucket"})
+        assert "error" in result
+
+    def test_huaweicloud_ecs_info(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_ecs_info
+        result = _tool_huaweicloud_ecs_info({"usage": "AI推理", "region": "cn-north-4"})
+        assert "recommendations" in result
+        assert len(result["recommendations"]) > 0
+        assert result["recommendations"][0]["scenario"] == "盘古推理部署"
+
+    def test_huaweicloud_ecs_info_training(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_ecs_info
+        result = _tool_huaweicloud_ecs_info({"usage": "AI训练"})
+        assert len(result["recommendations"]) == 3
+
+    def test_huaweicloud_iam_auth_aksk(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_iam_auth
+        result = _tool_huaweicloud_iam_auth({"auth_method": "aksk"})
+        assert "example" in result
+        assert result["example"]["description"] == "AK/SK签名认证（推荐生产环境）"
+
+    def test_huaweicloud_iam_auth_token(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_iam_auth
+        result = _tool_huaweicloud_iam_auth({"auth_method": "token"})
+        assert "example" in result
+        assert "Token" in result["example"]["description"]
+
+    def test_huaweicloud_iam_auth_agency(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_iam_auth
+        result = _tool_huaweicloud_iam_auth({"auth_method": "agency"})
+        assert "example" in result
+        assert "委托" in result["example"]["description"]
+
+    def test_huaweicloud_iam_auth_available_methods(self):
+        from ai_prompt_toolkit.mcp_server import _tool_huaweicloud_iam_auth
+        result = _tool_huaweicloud_iam_auth({})
+        assert "available_methods" in result
+        assert set(result["available_methods"]) == {"aksk", "token", "agency"}
