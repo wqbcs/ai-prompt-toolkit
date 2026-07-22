@@ -1244,3 +1244,111 @@ def plugin_list_cmd() -> None:
     pm = PluginManager.get_instance()
     summary = pm.get_summary()
     click.echo(_json.dumps(summary, ensure_ascii=False, indent=2))
+
+
+@main.command(name="tgd-optimize")
+@click.option("--prompt", "-p", required=True, help="待优化的Prompt文本")
+@click.option("--iterations", type=int, default=10, help="最大迭代次数")
+@click.option("--momentum", type=float, default=0.9, help="动量系数")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def tgd_optimize_cmd(prompt: str, iterations: int, momentum: float, fmt: str) -> None:
+    """TextGrad文本梯度优化: 用文本梯度下降优化Prompt"""
+    import json as _json
+    from ai_prompt_toolkit.textgrad import tgd_optimize
+
+    result = tgd_optimize(prompt, max_iterations=iterations, momentum=momentum)
+
+    if fmt == "json":
+        click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        from ai_prompt_toolkit.output import success, print_gepa_result
+        click.echo(f"初始分数: {result.initial_score:.1f} → 最优分数: {result.final_score:.1f}")
+        click.echo(f"提升: {result.improvement:+.1f} | 迭代: {result.iterations} | 收敛: {'是' if result.converged else '否'}")
+
+
+@main.command(name="opro-optimize")
+@click.option("--instruction", "-i", required=True, help="待优化的指令文本")
+@click.option("--generations", type=int, default=8, help="最大进化代数")
+@click.option("--population", type=int, default=5, help="种群大小")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def opro_optimize_cmd(instruction: str, generations: int, population: int, fmt: str) -> None:
+    """OPRO元Prompt优化: LLM-as-Optimizer进化优化"""
+    import json as _json
+    from ai_prompt_toolkit.opro import opro_optimize
+
+    result = opro_optimize(instruction, max_generations=generations, population_size=population)
+
+    if fmt == "json":
+        click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"初始分数: {result.initial_score:.1f} → 最优分数: {result.best_score:.1f}")
+        click.echo(f"提升: {result.improvement:+.1f} | 代数: {result.generations} | 候选: {result.candidates_explored}")
+
+
+@main.command(name="registry-push")
+@click.option("--name", "-n", required=True, help="模板名称")
+@click.option("--template", "-t", required=True, help="模板内容(或文件路径)")
+@click.option("--description", "-d", default="", help="模板描述")
+@click.option("--category", "-c", default="", help="分类")
+@click.option("--tags", default="", help="标签(逗号分隔)")
+@click.option("--author", default="", help="作者")
+def registry_push_cmd(name: str, template: str, description: str, category: str, tags: str, author: str) -> None:
+    """推送模板到Prompt Registry"""
+    from ai_prompt_toolkit.prompt_registry import PromptRegistry, RegistryEntry
+
+    template_text = template
+    p = Path(template)
+    if p.exists() and p.is_file():
+        template_text = p.read_text(encoding="utf-8")
+
+    tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
+
+    entry = RegistryEntry(
+        name=name,
+        template=template_text,
+        description=description,
+        category=category,
+        tags=tag_list,
+        author=author,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        registry = PromptRegistry(db_path=Path(tmpdir) / "registry.db")
+        row_id = registry.push(entry)
+        click.echo(f"推送成功: {name} v{entry.version} (id={row_id})")
+        registry.close()
+
+
+@main.command(name="registry-pull")
+@click.option("--name", "-n", required=True, help="模板名称")
+@click.option("--version", type=int, default=None, help="版本号(默认最新)")
+def registry_pull_cmd(name: str, version: int | None) -> None:
+    """从Prompt Registry拉取模板"""
+    import json as _json
+    from ai_prompt_toolkit.prompt_registry import PromptRegistry
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        registry = PromptRegistry(db_path=Path(tmpdir) / "registry.db")
+        entry = registry.pull(name, version=version)
+        if entry is None:
+            click.echo(f"模板不存在: {name}")
+            sys.exit(1)
+        click.echo(_json.dumps(entry.to_dict(), ensure_ascii=False, indent=2))
+        registry.close()
+
+
+@main.command(name="registry-search")
+@click.option("--query", "-q", required=True, help="搜索关键词")
+@click.option("--limit", type=int, default=20, help="返回条数")
+def registry_search_cmd(query: str, limit: int) -> None:
+    """搜索Prompt Registry模板"""
+    import json as _json
+    from ai_prompt_toolkit.prompt_registry import PromptRegistry
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        registry = PromptRegistry(db_path=Path(tmpdir) / "registry.db")
+        results = registry.search(query, limit=limit)
+        click.echo(f"找到 {len(results)} 个模板")
+        for entry in results:
+            click.echo(f"  {entry.name} v{entry.version} ({entry.category}) - {entry.description[:50]}")
+        registry.close()
