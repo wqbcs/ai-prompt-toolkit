@@ -497,7 +497,11 @@ def scan(target: str, config: str | None, incremental: bool,
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool) -> None:
+@click.option("--fail-on", "fail_on", type=click.Choice(["none", "low", "medium", "high", "critical"]),
+              default="none", help="CI失败阈值: 发现该级别及以上问题时退出码非0")
+@click.option("--baseline", type=click.Path(exists=True), help="基线JSON文件路径(仅报告新增问题)")
+@click.option("--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -560,6 +564,73 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 mm_findings_total.extend(mm_findings)
                 all_results[i].findings.extend(mm_findings)
                 total_findings += len(mm_findings)
+
+    if inline_suppress:
+        import re as _re
+        _SUPPRESS_RE = _re.compile(r"prompt-lint-disable\s+(.+?)(?:\s*--\s*(.+))?$")
+        for result in all_results:
+            suppressed = []
+            for finding in result.findings:
+                if finding.details and isinstance(finding.details, dict):
+                    line_num = finding.details.get("line", 0)
+                else:
+                    line_num = 0
+            remaining = []
+            text_for_suppress = ""
+            for tpl_path in templates:
+                if tpl_path.name == result.template_id or result.template_id.startswith(tpl_path.stem):
+                    text_for_suppress = tpl_path.read_text(encoding="utf-8")
+                    break
+            if text_for_suppress:
+                suppress_rules = set()
+                for line in text_for_suppress.split("\n"):
+                    m = _SUPPRESS_RE.search(line)
+                    if m:
+                        rules_str = m.group(1).strip()
+                        for r in rules_str.split(","):
+                            suppress_rules.add(r.strip())
+                result.findings = [f for f in result.findings if f.rule_id not in suppress_rules]
+            total_findings = sum(len(r.findings) for r in all_results)
+
+    if baseline:
+        import json as _json
+        try:
+            with open(baseline, "r", encoding="utf-8") as bf:
+                baseline_data = _json.load(bf)
+            baseline_ids = set()
+            if isinstance(baseline_data, dict):
+                for r in baseline_data.get("results", []):
+                    for f in r.get("findings", []):
+                        baseline_ids.add(f"{r.get('template_id', '')}:{f.get('rule_id', '')}")
+            elif isinstance(baseline_data, list):
+                for f in baseline_data:
+                    baseline_ids.add(f"{f.get('template_id', '')}:{f.get('rule_id', '')}")
+            for result in all_results:
+                before = len(result.findings)
+                result.findings = [f for f in result.findings
+                                   if f"{result.template_id}:{f.rule_id}" not in baseline_ids]
+                if len(result.findings) < before:
+                    click.echo(f"  基线过滤: {result.template_id} 跳过{before - len(result.findings)}条已知问题")
+            total_findings = sum(len(r.findings) for r in all_results)
+        except (OSError, _json.JSONDecodeError) as e:
+            click.echo(f"警告: 无法加载基线文件: {e}")
+
+    if fail_on != "none":
+        _SEV_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
+        threshold = _SEV_ORDER.get(fail_on, 0)
+        fail_findings = []
+        for result in all_results:
+            for f in result.findings:
+                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                if _SEV_ORDER.get(sev, 0) >= threshold:
+                    fail_findings.append((result.template_id, f.rule_id, sev))
+        if fail_findings:
+            click.echo(f"\n--fail-on={fail_on}: 发现{len(fail_findings)}条 >= {fail_on} 级别问题")
+            for tid, rid, sev in fail_findings[:10]:
+                click.echo(f"  [{sev.upper()}] {tid}: {rid}")
+            if len(fail_findings) > 10:
+                click.echo(f"  ... 还有{len(fail_findings) - 10}条")
+            sys.exit(2)
 
     if fmt == "table":
         try:
