@@ -56,7 +56,9 @@ class TestMCPProtocol:
         assert "prompt_cache_invalidate" in tool_names
         assert "attack_vault_check" in tool_names
         assert "attack_vault_learn" in tool_names
-        assert len(tools) == 34
+        assert "pangu_compat_check" in tool_names
+        assert "pangu_safety_audit" in tool_names
+        assert len(tools) == 36
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

@@ -230,6 +230,41 @@ _BUILTIN_TEMPLATES: list[dict[str, Any]] = [
         "category": "huaweicloud",
         "tags": ["huaweicloud", "deploy"],
     },
+    {
+        "name": "pangu-chat",
+        "template": "你是一个{{role|default('智能助手')}}。\n\n使用盘古大模型对话格式(system/user/assistant)进行交互。\n\n用户问题：{{question}}\n\n输出格式：{{format|default('JSON')}}\n\n约束：\n- Token限制: 控制在8K以内\n- 安全护栏: 启用ModelArts内容审核\n- 兼容华为云MaaS API格式",
+        "description": "盘古大模型对话模板",
+        "category": "pangu",
+        "tags": ["pangu", "chat", "huaweicloud"],
+    },
+    {
+        "name": "pangu-function-call",
+        "template": "你是一个盘古大模型工具调用助手。\n\n使用Function Calling格式调用工具：\n- 工具名: {{tool_name|default('search')}}\n- 工具描述: {{tool_description|default('搜索信息')}}\n- 参数: {{tool_params|default('{}')}}\n\n用户请求：{{user_request}}\n\n格式规范：\n- 工具定义使用tools参数\n- 输出tool_calls字段含function.name和function.arguments\n- 结果回传role='tool'",
+        "description": "盘古Function Calling模板",
+        "category": "pangu",
+        "tags": ["pangu", "function-calling", "tool-use"],
+    },
+    {
+        "name": "harmonyos-ability",
+        "template": "你是一个鸿蒙Stage模型开发专家。\n\n请开发{{ability_name|default('EntryAbility')}}：\n\n功能需求：{{requirements}}\n\n开发规范：\n- Stage模型Ability生命周期: onCreate→onWindowStageCreate→onForeground→onBackground→onDestroy\n- 权限声明: ohos.permission.{{permission|default('INTERNET')}}\n- 资源引用: $r('app.{{resource_type|default('string')}}.key')\n- 线程模型: 耗时操作使用TaskPool\n- API版本: {{api_version|default('API 12')}}\n- 签名配置: 调试.p12 + .p7b Profile",
+        "description": "鸿蒙Ability开发模板",
+        "category": "harmonyos",
+        "tags": ["harmonyos", "ability", "stage-model"],
+    },
+    {
+        "name": "huaweicloud-maas-finetune",
+        "template": "你是一个华为云ModelArts模型微调专家。\n\n请为盘古大模型设计微调方案：\n\n任务类型：{{task_type|default('文本分类')}}\n数据集：{{dataset|default('自定义数据集')}}\n训练规格：{{instance_type|default('Ascend 910')}}\n\n微调配置：\n- 框架: MindSpore + CANN算子库\n- 混合精度: AMP自动混合精度\n- 量化: FP16/INT8推理量化\n- 部署: ModelArts在线服务\n- 区域: {{region|default('cn-north-4')}}\n- 认证: AK/SK\n\n约束：\n- 数据合规: 遵守《数据安全法》和《个人信息保护法》\n- 敏感数据加密: AES-256\n- 传输安全: TLS 1.2+",
+        "description": "华为云ModelArts微调模板",
+        "category": "huaweicloud",
+        "tags": ["huaweicloud", "maas", "finetune", "modelarts"],
+    },
+    {
+        "name": "huaweicloud-sec-audit",
+        "template": "你是一个华为云安全审计专家。\n\n请对以下Prompt执行安全审计：\n\n{{prompt_content}}\n\n审计维度：\n1. 敏感信息检测: API Key/密码/AK-SK泄露\n2. 注入攻击检测: Prompt注入/模板注入\n3. 安全护栏: ModelArts内容审核配置\n4. 数据合规: 跨境传输/个人信息保护\n5. IAM认证: AK/SK/Token/Agency\n\n输出格式：\n- 安全评分(0-100)\n- 风险等级: 高/中/低\n- 修复建议\n- 安全评分阈值: ≥{{threshold|default('80')}}分",
+        "description": "华为云安全审计模板",
+        "category": "huaweicloud",
+        "tags": ["huaweicloud", "security", "audit"],
+    },
 ]
 
 

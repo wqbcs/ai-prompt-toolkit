@@ -123,6 +123,24 @@ class PromptVersionStore:
             CREATE INDEX IF NOT EXISTS idx_pv_name ON prompt_versions(prompt_name);
             CREATE INDEX IF NOT EXISTS idx_pv_parent ON prompt_versions(parent_version_id);
             CREATE INDEX IF NOT EXISTS idx_pv_score ON prompt_versions(score);
+            CREATE TABLE IF NOT EXISTS version_tags (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prompt_name TEXT NOT NULL,
+                version_id TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                UNIQUE(prompt_name, tag, version_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_vt_name_tag ON version_tags(prompt_name, tag);
+            CREATE TABLE IF NOT EXISTS version_branches (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prompt_name TEXT NOT NULL,
+                branch_name TEXT NOT NULL,
+                head_version_id TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL,
+                UNIQUE(prompt_name, branch_name)
+            );
+            CREATE INDEX IF NOT EXISTS idx_vb_name ON version_branches(prompt_name);
         """)
         conn.commit()
 
@@ -136,6 +154,7 @@ class PromptVersionStore:
         source: str = "manual",
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
+        auto_lint: bool = False,
     ) -> PromptVersion:
         import hashlib
         version_id = hashlib.sha256(
@@ -143,15 +162,30 @@ class PromptVersionStore:
         ).hexdigest()[:12]
 
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        final_score = score
+        final_metadata = dict(metadata or {})
+
+        if auto_lint and score == 0.0:
+            try:
+                from ai_prompt_toolkit.linter.linter import PromptLinter
+                linter = PromptLinter()
+                result = linter.lint(f"{prompt_name}.prompt", content)
+                final_score = result.score
+                final_metadata["auto_lint"] = True
+                final_metadata["lint_findings"] = len(result.findings)
+            except Exception:
+                pass
+
         version = PromptVersion(
             version_id=version_id,
             prompt_name=prompt_name,
             content=content,
             parent_version_id=parent_version_id,
-            score=score,
+            score=final_score,
             source=source,
             tags=tags or [],
-            metadata=metadata or {},
+            metadata=final_metadata,
             created_at=now,
         )
 
@@ -314,6 +348,115 @@ class PromptVersionStore:
             metadata=json.loads(row["metadata"]),
             created_at=row["created_at"],
         )
+
+    def add_tag(self, prompt_name: str, version_id: str, tag: str) -> bool:
+        conn = self._get_conn()
+        version = self.load(version_id)
+        if not version or version.prompt_name != prompt_name:
+            return False
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            conn.execute(
+                "INSERT OR IGNORE INTO version_tags (prompt_name, version_id, tag, created_at) VALUES (?, ?, ?, ?)",
+                (prompt_name, version_id, tag, now),
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+
+    def remove_tag(self, prompt_name: str, version_id: str, tag: str) -> bool:
+        conn = self._get_conn()
+        cursor = conn.execute(
+            "DELETE FROM version_tags WHERE prompt_name = ? AND version_id = ? AND tag = ?",
+            (prompt_name, version_id, tag),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def get_by_tag(self, prompt_name: str, tag: str) -> list[PromptVersion]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            """SELECT pv.* FROM prompt_versions pv
+               JOIN version_tags vt ON pv.version_id = vt.version_id
+               WHERE vt.prompt_name = ? AND vt.tag = ?
+               ORDER BY pv.created_at DESC""",
+            (prompt_name, tag),
+        ).fetchall()
+        return [self._row_to_version(r) for r in rows]
+
+    def list_tags(self, prompt_name: str) -> list[dict[str, str]]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT DISTINCT tag, version_id, created_at FROM version_tags WHERE prompt_name = ? ORDER BY created_at DESC",
+            (prompt_name,),
+        ).fetchall()
+        return [{"tag": r["tag"], "version_id": r["version_id"], "created_at": r["created_at"]} for r in rows]
+
+    def create_branch(self, prompt_name: str, branch_name: str, head_version_id: str = "") -> bool:
+        conn = self._get_conn()
+        now = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            conn.execute(
+                "INSERT OR IGNORE INTO version_branches (prompt_name, branch_name, head_version_id, created_at) VALUES (?, ?, ?, ?)",
+                (prompt_name, branch_name, head_version_id, now),
+            )
+            conn.commit()
+            return True
+        except Exception:
+            return False
+
+    def update_branch_head(self, prompt_name: str, branch_name: str, version_id: str) -> bool:
+        conn = self._get_conn()
+        cursor = conn.execute(
+            "UPDATE version_branches SET head_version_id = ? WHERE prompt_name = ? AND branch_name = ?",
+            (version_id, prompt_name, branch_name),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def get_branch_head(self, prompt_name: str, branch_name: str) -> PromptVersion | None:
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT head_version_id FROM version_branches WHERE prompt_name = ? AND branch_name = ?",
+            (prompt_name, branch_name),
+        ).fetchone()
+        if not row or not row["head_version_id"]:
+            return None
+        return self.load(row["head_version_id"])
+
+    def list_branches(self, prompt_name: str) -> list[dict[str, str]]:
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT branch_name, head_version_id, created_at FROM version_branches WHERE prompt_name = ? ORDER BY created_at",
+            (prompt_name,),
+        ).fetchall()
+        return [{"branch_name": r["branch_name"], "head_version_id": r["head_version_id"], "created_at": r["created_at"]} for r in rows]
+
+    def search_by_content_hash(self, content: str) -> list[PromptVersion]:
+        content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM prompt_versions WHERE json_extract(metadata, '$.content_hash') = ?",
+            (content_hash,),
+        ).fetchall()
+        return [self._row_to_version(r) for r in rows]
+
+    def get_version_tree(self, prompt_name: str) -> dict[str, Any]:
+        versions = self.list_versions(prompt_name, limit=100)
+        branches = self.list_branches(prompt_name)
+        tags = self.list_tags(prompt_name)
+        tree: dict[str, Any] = {
+            "prompt_name": prompt_name,
+            "total_versions": len(versions),
+            "versions": [v.to_dict() for v in versions[:20]],
+            "branches": branches,
+            "tags": tags,
+        }
+        if versions:
+            tree["latest_version_id"] = versions[0].version_id
+            tree["latest_score"] = versions[0].score
+        return tree
 
     def close(self) -> None:
         if self._conn:

@@ -19,7 +19,7 @@ from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095"}
+AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095", "P096", "P097", "P098", "P099", "P100"}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -424,6 +424,67 @@ def _fix_p095_signing(text: str) -> str:
     return text + block
 
 
+def _fix_p096_pangu_format(text: str) -> str:
+    block = (
+        "\n\n# 盘古对话格式兼容性\n"
+        "- 对话格式: 使用system/user/assistant角色标签\n"
+        "- API格式: 华为云MaaS API (messages数组)\n"
+        "- 禁止使用: ChatML <|im_start|> / Llama [INST] / Alpaca ###\n"
+        "- 示例: {'role': 'system', 'content': '...'} → {'role': 'user', 'content': '...'}"
+    )
+    return text + block
+
+
+def _fix_p097_pangu_token_limit(text: str) -> str:
+    estimated = len(text) // 2
+    if estimated > 16000:
+        model_ctx = "盘古32K模型 (32768 tokens)"
+    elif estimated > 4000:
+        model_ctx = "盘古8K模型 (8192 tokens)"
+    else:
+        model_ctx = "盘古8K/32K/128K模型"
+    block = (
+        "\n\n# 盘古Token限制声明\n"
+        f"- 适配模型: {model_ctx}\n"
+        f"- 当前估算: ~{estimated} tokens\n"
+        "- 控制输入长度, 预留输出空间(建议输入不超过上下文窗口的70%)"
+    )
+    return text + block
+
+
+def _fix_p098_pangu_tool_call(text: str) -> str:
+    block = (
+        "\n\n# 盘古Function Calling规范\n"
+        "- 工具定义: 使用tools参数, 含name/description/parameters\n"
+        "- 调用格式: 模型输出tool_calls字段, 含function.name和function.arguments\n"
+        "- 结果回传: role='tool', content=执行结果JSON\n"
+        "- 参考: 华为云MaaS Function Calling API文档"
+    )
+    return text + block
+
+
+def _fix_p099_pangu_multimodal(text: str) -> str:
+    block = (
+        "\n\n# 盘古多模态兼容性\n"
+        "- 图片输入: 支持base64编码和URL两种方式\n"
+        "- 格式示例: {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,...'}}\n"
+        "- 支持格式: PNG/JPEG/WebP/GIF\n"
+        "- 限制: 单张图片≤20MB, 单次请求≤4张图片"
+    )
+    return text + block
+
+
+def _fix_p100_pangu_safety(text: str) -> str:
+    block = (
+        "\n\n# 盘古安全护栏声明\n"
+        "- 启用ModelArts内容审核: 检测暴力/色情/政治敏感/辱骂等内容\n"
+        "- 配置敏感词过滤: 自定义敏感词库, 命中时拦截或替换\n"
+        "- 输出安全评分阈值: ≥0.8 (0-1, 越高越安全)\n"
+        "- 异常处理: 安全评分低于阈值时返回预设安全回复"
+    )
+    return text + block
+
+
 @dataclass
 class FixResult:
     rule_id: str
@@ -576,4 +637,14 @@ class Fixer:
             return _fix_p094_net_security(text)
         elif rule_id == "P095":
             return _fix_p095_signing(text)
+        elif rule_id == "P096":
+            return _fix_p096_pangu_format(text)
+        elif rule_id == "P097":
+            return _fix_p097_pangu_token_limit(text)
+        elif rule_id == "P098":
+            return _fix_p098_pangu_tool_call(text)
+        elif rule_id == "P099":
+            return _fix_p099_pangu_multimodal(text)
+        elif rule_id == "P100":
+            return _fix_p100_pangu_safety(text)
         return text

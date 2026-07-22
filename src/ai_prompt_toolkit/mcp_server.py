@@ -486,6 +486,29 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "pangu_compat_check",
+            "description": "盘古模型兼容性检查: 检测Prompt是否适配华为云盘古大模型(P096-P100规则)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检查的Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "pangu_safety_audit",
+            "description": "盘古安全审计: 对盘古模型Prompt执行安全护栏和内容审核合规检查",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待审计的Prompt文本"},
+                    "threshold": {"type": "number", "description": "安全评分阈值(默认0.8)", "default": 0.8},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -626,6 +649,10 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_attack_vault_check(arguments)
         elif tool_name == "attack_vault_learn":
             result = _tool_attack_vault_learn(arguments)
+        elif tool_name == "pangu_compat_check":
+            result = _tool_pangu_compat_check(arguments)
+        elif tool_name == "pangu_safety_audit":
+            result = _tool_pangu_safety_audit(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1388,6 +1415,63 @@ def _tool_attack_vault_learn(args: dict[str, Any]) -> dict[str, Any]:
     vault = get_attack_vault()
     sig = vault.learn(text, attack_type=attack_type)
     return {"status": "learned", "attack_type": attack_type, "vault_size": vault.size}
+
+
+def _tool_pangu_compat_check(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.rules_p096_p100 import run_checks_p096_p100
+    from ai_prompt_toolkit.linter.rules import _RULE_MAP
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    findings = run_checks_p096_p100(text)
+    pangu_rules = {rid: _RULE_MAP[rid].to_dict() for rid in ["P096", "P097", "P098", "P099", "P100"]}
+    return {
+        "compatible": len(findings) == 0,
+        "issues_found": len(findings),
+        "findings": [
+            {
+                "rule_id": f.rule_id,
+                "severity": f.severity.value,
+                "description": f.description,
+                "remediation": f.remediation,
+                "details": f.details,
+            }
+            for f in findings
+        ],
+        "rules_checked": pangu_rules,
+    }
+
+
+def _tool_pangu_safety_audit(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.rules_p096_p100 import check_p100, _PANGU_CTX
+    text = args.get("text", "")
+    threshold = args.get("threshold", 0.8)
+    if not text:
+        return {"error": "text is required"}
+    is_pangu = bool(_PANGU_CTX.search(text))
+    finding = check_p100(text)
+    safety_score = 1.0 if finding is None else 0.5
+    has_safety_decl = finding is None
+    audit_items = []
+    if not is_pangu:
+        audit_items.append({"item": "pangu_context", "status": "skip", "detail": "非盘古模型Prompt"})
+    elif has_safety_decl:
+        audit_items.append({"item": "safety_guardrail", "status": "pass", "detail": "安全护栏已声明"})
+    else:
+        audit_items.append({"item": "safety_guardrail", "status": "fail", "detail": "安全护栏未声明"})
+    audit_items.append({"item": "safety_score", "status": "pass" if safety_score >= threshold else "fail", "detail": f"安全评分{safety_score}(阈值{threshold})"})
+    return {
+        "is_pangu_prompt": is_pangu,
+        "safety_score": safety_score,
+        "threshold": threshold,
+        "passed": safety_score >= threshold,
+        "audit_items": audit_items,
+        "finding": {
+            "rule_id": finding.rule_id,
+            "description": finding.description,
+            "remediation": finding.remediation,
+        } if finding else None,
+    }
 
 
 if __name__ == "__main__":
