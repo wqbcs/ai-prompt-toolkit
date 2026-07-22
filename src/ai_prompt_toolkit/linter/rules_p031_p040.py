@@ -10,40 +10,40 @@ from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
 _AGENT_RULES: list[LintRule] = [
     LintRule("P031", "Agent缺失工具调用约束", "agent", Severity.HIGH,
              "Agent型Prompt未定义工具调用的安全边界和权限限制",
-             "添加工具调用约束: 明确可调用工具列表、参数校验规则、权限边界"),
+             "添加工具调用约束: 明确可调用工具列表、参数校验规则、权限边界", family="agent_tool"),
     LintRule("P032", "Agent缺失错误处理策略", "agent", Severity.MEDIUM,
              "Agent型Prompt未定义工具调用失败时的降级策略",
-             "添加错误处理: 定义工具不可用时的fallback行为、重试策略、超时处理"),
+             "添加错误处理: 定义工具不可用时的fallback行为、重试策略、超时处理", family="agent_error"),
     LintRule("P033", "Agent缺失上下文边界", "agent", Severity.HIGH,
              "Agent型Prompt未限制上下文传递范围，可能导致信息泄露",
-             "添加上下文边界: 明确哪些信息可以传递给工具、禁止传递敏感字段"),
+             "添加上下文边界: 明确哪些信息可以传递给工具、禁止传递敏感字段", family="agent_boundary"),
     LintRule("P034", "Agent缺失审批机制", "agent", Severity.MEDIUM,
              "Agent型Prompt未对高风险操作设置人工审批流程",
-             "添加审批机制: 高风险操作(删除/支付/发送)需人工确认后才可执行"),
+             "添加审批机制: 高风险操作(删除/支付/发送)需人工确认后才可执行", family="agent_approval"),
 ]
 
 _RAG_RULES: list[LintRule] = [
     LintRule("P035", "RAG缺失检索源验证", "rag", Severity.HIGH,
              "RAG型Prompt未验证检索内容的可信度和来源",
-             "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源"),
+             "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源", family="rag_retrieval"),
     LintRule("P036", "RAG缺失幻觉检测提示", "rag", Severity.MEDIUM,
              "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
-             "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'"),
+             "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'", family="rag_hallucination"),
     LintRule("P037", "RAG缺失引用标注要求", "rag", Severity.MEDIUM,
              "RAG型Prompt未要求模型标注答案来源的引用",
-             "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记"),
+             "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记", family="rag_citation"),
 ]
 
 _MULTIMODAL_RULES: list[LintRule] = [
     LintRule("P038", "多模态缺失输入类型验证", "multimodal", Severity.HIGH,
              "多模态Prompt未验证输入的类型(图片/音频/视频)和大小限制",
-             "添加输入验证: 限制接受的文件类型、最大文件大小、分辨率范围"),
+             "添加输入验证: 限制接受的文件类型、最大文件大小、分辨率范围", family="multimodal_input"),
     LintRule("P039", "多模态缺失内容安全检查", "multimodal", Severity.HIGH,
              "多模态Prompt未对非文本输入进行内容安全检查",
-             "添加内容安全: 对图片/音频执行安全检测，过滤不当内容后再处理"),
+             "添加内容安全: 对图片/音频执行安全检测，过滤不当内容后再处理", family="multimodal_safety"),
     LintRule("P040", "多模态缺失降级策略", "multimodal", Severity.MEDIUM,
              "多模态Prompt未定义非文本输入不可用时的降级方案",
-             "添加降级策略: 定义图片/音频无法处理时的纯文本fallback行为"),
+             "添加降级策略: 定义图片/音频无法处理时的纯文本fallback行为", family="multimodal_fallback"),
 ]
 
 for r in _AGENT_RULES + _RAG_RULES + _MULTIMODAL_RULES:

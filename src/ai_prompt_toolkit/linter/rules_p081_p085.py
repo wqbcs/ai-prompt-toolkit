@@ -19,19 +19,19 @@ from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
 _RULES_P081_P085: list[LintRule] = [
     LintRule("P081", "模板变量完整性缺失", "quality", Severity.MEDIUM,
              "使用{{var}}模板变量的Prompt缺少变量默认值声明",
-             "为每个变量添加默认值: {{var|default('fallback')}}"),
+             "为每个变量添加默认值: {{var|default('fallback')}}", family="template_var"),
     LintRule("P082", "Trace可观测性缺失", "quality", Severity.LOW,
              "复杂Prompt(>500字符)缺少Trace可观测性声明",
-             "添加'## Trace: enabled'或使用trace()上下文管理器"),
+             "添加'## Trace: enabled'或使用trace()上下文管理器", family="observability"),
     LintRule("P083", "Doctor健康检查建议", "quality", Severity.LOW,
              "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
-             "运行 'promptkit prompt-doctor -t <file>' 获取健康报告"),
+             "运行 'promptkit prompt-doctor -t <file>' 获取健康报告", family="health_check"),
     LintRule("P084", "输出格式规范缺失", "quality", Severity.MEDIUM,
              "Prompt声明了JSON/Markdown输出但缺少格式约束",
-             "添加输出格式示例和Schema约束, 如'返回JSON: {\"key\": \"value\"}'"),
+             "添加输出格式示例和Schema约束, 如'返回JSON: {\"key\": \"value\"}'", family="output_schema"),
     LintRule("P085", "模型兼容性风险", "quality", Severity.MEDIUM,
              "Prompt使用了特定模型语法但未声明目标模型",
-             "声明目标模型: '适用于GPT-4/Claude-3/盘古'或使用条件编译"),
+             "声明目标模型: '适用于GPT-4/Claude-3/盘古'或使用条件编译", family="model_compat"),
 ]
 
 for r in _RULES_P081_P085:
