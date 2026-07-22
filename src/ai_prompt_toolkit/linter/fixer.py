@@ -19,7 +19,7 @@ from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085"}
+AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095"}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -317,6 +317,113 @@ def _fix_p085_model_compat(text: str) -> str:
     return text + block
 
 
+def _fix_p086_arkts_compat(text: str) -> str:
+    block = (
+        "\n\n# ArkTS语法兼容性\n"
+        "- 避免使用: as const / satisfies / 运行时enum / namespace\n"
+        "- 推荐替代: 使用字面量类型 / 接口定义 / const枚举 / 模块导入\n"
+        "- 参考: ArkTS是TypeScript的严格子集, 禁止动态特性"
+    )
+    return text + block
+
+
+def _fix_p087_ability_decl(text: str) -> str:
+    block = (
+        "\n\n# Stage模型Ability声明\n"
+        "- 入口Ability: EntryAbility (类型: main)\n"
+        "- module.json5配置: name/label/description/exported/skills\n"
+        "- 请根据实际项目替换Ability名称和配置"
+    )
+    return text + block
+
+
+def _fix_p088_lifecycle(text: str) -> str:
+    block = (
+        "\n\n# Ability生命周期回调\n"
+        "- onCreate: Ability创建时初始化\n"
+        "- onWindowStageCreate: 窗口创建时加载UI\n"
+        "- onForeground: 回到前台时恢复状态\n"
+        "- onBackground: 进入后台时保存状态\n"
+        "- onDestroy: 销毁时释放资源"
+    )
+    return text + block
+
+
+def _fix_p089_permission(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙权限声明\n"
+        "- 必需权限: ohos.permission.INTERNET (网络访问)\n"
+        "- 敏感权限需动态申请: requestPermissionsFromUser()\n"
+        "- 最小权限原则: 仅申请功能必需权限, 禁止过度授权"
+    )
+    return text + block
+
+
+def _fix_p090_ui_compat(text: str) -> str:
+    block = (
+        "\n\n# ArkUI组件版本兼容性\n"
+        "- 最低API版本: API 12 (HarmonyOS NEXT 5.0)\n"
+        "- 降级方案: 高版本组件不可用时使用基础组件替代\n"
+        "- 条件编译: if (API >= 12) { 新组件 } else { 旧组件 }"
+    )
+    return text + block
+
+
+def _fix_p091_resource_ref(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙资源引用规范\n"
+        "- 字符串: $r('app.string.key_name')\n"
+        "- 图片: $r('app.media.icon')\n"
+        "- 颜色: $r('app.color.primary')\n"
+        "- 原始文件: $rawfile('data/config.json')"
+    )
+    return text + block
+
+
+def _fix_p092_thread_model(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙线程模型\n"
+        "- 耗时操作: 使用TaskPool (@Concurrent装饰器)\n"
+        "- 长时间任务: 使用Worker线程\n"
+        "- UI更新: 必须回主线程执行\n"
+        "- 线程通信: 使用Emitter或SharedArrayBuffer"
+    )
+    return text + block
+
+
+def _fix_p093_data_mgmt(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙数据管理规范\n"
+        "- 轻量键值对: @ohos.data.preferences (Preferences)\n"
+        "- 结构化数据: @ohos.data.relationalStore (RDB/SQLite)\n"
+        "- 跨设备同步: @ohos.data.dataShare (DataShare)\n"
+        "- 文件存储: @ohos.file.fs"
+    )
+    return text + block
+
+
+def _fix_p094_net_security(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙网络安全规范\n"
+        "- 强制HTTPS: 禁止明文HTTP传输\n"
+        "- 证书锁定: 配置publicKeyPinning防止中间人攻击\n"
+        "- 网络安全配置: security_config.json声明证书策略\n"
+        "- 敏感数据传输: 使用TLS 1.2+加密"
+    )
+    return text + block
+
+
+def _fix_p095_signing(text: str) -> str:
+    block = (
+        "\n\n# 鸿蒙应用签名规范\n"
+        "- 调试签名: 使用本地.p12证书 + .p7b Profile\n"
+        "- 发布签名: 通过AGC(AppGallery Connect)分发证书\n"
+        "- 签名算法: RSA2048/ECDSA P256\n"
+        "- Profile类型: debug(调试) / release(发布)"
+    )
+    return text + block
+
+
 @dataclass
 class FixResult:
     rule_id: str
@@ -449,4 +556,24 @@ class Fixer:
             return _fix_p084_output_schema(text)
         elif rule_id == "P085":
             return _fix_p085_model_compat(text)
+        elif rule_id == "P086":
+            return _fix_p086_arkts_compat(text)
+        elif rule_id == "P087":
+            return _fix_p087_ability_decl(text)
+        elif rule_id == "P088":
+            return _fix_p088_lifecycle(text)
+        elif rule_id == "P089":
+            return _fix_p089_permission(text)
+        elif rule_id == "P090":
+            return _fix_p090_ui_compat(text)
+        elif rule_id == "P091":
+            return _fix_p091_resource_ref(text)
+        elif rule_id == "P092":
+            return _fix_p092_thread_model(text)
+        elif rule_id == "P093":
+            return _fix_p093_data_mgmt(text)
+        elif rule_id == "P094":
+            return _fix_p094_net_security(text)
+        elif rule_id == "P095":
+            return _fix_p095_signing(text)
         return text

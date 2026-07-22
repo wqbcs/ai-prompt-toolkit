@@ -1,0 +1,70 @@
+name: 'AI Prompt Toolkit Lint'
+description: 'Run AI Prompt Toolkit lint, security scan, and quality evaluation on Prompt files'
+inputs:
+  target:
+    description: 'Target file or directory to lint'
+    required: true
+    default: '.'
+  rules:
+    description: 'Comma-separated rule IDs to include (e.g. P001,P006,P071)'
+    required: false
+  exclude-rules:
+    description: 'Comma-separated rule IDs to exclude'
+    required: false
+  threshold:
+    description: 'Minimum quality score (0-100) to pass'
+    required: false
+    default: '0'
+  fix:
+    description: 'Auto-fix issues where possible'
+    required: false
+    default: 'false'
+  format:
+    description: 'Output format: json, sarif, cli'
+    required: false
+    default: 'sarif'
+outputs:
+  score:
+    description: 'Lint quality score (0-100)'
+  findings-count:
+    description: 'Number of findings'
+runs:
+  using: 'composite'
+  steps:
+    - name: Install AI Prompt Toolkit
+      shell: bash
+      run: pip install ai-prompt-toolkit>=42.0.0
+    - name: Run Prompt Lint
+      shell: bash
+      run: |
+        ARGS=""
+        if [ -n "${{ inputs.rules }}" ]; then
+          ARGS="$ARGS --rules ${{ inputs.rules }}"
+        fi
+        if [ -n "${{ inputs.exclude-rules }}" ]; then
+          ARGS="$ARGS --exclude-rules ${{ inputs.exclude-rules }}"
+        fi
+        if [ "${{ inputs.fix }}" = "true" ]; then
+          ARGS="$ARGS --fix"
+        fi
+        if [ "${{ inputs.format }}" = "sarif" ]; then
+          promptkit lint --target ${{ inputs.target }} $ARGS --sarif prompt-lint-results.sarif
+        else
+          promptkit lint --target ${{ inputs.target }} $ARGS --format ${{ inputs.format }}
+        fi
+    - name: Run Security Scan
+      shell: bash
+      run: |
+        promptkit scan --target ${{ inputs.target }} --format json > prompt-scan-results.json 2>/dev/null || true
+    - name: Set outputs
+      shell: bash
+      run: |
+        if [ -f prompt-lint-results.sarif ]; then
+          SCORE=$(python3 -c "import json; d=json.load(open('prompt-lint-results.sarif')); print(d.get('runs',[{}])[0].get('results',[{}])[0].get('level','none'))" 2>/dev/null || echo "0")
+          FINDINGS=$(python3 -c "import json; d=json.load(open('prompt-lint-results.sarif')); print(len(d.get('runs',[{}])[0].get('results',[])))" 2>/dev/null || echo "0")
+          echo "score=$SCORE" >> $GITHUB_OUTPUT
+          echo "findings-count=$FINDINGS" >> $GITHUB_OUTPUT
+        fi
+branding:
+  icon: 'shield'
+  color: 'blue'

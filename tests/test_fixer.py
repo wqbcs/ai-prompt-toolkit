@@ -10,7 +10,7 @@ from ai_prompt_toolkit.types import Finding, Severity
 
 class TestAutoFixableRules:
     def test_auto_fixable_rules_contains_expected(self):
-        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085"}
+        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095"}
 
     def test_ambiguous_replacements_keys(self):
         for key in AMBIGUOUS_REPLACEMENTS:

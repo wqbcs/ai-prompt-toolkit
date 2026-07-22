@@ -84,6 +84,21 @@ class PromptCache:
                 return True
             return False
 
+    def put_batch(self, items: dict[str, Any]) -> int:
+        count = 0
+        for key, value in items.items():
+            self.put(key, value)
+            count += 1
+        return count
+
+    def get_batch(self, keys: list[str]) -> dict[str, Any]:
+        results: dict[str, Any] = {}
+        for key in keys:
+            value = self.get(key)
+            if value is not None:
+                results[key] = value
+        return results
+
     def clear(self) -> None:
         with self._lock:
             self._cache.clear()
