@@ -1027,3 +1027,62 @@ def prompt_version_cmd(action: str, name: str | None, source: str | None,
 
     finally:
         store.close()
+
+
+@main.command(name="eval-matrix")
+@click.option("--target", "-t", required=True, help="Prompt文件路径")
+@click.option("--evaluators", "-e", help="评估器(逗号分隔, 默认全部)")
+@click.option("--output", "-o", required=True, help="输出HTML报告路径")
+def eval_matrix_cmd(target: str, evaluators: str | None, output: str) -> None:
+    """评估矩阵可视化: 生成交互式HTML评估报告"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.eval_matrix import build_matrix_from_evaluator_results, generate_eval_matrix_html
+
+    target_path = resolve_path(target)
+    text = target_path.read_text(encoding="utf-8")
+    ev_list = [e.strip() for e in evaluators.split(",")] if evaluators else None
+
+    report = build_matrix_from_evaluator_results(str(target_path), text, evaluator_names=ev_list)
+    html_content = generate_eval_matrix_html(report, output_path=output)
+    click.echo(f"评估矩阵报告已生成: {output} ({len(report.cells)}个评估单元格)")
+
+
+@main.command(name="playground")
+@click.option("--output", "-o", default="playground.html", help="输出Playground HTML路径")
+def playground_cmd(output: str) -> None:
+    """Prompt Playground: 生成交互式Prompt调试界面"""
+    from ai_prompt_toolkit.prompt_playground import generate_playground_html
+
+    generate_playground_html(output_path=output)
+    click.echo(f"Playground已生成: {output} (浏览器打开即可使用)")
+
+
+@main.command(name="contest-eval")
+@click.option("--target", "-t", required=True, help="Prompt文件路径")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def contest_eval_cmd(target: str, fmt: str) -> None:
+    """赛事贴合度评估: 华为云+鸿蒙生态赛事关键指标"""
+    import json as _json
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.huawei_eval import evaluate_contest_readiness
+
+    target_path = resolve_path(target)
+    text = target_path.read_text(encoding="utf-8")
+    result = evaluate_contest_readiness(text)
+
+    if fmt == "json":
+        click.echo(_json.dumps(result, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"赛事贴合度: {result['contest_score']:.1f}/10 ({result['readiness_level']})")
+        click.echo(f"盘古集成: {'是' if result['pangu_integration'] else '否'}")
+        click.echo(f"鸿蒙集成: {'是' if result['harmonyos_integration'] else '否'}")
+        click.echo(f"\n鸿蒙Agent评估: {result['harmonyos_agent']['overall_score']:.1f}/10")
+        for d in result["harmonyos_agent"]["dimensions"]:
+            click.echo(f"  {d['dimension']}: {d['score']:.1f}/10")
+        click.echo(f"\n华为云评估: {result['huawei_cloud']['overall_score']:.1f}/10")
+        for d in result["huawei_cloud"]["dimensions"]:
+            click.echo(f"  {d['dimension']}: {d['score']:.1f}/10")
+        if result["recommendations"]:
+            click.echo("\n改进建议:")
+            for rec in result["recommendations"]:
+                click.echo(f"  - {rec}")
