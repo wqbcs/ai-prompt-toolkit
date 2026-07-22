@@ -651,3 +651,161 @@ def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | N
         click.echo("\n评估历史已保存")
 
     sys.exit(0 if results["summary"]["failed"] == 0 else 1)
+
+
+@main.command(name="eval-registry")
+@click.option("--target", "-t", required=True, help="评估目标(文件或目录)")
+@click.option("--evaluators", "-e", help="评估器名称(逗号分隔, 如lint,security,g_eval,discrete_metric)")
+@click.option("--type", "etype", help="按类型筛选评估器(quality/security/performance)")
+@click.option("--tag", help="按标签筛选评估器")
+@click.option("--threshold", type=float, default=0.0, help="分数阈值(0-10)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
+                      tag: str | None, threshold: float, fmt: str,
+                      output: str | None) -> None:
+    """评估器注册表: 使用注册表中的评估器组合评估Prompt"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry
+    from ai_prompt_toolkit.g_eval import GEvalEvaluator, FaithfulnessEvaluator, HallucinationEvaluator, AgentEvaluator
+    from ai_prompt_toolkit.discrete_eval import DiscreteMetricEvaluator
+
+    registry = EvaluatorRegistry()
+    registry.register(GEvalEvaluator())
+    registry.register(FaithfulnessEvaluator())
+    registry.register(HallucinationEvaluator())
+    registry.register(AgentEvaluator())
+    registry.register(DiscreteMetricEvaluator())
+
+    target_path = resolve_path(target)
+    if target_path.is_dir():
+        files = sorted(target_path.rglob("*.md"))
+    else:
+        files = [target_path]
+
+    if not files:
+        click.echo("错误: 未找到评估目标文件", err=True)
+        sys.exit(2)
+
+    eval_names = [e.strip() for e in evaluators.split(",")] if evaluators else None
+    thresholds = {name: threshold for name in (eval_names or [])}
+
+    all_results = []
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        result = registry.evaluate(
+            str(f), text,
+            evaluator_names=eval_names,
+            evaluator_type=etype,
+            tag=tag,
+            thresholds=thresholds,
+        )
+        all_results.append(result)
+
+    if fmt == "json":
+        import json as _json
+        data = {"results": [r.to_dict() for r in all_results]}
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        for result in all_results:
+            status = "[PASS]" if result.overall_passed else "[FAIL]"
+            click.echo(f"  {status} {result.template_id}: {result.overall_score:.2f}/10")
+            for r in result.results:
+                icon = "✓" if r.passed else "✗"
+                click.echo(f"    {icon} [{r.evaluator_name}] {r.score:.2f}/{r.max_score:.0f}")
+        if all_results:
+            avg = sum(r.overall_score for r in all_results) / len(all_results)
+            click.echo(f"\n总均分: {avg:.2f}/10")
+
+    sys.exit(0 if all(r.overall_passed for r in all_results) else 1)
+
+
+@main.command(name="data-generate")
+@click.option("--template", "-t", help="模板文件路径(用于生成基于模板的测试数据)")
+@click.option("--count", "-n", type=int, default=5, help="每类测试用例数量")
+@click.option("--adversarial", is_flag=True, help="包含对抗性测试用例")
+@click.option("--harmonyos", is_flag=True, help="包含鸿蒙/华为云专项测试用例")
+@click.option("--multi-turn", is_flag=True, help="包含多轮对话测试用例")
+@click.option("--output", "-o", help="输出数据集路径(JSON)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def data_generate_cmd(template: str | None, count: int, adversarial: bool,
+                      harmonyos: bool, multi_turn: bool, output: str | None,
+                      fmt: str) -> None:
+    """自动生成测试数据集: 基于模板变异/对抗/鸿蒙/多轮对话"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.test_generator import TestCaseGenerator
+
+    gen = TestCaseGenerator(seed=42)
+    template_text = ""
+    if template:
+        tpath = resolve_path(template)
+        template_text = tpath.read_text(encoding="utf-8")
+
+    ds = gen.generate_dataset(
+        name="auto_generated",
+        template_text=template_text,
+        include_adversarial=adversarial,
+        include_harmonyos=harmonyos,
+        include_multi_turn=multi_turn,
+        base_count=count,
+    )
+
+    if fmt == "json":
+        import json as _json
+        data = ds.to_dict()
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"数据集已保存: {output} ({ds.size}用例)")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"数据集: {ds.name} ({ds.size}用例)")
+        click.echo(f"  ID: {ds.dataset_id}")
+        for c in ds.cases:
+            click.echo(f"  [{c.category}/{c.difficulty}] {c.input_text[:60]}...")
+
+
+@main.command(name="prompt-optimize")
+@click.option("--target", "-t", required=True, help="待优化的Prompt文件路径")
+@click.option("--max-iterations", type=int, default=5, help="最大优化轮次")
+@click.option("--min-improvement", type=float, default=0.5, help="最小改进阈值")
+@click.option("--apply", "apply_changes", is_flag=True, help="直接应用优化结果(覆盖原文件)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="输出优化结果路径(JSON)")
+def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float,
+                        apply_changes: bool, fmt: str, output: str | None) -> None:
+    """Prompt自动优化: 评估→反馈→修改→再评估的迭代优化"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
+    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+
+    target_path = resolve_path(target)
+    text = target_path.read_text(encoding="utf-8")
+
+    result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
+
+    if fmt == "json":
+        import json as _json
+        data = result.to_dict()
+        if output:
+            write_report(data, output, fmt="json")
+            click.echo(f"优化报告已保存: {output}")
+        else:
+            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+    else:
+        click.echo(f"原始分数: {result.original_score:.1f}/100")
+        click.echo(f"优化分数: {result.final_score:.1f}/100")
+        click.echo(f"提升: +{result.total_improvement:.1f} ({result.iterations}轮优化)")
+        if result.converged:
+            click.echo("状态: 已收敛")
+        for step in result.steps:
+            click.echo(f"  步骤{step.strategy}: {step.score_before:.1f}→{step.score_after:.1f} (+{step.improvement:.1f})")
+
+    if apply_changes and result.optimized_text != text:
+        target_path.write_text(result.optimized_text, encoding="utf-8")
+        click.echo(f"已应用优化结果: {target}")
+
+    sys.exit(0)
