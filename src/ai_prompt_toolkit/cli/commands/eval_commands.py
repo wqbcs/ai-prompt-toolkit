@@ -43,13 +43,33 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         click.echo(empty_state_tip("evaluate"))
         sys.exit(2)
 
-    reports = []
-    for f in files:
-        text = f.read_text(encoding="utf-8")
-        report = evaluate_template(
-            str(f), text, dimensions=dim_list, categories=cat_list
-        )
-        reports.append(report)
+    if len(files) > 1 and fmt == "cli":
+        from ai_prompt_toolkit.output import console
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+        ) as progress:
+            task = progress.add_task("评估中...", total=len(files))
+            reports = []
+            for f in files:
+                text = f.read_text(encoding="utf-8")
+                report = evaluate_template(
+                    str(f), text, dimensions=dim_list, categories=cat_list
+                )
+                reports.append(report)
+                progress.advance(task)
+    else:
+        reports = []
+        for f in files:
+            text = f.read_text(encoding="utf-8")
+            report = evaluate_template(
+                str(f), text, dimensions=dim_list, categories=cat_list
+            )
+            reports.append(report)
 
     if fmt == "json":
         import json as _json
