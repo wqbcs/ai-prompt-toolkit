@@ -1,21 +1,36 @@
-"""Plugin系统基础 — 参考promptfoo plugin + pluggy
+"""Plugin系统v2 — 参考pluggy+setuptools entry_points双层架构
 
-- 插件注册/发现/加载
-- Hook机制: lint/scan/evaluate/compiler 四个扩展点
-- 支持Python包和文件两种插件形式
-- 插件隔离: 每个插件独立命名空间
+增强特性:
+- setuptools entry_points自动发现(pip安装即插即用)
+- 更多Hook: lint/scan/evaluate/compile/gepa_optimize/flow_run/notification
+- wrapper钩子: before/after生命周期
+- 通知Hook: on_notify发送评估结果
 """
-
 from __future__ import annotations
 
 import importlib
 import logging
+import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
+
+_HOOK_NAMES = frozenset({
+    "lint", "scan", "evaluate", "compile",
+    "gepa_optimize", "flow_run", "notification",
+})
+
+_WRAPPER_HOOK_NAMES = frozenset({
+    "before_lint", "after_lint",
+    "before_scan", "after_scan",
+    "before_evaluate", "after_evaluate",
+    "before_compile", "after_compile",
+    "before_gepa_optimize", "after_gepa_optimize",
+    "before_flow_run", "after_flow_run",
+})
 
 
 @dataclass
@@ -51,6 +66,51 @@ class PluginHook(ABC):
 
     def on_compile(self, template: str, compiled: str) -> str:
         return compiled
+
+    def on_gepa_optimize(self, prompt: str, result: Any) -> Any:
+        return result
+
+    def on_flow_run(self, flow_name: str, result: Any) -> Any:
+        return result
+
+    def on_notify(self, event: str, data: dict[str, Any]) -> dict[str, Any]:
+        return data
+
+    def before_lint(self, template: str) -> str:
+        return template
+
+    def after_lint(self, template: str, findings: list[Any]) -> list[Any]:
+        return findings
+
+    def before_scan(self, template: str) -> str:
+        return template
+
+    def after_scan(self, template: str, findings: list[Any]) -> list[Any]:
+        return findings
+
+    def before_evaluate(self, template: str) -> str:
+        return template
+
+    def after_evaluate(self, template: str, report: Any) -> Any:
+        return report
+
+    def before_compile(self, template: str) -> str:
+        return template
+
+    def after_compile(self, template: str, compiled: str) -> str:
+        return compiled
+
+    def before_gepa_optimize(self, prompt: str) -> str:
+        return prompt
+
+    def after_gepa_optimize(self, prompt: str, result: Any) -> Any:
+        return result
+
+    def before_flow_run(self, flow_name: str) -> str:
+        return flow_name
+
+    def after_flow_run(self, flow_name: str, result: Any) -> Any:
+        return result
 
 
 class Plugin:
@@ -164,15 +224,47 @@ class PluginManager:
                 loaded.append(plugin)
         return loaded
 
+    def load_from_entry_points(self, group: str = "promptkit.plugins") -> list[Plugin]:
+        try:
+            if sys.version_info >= (3, 12):
+                from importlib.metadata import entry_points as _ep
+                eps = _ep(group=group)
+            elif sys.version_info >= (3, 10):
+                from importlib.metadata import entry_points as _ep
+                eps = _ep(group=group)
+            else:
+                from importlib.metadata import entry_points as _ep
+                all_eps = _ep()
+                eps = [ep for ep in all_eps.get("promptkit.plugins", []) if ep.group == group]
+        except Exception:
+            logger.debug("Failed to load entry_points for group %s", group)
+            return []
+
+        loaded = []
+        for ep in eps:
+            try:
+                factory = ep.load()
+                if callable(factory):
+                    plugin = factory() if not isinstance(factory, Plugin) else factory
+                    if isinstance(plugin, Plugin):
+                        self.register(plugin)
+                        loaded.append(plugin)
+                    elif hasattr(plugin, "create_plugin"):
+                        p = plugin.create_plugin()
+                        self.register(p)
+                        loaded.append(p)
+            except Exception:
+                logger.exception("Failed to load entry_point %s", ep.name)
+        return loaded
+
     def fire_hook(self, hook_name: str, **kwargs: Any) -> Any:
         result = kwargs
         for plugin in self.get_enabled_plugins():
-            hook = plugin.get_hook(hook_name)
-            if hook is None:
-                continue
-            try:
-                method = getattr(hook, f"on_{hook_name}", None)
-                if method:
+            for hook in plugin._hooks:
+                try:
+                    method = getattr(hook, f"on_{hook_name}", None)
+                    if method is None:
+                        continue
                     if hook_name == "lint":
                         result["findings"] = method(
                             kwargs.get("template", ""), kwargs.get("findings", [])
@@ -189,11 +281,82 @@ class PluginManager:
                         result["compiled"] = method(
                             kwargs.get("template", ""), kwargs.get("compiled", "")
                         )
-            except Exception:
-                logger.exception(
-                    "Plugin %s hook %s failed", plugin.meta.name, hook_name
-                )
+                    elif hook_name == "gepa_optimize":
+                        result["result"] = method(
+                            kwargs.get("prompt", ""), kwargs.get("result")
+                        )
+                    elif hook_name == "flow_run":
+                        result["result"] = method(
+                            kwargs.get("flow_name", ""), kwargs.get("result")
+                        )
+                    elif hook_name == "notification":
+                        result["data"] = method(
+                            kwargs.get("event", ""), kwargs.get("data", {})
+                        )
+                except Exception:
+                    logger.exception(
+                        "Plugin %s hook %s failed", plugin.meta.name, hook_name
+                    )
         return result
+
+    def fire_before_hook(self, hook_name: str, **kwargs: Any) -> Any:
+        result = kwargs
+        for plugin in self.get_enabled_plugins():
+            for hook in plugin._hooks:
+                try:
+                    method = getattr(hook, f"before_{hook_name}", None)
+                    if method is None:
+                        continue
+                    if hook_name in ("lint", "scan", "evaluate", "compile"):
+                        result["template"] = method(kwargs.get("template", ""))
+                    elif hook_name == "gepa_optimize":
+                        result["prompt"] = method(kwargs.get("prompt", ""))
+                    elif hook_name == "flow_run":
+                        result["flow_name"] = method(kwargs.get("flow_name", ""))
+                except Exception:
+                    logger.exception("Plugin %s before_%s failed", plugin.meta.name, hook_name)
+        return result
+
+    def fire_after_hook(self, hook_name: str, **kwargs: Any) -> Any:
+        result = kwargs
+        for plugin in self.get_enabled_plugins():
+            for hook in plugin._hooks:
+                try:
+                    method = getattr(hook, f"after_{hook_name}", None)
+                    if method is None:
+                        continue
+                    if hook_name in ("lint", "scan"):
+                        result["findings"] = method(
+                            kwargs.get("template", ""), kwargs.get("findings", [])
+                        )
+                    elif hook_name == "evaluate":
+                        result["report"] = method(
+                            kwargs.get("template", ""), kwargs.get("report")
+                        )
+                    elif hook_name == "compile":
+                        result["compiled"] = method(
+                            kwargs.get("template", ""), kwargs.get("compiled", "")
+                        )
+                    elif hook_name == "gepa_optimize":
+                        result["result"] = method(
+                            kwargs.get("prompt", ""), kwargs.get("result")
+                        )
+                    elif hook_name == "flow_run":
+                        result["result"] = method(
+                            kwargs.get("flow_name", ""), kwargs.get("result")
+                        )
+                except Exception:
+                    logger.exception("Plugin %s after_%s failed", plugin.meta.name, hook_name)
+        return result
+
+    def fire_notification(self, event: str, data: dict[str, Any]) -> dict[str, Any]:
+        for plugin in self.get_enabled_plugins():
+            for hook in plugin._hooks:
+                try:
+                    data = hook.on_notify(event, data)
+                except Exception:
+                    logger.exception("Plugin %s notification failed", plugin.meta.name)
+        return data
 
     def get_summary(self) -> dict[str, Any]:
         return {

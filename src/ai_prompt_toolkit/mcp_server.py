@@ -320,6 +320,43 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "prompt_junit_report",
+            "description": "生成JUnit XML格式报告(兼容CI/CD平台)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "results": {"type": "string", "description": "JSON格式的lint/scan/eval结果"},
+                    "suite_name": {"type": "string", "description": "测试套件名称", "default": "promptkit"},
+                    "output_path": {"type": "string", "description": "输出文件路径"},
+                },
+                "required": ["results"],
+            },
+        },
+        {
+            "name": "prompt_notify",
+            "description": "发送通知到DingTalk/Feishu/Slack/Webhook",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "event": {"type": "string", "description": "事件类型(lint_failed/eval_passed/gepa_improved等)"},
+                    "variables": {"type": "string", "description": "JSON格式的模板变量"},
+                    "webhook_type": {"type": "string", "description": "通知类型(dingtalk/feishu/slack/webhook)", "default": "webhook"},
+                    "webhook_url": {"type": "string", "description": "Webhook URL"},
+                    "secret": {"type": "string", "description": "签名密钥(可选)"},
+                },
+                "required": ["event", "variables", "webhook_url"],
+            },
+        },
+        {
+            "name": "prompt_plugin_list",
+            "description": "列出已注册的Plugin和Hook信息",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -432,6 +469,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_eval_matrix(arguments)
         elif tool_name == "prompt_version_list":
             result = _tool_version_list(arguments)
+        elif tool_name == "prompt_junit_report":
+            result = _tool_junit_report(arguments)
+        elif tool_name == "prompt_notify":
+            result = _tool_notify(arguments)
+        elif tool_name == "prompt_plugin_list":
+            result = _tool_plugin_list(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -902,6 +945,109 @@ def _tool_version_list(args: dict[str, Any]) -> dict[str, Any]:
         return {"count": len(versions), "versions": [v.to_dict() for v in versions]}
     finally:
         store.close()
+
+
+def _tool_junit_report(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.ci_integration import JUnitReporter, extract_ci_tags
+
+    results_json = args.get("results", "[]")
+    suite_name = args.get("suite_name", "promptkit")
+    output_path = args.get("output_path", "")
+
+    try:
+        results = json.loads(results_json)
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON in results"}
+
+    ci_tags = extract_ci_tags()
+    reporter = JUnitReporter(suite_name=suite_name, ci_tags=ci_tags)
+
+    for item in results:
+        item_type = item.get("type", "lint")
+        if item_type == "lint":
+            reporter.add_lint_result(
+                file_path=item.get("file_path", "unknown"),
+                findings=item.get("findings", []),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "scan":
+            reporter.add_scan_result(
+                file_path=item.get("file_path", "unknown"),
+                findings=item.get("findings", []),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "eval":
+            reporter.add_eval_result(
+                file_path=item.get("file_path", "unknown"),
+                score=item.get("score", 0),
+                passed=item.get("passed", False),
+                details=item.get("details", ""),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "gepa":
+            reporter.add_gepa_result(
+                prompt_name=item.get("prompt_name", "unknown"),
+                best_score=item.get("best_score", 0),
+                improvement=item.get("improvement", 0),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "redteam":
+            reporter.add_redteam_result(
+                target=item.get("target", "unknown"),
+                vulnerabilities=item.get("vulnerabilities", 0),
+                passed=item.get("passed", False),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+
+    response = {
+        "total": reporter.suite.total,
+        "failures": reporter.suite.failures,
+        "errors": reporter.suite.errors,
+        "has_failures": reporter.has_failures,
+    }
+
+    if output_path:
+        path = reporter.write(output_path)
+        response["output_path"] = str(path)
+    else:
+        response["xml_preview"] = reporter.to_xml_string()[:500]
+
+    return response
+
+
+def _tool_notify(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.notification import (
+        NotificationConfig,
+        NotificationManager,
+    )
+
+    event = args.get("event", "")
+    variables_json = args.get("variables", "{}")
+    webhook_type = args.get("webhook_type", "webhook")
+    webhook_url = args.get("webhook_url", "")
+    secret = args.get("secret", "")
+
+    try:
+        variables = json.loads(variables_json)
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON in variables"}
+
+    config = NotificationConfig(
+        type=webhook_type,
+        webhook=webhook_url,
+        secret=secret,
+    )
+    manager = NotificationManager(configs=[config])
+    results = manager.notify(event, variables)
+
+    return {"event": event, "results": results}
+
+
+def _tool_plugin_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.plugin import PluginManager
+
+    pm = PluginManager.get_instance()
+    return pm.get_summary()
 
 
 if __name__ == "__main__":

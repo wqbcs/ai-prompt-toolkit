@@ -1,0 +1,24 @@
+- id: promptkit-lint
+  name: Prompt Lint
+  description: Lint检查Prompt文件质量(80条规则)
+  entry: promptkit lint
+  language: python
+  types: [file]
+  files: '\.(md|txt|prompt|ya?ml)$'
+  stages: [commit]
+- id: promptkit-security
+  name: Prompt Security Scan
+  description: 安全扫描Prompt文件(注入/PII/泄露)
+  entry: promptkit scan
+  language: python
+  types: [file]
+  files: '\.(md|txt|prompt|ya?ml)$'
+  stages: [push]
+- id: promptkit-eval
+  name: Prompt Eval
+  description: 62维度质量评估
+  entry: promptkit evaluate --quick --threshold 60 --fail-on-error
+  language: python
+  types: [file]
+  files: '\.(md|txt|prompt|ya?ml)$'
+  stages: [manual]

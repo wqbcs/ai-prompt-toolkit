@@ -1158,3 +1158,89 @@ def data_load_cmd(source: str, reader_type: str, query: str | None, recursive: b
         for doc in docs[:20]:
             name = doc.metadata.get("file_name", doc.id[:12])
             click.echo(f"  {name}: {len(doc.text)}字符 ({doc.metadata.get('file_type', 'unknown')})")
+
+
+@main.command(name="junit-report")
+@click.option("--input", "-i", "input_path", required=True, help="输入JSON结果文件")
+@click.option("--output", "-o", "output_path", default="junit-report.xml", help="输出JUnit XML路径")
+@click.option("--suite-name", default="promptkit", help="测试套件名称")
+def junit_report_cmd(input_path: str, output_path: str, suite_name: str) -> None:
+    """生成JUnit XML格式报告(兼容CI/CD平台)"""
+    import json as _json
+    from ai_prompt_toolkit.ci_integration import JUnitReporter, extract_ci_tags
+
+    with open(input_path, encoding="utf-8") as f:
+        results = _json.load(f)
+
+    ci_tags = extract_ci_tags()
+    reporter = JUnitReporter(suite_name=suite_name, ci_tags=ci_tags)
+
+    for item in results:
+        item_type = item.get("type", "lint")
+        if item_type == "lint":
+            reporter.add_lint_result(
+                file_path=item.get("file_path", "unknown"),
+                findings=item.get("findings", []),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "scan":
+            reporter.add_scan_result(
+                file_path=item.get("file_path", "unknown"),
+                findings=item.get("findings", []),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+        elif item_type == "eval":
+            reporter.add_eval_result(
+                file_path=item.get("file_path", "unknown"),
+                score=item.get("score", 0),
+                passed=item.get("passed", False),
+                details=item.get("details", ""),
+                elapsed_ms=item.get("elapsed_ms", 0),
+            )
+
+    path = reporter.write(output_path)
+    click.echo(f"JUnit XML报告已生成: {path}")
+    click.echo(f"测试: {reporter.suite.total} | 失败: {reporter.suite.failures} | 错误: {reporter.suite.errors}")
+
+    if reporter.has_failures:
+        sys.exit(1)
+
+
+@main.command(name="notify")
+@click.option("--event", "-e", required=True, help="事件类型(lint_failed/eval_passed/gepa_improved等)")
+@click.option("--webhook-url", required=True, help="Webhook URL")
+@click.option("--type", "webhook_type", type=click.Choice(["dingtalk", "feishu", "slack", "webhook"]), default="webhook", help="通知类型")
+@click.option("--secret", default="", help="签名密钥")
+@click.option("--variables", "-v", multiple=True, help="模板变量(key=value格式, 可多次指定)")
+def notify_cmd(event: str, webhook_url: str, webhook_type: str, secret: str, variables: tuple[str, ...]) -> None:
+    """发送通知到DingTalk/Feishu/Slack/Webhook"""
+    import json as _json
+    from ai_prompt_toolkit.notification import NotificationConfig, NotificationManager
+
+    var_dict: dict[str, str] = {}
+    for v in variables:
+        if "=" in v:
+            k, val = v.split("=", 1)
+            var_dict[k] = val
+
+    config = NotificationConfig(type=webhook_type, webhook=webhook_url, secret=secret)
+    manager = NotificationManager(configs=[config])
+    results = manager.notify(event, var_dict)
+
+    for r in results:
+        status = "✓" if r.get("success") else "✗"
+        click.echo(f"  {status} {r.get('type', 'unknown')}: {r.get('event', '')}")
+
+    if not all(r.get("success") for r in results):
+        sys.exit(1)
+
+
+@main.command(name="plugin-list")
+def plugin_list_cmd() -> None:
+    """列出已注册的Plugin和Hook信息"""
+    import json as _json
+    from ai_prompt_toolkit.plugin import PluginManager
+
+    pm = PluginManager.get_instance()
+    summary = pm.get_summary()
+    click.echo(_json.dumps(summary, ensure_ascii=False, indent=2))

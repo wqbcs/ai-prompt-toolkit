@@ -42,7 +42,10 @@ class TestMCPProtocol:
         assert "prompt_data_load" in tool_names
         assert "prompt_eval_matrix" in tool_names
         assert "prompt_version_list" in tool_names
-        assert len(tools) == 20
+        assert "prompt_junit_report" in tool_names
+        assert "prompt_notify" in tool_names
+        assert "prompt_plugin_list" in tool_names
+        assert len(tools) == 23
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
