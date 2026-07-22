@@ -1561,3 +1561,45 @@ def prompt_doctor_cmd(target: str, fmt: str) -> None:
             console.print(f"\n[bold]修复建议 ({len(report.recommendations)}条):[/bold]")
             for rec in report.recommendations:
                 console.print(f"  - {rec}")
+
+
+@main.command(name="cache")
+@click.option("--action", "-a", type=click.Choice(["stats", "clear", "expire", "get"]), default="stats", help="缓存操作")
+@click.option("--key", "-k", help="缓存键(用于get操作)")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+def cache_cmd(action: str, key: str | None, fmt: str) -> None:
+    """Prompt缓存管理: LRU/TTL缓存层"""
+    import json as _json
+    from ai_prompt_toolkit.prompt_cache import get_cache
+
+    cache = get_cache()
+
+    if action == "stats":
+        stats = cache.stats()
+        if fmt == "json":
+            click.echo(_json.dumps(stats, ensure_ascii=False, indent=2))
+        else:
+            from ai_prompt_toolkit.output import console
+            console.print("[bold]Prompt Cache Stats[/bold]")
+            console.print(f"  容量: {stats['size']}/{stats['maxsize']}")
+            console.print(f"  TTL: {stats['ttl_seconds']}s")
+            console.print(f"  命中: {stats['hits']} | 未命中: {stats['misses']}")
+            console.print(f"  命中率: {stats['hit_rate']:.1%}")
+
+    elif action == "clear":
+        cache.clear()
+        click.echo("Cache cleared")
+
+    elif action == "expire":
+        expired = cache.expire()
+        click.echo(f"Expired {expired} entries")
+
+    elif action == "get":
+        if not key:
+            click.echo("Error: --key required for get action", err=True)
+            sys.exit(1)
+        value = cache.get(key)
+        if value is None:
+            click.echo(f"Key not found: {key}")
+        else:
+            click.echo(_json.dumps(value, ensure_ascii=False, indent=2, default=str))

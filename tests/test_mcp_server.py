@@ -51,7 +51,10 @@ class TestMCPProtocol:
         assert "prompt_template_render" in tool_names
         assert "prompt_doctor" in tool_names
         assert "prompt_trace_export" in tool_names
-        assert len(tools) == 29
+        assert "prompt_cache_stats" in tool_names
+        assert "prompt_cache_lookup" in tool_names
+        assert "prompt_cache_invalidate" in tool_names
+        assert len(tools) == 32
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

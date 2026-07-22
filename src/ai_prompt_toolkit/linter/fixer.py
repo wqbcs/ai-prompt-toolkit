@@ -19,7 +19,7 @@ from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080"}
+AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085"}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -258,6 +258,65 @@ def _fix_p080_sla(text: str) -> str:
     return text + block
 
 
+def _fix_p081_template_var_defaults(text: str) -> str:
+    import re
+    _VAR_PATTERN = re.compile(r"\{\{\s*(\w+)(?!\s*\|\s*default)\s*\}\}")
+    return _VAR_PATTERN.sub(r"{{\1|default('')}}", text)
+
+
+def _fix_p082_trace_observability(text: str) -> str:
+    block = (
+        "\n\n## Trace: enabled\n"
+        "- 本Prompt已启用可观测性追踪\n"
+        "- 使用trace()上下文管理器捕获执行链路"
+    )
+    return text + block
+
+
+def _fix_p083_doctor_hint(text: str) -> str:
+    block = (
+        "\n\n<!-- Doctor: 建议运行 promptkit prompt-doctor 获取健康诊断报告 -->"
+    )
+    return text + block
+
+
+def _fix_p084_output_schema(text: str) -> str:
+    import re
+    has_json = bool(re.search(r'JSON|json', text))
+    if has_json:
+        block = (
+            "\n\n# 输出Schema\n"
+            '- 返回JSON格式示例: {"key": "value", "items": []}\n'
+            "- 所有字段必须有明确类型定义"
+        )
+    else:
+        block = (
+            "\n\n# 输出格式示例\n"
+            "- 使用Markdown标题和列表组织输出\n"
+            "- 关键信息使用**加粗**标注"
+        )
+    return text + block
+
+
+def _fix_p085_model_compat(text: str) -> str:
+    import re
+    model_specific = []
+    if re.search(r'<\|im_start\|>|system_prompt', text):
+        model_specific.append("ChatML")
+    if re.search(r'\[INST\]|\[/INST\]', text):
+        model_specific.append("Llama")
+    if re.search(r'Human:|Assistant:', text):
+        model_specific.append("Claude/Alpaca")
+    models_str = "、".join(model_specific) if model_specific else "多模型"
+    block = (
+        "\n\n# 模型兼容性声明\n"
+        f"- 本Prompt使用{models_str}语法\n"
+        "- 推荐模型: GPT-4 / Claude-3 / 盘古\n"
+        "- 使用条件编译适配不同模型格式差异"
+    )
+    return text + block
+
+
 @dataclass
 class FixResult:
     rule_id: str
@@ -380,4 +439,14 @@ class Fixer:
             return _fix_p079_data_compliance(text)
         elif rule_id == "P080":
             return _fix_p080_sla(text)
+        elif rule_id == "P081":
+            return _fix_p081_template_var_defaults(text)
+        elif rule_id == "P082":
+            return _fix_p082_trace_observability(text)
+        elif rule_id == "P083":
+            return _fix_p083_doctor_hint(text)
+        elif rule_id == "P084":
+            return _fix_p084_output_schema(text)
+        elif rule_id == "P085":
+            return _fix_p085_model_compat(text)
         return text

@@ -431,6 +431,38 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "prompt_cache_stats",
+            "description": "查看Prompt缓存统计: 容量/命中率/TTL/条目数",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+        {
+            "name": "prompt_cache_lookup",
+            "description": "查询Prompt缓存: 根据文本内容查找缓存结果",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "prompt_cache_invalidate",
+            "description": "清除Prompt缓存: 按键清除或全部清除",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "all": {"type": "boolean", "description": "清除全部缓存", "default": False},
+                    "key": {"type": "string", "description": "指定缓存键清除(不指定all则需此项)"},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -561,6 +593,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_prompt_doctor(arguments)
         elif tool_name == "prompt_trace_export":
             result = _tool_trace_export(arguments)
+        elif tool_name == "prompt_cache_stats":
+            result = _tool_cache_stats(arguments)
+        elif tool_name == "prompt_cache_lookup":
+            result = _tool_cache_lookup(arguments)
+        elif tool_name == "prompt_cache_invalidate":
+            result = _tool_cache_invalidate(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1262,6 +1300,38 @@ def _tool_trace_export(args: dict[str, Any]) -> dict[str, Any]:
     else:
         otlp = tracer.export_otlp_json()
         return {"status": "ok", "format": "otlp_json", "data": json.loads(otlp)}
+
+
+def _tool_cache_stats(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_cache import get_cache
+    cache = get_cache()
+    return cache.stats()
+
+
+def _tool_cache_lookup(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_cache import get_cache, PromptCache
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    cache = get_cache()
+    key = PromptCache.make_key(text)
+    value = cache.get(key)
+    if value is None:
+        return {"status": "miss", "key": key}
+    return {"status": "hit", "key": key, "value": value}
+
+
+def _tool_cache_invalidate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_cache import get_cache
+    cache = get_cache()
+    if args.get("all", False):
+        cache.clear()
+        return {"status": "cleared", "message": "All cache entries cleared"}
+    key = args.get("key", "")
+    if key:
+        removed = cache.invalidate(key)
+        return {"status": "invalidated" if removed else "not_found", "key": key}
+    return {"error": "Specify 'all' or 'key' parameter"}
 
 
 if __name__ == "__main__":
