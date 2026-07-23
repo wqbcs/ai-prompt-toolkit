@@ -66,7 +66,10 @@ class TestMCPProtocol:
         assert "huaweicloud_obs_upload" in tool_names
         assert "huaweicloud_ecs_info" in tool_names
         assert "huaweicloud_iam_auth" in tool_names
-        assert len(tools) == 44
+        assert "probe_run" in tool_names
+        assert "probe_list" in tool_names
+        assert "probe_detect" in tool_names
+        assert len(tools) == 47
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

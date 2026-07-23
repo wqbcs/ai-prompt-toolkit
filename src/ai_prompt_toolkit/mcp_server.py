@@ -606,6 +606,39 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "probe_run",
+            "description": "运行Red Team探针扫描: 10大探针类别(garak风格)自动检测Prompt安全漏洞",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测的Prompt文本"},
+                    "probes": {"type": "string", "description": "指定探针(逗号分隔，空=全部)", "default": ""},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "probe_list",
+            "description": "列出所有可用的Red Team探针和检测器",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+        {
+            "name": "probe_detect",
+            "description": "使用检测器分析文本中的安全风险模式",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测文本"},
+                    "detectors": {"type": "string", "description": "指定检测器(逗号分隔，空=全部)", "default": ""},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -766,6 +799,12 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_huaweicloud_ecs_info(arguments)
         elif tool_name == "huaweicloud_iam_auth":
             result = _tool_huaweicloud_iam_auth(arguments)
+        elif tool_name == "probe_run":
+            result = _tool_probe_run(arguments)
+        elif tool_name == "probe_list":
+            result = _tool_probe_list(arguments)
+        elif tool_name == "probe_detect":
+            result = _tool_probe_detect(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1850,6 +1889,41 @@ print('委托认证初始化完成，可通过agency方式跨账号访问')
             "使用IAM子账号而非主账号操作",
         ],
     }
+
+
+def _tool_probe_run(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import ProbeRunner
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    probes_str = args.get("probes", "")
+    probe_names = [p.strip() for p in probes_str.split(",") if p.strip()] if probes_str else None
+    runner = ProbeRunner(probe_names=probe_names)
+    report = runner.run("mcp_probe", text)
+    return report.to_dict()
+
+
+def _tool_probe_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import list_probes, list_detectors
+    return {"probes": list_probes(), "detectors": list_detectors()}
+
+
+def _tool_probe_detect(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    detectors_str = args.get("detectors", "")
+    if detectors_str:
+        detector_names = [d.strip() for d in detectors_str.split(",") if d.strip()]
+        detectors = [_DETECTOR_REGISTRY[n]() for n in detector_names if n in _DETECTOR_REGISTRY]
+    else:
+        detectors = [_DETECTOR_REGISTRY[n]() for n in sorted(_DETECTOR_REGISTRY)]
+    results = []
+    for det in detectors:
+        result = det.detect("", text)
+        results.append({"detector": det.name, **result})
+    return {"text_preview": text[:200], "detection_results": results}
 
 
 if __name__ == "__main__":
