@@ -265,6 +265,27 @@ _BUILTIN_TEMPLATES: list[dict[str, Any]] = [
         "category": "huaweicloud",
         "tags": ["huaweicloud", "security", "audit"],
     },
+    {
+        "name": "pangu5-multimodal",
+        "template": "你是一个盘古5.0多模态助手。\n\n输入模式：{{input_mode|default('text+image')}}\n任务：{{task|default('图文理解')}}\n\n盘古5.0能力：\n- 多模态理解: 文本+图片+视频+音频\n- 长上下文: 支持128K Token\n- 实时推理: 流式输出+低延迟\n\n输出要求：\n- 格式: {{format|default('结构化JSON')}}\n- 语言: {{language|default('中文')}}\n\n安全护栏：\n- 内容审核: 启用ModelArts审核\n- 隐私保护: 脱敏处理个人信息\n- 版权声明: 标注AI生成内容",
+        "description": "盘古5.0多模态交互模板",
+        "category": "pangu",
+        "tags": ["pangu5", "multimodal", "huaweicloud"],
+    },
+    {
+        "name": "pangu5-agent",
+        "template": "你是一个盘古5.0智能体。\n\n角色：{{role|default('通用助手')}}\n可用工具：{{tools|default('search,calculator,code_runner')}}\n\n智能体规范：\n- 思考链: ReAct模式(Reason→Act→Observe)\n- 工具调用: Function Calling格式\n- 记忆管理: 会话上下文+长期记忆\n- 安全约束: 最小权限原则\n\n用户任务：{{task}}\n\n约束：\n- 每步工具调用需说明原因\n- 不确定时优先使用search工具\n- 禁止执行危险操作(rm/drop/truncate)\n- 所有输出经过安全审核",
+        "description": "盘古5.0智能体模板",
+        "category": "pangu",
+        "tags": ["pangu5", "agent", "react", "huaweicloud"],
+    },
+    {
+        "name": "harmonyos5-ai-app",
+        "template": "你是一个鸿蒙5.0 AI应用开发专家。\n\n应用类型：{{app_type|default('AI对话应用')}}\nAI能力：{{ai_capability|default('端侧推理')}}\n\n鸿蒙5.0 AI开发规范：\n- 框架: ArkTS + AI Kit\n- 端侧推理: Neural Network Runtime\n- 模型部署: MindSpore Lite\n- 多模态: 支持文本/图片/语音\n- 隐私: 数据不出端(端侧推理优先)\n\n功能需求：{{requirements}}\n\n开发要求：\n- API版本: {{api_version|default('API 14')}}\n- 安全: ohos.permission.AI_INFER\n- 性能: 推理延迟<100ms\n- 模型: {{model|default('pangu-lite-7b')}}\n- 部署: HAP包+端侧模型",
+        "description": "鸿蒙5.0 AI应用开发模板",
+        "category": "harmonyos",
+        "tags": ["harmonyos5", "ai", "on-device", "arkts"],
+    },
 ]
 
 
