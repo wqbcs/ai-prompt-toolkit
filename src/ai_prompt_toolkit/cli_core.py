@@ -1883,6 +1883,75 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
         click.echo(f"\n已保存: {output}")
 
 
+@main.command(name="probe")
+@click.option("--target", "-t", required=True, help="目标Prompt文本文件路径")
+@click.option("--probes", "-p", help="指定探针(逗号分隔，默认全部)", default="")
+@click.option("--detectors", "-d", help="指定检测器(逗号分隔，默认全部)", default="")
+@click.option("--output", "-o", help="输出报告路径(JSON)")
+@click.option("--max-payloads", type=int, default=20, help="每个探针最大payload数")
+def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_payloads: int) -> None:
+    """Red Team Probe扫描: garak风格10大探针类别自动检测Prompt安全漏洞"""
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.probe_framework import ProbeRunner, list_probes, list_detectors as list_det
+
+    if target == "list":
+        probe_list = list_probes()
+        det_list = list_det()
+        click.echo("可用探针(Probe):")
+        for p in probe_list:
+            click.echo(f"  {p['name']:25s} [{p['severity']:8s}] {p['description']}")
+        click.echo(f"\n可用检测器(Detector):")
+        for d in det_list:
+            click.echo(f"  {d['name']:25s} {d['description']}")
+        return
+
+    target_path = resolve_path(target)
+    if not target_path.exists():
+        click.echo(f"错误: 文件不存在: {target}")
+        sys.exit(1)
+
+    text = target_path.read_text(encoding="utf-8")
+    probe_names = [p.strip() for p in probes.split(",") if p.strip()] if probes else None
+    detector_names = [d.strip() for d in detectors.split(",") if d.strip()] if detectors else None
+
+    runner = ProbeRunner(probe_names=probe_names, detector_names=detector_names, max_payloads_per_probe=max_payloads)
+    click.echo(f"正在运行Probe扫描({runner._probes.__len__()}探针, {len(runner._detectors)}检测器)...")
+
+    report = runner.run(target_path.name, text)
+
+    click.echo(f"\n{'='*60}")
+    click.echo(f"Probe扫描报告: {report.template_id}")
+    click.echo(f"{'='*60}")
+    click.echo(f"探针数: {report.total_probes} | Payload数: {report.total_payloads} | 检出: {report.total_detections}")
+    click.echo(f"风险评分: {report.risk_score:.1f}/10.0")
+
+    if report.probe_summary:
+        click.echo(f"\n探针检出统计:")
+        for name, count in sorted(report.probe_summary.items(), key=lambda x: -x[1]):
+            if count > 0:
+                click.echo(f"  {name:25s} {count} 检出")
+
+    if report.detector_summary:
+        click.echo(f"\n检测器统计:")
+        for name, count in sorted(report.detector_summary.items(), key=lambda x: -x[1]):
+            click.echo(f"  {name:25s} {count} 次")
+
+    if report.recommendations:
+        click.echo(f"\n防御建议:")
+        for rec in report.recommendations:
+            click.echo(f"  {rec}")
+
+    if output:
+        import json as _json
+        Path(output).write_text(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+        click.echo(f"\n报告已保存: {output}")
+
+    if report.risk_score >= 7.0:
+        sys.exit(2)
+    elif report.risk_score >= 4.0:
+        sys.exit(1)
+
+
 if __name__ == "__main__":
     main()
 
