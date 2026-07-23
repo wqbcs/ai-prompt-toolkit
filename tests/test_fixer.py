@@ -1,4 +1,4 @@
-"""Fixer 模块测试 — 自动修复器 P005/P006/P016/P063-P068/P071-P080"""
+"""Fixer 模块测试 — 自动修复器 P005/P006/P016/P063-P068/P071-P080/P101-P130"""
 
 from __future__ import annotations
 
@@ -10,7 +10,10 @@ from ai_prompt_toolkit.types import Finding, Severity
 
 class TestAutoFixableRules:
     def test_auto_fixable_rules_contains_expected(self):
-        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095", "P096", "P097", "P098", "P099", "P100"}
+        assert AUTO_FIXABLE_RULES == {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095", "P096", "P097", "P098", "P099", "P100", "P101", "P102", "P103", "P105", "P106", "P107", "P108", "P109", "P110", "P111", "P113", "P114", "P117", "P118", "P119", "P120", "P121", "P122", "P123", "P124", "P125", "P126", "P127", "P128", "P129", "P130"}
+
+    def test_auto_fixable_rules_count(self):
+        assert len(AUTO_FIXABLE_RULES) == 71
 
     def test_ambiguous_replacements_keys(self):
         for key in AMBIGUOUS_REPLACEMENTS:
