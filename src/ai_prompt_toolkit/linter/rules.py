@@ -522,6 +522,36 @@ _CHECKERS_EXTENDED.extend([
     check_p096, check_p097, check_p098, check_p099, check_p100,
 ])
 
+from ai_prompt_toolkit.linter.rules_p101_p110 import (  # noqa: E402
+    check_p101, check_p102, check_p103, check_p104, check_p105,
+    check_p106, check_p107, check_p108, check_p109, check_p110,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p101, check_p102, check_p103, check_p104, check_p105,
+    check_p106, check_p107, check_p108, check_p109, check_p110,
+])
+
+from ai_prompt_toolkit.linter.rules_p111_p120 import (  # noqa: E402
+    check_p111, check_p112, check_p113, check_p114, check_p115,
+    check_p116, check_p117, check_p118, check_p119, check_p120,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p111, check_p112, check_p113, check_p114, check_p115,
+    check_p116, check_p117, check_p118, check_p119, check_p120,
+])
+
+from ai_prompt_toolkit.linter.rules_p121_p130 import (  # noqa: E402
+    check_p121, check_p122, check_p123, check_p124, check_p125,
+    check_p126, check_p127, check_p128, check_p129, check_p130,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p121, check_p122, check_p123, check_p124, check_p125,
+    check_p126, check_p127, check_p128, check_p129, check_p130,
+])
+
 
 def get_all_rules() -> list[LintRule]:
     return list(_RULE_MAP.values())
