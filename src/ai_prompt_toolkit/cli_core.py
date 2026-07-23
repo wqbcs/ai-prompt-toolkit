@@ -300,12 +300,35 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         sys.exit(2)
 
     reports = []
-    for f in files:
-        text = f.read_text(encoding="utf-8")
-        report = evaluate_template(
-            str(f), text, dimensions=dim_list, categories=cat_list
-        )
-        reports.append(report)
+
+    try:
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.console import Console as _EvConsole
+        _has_rich_ev = True
+        _ev_console = _EvConsole()
+    except ImportError:
+        _has_rich_ev = False
+
+    if _has_rich_ev:
+        from ai_prompt_toolkit.cli_helpers import friendly_progress_label
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
+                      BarColumn(), TaskProgressColumn(), console=_ev_console) as progress:
+            task = progress.add_task("质量评估中...", total=len(files))
+            for i, f in enumerate(files, 1):
+                text = f.read_text(encoding="utf-8")
+                report = evaluate_template(
+                    str(f), text, dimensions=dim_list, categories=cat_list
+                )
+                reports.append(report)
+                progress.update(task, description=friendly_progress_label("evaluate", i, len(files)))
+                progress.advance(task)
+    else:
+        for f in files:
+            text = f.read_text(encoding="utf-8")
+            report = evaluate_template(
+                str(f), text, dimensions=dim_list, categories=cat_list
+            )
+            reports.append(report)
 
     if fmt == "json":
         import json as _json
@@ -316,28 +339,43 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         else:
             click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
     else:
-        total_score = 0.0
-        total_count = 0
-        low_items = []
-        for report in reports:
-            scores = report.scores
-            if not scores:
-                continue
-            avg = sum(s.score for s in scores) / len(scores) if scores else 0
-            total_score += avg
-            total_count += 1
-            tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
-            click.echo(f"  {tid}: 均分 {avg:.1f}/10 ({len(scores)}维度)")
-            if threshold > 0 and avg < threshold:
-                low_items.append((tid, avg))
+        if _has_rich_ev:
+            from ai_prompt_toolkit.cli_helpers import print_rich_evaluate_summary
+            print_rich_evaluate_summary(reports, threshold=threshold, console=_ev_console)
+            total_score_val = 0.0
+            total_count = 0
+            for report in reports:
+                scores = report.scores
+                if not scores:
+                    continue
+                avg = sum(s.score for s in scores) / len(scores) if scores else 0
+                total_score_val += avg
+                total_count += 1
+            if total_count > 0:
+                _ev_console.print(f"\n总均分: [bold]{total_score_val / total_count:.1f}/10[/bold]")
+        else:
+            total_score = 0.0
+            total_count = 0
+            low_items = []
+            for report in reports:
+                scores = report.scores
+                if not scores:
+                    continue
+                avg = sum(s.score for s in scores) / len(scores) if scores else 0
+                total_score += avg
+                total_count += 1
+                tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+                click.echo(f"  {tid}: 均分 {avg:.1f}/10 ({len(scores)}维度)")
+                if threshold > 0 and avg < threshold:
+                    low_items.append((tid, avg))
 
-        if total_count > 0:
-            click.echo(f"\n总均分: {total_score / total_count:.1f}/10")
+            if total_count > 0:
+                click.echo(f"\n总均分: {total_score / total_count:.1f}/10")
 
-        if low_items:
-            click.echo(f"\n低于阈值({threshold})的模板({len(low_items)}个):")
-            for tid, score in low_items[:5]:
-                click.echo(f"  {tid}: {score:.1f}/10")
+            if low_items:
+                click.echo(f"\n低于阈值({threshold})的模板({len(low_items)}个):")
+                for tid, score in low_items[:5]:
+                    click.echo(f"  {tid}: {score:.1f}/10")
 
     exit_code = 0
     if threshold > 0:
@@ -655,20 +693,28 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             fmt = "cli"
 
     if fmt == "cli":
-        for result in all_results:
-            if result.findings:
-                for f in result.findings:
-                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
-                    from ai_prompt_toolkit.cli_helpers import friendly_finding_line, friendly_fix_suggestion
-                    is_mm = f.rule_id.startswith("MM-")
-                    click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description, is_mm))
-                    if sev in ("high", "critical"):
-                        click.echo(f"    {friendly_fix_suggestion(f.rule_id, f.description)}")
+        if _has_rich:
+            from ai_prompt_toolkit.cli_helpers import print_rich_findings
+            print_rich_findings(all_results, console=console)
+        else:
+            for result in all_results:
+                if result.findings:
+                    for f in result.findings:
+                        sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                        from ai_prompt_toolkit.cli_helpers import friendly_finding_line, friendly_fix_suggestion
+                        is_mm = f.rule_id.startswith("MM-")
+                        click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description, is_mm))
+                        if sev in ("high", "critical"):
+                            click.echo(f"    {friendly_fix_suggestion(f.rule_id, f.description)}")
 
     avg_score = total_score / max(len(all_results), 1)
     from ai_prompt_toolkit.cli_helpers import friendly_lint_summary
     fixed_count = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed) if fix else 0
-    click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
+    if _has_rich and fmt == "cli":
+        from ai_prompt_toolkit.cli_helpers import print_rich_lint_summary
+        print_rich_lint_summary(len(templates), avg_score, total_findings, fixed_count, console=console)
+    else:
+        click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
 
     if avg_score >= 100.0 and total_findings == 0:
         from ai_prompt_toolkit.easter_eggs import show_perfect_score_celebration
@@ -1756,8 +1802,34 @@ def doctor_cmd(provider: str | None, as_json: bool) -> None:
     console.print(table)
 
     healthy = sum(1 for r in results if r.status == "healthy")
+    no_key = sum(1 for r in results if r.status == "no_api_key")
+    unreachable = sum(1 for r in results if r.status == "unreachable")
     total = len(results)
-    console.print(f"\n[bold]总计: {healthy}/{total} Provider 正常[/bold]")
+
+    if healthy == total:
+        panel_color = "green"
+        verdict = "✅ 全部正常"
+    elif unreachable > 0:
+        panel_color = "red"
+        verdict = "❌ 存在不可达Provider"
+    elif no_key > 0:
+        panel_color = "yellow"
+        verdict = "⚠️ 部分Provider未配置API Key"
+    else:
+        panel_color = "cyan"
+        verdict = "ℹ️ 部分Provider异常"
+
+    from rich.panel import Panel
+    summary_lines = [
+        f"[bold]健康: {healthy}/{total}[/bold]  |  未配置: {no_key}  |  不可达: {unreachable}",
+        verdict,
+    ]
+    top_issues = [r for r in results if r.status != "healthy"][:3]
+    if top_issues:
+        summary_lines.append("[bold]优先修复:[/bold]")
+        for idx, r in enumerate(top_issues, 1):
+            summary_lines.append(f"  {idx}. {r.label}: {r.error or r.status}")
+    console.print(Panel("\n".join(summary_lines), title="诊断摘要", border_style=panel_color))
 
     sys.exit(0 if healthy == total else 1)
 

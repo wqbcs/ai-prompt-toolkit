@@ -129,13 +129,47 @@ def format_findings_table(findings: Sequence[dict[str, Any]]) -> str:
 
 
 _EMPTY_STATE_TIPS: dict[str, str] = {
-    "lint": "没有发现Lint问题！你的Prompt质量很棒。试试 --gate 选项运行Quality Gate检查。",
-    "scan": "没有发现安全风险！你的Prompt很安全。建议定期扫描以保持安全。",
-    "evaluate": "评估结果为空。请确保目标文件包含有效的Prompt内容。",
+    "lint": """
+ ┌──────────────────────────────────────┐
+ │  ✨ Lint结果为空 — 你的Prompt很干净！  │
+ │                                      │
+ │  3步快速开始:                         │
+ │  1. prompt-cli init -t general       │
+ │  2. prompt-cli lint -t ./prompts     │
+ │  3. prompt-cli lint --gate -t ./prompts │
+ └──────────────────────────────────────┘""",
+    "scan": """
+ ┌──────────────────────────────────────┐
+ │  🛡️ 安全扫描为空 — 无安全风险！       │
+ │                                      │
+ │  建议: 定期运行 scan 以保持安全       │
+ │  prompt-cli scan -t ./prompts        │
+ └──────────────────────────────────────┘""",
+    "evaluate": """
+ ┌──────────────────────────────────────┐
+ │  📊 评估结果为空                      │
+ │                                      │
+ │  请确保目标包含有效Prompt:            │
+ │  prompt-cli evaluate -t ./prompts    │
+ │  prompt-cli evaluate -t . --quick    │
+ └──────────────────────────────────────┘""",
     "version": "暂无版本记录。使用 'prompt-cli version create -s <file>' 创建第一个版本。",
     "market": "模板市场暂无模板。使用 'prompt-cli market publish' 发布你的第一个模板。",
-    "ab-test": "暂无A/B测试结果。使用 'prompt-cli ab-test -c <config>' 开始第一次测试。",
-    "redteam": "红队探测暂无结果。使用 'prompt-cli redteam -s <file>' 开始安全测试。",
+    "ab-test": """
+ ┌──────────────────────────────────────┐
+ │  🧪 暂无A/B测试结果                   │
+ │                                      │
+ │  快速开始:                            │
+ │  prompt-cli ab-test -c config.yaml   │
+ └──────────────────────────────────────┘""",
+    "redteam": """
+ ┌──────────────────────────────────────┐
+ │  🎯 红队探测暂无结果                   │
+ │                                      │
+ │  快速开始:                            │
+ │  prompt-cli redteam -t ./prompt.md   │
+ │  prompt-cli redteam --owasp LLM01    │
+ └──────────────────────────────────────┘""",
     "default": "暂无结果。试试 'prompt-cli wizard' 开始使用工具链。",
 }
 
@@ -171,6 +205,14 @@ _SEVERITY_STYLING = {
     "medium": ("⚠", "MEDIUM"),
     "low": ("ℹ", "LOW"),
     "info": ("💡", "INFO"),
+}
+
+_SEVERITY_RICH_STYLE = {
+    "critical": "bold red",
+    "high": "red",
+    "medium": "yellow",
+    "low": "dim",
+    "info": "blue",
 }
 
 _SCORE_EMOJI = {
@@ -232,3 +274,117 @@ def friendly_fix_suggestion(rule_id: str, description: str) -> str:
         "P054": "📱 替换Android API为@ohos等效接口",
     }
     return _QUICK_FIXES.get(rule_id, f"💡 修复 {rule_id}: {description}")
+
+
+def print_rich_findings(results: list, console: Any = None) -> None:
+    try:
+        from rich.console import Console as _Console
+        from rich.text import Text as _Text
+        from rich.panel import Panel as _Panel
+    except ImportError:
+        for result in results:
+            for f in result.findings:
+                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description))
+        return
+
+    if console is None:
+        console = _Console()
+
+    for result in results:
+        if not result.findings:
+            console.print(f"  [green]✓[/green] {result.template_id}: [green]No issues[/green]")
+            continue
+        for f in result.findings:
+            sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+            sev_key = sev.lower()
+            style = _SEVERITY_RICH_STYLE.get(sev_key, "white")
+            marker, label = friendly_severity(sev)
+            is_mm = f.rule_id.startswith("MM-")
+            prefix = "[MM] " if is_mm else ""
+            text = _Text()
+            text.append(f"  {marker} ")
+            text.append(f"[{result.template_id}] ", style="cyan")
+            text.append(f"{prefix}{f.rule_id} ", style="bold")
+            text.append(f"({label}) ", style=style)
+            text.append(f.description[:120])
+            console.print(text)
+            if sev in ("high", "critical"):
+                suggestion = friendly_fix_suggestion(f.rule_id, f.description)
+                console.print(f"    [dim]{suggestion}[/dim]")
+
+
+def print_rich_lint_summary(total_files: int, avg_score: float, total_findings: int, fixed: int = 0, console: Any = None) -> None:
+    try:
+        from rich.console import Console as _Console
+        from rich.panel import Panel as _Panel
+        from rich.text import Text as _Text
+    except ImportError:
+        click.echo(friendly_lint_summary(total_files, avg_score, total_findings, fixed))
+        return
+
+    if console is None:
+        console = _Console()
+
+    if avg_score >= 90:
+        score_color = "green"
+        verdict = "🎉 优秀！"
+    elif avg_score >= 80:
+        score_color = "cyan"
+        verdict = "👍 良好！"
+    elif avg_score >= 70:
+        score_color = "yellow"
+        verdict = "💡 建议优化"
+    else:
+        score_color = "red"
+        verdict = "⚡ 需修复HIGH/CRITICAL"
+
+    lines = [
+        f"文件: [bold]{total_files}[/bold]  |  评分: [{score_color}]{avg_score:.1f}/100[/{score_color}]  |  问题: [bold]{total_findings}[/bold]",
+    ]
+    if fixed:
+        lines.append(f"🔧 自动修复: [bold green]{fixed}[/bold green] 处")
+    lines.append(verdict)
+
+    console.print(_Panel("\n".join(lines), title="Lint完成", border_style=score_color))
+
+
+def print_rich_evaluate_summary(reports: list, threshold: float = 0.0, console: Any = None) -> None:
+    try:
+        from rich.console import Console as _Console
+        from rich.table import Table as _Table
+    except ImportError:
+        return
+
+    if console is None:
+        console = _Console()
+
+    table = _Table(title="评估报告", show_lines=False)
+    table.add_column("模板", style="cyan", width=30)
+    table.add_column("均分", width=10)
+    table.add_column("维度", width=8)
+    table.add_column("状态", width=8)
+
+    low_items = []
+    for report in reports:
+        scores = report.scores
+        if not scores:
+            continue
+        avg = sum(s.score for s in scores) / len(scores)
+        tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+        if avg >= 8:
+            status = "[green]✓[/green]"
+        elif avg >= 6:
+            status = "[yellow]⚠[/yellow]"
+        else:
+            status = "[red]✗[/red]"
+        table.add_row(tid, f"{avg:.1f}/10", str(len(scores)), status)
+        if threshold > 0 and avg < threshold:
+            low_items.append((tid, avg))
+
+    console.print(table)
+
+    if low_items:
+        console.print(f"\n[red]低于阈值({threshold})的模板({len(low_items)}个):[/red]")
+        for tid, score in low_items[:5]:
+            console.print(f"  [red]{tid}[/red]: {score:.1f}/10")
