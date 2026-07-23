@@ -75,6 +75,9 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D60", "name": "Front Matter v3合规", "category": "toolchain", "weight": 0.9, "description": "模板是否使用v3 Schema(i18n_status/market_status/lint_score)"},
     {"id": "D61", "name": "VS Code扩展集成", "category": "toolchain", "weight": 0.7, "description": "是否提供VS Code Lint扩展实现编辑器内实时检查"},
     {"id": "D62", "name": "新用户引导可用性", "category": "toolchain", "weight": 0.6, "description": "是否提供3步引导(init命令)帮助新用户快速上手"},
+    {"id": "D63", "name": "偏见公平性", "category": "fairness", "weight": 1.0, "description": "Prompt是否避免性别/种族/年龄等偏见表述"},
+    {"id": "D64", "name": "文化包容性", "category": "fairness", "weight": 0.9, "description": "Prompt是否尊重多元文化背景，避免文化冒犯"},
+    {"id": "D65", "name": "可访问性", "category": "fairness", "weight": 0.8, "description": "Prompt输出是否考虑残障用户可访问性需求"},
 ]
 
 
@@ -206,6 +209,8 @@ class _DimensionEvaluator:
             return self._eval_quality(dim_id)
         elif dim_id in ("D41", "D42", "D43", "D44", "D45", "D46", "D47", "D48", "D49", "D50", "D51", "D52"):
             return self._eval_toolchain(dim_id)
+        elif dim_id in ("D63", "D64", "D65"):
+            return self._eval_fairness(dim_id)
         return 5.0
 
     def _eval_security(self, dim_id: str) -> float:
@@ -433,6 +438,32 @@ class _DimensionEvaluator:
             return 7.0 if self._has_pattern(r"vscode|extension|CodeActions") else 3.0
         elif dim_id == "D62":
             return 7.0 if self._has_pattern(r"init|onboarding|引导") else 3.0
+        return 5.0
+
+    def _eval_fairness(self, dim_id: str) -> float:
+        if dim_id == "D63":
+            bias_count = self._count_pattern(
+                r"他/她|he/she|(?:男|女)(?:士|生|工|程序员|工程师|经理|CEO)",
+                r"(?:必须|只能|不可以)(?:男|女|年轻|年长)",
+            )
+            if bias_count > 0:
+                return max(2.0, 5.0 - bias_count * 1.0)
+            neutral = self._has_pattern(r"所有人|不论性别|inclusive|diverse|平等")
+            return 9.0 if neutral else 7.0
+        elif dim_id == "D64":
+            offense = self._count_pattern(
+                r"(?:所谓|那些)(?:人|国家|文化)",
+                r"foreigner|alien|exotic",
+            )
+            if offense > 0:
+                return max(2.0, 4.0 - offense * 1.0)
+            inclusive = self._has_pattern(r"多文化|跨文化|文化敏感|inclusive|culturally")
+            return 9.0 if inclusive else 7.0
+        elif dim_id == "D65":
+            a11y = self._has_pattern(r"无障碍|accessible|alt|screen.reader|屏幕阅读器|语音")
+            if a11y:
+                return 9.0
+            return 6.0
         return 5.0
 
 

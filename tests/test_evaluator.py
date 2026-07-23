@@ -16,13 +16,13 @@ class TestEvaluateTemplate:
     def test_basic_evaluation(self):
         result = evaluate_template("test", "你是一个专业的AI助手，请以JSON格式输出。不要超过500字。如果失败请回退。")
         assert result.overall_score > 0
-        assert result.dimension_count == 62
-        assert len(result.scores) == 62
+        assert result.dimension_count == 65
+        assert len(result.scores) == 65
 
     def test_empty_prompt(self):
         result = evaluate_template("empty", "")
         assert result.overall_score >= 0
-        assert result.dimension_count == 62
+        assert result.dimension_count == 65
 
     def test_rich_prompt(self):
         text = (
@@ -36,7 +36,7 @@ class TestEvaluateTemplate:
         )
         result = evaluate_template("rich", text)
         assert result.overall_score > 10
-        assert result.dimension_count == 62
+        assert result.dimension_count == 65
 
     def test_with_dimensions_filter(self):
         result = evaluate_template("test", "你是一个专业的助手", dimensions=["D01", "D02", "D03"])
@@ -101,9 +101,9 @@ class TestDimensionScore:
 class TestDimensionAPIs:
     def test_get_all_dimensions(self):
         dims = get_all_dimensions()
-        assert len(dims) == 62
+        assert len(dims) == 65
         assert dims[0]["id"] == "D01"
-        assert dims[-1]["id"] == "D62"
+        assert dims[-1]["id"] == "D65"
 
     def test_get_dimensions_by_category(self):
         structure = get_dimensions_by_category("structure")

@@ -93,7 +93,7 @@ class TestOptPipeline:
         assert result.stages_completed == 2
 
     def test_condition_score_below_threshold(self):
-        p = OptPipeline(PipelineConfig(mode="sequential", score_threshold=90.0))
+        p = OptPipeline(PipelineConfig(mode="sequential", score_threshold=95.0))
         p.add_stage(PipelineStage(
             name="tgd",
             optimizer="tgd",
