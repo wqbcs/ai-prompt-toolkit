@@ -1,4 +1,4 @@
-"""62维度评估框架——D01-D62维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+"""80维度评估框架——D01-D80维度定义、evaluate_template()函数、EvaluationReport数据类。"""
 from __future__ import annotations
 
 import re
@@ -78,6 +78,21 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D63", "name": "偏见公平性", "category": "fairness", "weight": 1.0, "description": "Prompt是否避免性别/种族/年龄等偏见表述"},
     {"id": "D64", "name": "文化包容性", "category": "fairness", "weight": 0.9, "description": "Prompt是否尊重多元文化背景，避免文化冒犯"},
     {"id": "D65", "name": "可访问性", "category": "fairness", "weight": 0.8, "description": "Prompt输出是否考虑残障用户可访问性需求"},
+    {"id": "D66", "name": "思维链质量", "category": "quality", "weight": 0.8, "description": "Prompt推理链/CoT指令的质量和清晰度"},
+    {"id": "D67", "name": "工具调用准确性", "category": "quality", "weight": 0.9, "description": "Prompt工具/函数调用声明的准确性和完整性"},
+    {"id": "D68", "name": "多轮对话连贯性", "category": "quality", "weight": 0.8, "description": "Prompt多轮对话场景的上下文连贯性设计"},
+    {"id": "D69", "name": "RAG检索相关性", "category": "quality", "weight": 0.8, "description": "RAG场景Prompt的检索增强声明和引用规范"},
+    {"id": "D70", "name": "知识时效性", "category": "quality", "weight": 0.7, "description": "Prompt是否声明知识截止日期和时效性约束"},
+    {"id": "D71", "name": "情感智能度", "category": "quality", "weight": 0.6, "description": "Prompt是否具备情感感知和共情能力设计"},
+    {"id": "D72", "name": "伦理对齐度", "category": "fairness", "weight": 1.0, "description": "Prompt是否符合AI伦理准则，避免有害输出"},
+    {"id": "D73", "name": "公平性偏见检测", "category": "fairness", "weight": 1.0, "description": "Prompt是否检测并缓解输出中的公平性偏见"},
+    {"id": "D74", "name": "隐私合规度", "category": "security", "weight": 1.0, "description": "Prompt是否满足数据隐私法规(GDPR/PIPL)要求"},
+    {"id": "D75", "name": "可审计性", "category": "security", "weight": 0.8, "description": "Prompt是否支持决策过程审计和结果追溯"},
+    {"id": "D76", "name": "鲁棒性评分", "category": "quality", "weight": 0.9, "description": "Prompt在对抗性输入下的鲁棒性和稳定性"},
+    {"id": "D77", "name": "可维护性评分", "category": "structure", "weight": 0.7, "description": "Prompt的模块化程度和版本管理能力"},
+    {"id": "D78", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt的国际化/本地化支持完备度"},
+    {"id": "D79", "name": "盘古模型适配度", "category": "toolchain", "weight": 0.9, "description": "Prompt对华为云盘古大模型的适配和优化程度"},
+    {"id": "D80", "name": "鸿蒙场景贴合度", "category": "toolchain", "weight": 1.0, "description": "Prompt对鸿蒙HarmonyOS NEXT场景的专业贴合度"},
 ]
 
 
@@ -211,6 +226,16 @@ class _DimensionEvaluator:
             return self._eval_toolchain(dim_id)
         elif dim_id in ("D63", "D64", "D65"):
             return self._eval_fairness(dim_id)
+        elif dim_id in ("D66", "D67", "D68", "D69", "D70", "D71", "D76"):
+            return self._eval_advanced_quality(dim_id)
+        elif dim_id in ("D72", "D73"):
+            return self._eval_advanced_fairness(dim_id)
+        elif dim_id in ("D74", "D75"):
+            return self._eval_advanced_security(dim_id)
+        elif dim_id == "D77":
+            return self._eval_advanced_structure(dim_id)
+        elif dim_id in ("D78", "D79", "D80"):
+            return self._eval_advanced_toolchain(dim_id)
         return 5.0
 
     def _eval_security(self, dim_id: str) -> float:
@@ -466,6 +491,135 @@ class _DimensionEvaluator:
             return 6.0
         return 5.0
 
+    def _eval_advanced_quality(self, dim_id: str) -> float:
+        if dim_id == "D66":
+            has_cot = self._has_pattern(r"逐步|step.?by.?step|推理链|chain.?of.?thought|思考过程|思维链|CoT")
+            has_reasoning = self._has_pattern(r"推理|分析|判断|reasoning|analyze|逻辑|推断")
+            if has_cot:
+                return 9.0
+            if has_reasoning:
+                return 4.0
+            return 7.0
+        elif dim_id == "D67":
+            has_tool_decl = self._has_pattern(r"工具|函数调用|function.?call|tool.?call|API|插件|plugin")
+            has_tool_spec = self._has_pattern(r"参数|返回值|类型|格式|parameter|return.?type|schema")
+            if has_tool_decl and has_tool_spec:
+                return 9.0
+            if has_tool_decl:
+                return 5.0
+            return 8.0
+        elif dim_id == "D68":
+            has_dialog = self._has_pattern(r"对话|聊天|多轮|conversation|chat|multi.?turn|会话")
+            has_state = self._has_pattern(r"上下文|记忆|状态|context|memory|state|会话.*一致|session.*consistent")
+            if has_dialog and has_state:
+                return 9.0
+            if has_dialog:
+                return 4.0
+            return 8.0
+        elif dim_id == "D69":
+            has_rag = self._has_pattern(r"上下文|检索|知识库|RAG|rag|检索增强|向量|embedding|context")
+            has_rag_spec = self._has_pattern(r"引用|来源|置信度|citation|source|confidence|信息不足")
+            if has_rag and has_rag_spec:
+                return 9.0
+            if has_rag:
+                return 4.0
+            return 8.0
+        elif dim_id == "D70":
+            has_cutoff = self._has_pattern(r"截止|cutoff|cut.?off|知识.*日期|训练.*日期|时效|timeliness|更新.*日期")
+            if has_cutoff:
+                return 9.0
+            return 5.0
+        elif dim_id == "D71":
+            has_empathy = self._has_pattern(r"共情|理解|empathy|关心|情感|感受|温和|语气|tone")
+            if has_empathy:
+                return 9.0
+            return 6.0
+        elif dim_id == "D76":
+            has_defense = self._has_pattern(r"注入.*防御|injection.*defense|校验|validate|sanitize|异常.*处理|鲁棒|robust")
+            if has_defense:
+                return 9.0
+            has_adversarial = self._has_pattern(r"攻击|对抗|adversarial|red.?team|注入|inject")
+            if has_adversarial:
+                return 5.0
+            return 7.0
+        return 5.0
+
+    def _eval_advanced_fairness(self, dim_id: str) -> float:
+        if dim_id == "D72":
+            has_ethics = self._has_pattern(r"伦理|道德|ethics|moral|有害|harmful|安全|safety|负责任|responsible")
+            has_harm_decl = self._has_pattern(r"禁止.*有害|不得.*歧视|避免.*偏见|no.?harm|do.?no.?harm|公平|equitable")
+            if has_ethics and has_harm_decl:
+                return 9.0
+            if has_ethics:
+                return 6.0
+            return 5.0
+        elif dim_id == "D73":
+            bias_count = self._count_pattern(
+                r"显然|毋庸置疑|绝对|obviously|undoubtedly|absolutely",
+                r"必须.*认为|一定.*正确|理所当然",
+            )
+            has_mitigation = self._has_pattern(r"客观|中立|多角度|objective|neutral|balanced|公平|equitable")
+            if bias_count > 0 and not has_mitigation:
+                return max(2.0, 4.0 - bias_count)
+            if has_mitigation:
+                return 9.0
+            return 7.0
+        return 5.0
+
+    def _eval_advanced_security(self, dim_id: str) -> float:
+        if dim_id == "D74":
+            has_privacy = self._has_pattern(r"隐私|GDPR|gdpr|PIPL|个人信息|个人数据|privacy|data.?protection")
+            has_compliance = self._has_pattern(r"合规|脱敏|匿名|consent|同意|最小.*收集|不.*存储|不.*传输")
+            if has_privacy and has_compliance:
+                return 9.0
+            if has_privacy:
+                return 5.0
+            return 7.0
+        elif dim_id == "D75":
+            has_audit = self._has_pattern(r"审计|audit|追溯|trace|日志|log|决策.*依据|reasoning.*process")
+            if has_audit:
+                return 9.0
+            return 5.0
+        return 5.0
+
+    def _eval_advanced_structure(self, dim_id: str) -> float:
+        if dim_id == "D77":
+            has_modular = self._has_pattern(r"---|模块|##|section|组件|component|变量|variable")
+            has_version = self._has_pattern(r"版本|version|v\d|变更|changelog")
+            if has_modular and has_version:
+                return 9.0
+            if has_modular:
+                return 7.0
+            return 5.0
+        return 5.0
+
+    def _eval_advanced_toolchain(self, dim_id: str) -> float:
+        if dim_id == "D78":
+            has_i18n = self._has_pattern(r"i18n|国际化|多语言|locale|翻译|translate|lang|语言")
+            has_glossary = self._has_pattern(r"术语|glossary|术语表|翻译.*一致性|translation.*consistency")
+            if has_i18n and has_glossary:
+                return 9.0
+            if has_i18n:
+                return 6.0
+            return 5.0
+        elif dim_id == "D79":
+            has_pangu = self._has_pattern(r"盘古|Pangu|pangu|华为云.*模型|MaaS|ModelArts|昇腾|Ascend")
+            has_pangu_spec = self._has_pattern(r"盘古.*格式|Pangu.*format|MaaS.*API|system.*role|Function.?Calling|安全护栏")
+            if has_pangu and has_pangu_spec:
+                return 9.0
+            if has_pangu:
+                return 5.0
+            return 7.0
+        elif dim_id == "D80":
+            has_harmony = self._has_pattern(r"鸿蒙|HarmonyOS|harmonyos|ArkTS|arkts|Stage模型|Ability|OHOS|元服务")
+            has_harmony_spec = self._has_pattern(r"ArkTS.*严格|onCreate|onDestroy|ohos\.permission|断点|响应式|沙箱|DataShare|FormExtension|HTTPS|ohos\.net")
+            if has_harmony and has_harmony_spec:
+                return 9.0
+            if has_harmony:
+                return 5.0
+            return 7.0
+        return 5.0
+
 
 def evaluate_template(
     template_id: str,
@@ -474,12 +628,12 @@ def evaluate_template(
     dimensions: list[str] | None = None,
     categories: list[str] | None = None,
 ) -> EvaluationReport:
-    """62维度模板评估函数。
+    """80维度模板评估函数。
 
     Args:
         template_id: 模板标识。
         text: 模板文本。
-        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D62"。
+        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D80"。
                     也接受"D1"-"D9"格式（自动补零为"D01"-"D09"）。
         categories: 指定评估的维度类别（None=全部）。
 
