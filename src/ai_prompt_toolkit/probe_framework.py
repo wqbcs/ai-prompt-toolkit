@@ -505,6 +505,54 @@ class ProbeRunReport:
             "recommendations": self.recommendations,
         }
 
+    def to_jsonl(self) -> str:
+        import json as _json
+        lines = []
+        for r in self.results:
+            entry = {
+                "entry_type": "probe_result",
+                "probe_name": r.probe_name,
+                "probe_category": r.probe_category,
+                "severity": r.severity,
+                "is_detected": r.is_detected,
+                "payload_preview": r.payload[:200],
+                "detector_count": len(r.detector_results),
+            }
+            lines.append(_json.dumps(entry, ensure_ascii=False))
+        lines.append(_json.dumps({
+            "entry_type": "summary",
+            "template_id": self.template_id,
+            "total_probes": self.total_probes,
+            "total_payloads": self.total_payloads,
+            "total_detections": self.total_detections,
+            "risk_score": round(self.risk_score, 4),
+            "probe_summary": self.probe_summary,
+            "detector_summary": self.detector_summary,
+            "recommendations": self.recommendations,
+        }, ensure_ascii=False))
+        return "\n".join(lines)
+
+    def to_owasp_report(self) -> dict[str, Any]:
+        owasp_findings: dict[str, list] = {}
+        for llm_ref, info in OWASP_LLM_TOP_10_2025.items():
+            probe_names = [p.strip() for p in info["probes"].split(",")]
+            findings_for_ref = []
+            for r in self.results:
+                if r.probe_name in probe_names and r.is_detected:
+                    findings_for_ref.append(r.to_dict())
+            owasp_findings[llm_ref] = {
+                "name": info["name"],
+                "total_findings": len(findings_for_ref),
+                "findings": findings_for_ref[:5],
+            }
+        return {
+            "framework": "OWASP LLM Top 10 2025",
+            "template_id": self.template_id,
+            "risk_score": round(self.risk_score, 4),
+            "owasp_findings": owasp_findings,
+            "total_categories_affected": sum(1 for v in owasp_findings.values() if v["total_findings"] > 0),
+        }
+
 
 class ProbeRunner:
     def __init__(

@@ -260,4 +260,33 @@ class TestMCPProbeTools:
         from ai_prompt_toolkit.mcp_server import _handle_tools_list
         response = json.loads(_handle_tools_list(1))
         tools = response["result"]["tools"]
-        assert len(tools) == 47
+        assert len(tools) == 48
+
+    def test_probe_owasp_report_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_owasp_report
+        result = _tool_probe_owasp_report({"text": "You are a helpful assistant."})
+        assert "framework" in result
+        assert result["framework"] == "OWASP LLM Top 10 2025"
+        assert "owasp_findings" in result
+        assert len(result["owasp_findings"]) == 10
+
+    def test_probe_jsonl_export(self):
+        from ai_prompt_toolkit.probe_framework import ProbeRunner
+        runner = ProbeRunner(probe_names=["dan"])
+        report = runner.run("test", "test")
+        jsonl = report.to_jsonl()
+        lines = jsonl.strip().split("\n")
+        assert len(lines) > 0
+        import json
+        for line in lines:
+            entry = json.loads(line)
+            assert "entry_type" in entry
+
+    def test_probe_owasp_report_structure(self):
+        from ai_prompt_toolkit.probe_framework import ProbeRunner
+        runner = ProbeRunner(probe_names=["dan", "system_prompt_leak"])
+        report = runner.run("test", "You are a helpful assistant.")
+        owasp = report.to_owasp_report()
+        assert "framework" in owasp
+        assert "total_categories_affected" in owasp
+        assert owasp["total_categories_affected"] >= 0

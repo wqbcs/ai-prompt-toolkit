@@ -639,6 +639,17 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "probe_owasp_report",
+            "description": "生成OWASP LLM Top 10 2025合规报告",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测的Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -805,6 +816,8 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             result = _tool_probe_list(arguments)
         elif tool_name == "probe_detect":
             result = _tool_probe_detect(arguments)
+        elif tool_name == "probe_owasp_report":
+            result = _tool_probe_owasp_report(arguments)
         else:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
 
@@ -1924,6 +1937,16 @@ def _tool_probe_detect(args: dict[str, Any]) -> dict[str, Any]:
         result = det.detect("", text)
         results.append({"detector": det.name, **result})
     return {"text_preview": text[:200], "detection_results": results}
+
+
+def _tool_probe_owasp_report(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import ProbeRunner
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    runner = ProbeRunner()
+    report = runner.run("owasp_report", text)
+    return report.to_owasp_report()
 
 
 if __name__ == "__main__":

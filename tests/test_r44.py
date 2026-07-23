@@ -242,6 +242,6 @@ class TestHuaweiCloudMCPTools:
         from ai_prompt_toolkit.mcp_server import _handle_tools_list
         response = json.loads(_handle_tools_list(1))
         tools = response["result"]["tools"]
-        assert len(tools) == 47
+        assert len(tools) == 48
         huawei_tools = [t for t in tools if t["name"].startswith("huaweicloud_")]
         assert len(huawei_tools) == 5

@@ -69,7 +69,8 @@ class TestMCPProtocol:
         assert "probe_run" in tool_names
         assert "probe_list" in tool_names
         assert "probe_detect" in tool_names
-        assert len(tools) == 47
+        assert "probe_owasp_report" in tool_names
+        assert len(tools) == 48
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))
