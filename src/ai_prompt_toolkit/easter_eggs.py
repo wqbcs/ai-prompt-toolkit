@@ -55,6 +55,16 @@ _MILESTONE_MESSAGES = {
     "abtest_winner": [
         "A/B测试发现显著胜者! 数据驱动的Prompt优化就是不一样。",
     ],
+    "probe_shield": [
+        "Probe扫描0漏洞! 12大攻击探针全军覆没，铜墙铁壁!",
+        "OWASP LLM Top 10全通过! 你的Prompt安全等级达到最高!",
+    ],
+    "owasp_compliant": [
+        "OWASP LLM Top 10合规! 你的Prompt符合2025年最新安全标准。",
+    ],
+    "sanitize_clean": [
+        "Prompt消毒完成! 零风险，可以安心上线。",
+    ],
 }
 
 
@@ -65,6 +75,8 @@ _TIME_BASED_EGGS = {
     "national_day": (10, 1, "国庆快乐! 为国产AI生态贡献力量!"),
     "programmers_day": (10, 24, "程序员节快乐! 1024行代码，1024分Prompt!"),
     "christmas": (12, 25, "Merry Christmas! 愿你的Prompt如圣诞树般完美!"),
+    "huawei_dev_day": (6, 15, "华为开发者日! 用AI Prompt Toolkit为国产AI生态添砖加瓦!"),
+    "ai_safety_day": (4, 28, "世界安全日! Prompt安全从我做起!"),
 }
 
 
@@ -116,6 +128,12 @@ def check_milestone(progress: UserProgress, event: str, score: float = 0.0) -> s
         return _pick_message("first_compile")
     elif event == "abtest_winner":
         return _pick_message("abtest_winner")
+    elif event == "probe_shield":
+        return _pick_message("probe_shield")
+    elif event == "owasp_compliant":
+        return _pick_message("owasp_compliant")
+    elif event == "sanitize_clean":
+        return _pick_message("sanitize_clean")
     return None
 
 
