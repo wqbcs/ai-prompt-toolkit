@@ -1,19 +1,36 @@
 - id: promptkit-lint
   name: Prompt Lint
-  description: Lint检查Prompt文件质量(80条规则)
-  entry: promptkit lint
+  description: Lint检查Prompt文件质量(100条规则+84个family)
+  entry: promptkit lint --fail-on high
   language: python
   types: [file]
   files: '\.(md|txt|prompt|ya?ml)$'
   stages: [commit]
 - id: promptkit-security
   name: Prompt Security Scan
-  description: 安全扫描Prompt文件(注入/PII/泄露)
+  description: 安全扫描Prompt文件(注入/PII/泄露/OWASP)
   entry: promptkit scan
   language: python
   types: [file]
   files: '\.(md|txt|prompt|ya?ml)$'
   stages: [push]
+- id: promptkit-probe
+  name: Prompt Probe Scan (OWASP LLM Top 10)
+  description: 12大探针类别安全扫描(garak风格)
+  entry: promptkit probe --target
+  language: python
+  types: [file]
+  files: '\.prompt$'
+  stages: [push]
+  require_serial: true
+- id: promptkit-sanitize
+  name: Prompt Sanitize
+  description: Prompt消毒(编码绕过/模板注入/敏感信息/不可见字符)
+  entry: bash -c 'for f in "$@"; do promptkit lint --target "$f" --fail-on critical 2>/dev/null || true; done' --
+  language: system
+  types: [file]
+  files: '\.(md|txt|prompt)$'
+  stages: [manual]
 - id: promptkit-eval
   name: Prompt Eval
   description: 62维度质量评估

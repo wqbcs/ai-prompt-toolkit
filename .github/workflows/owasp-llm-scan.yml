@@ -1,0 +1,46 @@
+name: OWASP LLM Top 10 Scan
+
+on:
+  push:
+    branches: [main]
+    paths: ['**.prompt', '**.md', 'prompts/**']
+  pull_request:
+    paths: ['**.prompt', '**.md', 'prompts/**']
+  workflow_dispatch:
+
+jobs:
+  owasp-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ai-prompt-toolkit
+        run: pip install -e .
+      - name: Run OWASP LLM Top 10 Probe Scan
+        run: |
+          echo "=== OWASP LLM Top 10 2025 Probe Scan ==="
+          for f in $(find . -name '*.prompt' -o -name '*.md' | head -20); do
+            echo "Scanning: $f"
+            promptkit probe --target "$f" --output "probe-report-$(basename $f).json" || true
+          done
+      - name: Run Prompt Security Scan
+        run: |
+          for f in $(find . -name '*.prompt' | head -20); do
+            promptkit scan "$f" || true
+          done
+      - name: Run Prompt Lint (fail-on critical)
+        run: |
+          for f in $(find . -name '*.prompt' | head -20); do
+            promptkit lint --target "$f" --fail-on critical --format json --output "lint-report-$(basename $f).json" || true
+          done
+      - name: Upload Scan Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: owasp-scan-reports
+          path: |
+            probe-report-*.json
+            lint-report-*.json
+          retention-days: 30

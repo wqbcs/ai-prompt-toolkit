@@ -608,7 +608,7 @@ def _handle_tools_list(id_val: Any) -> str:
         },
         {
             "name": "probe_run",
-            "description": "运行Red Team探针扫描: 10大探针类别(garak风格)自动检测Prompt安全漏洞",
+            "description": "运行Red Team探针扫描: 12大探针类别(garak风格,OWASP LLM Top 10 2025)自动检测Prompt安全漏洞",
             "inputSchema": {
                 "type": "object",
                 "properties": {

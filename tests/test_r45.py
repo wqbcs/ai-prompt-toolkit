@@ -119,14 +119,57 @@ class TestDetectorClasses:
         assert result["is_detected"] is False
 
 
+class TestOWASP2025Probes:
+    def test_system_prompt_leak_probe(self):
+        from ai_prompt_toolkit.probe_framework import SystemPromptLeakProbe
+        probe = SystemPromptLeakProbe()
+        payloads = probe.generate("You are a helpful assistant.")
+        assert len(payloads) == 8
+        assert probe.category == "system_prompt_leak"
+        assert probe.severity == "critical"
+        assert "owasp" in probe.tags
+        assert "llm07" in probe.tags
+
+    def test_vector_embedding_probe(self):
+        from ai_prompt_toolkit.probe_framework import VectorEmbeddingProbe
+        probe = VectorEmbeddingProbe()
+        payloads = probe.generate("You are a helpful assistant.")
+        assert len(payloads) == 5
+        assert probe.category == "vector_embedding"
+        assert probe.severity == "high"
+        assert "owasp" in probe.tags
+        assert "llm08" in probe.tags
+
+    def test_owasp_mapping_complete(self):
+        from ai_prompt_toolkit.probe_framework import get_owasp_mapping
+        mapping = get_owasp_mapping()
+        assert len(mapping) == 10
+        for key in ["LLM01", "LLM02", "LLM03", "LLM04", "LLM05",
+                     "LLM06", "LLM07", "LLM08", "LLM09", "LLM10"]:
+            assert key in mapping
+            assert "name" in mapping[key]
+            assert "probes" in mapping[key]
+
+    def test_owasp_llm07_maps_to_new_probe(self):
+        from ai_prompt_toolkit.probe_framework import get_owasp_mapping
+        mapping = get_owasp_mapping()
+        assert "system_prompt_leak" in mapping["LLM07"]["probes"]
+
+    def test_owasp_llm08_maps_to_new_probe(self):
+        from ai_prompt_toolkit.probe_framework import get_owasp_mapping
+        mapping = get_owasp_mapping()
+        assert "vector_embedding" in mapping["LLM08"]["probes"]
+
+
 class TestProbeRegistry:
     def test_10_probes_registered(self):
-        assert len(_PROBE_REGISTRY) == 10
+        assert len(_PROBE_REGISTRY) == 12
 
     def test_all_categories_present(self):
         categories = {p().category for p in _PROBE_REGISTRY.values()}
         expected = {"dan", "encoding", "promptinject", "leakreplay", "xss",
-                    "packagehallucination", "badchars", "gcg", "snowball", "malwaregen"}
+                    "packagehallucination", "badchars", "gcg", "snowball", "malwaregen",
+                    "system_prompt_leak", "vector_embedding"}
         assert categories == expected
 
     def test_4_detectors_registered(self):
@@ -134,7 +177,7 @@ class TestProbeRegistry:
 
     def test_list_probes(self):
         probes = list_probes()
-        assert len(probes) == 10
+        assert len(probes) == 12
         assert all("name" in p and "category" in p for p in probes)
 
     def test_list_detectors(self):
@@ -146,7 +189,7 @@ class TestProbeRunner:
     def test_run_all_probes(self):
         runner = ProbeRunner()
         report = runner.run("test_template", "You are a helpful assistant.")
-        assert report.total_probes == 10
+        assert report.total_probes == 12
         assert report.total_payloads > 0
         assert 0.0 <= report.risk_score <= 10.0
         assert len(report.recommendations) > 0
@@ -199,7 +242,7 @@ class TestMCPProbeTools:
         result = _tool_probe_list({})
         assert "probes" in result
         assert "detectors" in result
-        assert len(result["probes"]) == 10
+        assert len(result["probes"]) == 12
         assert len(result["detectors"]) == 4
 
     def test_probe_detect_tool(self):
