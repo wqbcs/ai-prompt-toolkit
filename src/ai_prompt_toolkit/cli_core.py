@@ -1728,7 +1728,7 @@ def token_cmd(target: str, model: str, output: str | None) -> None:
 
 @main.command(name="watch")
 @click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
-@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate"]),
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "compliance"]),
               default="lint", help="文件变更时执行的命令")
 @click.option("--interval", type=float, default=1.0, help="轮询间隔(秒)")
 @click.option("--debounce", type=float, default=0.5, help="变更防抖延迟(秒)")
@@ -1797,6 +1797,21 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
                 scores = report.scores
                 avg = sum(s.score for s in scores) / len(scores) if scores else 0
                 click.echo(f"[evaluate] {tp.name} | 均分: {avg:.1f}/10")
+        elif command == "compliance":
+            from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
+            from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+            from ai_prompt_toolkit.security.pii_detector import PIIDetector
+            from ai_prompt_toolkit.cli_helpers import discover_templates
+            templates = discover_templates(t)
+            all_findings = []
+            for tpl in templates:
+                text = tpl.read_text(encoding="utf-8")
+                all_findings.extend(InjectionDetector().detect(text))
+                pii_f = PIIDetector().check(text)
+                if pii_f:
+                    all_findings.append(pii_f)
+            comp_report = compute_huaweicloud_compliance(all_findings)
+            click.echo(f"[compliance] {comp_report.overall_score}/100 ({comp_report.grade.value}) {comp_report.decision.value}")
 
     try:
         click.echo("按 Ctrl+C 停止监视")
@@ -2129,7 +2144,7 @@ if __name__ == "__main__":
 
 @main.command()
 @click.option("--target", "-t", required=True, help="监听目标(文件或目录)")
-@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate"]), default="lint", help="变更时执行的命令")
+@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "compliance"]), default="lint", help="变更时执行的命令")
 @click.option("--debounce", type=float, default=1.0, help="防抖延迟(秒)")
 def watch(target: str, command: str, debounce: float) -> None:
     """Watch模式：文件变更自动重新检查"""
