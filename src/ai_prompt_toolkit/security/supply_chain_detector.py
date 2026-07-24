@@ -59,6 +59,21 @@ _PROMPT_INJECTION_VIA_RESOURCE = [
     re.compile(r'(?:执行|运行|eval|execute|run)\s*(?:上面|以下|下面的|the\s+following|above|below)\s*(?:代码|脚本|命令|code|script|command)', re.IGNORECASE),
 ]
 
+_AI_ML_TOOLCHAIN_PATTERNS = [
+    (re.compile(r'(?:torch\.load|tf\.compat\.v1\.train|keras\.models\.load_model|pickle\.load|joblib\.load)\s*\(', re.IGNORECASE),
+     "AI模型加载风险 — 使用pickle/joblib/torch.load可能执行任意代码(参考protectai/ai-exploits)", "critical"),
+    (re.compile(r'(?:mlflow\s+.*(?:run|log|tracking)|ray\s+.*(?:init|submit|job)|dvc\s+.*(?:push|pull|run))', re.IGNORECASE),
+     "ML工具链暴露 — MLflow/Ray/DVC服务可能存在未授权访问(参考ai-exploits CVE)", "high"),
+    (re.compile(r'(?:from_pretrained|AutoModel|pipeline|AutoTokenizer|AutoConfig)\s*\(\s*["\'](?:[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+)', re.IGNORECASE),
+     "模型供应链风险 — 从HuggingFace加载未验证模型可能含后门", "high"),
+    (re.compile(r'torch\.hub\.load\s*\(', re.IGNORECASE),
+     "Hub模型加载风险 — 从远程Hub加载模型未经完整性校验", "medium"),
+    (re.compile(r'(?:docker\s+.*(?:run|exec|build)|kubectl\s+.*(?:apply|exec|run))', re.IGNORECASE),
+     "容器/K8s命令注入 — AI推理服务可能被容器逃逸攻击", "high"),
+    (re.compile(r'(?:transformers\s*\.|langchain\s*\.|llamaindex\s*\.|autogluon\s*\.)', re.IGNORECASE),
+     "AI框架依赖风险 — 使用的AI框架可能存在已知漏洞", "low"),
+]
+
 
 class SupplyChainDetector:
     def detect(self, text: str) -> list[SupplyChainMatch]:
@@ -106,6 +121,17 @@ class SupplyChainDetector:
                         line_number=line_num,
                         risk_level="critical",
                         description="通过外部资源注入指令的风险",
+                    ))
+                    break
+
+            for pattern, desc, risk_level in _AI_ML_TOOLCHAIN_PATTERNS:
+                if pattern.search(line):
+                    matches.append(SupplyChainMatch(
+                        match_type="ai_ml_toolchain",
+                        value=line.strip()[:80],
+                        line_number=line_num,
+                        risk_level=risk_level,
+                        description=desc,
                     ))
                     break
 

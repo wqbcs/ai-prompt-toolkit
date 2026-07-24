@@ -1,11 +1,11 @@
-"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(51个Tools)
+"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(52个Tools)
 
 参考:
 - MCP官方规范 (https://modelcontextprotocol.io)
 - claude-prompts MCP Server (https://github.com/minipuft/claude-prompts)
 - mcp-server-langfuse (https://github.com/langfuse/mcp-server-langfuse)
 
-暴露的MCP Tools (51个):
+暴露的MCP Tools (52个):
 - Lint/Scan: prompt_lint(130规则), prompt_scan, prompt_judge, prompt_canary_inject/check
 - 评估: prompt_evaluate(80维度), prompt_scorecard, prompt_dataset_run, eval_matrix
 - 安全引擎: prompt_engine(5层融合), prompt_badge, prompt_token_analyze
@@ -13,7 +13,7 @@
 - 编译/优化: prompt_compile, prompt_gepa_optimize, prompt_auto_optimize, prompt_sanitize
 - 版本/缓存: prompt_version_save/list, prompt_cache_stats/lookup/invalidate
 - 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge
-- 华为云: huaweicloud_modelarts_deploy/infer, huaweicloud_obs_upload/ecs_info/iam_auth
+- 华为云: huaweicloud_modelarts_deploy/infer, huaweicloud_obs_upload/ecs_info/iam_auth, huaweicloud_compliance
 - 盘古: pangu_compat_check, pangu_safety_audit
 - 其他: prompt_template_render, prompt_doctor, prompt_trace_export, prompt_contest_eval...
 
@@ -687,6 +687,19 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "huaweicloud_compliance",
+            "description": "华为云安全合规报告: 7域(数据隐私/模型安全/访问控制/内容安全/运维/供应链/认证)加权评分, 含OWASP LLM Top 10映射, 生成等保2.0合规报告",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测的Prompt文本"},
+                    "template_id": {"type": "string", "description": "模板ID(可选)", "default": ""},
+                    "owasp_compliance_pct": {"type": "number", "description": "OWASP合规百分比(可选)", "default": 0.0},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -812,6 +825,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "probe_detector_run": _tool_probe_detector_run,
             "probe_owasp_summary": _tool_probe_owasp_summary,
             "probe_ethics_scan": _tool_probe_ethics_scan,
+            "huaweicloud_compliance": _tool_huaweicloud_compliance,
         }
     return _TOOL_DISPATCH
 
@@ -2068,6 +2082,34 @@ def _tool_probe_ethics_scan(args: dict[str, Any]) -> dict[str, Any]:
         "is_compliant": is_compliant,
         "recommendations": recommendations,
     }
+
+
+def _tool_huaweicloud_compliance(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
+    from ai_prompt_toolkit.types import Finding, Severity
+    text = args.get("text", "")
+    template_id = args.get("template_id", "")
+    owasp_pct = args.get("owasp_compliance_pct", 0.0)
+    if not text:
+        return {"error": "text is required"}
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    all_findings: list[Finding] = []
+    for f in InjectionDetector().detect(text):
+        all_findings.append(f)
+    pii_f = PIIDetector().check(text)
+    if pii_f:
+        all_findings.append(pii_f)
+    sc_f = SupplyChainDetector().check(text)
+    if sc_f:
+        all_findings.append(sc_f)
+    struct_f = check_structural(text)
+    if struct_f:
+        all_findings.append(struct_f)
+    report = compute_huaweicloud_compliance(all_findings, template_id=template_id, owasp_compliance_pct=owasp_pct)
+    return report.to_dict()
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ def _generate_sarif(results: list, target: str) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 51 MCP工具 | 12 Probes | 6 Detectors | 15内置模板")
+@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 52 MCP工具 | 12 Probes | 6 Detectors | 15内置模板")
 def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
@@ -405,23 +405,41 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 @click.option("--target", "-t", required=True, help="扫描目标(文件或目录)")
 @click.option("--config", help="安全扫描配置YAML文件路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
+@click.option("--depth", type=click.Choice(["quick", "standard", "deep"]),
+              default="standard", help="扫描深度: quick=仅注入, standard=5层检测, deep=5层+Probe+评分卡")
 @click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "jsonl"]),
               default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
-def scan(target: str, config: str | None, incremental: bool,
+def scan(target: str, config: str | None, incremental: bool, depth: str,
          fmt: str, output: str | None) -> None:
-    """安全扫描：注入检测+继承链审计"""
+    """安全扫描：5层融合检测(注入/PII/供应链/结构/消毒)+可选Probe+评分卡"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code, empty_state_tip, friendly_progress_label
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.prompt_sanitizer import PromptSanitizer
+    from ai_prompt_toolkit.types import Finding, Severity
 
     templates = discover_templates(target)
     if not templates:
         click.echo(empty_state_tip("scan"))
         sys.exit(0)
 
-    detector = InjectionDetector()
+    injection_detector = InjectionDetector()
+    pii_detector = PIIDetector()
+    supply_chain_detector = SupplyChainDetector()
+    sanitizer = PromptSanitizer()
     all_findings = []
+    detector_stats = {"injection": 0, "pii": 0, "supply_chain": 0, "structural": 0, "sanitizer": 0, "probe": 0}
     total = len(templates)
+
+    _SCAN_LAYERS = {
+        "quick": ["injection"],
+        "standard": ["injection", "pii", "supply_chain", "structural", "sanitizer"],
+        "deep": ["injection", "pii", "supply_chain", "structural", "sanitizer", "probe"],
+    }
+    active_layers = _SCAN_LAYERS[depth]
 
     try:
         from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
@@ -430,23 +448,66 @@ def scan(target: str, config: str | None, incremental: bool,
     except ImportError:
         _has_rich = False
 
+    def _scan_single(text: str) -> list[dict]:
+        findings_data = []
+        if "injection" in active_layers:
+            for f in injection_detector.detect(text):
+                findings_data.append(f.to_dict())
+                detector_stats["injection"] += 1
+        if "pii" in active_layers:
+            pii_finding = pii_detector.check(text)
+            if pii_finding:
+                findings_data.append(pii_finding.to_dict())
+                detector_stats["pii"] += 1
+        if "supply_chain" in active_layers:
+            sc_finding = supply_chain_detector.check(text)
+            if sc_finding:
+                findings_data.append(sc_finding.to_dict())
+                detector_stats["supply_chain"] += 1
+        if "structural" in active_layers:
+            struct_finding = check_structural(text)
+            if struct_finding:
+                findings_data.append(struct_finding.to_dict())
+                detector_stats["structural"] += 1
+        if "sanitizer" in active_layers:
+            san_result = sanitizer.sanitize_prompt(text)
+            if san_result.findings:
+                for sf in san_result.findings:
+                    findings_data.append(sf.to_dict())
+                    detector_stats["sanitizer"] += 1
+        if "probe" in active_layers:
+            try:
+                from ai_prompt_toolkit.probe_framework import ProbeRunner
+                runner = ProbeRunner()
+                report = runner.run(text, probes="auto")
+                for pr in report.results:
+                    for det_result in pr.detection_results:
+                        if det_result.detected:
+                            findings_data.append({
+                                "rule_id": f"PROBE-{pr.probe_name}",
+                                "severity": "high" if det_result.confidence > 0.7 else "medium",
+                                "description": f"[{pr.probe_name}] {det_result.detector_name}: {det_result.reason}",
+                            })
+                            detector_stats["probe"] += 1
+            except Exception:
+                pass
+        return findings_data
+
     if _has_rich:
         _console = _Console()
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
                       BarColumn(), TaskProgressColumn(), console=_console) as progress:
-            task = progress.add_task("安全扫描中...", total=total)
+            task = progress.add_task(f"安全扫描[{depth}]...", total=total)
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
-                findings = detector.detect(text)
-                findings_data = [f.to_dict() for f in findings]
+                findings_data = _scan_single(text)
                 all_findings.extend(findings_data)
                 progress.update(task, description=friendly_progress_label("scan", i, total))
                 progress.advance(task)
     else:
         for i, tpl_path in enumerate(templates, 1):
             text = tpl_path.read_text(encoding="utf-8")
-            findings = detector.detect(text)
-            findings_data = [f.to_dict() for f in findings]
+            findings_data = _scan_single(text)
             all_findings.extend(findings_data)
             if fmt == "cli" and findings_data:
                 for f in findings_data:
@@ -462,22 +523,47 @@ def scan(target: str, config: str | None, incremental: bool,
     try:
         from rich.console import Console
         from rich.panel import Panel
-        from rich.text import Text
+        from rich.table import Table
         console = Console()
         risk_label = "CRITICAL" if critical_count > 0 else "HIGH" if high_count > 0 else "MEDIUM" if medium_count > 0 else "LOW" if low_count > 0 else "SAFE"
         risk_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green", "SAFE": "green"}[risk_label]
-        top3 = sorted(all_findings, key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3))[:3]
+        top5 = sorted(all_findings, key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3))[:5]
         summary_lines = [f"[bold]风险等级: [{risk_color}]{risk_label}[/{risk_color}][/bold]",
-                         f"文件: {total} | 发现: {len(all_findings)}",
+                         f"扫描深度: {depth} | 层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)}",
                          f"CRITICAL: {critical_count} | HIGH: {high_count - critical_count} | MEDIUM: {medium_count} | LOW: {low_count}"]
-        if top3:
-            summary_lines.append("[bold]TOP3风险:[/bold]")
-            for idx, f in enumerate(top3, 1):
-                summary_lines.append(f"  {idx}. [{f.get('rule_id', '?')}] {f.get('description', '')[:60]}")
-        console.print(Panel("\n".join(summary_lines), title="安全扫描摘要", border_style=risk_color))
 
-        from ai_prompt_toolkit.security.finding_enhancer import enhance_findings, _SEVERITY_COLORS
-        from ai_prompt_toolkit.types import Finding, Severity
+        layer_table = Table(title="检测层统计", show_header=True, header_style="bold")
+        layer_table.add_column("检测层", style="cyan")
+        layer_table.add_column("发现数", justify="right")
+        layer_names = {"injection": "注入检测", "pii": "PII隐私", "supply_chain": "供应链", "structural": "结构分析", "sanitizer": "Prompt消毒", "probe": "Probe探测"}
+        for layer_key in active_layers:
+            layer_table.add_row(layer_names.get(layer_key, layer_key), str(detector_stats.get(layer_key, 0)))
+        summary_lines_str = "\n".join(summary_lines)
+        console.print(Panel(summary_lines_str, title=f"安全扫描摘要 [{depth}]", border_style=risk_color))
+        console.print(layer_table)
+
+        if top5:
+            console.print("\n[bold]TOP5风险:[/bold]")
+            for idx, f in enumerate(top5, 1):
+                console.print(f"  {idx}. [{f.get('rule_id', '?')}] {f.get('description', '')[:70]}")
+
+        if depth == "deep":
+            try:
+                from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+                findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                         description=f.get("description", "")) for f in all_findings]
+                scorecard = compute_scorecard(findings_objs)
+                score_lines = [f"[bold]安全评分: {scorecard.overall_score}/100 ({scorecard.grade.value})[/bold]",
+                               f"决策: {scorecard.decision.value}"]
+                for dim in scorecard.dimensions:
+                    bar_filled = int(dim.ratio * 20)
+                    bar = "█" * bar_filled + "░" * (20 - bar_filled)
+                    score_lines.append(f"  {dim.name}: {dim.earned}/{dim.max_points} [{bar}]")
+                console.print(Panel("\n".join(score_lines), title="安全评分卡", border_style="green" if scorecard.overall_score >= 75 else "yellow" if scorecard.overall_score >= 50 else "red"))
+            except Exception:
+                pass
+
+        from ai_prompt_toolkit.security.finding_enhancer import enhance_findings
         findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
                                  description=f.get("description", "")) for f in all_findings[:10]]
         enhanced = enhance_findings(findings_objs)
@@ -488,13 +574,19 @@ def scan(target: str, config: str | None, incremental: bool,
                 if ef.risk_reason:
                     console.print(f"    [dim]风险: {ef.risk_reason}[/dim]")
     except ImportError:
-        click.echo(f"\n=== 安全扫描摘要 ===")
+        click.echo(f"\n=== 安全扫描摘要 [{depth}] ===")
         click.echo(f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}")
-        click.echo(f"文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})")
+        click.echo(f"层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})")
+        for layer_key in active_layers:
+            layer_names = {"injection": "注入检测", "pii": "PII隐私", "supply_chain": "供应链", "structural": "结构分析", "sanitizer": "Prompt消毒", "probe": "Probe探测"}
+            click.echo(f"  {layer_names.get(layer_key, layer_key)}: {detector_stats.get(layer_key, 0)}")
 
     if output and all_findings:
-        report_data = {
+        report_data: dict[str, Any] = {
             "scan_target": target,
+            "scan_depth": depth,
+            "active_layers": active_layers,
+            "detector_stats": detector_stats,
             "total_files": total,
             "findings": all_findings,
             "risk_level": "critical" if high_count > 0 and any(f.get("severity") == "critical" for f in all_findings)
@@ -502,16 +594,23 @@ def scan(target: str, config: str | None, incremental: bool,
                          else "medium" if medium_count > 0
                          else "low" if low_count > 0 else "none",
         }
+        if depth == "deep":
+            try:
+                from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+                findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
+                                         description=f.get("description", "")) for f in all_findings]
+                scorecard = compute_scorecard(findings_objs)
+                report_data["scorecard"] = scorecard.to_dict()
+            except Exception:
+                pass
         if fmt == "sarif" and output:
             from ai_prompt_toolkit.report.sarif_reporter import write_sarif_report
-            from ai_prompt_toolkit.types import Finding, Severity
             findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
                                      description=f.get("description", "")) for f in all_findings]
             write_sarif_report(findings_objs, output, source_file=target)
             click.echo(f"SARIF报告: {output}")
         elif fmt == "jsonl" and output:
             from ai_prompt_toolkit.report.sarif_reporter import write_jsonl_report
-            from ai_prompt_toolkit.types import Finding, Severity
             findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
                                      description=f.get("description", "")) for f in all_findings]
             write_jsonl_report(findings_objs, output, source_file=target)

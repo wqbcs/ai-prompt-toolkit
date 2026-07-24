@@ -295,7 +295,7 @@ class TestMCPProbeTools:
         from ai_prompt_toolkit.mcp_server import _handle_tools_list
         response = json.loads(_handle_tools_list(1))
         tools = response["result"]["tools"]
-        assert len(tools) == 51
+        assert len(tools) == 52
 
     def test_probe_owasp_report_tool(self):
         from ai_prompt_toolkit.mcp_server import _tool_probe_owasp_report

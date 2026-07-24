@@ -100,7 +100,7 @@ _SEVERITY_DEDUCTION = {
     Severity.INFO: 0,
 }
 
-_LINT_RULE_IDS = {f"P{i:03d}" for i in range(1, 56)}
+_LINT_RULE_IDS = {f"P{i:03d}" for i in range(1, 131)}
 _INJECTION_RULE_PREFIXES = ("INJ-", "INJ-ZH-")
 _PII_RULE_IDS = {"PII001", "PII002", "PII003"}
 _STRUCTURE_RULE_IDS = {"P001", "P002", "P003", "P005", "P025", "P026"}
