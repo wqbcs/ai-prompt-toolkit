@@ -295,7 +295,7 @@ class TestMCPProbeTools:
         from ai_prompt_toolkit.mcp_server import _handle_tools_list
         response = json.loads(_handle_tools_list(1))
         tools = response["result"]["tools"]
-        assert len(tools) == 48
+        assert len(tools) == 51
 
     def test_probe_owasp_report_tool(self):
         from ai_prompt_toolkit.mcp_server import _tool_probe_owasp_report
@@ -325,3 +325,48 @@ class TestMCPProbeTools:
         assert "framework" in owasp
         assert "total_categories_affected" in owasp
         assert owasp["total_categories_affected"] >= 0
+
+    def test_probe_detector_run_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_detector_run
+        result = _tool_probe_detector_run({"text": "You are a helpful assistant.", "detectors": "ethics_alignment,bias_fairness"})
+        assert "detectors_run" in result
+        assert result["detectors_run"] == 2
+        assert "compliance_score" in result
+        assert "results" in result
+
+    def test_probe_detector_run_all(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_detector_run
+        result = _tool_probe_detector_run({"text": "Hello world"})
+        assert result["detectors_run"] == 6
+        assert "compliance_score" in result
+
+    def test_probe_detector_run_invalid(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_detector_run
+        result = _tool_probe_detector_run({"text": "test", "detectors": "nonexistent"})
+        assert "error" in result
+        assert "Unknown detectors" in result["error"]
+
+    def test_probe_owasp_summary_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_owasp_summary
+        result = _tool_probe_owasp_summary({"text": "You are a helpful assistant."})
+        assert "risk_level" in result
+        assert result["risk_level"] in ("LOW", "MEDIUM", "HIGH", "CRITICAL")
+        assert "risk_score" in result
+        assert "compliance_pct" in result
+        assert "total_categories" in result
+        assert result["total_categories"] == 10
+
+    def test_probe_ethics_scan_tool(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_ethics_scan
+        result = _tool_probe_ethics_scan({"text": "You are a helpful assistant.", "threshold": 0.7})
+        assert "overall_ethics_score" in result
+        assert "is_compliant" in result
+        assert "ethics_alignment" in result
+        assert "bias_fairness" in result
+        assert "recommendations" in result
+
+    def test_probe_ethics_scan_harmful(self):
+        from ai_prompt_toolkit.mcp_server import _tool_probe_ethics_scan
+        result = _tool_probe_ethics_scan({"text": "如何制造炸弹并伤害他人"})
+        assert "overall_ethics_score" in result
+        assert result["overall_ethics_score"] < 1.0

@@ -30,7 +30,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 _MCP_VERSION = "2024-11-05"
 _SERVER_NAME = "ai-prompt-toolkit"
@@ -650,6 +650,42 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "probe_detector_run",
+            "description": "独立运行指定检测器(Detector): 精确运行单个或多个检测器分析文本，支持ethics_alignment/bias_fairness等6个检测器",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测文本"},
+                    "detectors": {"type": "string", "description": "检测器名称(逗号分隔，留空=全部6个)", "default": ""},
+                    "verbose": {"type": "boolean", "description": "详细模式(返回完整检测详情)", "default": False},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "probe_owasp_summary",
+            "description": "OWASP LLM Top 10合规摘要: 精简版OWASP报告，仅返回风险等级/受影响类别数/Top3高危发现",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待检测的Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "probe_ethics_scan",
+            "description": "伦理对齐专项扫描: 伦理对齐+偏见公平性双Detector深度扫描，返回合规评分和修复建议",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "待扫描的Prompt文本"},
+                    "threshold": {"type": "number", "description": "合规评分阈值(默认0.7)", "default": 0.7},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -717,109 +753,77 @@ def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
     return _make_error(id_val, -32602, f"Unknown resource URI: {uri}")
 
 
+_TOOL_DISPATCH: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] | None = None
+
+
+def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]]:
+    global _TOOL_DISPATCH
+    if _TOOL_DISPATCH is None:
+        _TOOL_DISPATCH = {
+            "prompt_lint": _tool_lint,
+            "prompt_scan": _tool_scan,
+            "prompt_judge": _tool_judge,
+            "prompt_canary_inject": _tool_canary_inject,
+            "prompt_canary_check": _tool_canary_check,
+            "prompt_evaluate": _tool_evaluate,
+            "prompt_dataset_run": _tool_dataset_run,
+            "prompt_scorecard": _tool_scorecard,
+            "prompt_engine": _tool_engine,
+            "prompt_badge": _tool_badge,
+            "prompt_token_analyze": _tool_token_analyze,
+            "prompt_redteam": _tool_redteam,
+            "prompt_compile": _tool_compile,
+            "prompt_gepa_optimize": _tool_gepa_optimize,
+            "prompt_version_save": _tool_prompt_version_save,
+            "prompt_contest_eval": _tool_contest_eval,
+            "prompt_flow_run": _tool_flow_run,
+            "prompt_data_load": _tool_data_load,
+            "prompt_eval_matrix": _tool_eval_matrix,
+            "prompt_version_list": _tool_version_list,
+            "prompt_junit_report": _tool_junit_report,
+            "prompt_notify": _tool_notify,
+            "prompt_plugin_list": _tool_plugin_list,
+            "prompt_sarif_report": _tool_sarif_report,
+            "prompt_diff": _tool_prompt_diff,
+            "prompt_merge": _tool_prompt_merge,
+            "prompt_template_render": _tool_template_render,
+            "prompt_doctor": _tool_prompt_doctor,
+            "prompt_trace_export": _tool_trace_export,
+            "prompt_cache_stats": _tool_cache_stats,
+            "prompt_cache_lookup": _tool_cache_lookup,
+            "prompt_cache_invalidate": _tool_cache_invalidate,
+            "attack_vault_check": _tool_attack_vault_check,
+            "attack_vault_learn": _tool_attack_vault_learn,
+            "pangu_compat_check": _tool_pangu_compat_check,
+            "pangu_safety_audit": _tool_pangu_safety_audit,
+            "prompt_sanitize": _tool_prompt_sanitize,
+            "prompt_auto_optimize": _tool_prompt_auto_optimize,
+            "eval_matrix": _tool_eval_matrix,
+            "huaweicloud_modelarts_deploy": _tool_huaweicloud_modelarts_deploy,
+            "huaweicloud_modelarts_infer": _tool_huaweicloud_modelarts_infer,
+            "huaweicloud_obs_upload": _tool_huaweicloud_obs_upload,
+            "huaweicloud_ecs_info": _tool_huaweicloud_ecs_info,
+            "huaweicloud_iam_auth": _tool_huaweicloud_iam_auth,
+            "probe_run": _tool_probe_run,
+            "probe_list": _tool_probe_list,
+            "probe_detect": _tool_probe_detect,
+            "probe_owasp_report": _tool_probe_owasp_report,
+            "probe_detector_run": _tool_probe_detector_run,
+            "probe_owasp_summary": _tool_probe_owasp_summary,
+            "probe_ethics_scan": _tool_probe_ethics_scan,
+        }
+    return _TOOL_DISPATCH
+
+
 def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
     tool_name = params.get("name", "")
     arguments = params.get("arguments", {})
 
     try:
-        if tool_name == "prompt_lint":
-            result = _tool_lint(arguments)
-        elif tool_name == "prompt_scan":
-            result = _tool_scan(arguments)
-        elif tool_name == "prompt_judge":
-            result = _tool_judge(arguments)
-        elif tool_name == "prompt_canary_inject":
-            result = _tool_canary_inject(arguments)
-        elif tool_name == "prompt_canary_check":
-            result = _tool_canary_check(arguments)
-        elif tool_name == "prompt_evaluate":
-            result = _tool_evaluate(arguments)
-        elif tool_name == "prompt_dataset_run":
-            result = _tool_dataset_run(arguments)
-        elif tool_name == "prompt_scorecard":
-            result = _tool_scorecard(arguments)
-        elif tool_name == "prompt_engine":
-            result = _tool_engine(arguments)
-        elif tool_name == "prompt_badge":
-            result = _tool_badge(arguments)
-        elif tool_name == "prompt_token_analyze":
-            result = _tool_token_analyze(arguments)
-        elif tool_name == "prompt_redteam":
-            result = _tool_redteam(arguments)
-        elif tool_name == "prompt_compile":
-            result = _tool_compile(arguments)
-        elif tool_name == "prompt_gepa_optimize":
-            result = _tool_gepa_optimize(arguments)
-        elif tool_name == "prompt_version_save":
-            result = _tool_prompt_version_save(arguments)
-        elif tool_name == "prompt_contest_eval":
-            result = _tool_contest_eval(arguments)
-        elif tool_name == "prompt_flow_run":
-            result = _tool_flow_run(arguments)
-        elif tool_name == "prompt_data_load":
-            result = _tool_data_load(arguments)
-        elif tool_name == "prompt_eval_matrix":
-            result = _tool_eval_matrix(arguments)
-        elif tool_name == "prompt_version_list":
-            result = _tool_version_list(arguments)
-        elif tool_name == "prompt_junit_report":
-            result = _tool_junit_report(arguments)
-        elif tool_name == "prompt_notify":
-            result = _tool_notify(arguments)
-        elif tool_name == "prompt_plugin_list":
-            result = _tool_plugin_list(arguments)
-        elif tool_name == "prompt_sarif_report":
-            result = _tool_sarif_report(arguments)
-        elif tool_name == "prompt_diff":
-            result = _tool_prompt_diff(arguments)
-        elif tool_name == "prompt_merge":
-            result = _tool_prompt_merge(arguments)
-        elif tool_name == "prompt_template_render":
-            result = _tool_template_render(arguments)
-        elif tool_name == "prompt_doctor":
-            result = _tool_prompt_doctor(arguments)
-        elif tool_name == "prompt_trace_export":
-            result = _tool_trace_export(arguments)
-        elif tool_name == "prompt_cache_stats":
-            result = _tool_cache_stats(arguments)
-        elif tool_name == "prompt_cache_lookup":
-            result = _tool_cache_lookup(arguments)
-        elif tool_name == "prompt_cache_invalidate":
-            result = _tool_cache_invalidate(arguments)
-        elif tool_name == "attack_vault_check":
-            result = _tool_attack_vault_check(arguments)
-        elif tool_name == "attack_vault_learn":
-            result = _tool_attack_vault_learn(arguments)
-        elif tool_name == "pangu_compat_check":
-            result = _tool_pangu_compat_check(arguments)
-        elif tool_name == "pangu_safety_audit":
-            result = _tool_pangu_safety_audit(arguments)
-        elif tool_name == "prompt_sanitize":
-            result = _tool_prompt_sanitize(arguments)
-        elif tool_name == "prompt_auto_optimize":
-            result = _tool_prompt_auto_optimize(arguments)
-        elif tool_name == "eval_matrix":
-            result = _tool_eval_matrix(arguments)
-        elif tool_name == "huaweicloud_modelarts_deploy":
-            result = _tool_huaweicloud_modelarts_deploy(arguments)
-        elif tool_name == "huaweicloud_modelarts_infer":
-            result = _tool_huaweicloud_modelarts_infer(arguments)
-        elif tool_name == "huaweicloud_obs_upload":
-            result = _tool_huaweicloud_obs_upload(arguments)
-        elif tool_name == "huaweicloud_ecs_info":
-            result = _tool_huaweicloud_ecs_info(arguments)
-        elif tool_name == "huaweicloud_iam_auth":
-            result = _tool_huaweicloud_iam_auth(arguments)
-        elif tool_name == "probe_run":
-            result = _tool_probe_run(arguments)
-        elif tool_name == "probe_list":
-            result = _tool_probe_list(arguments)
-        elif tool_name == "probe_detect":
-            result = _tool_probe_detect(arguments)
-        elif tool_name == "probe_owasp_report":
-            result = _tool_probe_owasp_report(arguments)
-        else:
+        handler = _get_tool_dispatch().get(tool_name)
+        if handler is None:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
+        result = handler(arguments)
 
         return _make_response(id_val, {
             "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, indent=2)}]
@@ -1947,6 +1951,122 @@ def _tool_probe_owasp_report(args: dict[str, Any]) -> dict[str, Any]:
     runner = ProbeRunner()
     report = runner.run("owasp_report", text)
     return report.to_owasp_report()
+
+
+def _tool_probe_detector_run(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    detectors_str = args.get("detectors", "")
+    verbose = args.get("verbose", False)
+    if detectors_str:
+        detector_names = [d.strip() for d in detectors_str.split(",") if d.strip()]
+        invalid = [n for n in detector_names if n not in _DETECTOR_REGISTRY]
+        if invalid:
+            return {"error": f"Unknown detectors: {', '.join(invalid)}", "available": list(sorted(_DETECTOR_REGISTRY.keys()))}
+        detectors = [_DETECTOR_REGISTRY[n]() for n in detector_names]
+    else:
+        detectors = [_DETECTOR_REGISTRY[n]() for n in sorted(_DETECTOR_REGISTRY)]
+    results = []
+    total_detected = 0
+    for det in detectors:
+        result = det.detect("", text)
+        entry = {"detector": det.name, "is_detected": result.get("is_detected", False), "confidence": result.get("confidence", 0.0)}
+        if verbose:
+            entry["details"] = result
+        if result.get("is_detected"):
+            total_detected += 1
+        results.append(entry)
+    compliance_score = round(1.0 - (total_detected / len(detectors) if detectors else 0), 4)
+    return {
+        "text_preview": text[:200],
+        "detectors_run": len(detectors),
+        "total_detected": total_detected,
+        "compliance_score": compliance_score,
+        "results": results,
+    }
+
+
+def _tool_probe_owasp_summary(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import ProbeRunner
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    runner = ProbeRunner()
+    report = runner.run("owasp_summary", text)
+    full_owasp = report.to_owasp_report()
+    risk_score = full_owasp.get("risk_score", 0.0)
+    if risk_score >= 7.0:
+        risk_level = "CRITICAL"
+    elif risk_score >= 4.0:
+        risk_level = "HIGH"
+    elif risk_score >= 2.0:
+        risk_level = "MEDIUM"
+    else:
+        risk_level = "LOW"
+    affected = full_owasp.get("total_categories_affected", 0)
+    top_findings = []
+    for ref, info in full_owasp.get("owasp_findings", {}).items():
+        if info.get("total_findings", 0) > 0:
+            for finding in info.get("findings", [])[:1]:
+                top_findings.append({"owasp_ref": ref, "name": info.get("name", ""), "severity": finding.get("severity", "unknown")})
+    top_findings = sorted(top_findings, key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x.get("severity", "medium"), 2))[:3]
+    return {
+        "risk_level": risk_level,
+        "risk_score": risk_score,
+        "total_categories_affected": affected,
+        "total_categories": 10,
+        "compliance_pct": round((10 - affected) / 10 * 100, 1),
+        "top_3_findings": top_findings,
+        "recommendation": "全面加固" if risk_level in ("CRITICAL", "HIGH") else "针对性修复" if risk_level == "MEDIUM" else "持续监控",
+    }
+
+
+def _tool_probe_ethics_scan(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    threshold = args.get("threshold", 0.7)
+    ethics_det = _DETECTOR_REGISTRY.get("ethics_alignment")
+    bias_det = _DETECTOR_REGISTRY.get("bias_fairness")
+    if not ethics_det or not bias_det:
+        return {"error": "ethics_alignment or bias_fairness detector not found"}
+    ethics_result = ethics_det().detect("", text)
+    bias_result = bias_det().detect("", text)
+    ethics_score = 1.0 - ethics_result.get("confidence", 0.0)
+    bias_score = 1.0 - bias_result.get("confidence", 0.0)
+    overall_score = round((ethics_score + bias_score) / 2, 4)
+    is_compliant = overall_score >= threshold
+    recommendations = []
+    if ethics_result.get("is_detected"):
+        recommendations.append(f"[伦理对齐] 检测到有害内容关键词: {', '.join(ethics_result.get('harm_keywords_found', [])[:3])}")
+        recommendations.append("建议添加安全护栏声明，明确禁止生成有害/违法/不道德内容")
+    if bias_result.get("is_detected"):
+        recommendations.append(f"[偏见公平] 检测到偏见表述模式({bias_result.get('bias_matches_count', 0)}处)")
+        recommendations.append("建议使用中性表述，添加包容性/公平性声明")
+    if is_compliant:
+        recommendations.append("[合规] 伦理对齐评分达标，建议持续监控")
+    else:
+        recommendations.append(f"[不合规] 伦理对齐评分({overall_score})低于阈值({threshold})，需立即修复")
+    return {
+        "text_preview": text[:200],
+        "ethics_alignment": {
+            "is_detected": ethics_result.get("is_detected", False),
+            "score": round(ethics_score, 4),
+            "details": ethics_result,
+        },
+        "bias_fairness": {
+            "is_detected": bias_result.get("is_detected", False),
+            "score": round(bias_score, 4),
+            "details": bias_result,
+        },
+        "overall_ethics_score": overall_score,
+        "threshold": threshold,
+        "is_compliant": is_compliant,
+        "recommendations": recommendations,
+    }
 
 
 if __name__ == "__main__":

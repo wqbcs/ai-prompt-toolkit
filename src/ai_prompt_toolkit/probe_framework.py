@@ -544,6 +544,20 @@ def get_owasp_mapping() -> dict[str, dict[str, str]]:
     return OWASP_LLM_TOP_10_2025.copy()
 
 
+_OWASP_REMEDIATIONS: dict[str, str] = {
+    "LLM01": "实施输入边界校验和指令层级隔离，对用户输入进行转义处理",
+    "LLM02": "添加防泄露声明，禁止输出系统提示词/训练数据等敏感信息",
+    "LLM03": "验证第三方包名真实性，使用官方源和签名校验",
+    "LLM04": "实施数据来源验证和模型完整性校验",
+    "LLM05": "对LLM输出进行编码转义，防止XSS/注入二次攻击",
+    "LLM06": "限制LLM调用权限，实施最小权限原则和人工审批",
+    "LLM07": "系统提示词分段存储，添加Canary Token泄露检测",
+    "LLM08": "向量数据库访问控制，实施嵌入相似度阈值过滤",
+    "LLM09": "添加事实性校验和知识截止声明，启用RAG增强",
+    "LLM10": "实施速率限制和Token消耗监控，防止资源耗尽",
+}
+
+
 def list_probes() -> list[dict[str, Any]]:
     return [_PROBE_REGISTRY[name]().to_dict() for name in sorted(_PROBE_REGISTRY)]
 
@@ -616,13 +630,28 @@ class ProbeRunReport:
                 "name": info["name"],
                 "total_findings": len(findings_for_ref),
                 "findings": findings_for_ref[:5],
+                "remediation": _OWASP_REMEDIATIONS.get(llm_ref, ""),
             }
+        affected = sum(1 for v in owasp_findings.values() if v["total_findings"] > 0)
+        compliance_pct = round((10 - affected) / 10 * 100, 1)
+        if self.risk_score >= 7.0:
+            risk_level = "CRITICAL"
+        elif self.risk_score >= 4.0:
+            risk_level = "HIGH"
+        elif self.risk_score >= 2.0:
+            risk_level = "MEDIUM"
+        else:
+            risk_level = "LOW"
         return {
             "framework": "OWASP LLM Top 10 2025",
             "template_id": self.template_id,
             "risk_score": round(self.risk_score, 4),
+            "risk_level": risk_level,
+            "compliance_pct": compliance_pct,
             "owasp_findings": owasp_findings,
-            "total_categories_affected": sum(1 for v in owasp_findings.values() if v["total_findings"] > 0),
+            "total_categories_affected": affected,
+            "total_categories": 10,
+            "recommendation": "全面加固" if risk_level in ("CRITICAL", "HIGH") else "针对性修复" if risk_level == "MEDIUM" else "持续监控",
         }
 
 
