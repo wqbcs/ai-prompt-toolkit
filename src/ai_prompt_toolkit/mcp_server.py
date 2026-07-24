@@ -9,7 +9,7 @@
 - Lint/Scan: prompt_lint(130规则), prompt_scan, prompt_judge, prompt_canary_inject/check
 - 评估: prompt_evaluate(80维度), prompt_scorecard, prompt_dataset_run, eval_matrix
 - 安全引擎: prompt_engine(5层融合), prompt_badge, prompt_token_analyze
-- 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan
+- 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan(15 Probes, 8 Detectors)
 - 编译/优化: prompt_compile, prompt_gepa_optimize, prompt_auto_optimize, prompt_sanitize
 - 版本/缓存: prompt_version_save/list, prompt_cache_stats/lookup/invalidate
 - 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge
@@ -18,7 +18,7 @@
 - 其他: prompt_template_render, prompt_doctor, prompt_trace_export, prompt_contest_eval...
 
 暴露的MCP Resources:
-1. prompt://templates — 场景模板列表(15个内置)
+1. prompt://templates — 场景模板列表(18个内置)
 2. prompt://rules — Lint规则列表(P001-P130)
 3. prompt://datasets — 数据集列表
 

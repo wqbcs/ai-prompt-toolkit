@@ -67,7 +67,7 @@ def _generate_sarif(results: list, target: str) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 52 MCP工具 | 12 Probes | 6 Detectors | 15内置模板")
+@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 52 MCP工具 | 15 Probes | 8 Detectors | 15内置模板")
 def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
@@ -2741,6 +2741,118 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
         return
 
     click.echo("使用 --init 生成示例规则 或 --load 加载规则文件")
+
+
+@main.command(name="compliance")
+@click.option("--target", "-t", required=True, help="合规扫描目标(文件或目录)")
+@click.option("--format", "fmt", type=click.Choice(["cli", "json", "markdown"]),
+              default="cli", help="输出格式")
+@click.option("--output", "-o", help="报告输出路径")
+@click.option("--owasp-pct", "owasp_pct", type=float, default=0.0, help="OWASP LLM Top 10合规百分比(0-100)")
+def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) -> None:
+    """华为云安全合规报告: 7域加权评分+OWASP映射+等保2.0"""
+    from ai_prompt_toolkit.cli_helpers import discover_templates, empty_state_tip
+    from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.types import Finding, Severity
+
+    templates = discover_templates(target)
+    if not templates:
+        click.echo(empty_state_tip("compliance"))
+        sys.exit(0)
+
+    all_findings: list[Finding] = []
+    injection_detector = InjectionDetector()
+    pii_detector = PIIDetector()
+    supply_chain_detector = SupplyChainDetector()
+
+    for tpl_path in templates:
+        text = tpl_path.read_text(encoding="utf-8")
+        all_findings.extend(injection_detector.detect(text))
+        pii_f = pii_detector.check(text)
+        if pii_f:
+            all_findings.append(pii_f)
+        sc_f = supply_chain_detector.check(text)
+        if sc_f:
+            all_findings.append(sc_f)
+        struct_f = check_structural(text)
+        if struct_f:
+            all_findings.append(struct_f)
+
+    report = compute_huaweicloud_compliance(all_findings, owasp_compliance_pct=owasp_pct)
+
+    if fmt == "json":
+        if output:
+            Path(output).write_text(report.to_json(), encoding="utf-8")
+            click.echo(f"JSON报告: {output}")
+        else:
+            click.echo(report.to_json())
+    elif fmt == "markdown":
+        md = report.to_markdown()
+        if output:
+            Path(output).write_text(md, encoding="utf-8")
+            click.echo(f"Markdown报告: {output}")
+        else:
+            click.echo(md)
+    else:
+        try:
+            from rich.console import Console
+            from rich.panel import Panel
+            from rich.table import Table
+            console = Console()
+            grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red bold"}[report.grade.value]
+            summary_lines = [
+                f"[bold]综合评分: [{grade_color}]{report.overall_score}/100 ({report.grade.value})[/{grade_color}][/bold]",
+                f"决策: {report.decision.value} | OWASP合规: {report.owasp_compliance_pct}%",
+                f"文件: {len(templates)} | 发现: {report.total_findings} (CRITICAL:{report.critical_count} HIGH:{report.high_count})",
+                f"",
+                f"[dim]{report.summary}[/dim]",
+            ]
+            console.print(Panel("\n".join(summary_lines), title="华为云安全合规报告", border_style=grade_color))
+
+            domain_table = Table(title="合规域详情", show_header=True, header_style="bold")
+            domain_table.add_column("域", style="cyan")
+            domain_table.add_column("评分", justify="right")
+            domain_table.add_column("通过率", justify="right")
+            domain_table.add_column("发现", justify="right")
+            domain_table.add_column("CRITICAL", justify="right", style="red")
+            domain_table.add_column("HIGH", justify="right", style="yellow")
+            for d in report.domains:
+                domain_table.add_row(
+                    d.domain_name,
+                    f"{d.score}/{d.max_score}",
+                    f"{d.pass_rate:.0%}",
+                    str(d.findings_count),
+                    str(d.critical_count),
+                    str(d.high_count),
+                )
+            console.print(domain_table)
+
+            remediation_table = Table(title="修复建议", show_header=True, header_style="bold")
+            remediation_table.add_column("域", style="cyan")
+            remediation_table.add_column("建议")
+            for d in report.domains:
+                if d.findings_count > 0:
+                    remediation_table.add_row(d.domain_name, d.remediation)
+            if remediation_table.rows:
+                console.print(remediation_table)
+        except ImportError:
+            click.echo(f"华为云安全合规: {report.overall_score}/100 ({report.grade.value}) 决策:{report.decision.value}")
+            click.echo(f"发现: {report.total_findings} (CRITICAL:{report.critical_count} HIGH:{report.high_count})")
+            click.echo(report.summary)
+            for d in report.domains:
+                click.echo(f"  {d.domain_name}: {d.score}/{d.max_score}")
+
+    if output and fmt == "cli":
+        report_data = report.to_dict()
+        from ai_prompt_toolkit.cli_helpers import write_report
+        write_report(report_data, output, fmt="json")
+
+    exit_code = 0 if report.decision.value == "pass" else 1 if report.decision.value == "conditional" else 2
+    sys.exit(exit_code)
 
 
 from ai_prompt_toolkit.cli.commands import (  # noqa: E402,F401

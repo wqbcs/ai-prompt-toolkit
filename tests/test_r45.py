@@ -198,33 +198,34 @@ class TestOWASP2025Probes:
 
 class TestProbeRegistry:
     def test_10_probes_registered(self):
-        assert len(_PROBE_REGISTRY) == 12
+        assert len(_PROBE_REGISTRY) == 15
 
     def test_all_categories_present(self):
         categories = {p().category for p in _PROBE_REGISTRY.values()}
         expected = {"dan", "encoding", "promptinject", "leakreplay", "xss",
                     "packagehallucination", "badchars", "gcg", "snowball", "malwaregen",
-                    "system_prompt_leak", "vector_embedding"}
+                    "system_prompt_leak", "vector_embedding",
+                    "grandma", "continuation", "donot_answer"}
         assert categories == expected
 
     def test_6_detectors_registered(self):
-        assert len(_DETECTOR_REGISTRY) == 6
+        assert len(_DETECTOR_REGISTRY) == 8
 
     def test_list_probes(self):
         probes = list_probes()
-        assert len(probes) == 12
+        assert len(probes) == 15
         assert all("name" in p and "category" in p for p in probes)
 
     def test_list_detectors(self):
         detectors = list_detectors()
-        assert len(detectors) == 6
+        assert len(detectors) == 8
 
 
 class TestProbeRunner:
     def test_run_all_probes(self):
         runner = ProbeRunner()
         report = runner.run("test_template", "You are a helpful assistant.")
-        assert report.total_probes == 12
+        assert report.total_probes == 15
         assert report.total_payloads > 0
         assert 0.0 <= report.risk_score <= 10.0
         assert len(report.recommendations) > 0
@@ -277,8 +278,8 @@ class TestMCPProbeTools:
         result = _tool_probe_list({})
         assert "probes" in result
         assert "detectors" in result
-        assert len(result["probes"]) == 12
-        assert len(result["detectors"]) == 6
+        assert len(result["probes"]) == 15
+        assert len(result["detectors"]) == 8
 
     def test_probe_detect_tool(self):
         from ai_prompt_toolkit.mcp_server import _tool_probe_detect
@@ -337,7 +338,7 @@ class TestMCPProbeTools:
     def test_probe_detector_run_all(self):
         from ai_prompt_toolkit.mcp_server import _tool_probe_detector_run
         result = _tool_probe_detector_run({"text": "Hello world"})
-        assert result["detectors_run"] == 6
+        assert result["detectors_run"] == 8
         assert "compliance_score" in result
 
     def test_probe_detector_run_invalid(self):

@@ -307,6 +307,27 @@ _BUILTIN_TEMPLATES: list[dict[str, Any]] = [
         "category": "harmonyos",
         "tags": ["harmonyos5", "widget", "form-extension", "arkts"],
     },
+    {
+        "name": "harmonyos5-ai-agent",
+        "template": "你是一个鸿蒙5.0 AI Agent开发专家。\n\nAgent类型：{{agent_type|default('对话Agent')}}\n执行模式：{{execution_mode|default('单步执行')}}\n\n鸿蒙5.0 AI Agent架构：\n- 框架: ArkTS + AI Kit + Agent Framework\n- 感知: 多模态输入(文本/语音/图片/传感器)\n- 决策: LLM推理 + 工具调用(Function Call)\n- 执行: 系统能力调用 + 应用间协作\n- 记忆: 短期会话记忆 + 长期用户偏好\n\nAgent能力声明：\n- 工具: {{tools|default('系统日历/联系人/天气/地图')}}\n- 权限: ohos.permission.AI_AGENT\n- 安全: 最小权限原则 + 用户确认机制\n- 隐私: 数据不出端 + 脱敏处理\n\n任务规划：{{task}}\n\n执行约束：\n- 最大推理轮次: {{max_rounds|default('5')}}\n- 工具调用超时: 3s\n- 用户确认: 涉及隐私/支付/删除操作时强制确认\n- 降级: LLM不可用时回退规则引擎\n- 日志: 全链路追踪(AI Agent Trace)",
+        "description": "鸿蒙5.0 AI Agent开发模板",
+        "category": "harmonyos",
+        "tags": ["harmonyos5", "ai-agent", "function-call", "arkts"],
+    },
+    {
+        "name": "huaweicloud-secops",
+        "template": "你是一个华为云安全运营(SecOps)专家。\n\n运营模式：{{ops_mode|default('主动巡检')}}\n告警级别：{{alert_level|default('中危及以上')}}\n\n华为云安全运营体系：\n- 威胁检测: 华为云HIDS/anti-DDoS/WAF\n- 日志审计: LTS + 安全大脑\n- 脆弱性管理: 漏洞扫描 + 配置核查\n- 应急响应: 自动化剧本 + SOAR\n- 合规: 等保2.0 + ISO27001\n\n巡检目标：{{target}}\n\n安全检查项：\n- 身份认证: IAM策略/MFA/临时凭证\n- 网络安全: 安全组/网络ACL/VPN\n- 数据保护: KMS加密/OBS桶策略/RDS审计\n- 应用安全: WAF规则/API网关/CC防护\n- 运维安全:堡垒机/运维审计/变更管理\n\n输出格式：\n- 风险等级: CRITICAL/HIGH/MEDIUM/LOW\n- 影响范围: 资源类型+数量\n- 修复建议: 具体操作步骤\n- 合规映射: 等保条款/ISO条款",
+        "description": "华为云安全运营(SecOps)模板",
+        "category": "huaweicloud",
+        "tags": ["huaweicloud", "secops", "security-operations", "compliance"],
+    },
+    {
+        "name": "pangu5-reasoning",
+        "template": "你是一个盘古5.0深度推理专家。\n\n推理模式：{{reasoning_mode|default('逐步推理')}}\n验证策略：{{verification|default('交叉验证')}}\n\n盘古5.0推理能力：\n- 逻辑推理: 三段论/假言推理/反证法\n- 数学推理: 定理证明/方程求解/概率计算\n- 因果推理: 因果图/反事实推理/干预分析\n- 类比推理: 结构映射/属性迁移\n- 抽象推理: 模式识别/规律发现\n\n问题：{{problem}}\n\n推理步骤：\n1. 问题分解: 拆分子问题和已知条件\n2. 知识检索: 调用相关领域知识\n3. 假设生成: 列出可能的推理路径\n4. 逐步推理: 每步标注推理依据和置信度\n5. 结果验证: 交叉验证+边界检查+反例测试\n6. 结论输出: 结论+置信度+推理链\n\n输出格式：\n- 推理链: 每步标注[步骤n][依据][置信度]\n- 置信度: 0-1分, 标注不确定部分\n- 反例: 列出可能推翻结论的反例\n- 替代解释: 其他可能的推理路径\n\n约束：\n- 不确定时明确标注, 不编造推理步骤\n- 数学计算使用精确值, 避免近似\n- 逻辑矛盾时回溯检查",
+        "description": "盘古5.0深度推理专项模板",
+        "category": "pangu",
+        "tags": ["pangu5", "reasoning", "chain-of-thought", "logic"],
+    },
 ]
 
 

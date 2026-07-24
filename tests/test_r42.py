@@ -461,7 +461,7 @@ class TestH2NewTemplates:
 
     def test_template_count(self):
         from ai_prompt_toolkit.prompt_template import get_builtin_templates
-        assert len(get_builtin_templates()) == 15
+        assert len(get_builtin_templates()) == 18
 
 
 class TestD1FixerConflictDetection:
