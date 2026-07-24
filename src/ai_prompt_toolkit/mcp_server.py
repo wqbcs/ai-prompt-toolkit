@@ -1,25 +1,26 @@
-"""MCP Server — 将lint/scan/judge/canary能力暴露为MCP协议
+"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(51个Tools)
 
 参考:
 - MCP官方规范 (https://modelcontextprotocol.io)
 - claude-prompts MCP Server (https://github.com/minipuft/claude-prompts)
 - mcp-server-langfuse (https://github.com/langfuse/mcp-server-langfuse)
 
-暴露的MCP Tools:
-1. prompt_lint — 对Prompt文件执行Lint检查
-2. prompt_scan — 对Prompt文件执行安全扫描
-3. prompt_judge — LLM-as-Judge评估
-4. prompt_canary_inject — 注入Canary Token
-5. prompt_canary_check — 检测Canary泄露
-6. prompt_evaluate — 62维度质量评估
-7. prompt_dataset_run — 批量数据集运行
-8. prompt_scorecard — 安全评分卡(0-100分)
-9. prompt_engine — 多层融合注入检测引擎(5层+元分类器融合)
-10. prompt_badge — 安全评分徽章SVG生成
+暴露的MCP Tools (51个):
+- Lint/Scan: prompt_lint(130规则), prompt_scan, prompt_judge, prompt_canary_inject/check
+- 评估: prompt_evaluate(80维度), prompt_scorecard, prompt_dataset_run, eval_matrix
+- 安全引擎: prompt_engine(5层融合), prompt_badge, prompt_token_analyze
+- 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan
+- 编译/优化: prompt_compile, prompt_gepa_optimize, prompt_auto_optimize, prompt_sanitize
+- 版本/缓存: prompt_version_save/list, prompt_cache_stats/lookup/invalidate
+- 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge
+- 华为云: huaweicloud_modelarts_deploy/infer, huaweicloud_obs_upload/ecs_info/iam_auth
+- 盘古: pangu_compat_check, pangu_safety_audit
+- 其他: prompt_template_render, prompt_doctor, prompt_trace_export, prompt_contest_eval...
 
 暴露的MCP Resources:
-1. prompt://templates — 场景模板列表
-2. prompt://rules — Lint规则列表
+1. prompt://templates — 场景模板列表(15个内置)
+2. prompt://rules — Lint规则列表(P001-P130)
+3. prompt://datasets — 数据集列表
 
 使用方式:
 1. 直接运行: python -m ai_prompt_toolkit.mcp_server
@@ -71,7 +72,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回55条规则的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回130条规则(P001-P130)的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -132,7 +133,7 @@ def _handle_tools_list(id_val: Any) -> str:
         },
         {
             "name": "prompt_evaluate",
-            "description": "对Prompt执行62维度质量评估，返回综合评分和各维度得分",
+            "description": "对Prompt执行80维度(D01-D80)质量评估，返回综合评分和各维度得分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -701,7 +702,7 @@ def _handle_resources_list(id_val: Any) -> str:
         {
             "uri": "prompt://rules",
             "name": "Lint规则列表",
-            "description": "55条Lint规则(P001-P055)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
+            "description": "130条Lint规则(P001-P130)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
             "mimeType": "application/json",
         },
         {
@@ -728,7 +729,7 @@ def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
         })
     elif uri == "prompt://rules":
         rules = []
-        for i in range(1, 56):
+        for i in range(1, 131):
             rules.append({"rule_id": f"P{i:03d}", "category": "lint"})
         for i in range(1, 16):
             rules.append({"rule_id": f"INJ-{i:03d}", "category": "security"})
