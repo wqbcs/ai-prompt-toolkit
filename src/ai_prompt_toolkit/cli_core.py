@@ -2745,7 +2745,7 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
 
 @main.command(name="compliance")
 @click.option("--target", "-t", required=True, help="合规扫描目标(文件或目录)")
-@click.option("--format", "fmt", type=click.Choice(["cli", "json", "markdown"]),
+@click.option("--format", "fmt", type=click.Choice(["cli", "json", "markdown", "sarif"]),
               default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--owasp-pct", "owasp_pct", type=float, default=0.0, help="OWASP LLM Top 10合规百分比(0-100)")
@@ -2790,6 +2790,19 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
             click.echo(f"JSON报告: {output}")
         else:
             click.echo(report.to_json())
+    elif fmt == "sarif":
+        from ai_prompt_toolkit.report.sarif_reporter import write_sarif_report
+        sarif_findings = []
+        for d in report.domains:
+            if d.findings_count > 0:
+                sarif_findings.append(Finding(
+                    rule_id=f"HC-{d.domain}",
+                    severity=Severity.HIGH if d.critical_count > 0 else Severity.MEDIUM if d.high_count > 0 else Severity.LOW,
+                    description=f"[{d.domain_name}] 评分{d.score}/{d.max_score} 发现{d.findings_count}个问题",
+                ))
+        output_path = output or "compliance-report.sarif.json"
+        write_sarif_report(sarif_findings, output_path, source_file=target)
+        click.echo(f"SARIF报告: {output_path}")
     elif fmt == "markdown":
         md = report.to_markdown()
         if output:

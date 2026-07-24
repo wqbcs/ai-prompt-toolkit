@@ -292,3 +292,138 @@ def prompt_merge(
 
 def prompt_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+
+
+@dataclass
+class SemanticChange:
+    change_type: str
+    section: str
+    description: str
+    impact: str = "low"
+    detail: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "change_type": self.change_type,
+            "section": self.section,
+            "description": self.description,
+            "impact": self.impact,
+            "detail": self.detail,
+        }
+
+
+@dataclass
+class SemanticDiffReport:
+    old_hash: str
+    new_hash: str
+    changes: list[SemanticChange] = field(default_factory=list)
+    sections_added: list[str] = field(default_factory=list)
+    sections_removed: list[str] = field(default_factory=list)
+    sections_modified: list[str] = field(default_factory=list)
+    summary: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "old_hash": self.old_hash,
+            "new_hash": self.new_hash,
+            "changes": [c.to_dict() for c in self.changes],
+            "sections_added": self.sections_added,
+            "sections_removed": self.sections_removed,
+            "sections_modified": self.sections_modified,
+            "summary": self.summary,
+        }
+
+
+def semantic_diff(old_text: str, new_text: str) -> SemanticDiffReport:
+    old_sections = _parse_sections(old_text)
+    new_sections = _parse_sections(new_text)
+    changes: list[SemanticChange] = []
+    sections_added = []
+    sections_removed = []
+    sections_modified = []
+
+    for section in new_sections:
+        if section not in old_sections:
+            sections_added.append(section)
+            changes.append(SemanticChange(
+                change_type="section_added",
+                section=section,
+                description=f"新增'{section}'段",
+                impact="medium",
+                detail=new_sections[section][:100],
+            ))
+
+    for section in old_sections:
+        if section not in new_sections:
+            sections_removed.append(section)
+            changes.append(SemanticChange(
+                change_type="section_removed",
+                section=section,
+                description=f"删除'{section}'段",
+                impact="high",
+                detail=old_sections[section][:100],
+            ))
+
+    for section in old_sections:
+        if section in new_sections:
+            old_content = old_sections[section]
+            new_content = new_sections[section]
+            if old_content != new_content:
+                sections_modified.append(section)
+                similarity = _compute_similarity(old_content, new_content)
+                old_lines = set(old_content.strip().split("\n"))
+                new_lines = set(new_content.strip().split("\n"))
+                added_lines = new_lines - old_lines
+                removed_lines = old_lines - new_lines
+
+                if section == "role":
+                    impact = "high"
+                    desc = f"角色定义变更(相似度{similarity:.0%})"
+                elif section == "security":
+                    impact = "critical"
+                    desc = f"安全策略变更(相似度{similarity:.0%})"
+                elif section == "constraints":
+                    impact = "high"
+                    desc = f"约束条件变更(相似度{similarity:.0%})"
+                elif section == "examples":
+                    impact = "medium"
+                    desc = f"示例变更(相似度{similarity:.0%})"
+                else:
+                    impact = "low"
+                    desc = f"{section}段变更(相似度{similarity:.0%})"
+
+                detail_parts = []
+                if added_lines:
+                    detail_parts.append(f"新增{len(added_lines)}行")
+                if removed_lines:
+                    detail_parts.append(f"删除{len(removed_lines)}行")
+
+                changes.append(SemanticChange(
+                    change_type="section_modified",
+                    section=section,
+                    description=desc,
+                    impact=impact,
+                    detail=", ".join(detail_parts),
+                ))
+
+    high_count = sum(1 for c in changes if c.impact in ("high", "critical"))
+    crit_count = sum(1 for c in changes if c.impact == "critical")
+
+    if crit_count > 0:
+        summary = f"严重变更{crit_count}项(安全策略), 需立即审核"
+    elif high_count > 0:
+        summary = f"重要变更{high_count}项(角色/约束), 建议审核"
+    elif changes:
+        summary = f"轻微变更{len(changes)}项, 可自动合并"
+    else:
+        summary = "无变更"
+
+    return SemanticDiffReport(
+        old_hash=prompt_hash(old_text),
+        new_hash=prompt_hash(new_text),
+        changes=changes,
+        sections_added=sections_added,
+        sections_removed=sections_removed,
+        sections_modified=sections_modified,
+        summary=summary,
+    )

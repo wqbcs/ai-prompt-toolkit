@@ -1,0 +1,58 @@
+name: Daily Security Scorecard
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ai-prompt-toolkit
+        run: pip install -e .
+      - name: Run Scorecard on all prompts
+        run: |
+          echo "=== 安全评分卡(5维度) ==="
+          for f in $(find . -name '*.prompt' -o -name '*.md' | head -50); do
+            prompt-cli score --target "$f" --format json --output "scorecard-$(basename $f).json" || true
+          done
+      - name: Run Compliance on all prompts
+        run: |
+          echo "=== 华为云合规报告(7域) ==="
+          for f in $(find . -name '*.prompt' -o -name '*.md' | head -50); do
+            prompt-cli compliance --target "$f" --format json --output "compliance-$(basename $f).json" || true
+          done
+      - name: Generate Summary
+        run: |
+          python3 -c "
+          import json, glob, os
+          scores, grades = [], {'A':0,'B':0,'C':0,'D':0,'F':0}
+          for f in glob.glob('scorecard-*.json'):
+              try:
+                  d = json.load(open(f))
+                  scores.append(d.get('overall_score', 0))
+                  g = d.get('grade', 'F')
+                  grades[g] = grades.get(g, 0) + 1
+              except: pass
+          avg = sum(scores)/len(scores) if scores else 0
+          print(f'## 安全评分卡摘要')
+          print(f'- 平均分: {avg:.1f}/100')
+          print(f'- 评分分布: A={grades[\"A\"]} B={grades[\"B\"]} C={grades[\"C\"]} D={grades[\"D\"]} F={grades[\"F\"]}')
+          print(f'- 扫描文件: {len(scores)}')
+          " > scorecard-summary.md
+          cat scorecard-summary.md
+      - name: Upload Scorecard Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-scorecard-reports
+          path: |
+            scorecard-*.json
+            compliance-*.json
+            scorecard-summary.md
+          retention-days: 90

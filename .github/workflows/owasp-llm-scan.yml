@@ -18,23 +18,49 @@ jobs:
           python-version: '3.12'
       - name: Install ai-prompt-toolkit
         run: pip install -e .
-      - name: Run OWASP LLM Top 10 Probe Scan
+      - name: Run OWASP LLM Top 10 Probe Scan (15 Probes)
         run: |
-          echo "=== OWASP LLM Top 10 2025 Probe Scan ==="
+          echo "=== OWASP LLM Top 10 2025 Probe Scan (15 Probes: dan/grandma/continuation/donot_answer/...) ==="
           for f in $(find . -name '*.prompt' -o -name '*.md' | head -20); do
-            echo "Scanning: $f"
-            promptkit probe --target "$f" --output "probe-report-$(basename $f).json" || true
+            echo "Probing: $f"
+            prompt-cli probe --target "$f" --output "probe-report-$(basename $f).json" || true
           done
-      - name: Run Prompt Security Scan
+      - name: Run Prompt Security Scan (5-Layer Deep)
         run: |
+          echo "=== 5-Layer Security Scan (deep mode) ==="
           for f in $(find . -name '*.prompt' | head -20); do
-            promptkit scan "$f" || true
+            prompt-cli scan --target "$f" --depth deep --format sarif --output "scan-$(basename $f).sarif.json" || true
+          done
+      - name: Run Huawei Cloud Compliance Check
+        run: |
+          echo "=== 华为云安全合规报告 (7域评分) ==="
+          for f in $(find . -name '*.prompt' | head -20); do
+            prompt-cli compliance --target "$f" --format json --output "compliance-$(basename $f).json" || true
           done
       - name: Run Prompt Lint (fail-on critical)
         run: |
           for f in $(find . -name '*.prompt' | head -20); do
-            promptkit lint --target "$f" --fail-on critical --format json --output "lint-report-$(basename $f).json" || true
+            prompt-cli lint --target "$f" --fail-on critical --format json --output "lint-report-$(basename $f).json" || true
           done
+      - name: Compliance Gate Check
+        run: |
+          echo "=== 检查合规等级 ==="
+          PASS=true
+          for f in compliance-*.json; do
+            if [ -f "$f" ]; then
+              GRADE=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('grade','F'))")
+              DECISION=$(python3 -c "import json; d=json.load(open('$f')); print(d.get('decision','fail'))")
+              echo "  $f: Grade=$GRADE Decision=$DECISION"
+              if [ "$DECISION" = "fail" ]; then
+                PASS=false
+              fi
+            fi
+          done
+          if [ "$PASS" = "false" ]; then
+            echo "::error::华为云安全合规检查未通过, 存在FAIL级别风险"
+            exit 1
+          fi
+          echo "合规检查通过"
       - name: Upload Scan Reports
         uses: actions/upload-artifact@v4
         if: always()
@@ -42,5 +68,7 @@ jobs:
           name: owasp-scan-reports
           path: |
             probe-report-*.json
+            scan-*.sarif.json
+            compliance-*.json
             lint-report-*.json
           retention-days: 30
