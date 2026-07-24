@@ -1,18 +1,18 @@
-"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(52个Tools)
+"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(53个Tools)
 
 参考:
 - MCP官方规范 (https://modelcontextprotocol.io)
 - claude-prompts MCP Server (https://github.com/minipuft/claude-prompts)
 - mcp-server-langfuse (https://github.com/langfuse/mcp-server-langfuse)
 
-暴露的MCP Tools (52个):
+暴露的MCP Tools (53个):
 - Lint/Scan: prompt_lint(130规则), prompt_scan, prompt_judge, prompt_canary_inject/check
 - 评估: prompt_evaluate(80维度), prompt_scorecard, prompt_dataset_run, eval_matrix
 - 安全引擎: prompt_engine(5层融合), prompt_badge, prompt_token_analyze
 - 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan(15 Probes, 8 Detectors)
 - 编译/优化: prompt_compile, prompt_gepa_optimize, prompt_auto_optimize, prompt_sanitize
 - 版本/缓存: prompt_version_save/list, prompt_cache_stats/lookup/invalidate
-- 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge
+- 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge, prompt_semantic_diff
 - 华为云: huaweicloud_modelarts_deploy/infer, huaweicloud_obs_upload/ecs_info/iam_auth, huaweicloud_compliance
 - 盘古: pangu_compat_check, pangu_safety_audit
 - 其他: prompt_template_render, prompt_doctor, prompt_trace_export, prompt_contest_eval...
@@ -700,6 +700,18 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "prompt_semantic_diff",
+            "description": "Prompt语义差异对比: 按段(角色/约束/安全/示例)独立比较, 安全策略变更=critical, 支持结构化变更摘要",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "old_text": {"type": "string", "description": "旧版Prompt文本"},
+                    "new_text": {"type": "string", "description": "新版Prompt文本"},
+                },
+                "required": ["old_text", "new_text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -826,6 +838,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "probe_owasp_summary": _tool_probe_owasp_summary,
             "probe_ethics_scan": _tool_probe_ethics_scan,
             "huaweicloud_compliance": _tool_huaweicloud_compliance,
+            "prompt_semantic_diff": _tool_prompt_semantic_diff,
         }
     return _TOOL_DISPATCH
 
@@ -2109,6 +2122,16 @@ def _tool_huaweicloud_compliance(args: dict[str, Any]) -> dict[str, Any]:
     if struct_f:
         all_findings.append(struct_f)
     report = compute_huaweicloud_compliance(all_findings, template_id=template_id, owasp_compliance_pct=owasp_pct)
+    return report.to_dict()
+
+
+def _tool_prompt_semantic_diff(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_diff import semantic_diff
+    old_text = args.get("old_text", "")
+    new_text = args.get("new_text", "")
+    if not old_text or not new_text:
+        return {"error": "old_text and new_text are required"}
+    report = semantic_diff(old_text, new_text)
     return report.to_dict()
 
 

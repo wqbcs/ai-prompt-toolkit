@@ -67,7 +67,7 @@ def _generate_sarif(results: list, target: str) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 52 MCP工具 | 15 Probes | 8 Detectors | 15内置模板")
+@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 53 MCP工具 | 15 Probes | 8 Detectors | 18内置模板")
 def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
