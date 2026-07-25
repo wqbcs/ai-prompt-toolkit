@@ -9,7 +9,7 @@
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-130-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-80-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-53-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
-[![Probes](https://img.shields.io/badge/Probes-15-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+[![Probes](https://img.shields.io/badge/Probes-20-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 
 ## 项目简介
 
@@ -23,10 +23,10 @@
 | **评估维度** | 80 | D01-D80，6大类(structure/quality/security/performance/fairness/toolchain) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
-| **红队探针** | 15 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer |
-| **红队检测器** | 8 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝 |
+| **红队探针** | 20 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗 |
+| **红队检测器** | 9 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常 |
 | **MCP工具** | 53 | 完整MCP Server，字典O(1)路由 |
-| **LLM Provider** | 21 | OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等 |
+| **LLM Provider** | 20 | OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古/华为云ModelArts等 |
 | **内置模板** | 18 | 华为云/鸿蒙/盘古5/通用QA等 |
 | **Prompt消毒** | 8层 | 注入/PII/Unicode/供应链/结构/编码/格式/语言 |
 
