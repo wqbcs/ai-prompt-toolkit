@@ -16,10 +16,10 @@ from ai_prompt_toolkit.probe_framework import (
 
 class TestAgenticProbes:
     def test_probe_registry_count(self):
-        assert len(_PROBE_REGISTRY) == 20
+        assert len(_PROBE_REGISTRY) == 23
 
     def test_detector_registry_count(self):
-        assert len(_DETECTOR_REGISTRY) == 9
+        assert len(_DETECTOR_REGISTRY) == 11
 
     def test_agent_inject_probe(self):
         p = AgentInjectProbe()

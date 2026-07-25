@@ -627,8 +627,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option("--config", help="Lint配置YAML文件路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "table"]),
-              default="cli", help="输出格式")
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "table", "yaml", "csv"]),
+              default="cli", help="输出格式(json/html/cli/sarif/table/yaml/csv)")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")

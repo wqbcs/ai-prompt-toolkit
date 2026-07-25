@@ -251,6 +251,10 @@ _PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
     ProviderType.BAIDU: "https://qianfan.baidubce.com/v2",
     ProviderType.MINIMAX: "https://api.minimax.chat/v1",
     ProviderType.HUAWEI_MODELARTS: "https://infer.cn-north-4.myhuaweicloud.com",
+    ProviderType.DOUBAO: "https://ark.cn-beijing.volces.com/api/v3",
+    ProviderType.SPARK: "https://spark-api-open.xf-yun.com/v1",
+    ProviderType.BAICHUAN: "https://api.baichuan-ai.com/v1",
+    ProviderType.SENSENOVA: "https://api.sensenova.cn/v1",
 }
 
 _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
@@ -274,6 +278,10 @@ _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
     ProviderType.BAIDU: "BAIDU_API_KEY",
     ProviderType.MINIMAX: "MINIMAX_API_KEY",
     ProviderType.HUAWEI_MODELARTS: "HUAWEI_CLOUD_AK",
+    ProviderType.DOUBAO: "DOUBAO_API_KEY",
+    ProviderType.SPARK: "SPARK_API_KEY",
+    ProviderType.BAICHUAN: "BAICHUAN_API_KEY",
+    ProviderType.SENSENOVA: "SENSENOVA_API_KEY",
 }
 
 

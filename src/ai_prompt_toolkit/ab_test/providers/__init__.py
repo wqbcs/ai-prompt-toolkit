@@ -40,6 +40,10 @@ _PROVIDER_TYPE_MAP: dict[str, ProviderType] = {
     "BaiduProvider": ProviderType.BAIDU,
     "MiniMaxProvider": ProviderType.MINIMAX,
     "HuaweiModelArtsProvider": ProviderType.HUAWEI_MODELARTS,
+    "DoubaoProvider": ProviderType.DOUBAO,
+    "SparkProvider": ProviderType.SPARK,
+    "BaichuanProvider": ProviderType.BAICHUAN,
+    "SenseNovaProvider": ProviderType.SENSENOVA,
 }
 
 

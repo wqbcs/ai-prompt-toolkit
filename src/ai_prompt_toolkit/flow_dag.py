@@ -156,6 +156,92 @@ class FlowDAG:
     def get_successors(self, node_name: str) -> list[str]:
         return self._adjacency.get(node_name, [])
 
+    _NODE_COLORS: dict[NodeType, str] = {
+        NodeType.PROMPT: "#4A90D9",
+        NodeType.LLM: "#7B68EE",
+        NodeType.PYTHON: "#F5A623",
+        NodeType.CONDITION: "#E67E22",
+        NodeType.AGGREGATE: "#27AE60",
+        NodeType.LINT: "#E74C3C",
+        NodeType.SCAN: "#C0392B",
+        NodeType.GEPA: "#8E44AD",
+    }
+
+    def to_svg(self, width: int = 1200, height: int = 800) -> str:
+        order = self.topological_sort()
+        layers: dict[str, int] = {}
+        for node_name in order:
+            preds = [e.source for e in self.edges if e.target == node_name]
+            if not preds:
+                layers[node_name] = 0
+            else:
+                layers[node_name] = max(layers.get(p, 0) for p in preds) + 1
+
+        max_layer = max(layers.values()) if layers else 0
+        layer_nodes: dict[int, list[str]] = {}
+        for name, layer in layers.items():
+            layer_nodes.setdefault(layer, []).append(name)
+
+        node_width = 180
+        node_height = 56
+        layer_spacing = (width - node_width) / max(max_layer, 1) if max_layer > 0 else 0
+        positions: dict[str, tuple[float, float]] = {}
+        for layer_idx, nodes_in_layer in layer_nodes.items():
+            total_height = len(nodes_in_layer) * (node_height + 20) - 20
+            start_y = (height - total_height) / 2
+            for i, name in enumerate(nodes_in_layer):
+                x = layer_idx * layer_spacing + 40
+                y = start_y + i * (node_height + 20)
+                positions[name] = (x, y)
+
+        lines: list[str] = []
+        lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+        lines.append(f'<rect width="{width}" height="{height}" fill="#1a1a2e" rx="8"/>')
+
+        if self.name:
+            lines.append(f'<text x="{width/2}" y="30" text-anchor="middle" fill="#e0e0e0" font-family="monospace" font-size="16" font-weight="bold">{_svg_escape(self.name)}</text>')
+
+        for edge in self.edges:
+            if edge.source in positions and edge.target in positions:
+                sx, sy = positions[edge.source]
+                tx, ty = positions[edge.target]
+                x1 = sx + node_width
+                y1 = sy + node_height / 2
+                x2 = tx
+                y2 = ty + node_height / 2
+                mx = (x1 + x2) / 2
+                lines.append(f'<path d="M{x1},{y1} C{mx},{y1} {mx},{y2} {x2},{y2}" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>')
+                if edge.condition:
+                    cond_text = _svg_escape(edge.condition[:20])
+                    lines.append(f'<text x="{mx}" y="{(y1+y2)/2 - 8}" text-anchor="middle" fill="#888" font-family="monospace" font-size="9">{cond_text}</text>')
+
+        lines.append('<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#555"/></marker></defs>')
+
+        for name, (x, y) in positions.items():
+            node = self.nodes[name]
+            color = self._NODE_COLORS.get(node.node_type, "#4A90D9")
+            lines.append(f'<rect x="{x}" y="{y}" width="{node_width}" height="{node_height}" rx="6" fill="{color}" opacity="0.9"/>')
+            label = _svg_escape(name[:18])
+            type_label = _svg_escape(node.node_type.value)
+            lines.append(f'<text x="{x + node_width/2}" y="{y + 22}" text-anchor="middle" fill="white" font-family="monospace" font-size="12" font-weight="bold">{label}</text>')
+            lines.append(f'<text x="{x + node_width/2}" y="{y + 40}" text-anchor="middle" fill="#ddd" font-family="monospace" font-size="10">{type_label}</text>')
+
+        lines.append('</svg>')
+        return '\n'.join(lines)
+
+    def to_dot(self) -> str:
+        lines = [f'digraph "{_dot_escape(self.name)}" {{']
+        lines.append('  rankdir=LR;')
+        lines.append('  node [shape=box, style="rounded,filled", fontname="monospace"];')
+        for name, node in self.nodes.items():
+            color = self._NODE_COLORS.get(node.node_type, "#4A90D9")
+            lines.append(f'  "{_dot_escape(name)}" [label="{_dot_escape(name)}\\n{_dot_escape(node.node_type.value)}", fillcolor="{color}", fontcolor="white"];')
+        for edge in self.edges:
+            cond = f' [label="{_dot_escape(edge.condition)}"]' if edge.condition else ''
+            lines.append(f'  "{_dot_escape(edge.source)}" -> "{_dot_escape(edge.target)}"{cond};')
+        lines.append('}')
+        return '\n'.join(lines)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
@@ -323,6 +409,162 @@ class FlowExecutor:
         return {"output": inputs}
 
 
+class InteractiveFlowExecutor:
+    def __init__(self, flow: FlowDAG) -> None:
+        self.flow = flow
+        self._context: dict[str, Any] = {}
+        self._step_index: int = 0
+        self._order: list[str] = []
+        self._execution: FlowExecution | None = None
+        self._start_time: float = 0.0
+        self._paused: bool = False
+
+    def start(self, initial_inputs: dict[str, Any] | None = None) -> dict[str, Any]:
+        self._context = {"$inputs": initial_inputs or {}}
+        try:
+            self._order = self.flow.topological_sort()
+        except ValueError as e:
+            return {"status": "error", "error": str(e)}
+        self._step_index = 0
+        self._execution = FlowExecution(flow_name=self.flow.name)
+        self._start_time = time.perf_counter()
+        self._paused = False
+        return {
+            "status": "started",
+            "flow_name": self.flow.name,
+            "total_steps": len(self._order),
+            "nodes": self._order,
+        }
+
+    def step(self) -> dict[str, Any]:
+        if self._execution is None:
+            return {"status": "not_started", "error": "Call start() first"}
+        if self._step_index >= len(self._order):
+            return {"status": "completed", "execution": self._execution.to_dict()}
+        if self._paused:
+            return {"status": "paused", "step": self._step_index}
+
+        node_name = self._order[self._step_index]
+        node = self.flow.nodes[node_name]
+        node_start = time.perf_counter()
+
+        try:
+            resolved = self._resolve_inputs(node)
+            output = self._execute_node(node, resolved)
+            self._context[node_name] = output
+            elapsed = (time.perf_counter() - node_start) * 1000
+            result = FlowResult(
+                node_name=node_name,
+                output=output,
+                status="success",
+                execution_time_ms=elapsed,
+            )
+            self._execution.results[node_name] = result
+        except Exception as e:
+            elapsed = (time.perf_counter() - node_start) * 1000
+            result = FlowResult(
+                node_name=node_name,
+                status="error",
+                error=str(e),
+                execution_time_ms=elapsed,
+            )
+            self._execution.results[node_name] = result
+
+        self._step_index += 1
+        progress = self._step_index / len(self._order)
+        return {
+            "status": "step_completed",
+            "node": node_name,
+            "result": result.to_dict(),
+            "progress": round(progress, 2),
+            "completed_steps": self._step_index,
+            "total_steps": len(self._order),
+        }
+
+    def run_all(self) -> dict[str, Any]:
+        result = self.start()
+        if result["status"] == "error":
+            return result
+        while self._step_index < len(self._order):
+            step_result = self.step()
+            if step_result.get("result", {}).get("status") == "error":
+                return step_result
+        return self.get_status()
+
+    def pause(self) -> dict[str, Any]:
+        self._paused = True
+        return {"status": "paused", "step": self._step_index}
+
+    def resume(self) -> dict[str, Any]:
+        self._paused = False
+        return {"status": "resumed", "step": self._step_index}
+
+    def get_status(self) -> dict[str, Any]:
+        if self._execution is None:
+            return {"status": "not_started"}
+        total_elapsed = (time.perf_counter() - self._start_time) * 1000
+        self._execution.total_time_ms = total_elapsed
+        self._execution.status = (
+            "success" if all(r.status == "success" for r in self._execution.results.values())
+            else ("partial" if self._step_index < len(self._order) else "error")
+        )
+        return {
+            "status": "completed" if self._step_index >= len(self._order) else "in_progress",
+            "execution": self._execution.to_dict(),
+            "progress": round(self._step_index / max(len(self._order), 1), 2),
+        }
+
+    def _resolve_inputs(self, node: FlowNode) -> dict[str, Any]:
+        resolved = {}
+        for key, value in node.inputs.items():
+            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+                ref = value[2:-1]
+                parts = ref.split(".")
+                if len(parts) >= 1 and parts[0] in self._context:
+                    val = self._context[parts[0]]
+                    for part in parts[1:]:
+                        if isinstance(val, dict):
+                            val = val.get(part)
+                        else:
+                            val = getattr(val, part, None)
+                        if val is None:
+                            break
+                    resolved[key] = val
+                else:
+                    resolved[key] = value
+            else:
+                resolved[key] = value
+        return resolved
+
+    def _execute_node(self, node: FlowNode, inputs: dict[str, Any]) -> Any:
+        if node.node_type == NodeType.PROMPT:
+            template = node.config.get("template", "")
+            for key, value in inputs.items():
+                template = template.replace(f"{{{{{key}}}}}", str(value))
+            return {"rendered": template}
+        elif node.node_type == NodeType.LINT:
+            from ai_prompt_toolkit.linter.linter import PromptLinter
+            text = inputs.get("text", inputs.get("rendered", ""))
+            linter = PromptLinter()
+            result = linter.lint(node.name, str(text))
+            return {"score": result.score, "findings_count": len(result.findings)}
+        elif node.node_type == NodeType.SCAN:
+            from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+            text = inputs.get("text", inputs.get("rendered", ""))
+            detector = InjectionDetector()
+            results = detector.detect(str(text), template_id=node.name)
+            return {"injection_count": len(results) if isinstance(results, list) else 0}
+        elif node.node_type == NodeType.CONDITION:
+            condition = node.config.get("expression", "")
+            value = inputs.get("value", inputs.get("score", 0))
+            if isinstance(value, (int, float)):
+                threshold = node.config.get("threshold", 0)
+                return {"passed": value >= threshold, "value": value}
+        elif node.node_type == NodeType.AGGREGATE:
+            return dict(inputs)
+        return {"output": inputs}
+
+
 def create_lint_scan_flow(name: str = "lint-scan-flow") -> FlowDAG:
     dag = FlowDAG(name=name)
     dag.add_node(FlowNode(name="input", node_type=NodeType.PROMPT, config={"template": "{{text}}"}, inputs={"text": "${$inputs.text}"}))
@@ -347,3 +589,67 @@ def create_gepa_optimize_flow(name: str = "gepa-optimize-flow") -> FlowDAG:
     dag.add_edge("lint_before", "aggregate")
     dag.add_edge("gepa", "aggregate")
     return dag
+
+
+class PromptChain:
+    def __init__(self, name: str = "") -> None:
+        self.name = name
+        self._steps: list[dict[str, Any]] = []
+        self._mode: str = "sequential"
+
+    def sequential(self, *node_names: str) -> PromptChain:
+        self._mode = "sequential"
+        for name in node_names:
+            self._steps.append({"name": name, "mode": "sequential"})
+        return self
+
+    def parallel(self, *node_names: str) -> PromptChain:
+        self._mode = "parallel"
+        for name in node_names:
+            self._steps.append({"name": name, "mode": "parallel"})
+        return self
+
+    def conditional(self, node_name: str, condition: str, true_branch: str, false_branch: str) -> PromptChain:
+        self._steps.append({
+            "name": node_name,
+            "mode": "conditional",
+            "condition": condition,
+            "true_branch": true_branch,
+            "false_branch": false_branch,
+        })
+        return self
+
+    def build(self) -> FlowDAG:
+        dag = FlowDAG(name=self.name)
+        for step in self._steps:
+            node_type = NodeType.CONDITION if step["mode"] == "conditional" else NodeType.PROMPT
+            config: dict[str, Any] = {}
+            if step["mode"] == "conditional":
+                config["expression"] = step.get("condition", "")
+            dag.add_node(FlowNode(name=step["name"], node_type=node_type, config=config))
+
+        sequential_steps = [s for s in self._steps if s["mode"] == "sequential"]
+        for i in range(len(sequential_steps) - 1):
+            dag.add_edge(sequential_steps[i]["name"], sequential_steps[i + 1]["name"])
+
+        parallel_steps = [s for s in self._steps if s["mode"] == "parallel"]
+        if len(parallel_steps) >= 2:
+            join_name = f"{parallel_steps[0]['name']}_join"
+            dag.add_node(FlowNode(name=join_name, node_type=NodeType.AGGREGATE))
+            for step in parallel_steps:
+                dag.add_edge(step["name"], join_name)
+
+        for step in self._steps:
+            if step["mode"] == "conditional":
+                dag.add_edge(step["name"], step["true_branch"], condition="true")
+                dag.add_edge(step["name"], step["false_branch"], condition="false")
+
+        return dag
+
+
+def _svg_escape(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _dot_escape(text: str) -> str:
+    return text.replace('"', '\\"').replace("\n", "\\n")

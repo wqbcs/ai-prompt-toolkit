@@ -27,6 +27,10 @@ class ProviderType(Enum):
     BAIDU = "baidu"
     MINIMAX = "minimax"
     HUAWEI_MODELARTS = "huawei_modelarts"
+    DOUBAO = "doubao"
+    SPARK = "spark"
+    BAICHUAN = "baichuan"
+    SENSENOVA = "sensenova"
 
 
 class TestStatus(Enum):

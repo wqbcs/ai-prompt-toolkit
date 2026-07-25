@@ -6,10 +6,10 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-42.0.0-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-2674%20passed-brightgreen.svg)](tests/)
-[![Lint Rules](https://img.shields.io/badge/Lint_Rules-130-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Lint Rules](https://img.shields.io/badge/Lint_Rules-140-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-80-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-53-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
-[![Probes](https://img.shields.io/badge/Probes-20-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+[![Probes](https://img.shields.io/badge/Probes-23-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 
 ## 项目简介
 
@@ -19,14 +19,14 @@
 
 | 能力 | 数量 | 详情 |
 |------|------|------|
-| **Lint规则** | 130 | P001-P130，71条可自动修复 |
+| **Lint规则** | 140 | P001-P140，71条可自动修复，含10条多模态专项规则(P131-P140) |
 | **评估维度** | 80 | D01-D80，6大类(structure/quality/security/performance/fairness/toolchain) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
-| **红队探针** | 20 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗 |
-| **红队检测器** | 9 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常 |
+| **红队探针** | 23 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗/图像注入/音频注入/跨模态泄露 |
+| **红队检测器** | 11 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常/多模态输出检测/链式攻击检测 |
 | **MCP工具** | 53 | 完整MCP Server，字典O(1)路由 |
-| **LLM Provider** | 20 | OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古/华为云ModelArts等 |
+| **LLM Provider** | 24 | OpenAI/Claude/DeepSeek/通义千问/智谱/Moonshot/百度/MiniMax/华为/盘古/ModelArts/豆包/星火/百川/商汤等 |
 | **内置模板** | 18 | 华为云/鸿蒙/盘古5/通用QA等 |
 | **Prompt消毒** | 8层 | 注入/PII/Unicode/供应链/结构/编码/格式/语言 |
 

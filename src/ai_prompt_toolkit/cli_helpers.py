@@ -84,6 +84,27 @@ def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> N
         md = _generate_markdown_report(data)
         with open(p, "w", encoding="utf-8") as f:
             f.write(md)
+    elif fmt == "yaml":
+        import yaml
+        with open(p, "w", encoding="utf-8") as f:
+            yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+    elif fmt == "csv":
+        _generate_csv_report(data, p)
+
+
+def _generate_csv_report(data: dict[str, Any], path: Path) -> None:
+    import csv
+    results = data.get("results", [])
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["template_id", "rule_id", "severity", "description"])
+        for r in results:
+            tid = r.get("template_id", "")
+            for finding in r.get("findings", []):
+                sev = finding.get("severity", "")
+                if hasattr(sev, "value"):
+                    sev = sev.value
+                writer.writerow([tid, finding.get("rule_id", ""), sev, finding.get("description", "")])
 
 
 def _generate_html_report(data: dict[str, Any]) -> str:

@@ -153,7 +153,7 @@ class TestRefusalDetector:
 
 class TestRegistryCounts:
     def test_probe_count(self):
-        assert len(_PROBE_REGISTRY) == 20
+        assert len(_PROBE_REGISTRY) == 23
 
     def test_detector_count(self):
-        assert len(_DETECTOR_REGISTRY) == 9
+        assert len(_DETECTOR_REGISTRY) == 11
