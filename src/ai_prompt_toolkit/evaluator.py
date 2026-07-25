@@ -672,98 +672,203 @@ class _DimensionEvaluator:
 
     def _eval_toolchain(self, dim_id: str) -> float:
         if dim_id == "D41":
-            has_import = self._has_pattern(r"import|from|require|依赖")
-            has_api_ref = self._has_pattern(r"API|SDK|\.py|\.ts|\.js|\.go")
-            score = 4.0
-            if has_import:
+            score = 2.0
+            if self._has_pattern(r"import|from|require|依赖|SDK"):
                 score += 3.0
-            if has_api_ref:
+            if self._has_pattern(r"API|\.py|\.ts|\.js|\.go|\.dart"):
                 score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"包管理|package.?manage|pip|npm|pub"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D42":
-            has_endpoint = self._has_pattern(r"https?://|endpoint|API|api_key|url")
-            has_provider = self._has_pattern(r"provider|openai|claude|qwen|pangu|deepseek")
-            score = 3.0
-            if has_endpoint:
+            score = 2.0
+            if self._has_pattern(r"https?://|endpoint|API|api_key|url|服务地址"):
                 score += 3.0
-            if has_provider:
-                score += 4.0
-            return min(10.0, score)
+            if self._has_pattern(r"provider|openai|claude|qwen|pangu|deepseek|模型"):
+                score += 3.0
+            if self._has_pattern(r"认证|auth|AK|SK|token|凭证"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D43":
-            return 7.0 if self._has_pattern(r"依赖|require|import") else 4.0
+            score = 2.0
+            if self._has_pattern(r"依赖|require|import|第三方"):
+                score += 4.0
+            if self._has_pattern(r"版本.*锁定|pin|lock|freeze|固定版本"):
+                score += 2.0
+            if self._has_pattern(r"安全.*审计|audit|漏洞|CVE|vulnerability"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D44":
-            return 8.0 if self._has_pattern(r"ENV|environment|环境变量") else 4.0
+            score = 2.0
+            if self._has_pattern(r"ENV|environment|环境变量|\$\{.*\}"):
+                score += 4.0
+            if self._has_pattern(r"配置文件|config|\.env|setting|TOML|YAML"):
+                score += 2.0
+            if self._stat("has_variables"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D45":
-            return 7.0 if self._has_pattern(r"version|版本|v\d") else 3.0
+            score = 2.0
+            if self._has_pattern(r"version|版本|v\d"):
+                score += 4.0
+            if self._has_pattern(r"变更.*日志|changelog|release.*note"):
+                score += 2.0
+            if self._has_pattern(r"语义版本|semver|兼容.*性"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D46":
-            has_gate = self._has_pattern(r"quality.?gate|门禁|lint|score|评分")
-            has_ci = self._has_pattern(r"CI|github|workflow|pipeline")
-            score = 4.0
-            if has_gate:
+            score = 2.0
+            if self._has_pattern(r"quality.?gate|门禁|lint|score|评分"):
                 score += 3.0
-            if has_ci:
+            if self._has_pattern(r"CI|github|workflow|pipeline"):
                 score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"PASS|WARN|FAIL|阈值|threshold"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D47":
-            has_scan = self._has_pattern(r"scan|安全扫描|injection|注入|PII|脱敏")
-            has_compliance = self._has_pattern(r"合规|OWASP|compliance|GDPR")
-            score = 3.0
-            if has_scan:
+            score = 2.0
+            if self._has_pattern(r"scan|安全扫描|injection|注入|PII|脱敏"):
                 score += 4.0
-            if has_compliance:
-                score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"合规|OWASP|compliance|GDPR"):
+                score += 2.0
+            if self._has_pattern(r"红队|redteam|probe|对抗"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D48":
-            return 7.0 if self._has_pattern(r"{{#if", r"{{/if}}") else 5.0
+            score = 2.0
+            if self._stat("has_conditions"):
+                score += 4.0
+            if self._has_pattern(r"\{\{#if", r"\{\{/if\}\}"):
+                score += 2.0
+            if self._has_pattern(r"条件.*编译|compile|model"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D49":
-            has_test_ref = self._has_pattern(r"测试|test|assert|验证|pytest|jest")
-            has_dataset = self._has_pattern(r"dataset|数据集|用例|test.?case")
-            score = 3.0
-            if has_test_ref:
-                score += 4.0
-            if has_dataset:
+            score = 2.0
+            if self._has_pattern(r"测试|test|assert|验证|pytest|jest"):
                 score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"dataset|数据集|用例|test.?case"):
+                score += 3.0
+            if self._has_pattern(r"覆盖.*率|coverage|边界.*测试|edge.?case"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D50":
-            return 7.0 if self._has_pattern(r"---", r"```") else 3.0
+            score = 2.0
+            if self._has_pattern(r"---", r"```"):
+                score += 4.0
+            if self._stat("has_variables"):
+                score += 2.0
+            if self._has_pattern(r"front.?matter|元数据|metadata"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D51":
-            has_ci = self._has_pattern(r"CI|CD|github|workflow|pipeline|jenkins")
-            has_auto = self._has_pattern(r"自动|automat|hook|trigger|trigger")
-            score = 3.0
-            if has_ci:
+            score = 2.0
+            if self._has_pattern(r"CI|CD|github|workflow|pipeline|jenkins"):
                 score += 4.0
-            if has_auto:
-                score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"自动|automat|hook|trigger"):
+                score += 2.0
+            if self._has_pattern(r"SARIF|code.?scanning|质量.*报告"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D52":
-            has_monitor = self._has_pattern(r"监控|monitor|日志|log|metric|指标")
-            has_alert = self._has_pattern(r"告警|alert|阈值|threshold|通知")
-            score = 3.0
-            if has_monitor:
+            score = 2.0
+            if self._has_pattern(r"监控|monitor|日志|log|metric|指标"):
                 score += 4.0
-            if has_alert:
-                score += 3.0
-            return min(10.0, score)
+            if self._has_pattern(r"告警|alert|阈值|threshold|通知"):
+                score += 2.0
+            if self._has_pattern(r"dashboard|仪表盘|grafana|prometheus"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D53":
-            return 8.0 if self._has_pattern(r"lint_score|lint") else 3.0
+            score = 2.0
+            if self._has_pattern(r"lint_score|lint|代码质量"):
+                score += 4.0
+            if self._has_pattern(r"P\d{3}|规则|rule|check"):
+                score += 2.0
+            if self._has_pattern(r"自动修复|auto.?fix|fixer"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D54":
-            return 8.0 if self._has_pattern(r"i18n_status|locale|translation") else 3.0
+            score = 2.0
+            if self._has_pattern(r"i18n|locale|translation|国际化|多语言"):
+                score += 4.0
+            if self._has_pattern(r"术语.*表|glossary|翻译.*一致"):
+                score += 2.0
+            if self._has_pattern(r"回退|fallback|默认.*语言"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D55":
-            return 8.0 if self._has_pattern(r"provider|api_key|PROMPT_CLI_REAL_API") else 3.0
+            score = 2.0
+            if self._has_pattern(r"provider|api_key|PROMPT_CLI_REAL_API|模型.*调用"):
+                score += 4.0
+            if self._has_pattern(r"重试|retry|超时|timeout|降级"):
+                score += 2.0
+            if self._has_pattern(r"负载均衡|load.?balanc|路由|routing"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D56":
-            return 7.0 if self._has_pattern(r"compile|scan|lint|ab-test|redteam|serve") else 3.0
+            score = 2.0
+            if self._has_pattern(r"compile|scan|lint|ab-test|redteam|serve"):
+                score += 4.0
+            if self._has_pattern(r"prompt-cli|CLI|命令行"):
+                score += 2.0
+            if self._has_pattern(r"MCP|JSON.?RPC|工具.*调用"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D57":
-            return 7.0 if self._has_pattern(r"playground|/api/compile|WebSocket") else 3.0
+            score = 2.0
+            if self._has_pattern(r"playground|/api/compile|WebSocket|交互"):
+                score += 4.0
+            if self._has_pattern(r"实时|real.?time|预览|preview"):
+                score += 2.0
+            if self._has_pattern(r"浏览器|browser|UI|可视化"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D58":
-            return 7.0 if self._has_pattern(r"github|workflows|quality-gate|CI") else 3.0
+            score = 2.0
+            if self._has_pattern(r"github|workflows|quality-gate|CI"):
+                score += 4.0
+            if self._has_pattern(r"SARIF|codeql|security.*scan"):
+                score += 2.0
+            if self._has_pattern(r"merge.*request|pull.*request|branch"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D59":
-            return 8.0 if self._has_pattern(r"template_type|knowledge|prompt") else 4.0
+            score = 2.0
+            if self._has_pattern(r"template_type|knowledge|prompt|模板"):
+                score += 4.0
+            if self._has_pattern(r"分类|category|标签|tag"):
+                score += 2.0
+            if self._has_pattern(r"版本.*管理|version.*manage|发布|publish"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D60":
-            return 8.0 if self._has_pattern(r"market_status|i18n_status|lint_score") else 3.0
+            score = 2.0
+            if self._has_pattern(r"market_status|i18n_status|lint_score|评分"):
+                score += 4.0
+            if self._has_pattern(r"趋势|trend|历史|history|对比"):
+                score += 2.0
+            if self._has_pattern(r"dashboard|面板|统计|statistic"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D61":
-            return 7.0 if self._has_pattern(r"vscode|extension|CodeActions") else 3.0
+            score = 2.0
+            if self._has_pattern(r"vscode|extension|CodeActions|插件"):
+                score += 4.0
+            if self._has_pattern(r"LSP|language.*server|诊断|diagnostic"):
+                score += 2.0
+            if self._has_pattern(r"语法高亮|syntax.*highlight|自动补全|autocomplete"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D62":
-            return 7.0 if self._has_pattern(r"init|onboarding|引导") else 3.0
+            score = 2.0
+            if self._has_pattern(r"init|onboarding|引导|wizard|快速开始"):
+                score += 4.0
+            if self._has_pattern(r"doctor|健康.*检查|配置.*验证"):
+                score += 2.0
+            if self._has_pattern(r"示例|example|demo|教程|tutorial"):
+                score += 2.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_fairness(self, dim_id: str) -> float:

@@ -383,7 +383,7 @@ function updateEvalUI(score,dimScores){
   const scoreEl=document.getElementById('eval-score'),dimsEl=document.getElementById('eval-dims'),radarEl=document.getElementById('eval-radar'),statusEl=document.getElementById('eval-status');
   scoreEl.textContent=score.toFixed(1);
   scoreEl.style.color=score>=80?'#22c55e':score>=60?'#f59e0b':'#ef4444';
-  statusEl.textContent='62维度评估';
+  statusEl.textContent='80维度评估';
   const entries=Object.entries(dimScores);
   if(!entries.length){dimsEl.innerHTML='<p style="font-size:11px;color:var(--text2)">无维度数据</p>';return}
   dimsEl.innerHTML=entries.map(([k,v])=>`<div class="eval-dim"><span>${k}</span><span style="font-weight:600;color:${v>=8?'#22c55e':v>=5?'#f59e0b':'#ef4444'}">${v.toFixed(1)}</span></div>`).join('');
