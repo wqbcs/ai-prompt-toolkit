@@ -93,6 +93,11 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D78", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt的国际化/本地化支持完备度"},
     {"id": "D79", "name": "盘古模型适配度", "category": "toolchain", "weight": 0.9, "description": "Prompt对华为云盘古大模型的适配和优化程度"},
     {"id": "D80", "name": "鸿蒙场景贴合度", "category": "toolchain", "weight": 1.0, "description": "Prompt对鸿蒙HarmonyOS NEXT场景的专业贴合度"},
+    {"id": "D81", "name": "多模态一致性", "category": "quality", "weight": 0.9, "description": "多模态Prompt各模态输出(文本/图像/音频)的语义一致性"},
+    {"id": "D82", "name": "跨语言一致性", "category": "quality", "weight": 0.8, "description": "多语言Prompt各语言版本的功能和语义一致性"},
+    {"id": "D83", "name": "Agent对齐度", "category": "security", "weight": 1.0, "description": "Agent Prompt的目标对齐度，防止目标劫持和权限越界"},
+    {"id": "D84", "name": "合规度", "category": "security", "weight": 1.0, "description": "Prompt对等保2.0/GDPR/华为云安全基线的合规程度"},
+    {"id": "D85", "name": "可观测性", "category": "toolchain", "weight": 0.8, "description": "Prompt执行链路的可追踪/可监控/可告警能力"},
 ]
 
 

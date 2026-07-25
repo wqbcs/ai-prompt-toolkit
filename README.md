@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/Version-42.0.0-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-2674%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-140-blue.svg)](src/ai_prompt_toolkit/linter/)
-[![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-80-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
+[![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-85-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-53-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-23-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 

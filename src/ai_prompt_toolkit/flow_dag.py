@@ -33,6 +33,7 @@ class NodeType(Enum):
     LINT = "lint"
     SCAN = "scan"
     GEPA = "gepa"
+    EVALUATE = "evaluate"
 
 
 @dataclass
@@ -165,6 +166,7 @@ class FlowDAG:
         NodeType.LINT: "#E74C3C",
         NodeType.SCAN: "#C0392B",
         NodeType.GEPA: "#8E44AD",
+        NodeType.EVALUATE: "#3498DB",
     }
 
     def to_svg(self, width: int = 1200, height: int = 800) -> str:
@@ -363,6 +365,13 @@ class FlowExecutor:
             result = linter.lint(node.name, str(text))
             return {"score": result.score, "findings_count": len(result.findings)}
 
+        elif node.node_type == NodeType.EVALUATE:
+            from ai_prompt_toolkit.evaluator import PromptEvaluator
+            text = inputs.get("text", inputs.get("rendered", ""))
+            evaluator = PromptEvaluator()
+            eval_result = evaluator.evaluate(node.name, str(text))
+            return {"overall_score": eval_result.overall_score if hasattr(eval_result, 'overall_score') else 0.0, "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, 'dimensions') else 0}
+
         elif node.node_type == NodeType.SCAN:
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
             text = inputs.get("text", inputs.get("rendered", ""))
@@ -418,6 +427,36 @@ class InteractiveFlowExecutor:
         self._execution: FlowExecution | None = None
         self._start_time: float = 0.0
         self._paused: bool = False
+        self._snapshots: list[dict[str, Any]] = []
+
+    def _save_snapshot(self) -> None:
+        self._snapshots.append({
+            "step_index": self._step_index,
+            "context": {k: (v if not isinstance(v, dict) else dict(v)) for k, v in self._context.items()},
+        })
+
+    def rollback(self, step_index: int) -> dict[str, Any]:
+        if not self._snapshots:
+            return {"status": "error", "error": "No snapshots available"}
+        target = None
+        for snap in self._snapshots:
+            if snap["step_index"] <= step_index:
+                target = snap
+        if target is None:
+            return {"status": "error", "error": f"No snapshot found for step {step_index}"}
+        self._step_index = target["step_index"]
+        self._context = dict(target["context"])
+        self._snapshots = [s for s in self._snapshots if s["step_index"] <= step_index]
+        if self._execution:
+            for node_name in list(self._execution.results.keys()):
+                order_idx = self._order.index(node_name) if node_name in self._order else -1
+                if order_idx >= self._step_index:
+                    del self._execution.results[node_name]
+        self._paused = False
+        return {"status": "rolled_back", "step": self._step_index}
+
+    def list_snapshots(self) -> list[dict[str, Any]]:
+        return [{"step_index": s["step_index"], "context_keys": list(s["context"].keys())} for s in self._snapshots]
 
     def start(self, initial_inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         self._context = {"$inputs": initial_inputs or {}}
@@ -471,6 +510,7 @@ class InteractiveFlowExecutor:
             self._execution.results[node_name] = result
 
         self._step_index += 1
+        self._save_snapshot()
         progress = self._step_index / len(self._order)
         return {
             "status": "step_completed",
@@ -548,6 +588,12 @@ class InteractiveFlowExecutor:
             linter = PromptLinter()
             result = linter.lint(node.name, str(text))
             return {"score": result.score, "findings_count": len(result.findings)}
+        elif node.node_type == NodeType.EVALUATE:
+            from ai_prompt_toolkit.evaluator import PromptEvaluator
+            text = inputs.get("text", inputs.get("rendered", ""))
+            evaluator = PromptEvaluator()
+            eval_result = evaluator.evaluate(node.name, str(text))
+            return {"overall_score": eval_result.overall_score if hasattr(eval_result, 'overall_score') else 0.0, "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, 'dimensions') else 0}
         elif node.node_type == NodeType.SCAN:
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
             text = inputs.get("text", inputs.get("rendered", ""))
@@ -621,12 +667,23 @@ class PromptChain:
 
     def build(self) -> FlowDAG:
         dag = FlowDAG(name=self.name)
+        all_node_names = set()
         for step in self._steps:
-            node_type = NodeType.CONDITION if step["mode"] == "conditional" else NodeType.PROMPT
-            config: dict[str, Any] = {}
+            all_node_names.add(step["name"])
             if step["mode"] == "conditional":
-                config["expression"] = step.get("condition", "")
-            dag.add_node(FlowNode(name=step["name"], node_type=node_type, config=config))
+                all_node_names.add(step.get("true_branch", ""))
+                all_node_names.add(step.get("false_branch", ""))
+
+        for name in all_node_names:
+            if not name:
+                continue
+            is_cond = any(s["mode"] == "conditional" and s["name"] == name for s in self._steps)
+            node_type = NodeType.CONDITION if is_cond else NodeType.PROMPT
+            config: dict[str, Any] = {}
+            if is_cond:
+                cond_step = next(s for s in self._steps if s["name"] == name)
+                config["expression"] = cond_step.get("condition", "")
+            dag.add_node(FlowNode(name=name, node_type=node_type, config=config))
 
         sequential_steps = [s for s in self._steps if s["mode"] == "sequential"]
         for i in range(len(sequential_steps) - 1):
