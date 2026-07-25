@@ -24,7 +24,7 @@ from ai_prompt_toolkit.cli_core import main
 def evaluate(target: str, dimensions: str | None, categories: str | None,
              threshold: float, fmt: str, output: str | None, quick: bool,
              save_history: bool) -> None:
-    """62维度质量评估：全面评估Prompt质量"""
+    """80维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip, resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template
 

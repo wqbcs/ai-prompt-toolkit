@@ -1881,30 +1881,21 @@ print('AK/SK认证初始化完成')
             "security": ["AK/SK务必存储在环境变量或密钥管理服务(DEW)中", "切勿将AK/SK硬编码或提交到代码仓库"],
         },
         "token": {
-            "description": "Token认证（适合临时调用）",
-            "code": f"""import requests
+            "description": "Token认证（推荐使用AK/SK+DEW替代密码方式）",
+            "code": f"""import os
+import requests
 
-url = "https://iam.{region}.myhuaweicloud.com/v3/auth/tokens"
-payload = {{
-    "auth": {{
-        "identity": {{
-            "methods": ["password"],
-            "password": {{
-                "user": {{
-                    "name": "$IAM_USER",
-                    "password": "$IAM_PASSWORD",
-                    "domain": {{"name": "$DOMAIN_NAME"}}
-                }}
-            }}
-        }},
-        "scope": {{"project": {{"name": "{region}"}}}}
-    }}
-}}
-resp = requests.post(url, json=payload)
-token = resp.headers.get('X-Subject-Token')
-print(f'Token获取成功，有效期至: {{resp.json()["token"]["expires_at"]}}')
+# 推荐方式: 使用AK/SK获取临时Token，而非密码
+ak = os.getenv('HWCLOUD_AK')
+sk = os.getenv('HWCLOUD_SK')
+
+# 如必须使用密码认证，请通过DEW(数据加密服务)获取加密存储的密码
+# 切勿在代码中明文存储密码
+from huaweicloudsdkcore.auth.credentials import BasicCredentials
+credentials = BasicCredentials(ak, sk, project_id='{region}')
+print('认证初始化完成，建议使用AK/SK而非密码方式')
 """,
-            "security": ["Token有效期24小时，需定时刷新", "建议使用IAM代理而非主账号"],
+            "security": ["不推荐密码认证方式，优先使用AK/SK", "如必须使用密码，请通过DEW(数据加密服务)获取", "Token有效期24小时，需定时刷新", "建议使用IAM代理而非主账号"],
         },
         "agency": {
             "description": "委托认证（跨账号授权）",

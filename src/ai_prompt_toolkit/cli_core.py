@@ -280,7 +280,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 def evaluate(target: str, dimensions: str | None, categories: str | None,
              threshold: float, fmt: str, output: str | None, quick: bool,
              save_history: bool) -> None:
-    """62维度质量评估：全面评估Prompt质量"""
+    """80维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report, empty_state_tip
     from ai_prompt_toolkit.evaluator import evaluate_template
 
@@ -2445,13 +2445,55 @@ def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
 
 
 @main.command(name="feedback")
-@click.option("--message", "-m", required=True, help="反馈内容")
+@click.option("--message", "-m", help="反馈内容(最长2000字)")
 @click.option("--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型")
-def feedback_cmd(message: str, type: str) -> None:
-    """提交用户反馈"""
+@click.option("--action", type=click.Choice(["submit", "list", "stats"]), default="submit", help="操作: submit/list/stats")
+def feedback_cmd(message: str | None, type: str, action: str) -> None:
+    """提交/查看用户反馈"""
     import json
-    from ai_prompt_toolkit.output import success
+    from ai_prompt_toolkit.output import success, console
     feedback_dir = Path.home() / ".ai-prompt-toolkit" / "feedback"
+
+    if action == "list":
+        feedback_dir.mkdir(parents=True, exist_ok=True)
+        entries = sorted(feedback_dir.glob("fb_*.json"))
+        if not entries:
+            console.print("[dim]暂无反馈记录[/dim]")
+            return
+        for entry in entries[-20:]:
+            try:
+                data = json.loads(entry.read_text(encoding="utf-8"))
+                console.print(f"  [{data.get('type', '?')}] {data.get('message', '')[:60]}  [dim]{data.get('timestamp', '')}[/dim]")
+            except Exception:
+                pass
+        return
+
+    if action == "stats":
+        feedback_dir.mkdir(parents=True, exist_ok=True)
+        entries = list(feedback_dir.glob("fb_*.json"))
+        if not entries:
+            console.print("[dim]暂无反馈记录[/dim]")
+            return
+        type_counts: dict[str, int] = {}
+        for entry in entries:
+            try:
+                data = json.loads(entry.read_text(encoding="utf-8"))
+                t = data.get("type", "other")
+                type_counts[t] = type_counts.get(t, 0) + 1
+            except Exception:
+                pass
+        console.print(f"[bold cyan]反馈统计[/bold cyan]  总计: [bold]{len(entries)}[/bold]条")
+        for t, cnt in sorted(type_counts.items(), key=lambda x: -x[1]):
+            console.print(f"  {t}: {cnt}条")
+        return
+
+    if not message:
+        console.print("[red]错误: submit操作需要--message参数[/red]")
+        return
+    if len(message) > 2000:
+        console.print("[red]错误: 反馈内容不能超过2000字[/red]")
+        return
+
     feedback_dir.mkdir(parents=True, exist_ok=True)
     import time
     entry = {

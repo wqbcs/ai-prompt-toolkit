@@ -133,7 +133,7 @@ def wizard_scan() -> int:
 
 def wizard_evaluate() -> int:
     click.echo("\n" + "=" * 50)
-    click.echo("  62维度质量评估 向导")
+    click.echo("  80维度质量评估 向导")
     click.echo("  逐步引导你完成Prompt质量评估")
     click.echo("=" * 50)
 
@@ -215,20 +215,28 @@ def wizard_ab_test() -> int:
         "prompt_templates": ["请根据以下内容生成回复：{input}"],
     }
     tmp = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False, mode="w", encoding="utf-8")
-    yaml.dump(default_config, tmp, allow_unicode=True, default_flow_style=False)
-    tmp.close()
+    tmp_name = tmp.name
+    try:
+        yaml.dump(default_config, tmp, allow_unicode=True, default_flow_style=False)
+        tmp.close()
 
-    args: dict[str, Any] = {"config": tmp.name, "models": ",".join(model_inputs)}
-    if dataset:
-        args["dataset"] = dataset
-    if output:
-        args["output"] = output
+        args: dict[str, Any] = {"config": tmp_name, "models": ",".join(model_inputs)}
+        if dataset:
+            args["dataset"] = dataset
+        if output:
+            args["output"] = output
 
-    if not _confirm_step(4, "预览确认", {"命令": "ab-test", **args}):
-        click.echo("已取消")
-        return 0
+        if not _confirm_step(4, "预览确认", {"命令": "ab-test", **args}):
+            click.echo("已取消")
+            return 0
 
-    return _build_and_execute("ab-test", args)
+        return _build_and_execute("ab-test", args)
+    finally:
+        try:
+            import os
+            os.unlink(tmp_name)
+        except OSError:
+            pass
 
 
 def wizard_redteam() -> int:
@@ -342,7 +350,7 @@ def wizard_recommend() -> int:
 _WIZARD_MAP = {
     "1": ("Prompt Linter — 静态检查提示词质量", wizard_lint),
     "2": ("安全扫描 — 注入检测+继承链审计", wizard_scan),
-    "3": ("62维度评估 — 全面评估Prompt质量", wizard_evaluate),
+    "3": ("80维度评估 — 全面评估Prompt质量", wizard_evaluate),
     "4": ("A/B测试 — 多模型并行对比", wizard_ab_test),
     "5": ("红队探测 — 对抗性安全测试", wizard_redteam),
     "6": ("智能推荐 — 根据场景推荐最佳模板", wizard_recommend),

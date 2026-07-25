@@ -198,7 +198,7 @@ class SecurityEvaluator(BaseEvaluator):
 class DimensionEvaluator(BaseEvaluator):
     name = "dimension"
     evaluator_type = "quality"
-    description = "62维度评估器"
+    description = "80维度评估器"
     tags = ["quality", "dimension", "scoring"]
 
     def __init__(self, dimensions: list[str] | None = None, categories: list[str] | None = None):

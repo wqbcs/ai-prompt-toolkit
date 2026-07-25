@@ -157,6 +157,7 @@ class EvaluationReport:
 class _DimensionEvaluator:
     def __init__(self, text: str) -> None:
         self._text = text
+        self._stats_cache: dict[str, Any] | None = None
 
     def _has_pattern(self, *patterns: str) -> bool:
         for p in patterns:
@@ -172,6 +173,69 @@ class _DimensionEvaluator:
         for p in patterns:
             total += len(re.findall(p, self._text, re.IGNORECASE | re.MULTILINE))
         return total
+
+    def _compute_stats(self) -> dict[str, Any]:
+        if self._stats_cache is not None:
+            return self._stats_cache
+        import unicodedata
+        from collections import Counter
+        from difflib import SequenceMatcher
+        text = self._text
+        words_zh = [c for c in text if '\u4e00' <= c <= '\u9fff']
+        words_en = re.findall(r'[a-zA-Z]+', text)
+        total_words = len(words_zh) + len(words_en)
+        unique_zh = len(set(words_zh))
+        unique_en = len(set(w.lower() for w in words_en))
+        ttr = (unique_zh + unique_en) / max(total_words, 1)
+        sentences = re.split(r'[。！？.!?]+', text)
+        sentences = [s.strip() for s in sentences if s.strip()]
+        sent_lengths = [len(s) for s in sentences]
+        avg_sent_len = sum(sent_lengths) / max(len(sent_lengths), 1)
+        sent_len_var = 0.0
+        if len(sent_lengths) > 1:
+            mean = avg_sent_len
+            sent_len_var = sum((l - mean) ** 2 for l in sent_lengths) / len(sent_lengths)
+        paragraphs = re.split(r'\n\s*\n', text)
+        paragraphs = [p.strip() for p in paragraphs if p.strip()]
+        para_count = len(paragraphs)
+        has_structure = sum(1 for p in paragraphs if re.match(r'^#{1,6}\s', p) or re.match(r'^-{3,}', p))
+        bigrams = []
+        for sent in sentences:
+            chars = [c for c in sent if '\u4e00' <= c <= '\u9fff']
+            for i in range(len(chars) - 1):
+                bigrams.append(chars[i] + chars[i + 1])
+        bigram_counter = Counter(bigrams)
+        repeated_bigrams = sum(1 for bg, cnt in bigram_counter.items() if cnt > 2)
+        similarities = []
+        if len(paragraphs) >= 2:
+            for i in range(min(len(paragraphs) - 1, 5)):
+                ratio = SequenceMatcher(None, paragraphs[i], paragraphs[i + 1]).ratio()
+                similarities.append(ratio)
+        avg_similarity = sum(similarities) / max(len(similarities), 1)
+        has_variables = bool(re.search(r'\{\{.*?\}\}', text))
+        has_conditions = bool(re.search(r'\{%\s*if', text))
+        has_few_shot = text.count('```') >= 2 or self._count_pattern(r'例[如子]', r'example', r'for\s+instance') >= 2
+        role_sections = len(re.findall(r'(?:^|\n)\s*(?:system|user|assistant|角色|任务|约束|输出)[：:]\s*', text, re.IGNORECASE))
+        self._stats_cache = {
+            "total_chars": len(text),
+            "total_words": total_words,
+            "ttr": ttr,
+            "sentence_count": len(sentences),
+            "avg_sent_len": avg_sent_len,
+            "sent_len_var": sent_len_var,
+            "para_count": para_count,
+            "structured_para_count": has_structure,
+            "repeated_bigrams": repeated_bigrams,
+            "avg_para_similarity": avg_similarity,
+            "has_variables": has_variables,
+            "has_conditions": has_conditions,
+            "has_few_shot": has_few_shot,
+            "role_sections": role_sections,
+        }
+        return self._stats_cache
+
+    def _stat(self, key: str) -> Any:
+        return self._compute_stats().get(key, 0)
 
     def evaluate(self, dim: dict[str, Any]) -> DimensionScore:
         dim_id = dim["id"]
@@ -190,32 +254,102 @@ class _DimensionEvaluator:
         length = self._text_length()
 
         if dim_id == "D01":
-            return 8.0 if self._has_pattern(r"你(?:是|作为|扮演)", r"you\s+are", r"role[:：]") else 2.0
+            score = 2.0
+            if self._has_pattern(r"你(?:是|作为|扮演)", r"you\s+are", r"role[:：]"):
+                score += 4.0
+            if self._stat("role_sections") >= 2:
+                score += 2.0
+            if self._stat("role_sections") >= 4:
+                score += 1.0
+            if self._has_pattern(r"作为.{1,20}专家", r"你是.{1,20}助手", r"act\s+as", r"expert|specialist|professional"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D02":
-            return 8.0 if self._has_pattern(r"请|帮我|要求|must|should|need") else 3.0
+            score = 2.0
+            instr_count = self._count_pattern(r"请|帮我|要求|must|should|need|务必|确保|禁止|不要|不可")
+            score += min(instr_count * 1.0, 4.0)
+            if self._stat("avg_sent_len") > 10:
+                score += 2.0
+            if self._stat("role_sections") >= 2:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D03":
-            return 9.0 if self._has_pattern(r"输出(?:格式|为)|JSON|Markdown|format|output\s+as") else 2.0
+            score = 2.0
+            if self._has_pattern(r"输出(?:格式|为)|JSON|Markdown|format|output\s+as"):
+                score += 4.0
+            if self._has_pattern(r"列表|分点|要点|bullet|numbered|步骤"):
+                score += 2.0
+            if self._has_pattern(r"格式要求|输出规范|output\s+spec|output\s+format"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D04":
-            count = self._count_pattern(r"不要|不可|禁止|must\s+not|do\s+not|never|限制")
+            count = self._count_pattern(r"不要|不可|禁止|must\s+not|do\s+not|never|限制|不得|严禁")
             return min(10.0, 3.0 + count * 1.5)
         elif dim_id == "D05":
-            return min(10.0, 3.0 + length / 200.0)
+            score = 2.0
+            score += min(length / 200.0, 4.0)
+            ttr = self._stat("ttr")
+            if ttr > 0.5:
+                score += 2.0
+            elif ttr > 0.3:
+                score += 1.0
+            if self._stat("para_count") >= 3:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D06":
-            ambiguous = self._count_pattern(r"可能|大概|也许|maybe|perhaps|possibly|差不多")
-            return max(1.0, 10.0 - ambiguous * 2.0)
+            ambiguous = self._count_pattern(r"可能|大概|也许|maybe|perhaps|possibly|差不多|尽量|尽量|适当|酌情")
+            base = max(1.0, 10.0 - ambiguous * 2.0)
+            if self._has_pattern(r"务必|确保|必须|严格|exactly|precisely"):
+                base = min(base + 1.5, 10.0)
+            return base
         elif dim_id == "D07":
-            has_positive = self._has_pattern(r"要|必须|需要|should|must")
-            has_negative = self._has_pattern(r"不要|禁止|must\s+not|never")
+            score = 3.0
+            has_positive = self._has_pattern(r"要|必须|需要|should|must|务必")
+            has_negative = self._has_pattern(r"不要|禁止|must\s+not|never|不可|不得")
+            if has_positive:
+                score += 2.0
+            if has_negative:
+                score += 2.0
             if has_positive and has_negative:
-                return 10.0
-            return 5.0
+                score += 2.0
+            if self._stat("sent_len_var") > 100:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D08":
+            score = 2.0
             headers = self._count_pattern(r"^#+\s", r"^\d+\.\s", r"^-\s")
-            return min(10.0, 2.0 + headers * 1.0)
+            score += min(headers * 0.8, 3.0)
+            sp = self._stat("structured_para_count")
+            if sp >= 3:
+                score += 2.0
+            elif sp >= 1:
+                score += 1.0
+            if self._stat("para_count") >= 3:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D09":
-            return 8.0 if self._has_pattern(r"version|版本|v\d+") else 2.0
+            score = 2.0
+            if self._has_pattern(r"version|版本|v\d+"):
+                score += 4.0
+            if self._has_pattern(r"更新|修订|迭代|changelog|变更日志"):
+                score += 2.0
+            if self._stat("has_conditions"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D10":
-            return min(10.0, 3.0 + (1.0 if length < 2000 else 0.0) + (2.0 if self._has_pattern(r"---") else 0.0))
+            score = 3.0
+            if length < 2000:
+                score += 1.0
+            if self._has_pattern(r"---"):
+                score += 1.5
+            if self._stat("ttr") < 0.2:
+                score -= 1.5
+            repeated = self._stat("repeated_bigrams")
+            if repeated > 10:
+                score -= 1.0
+            if self._stat("avg_para_similarity") > 0.8:
+                score -= 1.0
+            return max(1.0, min(score, 10.0))
         elif dim_id in ("D11", "D12", "D13", "D14", "D15", "D16", "D17", "D18", "D19", "D20"):
             return self._eval_security(dim_id)
         elif dim_id in ("D21", "D22", "D23", "D24", "D25", "D26", "D27", "D28", "D29", "D30"):
@@ -328,19 +462,64 @@ class _DimensionEvaluator:
 
     def _eval_quality(self, dim_id: str) -> float:
         if dim_id == "D31":
-            return 8.0 if self._has_pattern(r"示例|example|如：|如下|e\.g\.") else 3.0
+            score = 3.0
+            if self._has_pattern(r"示例|example|如：|如下|e\.g\."):
+                score += 3.0
+            if self._stat("has_few_shot"):
+                score += 3.0
+            if self._count_pattern(r"```") >= 2:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D32":
-            return 8.0 if self._has_pattern(r"一步步|逐步|step\s+by\s+step|CoT|推理链") else 3.0
+            score = 3.0
+            if self._has_pattern(r"一步步|逐步|step\s+by\s+step|CoT|推理链|思考过程|chain.of.thought"):
+                score += 4.0
+            if self._has_pattern(r"先.*再.*然后|首先.*其次.*最后|1\..*2\..*3\."):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D33":
-            return 7.0 if self._has_pattern(r"如果.*失败|错误|异常|error|exception") else 3.0
+            score = 2.0
+            if self._has_pattern(r"如果.*失败|错误|异常|error|exception|失败时"):
+                score += 4.0
+            if self._has_pattern(r"重试|retry|回退|fallback|降级|备选"):
+                score += 2.0
+            if self._has_pattern(r"超时|timeout|中断|interrupt"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D34":
-            return 7.0 if self._has_pattern(r"边界|极限|最大|最小|boundary|edge") else 3.0
+            score = 2.0
+            if self._has_pattern(r"边界|极限|最大|最小|boundary|edge|极端"):
+                score += 4.0
+            if self._has_pattern(r"空值|null|none|缺失|missing|空字符串"):
+                score += 2.0
+            if self._has_pattern(r"超长|overflow|超出范围|超出.*限制"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D35":
-            return 8.0 if self._has_pattern(r"中文|英文|English|language|语言") else 4.0
+            score = 3.0
+            zh_chars = sum(1 for c in self._text if '\u4e00' <= c <= '\u9fff')
+            en_chars = len(re.findall(r'[a-zA-Z]', self._text))
+            if zh_chars > 0 and en_chars > 0:
+                score += 4.0
+            elif zh_chars > 0 or en_chars > 0:
+                score += 2.0
+            if self._has_pattern(r"中文|英文|English|language|语言|locale|i18n"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D36":
-            return 6.0 if self._has_pattern(r"文化|习惯|地区|region") else 3.0
+            score = 2.0
+            if self._has_pattern(r"文化|习惯|地区|region|本地化|文化差异"):
+                score += 4.0
+            if self._has_pattern(r"避免.*歧视|尊重.*差异|文化敏感|inclusive|diversity"):
+                score += 4.0
+            return min(score, 10.0)
         elif dim_id == "D37":
-            return 7.0 if self._has_pattern(r"原因|理由|为什么|why|reason") else 4.0
+            score = 3.0
+            if self._has_pattern(r"原因|理由|为什么|why|reason|解释"):
+                score += 4.0
+            if self._has_pattern(r"因为.*所以|due\s+to|because|therefore|因果"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D38":
             has_error_handling = self._has_pattern(r"错误|异常|失败|error|exception|fallback")
             has_boundary = self._has_pattern(r"边界|极限|最大|最小|超|超出|boundary")
@@ -366,7 +545,14 @@ class _DimensionEvaluator:
                 score += 2.0
             return min(10.0, score)
         elif dim_id == "D40":
-            return 7.0 if self._has_pattern(r"请|帮我") else 4.0
+            score = 2.0
+            politeness = self._count_pattern(r"请|帮我|麻烦|能否|would|could|please")
+            score += min(politeness * 1.0, 4.0)
+            if self._has_pattern(r"谢谢|感谢|thank"):
+                score += 2.0
+            if self._stat("avg_sent_len") > 5:
+                score += 2.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_toolchain(self, dim_id: str) -> float:
@@ -467,28 +653,47 @@ class _DimensionEvaluator:
 
     def _eval_fairness(self, dim_id: str) -> float:
         if dim_id == "D63":
+            score = 5.0
             bias_count = self._count_pattern(
                 r"他/她|he/she|(?:男|女)(?:士|生|工|程序员|工程师|经理|CEO)",
                 r"(?:必须|只能|不可以)(?:男|女|年轻|年长)",
+                r"男人们|女人们|boys.*don.*t|girls.*can.*t",
+                r"(?:只会|只会|天生)(?:男|女|黑|白)",
             )
             if bias_count > 0:
-                return max(2.0, 5.0 - bias_count * 1.0)
-            neutral = self._has_pattern(r"所有人|不论性别|inclusive|diverse|平等")
-            return 9.0 if neutral else 7.0
+                score -= min(bias_count * 1.5, 4.0)
+            neutral = self._has_pattern(r"所有人|不论性别|inclusive|diverse|平等|每个人|无论性别")
+            if neutral:
+                score += 3.0
+            if self._has_pattern(r"避免.*偏见|避免.*歧视|bias.?free|non.?discriminat"):
+                score += 2.0
+            return max(1.0, min(score, 10.0))
         elif dim_id == "D64":
+            score = 5.0
             offense = self._count_pattern(
                 r"(?:所谓|那些)(?:人|国家|文化)",
                 r"foreigner|alien|exotic",
+                r"(?:低等|劣等|野蛮)(?:文化|种族|国家)",
+                r"underdeveloped|third.?world|primitive",
             )
             if offense > 0:
-                return max(2.0, 4.0 - offense * 1.0)
-            inclusive = self._has_pattern(r"多文化|跨文化|文化敏感|inclusive|culturally")
-            return 9.0 if inclusive else 7.0
+                score -= min(offense * 1.5, 4.0)
+            inclusive = self._has_pattern(r"多文化|跨文化|文化敏感|inclusive|culturally|尊重.*差异")
+            if inclusive:
+                score += 3.0
+            if self._has_pattern(r"不同.*背景|多元|diversity|各.*文化"):
+                score += 2.0
+            return max(1.0, min(score, 10.0))
         elif dim_id == "D65":
+            score = 3.0
             a11y = self._has_pattern(r"无障碍|accessible|alt|screen.reader|屏幕阅读器|语音")
             if a11y:
-                return 9.0
-            return 6.0
+                score += 4.0
+            if self._has_pattern(r"色盲|高对比|contrast|color.?blind|大字体|large.?text"):
+                score += 2.0
+            if self._has_pattern(r"aria|WCAG|readable|键盘.*导航|keyboard.*nav"):
+                score += 1.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_advanced_quality(self, dim_id: str) -> float:
@@ -730,7 +935,7 @@ def evaluate_template(
 
 
 def get_all_dimensions() -> list[dict[str, Any]]:
-    """获取全部62个维度定义。"""
+    """获取全部80个维度定义。"""
     return list(_DIMENSIONS)
 
 
