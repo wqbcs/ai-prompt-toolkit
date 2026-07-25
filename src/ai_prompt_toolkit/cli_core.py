@@ -2075,8 +2075,9 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
 @click.option("--detectors", "-d", help="指定检测器(逗号分隔，默认全部)", default="")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--max-payloads", type=int, default=20, help="每个探针最大payload数")
-def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_payloads: int) -> None:
-    """Red Team Probe扫描: garak风格10大探针类别自动检测Prompt安全漏洞"""
+@click.option("--quick", is_flag=True, help="快速模式: 仅运行TOP5高危Probe, 30秒内返回")
+def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_payloads: int, quick: bool) -> None:
+    """Red Team Probe扫描: garak风格探针类别自动检测Prompt安全漏洞"""
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.probe_framework import ProbeRunner, list_probes, list_detectors as list_det
 
@@ -2097,7 +2098,14 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
         sys.exit(1)
 
     text = target_path.read_text(encoding="utf-8")
-    probe_names = [p.strip() for p in probes.split(",") if p.strip()] if probes else None
+
+    _QUICK_PROBES = ["dan", "prompt_inject", "system_prompt_leak", "encoding_bypass", "package_hallucination"]
+    if quick:
+        if probes:
+            click.echo("[INFO] --quick 已指定, 忽略 --probes 参数, 使用TOP5高危Probe")
+        probe_names = _QUICK_PROBES
+    else:
+        probe_names = [p.strip() for p in probes.split(",") if p.strip()] if probes else None
     detector_names = [d.strip() for d in detectors.split(",") if d.strip()] if detectors else None
 
     runner = ProbeRunner(probe_names=probe_names, detector_names=detector_names, max_payloads_per_probe=max_payloads)
