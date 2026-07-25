@@ -205,7 +205,7 @@ class TestFunctionGraphProvider:
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
         config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK")
         provider = FunctionGraphProvider(config)
-        result = asyncio.get_event_loop().run_until_complete(provider.invoke("test prompt"))
+        result = asyncio.run(provider.invoke("test prompt"))
         assert result.status.value in ("completed", "failed")
 
     def test_provider_type_count_25(self):

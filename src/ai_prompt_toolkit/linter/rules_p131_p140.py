@@ -133,7 +133,7 @@ _AUDIO_SAFETY_DECL = re.compile(
 
 def check_p133(text: str) -> Finding | None:
     rule = _RULE_MAP["P133"]
-    _AUDIO_CTX = re.compile(r'(?:音频|audio|语音|voice|声|sound|录音|recording|ASR|转录|transcri)', re.IGNORECASE)
+    _AUDIO_CTX = re.compile(r'(?:音频|audio|语音|voice|声音|声纹|声学|超声|次声|sound|录音|recording|ASR|转录|transcri)', re.IGNORECASE)
     if not _AUDIO_CTX.search(text):
         return None
     if _AUDIO_SAFETY_DECL.search(text):

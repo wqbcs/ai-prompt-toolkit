@@ -109,4 +109,4 @@ class TestHuaweiModelArtsProvider:
     def test_total_provider_count(self):
         from ai_prompt_toolkit.ab_test.types import ProviderType
         providers = list(ProviderType)
-        assert len(providers) == 20
+        assert len(providers) == 25
