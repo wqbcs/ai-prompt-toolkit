@@ -98,6 +98,11 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D83", "name": "Agent对齐度", "category": "security", "weight": 1.0, "description": "Agent Prompt的目标对齐度，防止目标劫持和权限越界"},
     {"id": "D84", "name": "合规度", "category": "security", "weight": 1.0, "description": "Prompt对等保2.0/GDPR/华为云安全基线的合规程度"},
     {"id": "D85", "name": "可观测性", "category": "toolchain", "weight": 0.8, "description": "Prompt执行链路的可追踪/可监控/可告警能力"},
+    {"id": "D86", "name": "缓存复用率", "category": "performance", "weight": 0.7, "description": "Prompt是否声明缓存策略(前缀缓存/语义缓存)，支持重复调用成本降低"},
+    {"id": "D87", "name": "RAG检索精度声明", "category": "quality", "weight": 0.9, "description": "RAG场景Prompt是否声明检索精度要求(Top-K/相似度阈值/召回率)"},
+    {"id": "D88", "name": "流式输出适配度", "category": "performance", "weight": 0.6, "description": "Prompt是否声明流式输出适配(增量格式/SSE/分块策略)"},
+    {"id": "D89", "name": "多租户隔离度", "category": "security", "weight": 0.9, "description": "Prompt是否声明多租户数据隔离(租户ID注入/上下文隔离/资源配额)"},
+    {"id": "D90", "name": "国产芯片适配度", "category": "toolchain", "weight": 0.8, "description": "Prompt对昇腾NPU/寒武纪MLU/海光DCU的推理适配声明"},
 ]
 
 
@@ -375,6 +380,8 @@ class _DimensionEvaluator:
             return self._eval_advanced_structure(dim_id)
         elif dim_id in ("D78", "D79", "D80"):
             return self._eval_advanced_toolchain(dim_id)
+        elif dim_id in ("D81", "D82", "D83", "D84", "D85", "D86", "D87", "D88", "D89", "D90"):
+            return self._eval_r70_dimensions(dim_id)
         return 5.0
 
     def _eval_security(self, dim_id: str) -> float:
@@ -1116,6 +1123,104 @@ class _DimensionEvaluator:
                 score += 2.0
             if self._has_pattern(r"API.*14|API.*15|端侧.*推理|AI.*Kit|Neural.*Network|MindSpore.*Lite"):
                 score += 2.0
+            return min(score, 10.0)
+        return 5.0
+
+    def _eval_r70_dimensions(self, dim_id: str) -> float:
+        if dim_id == "D81":
+            score = 3.0
+            has_multimodal = self._has_pattern(r"多模态|multimodal|图像|image|音频|audio|视觉|vision|跨模态|cross.?modal")
+            has_consistency = self._has_pattern(r"一致性|consistency|校验.*一致|verify.*consist|语义.*对齐|semantic.*align")
+            if has_multimodal:
+                score += 3.0
+            if has_consistency:
+                score += 2.0
+            if self._has_pattern(r"跨模态.*验证|cross.?modal.*verif|不矛盾|no.*contradict"):
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D82":
+            score = 3.0
+            has_multilang = self._has_pattern(r"多语言|multi.?lang|翻译|translat|i18n|locale|双语|bilingual")
+            has_consistency = self._has_pattern(r"语言.*一致|language.*consist|翻译.*质量|translation.*quality|术语.*统一|terminology.*unif")
+            if has_multilang:
+                score += 3.0
+            if has_consistency:
+                score += 2.0
+            if self._has_pattern(r"本地化|localiz|文化.*适配|cultural.*adapt"):
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D83":
+            score = 3.0
+            has_agent = self._has_pattern(r"Agent|代理|智能体|autonomous|tool.?use|ReAct|function.?call")
+            has_alignment = self._has_pattern(r"目标|goal|约束|constraint|权限|permission|禁止|prohibit|边界|boundary")
+            if has_agent:
+                score += 3.0
+            if has_alignment:
+                score += 2.0
+            if self._has_pattern(r"最小.*权限|least.*privilege|循环.*限制|loop.*limit|迭代.*上限|max.*iterat"):
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D84":
+            score = 3.0
+            has_compliance = self._has_pattern(r"合规|compliance|等保|GDPR|PIPL|安全.*基线|security.*baseline")
+            has_specific = self._has_pattern(r"数据.*保护|data.*protect|隐私|privacy|审计|audit|留存|retention")
+            if has_compliance:
+                score += 3.0
+            if has_specific:
+                score += 2.0
+            if self._has_pattern(r"华为云.*安全|HWCLOUD.*security|IAM|KMS|VPC|数据.*加密"):
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D85":
+            score = 3.0
+            has_observability = self._has_pattern(r"可观测|observab|监控|monitor|追踪|trace|告警|alert|指标|metric|日志|log")
+            if has_observability:
+                score += 4.0
+            if self._has_pattern(r"OpenTelemetry|OTEL|AOM|Prometheus|Grafana|链路.*追踪|distributed.*trace"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D86":
+            score = 3.0
+            has_cache = self._has_pattern(r"缓存|cache|前缀.*缓存|prefix.*cache|语义.*缓存|semantic.*cache|复用|reuse")
+            if has_cache:
+                score += 4.0
+            if self._has_pattern(r"缓存.*策略|cache.*strategy|缓存.*失效|cache.*invalidat|TTL|过期|expir"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D87":
+            score = 3.0
+            has_rag = self._has_pattern(r"RAG|检索|retriev|知识库|knowledge.*base|向量|vector|embedding|召回|recall")
+            has_precision = self._has_pattern(r"Top.?K|相似度|similarity|阈值|threshold|召回率|recall.*rate|精度|precision")
+            if has_rag:
+                score += 3.0
+            if has_precision:
+                score += 2.0
+            if self._has_pattern(r"重排序|rerank|混合.*检索|hybrid.*search|BM25|FAISS|Milvus"):
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D88":
+            score = 3.0
+            has_streaming = self._has_pattern(r"流式|stream|SSE|增量|incremental|分块|chunk|实时.*输出|real.?time.*output")
+            if has_streaming:
+                score += 4.0
+            if self._has_pattern(r"Server.?Sent.*Events|chunk.*transfer|流式.*解析|stream.*pars|背压|backpressure"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D89":
+            score = 3.0
+            has_multi_tenant = self._has_pattern(r"多租户|multi.?tenant|租户|tenant|隔离|isolat|配额|quota|资源.*限制|resource.*limit")
+            if has_multi_tenant:
+                score += 4.0
+            if self._has_pattern(r"租户.*ID|tenant.*ID|上下文.*隔离|context.*isolat|数据.*隔离|data.*isolat|RBAC|ABAC"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D90":
+            score = 3.0
+            has_domestic_chip = self._has_pattern(r"昇腾|Ascend|ascend|寒武纪|Cambricon|MLU|海光|Hygon|DCU|NPU|国产.*芯片|domestic.*chip")
+            if has_domestic_chip:
+                score += 4.0
+            if self._has_pattern(r"CANN|ATC|MindSpore|精度.*适配|precision.*adapt|量化|quantiz|INT8|FP16|推理.*优化|inference.*optim"):
+                score += 3.0
             return min(score, 10.0)
         return 5.0
 

@@ -712,6 +712,79 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["old_text", "new_text"],
             },
         },
+        {
+            "name": "multimodal_token_estimate",
+            "description": "多模态Token估算: 估算文本/图像/音频/视频的Token消耗和预算",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "文本内容"},
+                    "image_width": {"type": "integer", "description": "图像宽度(像素)", "default": 0},
+                    "image_height": {"type": "integer", "description": "图像高度(像素)", "default": 0},
+                    "image_detail": {"type": "string", "enum": ["auto", "low", "high"], "description": "图像细节级别", "default": "auto"},
+                    "audio_duration": {"type": "number", "description": "音频时长(秒)", "default": 0},
+                    "video_duration": {"type": "number", "description": "视频时长(秒)", "default": 0},
+                    "video_fps": {"type": "integer", "description": "视频帧率", "default": 1},
+                    "max_total": {"type": "integer", "description": "Token预算上限", "default": 8192},
+                },
+                "required": [],
+            },
+        },
+        {
+            "name": "config_hot_reload_status",
+            "description": "配置热加载状态: 查询ConfigWatcher监控状态、监控文件列表、上次加载时间",
+            "inputSchema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+        {
+            "name": "badge_generate_themed",
+            "description": "主题Badge生成: 生成指定主题(light/dark/huawei)的安全评分SVG徽章",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "score": {"type": "integer", "description": "安全评分(0-100)", "default": 80},
+                    "grade": {"type": "string", "enum": ["A", "B", "C", "D", "F"], "description": "安全等级", "default": "B"},
+                    "theme": {"type": "string", "enum": ["light", "dark", "huawei"], "description": "主题", "default": "light"},
+                },
+                "required": [],
+            },
+        },
+        {
+            "name": "harmonyos_arkui_check",
+            "description": "鸿蒙ArkUI检查: 检测Prompt是否涉及ArkUI组件推荐和用法最佳实践",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "harmonyos_stage_model_check",
+            "description": "鸿蒙Stage模型检查: 检测Prompt是否声明Stage模型生命周期和Ability交互",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "harmonyos_distributed_check",
+            "description": "鸿蒙分布式检查: 检测Prompt是否声明分布式能力(设备发现/数据迁移/冲突解决)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Prompt文本"},
+                },
+                "required": ["text"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -839,6 +912,12 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "probe_ethics_scan": _tool_probe_ethics_scan,
             "huaweicloud_compliance": _tool_huaweicloud_compliance,
             "prompt_semantic_diff": _tool_prompt_semantic_diff,
+            "multimodal_token_estimate": _tool_multimodal_token_estimate,
+            "config_hot_reload_status": _tool_config_hot_reload_status,
+            "badge_generate_themed": _tool_badge_generate_themed,
+            "harmonyos_arkui_check": _tool_harmonyos_arkui_check,
+            "harmonyos_stage_model_check": _tool_harmonyos_stage_model_check,
+            "harmonyos_distributed_check": _tool_harmonyos_distributed_check,
         }
     return _TOOL_DISPATCH
 
@@ -2142,6 +2221,108 @@ def _tool_prompt_semantic_diff(args: dict[str, Any]) -> dict[str, Any]:
         return {"error": "old_text and new_text are required"}
     report = semantic_diff(old_text, new_text)
     return report.to_dict()
+
+
+def _tool_multimodal_token_estimate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.multimodal_token_counter import MultimodalTokenCounter
+    text = args.get("text", "")
+    image_width = args.get("image_width", 0)
+    image_height = args.get("image_height", 0)
+    image_detail = args.get("image_detail", "auto")
+    audio_duration = args.get("audio_duration", 0.0)
+    video_duration = args.get("video_duration", 0.0)
+    video_fps = args.get("video_fps", 1)
+    max_total = args.get("max_total", 8192)
+    counter = MultimodalTokenCounter(max_total=max_total)
+    if text:
+        counter.count_text(text)
+    if image_width and image_height:
+        counter.count_image(int(image_width), int(image_height), image_detail)
+    if audio_duration:
+        counter.count_audio(float(audio_duration))
+    if video_duration:
+        counter.count_video(float(video_duration), int(video_fps))
+    return counter.get_budget().to_dict()
+
+
+def _tool_config_hot_reload_status(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.config import get_watcher
+    watcher = get_watcher()
+    watches = [{"path": str(ws.path), "mtime": ws.mtime, "content_hash": ws.content_hash[:8]} for ws in watcher._watches]
+    return {
+        "running": watcher._running,
+        "watch_count": len(watcher._watches),
+        "watches": watches,
+        "poll_interval": watcher._poll_interval,
+        "debounce_seconds": watcher._debounce_seconds,
+    }
+
+
+def _tool_badge_generate_themed(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.badge import generate_score_svg, generate_scorecard_badge, Theme
+    from ai_prompt_toolkit.security.prompt_scorecard import Grade
+    score = args.get("score", 80)
+    grade_str = args.get("grade", "B")
+    theme = args.get("theme", "light")
+    if theme not in ("light", "dark", "huawei"):
+        theme = "light"
+    try:
+        grade = Grade(grade_str)
+    except ValueError:
+        grade = Grade.B
+    svg = generate_score_svg(int(score), grade, theme=theme)
+    return {"svg": svg, "score": score, "grade": grade_str, "theme": theme}
+
+
+def _tool_harmonyos_arkui_check(args: dict[str, Any]) -> dict[str, Any]:
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    import re
+    arkui_keywords = re.compile(r'(?:ArkUI|ArkTS|Component|@Component|@Entry|@Builder|Row|Column|Text|Image|List|Grid|Tabs|Navigation|Swiper|@State|@Prop|@Link|@Watch|@Provide|@Consume)', re.IGNORECASE)
+    best_practice = re.compile(r'(?:组件.*推荐|component.*recommend|自定义组件|custom.*component|@Builder.*封装|@Extend|样式.*复用|style.*reuse|懒加载|lazy.*load|复用.*策略|reuse.*strategy)', re.IGNORECASE)
+    has_arkui = bool(arkui_keywords.search(text))
+    has_best_practice = bool(best_practice.search(text))
+    checks = []
+    if has_arkui and not has_best_practice:
+        checks.append({"check": "ArkUI最佳实践缺失", "severity": "warn", "suggestion": "声明组件复用策略、懒加载、自定义组件封装等ArkUI最佳实践"})
+    if not re.search(r'@Component|@Entry', text) and has_arkui:
+        checks.append({"check": "ArkUI组件装饰器缺失", "severity": "warn", "suggestion": "使用@Component/@Entry装饰器声明组件"})
+    return {"pass": len(checks) == 0, "has_arkui_context": has_arkui, "checks": checks}
+
+
+def _tool_harmonyos_stage_model_check(args: dict[str, Any]) -> dict[str, Any]:
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    import re
+    stage_keywords = re.compile(r'(?:Stage|Ability|UIAbility|ExtensionAbility|onCreate|onDestroy|onWindowStageCreate|onForeground|onBackground|AbilityStage|Context|HAP|HSP)', re.IGNORECASE)
+    lifecycle_decl = re.compile(r'(?:生命周期|lifecycle|onCreate|onDestroy|onForeground|onBackground|onWindowStageCreate|状态.*管理|state.*manage)', re.IGNORECASE)
+    has_stage = bool(stage_keywords.search(text))
+    has_lifecycle = bool(lifecycle_decl.search(text))
+    checks = []
+    if has_stage and not has_lifecycle:
+        checks.append({"check": "Stage模型生命周期声明缺失", "severity": "warn", "suggestion": "声明UIAbility生命周期回调(onCreate/onDestroy/onForeground/onBackground)"})
+    if has_stage and not re.search(r'Context|want|AbilityResult', text, re.IGNORECASE):
+        checks.append({"check": "Stage模型Ability交互声明缺失", "severity": "info", "suggestion": "声明Ability间交互方式(Context/want/AbilityResult)"})
+    return {"pass": len(checks) == 0, "has_stage_context": has_stage, "checks": checks}
+
+
+def _tool_harmonyos_distributed_check(args: dict[str, Any]) -> dict[str, Any]:
+    text = args.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    import re
+    dist_keywords = re.compile(r'(?:分布式|distributed|设备.*发现|device.*discover|数据.*迁移|data.*migrat|跨设备|cross.?device|流转|flow|协同|collaborat|Continuation|RemoteObject|DistributedData|DeviceManager)', re.IGNORECASE)
+    conflict_decl = re.compile(r'(?:冲突.*解决|conflict.*resolut|数据.*同步|data.*sync|一致性|consistency|锁|lock|互斥|mutex|仲裁|arbitrat|超时|timeout)', re.IGNORECASE)
+    has_dist = bool(dist_keywords.search(text))
+    has_conflict = bool(conflict_decl.search(text))
+    checks = []
+    if has_dist and not has_conflict:
+        checks.append({"check": "分布式冲突解决策略缺失", "severity": "warn", "suggestion": "声明数据同步策略、冲突解决机制、锁/互斥机制、超时处理"})
+    if has_dist and not re.search(r'Continuation|RemoteObject|DistributedData|DeviceManager', text, re.IGNORECASE):
+        checks.append({"check": "分布式API声明缺失", "severity": "info", "suggestion": "声明使用的分布式API(Continuation/RemoteObject/DistributedData/DeviceManager)"})
+    return {"pass": len(checks) == 0, "has_distributed_context": has_dist, "checks": checks}
 
 
 if __name__ == "__main__":

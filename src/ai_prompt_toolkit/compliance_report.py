@@ -161,6 +161,17 @@ _HWCLOUD_BASELINE = [
                    "", "通过API网关实施限流和防重放攻击"),
 ]
 
+_HWCLOUD_SECURITY_BASELINE = [
+    ComplianceItem("HWC-SEC-01", "IAM最小权限", "hwcloud_security", "not_checked", "critical",
+                   "", "Prompt声明华为云IAM最小权限原则，禁止使用root账号或管理员权限"),
+    ComplianceItem("HWC-SEC-02", "OBS数据加密(KMS)", "hwcloud_security", "not_checked", "high",
+                   "", "Prompt声明OBS数据使用KMS加密，禁止明文存储敏感数据"),
+    ComplianceItem("HWC-SEC-03", "VPC网络隔离", "hwcloud_security", "not_checked", "high",
+                   "", "Prompt声明VPC网络隔离，LLM服务不直接暴露公网"),
+    ComplianceItem("HWC-SEC-04", "数据留存合规(GDPR/PIPL)", "hwcloud_security", "not_checked", "critical",
+                   "", "Prompt声明数据留存策略，符合GDPR/PIPL要求，明确数据保留期限和删除机制"),
+]
+
 
 def generate_compliance_report(
     project_name: str = "",
@@ -181,6 +192,8 @@ def generate_compliance_report(
     for item in _DJBF_REQUIREMENTS:
         all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
     for item in _HWCLOUD_BASELINE:
+        all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
+    for item in _HWCLOUD_SECURITY_BASELINE:
         all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
 
     lint_severity = {}
