@@ -236,6 +236,7 @@ _PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
     ProviderType.ALIYUN: "https://dashscope.aliyuncs.com/compatible-mode/v1",
     ProviderType.DEEPSEEK: "https://api.deepseek.com/v1",
     ProviderType.HUAWEI: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
+    ProviderType.PANGU: "https://infer.cn-north-4.myhuaweicloud.com",
     ProviderType.GOOGLE: "https://generativelanguage.googleapis.com/v1beta/openai",
     ProviderType.MISTRAL: "https://api.mistral.ai/v1",
     ProviderType.COHERE: "https://api.cohere.com/v2",
@@ -249,6 +250,7 @@ _PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
     ProviderType.MOONSHOT: "https://api.moonshot.cn/v1",
     ProviderType.BAIDU: "https://qianfan.baidubce.com/v2",
     ProviderType.MINIMAX: "https://api.minimax.chat/v1",
+    ProviderType.HUAWEI_MODELARTS: "https://infer.cn-north-4.myhuaweicloud.com",
 }
 
 _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
@@ -257,6 +259,7 @@ _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
     ProviderType.ALIYUN: "ALIYUN_API_KEY",
     ProviderType.DEEPSEEK: "DEEPSEEK_API_KEY",
     ProviderType.HUAWEI: "HUAWEI_API_KEY",
+    ProviderType.PANGU: "HUAWEI_CLOUD_AK",
     ProviderType.GOOGLE: "GOOGLE_API_KEY",
     ProviderType.MISTRAL: "MISTRAL_API_KEY",
     ProviderType.COHERE: "COHERE_API_KEY",
@@ -270,6 +273,7 @@ _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
     ProviderType.MOONSHOT: "MOONSHOT_API_KEY",
     ProviderType.BAIDU: "BAIDU_API_KEY",
     ProviderType.MINIMAX: "MINIMAX_API_KEY",
+    ProviderType.HUAWEI_MODELARTS: "HUAWEI_CLOUD_AK",
 }
 
 

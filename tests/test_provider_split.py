@@ -17,9 +17,9 @@ from ai_prompt_toolkit.ab_test.providers import get_registry
 
 
 class TestProviderModuleSplit:
-    def test_registry_has_all_19_providers(self):
+    def test_registry_has_all_20_providers(self):
         registry = get_registry()
-        assert len(registry) == 19
+        assert len(registry) == 20
 
     def test_create_all_openai_compatible_providers(self):
         openai_compatible = [
@@ -67,7 +67,7 @@ class TestProviderModuleSplit:
 class TestHealthCheck:
     def test_health_check_returns_all_providers(self):
         results = run_health_check()
-        assert len(results) == 19
+        assert len(results) == 20
 
     def test_health_check_no_api_key_providers(self):
         results = run_health_check([ProviderType.OPENAI])

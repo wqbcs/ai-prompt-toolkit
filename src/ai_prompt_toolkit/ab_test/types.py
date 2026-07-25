@@ -26,6 +26,7 @@ class ProviderType(Enum):
     MOONSHOT = "moonshot"
     BAIDU = "baidu"
     MINIMAX = "minimax"
+    HUAWEI_MODELARTS = "huawei_modelarts"
 
 
 class TestStatus(Enum):
