@@ -255,6 +255,7 @@ _PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
     ProviderType.SPARK: "https://spark-api-open.xf-yun.com/v1",
     ProviderType.BAICHUAN: "https://api.baichuan-ai.com/v1",
     ProviderType.SENSENOVA: "https://api.sensenova.cn/v1",
+    ProviderType.FUNCTIONGRAPH: "https://functiongraph.cn-north-4.myhuaweicloud.com",
 }
 
 _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
@@ -282,6 +283,7 @@ _PROVIDER_ENV_VARS: dict[ProviderType, str] = {
     ProviderType.SPARK: "SPARK_API_KEY",
     ProviderType.BAICHUAN: "BAICHUAN_API_KEY",
     ProviderType.SENSENOVA: "SENSENOVA_API_KEY",
+    ProviderType.FUNCTIONGRAPH: "HUAWEI_CLOUD_AK",
 }
 
 

@@ -55,7 +55,7 @@ class TestProviderType:
         assert ProviderType.MINIMAX.value == "minimax"
 
     def test_provider_type_count(self):
-        assert len(ProviderType) == 24
+        assert len(ProviderType) == 25
 
 
 class TestCostTracker:

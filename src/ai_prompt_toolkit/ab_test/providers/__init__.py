@@ -44,6 +44,7 @@ _PROVIDER_TYPE_MAP: dict[str, ProviderType] = {
     "SparkProvider": ProviderType.SPARK,
     "BaichuanProvider": ProviderType.BAICHUAN,
     "SenseNovaProvider": ProviderType.SENSENOVA,
+    "FunctionGraphProvider": ProviderType.FUNCTIONGRAPH,
 }
 
 

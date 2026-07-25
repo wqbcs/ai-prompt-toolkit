@@ -327,7 +327,7 @@ class TestNationalModelProviders:
 
     def test_provider_type_count(self):
         from ai_prompt_toolkit.ab_test.types import ProviderType
-        assert len(ProviderType) == 24
+        assert len(ProviderType) == 25
 
     def test_provider_registry_has_new(self):
         from ai_prompt_toolkit.ab_test.providers import get_registry
@@ -337,6 +337,7 @@ class TestNationalModelProviders:
         assert ProviderType.SPARK in registry
         assert ProviderType.BAICHUAN in registry
         assert ProviderType.SENSENOVA in registry
+        assert ProviderType.FUNCTIONGRAPH in registry
 
 
 class TestOWASPMapping:

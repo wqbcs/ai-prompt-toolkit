@@ -31,6 +31,7 @@ class ProviderType(Enum):
     SPARK = "spark"
     BAICHUAN = "baichuan"
     SENSENOVA = "sensenova"
+    FUNCTIONGRAPH = "functiongraph"
 
 
 class TestStatus(Enum):
