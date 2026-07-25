@@ -291,7 +291,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
 
     if target_path.is_dir():
-        files = sorted(target_path.rglob("*.md"))
+        files = sorted(f for f in target_path.rglob("*.md") if len(f.relative_to(target_path).parts) <= 10)
     else:
         files = [target_path]
 

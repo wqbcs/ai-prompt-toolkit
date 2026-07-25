@@ -843,11 +843,29 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
     return _TOOL_DISPATCH
 
 
+def _check_auth(params: dict[str, Any]) -> str | None:
+    import os
+    expected_key = os.getenv("PROMPT_MCP_API_KEY", "")
+    if not expected_key:
+        return None
+    provided = params.get("_meta", {}).get("apiKey", "")
+    if not provided:
+        for item in params.get("_meta", {}).get("progressToken", "").split("|"):
+            if item.startswith("key:"):
+                provided = item[4:]
+    if provided != expected_key:
+        return "Unauthorized: invalid API key"
+    return None
+
+
 def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
     tool_name = params.get("name", "")
     arguments = params.get("arguments", {})
 
     try:
+        auth_error = _check_auth(params)
+        if auth_error:
+            return _make_error(id_val, -32001, auth_error)
         handler = _get_tool_dispatch().get(tool_name)
         if handler is None:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")

@@ -374,90 +374,205 @@ class _DimensionEvaluator:
 
     def _eval_security(self, dim_id: str) -> float:
         if dim_id == "D11":
-            has_escape = self._has_pattern(r"转义|escape|sanitize|校验")
-            has_user_input = self._has_pattern(r"\{\{.*?user.*?\}\}", r"\$\{")
+            score = 3.0
+            has_escape = self._has_pattern(r"转义|escape|sanitize|校验|清洗|purify")
+            has_user_input = self._has_pattern(r"\{\{.*?user.*?\}\}", r"\$\{", r"用户输入|user.?input")
             if has_user_input and has_escape:
-                return 8.0
-            if has_user_input:
-                return 3.0
-            return 7.0
+                score += 5.0
+            elif has_user_input:
+                score += 0.0
+            elif has_escape:
+                score += 3.0
+            else:
+                score += 2.0
+            if self._has_pattern(r"注入检测|injection.?detect|防护|protect"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D12":
-            sensitive = self._count_pattern(r"api[_-]?key|password|secret|token")
-            return max(1.0, 10.0 - sensitive * 3.0)
+            sensitive = self._count_pattern(r"api[_-]?key|password|secret|token|AK|SK|密钥|凭证")
+            score = max(1.0, 10.0 - sensitive * 2.5)
+            if self._has_pattern(r"环境变量|env|密钥管理|KMS|DEW"):
+                score = min(score + 2.0, 10.0)
+            return score
         elif dim_id == "D13":
-            broad = self._has_pattern(r"任何|任意|anything|everything")
-            return 3.0 if broad else 8.0
+            score = 3.0
+            broad = self._has_pattern(r"任何|任意|anything|everything|所有.*权限|完全.*控制")
+            if not broad:
+                score += 4.0
+            if self._has_pattern(r"最小权限|least.?privilege|仅限|restricted"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D14":
-            return 7.0 if self._has_pattern(r"验证|校验|validate|check") else 3.0
+            score = 2.0
+            if self._has_pattern(r"验证|校验|validate|check|确认|verify"):
+                score += 4.0
+            if self._has_pattern(r"输入验证|input.?valid|类型检查|type.?check"):
+                score += 2.0
+            if self._has_pattern(r"白名单|allowlist|whitelist|范围.*限制"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D15":
-            return 7.0 if self._has_pattern(r"过滤|filter|排除|exclude") else 4.0
+            score = 2.0
+            if self._has_pattern(r"过滤|filter|排除|exclude|屏蔽|block"):
+                score += 4.0
+            if self._has_pattern(r"敏感词|sensitive.?word|内容审核|content.?moderat"):
+                score += 2.0
+            if self._has_pattern(r"黑名单|blacklist|denylist"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D16":
-            return 8.0 if self._has_pattern(r"审计|audit|日志|log") else 2.0
+            score = 2.0
+            if self._has_pattern(r"审计|audit|日志|log|记录|record"):
+                score += 4.0
+            if self._has_pattern(r"操作日志|access.?log|变更.*记录|change.?log"):
+                score += 2.0
+            if self._has_pattern(r"不可篡改|immutable|签名|signature"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D17":
-            return 8.0 if self._has_pattern(r"如果.*失败|回退|fallback|otherwise") else 3.0
+            score = 2.0
+            if self._has_pattern(r"如果.*失败|回退|fallback|otherwise|异常处理"):
+                score += 4.0
+            if self._has_pattern(r"重试|retry|降级|degrade|容错|fault.?tolerant"):
+                score += 2.0
+            if self._has_pattern(r"超时|timeout|熔断|circuit.?break"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D18":
-            return 7.0 if self._has_pattern(r"隔离|isolate|sandbox|沙箱") else 4.0
+            score = 2.0
+            if self._has_pattern(r"隔离|isolate|sandbox|沙箱|安全边界"):
+                score += 4.0
+            if self._has_pattern(r"权限.*分离|separation.*duty|最小.*权限"):
+                score += 2.0
+            if self._has_pattern(r"容器|container|命名空间|namespace"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D19":
-            return 7.0 if self._has_pattern(r"合规|compliance|GDPR|隐私") else 4.0
+            score = 2.0
+            if self._has_pattern(r"合规|compliance|GDPR|隐私|PIPL|等保"):
+                score += 4.0
+            if self._has_pattern(r"数据安全法|个人信息保护|数据出境|跨境"):
+                score += 2.0
+            if self._has_pattern(r"审计.*报告|合规.*检查|compliance.*check"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D20":
-            return 8.0 if self._has_pattern(r"脱敏|mask|redact|匿名") else 3.0
+            score = 2.0
+            if self._has_pattern(r"脱敏|mask|redact|匿名|anonymiz"):
+                score += 4.0
+            if self._has_pattern(r"假名化|pseudonymiz|去标识|de.?identif"):
+                score += 2.0
+            if self._has_pattern(r"差分隐私|differential.?privacy|K.?匿名"):
+                score += 2.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_performance(self, dim_id: str, length: int) -> float:
         if dim_id == "D21":
+            score = 3.0
             if length < 500:
-                return 9.0
-            if length < 2000:
-                return 6.0
-            return 3.0
+                score += 4.0
+            elif length < 2000:
+                score += 2.0
+            if self._stat("has_variables"):
+                score += 2.0
+            if self._has_pattern(r"精简|token.*效率|efficient|优化.*长度"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D22":
-            has_concise = self._has_pattern(r"简洁|简短|不超过|精简|concise|brief")
-            has_no_redundancy = self._count_pattern(r"等等|之类的|可能|大概|应该|尽量") < 3
-            score = 4.0
+            score = 3.0
             if length < 1000:
                 score += 2.0
+            has_concise = self._has_pattern(r"简洁|简短|不超过|精简|concise|brief")
             if has_concise:
                 score += 2.0
-            if has_no_redundancy:
-                score += 1.0
-            return min(10.0, score)
+            repeated = self._stat("repeated_bigrams")
+            if repeated < 5:
+                score += 1.5
+            elif repeated > 15:
+                score -= 1.0
+            redundant_words = self._count_pattern(r"等等|之类的|可能|大概|应该|尽量")
+            if redundant_words < 3:
+                score += 1.5
+            return max(1.0, min(score, 10.0))
         elif dim_id == "D23":
-            return 7.0 if self._has_pattern(r"---", r"version") else 4.0
+            score = 2.0
+            if self._has_pattern(r"---", r"version"):
+                score += 3.0
+            if self._stat("has_conditions"):
+                score += 3.0
+            if self._stat("has_variables"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D24":
-            return 6.0 if self._has_pattern(r"批量|batch|循环|loop") else 4.0
+            score = 3.0
+            if self._has_pattern(r"批量|batch|循环|loop|并行|parallel"):
+                score += 4.0
+            if self._has_pattern(r"异步|async|并发|concurrent|队列|queue"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D25":
+            score = 4.0
             has_stateless = self._has_pattern(r"无状态|stateless|幂等|idempotent")
             no_global_var = self._count_pattern(r"全局|global|共享变量") == 0
-            score = 5.0
             if has_stateless:
                 score += 3.0
             if no_global_var:
                 score += 2.0
-            return min(10.0, score)
+            if self._has_pattern(r"缓存|cache|LRU|TTL"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D26":
+            score = 3.0
             has_structure = self._count_pattern(r"^#+\s") >= 2
             has_sequential = self._has_pattern(r"首先|然后|接着|最后|第一步|step")
-            score = 4.0
             if has_structure:
                 score += 3.0
             if has_sequential:
                 score += 2.0
-            return min(10.0, score)
+            if self._stat("para_count") >= 3:
+                score += 1.0
+            if self._stat("avg_para_similarity") < 0.5:
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D27":
-            return 8.0 if length < 800 else 5.0
+            score = 2.0
+            if length < 800:
+                score += 4.0
+            elif length < 1500:
+                score += 2.0
+            if self._has_pattern(r"压缩|compress|摘要|summary|精简"):
+                score += 2.0
+            if self._stat("ttr") > 0.4:
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D28":
-            return 7.0 if self._has_pattern(r"{{#if", r"model") else 5.0
+            score = 3.0
+            if self._has_pattern(r"\{\{#if", r"model", r"条件编译", r"compile"):
+                score += 4.0
+            if self._stat("has_conditions"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D29":
-            return 6.0 if length < 500 else 4.0
+            score = 2.0
+            if length < 500:
+                score += 4.0
+            elif length < 1000:
+                score += 2.0
+            if self._has_pattern(r"流式|stream|增量|incremental|SSE"):
+                score += 3.0
+            return min(score, 10.0)
         elif dim_id == "D30":
+            score = 4.0
             has_idempotent = self._has_pattern(r"幂等|idempotent|无状态|stateless")
             has_same_result = self._has_pattern(r"相同结果|same result|一致|consistent")
-            score = 5.0
             if has_idempotent:
                 score += 3.0
             if has_same_result:
                 score += 2.0
-            return min(10.0, score)
+            if self._has_pattern(r"temperature.*0|确定性|deterministic"):
+                score += 1.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_quality(self, dim_id: str) -> float:
