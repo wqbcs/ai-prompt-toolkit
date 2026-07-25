@@ -1138,6 +1138,7 @@ def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
 
     template = args.get("template", "")
     compact = args.get("compact", False)
+    theme = args.get("theme", "light")
     if not template.strip():
         return {"error": "模板为空"}
 
@@ -1160,7 +1161,7 @@ def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
     all_findings = list(lint_findings) + sec_findings
     scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
 
-    svg = generate_scorecard_badge(scorecard, compact=compact)
+    svg = generate_scorecard_badge(scorecard, compact=compact, theme=theme)
     return {
         "score": scorecard.overall_score,
         "grade": scorecard.grade.value,

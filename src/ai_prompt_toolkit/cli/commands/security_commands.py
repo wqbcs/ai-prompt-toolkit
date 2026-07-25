@@ -210,7 +210,8 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
 @click.option("--target", "-t", required=True, help="目标Prompt文件")
 @click.option("--output", "-o", required=True, help="输出SVG文件路径")
 @click.option("--compact", is_flag=True, help="紧凑模式(仅评分+等级)")
-def badge_cmd(target: str, output: str, compact: bool) -> None:
+@click.option("--theme", type=click.Choice(["light", "dark", "huawei"]), default="light", help="主题(light/dark/huawei)")
+def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     """生成安全评分徽章SVG"""
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -248,5 +249,5 @@ def badge_cmd(target: str, output: str, compact: bool) -> None:
     all_findings = list(lint_findings) + sec_findings
     scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
-    generate_scorecard_badge_file(scorecard, output, compact=compact)
+    generate_scorecard_badge_file(scorecard, output, compact=compact, theme=theme)
     success(f"评分徽章已生成到 {output} (评分: {scorecard.overall_score}/100 {scorecard.grade.value})")

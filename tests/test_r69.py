@@ -225,3 +225,117 @@ class TestFunctionGraphProvider:
         config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro")
         p = create_provider(config)
         assert p.provider_type == ProviderType.FUNCTIONGRAPH
+
+
+class TestBadgeMultiTheme:
+    def test_light_theme_default(self):
+        from ai_prompt_toolkit.security.badge import generate_score_svg, Theme
+        from ai_prompt_toolkit.security.prompt_scorecard import Grade
+        svg = generate_score_svg(95, Grade.A)
+        assert "#2ea44f" in svg
+        assert "#555555" in svg
+
+    def test_dark_theme(self):
+        from ai_prompt_toolkit.security.badge import generate_score_svg
+        from ai_prompt_toolkit.security.prompt_scorecard import Grade
+        svg = generate_score_svg(95, Grade.A, theme="dark")
+        assert "#3fb950" in svg
+        assert "#30363d" in svg
+        assert "#e6edf3" in svg
+
+    def test_huawei_theme(self):
+        from ai_prompt_toolkit.security.badge import generate_score_svg
+        from ai_prompt_toolkit.security.prompt_scorecard import Grade
+        svg = generate_score_svg(95, Grade.A, theme="huawei")
+        assert "#C7000B" in svg
+
+    def test_theme_config_all_keys(self):
+        from ai_prompt_toolkit.security.badge import _THEME_CONFIG
+        for theme_name in ("light", "dark", "huawei"):
+            tc = _THEME_CONFIG[theme_name]
+            assert "bg" in tc
+            assert "text" in tc
+            for grade in ("A", "B", "C", "D", "F"):
+                assert grade in tc
+            for decision in ("ALLOW", "WARN", "BLOCK"):
+                assert decision in tc
+
+    def test_scorecard_badge_theme(self):
+        from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+        from ai_prompt_toolkit.security.prompt_scorecard import PromptScorecard, Grade, Decision
+        sc = PromptScorecard(overall_score=80, grade=Grade.B, decision=Decision.ALLOW, dimensions=[], total_findings=0, critical_count=0, high_count=0, medium_count=0, low_count=0)
+        svg_light = generate_scorecard_badge(sc, theme="light")
+        svg_dark = generate_scorecard_badge(sc, theme="dark")
+        svg_hw = generate_scorecard_badge(sc, theme="huawei")
+        assert "#57ab5a" in svg_light
+        assert "#56d364" in svg_dark
+        assert "#E6382E" in svg_hw
+
+    def test_compact_badge_theme(self):
+        from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+        from ai_prompt_toolkit.security.prompt_scorecard import PromptScorecard, Grade, Decision
+        sc = PromptScorecard(overall_score=50, grade=Grade.C, decision=Decision.WARN, dimensions=[], total_findings=0, critical_count=0, high_count=0, medium_count=0, low_count=0)
+        svg = generate_scorecard_badge(sc, compact=True, theme="huawei")
+        assert "#F5A623" in svg
+
+
+class TestConfigWatcher:
+    def test_watcher_init(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        w = ConfigWatcher(poll_interval=1.0, debounce_seconds=0.5)
+        assert w._poll_interval == 1.0
+        assert w._debounce_seconds == 0.5
+        assert not w._running
+
+    def test_watcher_start_and_stop(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        w = ConfigWatcher()
+        config = w.start()
+        assert w._running is True
+        assert config is not None
+        w.stop()
+        assert w._running is False
+
+    def test_watcher_current_config(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        w = ConfigWatcher()
+        config = w.current_config
+        assert config.lint_on_save is True
+
+    def test_watcher_add_watch_nonexistent(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        from pathlib import Path
+        w = ConfigWatcher()
+        w.add_watch(Path("/nonexistent/config.toml"))
+        assert len(w._watches) == 0
+
+    def test_watcher_check_no_change(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        w = ConfigWatcher()
+        w.start()
+        result = w.check_and_reload()
+        assert result is False
+        w.stop()
+
+    def test_watcher_callback(self):
+        from ai_prompt_toolkit.config import ConfigWatcher
+        called = []
+        def on_reload(cfg):
+            called.append(cfg)
+        w = ConfigWatcher(on_reload=on_reload)
+        w.start()
+        w._last_reload_time = 0
+        if w._watches:
+            ws = w._watches[0]
+            ws.content_hash = "old_hash"
+            if ws.path.exists():
+                result = w.check_and_reload()
+                if result:
+                    assert len(called) == 1
+        w.stop()
+
+    def test_get_watcher_singleton(self):
+        from ai_prompt_toolkit.config import get_watcher
+        w1 = get_watcher()
+        w2 = get_watcher()
+        assert w1 is w2

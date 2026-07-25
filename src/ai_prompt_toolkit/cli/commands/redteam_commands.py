@@ -129,7 +129,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         findings_count = sum(len(pr.findings) for pr in report.probe_results)
         total_probes = len(report.probe_results)
         passed = sum(1 for pr in report.probe_results if not pr.findings)
-        svg = generate_scorecard_badge(total=total_probes, passed=passed, failed=findings_count)
+        svg = generate_scorecard_badge(scorecard)
         badge_path = "redteam-scorecard.svg"
         _P(badge_path).write_text(svg, encoding="utf-8")
         click.echo(f"安全评分卡: {badge_path}")

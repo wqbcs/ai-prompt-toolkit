@@ -15,7 +15,7 @@ from ai_prompt_toolkit.security.inheritance_auditor import (
 )
 from ai_prompt_toolkit.security.scanner import Scanner
 from ai_prompt_toolkit.security.engine import FusionEngine, EngineResult, LayerResult
-from ai_prompt_toolkit.security.badge import generate_scorecard_badge, generate_score_svg
+from ai_prompt_toolkit.security.badge import generate_scorecard_badge, generate_score_svg, Theme
 
 
 def scan_template(

@@ -275,3 +275,120 @@ def generate_config(output_path: str | Path | None = None, fmt: str = "toml") ->
         output_path.write_text(yaml.dump(config_data, allow_unicode=True, default_flow_style=False), encoding="utf-8")
 
     return output_path
+
+
+@dataclass
+class ConfigWatchState:
+    path: Path
+    mtime: float
+    content_hash: str
+
+
+class ConfigWatcher:
+    """配置文件热加载监视器 — MD5哈希轮询检测变化, 自动重载配置
+
+    参考: watchdog库轮询模式 + dynaconf hot-reload
+    - 支持项目配置(.prompt-cli.toml/yaml) + 全局配置(~/.config/prompt-cli/config.toml)
+    - MD5哈希比较检测变化(比mtime更可靠)
+    - 防抖机制避免频繁重载
+    - 回调通知配置变更
+    """
+
+    def __init__(
+        self,
+        *,
+        poll_interval: float = 2.0,
+        debounce_seconds: float = 1.0,
+        on_reload: Any | None = None,
+    ) -> None:
+        self._poll_interval = poll_interval
+        self._debounce_seconds = debounce_seconds
+        self._on_reload = on_reload
+        self._watches: list[ConfigWatchState] = []
+        self._last_reload_time: float = 0.0
+        self._running = False
+        self._current_config: PromptCliConfig | None = None
+
+    def add_watch(self, path: Path) -> None:
+        if not path.exists():
+            return
+        content_hash = self._compute_hash(path)
+        mtime = path.stat().st_mtime
+        self._watches.append(ConfigWatchState(path=path, mtime=mtime, content_hash=content_hash))
+
+    def start(self, project_dir: Path | None = None) -> PromptCliConfig:
+        self._current_config = load_config(project_dir)
+
+        global_config = _GLOBAL_CONFIG_DIR / "config.toml"
+        self.add_watch(global_config)
+
+        project_config = _find_project_config(project_dir)
+        if project_config:
+            self.add_watch(project_config)
+
+        self._running = True
+        return self._current_config
+
+    def stop(self) -> None:
+        self._running = False
+
+    @property
+    def current_config(self) -> PromptCliConfig:
+        if self._current_config is None:
+            self._current_config = load_config()
+        return self._current_config
+
+    def check_and_reload(self) -> bool:
+        import time
+
+        if not self._watches:
+            return False
+
+        now = time.time()
+        if now - self._last_reload_time < self._debounce_seconds:
+            return False
+
+        changed = False
+        for ws in self._watches:
+            if not ws.path.exists():
+                continue
+            new_hash = self._compute_hash(ws.path)
+            if new_hash != ws.content_hash:
+                ws.content_hash = new_hash
+                ws.mtime = ws.path.stat().st_mtime
+                changed = True
+
+        if changed:
+            self._current_config = load_config()
+            self._last_reload_time = now
+            if self._on_reload:
+                self._on_reload(self._current_config)
+            return True
+        return False
+
+    def poll_loop(self) -> None:
+        import time
+
+        while self._running:
+            self.check_and_reload()
+            time.sleep(self._poll_interval)
+
+    @staticmethod
+    def _compute_hash(path: Path) -> str:
+        import hashlib
+
+        try:
+            content = path.read_bytes()
+            return hashlib.md5(content).hexdigest()
+        except Exception:
+            return ""
+
+
+_watcher: ConfigWatcher | None = None
+
+
+def get_watcher() -> ConfigWatcher:
+    global _watcher
+    if _watcher is None:
+        _watcher = ConfigWatcher()
+    return _watcher

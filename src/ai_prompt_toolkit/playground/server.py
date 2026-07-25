@@ -403,6 +403,7 @@ async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
 
     template = request.get("template", "")
     compact = request.get("compact", False)
+    theme = request.get("theme", "light")
     if not template.strip():
         return {"status": "error", "error": "模板为空"}
 
@@ -425,7 +426,7 @@ async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
 
         all_findings = list(lint_findings) + sec_findings
         scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
-        svg = generate_scorecard_badge(scorecard, compact=compact)
+        svg = generate_scorecard_badge(scorecard, compact=compact, theme=theme)
 
         return {
             "status": "success",
