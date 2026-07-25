@@ -113,19 +113,19 @@ class TestR43MCPTools:
 
     def test_eval_matrix_tool(self):
         import json
-        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix
+        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix_compare
         prompts = json.dumps({"prompt_a": "你是一个助手", "prompt_b": "回答问题"})
-        result = _tool_eval_matrix({"prompts": prompts})
+        result = _tool_eval_matrix_compare({"prompts": prompts})
         assert "prompts" in result or "error" in result
 
     def test_eval_matrix_tool_invalid_json(self):
-        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix
-        result = _tool_eval_matrix({"prompts": "not json"})
+        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix_compare
+        result = _tool_eval_matrix_compare({"prompts": "not json"})
         assert "error" in result
 
     def test_eval_matrix_tool_empty(self):
-        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix
-        result = _tool_eval_matrix({"prompts": ""})
+        from ai_prompt_toolkit.mcp_server import _tool_eval_matrix_compare
+        result = _tool_eval_matrix_compare({"prompts": ""})
         assert "error" in result
 
     def test_pangu_compat_tool(self):

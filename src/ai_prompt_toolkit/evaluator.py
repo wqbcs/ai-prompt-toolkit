@@ -568,29 +568,60 @@ class _DimensionEvaluator:
 
     def _eval_advanced_security(self, dim_id: str) -> float:
         if dim_id == "D74":
-            has_privacy = self._has_pattern(r"隐私|GDPR|gdpr|PIPL|个人信息|个人数据|privacy|data.?protection")
-            has_compliance = self._has_pattern(r"合规|脱敏|匿名|consent|同意|最小.*收集|不.*存储|不.*传输")
-            if has_privacy and has_compliance:
-                return 9.0
-            if has_privacy:
-                return 5.0
-            return 7.0
+            score = 3.0
+            privacy_patterns = [
+                (r"隐私|GDPR|gdpr|PIPL|个人信息|个人数据|privacy|data.?protection", 1.5),
+                (r"合规|脱敏|匿名|consent|同意|最小.*收集|不.*存储|不.*传输", 1.5),
+                (r"加密|encrypt|AES|RSA|TLS|SSL|KMS|密钥管理", 1.0),
+                (r"数据分类|分级|sensitivity|classification|敏感.*级别", 1.0),
+                (r"跨境|cross.?border|数据出境|transfer.*abroad|本地化|localization", 1.0),
+                (r"被遗忘权|right.?to.?be.?forgotten|数据删除|data.?deletion|撤回.*同意", 1.0),
+                (r"DPIA|隐私影响评估|PIA|privacy.?impact|data.?protection.?impact", 1.0),
+                (r"数据最小化|data.?minimization|必要.*收集|purpose.?limitation", 1.0),
+            ]
+            for pattern, weight in privacy_patterns:
+                if self._has_pattern(pattern):
+                    score += weight
+            return min(score, 10.0)
         elif dim_id == "D75":
-            has_audit = self._has_pattern(r"审计|audit|追溯|trace|日志|log|决策.*依据|reasoning.*process")
-            if has_audit:
-                return 9.0
-            return 5.0
+            score = 3.0
+            audit_patterns = [
+                (r"审计|audit|追溯|trace|日志|log", 1.5),
+                (r"决策.*依据|reasoning.?process|explain|可解释|interpretability", 1.5),
+                (r"版本|version|变更|changelog|diff|历史", 1.0),
+                (r"签名|signature|哈希|hash|不可篡改|immutable|tamper.?proof", 1.0),
+                (r"SIEM|安全.*事件|event.*management|告警|alert|通知|notification", 1.0),
+                (r"保留.*期限|retention.*period|归档|archive|销毁|destroy", 1.0),
+                (r"链路.*追踪|tracing|span|trace.?id|correlation.?id", 1.0),
+            ]
+            for pattern, weight in audit_patterns:
+                if self._has_pattern(pattern):
+                    score += weight
+            return min(score, 10.0)
         return 5.0
 
     def _eval_advanced_structure(self, dim_id: str) -> float:
         if dim_id == "D77":
-            has_modular = self._has_pattern(r"---|模块|##|section|组件|component|变量|variable")
-            has_version = self._has_pattern(r"版本|version|v\d|变更|changelog")
-            if has_modular and has_version:
-                return 9.0
-            if has_modular:
-                return 7.0
-            return 5.0
+            score = 3.0
+            structure_patterns = [
+                (r"---|模块|##|section|组件|component|变量|variable", 1.5),
+                (r"版本|version|v\d|变更|changelog", 1.0),
+                (r"输入|input|输出|output|接口|interface|API|参数|parameter", 1.0),
+                (r"配置|config|环境|environment|profile|setting", 1.0),
+                (r"测试|test|验证|verify|校验|validate|assert", 1.0),
+                (r"错误处理|error.?handling|异常|exception|fallback|降级|degrade", 1.0),
+                (r"依赖|dependency|import|require|引用|reference", 0.5),
+                (r"文档|doc|注释|comment|说明|readme|README", 0.5),
+            ]
+            sections = self._text.count("##") + self._text.count("---") + self._text.count("===")
+            if sections >= 5:
+                score += 1.0
+            elif sections >= 3:
+                score += 0.5
+            for pattern, weight in structure_patterns:
+                if self._has_pattern(pattern):
+                    score += weight
+            return min(score, 10.0)
         return 5.0
 
     def _eval_advanced_toolchain(self, dim_id: str) -> float:

@@ -60,12 +60,12 @@ class TestProbeClasses:
     def test_gcg_suffix_probe(self):
         probe = GCGSuffixProbe()
         payloads = probe.generate("test")
-        assert len(payloads) == 3
+        assert len(payloads) >= 10
 
     def test_snowball_probe(self):
         probe = SnowballProbe()
         payloads = probe.generate("test")
-        assert len(payloads) == 3
+        assert len(payloads) >= 10
 
     def test_malwaregen_probe(self):
         probe = MalwareGenProbe()

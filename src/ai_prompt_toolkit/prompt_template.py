@@ -204,10 +204,10 @@ class PromptTemplate:
 _BUILTIN_TEMPLATES: list[dict[str, Any]] = [
     {
         "name": "general-qa",
-        "template": "你是一个{{role|default('智能助手')}}。\n\n请回答以下问题：{{question}}\n\n输出格式：{{format|default('简洁文字')}}",
-        "description": "通用问答模板",
+        "template": "你是一个{{role|default('智能助手')}}。\n\n## 角色定义\n作为{{role|default('智能助手')}}，你应当：\n- 仅在所掌握的知识范围内回答\n- 不确定时明确标注[不确定]而非编造\n- 区分事实陈述与观点表达\n\n## 任务\n请回答以下问题：{{question}}\n\n## 输出格式\n{{format|default('结构化文字：分点陈述，关键信息加粗')}}\n\n## 约束\n- 安全: 拒绝生成有害/违法/侵权内容\n- 隐私: 不输出个人隐私信息(身份证/手机号/银行卡号)\n- 准确: 事实性声明需可验证，不确定内容标注置信度\n- 完整: 覆盖问题核心要点，不遗漏关键信息\n- 中立: 多角度呈现，标注争议性内容",
+        "description": "通用问答模板(最佳实践级)",
         "category": "general",
-        "tags": ["qa", "general"],
+        "tags": ["qa", "general", "best-practice"],
     },
     {
         "name": "code-review",
@@ -344,3 +344,7 @@ def get_template_by_name(name: str) -> PromptTemplate | None:
 
 def list_template_names() -> list[str]:
     return [t["name"] for t in _BUILTIN_TEMPLATES]
+
+
+def list_templates() -> list[PromptTemplate]:
+    return get_builtin_templates()

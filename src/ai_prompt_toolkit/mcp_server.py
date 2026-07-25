@@ -824,7 +824,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "pangu_safety_audit": _tool_pangu_safety_audit,
             "prompt_sanitize": _tool_prompt_sanitize,
             "prompt_auto_optimize": _tool_prompt_auto_optimize,
-            "eval_matrix": _tool_eval_matrix,
+            "eval_matrix": _tool_eval_matrix_compare,
             "huaweicloud_modelarts_deploy": _tool_huaweicloud_modelarts_deploy,
             "huaweicloud_modelarts_infer": _tool_huaweicloud_modelarts_infer,
             "huaweicloud_obs_upload": _tool_huaweicloud_obs_upload,
@@ -1697,8 +1697,7 @@ def _tool_prompt_auto_optimize(args: dict[str, Any]) -> dict[str, Any]:
     return result.to_dict()
 
 
-def _tool_eval_matrix(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.eval_matrix import build_matrix_from_evaluator_results
+def _tool_eval_matrix_compare(args: dict[str, Any]) -> dict[str, Any]:
     prompts_json = args.get("prompts", "")
     if not prompts_json:
         return {"error": "prompts is required"}

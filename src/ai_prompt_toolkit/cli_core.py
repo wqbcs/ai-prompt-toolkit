@@ -2525,6 +2525,63 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     except Exception:
         pass
 
+    lint_rules_count = 0
+    auto_fixable_count = 0
+    try:
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        lint_rules_count = len(_RULE_MAP)
+        auto_fixable_count = len(AUTO_FIXABLE_RULES)
+    except Exception:
+        pass
+
+    security_rules_count = 0
+    try:
+        from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+        from ai_prompt_toolkit.security.pii_detector import PIIDetector
+        sec_counts = []
+        try:
+            sec_counts.append(len(InjectionDetector.RULES))
+        except Exception:
+            pass
+        try:
+            sec_counts.append(len(PIIDetector.PATTERNS))
+        except Exception:
+            pass
+        security_rules_count = sum(sec_counts)
+    except Exception:
+        pass
+
+    probe_count = 0
+    detector_count = 0
+    try:
+        from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY, _DETECTOR_REGISTRY
+        probe_count = len(_PROBE_REGISTRY)
+        detector_count = len(_DETECTOR_REGISTRY)
+    except Exception:
+        pass
+
+    eval_dims_count = 0
+    try:
+        from ai_prompt_toolkit.evaluator import get_all_dimensions
+        eval_dims_count = len(get_all_dimensions())
+    except Exception:
+        pass
+
+    mcp_tools_count = 0
+    try:
+        from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
+        mcp_tools_count = len(_get_tool_dispatch())
+    except Exception:
+        pass
+
+    template_count = 0
+    try:
+        from ai_prompt_toolkit.prompt_template import list_templates
+        template_count = len(list_templates())
+    except Exception:
+        pass
+
     stats_data = {
         "prompt_files": len(prompt_files),
         "total_chars": total_chars,
@@ -2533,9 +2590,14 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         "language_distribution": lang_dist,
         "versioned_templates": version_count,
         "datasets": dataset_count,
-        "lint_rules": 55,
-        "security_rules": "30+",
-        "providers": 19,
+        "lint_rules": lint_rules_count,
+        "auto_fixable_rules": auto_fixable_count,
+        "security_rules": security_rules_count,
+        "eval_dimensions": eval_dims_count,
+        "probes": probe_count,
+        "detectors": detector_count,
+        "mcp_tools": mcp_tools_count,
+        "templates": template_count,
     }
 
     if fmt == "json":
@@ -2549,7 +2611,9 @@ def stats_cmd(target: str | None, fmt: str) -> None:
                 console.print(f"  🌐 语言分布: {lang} {cnt}个文件")
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
-        console.print(f"  🔍 Lint规则: [bold]55[/bold]条 | 安全规则: [bold]30+[/bold]条 | Provider: [bold]19[/bold]个")
+        console.print(f"  🔍 Lint规则: [bold]{lint_rules_count}[/bold]条(自动修复:[bold]{auto_fixable_count}[/bold]) | 安全规则: [bold]{security_rules_count}[/bold]条")
+        console.print(f"  🎯 评估维度: [bold]{eval_dims_count}[/bold]个 | Probe: [bold]{probe_count}[/bold]个 | Detector: [bold]{detector_count}[/bold]个")
+        console.print(f"  🔧 MCP工具: [bold]{mcp_tools_count}[/bold]个 | 内置模板: [bold]{template_count}[/bold]个")
 
 
 @main.command(name="score")
