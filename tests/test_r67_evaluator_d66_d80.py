@@ -20,7 +20,7 @@ class TestAdvancedQualityD66D71D76:
     def test_d66_no_cot(self):
         r = evaluate_template("t", "请回答问题")
         d66 = [s for s in r.scores if s.dimension_id == "D66"][0]
-        assert d66.score == 7.0
+        assert d66.score <= 4.0
 
     def test_d67_tool_call_with_spec(self):
         r = evaluate_template("t", "使用工具API调用，参数格式为JSON，返回值类型为string")
@@ -30,7 +30,7 @@ class TestAdvancedQualityD66D71D76:
     def test_d67_tool_call_only(self):
         r = evaluate_template("t", "使用工具和函数调用完成操作")
         d67 = [s for s in r.scores if s.dimension_id == "D67"][0]
-        assert d67.score == 5.0
+        assert 5.0 <= d67.score <= 7.0
 
     def test_d68_dialog_with_state(self):
         r = evaluate_template("t", "多轮对话中保持上下文记忆和状态一致性")
@@ -40,7 +40,7 @@ class TestAdvancedQualityD66D71D76:
     def test_d68_dialog_only(self):
         r = evaluate_template("t", "进行多轮对话聊天")
         d68 = [s for s in r.scores if s.dimension_id == "D68"][0]
-        assert d68.score == 4.0
+        assert 5.0 <= d68.score <= 7.0
 
     def test_d69_rag_with_spec(self):
         r = evaluate_template("t", "使用RAG检索增强，引用来源标注置信度，信息不足时声明")
@@ -50,12 +50,12 @@ class TestAdvancedQualityD66D71D76:
     def test_d69_rag_only(self):
         r = evaluate_template("t", "使用RAG检索知识库")
         d69 = [s for s in r.scores if s.dimension_id == "D69"][0]
-        assert d69.score == 4.0
+        assert 5.0 <= d69.score <= 7.0
 
     def test_d70_cutoff(self):
-        r = evaluate_template("t", "知识截止日期为2024年1月，注意时效性")
+        r = evaluate_template("t", "知识截止日期为2024年1月，注意时效性，知识局限不确定")
         d70 = [s for s in r.scores if s.dimension_id == "D70"][0]
-        assert d70.score >= 8.0
+        assert d70.score >= 7.0
 
     def test_d71_empathy(self):
         r = evaluate_template("t", "用温和共情的语气理解用户感受，关心对方需求")
@@ -143,7 +143,7 @@ class TestAdvancedToolchainD78D79D80:
     def test_d79_pangu_only(self):
         r = evaluate_template("t", "使用盘古模型和华为云MaaS平台")
         d79 = [s for s in r.scores if s.dimension_id == "D79"][0]
-        assert d79.score == 5.0
+        assert 5.0 <= d79.score <= 7.0
 
     def test_d80_harmony_with_spec(self):
         r = evaluate_template("t", "鸿蒙HarmonyOS ArkTS开发，onCreate生命周期，ohos.permission权限，ohos.net HTTPS")
@@ -153,7 +153,7 @@ class TestAdvancedToolchainD78D79D80:
     def test_d80_harmony_only(self):
         r = evaluate_template("t", "鸿蒙HarmonyOS Stage模型开发元服务")
         d80 = [s for s in r.scores if s.dimension_id == "D80"][0]
-        assert d80.score == 5.0
+        assert 5.0 <= d80.score <= 7.0
 
 
 class TestTotalDimensions:

@@ -918,77 +918,106 @@ class _DimensionEvaluator:
 
     def _eval_advanced_quality(self, dim_id: str) -> float:
         if dim_id == "D66":
+            score = 3.0
             has_cot = self._has_pattern(r"逐步|step.?by.?step|推理链|chain.?of.?thought|思考过程|思维链|CoT")
             has_reasoning = self._has_pattern(r"推理|分析|判断|reasoning|analyze|逻辑|推断")
             if has_cot:
-                return 9.0
+                score += 4.0
             if has_reasoning:
-                return 4.0
-            return 7.0
+                score += 2.0
+            if self._has_pattern(r"验证.*推理|交叉.*检查|反例|counter.?example"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D67":
+            score = 3.0
             has_tool_decl = self._has_pattern(r"工具|函数调用|function.?call|tool.?call|API|插件|plugin")
             has_tool_spec = self._has_pattern(r"参数|返回值|类型|格式|parameter|return.?type|schema")
-            if has_tool_decl and has_tool_spec:
-                return 9.0
             if has_tool_decl:
-                return 5.0
-            return 8.0
+                score += 3.0
+            if has_tool_spec:
+                score += 2.0
+            if self._has_pattern(r"错误.*处理|降级|fallback|权限.*检查"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D68":
+            score = 3.0
             has_dialog = self._has_pattern(r"对话|聊天|多轮|conversation|chat|multi.?turn|会话")
             has_state = self._has_pattern(r"上下文|记忆|状态|context|memory|state|会话.*一致|session.*consistent")
-            if has_dialog and has_state:
-                return 9.0
             if has_dialog:
-                return 4.0
-            return 8.0
+                score += 3.0
+            if has_state:
+                score += 2.0
+            if self._has_pattern(r"澄清|clarif|追问|follow.?up|确认.*理解"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D69":
+            score = 3.0
             has_rag = self._has_pattern(r"上下文|检索|知识库|RAG|rag|检索增强|向量|embedding|context")
             has_rag_spec = self._has_pattern(r"引用|来源|置信度|citation|source|confidence|信息不足")
-            if has_rag and has_rag_spec:
-                return 9.0
             if has_rag:
-                return 4.0
-            return 8.0
+                score += 3.0
+            if has_rag_spec:
+                score += 2.0
+            if self._has_pattern(r"幻觉|hallucinat|不确定|知识.*边界|知识.*截止"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D70":
-            has_cutoff = self._has_pattern(r"截止|cutoff|cut.?off|知识.*日期|训练.*日期|时效|timeliness|更新.*日期")
-            if has_cutoff:
-                return 9.0
-            return 5.0
+            score = 3.0
+            if self._has_pattern(r"截止|cutoff|cut.?off|知识.*日期|训练.*日期|时效|timeliness"):
+                score += 4.0
+            if self._has_pattern(r"不确定|无法.*确认|知识.*局限|may.*not.*have"):
+                score += 2.0
+            if self._has_pattern(r"实时|real.?time|最新|latest|updated"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D71":
-            has_empathy = self._has_pattern(r"共情|理解|empathy|关心|情感|感受|温和|语气|tone")
-            if has_empathy:
-                return 9.0
-            return 6.0
+            score = 3.0
+            if self._has_pattern(r"共情|理解|empathy|关心|情感|感受|温和|语气|tone"):
+                score += 4.0
+            if self._has_pattern(r"抱歉|sorry|理解.*感受|尊重|respectful"):
+                score += 2.0
+            if self._has_pattern(r"支持|帮助|鼓励|encourage|support"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D76":
+            score = 3.0
             has_defense = self._has_pattern(r"注入.*防御|injection.*defense|校验|validate|sanitize|异常.*处理|鲁棒|robust")
-            if has_defense:
-                return 9.0
             has_adversarial = self._has_pattern(r"攻击|对抗|adversarial|red.?team|注入|inject")
+            if has_defense:
+                score += 4.0
             if has_adversarial:
-                return 5.0
-            return 7.0
+                score += 2.0
+            if self._has_pattern(r"Prompt.*消毒|安全.*护栏|content.?filter|输出.*检查"):
+                score += 1.0
+            return min(score, 10.0)
         return 5.0
 
     def _eval_advanced_fairness(self, dim_id: str) -> float:
         if dim_id == "D72":
+            score = 3.0
             has_ethics = self._has_pattern(r"伦理|道德|ethics|moral|有害|harmful|安全|safety|负责任|responsible")
             has_harm_decl = self._has_pattern(r"禁止.*有害|不得.*歧视|避免.*偏见|no.?harm|do.?no.?harm|公平|equitable")
-            if has_ethics and has_harm_decl:
-                return 9.0
             if has_ethics:
-                return 6.0
-            return 5.0
+                score += 3.0
+            if has_harm_decl:
+                score += 3.0
+            if self._has_pattern(r"AI.*对齐|value.?align|人类.*价值|human.?value"):
+                score += 1.0
+            return min(score, 10.0)
         elif dim_id == "D73":
+            score = 5.0
             bias_count = self._count_pattern(
                 r"显然|毋庸置疑|绝对|obviously|undoubtedly|absolutely",
                 r"必须.*认为|一定.*正确|理所当然",
             )
             has_mitigation = self._has_pattern(r"客观|中立|多角度|objective|neutral|balanced|公平|equitable")
             if bias_count > 0 and not has_mitigation:
-                return max(2.0, 4.0 - bias_count)
+                score -= min(bias_count * 1.5, 4.0)
             if has_mitigation:
-                return 9.0
-            return 7.0
+                score += 3.0
+            if self._has_pattern(r"不确定性|uncertain|可能.*错误|open.?to.?discuss"):
+                score += 2.0
+            return max(1.0, min(score, 10.0))
         return 5.0
 
     def _eval_advanced_security(self, dim_id: str) -> float:
@@ -1051,29 +1080,38 @@ class _DimensionEvaluator:
 
     def _eval_advanced_toolchain(self, dim_id: str) -> float:
         if dim_id == "D78":
+            score = 3.0
             has_i18n = self._has_pattern(r"i18n|国际化|多语言|locale|翻译|translate|lang|语言")
             has_glossary = self._has_pattern(r"术语|glossary|术语表|翻译.*一致性|translation.*consistency")
-            if has_i18n and has_glossary:
-                return 9.0
             if has_i18n:
-                return 6.0
-            return 5.0
+                score += 3.0
+            if has_glossary:
+                score += 2.0
+            if self._has_pattern(r"RTL|right.?to.?left|文字.*方向|字符.*编码|Unicode"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D79":
+            score = 3.0
             has_pangu = self._has_pattern(r"盘古|Pangu|pangu|华为云.*模型|MaaS|ModelArts|昇腾|Ascend")
             has_pangu_spec = self._has_pattern(r"盘古.*格式|Pangu.*format|MaaS.*API|system.*role|Function.?Calling|安全护栏")
-            if has_pangu and has_pangu_spec:
-                return 9.0
             if has_pangu:
-                return 5.0
-            return 7.0
+                score += 3.0
+            if has_pangu_spec:
+                score += 2.0
+            if self._has_pattern(r"华为云.*API|HWCLOUD|ModelArts.*部署|昇腾.*推理"):
+                score += 2.0
+            return min(score, 10.0)
         elif dim_id == "D80":
+            score = 3.0
             has_harmony = self._has_pattern(r"鸿蒙|HarmonyOS|harmonyos|ArkTS|arkts|Stage模型|Ability|OHOS|元服务")
             has_harmony_spec = self._has_pattern(r"ArkTS.*严格|onCreate|onDestroy|ohos\.permission|断点|响应式|沙箱|DataShare|FormExtension|HTTPS|ohos\.net")
-            if has_harmony and has_harmony_spec:
-                return 9.0
             if has_harmony:
-                return 5.0
-            return 7.0
+                score += 3.0
+            if has_harmony_spec:
+                score += 2.0
+            if self._has_pattern(r"API.*14|API.*15|端侧.*推理|AI.*Kit|Neural.*Network|MindSpore.*Lite"):
+                score += 2.0
+            return min(score, 10.0)
         return 5.0
 
 
