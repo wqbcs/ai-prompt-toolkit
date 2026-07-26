@@ -690,7 +690,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--baseline", type=click.Path(exists=True), help="基线JSON文件路径(仅报告新增问题)")
 @click.option("--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)")
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool) -> None:
+@click.option("--watch", is_flag=True, help="监视文件变化，自动重新执行lint")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -945,6 +946,38 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             }
             write_report(report_data, output, fmt=fmt)
             click.echo(f"报告: {output}")
+
+    if watch:
+        from ai_prompt_toolkit.config import ConfigWatcher
+        import time
+        watcher = ConfigWatcher(poll_interval=2.0, debounce_seconds=1.0)
+        target_path = Path(target)
+        if target_path.is_dir():
+            for p in target_path.rglob("*"):
+                if p.suffix in (".txt", ".md", ".prompt", ".yaml", ".yml", ".toml"):
+                    watcher.add_watch(p)
+        elif target_path.is_file():
+            watcher.add_watch(target_path)
+        click.echo(f"👀 监视中... (Ctrl+C退出)")
+        try:
+            while True:
+                time.sleep(2.0)
+                if watcher.check_and_reload():
+                    click.echo("\n📝 文件变化，重新lint...")
+                    templates = discover_templates(target)
+                    if templates:
+                        linter = PromptLinter()
+                        new_results = []
+                        for tpl_path in templates:
+                            text = tpl_path.read_text(encoding="utf-8")
+                            result = linter.lint(tpl_path.name, text, fix=fix)
+                            new_results.append(result)
+                        new_findings = sum(r.failed_count for r in new_results)
+                        new_score = sum(r.score for r in new_results) / len(new_results) if new_results else 0
+                        click.echo(f"  文件: {len(templates)} | 发现: {new_findings} | 评分: {new_score:.1f}")
+        except KeyboardInterrupt:
+            click.echo("\n停止监视")
+            return
 
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
 
