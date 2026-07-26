@@ -167,3 +167,59 @@ class TestP133Fix:
         text = "处理语音输入。"
         result = check_p133(text)
         assert result is not None
+
+        assert result.rule_id == "P133"
+
+
+class TestCLIResumeOption:
+    def test_lint_has_resume_option(self):
+        import importlib
+        import ai_prompt_toolkit.cli_core as m
+        importlib.reload(m)
+        lint_cmd = m.main.commands["lint"]
+        param_names = [p.name for p in lint_cmd.params]
+        assert "resume" in param_names
+
+    def test_scan_has_resume_option(self):
+        import importlib
+        import ai_prompt_toolkit.cli_core as m
+        importlib.reload(m)
+        scan_cmd = m.main.commands["scan"]
+        param_names = [p.name for p in scan_cmd.params]
+        assert "resume" in param_names
+
+    def test_lint_resume_no_saved_progress(self, tmp_path):
+        from click.testing import CliRunner
+        import importlib
+        import ai_prompt_toolkit.cli_core as m
+        import ai_prompt_toolkit.resume_state as rs
+        importlib.reload(m)
+        old_cache = rs._CACHE_DIR
+        rs._CACHE_DIR = tmp_path / "cache"
+        try:
+            template = tmp_path / "test.txt"
+            template.write_text("你是一个AI助手", encoding="utf-8")
+            runner = CliRunner()
+            result = runner.invoke(m.main, ["lint", "-t", str(template), "--resume"])
+            assert "无已保存的进度" in result.output or result.exit_code == 0
+        finally:
+            rs._CACHE_DIR = old_cache
+
+    def test_lint_resume_with_saved_progress(self, tmp_path):
+        from click.testing import CliRunner
+        import importlib
+        import ai_prompt_toolkit.cli_core as m
+        import ai_prompt_toolkit.resume_state as rs
+        importlib.reload(m)
+        old_cache = rs._CACHE_DIR
+        rs._CACHE_DIR = tmp_path / "cache"
+        try:
+            template = tmp_path / "test.txt"
+            template.write_text("你是一个AI助手", encoding="utf-8")
+            rs.save_progress("lint", [], [str(template)], [])
+            runner = CliRunner()
+            result = runner.invoke(m.main, ["lint", "-t", str(tmp_path), "--resume"])
+            assert result.exit_code == 0
+        finally:
+            rs._CACHE_DIR = old_cache
+            rs.clear_progress("lint")

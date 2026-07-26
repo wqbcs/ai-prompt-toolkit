@@ -114,7 +114,21 @@ def _install_exception_handler() -> None:
             import sys
             sys.exit(130)
         _graceful_exit_active = True
-        click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
+        try:
+            from ai_prompt_toolkit.resume_state import save_progress
+            import inspect
+            _local = frame.f_locals if frame else {}
+            _cf = _local.get("_completed_files", [])
+            _af = _local.get("_all_file_names", [])
+            _cmd = _local.get("resume_cmd_hint", "lint")
+            if _cf and _af:
+                pending = [f for f in _af if f not in set(_cf)]
+                save_progress(_cmd, [], _cf, pending)
+                click.echo(f"\n\n⏹ 操作已取消。进度已保存({_cmd}: {len(_cf)}/{len(_af)})，使用 --resume 恢复。", err=True)
+            else:
+                click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
+        except Exception:
+            click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
         import sys
         sys.exit(130)
 
@@ -412,8 +426,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 @click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "jsonl"]),
               default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
+@click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
 def scan(target: str, config: str | None, incremental: bool, depth: str,
-         fmt: str, output: str | None) -> None:
+         fmt: str, output: str | None, resume: bool) -> None:
     """安全扫描：5层融合检测(注入/PII/供应链/结构/消毒)+可选Probe+评分卡"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code, empty_state_tip, friendly_progress_label
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
@@ -427,6 +442,20 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
     if not templates:
         click.echo(empty_state_tip("scan"))
         sys.exit(0)
+
+    _completed_files: list[str] = []
+    _all_file_names = [str(t) for t in templates]
+    resume_cmd_hint = "scan"
+    if resume:
+        from ai_prompt_toolkit.resume_state import load_progress, clear_progress
+        saved = load_progress("scan")
+        if saved:
+            _completed_files = saved.get("completed_files", [])
+            click.echo(f"恢复进度: 已完成 {len(_completed_files)}/{len(templates)} 个文件")
+            templates = [t for t in templates if str(t) not in set(_completed_files)]
+        else:
+            click.echo("无已保存的进度，从头开始")
+            _completed_files = []
 
     injection_detector = InjectionDetector()
     pii_detector = PIIDetector()
@@ -503,6 +532,11 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
                 text = tpl_path.read_text(encoding="utf-8")
                 findings_data = _scan_single(text)
                 all_findings.extend(findings_data)
+                _completed_files.append(str(tpl_path))
+                if resume:
+                    from ai_prompt_toolkit.resume_state import save_progress
+                    pending = [f for f in _all_file_names if f not in set(_completed_files)]
+                    save_progress("scan", [], _completed_files, pending)
                 progress.update(task, description=friendly_progress_label("scan", i, total))
                 progress.advance(task)
     else:
@@ -510,6 +544,11 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
             text = tpl_path.read_text(encoding="utf-8")
             findings_data = _scan_single(text)
             all_findings.extend(findings_data)
+            _completed_files.append(str(tpl_path))
+            if resume:
+                from ai_prompt_toolkit.resume_state import save_progress
+                pending = [f for f in _all_file_names if f not in set(_completed_files)]
+                save_progress("scan", [], _completed_files, pending)
             if fmt == "cli" and findings_data:
                 for f in findings_data:
                     sev = f.get("severity", "info")
@@ -639,7 +678,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
               default="none", help="CI失败阈值: 发现该级别及以上问题时退出码非0")
 @click.option("--baseline", type=click.Path(exists=True), help="基线JSON文件路径(仅报告新增问题)")
 @click.option("--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool) -> None:
+@click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -650,6 +690,20 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
+
+    _completed_files: list[str] = []
+    _all_file_names = [str(t) for t in templates]
+    resume_cmd_hint = "lint"
+    if resume:
+        from ai_prompt_toolkit.resume_state import load_progress, load_results, clear_progress
+        saved = load_progress("lint")
+        if saved:
+            _completed_files = saved.get("completed_files", [])
+            click.echo(f"恢复进度: 已完成 {len(_completed_files)}/{len(templates)} 个文件")
+            templates = [t for t in templates if str(t) not in set(_completed_files)]
+        else:
+            click.echo("无已保存的进度，从头开始")
+            _completed_files = []
 
     linter = PromptLinter()
     all_results = []
@@ -680,6 +734,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 all_results.append(result)
                 total_findings += result.failed_count
                 total_score += result.score
+                _completed_files.append(str(tpl_path))
+                if resume:
+                    from ai_prompt_toolkit.resume_state import save_progress
+                    pending = [f for f in _all_file_names if f not in set(_completed_files)]
+                    save_progress("lint", [], _completed_files, pending)
                 progress.update(task, description=friendly_progress_label("lint", i, len(templates)))
                 progress.advance(task)
     else:
@@ -690,6 +749,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             all_results.append(result)
             total_findings += result.failed_count
             total_score += result.score
+            _completed_files.append(str(tpl_path))
+            if resume:
+                from ai_prompt_toolkit.resume_state import save_progress
+                pending = [f for f in _all_file_names if f not in set(_completed_files)]
+                save_progress("lint", [], _completed_files, pending)
 
     mm_findings_total: list = []
     if multimodal:
