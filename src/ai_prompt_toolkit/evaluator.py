@@ -123,6 +123,16 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D108", "name": "混沌工程韧性", "category": "quality", "weight": 0.6, "description": "Prompt是否声明故障注入容错/熔断/降级演练策略"},
     {"id": "D109", "name": "API契约一致性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明API接口契约(请求/响应schema/版本/向后兼容)"},
     {"id": "D110", "name": "供应链安全", "category": "security", "weight": 0.8, "description": "Prompt是否声明依赖来源可信度/签名验证/漏洞扫描策略"},
+    {"id": "D111", "name": "模板注入防护", "category": "security", "weight": 1.0, "description": "Prompt是否声明模板变量转义/沙箱渲染/指令隔离"},
+    {"id": "D112", "name": "缓存投毒防护", "category": "security", "weight": 0.9, "description": "Prompt是否声明缓存键验证/内容签名/过期策略"},
+    {"id": "D113", "name": "越狱防护强度", "category": "security", "weight": 1.0, "description": "Prompt是否声明系统指令固化/角色锚定/拒绝策略"},
+    {"id": "D114", "name": "指令提取防护", "category": "security", "weight": 0.9, "description": "Prompt是否声明输出过滤/指令不可见/反提取措辞"},
+    {"id": "D115", "name": "侧信道防护", "category": "security", "weight": 0.8, "description": "Prompt是否声明时间恒定/错误统一/日志脱敏"},
+    {"id": "D116", "name": "Prompt加密传输", "category": "security", "weight": 0.8, "description": "Prompt是否声明传输加密(TLS1.3/证书固定/双向认证)"},
+    {"id": "D117", "name": "Prompt压缩效率", "category": "performance", "weight": 0.7, "description": "Prompt的压缩优化潜力(冗余词/重复模式/可参数化段)"},
+    {"id": "D118", "name": "Prompt分段质量", "category": "structure", "weight": 0.7, "description": "Prompt是否按角色/指令/约束/示例清晰分段"},
+    {"id": "D119", "name": "Prompt国际化就绪", "category": "quality", "weight": 0.5, "description": "Prompt是否支持i18n(变量化文本/语言声明/翻译友好)"},
+    {"id": "D120", "name": "Prompt元数据完备", "category": "structure", "weight": 0.6, "description": "Prompt是否包含元数据(作者/版本/标签/创建时间/用途)"},
 ]
 
 
@@ -1380,6 +1390,76 @@ class _DimensionEvaluator:
             if self._has_pattern(r"供应链|supply.*chain|依赖|depend|来源|provenance"):
                 score += 4.0
             if self._has_pattern(r"签名|sign|验证|verif|漏洞.*扫描|vulnerab.*scan"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D111":
+            score = 3.0
+            if self._has_pattern(r"转义|escap|沙箱|sandbox|指令.*隔离|instruct.*isolat"):
+                score += 4.0
+            if self._has_pattern(r"模板.*安全|template.*safe|变量.*转义|variable.*escap"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D112":
+            score = 3.0
+            if self._has_pattern(r"缓存.*键|cache.*key|签名|sign|hash|TTL|过期"):
+                score += 4.0
+            if self._has_pattern(r"内容.*验证|content.*validat|一致性|consistency|投毒|poison"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D113":
+            score = 3.0
+            if self._has_pattern(r"固化|anchor|锚定|不可.*覆盖|cannot.*override|immutable"):
+                score += 4.0
+            if self._has_pattern(r"拒绝.*策略|deny.*policy|越狱.*防护|jailbreak.*protect"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D114":
+            score = 3.0
+            if self._has_pattern(r"输出.*过滤|output.*filter|指令.*不可见|instruct.*invisible"):
+                score += 4.0
+            if self._has_pattern(r"反提取|anti.?extract|禁止.*泄露|prohibit.*leak"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D115":
+            score = 3.0
+            if self._has_pattern(r"时间.*恒定|constant.*time|统一.*错误|unified.*error"):
+                score += 4.0
+            if self._has_pattern(r"侧信道|side.?channel|日志.*脱敏|log.*mask"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D116":
+            score = 3.0
+            if self._has_pattern(r"TLS|加密|encrypt|证书|cert|双向认证|mutual.*auth"):
+                score += 4.0
+            if self._has_pattern(r"传输.*安全|transport.*secur|固定|pin"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D117":
+            score = 5.0
+            if self._has_pattern(r"压缩|compress|精简|minif|参数化|parametriz"):
+                score += 3.0
+            if self._stat("ttr") < 0.4:
+                score += 2.0
+            return min(score, 10.0)
+        elif dim_id == "D118":
+            score = 3.0
+            if self._has_pattern(r"#{1,6}\s|角色|role|指令|instruct|约束|constraint|示例|example"):
+                score += 4.0
+            if self._stat("role_sections") >= 3:
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D119":
+            score = 3.0
+            if self._has_pattern(r"i18n|国际化|locale|语言|language|翻译|translat"):
+                score += 4.0
+            if self._has_pattern(r"\{\{.*?\}\}|\{.*?\}|变量|variable"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D120":
+            score = 3.0
+            if self._has_pattern(r"作者|author|版本|version|标签|tag|创建|creat|用途|purpose"):
+                score += 4.0
+            if self._has_pattern(r"元数据|metadata|标注|annotat|描述|description"):
                 score += 3.0
             return min(score, 10.0)
         return 5.0

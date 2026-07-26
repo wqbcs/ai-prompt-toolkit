@@ -438,8 +438,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
               default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
+@click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复scan相似prompt)")
 def scan(target: str, config: str | None, incremental: bool, depth: str,
-         fmt: str, output: str | None, resume: bool) -> None:
+         fmt: str, output: str | None, resume: bool, semantic_cache: bool) -> None:
     """安全扫描：5层融合检测(注入/PII/供应链/结构/消毒)+可选Probe+评分卡"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code, empty_state_tip, friendly_progress_label
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
@@ -475,6 +476,11 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
     all_findings = []
     detector_stats = {"injection": 0, "pii": 0, "supply_chain": 0, "structural": 0, "sanitizer": 0, "probe": 0}
     total = len(templates)
+
+    _sem_cache = None
+    if semantic_cache:
+        from ai_prompt_toolkit.semantic_cache import SemanticCache
+        _sem_cache = SemanticCache(threshold=0.85, max_size=500, ttl_seconds=86400.0)
 
     _SCAN_LAYERS = {
         "quick": ["injection"],
@@ -692,10 +698,49 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
 @click.option("--watch", is_flag=True, help="监视文件变化，自动重新执行lint")
 @click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复lint相似prompt)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool) -> None:
+@click.option("--json-schema", "json_schema", is_flag=True, help="输出Lint规则集JSON Schema定义")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
+    if json_schema:
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        import json as _json
+        rules = get_all_rules()
+        schema = {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "ai-prompt-toolkit Lint Rule Set",
+            "type": "object",
+            "properties": {
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "rule_id": {"type": "string", "pattern": "^P\\d{3}$"},
+                            "name": {"type": "string"},
+                            "category": {"type": "string"},
+                            "severity": {"type": "string"},
+                            "description": {"type": "string"},
+                            "remediation": {"type": "string"},
+                            "auto_fixable": {"type": "boolean"},
+                            "owasp_refs": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": ["rule_id", "name", "category", "severity"],
+                    },
+                },
+            },
+        }
+        rules_data = []
+        for r in rules:
+            entry = r.to_dict()
+            entry["auto_fixable"] = r.rule_id in AUTO_FIXABLE_RULES
+            rules_data.append(entry)
+        output_data = {"schema": schema, "rules": rules_data, "total_count": len(rules_data)}
+        click.echo(_json.dumps(output_data, ensure_ascii=False, indent=2))
+        sys.exit(0)
 
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
 
@@ -1551,9 +1596,10 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 @click.option("--author", help="作者")
 @click.option("--message", "-m", help="变更说明")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--semantic", is_flag=True, help="使用语义差异分析(按段比较+安全策略变更检测)")
 def version_cmd(action: str, template: str | None, source: str | None, ver: int | None,
                 version_a: int | None, version_b: int | None, author: str | None,
-                message: str | None, fmt: str) -> None:
+                message: str | None, fmt: str, semantic: bool) -> None:
     """Prompt版本管理：版本创建/列表/diff/回滚"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.version_store import VersionStore
@@ -1607,23 +1653,34 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
             if not template or not version_a or not version_b:
                 click.echo("错误: 请指定--template --version-a --version-b", err=True)
                 sys.exit(2)
-            result = store.diff(template, version_a, version_b)
-            if fmt == "json":
+            if semantic:
+                from ai_prompt_toolkit.prompt_diff import semantic_diff
                 import json as _json
-                click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+                va = store.get_version(template, version_a)
+                vb = store.get_version(template, version_b)
+                if not va or not vb:
+                    click.echo("错误: 版本不存在", err=True)
+                    sys.exit(2)
+                sem_result = semantic_diff(va.content, vb.content)
+                click.echo(_json.dumps(sem_result.to_dict(), ensure_ascii=False, indent=2))
             else:
-                from ai_prompt_toolkit.output import console
-                console.print(f"[bold]Diff: {template} v{version_a} → v{version_b}[/bold]")
-                console.print(f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}")
-                for line in result.unified_diff:
-                    if line.startswith("+") and not line.startswith("+++"):
-                        console.print(f"  [green]{line}[/green]")
-                    elif line.startswith("-") and not line.startswith("---"):
-                        console.print(f"  [red]{line}[/red]")
-                    elif line.startswith("@@"):
-                        console.print(f"  [cyan]{line}[/cyan]")
-                    else:
-                        console.print(f"  {line}")
+                result = store.diff(template, version_a, version_b)
+                if fmt == "json":
+                    import json as _json
+                    click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+                else:
+                    from ai_prompt_toolkit.output import console
+                    console.print(f"[bold]Diff: {template} v{version_a} → v{version_b}[/bold]")
+                    console.print(f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}")
+                    for line in result.unified_diff:
+                        if line.startswith("+") and not line.startswith("+++"):
+                            console.print(f"  [green]{line}[/green]")
+                        elif line.startswith("-") and not line.startswith("---"):
+                            console.print(f"  [red]{line}[/red]")
+                        elif line.startswith("@@"):
+                            console.print(f"  [cyan]{line}[/cyan]")
+                        else:
+                            console.print(f"  {line}")
 
         elif action == "rollback":
             if not template or not ver:
