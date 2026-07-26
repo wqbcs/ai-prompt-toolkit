@@ -159,4 +159,4 @@ class TestAdvancedToolchainD78D79D80:
 class TestTotalDimensions:
     def test_80_dimensions(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS
-        assert len(_DIMENSIONS) == 100
+        assert len(_DIMENSIONS) == 110

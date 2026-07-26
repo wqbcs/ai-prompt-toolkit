@@ -113,6 +113,16 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D98", "name": "Prompt注入鲁棒性", "category": "security", "weight": 1.0, "description": "Prompt对注入攻击的防御深度(多层防御/指令隔离/输入净化)"},
     {"id": "D99", "name": "可解释性声明", "category": "quality", "weight": 0.8, "description": "Prompt是否声明输出可解释性(推理过程透明/置信度/不确定性量化)"},
     {"id": "D100", "name": "赛事评分契合度", "category": "compliance", "weight": 0.9, "description": "Prompt对华为云/鸿蒙生态赛事评分标准的适配度"},
+    {"id": "D101", "name": "版本管理完备性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明语义版本/变更日志/兼容性标注"},
+    {"id": "D102", "name": "灰度发布可控性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明灰度发布策略(流量百分比/AB测试/逐步放量)"},
+    {"id": "D103", "name": "数据脱敏合规性", "category": "security", "weight": 0.9, "description": "Prompt是否声明PII检测/字段掩码/日志脱敏策略"},
+    {"id": "D104", "name": "沙箱隔离强度", "category": "security", "weight": 0.9, "description": "Prompt是否声明执行环境隔离/资源限制/网络白名单"},
+    {"id": "D105", "name": "回滚机制可靠性", "category": "security", "weight": 0.8, "description": "Prompt是否声明版本回滚/快照恢复/自动回滚触发条件"},
+    {"id": "D106", "name": "多租户隔离性", "category": "security", "weight": 0.8, "description": "Prompt是否支持多租户数据隔离/权限隔离/资源隔离"},
+    {"id": "D107", "name": "可观测性", "category": "quality", "weight": 0.7, "description": "Prompt是否声明监控指标/告警规则/链路追踪"},
+    {"id": "D108", "name": "混沌工程韧性", "category": "quality", "weight": 0.6, "description": "Prompt是否声明故障注入容错/熔断/降级演练策略"},
+    {"id": "D109", "name": "API契约一致性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明API接口契约(请求/响应schema/版本/向后兼容)"},
+    {"id": "D110", "name": "供应链安全", "category": "security", "weight": 0.8, "description": "Prompt是否声明依赖来源可信度/签名验证/漏洞扫描策略"},
 ]
 
 
@@ -1300,6 +1310,76 @@ class _DimensionEvaluator:
             if self._has_pattern(r"华为云|Huawei.*Cloud|鸿蒙|HarmonyOS|盘古|Pangu|昇腾|Ascend"):
                 score += 4.0
             if self._has_pattern(r"等保|DJBF|合规|compliance|安全基线|security.*baseline|OWASP"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D101":
+            score = 3.0
+            if self._has_pattern(r"语义版本|semver|v\d+\.\d+|变更日志|changelog"):
+                score += 4.0
+            if self._has_pattern(r"兼容|compat|tag|标签"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D102":
+            score = 3.0
+            if self._has_pattern(r"灰度|canary|feature.*flag|AB.*测试|A/B"):
+                score += 4.0
+            if self._has_pattern(r"流量.*百分比|逐步.*放量|回滚|rollback"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D103":
+            score = 3.0
+            if self._has_pattern(r"脱敏|desensitiz|掩码|mask|PII|隐私|privacy"):
+                score += 4.0
+            if self._has_pattern(r"禁止.*原始|prohibit.*raw|日志.*脱敏|log.*mask"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D104":
+            score = 3.0
+            if self._has_pattern(r"沙箱|sandbox|隔离|isolat|容器|container"):
+                score += 4.0
+            if self._has_pattern(r"内存.*限制|CPU.*限制|网络.*白名单|whitelist"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D105":
+            score = 3.0
+            if self._has_pattern(r"回滚|rollback|快照|snapshot|恢复|restor"):
+                score += 4.0
+            if self._has_pattern(r"自动.*回滚|异常.*触发|稳定.*版本"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D106":
+            score = 3.0
+            if self._has_pattern(r"多租户|multi.?tenant|租户|tenant"):
+                score += 4.0
+            if self._has_pattern(r"数据.*隔离|权限.*隔离|资源.*隔离"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D107":
+            score = 3.0
+            if self._has_pattern(r"监控|monitor|指标|metric|告警|alert"):
+                score += 4.0
+            if self._has_pattern(r"链路.*追踪|trace|可观测|observab|日志|log"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D108":
+            score = 3.0
+            if self._has_pattern(r"混沌|chaos|故障.*注入|fault.*inject|熔断|circuit.?break"):
+                score += 4.0
+            if self._has_pattern(r"降级|degrad|容错|fault.?tolerant|演练|drill"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D109":
+            score = 3.0
+            if self._has_pattern(r"API.*契约|contract|接口.*schema|请求.*响应|request.*response"):
+                score += 4.0
+            if self._has_pattern(r"版本|version|向后.*兼容|backward.*compat"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D110":
+            score = 3.0
+            if self._has_pattern(r"供应链|supply.*chain|依赖|depend|来源|provenance"):
+                score += 4.0
+            if self._has_pattern(r"签名|sign|验证|verif|漏洞.*扫描|vulnerab.*scan"):
                 score += 3.0
             return min(score, 10.0)
         return 5.0

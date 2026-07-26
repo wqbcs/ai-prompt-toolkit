@@ -328,3 +328,10 @@ def get_all_snippets() -> list[ArkTSSnippet]:
 
 def get_snippets_by_tag(tag: str) -> list[ArkTSSnippet]:
     return [s for s in _SNIPPETS if tag in s.tags]
+
+
+def get_template(rule_id: str) -> str | None:
+    snippets = get_snippets_by_rule(rule_id)
+    if not snippets:
+        return None
+    return snippets[0].code

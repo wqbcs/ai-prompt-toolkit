@@ -691,7 +691,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)")
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
 @click.option("--watch", is_flag=True, help="监视文件变化，自动重新执行lint")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool) -> None:
+@click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复lint相似prompt)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -722,6 +723,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     total_findings = 0
     total_score = 0.0
 
+    _sem_cache = None
+    if semantic_cache:
+        from ai_prompt_toolkit.semantic_cache import SemanticCache
+        _sem_cache = SemanticCache(threshold=0.85, max_size=1000, ttl_seconds=86400.0)
+
     try:
         from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console
@@ -737,7 +743,17 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(tpl_path.name, text, fix=fix or interactive, template_type=template_type)
+                _cache_hit = False
+                if _sem_cache:
+                    _cached = _sem_cache.lookup(text)
+                    if _cached is not None:
+                        from ai_prompt_toolkit.linter.linter import LintResult
+                        result = LintResult(template_id=tpl_path.name, findings=[], score=_cached.get("score", 0), passed=True, fixes_applied=[])
+                        _cache_hit = True
+                if not _cache_hit:
+                    result = linter.lint(tpl_path.name, text, fix=fix or interactive, template_type=template_type)
+                    if _sem_cache:
+                        _sem_cache.store(text, {"score": result.score, "findings_count": result.failed_count})
                 if interactive and result.fixes_applied:
                     for fix_info in result.fixes_applied:
                         click.echo(f"  修复: {fix_info}")
@@ -757,7 +773,17 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         for tpl_path in templates:
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
-            result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+            _cache_hit = False
+            if _sem_cache:
+                _cached = _sem_cache.lookup(text)
+                if _cached is not None:
+                    from ai_prompt_toolkit.linter.linter import LintResult
+                    result = LintResult(template_id=tpl_path.name, findings=[], score=_cached.get("score", 0), passed=True, fixes_applied=[])
+                    _cache_hit = True
+            if not _cache_hit:
+                result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+                if _sem_cache:
+                    _sem_cache.store(text, {"score": result.score, "findings_count": result.failed_count})
             all_results.append(result)
             total_findings += result.failed_count
             total_score += result.score
@@ -946,6 +972,10 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             }
             write_report(report_data, output, fmt=fmt)
             click.echo(f"报告: {output}")
+
+    if _sem_cache:
+        _cache_stats = _sem_cache.stats()
+        click.echo(f"语义缓存: 命中{_cache_stats['hits']}次 / 未命中{_cache_stats['misses']}次 / 命中率{_cache_stats['hit_rate']:.1%}")
 
     if watch:
         from ai_prompt_toolkit.config import ConfigWatcher

@@ -785,6 +785,30 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["text"],
             },
         },
+        {
+            "name": "harmonyos_template_generate",
+            "description": "鸿蒙ArkTS代码模板生成: 根据规则ID和场景生成鸿蒙ArkTS/ArkUI代码片段(覆盖P121/P122/P124/P146-P150)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "rule_id": {"type": "string", "description": "Lint规则ID(如P121/P146等)", "enum": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"]},
+                    "scene": {"type": "string", "description": "应用场景(如chatbot/card/extension)", "default": "general"},
+                },
+                "required": ["rule_id"],
+            },
+        },
+        {
+            "name": "prompt_lint_json_schema",
+            "description": "输出Lint规则集JSON Schema: 生成所有Lint规则的JSON Schema定义, 可用于配置验证和IDE自动补全",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "category": {"type": "string", "description": "按类别过滤(如security/structure/performance)", "default": ""},
+                    "include_owasp": {"type": "boolean", "description": "包含OWASP映射", "default": True},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -918,6 +942,8 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "harmonyos_arkui_check": _tool_harmonyos_arkui_check,
             "harmonyos_stage_model_check": _tool_harmonyos_stage_model_check,
             "harmonyos_distributed_check": _tool_harmonyos_distributed_check,
+            "harmonyos_template_generate": _tool_harmonyos_template_generate,
+            "prompt_lint_json_schema": _tool_prompt_lint_json_schema,
         }
     return _TOOL_DISPATCH
 
@@ -2323,6 +2349,59 @@ def _tool_harmonyos_distributed_check(args: dict[str, Any]) -> dict[str, Any]:
     if has_dist and not re.search(r'Continuation|RemoteObject|DistributedData|DeviceManager', text, re.IGNORECASE):
         checks.append({"check": "分布式API声明缺失", "severity": "info", "suggestion": "声明使用的分布式API(Continuation/RemoteObject/DistributedData/DeviceManager)"})
     return {"pass": len(checks) == 0, "has_distributed_context": has_dist, "checks": checks}
+
+
+def _tool_harmonyos_template_generate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.harmonyos_templates import get_template
+    rule_id = args.get("rule_id", "")
+    scene = args.get("scene", "general")
+    if not rule_id:
+        return {"error": "rule_id is required"}
+    template = get_template(rule_id)
+    if template is None:
+        return {"error": f"No template found for rule {rule_id}", "available_rules": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"]}
+    return {"rule_id": rule_id, "scene": scene, "template": template, "language": "ArkTS"}
+
+
+def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+    from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+    category = args.get("category", "")
+    include_owasp = args.get("include_owasp", True)
+    rules = get_all_rules()
+    if category:
+        rules = [r for r in rules if r.category == category]
+    schema = {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "title": "ai-prompt-toolkit Lint Rule Set",
+        "type": "object",
+        "properties": {
+            "rules": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "rule_id": {"type": "string", "pattern": "^P\\d{3}$"},
+                        "name": {"type": "string"},
+                        "category": {"type": "string", "enum": ["structure", "security", "performance", "quality", "compliance", "agent", "rag", "harmonyos", "multimodal"]},
+                        "severity": {"type": "string", "enum": ["critical", "high", "medium", "low", "info"]},
+                        "description": {"type": "string"},
+                        "remediation": {"type": "string"},
+                        "auto_fixable": {"type": "boolean"},
+                    },
+                    "required": ["rule_id", "name", "category", "severity"],
+                },
+            },
+        },
+    }
+    if include_owasp:
+        schema["properties"]["rules"]["items"]["properties"]["owasp_refs"] = {"type": "array", "items": {"type": "string", "pattern": "^LLM\\d{2}$"}}
+    rules_data = []
+    for r in rules:
+        entry = r.to_dict()
+        entry["auto_fixable"] = r.rule_id in AUTO_FIXABLE_RULES
+        rules_data.append(entry)
+    return {"schema": schema, "rules": rules_data, "total_count": len(rules_data), "auto_fixable_count": sum(1 for r in rules if r.rule_id in AUTO_FIXABLE_RULES)}
 
 
 if __name__ == "__main__":
