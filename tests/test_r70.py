@@ -105,7 +105,7 @@ class TestRuleCount150:
 class TestD86D90Dimensions:
     def test_dimensions_count_90(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS
-        assert len(_DIMENSIONS) == 90
+        assert len(_DIMENSIONS) == 100
 
     def test_d86_d90_in_dimensions(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS

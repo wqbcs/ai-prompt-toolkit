@@ -103,6 +103,16 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D88", "name": "流式输出适配度", "category": "performance", "weight": 0.6, "description": "Prompt是否声明流式输出适配(增量格式/SSE/分块策略)"},
     {"id": "D89", "name": "多租户隔离度", "category": "security", "weight": 0.9, "description": "Prompt是否声明多租户数据隔离(租户ID注入/上下文隔离/资源配额)"},
     {"id": "D90", "name": "国产芯片适配度", "category": "toolchain", "weight": 0.8, "description": "Prompt对昇腾NPU/寒武纪MLU/海光DCU的推理适配声明"},
+    {"id": "D91", "name": "Prompt版本可追溯性", "category": "toolchain", "weight": 0.7, "description": "Prompt是否声明版本号/变更日志/回滚策略"},
+    {"id": "D92", "name": "AB实验适配度", "category": "quality", "weight": 0.6, "description": "Prompt是否支持A/B实验(变体声明/流量分配/统计显著性)"},
+    {"id": "D93", "name": "Prompt复用度", "category": "quality", "weight": 0.7, "description": "Prompt模板化/参数化程度，支持跨场景复用"},
+    {"id": "D94", "name": "端到端加密声明", "category": "security", "weight": 0.9, "description": "Prompt是否声明E2EE加密传输(KMS/证书轮换/密钥分级)"},
+    {"id": "D95", "name": "成本可预测性", "category": "performance", "weight": 0.7, "description": "Prompt是否声明Token预算/调用频率/成本上限"},
+    {"id": "D96", "name": "鸿蒙分布式一致性", "category": "harmonyos", "weight": 0.8, "description": "Prompt对鸿蒙分布式数据一致性的声明(冲突解决/最终一致性/数据分级)"},
+    {"id": "D97", "name": "ModelArts可部署性", "category": "toolchain", "weight": 0.7, "description": "Prompt对华为云ModelArts训练/推理部署的适配声明"},
+    {"id": "D98", "name": "Prompt注入鲁棒性", "category": "security", "weight": 1.0, "description": "Prompt对注入攻击的防御深度(多层防御/指令隔离/输入净化)"},
+    {"id": "D99", "name": "可解释性声明", "category": "quality", "weight": 0.8, "description": "Prompt是否声明输出可解释性(推理过程透明/置信度/不确定性量化)"},
+    {"id": "D100", "name": "赛事评分契合度", "category": "compliance", "weight": 0.9, "description": "Prompt对华为云/鸿蒙生态赛事评分标准的适配度"},
 ]
 
 
@@ -1222,6 +1232,76 @@ class _DimensionEvaluator:
             if self._has_pattern(r"CANN|ATC|MindSpore|精度.*适配|precision.*adapt|量化|quantiz|INT8|FP16|推理.*优化|inference.*optim"):
                 score += 3.0
             return min(score, 10.0)
+        elif dim_id == "D91":
+            score = 3.0
+            if self._has_pattern(r"版本|version|v\d|变更日志|changelog|回滚|rollback|回退"):
+                score += 4.0
+            if self._has_pattern(r"语义版本|semver|兼容性|compat|灰度发布|canary"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D92":
+            score = 3.0
+            if self._has_pattern(r"A/B|AB测试|变体|variant|流量分配|traffic.*split"):
+                score += 4.0
+            if self._has_pattern(r"统计显著性|statistical.*significan|置信区间|confidence.*interval|p.value"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D93":
+            score = 3.0
+            if self._has_pattern(r"模板|template|参数化|parametriz|变量|variable|\{\{"):
+                score += 4.0
+            if self._has_pattern(r"复用|reuse|共享|shared|继承|inherit|组合|compos"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D94":
+            score = 3.0
+            if self._has_pattern(r"E2EE|端到端加密|KMS|密钥管理|加密传输|encrypted.*trans"):
+                score += 4.0
+            if self._has_pattern(r"证书轮换|cert.*rotat|密钥分级|key.*hierarchy|TLS|mTLS"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D95":
+            score = 3.0
+            if self._has_pattern(r"Token.*预算|token.*budget|成本.*上限|cost.*limit|调用频率|rate.*limit"):
+                score += 4.0
+            if self._has_pattern(r"计费|billing|配额|quota|资源.*规划|resource.*plan"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D96":
+            score = 3.0
+            if self._has_pattern(r"分布式.*一致|distribut.*consist|冲突.*解决|conflict.*resolut|最终一致性|eventual.*consist"):
+                score += 4.0
+            if self._has_pattern(r"数据分级|data.*classific|软总线|SoftBus|跨设备|cross.*device"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D97":
+            score = 3.0
+            if self._has_pattern(r"ModelArts|模型训练|model.*train|推理部署|inference.*deploy|在线推理|online.*infer"):
+                score += 4.0
+            if self._has_pattern(r"昇腾|Ascend|专属池|dedicated.*pool|自动扩缩|auto.*scal"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D98":
+            score = 3.0
+            if self._has_pattern(r"注入.*防御|injection.*defens|指令.*隔离|instruction.*isolat|输入.*净化|input.*sanitiz"):
+                score += 4.0
+            if self._has_pattern(r"多层防御|defense.*in.*depth|边界校验|boundary.*check|沙箱|sandbox|越狱|jailbreak.*defens"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D99":
+            score = 3.0
+            if self._has_pattern(r"可解释|explainab|推理过程|reasoning.*process|透明|transparent|置信度|confidence"):
+                score += 4.0
+            if self._has_pattern(r"不确定性|uncertainty|校准|calibrat|证据|evidence|来源|provenance"):
+                score += 3.0
+            return min(score, 10.0)
+        elif dim_id == "D100":
+            score = 3.0
+            if self._has_pattern(r"华为云|Huawei.*Cloud|鸿蒙|HarmonyOS|盘古|Pangu|昇腾|Ascend"):
+                score += 4.0
+            if self._has_pattern(r"等保|DJBF|合规|compliance|安全基线|security.*baseline|OWASP"):
+                score += 3.0
+            return min(score, 10.0)
         return 5.0
 
 
@@ -1232,12 +1312,12 @@ def evaluate_template(
     dimensions: list[str] | None = None,
     categories: list[str] | None = None,
 ) -> EvaluationReport:
-    """80维度模板评估函数。
+    """100维度模板评估函数。
 
     Args:
         template_id: 模板标识。
         text: 模板文本。
-        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D80"。
+        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D100"。
                     也接受"D1"-"D9"格式（自动补零为"D01"-"D09"）。
         categories: 指定评估的维度类别（None=全部）。
 
