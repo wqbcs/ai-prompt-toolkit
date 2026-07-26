@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable
 
 from ai_prompt_toolkit.types import Finding, Severity
@@ -20,6 +20,7 @@ class LintRule:
     description_en: str = ""
     remediation_en: str = ""
     family: str = ""
+    owasp_refs: list[str] = field(default_factory=list)
 
     def to_dict(self, lang: str = "zh") -> dict[str, Any]:
         desc = self.description if lang == "zh" else (self.description_en or self.description)
@@ -34,6 +35,8 @@ class LintRule:
         }
         if self.family:
             result["family"] = self.family
+        if self.owasp_refs:
+            result["owasp_refs"] = self.owasp_refs
         return result
 
 
@@ -637,6 +640,14 @@ from ai_prompt_toolkit.linter.rules_p146_p150 import (  # noqa: E402
 _CHECKERS_EXTENDED.extend([
     check_p146, check_p147, check_p148, check_p149, check_p150,
 ])
+
+
+def _apply_owasp_refs() -> None:
+    from ai_prompt_toolkit.linter.owasp_mapping import apply_owasp_refs
+    apply_owasp_refs()
+
+
+_apply_owasp_refs()
 
 
 def get_all_rules() -> list[LintRule]:
