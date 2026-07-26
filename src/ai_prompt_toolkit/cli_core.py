@@ -78,20 +78,23 @@ def main() -> None:
 @main.command()
 @click.argument("shell", type=click.Choice(["bash", "zsh", "fish"]))
 def completion(shell: str) -> None:
-    """生成Shell自动补全脚本"""
-    import os
-    env_var = f"_PROMPT_CLI_COMPLETE={shell}_source"
-    prog = sys.argv[0]
-    if shell == "bash":
-        script = f'eval "$({env_var} {prog} 2>/dev/null)"'
-    elif shell == "zsh":
-        script = f'eval "$({env_var} {prog} 2>/dev/null)"'
-    else:
-        script = f'eval ({env_var} {prog} 2>/dev/null)'
-    click.echo(f"# 将以下内容添加到你的 ~/.{shell}rc:")
+    """生成Shell自动补全脚本(bash/zsh/fish)
+
+    使用方式:
+      apt completion bash > ~/.apt-completion.bash && echo 'source ~/.apt-completion.bash' >> ~/.bashrc
+      apt completion zsh > ~/.zsh/completion/_apt && echo 'fpath=(~/.zsh/completion $fpath)' >> ~/.zshrc
+      apt completion fish > ~/.config/fish/completions/apt.fish
+    """
+    from click.shell_completion import get_completion_class
+    prog_name = "apt"
+    complete_var = f"_APT_COMPLETE={shell}_source"
+    comp_class = get_completion_class(shell)
+    if comp_class is None:
+        click.echo(f"不支持 {shell} 补全", err=True)
+        raise SystemExit(1)
+    comp = comp_class(main, {}, prog_name, complete_var)
+    script = comp.source()
     click.echo(script)
-
-
 @main.result_callback()
 def _handle_result(result: Any, **kwargs: Any) -> None:
     pass
