@@ -305,7 +305,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     reports = []
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console as _EvConsole
         _has_rich_ev = True
         _ev_console = _EvConsole()
@@ -314,8 +314,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 
     if _has_rich_ev:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                      BarColumn(), TaskProgressColumn(), console=_ev_console) as progress:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
             task = progress.add_task("质量评估中...", total=len(files))
             for i, f in enumerate(files, 1):
                 text = f.read_text(encoding="utf-8")
@@ -445,7 +444,7 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
     active_layers = _SCAN_LAYERS[depth]
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console as _Console
         _has_rich = True
     except ImportError:
@@ -498,8 +497,7 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 
     if _has_rich:
         _console = _Console()
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                      BarColumn(), TaskProgressColumn(), console=_console) as progress:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
             task = progress.add_task(f"安全扫描[{depth}]...", total=total)
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
@@ -659,7 +657,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     total_score = 0.0
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console
         _has_rich = True
         console = Console()
@@ -668,8 +666,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if _has_rich:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                      BarColumn(), TaskProgressColumn(), console=console) as progress:
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
             task = progress.add_task("Lint检查中...", total=len(templates))
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
