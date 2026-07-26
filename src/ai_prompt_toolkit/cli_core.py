@@ -30,6 +30,7 @@ def _detect_template_type(text: str) -> str:
 
 def _generate_sarif(results: list, target: str) -> dict:
     import json as _json
+    from ai_prompt_toolkit.linter.rules import get_rule
     sarif = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
         "version": "2.1.0",
@@ -50,11 +51,21 @@ def _generate_sarif(results: list, target: str) -> dict:
         for f in result.findings:
             if f.rule_id not in rules_seen:
                 rules_seen.add(f.rule_id)
-                sarif["runs"][0]["tool"]["driver"]["rules"].append({
+                rule_def = get_rule(f.rule_id)
+                rule_entry = {
                     "id": f.rule_id,
                     "shortDescription": {"text": f.description},
                     "properties": {"severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity)},
-                })
+                }
+                if rule_def:
+                    rule_entry["helpUri"] = f"https://ai-prompt-toolkit.dev/rules/{f.rule_id}"
+                    if rule_def.remediation:
+                        rule_entry["fullDescription"] = {"text": f"{rule_def.description}\n\nFix: {rule_def.remediation}"}
+                    if rule_def.owasp_refs:
+                        rule_entry["properties"]["owaspRefs"] = rule_def.owasp_refs
+                    rule_entry["properties"]["category"] = rule_def.category
+                    rule_entry["properties"]["precision"] = "high" if rule_def.category == "security" else "medium"
+                sarif["runs"][0]["tool"]["driver"]["rules"].append(rule_entry)
             sev_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
             sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
             sarif["runs"][0]["results"].append({
@@ -67,7 +78,7 @@ def _generate_sarif(results: list, target: str) -> dict:
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 130条Lint规则 | 80评估维度 | 53 MCP工具 | 15 Probes | 8 Detectors | 18内置模板")
+@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 150条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers")
 def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
