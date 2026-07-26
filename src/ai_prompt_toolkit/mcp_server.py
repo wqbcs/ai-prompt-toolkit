@@ -458,8 +458,8 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "all": {"type": "boolean", "description": "清除全部缓存", "default": False},
-                    "key": {"type": "string", "description": "指定缓存键清除(不指定all则需此项)"},
+                    "all": {"type": "boolean", "description": "清除全部缓存", "default": True},
+                    "key": {"type": "string", "description": "指定缓存键清除(设all=false时必填)"},
                 },
                 "required": [],
             },
@@ -482,9 +482,9 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "攻击文本"},
-                    "attack_type": {"type": "string", "description": "攻击类型(如injection/sql_injection)"},
+                    "attack_type": {"type": "string", "description": "攻击类型(如injection/sql_injection)", "enum": ["injection", "sql_injection", "xss", "ssrf", "command_injection", "path_traversal", "other"]},
                 },
-                "required": ["text"],
+                "required": ["text", "attack_type"],
             },
         },
         {
@@ -517,7 +517,7 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "待消毒的Prompt文本"},
-                    "level": {"type": "string", "description": "消毒级别(none/standard/strict)", "default": "standard"},
+                    "level": {"type": "string", "description": "消毒级别(none/standard/strict)", "enum": ["none", "standard", "strict"], "default": "standard"},
                 },
                 "required": ["text"],
             },
@@ -567,7 +567,7 @@ def _handle_tools_list(id_val: Any) -> str:
                     "endpoint": {"type": "string", "description": "推理端点URL"},
                     "prompt": {"type": "string", "description": "推理Prompt文本"},
                 },
-                "required": ["prompt"],
+                "required": ["endpoint", "prompt"],
             },
         },
         {
@@ -727,7 +727,7 @@ def _handle_tools_list(id_val: Any) -> str:
                     "video_fps": {"type": "integer", "description": "视频帧率", "default": 1},
                     "max_total": {"type": "integer", "description": "Token预算上限", "default": 8192},
                 },
-                "required": [],
+                "required": ["text"],
             },
         },
         {
