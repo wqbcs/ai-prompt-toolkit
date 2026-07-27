@@ -1,0 +1,43 @@
+# 华为云CodeArts Pipeline — Prompt质量门禁
+
+# 在CodeArts Pipeline中自动执行lint+scan+evaluate
+# 使用方式: 将此文件放入代码仓库根目录 .codearts/pipeline.yml
+
+version: '1.0'
+name: prompt-quality-gate
+
+stages:
+  - name: prompt-lint
+    jobs:
+      - name: lint-check
+        steps:
+          - name: Install
+            run: pip install ai-prompt-toolkit
+          - name: Lint
+            run: prompt-cli lint -t prompts/ --fail-on high --format json --output lint-report.json
+          - name: Security Scan
+            run: prompt-cli scan -t prompts/ --format json --output scan-report.json
+          - name: Evaluate
+            run: prompt-cli evaluate -t prompts/ --threshold 5.0 --format json --output eval-report.json --preset security-heavy
+
+  - name: prompt-gate
+    condition: prompt-lint.success
+    jobs:
+      - name: quality-gate
+        steps:
+          - name: Check Results
+            run: |
+              echo "=== Prompt Quality Gate ==="
+              echo "Lint: See lint-report.json"
+              echo "Scan: See scan-report.json"
+              echo "Eval: See eval-report.json"
+              prompt-cli doctor
+
+triggers:
+  - type: push
+    branches:
+      - main
+      - develop
+  - type: pull_request
+    branches:
+      - main
