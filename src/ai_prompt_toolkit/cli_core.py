@@ -2170,8 +2170,50 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
 @main.command(name="doctor")
 @click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
-def doctor_cmd(provider: str | None, as_json: bool) -> None:
+@click.option("--init", "init_config", is_flag=True, help="首次运行: 自动生成.prompt-toolkit.yml配置模板")
+def doctor_cmd(provider: str | None, as_json: bool, init_config: bool) -> None:
     """健康检查：检测Provider连接状态和API Key配置"""
+    if init_config:
+        from pathlib import Path as _P
+        config_path = _P(".prompt-toolkit.yml")
+        if config_path.exists():
+            click.echo(f"配置文件已存在: {config_path}")
+        else:
+            config_content = """# ai-prompt-toolkit 配置
+lint:
+  fail_on: high
+  format: cli
+  semantic_cache: true
+  parallel: 0
+
+scan:
+  depth: full
+  format: json
+
+evaluate:
+  threshold: 5.0
+  format: cli
+
+security:
+  block_threshold: 0.7
+  warn_threshold: 0.35
+
+output_scan:
+  enabled: true
+  scanners: [no_refusal, bias, toxicity, relevance, factual_consistency, citation]
+
+harmonyos:
+  stage_model: true
+  min_api: 12
+  target_api: 14
+"""
+            config_path.write_text(config_content, encoding="utf-8")
+            click.echo(f"配置模板已生成: {config_path}")
+        return
+
+    _config_path = _P(".prompt-toolkit.yml") if (_P := __import__("pathlib").Path)(".prompt-toolkit.yml").exists() else None
+    if not _config_path and not as_json:
+        click.echo("提示: 未找到配置文件, 使用 --init 生成 .prompt-toolkit.yml 模板\n")
     from ai_prompt_toolkit.ab_test.provider import run_health_check
     from ai_prompt_toolkit.ab_test.types import ProviderType
 
