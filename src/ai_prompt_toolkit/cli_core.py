@@ -701,7 +701,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--json-schema", "json_schema", is_flag=True, help="输出Lint规则集JSON Schema定义")
 @click.option("--explain", "explain", is_flag=True, help="交互式修复建议: 对每个问题输出详细解释和修复方案")
 @click.option("--parallel", "-j", "parallel", type=int, default=1, help="并行lint线程数(默认1, 设为0=CPU核数)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int) -> None:
+@click.option("--quiet", "-q", "quiet", is_flag=True, help="精简模式: 仅输出PASS/FAIL和分数(CI友好)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int, quiet: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -1001,7 +1002,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             click.echo("Table format requires 'rich' package. Install with: pip install rich")
             fmt = "cli"
 
-    if fmt == "cli":
+    if quiet:
+        for result in all_results:
+            status = "PASS" if result.passed else "FAIL"
+            click.echo(f"{result.template_id}: {status} ({result.score:.0f})")
+        if total_findings > 0:
+            click.echo(f"TOTAL: FAIL | {total_findings} findings | avg={avg_score:.0f}")
+        else:
+            click.echo(f"TOTAL: PASS | avg={avg_score:.0f}")
+    elif fmt == "cli":
         if _has_rich:
             from ai_prompt_toolkit.cli_helpers import print_rich_findings
             print_rich_findings(all_results, console=console)
