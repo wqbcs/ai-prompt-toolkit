@@ -4,6 +4,28 @@
 
 ## [v50.0.0] - 2026-07-28
 
+### Added (R91-R94: CHANGELOG+运维规则+eval预设格式统一+weight_preset配置)
+
+#### R94: eval --preset + table/yaml格式统一 + doctor --init weight_preset
+- cli_core.py evaluate: 添加--preset选项 + weight_overrides传递
+- eval_commands.py: --format扩展支持table/yaml输出
+- doctor --init: 配置模板添加weight_preset字段
+
+#### R93: P181-P185 Prompt运维Lint规则
+- P181: Prompt版本声明缺失(生产环境必须有版本号)
+- P182: Prompt依赖声明缺失(外部API/模型/工具依赖需显式声明)
+- P183: Prompt环境隔离不足(生产/测试/开发环境配置隔离)
+- P184: Prompt降级策略缺失(模型不可用时无降级方案)
+- P185: Prompt灰度发布配置缺失(新版本灰度发布策略)
+- AUTO_FIXABLE: 121→126, OWASP LLM01/LLM09映射
+
+#### R92: scan --explain交互式安全扫描解释 + MCP工具
+- scan --explain: 交互式安全扫描解释模式
+- 3个新MCP工具: rollback_safety_check/html_report_generate/weight_preset_list
+- __init__.py: v42.0.0→v50.0.0
+
+#### R91: CHANGELOG.md更新记录R85-R90
+
 ### Added (R76-R90: 输出安全+DevEco+权重预设+高级安全规则+回滚检查+HTML报告+主题)
 
 #### R90: lint --color-theme + --html报告

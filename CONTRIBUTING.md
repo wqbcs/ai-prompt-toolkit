@@ -50,13 +50,27 @@ test: 简短描述
 1. 创建 `src/ai_prompt_toolkit/linter/rules_pXXX_pYYY.py`
 2. 定义 `_RULES_PXXX_PYYY` 列表，包含 `LintRule` 对象
 3. 通过 `_RULE_MAP[r.rule_id] = r` 注册到全局
-4. 实现 check 函数 `check_pXXX(text: str) -> Finding | None`
+4. 实现 check 函数 `check_pXXX(text: str) -> Finding | list[Finding]`
 5. 在 `rules.py` 中 import check 并添加到 `_CHECKERS_EXTENDED`
 6. 在 `owasp_mapping.py` 的 `_OWASP_RULE_MAPPING` 添加 OWASP 映射
 7. 在 `fixer.py` 的 `AUTO_FIXABLE_RULES` 添加(如可自动修复)
 8. 在 `linter.py` 的 `_get_fix_action` 添加修复逻辑(如可自动修复)
 9. **更新测试断言中的Lint规则数量**
 10. 编写测试 `tests/test_rXX.py`
+
+### Lint规则类别
+
+| 类别 | 规则范围 | 说明 |
+|------|----------|------|
+| structure | P001-P030 | Prompt结构基础规则 |
+| security | P031-P100 | 安全防护规则 |
+| quality | P101-P130 | 质量评估规则 |
+| privacy | P131-P150 | 隐私合规规则 |
+| advanced_security | P151-P165 | 高级安全规则 |
+| output_safety | P166-P170 | 输出安全规则 |
+| harmonyos | P171-P175 | 鸿蒙NEXT API规则 |
+| injection | P176-P180 | 注入攻击检测规则 |
+| operations | P181-P185 | Prompt运维规则(版本/依赖/隔离/降级/灰度) |
 
 ## 添加Probe
 
@@ -74,6 +88,20 @@ test: 简短描述
 
 1. 在 `evaluator.py` 的 `_DIMENSIONS` 列表添加维度字典
 2. 更新测试断言中的维度数量
+
+### 权重预设(WeightPreset)
+
+支持7个行业预设，通过 `evaluate --preset` 使用：
+
+| 预设名 | 说明 |
+|--------|------|
+| default | 默认均衡权重 |
+| security-heavy | 安全维度权重加倍 |
+| quality-balanced | 质量维度均衡 |
+| performance-first | 性能维度优先 |
+| harmonyos-strict | 鸿蒙生态严格模式 |
+| redteam-ready | 红队对抗权重 |
+| cost-efficient | 成本效率优先 |
 
 ## 添加MCP工具
 
