@@ -1630,3 +1630,23 @@ def get_weight_preset(name: str) -> WeightPreset | None:
 
 def list_weight_presets() -> list[dict[str, Any]]:
     return [p.summary() for p in WEIGHT_PRESETS.values()]
+
+
+def score_to_grade(score: float) -> str:
+    if score >= 9.0:
+        return "S"
+    elif score >= 8.0:
+        return "A"
+    elif score >= 6.5:
+        return "B"
+    elif score >= 5.0:
+        return "C"
+    elif score >= 3.0:
+        return "D"
+    else:
+        return "F"
+
+
+def score_to_decision(score: float, threshold: float = 5.0) -> str:
+    return "PASS" if score >= threshold else "FAIL"
+

@@ -411,7 +411,11 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
                 total_score_val += avg
                 total_count += 1
             if total_count > 0:
-                _ev_console.print(f"\n总均分: [bold]{total_score_val / total_count:.1f}/10[/bold]")
+                _avg = total_score_val / total_count
+                from ai_prompt_toolkit.evaluator import score_to_grade, score_to_decision
+                _grade = score_to_grade(_avg)
+                _decision = score_to_decision(_avg, threshold)
+                _ev_console.print(f"\n总均分: [bold]{_avg:.1f}/10[/bold]  等级: [bold]{_grade}[/bold]  决策: [bold]{_decision}[/bold]")
         else:
             total_score = 0.0
             total_count = 0
@@ -429,7 +433,11 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
                     low_items.append((tid, avg))
 
             if total_count > 0:
-                click.echo(f"\n总均分: {total_score / total_count:.1f}/10")
+                _avg2 = total_score / total_count
+                from ai_prompt_toolkit.evaluator import score_to_grade, score_to_decision
+                _g2 = score_to_grade(_avg2)
+                _d2 = score_to_decision(_avg2, threshold)
+                click.echo(f"\n总均分: {_avg2:.1f}/10  等级: {_g2}  决策: {_d2}")
 
             if low_items:
                 click.echo(f"\n低于阈值({threshold})的模板({len(low_items)}个):")
