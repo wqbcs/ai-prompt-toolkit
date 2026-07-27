@@ -2,9 +2,50 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [v50.0.0] - 2026-07-27
+## [v50.0.0] - 2026-07-28
 
-### Added (R76-R80: 输出安全+DevEco集成+条件模板+合规映射+LSP增强)
+### Added (R76-R90: 输出安全+DevEco+权重预设+高级安全规则+回滚检查+HTML报告+主题)
+
+#### R90: lint --color-theme + --html报告
+- lint --color-theme: 5种颜色主题(default/monokai/solarized/nord/dracula)
+- lint --html: 一键生成交互式HTML报告
+- PROMPT_TOOLKIT_THEME环境变量: 运行时主题切换
+
+#### R89: HTML报告交互式折叠
+- generate_html_report(): 独立HTML报告(内联CSS/JS, 零外部依赖)
+- 交互式折叠+深浅主题切换+搜索过滤+统计面板+分数进度条
+
+#### R88: Prompt Diff回滚安全检查
+- rollback_safety_check(): 检测回滚是否引入安全降级
+- RollbackCheckResult: is_safe/risk_level/security_score_delta/recommendations
+- 风险等级: safe/warning/dangerous三级
+
+#### R87: P176-P180高级安全Lint规则(参考garak/promptfoo)
+- P176: 多轮对话上下文污染检测(continuation probe)
+- P177: Base64/编码混淆注入检测(encoding probe)
+- P178: 影子指令注入(HTML注释/Markdown隐藏指令)
+- P179: 输出格式劫持(强制JSON/SQL输出绕过)
+- P180: 链式Prompt注入(跨步骤传播检测)
+
+#### R86: 评估维度权重体系
+- WeightPreset类: 7个行业预设(default/security-heavy/quality-balanced/performance-first/harmonyos-strict/redteam-ready/cost-efficient)
+- evaluate --preset CLI选项
+- evaluate_template()支持weight_overrides参数
+
+#### R85: doctor --init配置模板
+- doctor --init: 首次运行自动生成.prompt-toolkit.yml配置模板
+- 删除dev_commands.py中旧版doctor(与cli_core.py冲突)
+
+#### R81-R84: (已在之前commit中记录)
+
+### Stats
+- Lint规则: 180 (P001-P180)
+- 自动修复: 121条
+- 评估维度: 130
+- 行业预设: 7个
+- MCP工具: 46+
+- Provider: 25
+- Probe: 116 (含4个glitch)
 
 #### R80: LSP Server增强
 - textDocument/hover: 悬浮显示规则详情+修复建议+自动修复标识
