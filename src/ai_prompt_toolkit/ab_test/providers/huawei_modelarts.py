@@ -3,6 +3,8 @@
 参考: 华为云ModelArts推理API文档
 - 支持盘古/昇腾模型推理
 - 兼容OpenAI格式API(华为云ModelArts推理端点支持/v1/chat/completions)
+- MaaS API 2.0支持(推理/V2端点)
+- AgentArts智能体集成
 - 流式/非流式响应
 - AK/SK认证
 
@@ -10,6 +12,7 @@
 - HUAWEI_CLOUD_AK: 华为云Access Key ID
 - HUAWEI_CLOUD_SK: 华为云Secret Access Key
 - HUAWEI_MODELARTS_ENDPOINT: ModelArts推理端点URL(可选, 默认华北-北京四)
+- HUAWEI_MODELARTS_PROJECT_ID: 华为云项目ID(MaaS V2需要)
 """
 from __future__ import annotations
 
@@ -30,6 +33,10 @@ class HuaweiModelArtsProvider(BaseProvider):
         "pangu5-reasoning": (0.005, 0.010),
         "pangu5-vision": (0.004, 0.008),
         "pangu5-code": (0.003, 0.006),
+        "qwen2.5-72b": (0.004, 0.008),
+        "deepseek-v3": (0.002, 0.006),
+        "llama3.1-70b": (0.003, 0.007),
+        "chatglm4-9b": (0.001, 0.003),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.003, 0.006)
     _PROVIDER_LABEL: str = "HuaweiModelArts"
