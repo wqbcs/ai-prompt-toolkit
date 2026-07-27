@@ -149,10 +149,10 @@ class TestP166P170Rules:
         p166 = [f for f in result.findings if f.rule_id == "P166"]
         assert len(p166) == 0
 
-    def test_total_rules_180(self):
+    def test_total_rules_185(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
         rules = get_all_rules()
-        assert len(rules) == 180
+        assert len(rules) == 185
 
     def test_p166_p170_in_rule_map(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP

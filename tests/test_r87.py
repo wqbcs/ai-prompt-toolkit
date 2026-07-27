@@ -52,9 +52,9 @@ class TestP176P180Rules:
         for rid in ("P176", "P177", "P178", "P179", "P180"):
             assert rid in AUTO_FIXABLE_RULES
 
-    def test_total_rules_180(self):
+    def test_total_rules_185(self):
         rules = get_all_rules()
-        assert len(rules) == 180
+        assert len(rules) == 185
 
     def test_p176_p180_severity(self):
         assert _RULE_MAP["P176"].severity == Severity.CRITICAL
