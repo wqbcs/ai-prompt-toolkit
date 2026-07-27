@@ -677,6 +677,14 @@ _CHECKERS_EXTENDED.extend([
     check_p171, check_p172, check_p173, check_p174, check_p175,
 ])
 
+from ai_prompt_toolkit.linter.rules_p176_p180 import (  # noqa: E402
+    check_p176, check_p177, check_p178, check_p179, check_p180,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p176, check_p177, check_p178, check_p179, check_p180,
+])
+
 
 def _apply_owasp_refs() -> None:
     from ai_prompt_toolkit.linter.owasp_mapping import apply_owasp_refs
@@ -699,7 +707,10 @@ def run_all_checks(text: str) -> list[Finding]:
     for checker in _CHECKERS_EXTENDED:
         result = checker(text)
         if result is not None:
-            findings.append(result)
+            if isinstance(result, list):
+                findings.extend(result)
+            else:
+                findings.append(result)
     p017_triggered = any(f.rule_id == "P017" for f in findings)
     p023_triggered = any(f.rule_id == "P023" for f in findings)
     if p017_triggered and p023_triggered:
