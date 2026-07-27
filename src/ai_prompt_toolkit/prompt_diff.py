@@ -18,6 +18,7 @@ from __future__ import annotations
 import difflib
 import hashlib
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -426,4 +427,105 @@ def semantic_diff(old_text: str, new_text: str) -> SemanticDiffReport:
         sections_removed=sections_removed,
         sections_modified=sections_modified,
         summary=summary,
+    )
+
+
+class RollbackRisk(str):
+    SAFE = "safe"
+    WARNING = "warning"
+    DANGEROUS = "dangerous"
+
+
+@dataclass
+class RollbackCheckResult:
+    is_safe: bool
+    risk_level: str
+    security_section_removed: bool
+    constraints_section_removed: bool
+    security_lines_removed: list[str] = field(default_factory=list)
+    constraint_lines_removed: list[str] = field(default_factory=list)
+    security_score_delta: float = 0.0
+    recommendations: list[str] = field(default_factory=list)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "is_safe": self.is_safe, "risk_level": self.risk_level,
+            "security_section_removed": self.security_section_removed,
+            "constraints_section_removed": self.constraints_section_removed,
+            "security_lines_removed": self.security_lines_removed,
+            "constraint_lines_removed": self.constraint_lines_removed,
+            "security_score_delta": self.security_score_delta,
+            "recommendations": self.recommendations,
+        }
+
+
+_SECURITY_KW = re.compile(
+    r'(?:禁止|不允许|不得|do not|must not|never|forbidden|'
+    r'验证|校验|validate|verify|authenticate|'
+    r'过滤|filter|sanitize|escape|encode|'
+    r'加密|encrypt|decrypt|hash|'
+    r'角色|role|权限|permission|auth|'
+    r'注入|inject|XSS|CSRF|SQL)',
+    re.IGNORECASE,
+)
+_CONSTRAINT_KW = re.compile(
+    r'(?:约束|constraint|限制|limit|边界|boundary|'
+    r'不得|禁止|must not|shall not|'
+    r'范围|range|上限|upper|下限|lower)',
+    re.IGNORECASE,
+)
+
+
+def rollback_safety_check(old_text: str, new_text: str) -> RollbackCheckResult:
+    old_sections = _parse_sections(old_text)
+    new_sections = _parse_sections(new_text)
+
+    security_section_removed = "security" in old_sections and "security" not in new_sections
+    constraints_section_removed = "constraints" in old_sections and "constraints" not in new_sections
+
+    old_lines = set(old_text.splitlines())
+    new_lines = set(new_text.splitlines())
+    removed_lines = old_lines - new_lines
+
+    security_lines_removed = [l for l in removed_lines if _SECURITY_KW.search(l)]
+    constraint_lines_removed = [l for l in removed_lines if _CONSTRAINT_KW.search(l)]
+
+    old_sec_score = sum(1 for l in old_text.splitlines() if _SECURITY_KW.search(l))
+    new_sec_score = sum(1 for l in new_text.splitlines() if _SECURITY_KW.search(l))
+    score_delta = float(new_sec_score - old_sec_score)
+
+    risk = RollbackRisk.SAFE
+    recommendations: list[str] = []
+
+    if security_section_removed:
+        risk = RollbackRisk.DANGEROUS
+        recommendations.append("CRITICAL: 安全段(security)被完全删除, 回滚将丢失所有安全防护")
+    if constraints_section_removed:
+        risk = RollbackRisk.DANGEROUS if risk != RollbackRisk.DANGEROUS else risk
+        recommendations.append("CRITICAL: 约束段(constraints)被完全删除, 回滚将丢失所有约束条件")
+    if security_lines_removed:
+        if risk == RollbackRisk.SAFE:
+            risk = RollbackRisk.DANGEROUS
+        recommendations.append(f"删除了{len(security_lines_removed)}行安全声明, 建议逐条审核")
+    if constraint_lines_removed:
+        if risk == RollbackRisk.SAFE:
+            risk = RollbackRisk.WARNING
+        recommendations.append(f"删除了{len(constraint_lines_removed)}行约束声明, 建议确认是否必要")
+    if score_delta < -2:
+        if risk == RollbackRisk.SAFE:
+            risk = RollbackRisk.WARNING
+        recommendations.append(f"安全评分下降{abs(score_delta):.0f}分, 回滚可能引入安全降级")
+
+    if not recommendations:
+        recommendations.append("回滚安全: 无安全降级风险")
+
+    return RollbackCheckResult(
+        is_safe=(risk != RollbackRisk.DANGEROUS),
+        risk_level=risk,
+        security_section_removed=security_section_removed,
+        constraints_section_removed=constraints_section_removed,
+        security_lines_removed=security_lines_removed,
+        constraint_lines_removed=constraint_lines_removed,
+        security_score_delta=score_delta,
+        recommendations=recommendations,
     )
