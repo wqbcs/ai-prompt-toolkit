@@ -153,6 +153,50 @@ if _HAS_LSP:
             del server._debounce_timers[uri]
         server.publish_diagnostics(uri, [])
 
+    @server.feature(lsp.TEXT_DOCUMENT_HOVER)
+    def hover(params: lsp.HoverParams) -> lsp.Hover | None:
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        uri = params.text_document.uri
+        text = server._documents.get(uri, "")
+        if not text:
+            return None
+        diagnostics = _lint_to_diagnostics(text)
+        line = params.position.line
+        for d in diagnostics:
+            if d["range"]["start"]["line"] == line:
+                rule_id = d["code"]
+                rule = _RULE_MAP.get(rule_id)
+                if rule:
+                    content = f"**{rule_id}: {rule.name}**\n\n{rule.description}\n\n修复: {rule.remediation}"
+                    if rule_id in AUTO_FIXABLE_RULES:
+                        content += "\n\n⚡ 可自动修复(--fix)"
+                    return lsp.Hover(contents=lsp.MarkupContent(kind=lsp.MarkupKind.Markdown, value=content))
+        return None
+
+    @server.feature(lsp.TEXT_DOCUMENT_CODE_ACTION)
+    def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction] | None:
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+        actions = []
+        for diag in params.context.diagnostics:
+            rule_id = diag.code if isinstance(diag.code, str) else str(diag.code)
+            rule = _RULE_MAP.get(rule_id)
+            if rule and rule_id in AUTO_FIXABLE_RULES:
+                actions.append(lsp.CodeAction(
+                    title=f"修复 {rule_id}: {rule.name}",
+                    kind=lsp.CodeActionKind.QuickFix,
+                    diagnostics=[diag],
+                    is_preferred=True,
+                ))
+            if rule:
+                actions.append(lsp.CodeAction(
+                    title=f"查看 {rule_id} 详情",
+                    kind=lsp.CodeActionKind.QuickFix,
+                    diagnostics=[diag],
+                ))
+        return actions if actions else None
+
 
 def create_lsp_server() -> Any:
     if not _HAS_LSP:
