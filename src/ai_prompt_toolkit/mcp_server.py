@@ -72,7 +72,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回180条规则(P001-P180)的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回190条规则(P001-P190)的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -869,6 +869,24 @@ def _handle_tools_list(id_val: Any) -> str:
             "description": "列出评估维度权重预设: 7个行业场景(security-heavy/quality-balanced/performance-first/harmonyos-strict/redteam-ready/cost-efficient)",
             "inputSchema": {"type": "object", "properties": {}, "required": []},
         },
+        {
+            "name": "fg_template_list",
+            "description": "列出华为云FunctionGraph Prompt模板: 4种类型(ai_inference/conversation/embedding/content_moderation)",
+            "inputSchema": {"type": "object", "properties": {}, "required": []},
+        },
+        {
+            "name": "fg_template_generate",
+            "description": "生成华为云FunctionGraph函数代码模板(Serverless AI函数)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template_type": {"type": "string", "enum": ["ai_inference", "conversation", "embedding", "content_moderation"], "description": "模板类型"},
+                    "name": {"type": "string", "description": "函数名称", "default": ""},
+                    "description": {"type": "string", "description": "函数描述", "default": ""},
+                },
+                "required": ["template_type"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -1009,6 +1027,8 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "rollback_safety_check": _tool_rollback_safety_check,
             "html_report_generate": _tool_html_report_generate,
             "weight_preset_list": _tool_weight_preset_list,
+            "fg_template_list": _tool_fg_template_list,
+            "fg_template_generate": _tool_fg_template_generate,
         }
     return _TOOL_DISPATCH
 
@@ -2537,6 +2557,29 @@ def _tool_weight_preset_list(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.evaluator import list_weight_presets
     presets = list_weight_presets()
     return {"presets": presets, "count": len(presets)}
+
+
+def _tool_fg_template_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.huawei_cloud.fg_template import list_fg_templates
+    templates = list_fg_templates()
+    return {"templates": templates, "count": len(templates)}
+
+
+def _tool_fg_template_generate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.huawei_cloud.fg_template import get_fg_template
+    template_type = args.get("template_type", "ai_inference")
+    name = args.get("name", "")
+    description = args.get("description", "")
+    template = get_fg_template(template_type, name=name, description=description)
+    return {
+        "name": template.name,
+        "type": template.template_type.value,
+        "description": template.description,
+        "code": template.code,
+        "env_vars": template.env_vars,
+        "prompt_variables": template.prompt_variables,
+        "version": template.version,
+    }
 
 
 if __name__ == "__main__":
