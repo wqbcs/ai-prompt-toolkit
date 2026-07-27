@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v51.0.0] - 2026-07-28
+
+### Added (R99-R104: 改进循环+Agent安全+ModelArts增强+评分等级+CodeArts Pipeline)
+
+#### R104: CodeArts Pipeline + 版本v51.0.0
+- .codearts/pipeline.yml: 华为云CodeArts Pipeline Prompt质量门禁
+- __init__.py: v50.0.0→v51.0.0
+
+#### R103: 评分等级 + PASS/FAIL决策
+- score_to_grade(): S/A/B/C/D/F等级评定
+- score_to_decision(): PASS/FAIL决策(可配置阈值)
+- evaluate输出增加等级+决策
+
+#### R102: ModelArts Provider增强
+- 扩展模型定价: Qwen2.5-72B/DeepSeek-V3/Llama3.1-70B/ChatGLM4-9B
+- MaaS API 2.0/AgentArts文档
+
+#### R101: P191-P195 AI Agent安全规则
+- P191: Agent权限边界 | P192: 工具调用约束 | P193: CoT泄露 | P194: 多Agent协调 | P195: 记忆隔离
+- 总规则190→195, AUTO_FIXABLE 131→136
+
+#### R100: CHANGELOG R95-R98 + MCP同步校验 + lint --changed优化
+- _validate_tools_dispatch_sync(): 启动时校验tools/dispatch一致性
+- lint --changed: relative_path精确匹配
+
+#### R99: 改进清单文档 + 开源项目复用调查
+- docs/99-改进分析-改进清单-v1.0#0.md: 8功能+4内容+5细节+4体验+4赛事
+- 01-调研-开源项目复用调查-v1.0.md: promptfoo/garak/DSPy/Langfuse/llm-guard/DeepEval
+
 ## [v50.0.0] - 2026-07-28
 
 ### Added (R95-R98: 文档更新+增量lint+鸿蒙API15+华为云FG模板)

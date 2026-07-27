@@ -1,0 +1,31 @@
+# 自定义Lint规则示例
+# 使用方式: 放入 .prompt-toolkit-rules/ 目录
+# lint --config 可指定规则目录
+
+rules:
+  - id: CUSTOM001
+    name: 禁止竞品提及
+    category: custom
+    severity: medium
+    check_type: keyword
+    keywords: ["OpenAI", "ChatGPT", "Claude", "Gemini"]
+    message: "Prompt提及竞品产品名"
+    remediation: "移除竞品提及或使用通用描述"
+
+  - id: CUSTOM002
+    name: 必须包含版本声明
+    category: custom
+    severity: high
+    check_type: not_contains
+    keywords: ["version", "版本", "v="]
+    message: "Prompt缺少版本声明"
+    remediation: "在Prompt头部添加版本声明"
+
+  - id: CUSTOM003
+    name: Prompt最小长度
+    category: custom
+    severity: low
+    check_type: min_length
+    pattern: "100"
+    message: "Prompt过短(少于100字符)"
+    remediation: "补充上下文和约束"
