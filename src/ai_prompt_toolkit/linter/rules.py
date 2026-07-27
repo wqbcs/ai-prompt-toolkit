@@ -665,6 +665,14 @@ _CHECKERS_EXTENDED.extend([
     check_p161, check_p162, check_p163, check_p164, check_p165,
 ])
 
+from ai_prompt_toolkit.linter.rules_p166_p170 import (  # noqa: E402
+    check_p166, check_p167, check_p168, check_p169, check_p170,
+)
+
+_CHECKERS_EXTENDED.extend([
+    check_p166, check_p167, check_p168, check_p169, check_p170,
+])
+
 
 def _apply_owasp_refs() -> None:
     from ai_prompt_toolkit.linter.owasp_mapping import apply_owasp_refs

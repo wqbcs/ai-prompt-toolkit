@@ -699,7 +699,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--watch", is_flag=True, help="监视文件变化，自动重新执行lint")
 @click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复lint相似prompt)")
 @click.option("--json-schema", "json_schema", is_flag=True, help="输出Lint规则集JSON Schema定义")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool) -> None:
+@click.option("--explain", "explain", is_flag=True, help="交互式修复建议: 对每个问题输出详细解释和修复方案")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -915,6 +916,43 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             if len(fail_findings) > 10:
                 click.echo(f"  ... 还有{len(fail_findings) - 10}条")
             sys.exit(2)
+
+    if explain:
+        from ai_prompt_toolkit.linter.rules import get_rule, _RULE_MAP
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        from ai_prompt_toolkit.linter.harmonyos_templates import get_template
+        for result in all_results:
+            if not result.findings:
+                continue
+            click.echo(f"\n{'='*60}")
+            click.echo(f"文件: {result.template_id} ({len(result.findings)}个问题)")
+            click.echo(f"{'='*60}")
+            for i, f in enumerate(result.findings, 1):
+                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                click.echo(f"\n  [{i}] {f.rule_id} [{sev.upper()}]")
+                rule = _RULE_MAP.get(f.rule_id)
+                if rule:
+                    click.echo(f"  名称: {rule.name}")
+                    click.echo(f"  类别: {rule.category} | 家族: {rule.family or 'N/A'}")
+                    if rule.description_en:
+                        click.echo(f"  描述: {rule.description}")
+                        click.echo(f"  Desc:  {rule.description_en}")
+                    else:
+                        click.echo(f"  描述: {rule.description}")
+                else:
+                    click.echo(f"  描述: {f.description}")
+                click.echo(f"  修复: {f.remediation or (rule.remediation if rule else 'N/A')}")
+                if rule and rule.remediation_en:
+                    click.echo(f"  Fix:   {rule.remediation_en}")
+                if f.rule_id in AUTO_FIXABLE_RULES:
+                    click.echo(f"  可自动修复: 是 (使用 --fix)")
+                template = get_template(f.rule_id)
+                if template:
+                    click.echo(f"  鸿蒙模板: 可用 (使用 harmonyos_template_generate 获取)")
+                if rule and rule.owasp_refs:
+                    click.echo(f"  OWASP: {', '.join(rule.owasp_refs)}")
+                click.echo(f"  {'─'*50}")
+        click.echo()
 
     if fmt == "table":
         try:

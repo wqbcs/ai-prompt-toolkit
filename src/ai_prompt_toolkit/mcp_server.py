@@ -809,6 +809,37 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "output_scan",
+            "description": "输出安全扫描: 对LLM输出执行6类安全扫描(NoRefusal/Bias/Toxicity/Relevance/FactualConsistency/Citation), 参考llm-guard输出扫描器架构",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "LLM输出文本"},
+                    "context": {"type": "string", "description": "原始输入(用于相关性检测)", "default": ""},
+                    "scanners": {"type": "string", "description": "启用扫描器(逗号分隔): no_refusal,bias,toxicity,relevance,factual_consistency,citation", "default": ""},
+                },
+                "required": ["text"],
+            },
+        },
+        {
+            "name": "deveco_config",
+            "description": "鸿蒙DevEco Studio配置生成: 生成prompt-toolkit集成配置+构建钩子+CI工作流, 用于HarmonyOS项目安全集成",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "project_name": {"type": "string", "description": "项目名称", "default": "MyHarmonyApp"},
+                    "bundle_name": {"type": "string", "description": "Bundle ID", "default": "com.example.myapp"},
+                    "min_api": {"type": "integer", "description": "最低API版本", "default": 12},
+                    "target_api": {"type": "integer", "description": "目标API版本", "default": 14},
+                    "enable_lint": {"type": "boolean", "description": "启用Prompt Lint", "default": True},
+                    "enable_scan": {"type": "boolean", "description": "启用安全扫描", "default": True},
+                    "enable_output_scan": {"type": "boolean", "description": "启用输出扫描", "default": True},
+                    "enable_redteam": {"type": "boolean", "description": "启用红队测试", "default": False},
+                },
+                "required": [],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -944,6 +975,8 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "harmonyos_distributed_check": _tool_harmonyos_distributed_check,
             "harmonyos_template_generate": _tool_harmonyos_template_generate,
             "prompt_lint_json_schema": _tool_prompt_lint_json_schema,
+            "output_scan": _tool_output_scan,
+            "deveco_config": _tool_deveco_config,
         }
     return _TOOL_DISPATCH
 
@@ -2402,6 +2435,54 @@ def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
         entry["auto_fixable"] = r.rule_id in AUTO_FIXABLE_RULES
         rules_data.append(entry)
     return {"schema": schema, "rules": rules_data, "total_count": len(rules_data), "auto_fixable_count": sum(1 for r in rules if r.rule_id in AUTO_FIXABLE_RULES)}
+
+
+def _tool_output_scan(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.security.output_scanners import OutputScanEngine
+    text = args.get("text", "")
+    context = args.get("context", "")
+    scanners = args.get("scanners", "")
+    if not text:
+        return {"error": "text is required"}
+    scanner_kwargs = {}
+    if scanners:
+        scanner_list = [s.strip() for s in scanners.split(",")]
+        scanner_kwargs = {
+            "enable_no_refusal": "no_refusal" in scanner_list,
+            "enable_bias": "bias" in scanner_list,
+            "enable_toxicity": "toxicity" in scanner_list,
+            "enable_relevance": "relevance" in scanner_list,
+            "enable_factual": "factual_consistency" in scanner_list,
+            "enable_citation": "citation" in scanner_list,
+        }
+    engine = OutputScanEngine(**scanner_kwargs) if scanner_kwargs else OutputScanEngine()
+    report = engine.scan(text, context=context)
+    return report.to_dict()
+
+
+def _tool_deveco_config(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.harmonyos_templates import generate_deveco_config, generate_deveco_build_hook, generate_deveco_workflow_yaml
+    project_name = args.get("project_name", "MyHarmonyApp")
+    bundle_name = args.get("bundle_name", "com.example.myapp")
+    min_api = int(args.get("min_api", 12))
+    target_api = int(args.get("target_api", 14))
+    config = generate_deveco_config(
+        project_name=project_name,
+        bundle_name=bundle_name,
+        min_api=min_api,
+        target_api=target_api,
+        enable_prompt_lint=args.get("enable_lint", True),
+        enable_security_scan=args.get("enable_scan", True),
+        enable_output_scan=args.get("enable_output_scan", True),
+        enable_redteam=args.get("enable_redteam", False),
+    )
+    build_hook = generate_deveco_build_hook()
+    workflow_yaml = generate_deveco_workflow_yaml()
+    return {
+        "config": config,
+        "build_hook_lines": len(build_hook.splitlines()),
+        "workflow_yaml_lines": len(workflow_yaml.splitlines()),
+    }
 
 
 if __name__ == "__main__":

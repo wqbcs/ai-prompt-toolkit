@@ -335,3 +335,180 @@ def get_template(rule_id: str) -> str | None:
     if not snippets:
         return None
     return snippets[0].code
+
+
+def generate_deveco_config(
+    *,
+    project_name: str = "MyHarmonyApp",
+    bundle_name: str = "com.example.myapp",
+    min_api: int = 12,
+    target_api: int = 14,
+    enable_prompt_lint: bool = True,
+    enable_security_scan: bool = True,
+    enable_output_scan: bool = True,
+    enable_redteam: bool = False,
+    lint_gate_score: float = 80.0,
+    custom_rules: list[str] | None = None,
+) -> dict[str, Any]:
+    """生成DevEco Studio项目集成的ai-prompt-toolkit配置
+
+    产出:
+    - .deveco/prompt-toolkit.json — 主配置
+    - build-profile.json5 集成钩子 — 构建时自动lint
+    - hvigorfile.ts 集成脚本 — 构建流水线
+    """
+    config = {
+        "$schema": "https://ai-prompt-toolkit.dev/schemas/deveco-config/v1.json",
+        "version": "1.0.0",
+        "project": {
+            "name": project_name,
+            "bundleName": bundle_name,
+            "minAPI": min_api,
+            "targetAPI": target_api,
+        },
+        "lint": {
+            "enabled": enable_prompt_lint,
+            "gateScore": lint_gate_score,
+            "rules": custom_rules or ["P001-P170"],
+            "failOn": "high",
+            "format": "sarif",
+            "outputPath": "build/prompt-lint-results.sarif",
+            "semanticCache": True,
+            "fix": False,
+        },
+        "security": {
+            "enabled": enable_security_scan,
+            "scanners": ["injection", "pii", "supply_chain", "unicode", "defender", "structural", "anomaly"],
+            "engine": {
+                "enabled": True,
+                "layers": ["l1_regex", "l2_classifier", "l3_similarity", "l4_structural", "l5_anomaly"],
+                "blockThreshold": 0.7,
+                "warnThreshold": 0.35,
+            },
+        },
+        "outputScan": {
+            "enabled": enable_output_scan,
+            "scanners": ["no_refusal", "bias", "toxicity", "relevance", "factual_consistency", "citation"],
+        },
+        "redteam": {
+            "enabled": enable_redteam,
+            "probes": ["encoding", "glitch", "prompt_injection", "jailbreak"],
+            "detectors": ["refusal", "error", "quality"],
+        },
+        "harmonyos": {
+            "stageModel": True,
+            "arkuiDeclarative": True,
+            "distributedSecurity": True,
+            "permissionLeastPrivilege": True,
+            "lifecycleManagement": True,
+            "widgetUpdateStrategy": True,
+        },
+        "cicd": {
+            "preCommit": enable_prompt_lint,
+            "preBuild": enable_security_scan,
+            "postBuild": enable_output_scan,
+            "githubAction": True,
+            "sarifUpload": True,
+        },
+    }
+    return config
+
+
+def generate_deveco_build_hook() -> str:
+    """生成hvigorfile.ts构建钩子脚本"""
+    return """// hvigorfile.ts - ai-prompt-toolkit构建集成
+// 在HarmonyOS构建流水线中自动执行Prompt安全检查
+import { hvigorfile, appTask } from '@ohos/hvigor';
+
+export default appTask({
+  onLoad: () => {
+    console.info('[prompt-toolkit] Build hook loaded');
+  },
+  onApply: () => {
+    console.info('[prompt-toolkit] Running pre-build prompt security scan...');
+  }
+});
+
+// 自定义任务: prompt-lint
+appTask('prompt-lint', async () => {
+  const { execSync } = require('child_process');
+  try {
+    const result = execSync('prompt lint ./entry/src/main/resources/prompts/ --format sarif --gate --fail-on high', {
+      encoding: 'utf-8',
+      cwd: process.cwd()
+    });
+    console.info('[prompt-toolkit] Lint passed:', result);
+  } catch (error) {
+    console.error('[prompt-toolkit] Lint failed - blocking build');
+    throw error;
+  }
+});
+
+// 自定义任务: prompt-scan
+appTask('prompt-scan', async () => {
+  const { execSync } = require('child_process');
+  try {
+    const result = execSync('prompt scan ./entry/src/main/resources/prompts/ --format json', {
+      encoding: 'utf-8',
+      cwd: process.cwd()
+    });
+    const report = JSON.parse(result);
+    if (report.risk_level === 'critical' || report.risk_level === 'high') {
+      throw new Error('Security scan failed: ' + report.risk_level);
+    }
+    console.info('[prompt-toolkit] Security scan passed');
+  } catch (error) {
+    console.error('[prompt-toolkit] Security scan failed - blocking build');
+    throw error;
+  }
+});
+"""
+
+
+def generate_deveco_workflow_yaml() -> str:
+    """生成GitHub Actions工作流YAML(鸿蒙项目专用)"""
+    return """name: HarmonyOS Prompt Security CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'entry/src/main/resources/prompts/**'
+      - '**/*.prompt.md'
+  pull_request:
+    branches: [main]
+
+jobs:
+  prompt-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install ai-prompt-toolkit
+        run: pip install ai-prompt-toolkit
+      - name: Prompt Lint
+        run: |
+          prompt lint entry/src/main/resources/prompts/ \\
+            --format sarif \\
+            --gate \\
+            --fail-on high \\
+            --output build/prompt-lint-results.sarif
+      - name: Prompt Security Scan
+        run: |
+          prompt scan entry/src/main/resources/prompts/ \\
+            --format json \\
+            --depth full
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: build/prompt-lint-results.sarif
+          category: prompt-security
+      - name: Compliance Report
+        run: |
+          prompt compliance entry/src/main/resources/prompts/ \\
+            --format json \\
+            --output build/compliance-report.json
+"""
