@@ -700,7 +700,8 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复lint相似prompt)")
 @click.option("--json-schema", "json_schema", is_flag=True, help="输出Lint规则集JSON Schema定义")
 @click.option("--explain", "explain", is_flag=True, help="交互式修复建议: 对每个问题输出详细解释和修复方案")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool) -> None:
+@click.option("--parallel", "-j", "parallel", type=int, default=1, help="并行lint线程数(默认1, 设为0=CPU核数)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -768,6 +769,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     all_results = []
     total_findings = 0
     total_score = 0.0
+
+    if parallel == 0:
+        import os
+        parallel = os.cpu_count() or 4
+    _use_parallel = parallel > 1 and len(templates) > 1
 
     _sem_cache = None
     if semantic_cache:
@@ -838,6 +844,25 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 from ai_prompt_toolkit.resume_state import save_progress
                 pending = [f for f in _all_file_names if f not in set(_completed_files)]
                 save_progress("lint", [], _completed_files, pending)
+
+    if _use_parallel and not _has_rich:
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        def _lint_single(tpl_path):
+            text = tpl_path.read_text(encoding="utf-8")
+            template_type = _detect_template_type(text)
+            result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+            if _sem_cache:
+                _sem_cache.store(text, {"score": result.score, "findings_count": result.failed_count})
+            return result, tpl_path
+        with ThreadPoolExecutor(max_workers=parallel) as executor:
+            futures = {executor.submit(_lint_single, tpl): tpl for tpl in templates}
+            for future in as_completed(futures):
+                result, tpl_path = future.result()
+                all_results.append(result)
+                total_findings += result.failed_count
+                total_score += result.score
+                _completed_files.append(str(tpl_path))
+        all_results.sort(key=lambda r: templates[0].name if not _completed_files else r.template_id)
 
     mm_findings_total: list = []
     if multimodal:
