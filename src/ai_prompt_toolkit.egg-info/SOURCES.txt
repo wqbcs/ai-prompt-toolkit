@@ -31,6 +31,7 @@ src/ai_prompt_toolkit/flow_dag.py
 src/ai_prompt_toolkit/g_eval.py
 src/ai_prompt_toolkit/gepa.py
 src/ai_prompt_toolkit/harmonyos_templates.py
+src/ai_prompt_toolkit/html_report.py
 src/ai_prompt_toolkit/huawei_cloud.py
 src/ai_prompt_toolkit/huawei_eval.py
 src/ai_prompt_toolkit/mcp_server.py
@@ -176,6 +177,8 @@ src/ai_prompt_toolkit/linter/rules_p156_p160.py
 src/ai_prompt_toolkit/linter/rules_p161_p165.py
 src/ai_prompt_toolkit/linter/rules_p166_p170.py
 src/ai_prompt_toolkit/linter/rules_p171_p175.py
+src/ai_prompt_toolkit/linter/rules_p176_p180.py
+src/ai_prompt_toolkit/linter/rules_p181_p185.py
 src/ai_prompt_toolkit/linter/token_analyzer.py
 src/ai_prompt_toolkit/market/__init__.py
 src/ai_prompt_toolkit/market/api.py
@@ -313,6 +316,15 @@ tests/test_r78.py
 tests/test_r79.py
 tests/test_r81.py
 tests/test_r85.py
+tests/test_r86.py
+tests/test_r87.py
+tests/test_r88.py
+tests/test_r89.py
+tests/test_r90.py
+tests/test_r92.py
+tests/test_r93.py
+tests/test_r94.py
+tests/test_r96.py
 tests/test_redteam.py
 tests/test_report.py
 tests/test_result_cache.py

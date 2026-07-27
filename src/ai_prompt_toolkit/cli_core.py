@@ -734,7 +734,9 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--explain", "explain", is_flag=True, help="交互式修复建议: 对每个问题输出详细解释和修复方案")
 @click.option("--parallel", "-j", "parallel", type=int, default=1, help="并行lint线程数(默认1, 设为0=CPU核数)")
 @click.option("--quiet", "-q", "quiet", is_flag=True, help="精简模式: 仅输出PASS/FAIL和分数(CI友好)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int, quiet: bool) -> None:
+@click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
+@click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
+def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int, quiet: bool, changed_only: bool, cache_dir: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -783,6 +785,31 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
+
+    if changed_only:
+        import subprocess as _sp
+        try:
+            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _changed_files = set(_r.stdout.strip().split("\n")) if _r.stdout.strip() else set()
+            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _untracked = set(_r2.stdout.strip().split("\n")) if _r2.stdout.strip() else set()
+            _git_changed = _changed_files | _untracked
+            _git_changed = {f for f in _git_changed if f.endswith((".md", ".txt", ".prompt", ".yaml", ".yml"))}
+            if _git_changed:
+                templates = [t for t in templates if t.name in _git_changed or str(t) in _git_changed]
+                if quiet:
+                    pass
+                else:
+                    click.echo(f"增量模式: 检查 {len(templates)} 个变更文件(git diff)")
+            else:
+                if not quiet:
+                    click.echo("增量模式: 无变更文件, 跳过lint")
+                sys.exit(0)
+        except Exception:
+            click.echo("增量模式: git不可用, 回退到全量检查", err=True)
+
+    _cache_dir_path = Path(cache_dir) if cache_dir else Path(".prompt-toolkit-cache")
+    _cache_dir_path.mkdir(exist_ok=True)
 
     _completed_files: list[str] = []
     _all_file_names = [str(t) for t in templates]

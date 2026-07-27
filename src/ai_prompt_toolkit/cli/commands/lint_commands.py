@@ -24,9 +24,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
 @click.option("--color-theme", type=click.Choice(["default", "monokai", "solarized", "nord", "dracula"]), default="default", help="颜色主题")
 @click.option("--html", "html_report", is_flag=True, help="生成交互式HTML报告(同--format html)")
+@click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
+@click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
-         html_report: bool) -> None:
+         html_report: bool, changed_only: bool, cache_dir: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -35,6 +37,27 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
+
+    if changed_only:
+        import subprocess as _sp
+        try:
+            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _changed_files = set(_r.stdout.strip().split("\n")) if _r.stdout.strip() else set()
+            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _untracked = set(_r2.stdout.strip().split("\n")) if _r2.stdout.strip() else set()
+            _git_changed = _changed_files | _untracked
+            _git_changed = {f for f in _git_changed if f.endswith((".md", ".txt", ".prompt", ".yaml", ".yml"))}
+            if _git_changed:
+                templates = [t for t in templates if t.name in _git_changed or str(t) in _git_changed]
+                click.echo(f"增量模式: 检查 {len(templates)} 个变更文件(git diff)")
+            else:
+                click.echo("增量模式: 无变更文件, 跳过lint")
+                sys.exit(0)
+        except Exception:
+            click.echo("增量模式: git不可用, 回退到全量检查", err=True)
+
+    _cache_dir_path = Path(cache_dir) if cache_dir else Path(".prompt-toolkit-cache")
+    _cache_dir_path.mkdir(exist_ok=True)
 
     linter = PromptLinter()
     if html_report:
