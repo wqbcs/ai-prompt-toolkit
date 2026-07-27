@@ -305,12 +305,18 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
+@click.option("--preset", type=click.Choice(["default", "security-heavy", "quality-balanced", "performance-first", "harmonyos-strict", "redteam-ready", "cost-efficient"]), default="default", help="权重预设(行业场景)")
 def evaluate(target: str, dimensions: str | None, categories: str | None,
              threshold: float, fmt: str, output: str | None, quick: bool,
-             save_history: bool) -> None:
-    """130维度质量评估：全面评估Prompt质量"""
+             save_history: bool, preset: str) -> None:
+    """130维度质量评估：全面评估Prompt质量(支持行业权重预设)"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report, empty_state_tip
-    from ai_prompt_toolkit.evaluator import evaluate_template
+    from ai_prompt_toolkit.evaluator import evaluate_template, get_weight_preset
+
+    weight_preset_obj = get_weight_preset(preset)
+    _wo = weight_preset_obj._overrides if (weight_preset_obj and preset != "default") else None
+    if _wo:
+        click.echo(f"权重预设: {weight_preset_obj.display_name} ({weight_preset_obj.description})")
 
     target_path = resolve_path(target)
     dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
@@ -344,7 +350,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
             for i, f in enumerate(files, 1):
                 text = f.read_text(encoding="utf-8")
                 report = evaluate_template(
-                    str(f), text, dimensions=dim_list, categories=cat_list
+                    str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
                 )
                 reports.append(report)
                 progress.update(task, description=friendly_progress_label("evaluate", i, len(files)))
@@ -353,7 +359,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         for f in files:
             text = f.read_text(encoding="utf-8")
             report = evaluate_template(
-                str(f), text, dimensions=dim_list, categories=cat_list
+                str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
             )
             reports.append(report)
 
@@ -2206,6 +2212,8 @@ harmonyos:
   stage_model: true
   min_api: 12
   target_api: 14
+
+weight_preset: default
 """
             config_path.write_text(config_content, encoding="utf-8")
             click.echo(f"配置模板已生成: {config_path}")
