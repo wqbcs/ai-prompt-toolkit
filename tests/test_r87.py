@@ -54,7 +54,7 @@ class TestP176P180Rules:
 
     def test_total_rules_185(self):
         rules = get_all_rules()
-        assert len(rules) == 190
+        assert len(rules) == 195
 
     def test_p176_p180_severity(self):
         assert _RULE_MAP["P176"].severity == Severity.CRITICAL

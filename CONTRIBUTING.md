@@ -71,6 +71,8 @@ test: 简短描述
 | harmonyos | P171-P175 | 鸿蒙NEXT API规则 |
 | injection | P176-P180 | 注入攻击检测规则 |
 | operations | P181-P185 | Prompt运维规则(版本/依赖/隔离/降级/灰度) |
+| harmonyos_v15 | P186-P190 | 鸿蒙NEXT API 15规则(ArkUI/NAPI/沙箱2.0/HSP/元服务) |
+| agent_security | P191-P195 | AI Agent安全规则(权限/工具约束/CoT隔离/协调/记忆) |
 
 ## 添加Probe
 
@@ -108,7 +110,14 @@ test: 简短描述
 1. 在 `mcp_server.py` 的 `_handle_tools_list` 添加工具定义
 2. 实现工具处理函数 `_tool_xxx(args) -> dict`
 3. 在 `_get_tool_dispatch` 添加 dispatch 映射
-4. tools list 和 dispatch 必须同步
+4. tools list 和 dispatch 必须同步（启动时自动校验）
+
+## 添加华为云FunctionGraph模板
+
+1. 在 `huawei_cloud/fg_template.py` 的 `_TEMPLATES` 添加代码模板字符串
+2. 在 `_TEMPLATE_META` 添加 FGTemplate 元数据
+3. 在 `FGTemplateType` 枚举添加新类型
+4. MCP工具自动支持: fg_template_list 和 fg_template_generate
 
 ## 安全规范
 

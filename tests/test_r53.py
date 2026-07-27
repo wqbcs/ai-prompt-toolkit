@@ -10,7 +10,7 @@ from ai_prompt_toolkit.linter.rules import get_all_rules, _RULE_MAP, run_all_che
 class TestRuleRegistration:
     def test_total_rule_count_130(self):
         rules = get_all_rules()
-        assert len(rules) == 190
+        assert len(rules) == 195
 
     def test_p101_to_p130_in_rule_map(self):
         for i in range(101, 131):
