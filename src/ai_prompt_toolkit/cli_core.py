@@ -1000,6 +1000,23 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     else:
         click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
 
+    if total_findings > 0 and fmt == "cli":
+        from collections import Counter
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+        category_counts = Counter()
+        severity_counts = Counter()
+        for result in all_results:
+            for f in result.findings:
+                rule = _RULE_MAP.get(f.rule_id)
+                cat = rule.category if rule else "unknown"
+                category_counts[cat] += 1
+                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                severity_counts[sev] += 1
+        cat_summary = " | ".join(f"{k}: {v}" for k, v in sorted(category_counts.items(), key=lambda x: -x[1]))
+        sev_summary = " | ".join(f"{k.upper()}: {v}" for k, v in sorted(severity_counts.items(), key=lambda x: -x[1]))
+        click.echo(f"  类别统计: {cat_summary}")
+        click.echo(f"  严重度:   {sev_summary}")
+
     if avg_score >= 100.0 and total_findings == 0:
         from ai_prompt_toolkit.easter_eggs import show_perfect_score_celebration
         celebration = show_perfect_score_celebration(avg_score)

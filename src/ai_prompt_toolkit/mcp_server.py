@@ -72,7 +72,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回130条规则(P001-P130)的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回170条规则(P001-P170)的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -855,7 +855,7 @@ def _handle_resources_list(id_val: Any) -> str:
         {
             "uri": "prompt://rules",
             "name": "Lint规则列表",
-            "description": "130条Lint规则(P001-P130)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
+            "description": "170条Lint规则(P001-P170)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
             "mimeType": "application/json",
         },
         {
