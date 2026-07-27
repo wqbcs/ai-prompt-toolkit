@@ -1197,7 +1197,17 @@ def _tool_canary_check(args: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _validate_tools_dispatch_sync() -> None:
+    dispatch = _get_tool_dispatch()
+    tools_list_str = str(_handle_tools_list(0))
+    for tool_name in dispatch:
+        if tool_name not in tools_list_str:
+            import logging as _l
+            _l.getLogger(__name__).warning(f"MCP工具dispatch与tools_list不同步: {tool_name}在dispatch但不在tools_list")
+
+
 def run_server() -> None:
+    _validate_tools_dispatch_sync()
     while True:
         try:
             line = sys.stdin.readline()

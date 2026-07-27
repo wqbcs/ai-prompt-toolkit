@@ -789,14 +789,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if changed_only:
         import subprocess as _sp
         try:
-            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _target_dir = Path(target).parent if Path(target).is_file() else Path(target)
+            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=str(_target_dir))
             _changed_files = set(_r.stdout.strip().split("\n")) if _r.stdout.strip() else set()
-            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=str(_target_dir))
             _untracked = set(_r2.stdout.strip().split("\n")) if _r2.stdout.strip() else set()
             _git_changed = _changed_files | _untracked
             _git_changed = {f for f in _git_changed if f.endswith((".md", ".txt", ".prompt", ".yaml", ".yml"))}
             if _git_changed:
-                templates = [t for t in templates if t.name in _git_changed or str(t) in _git_changed]
+                templates = [t for t in templates if t.name in _git_changed or any(f.endswith(t.name) for f in _git_changed) or str(t.relative_to(_target_dir)) in _git_changed if t.is_relative_to(_target_dir)]
                 if quiet:
                     pass
                 else:

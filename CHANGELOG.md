@@ -4,6 +4,25 @@
 
 ## [v50.0.0] - 2026-07-28
 
+### Added (R95-R98: 文档更新+增量lint+鸿蒙API15+华为云FG模板)
+
+#### R98: 华为云FunctionGraph Prompt模板 + 2个新MCP工具
+- huawei_cloud/fg_template.py: 4种FG模板(ai_inference/conversation/embedding/content_moderation)
+- MCP工具: fg_template_list + fg_template_generate
+- prompt_lint描述更新180→190
+
+#### R97: P186-P190鸿蒙NEXT API 15规则
+- P186: ArkUI声明式范式迁移 | P187: Node-API线程安全 | P188: 沙箱2.0
+- P189: 模块化编译依赖 | P190: 元服务(Atomic Service)规范
+- AUTO_FIXABLE: 126→131, 总规则185→190
+
+#### R96: lint --changed增量模式 + --cache-dir缓存目录
+- --changed: 仅lint git变更/未提交文件(git diff + ls-files)
+- --cache-dir: 指定增量缓存目录(默认.prompt-toolkit-cache/)
+
+#### R95: CHANGELOG R91-R94 + CONTRIBUTING.md更新
+- CONTRIBUTING.md: Lint规则类别表(9类P001-P190) + WeightPreset预设表
+
 ### Added (R91-R94: CHANGELOG+运维规则+eval预设格式统一+weight_preset配置)
 
 #### R94: eval --preset + table/yaml格式统一 + doctor --init weight_preset
