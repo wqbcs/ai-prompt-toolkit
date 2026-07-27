@@ -1481,15 +1481,17 @@ def evaluate_template(
     *,
     dimensions: list[str] | None = None,
     categories: list[str] | None = None,
+    weight_overrides: dict[str, float] | None = None,
 ) -> EvaluationReport:
-    """100维度模板评估函数。
+    """130维度模板评估函数。
 
     Args:
         template_id: 模板标识。
         text: 模板文本。
-        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D100"。
+        dimensions: 指定评估的维度ID列表（None=全部），ID格式为"D01"-"D130"。
                     也接受"D1"-"D9"格式（自动补零为"D01"-"D09"）。
         categories: 指定评估的维度类别（None=全部）。
+        weight_overrides: 维度权重覆盖(维度ID或类别名→新权重)。
 
     Returns:
         EvaluationReport 评估报告。
@@ -1508,6 +1510,12 @@ def evaluate_template(
     if categories:
         cat_set = set(categories)
         dims = [d for d in dims if d["category"] in cat_set]
+
+    if weight_overrides:
+        dims = [
+            {**d, "weight": weight_overrides.get(d["id"], weight_overrides.get(d["category"], d["weight"]))}
+            for d in dims
+        ]
 
     evaluator = _DimensionEvaluator(text)
     scores = [evaluator.evaluate(d) for d in dims]
@@ -1553,10 +1561,72 @@ def evaluate_template(
 
 
 def get_all_dimensions() -> list[dict[str, Any]]:
-    """获取全部80个维度定义。"""
+    """获取全部130个维度定义。"""
     return list(_DIMENSIONS)
 
 
 def get_dimensions_by_category(category: str) -> list[dict[str, Any]]:
     """按类别获取维度。"""
     return [d for d in _DIMENSIONS if d["category"] == category]
+
+
+class WeightPreset:
+    """评估维度权重预设(行业场景)"""
+    def __init__(self, name: str, display_name: str, description: str,
+                 weights: dict[str, float]) -> None:
+        self.name = name
+        self.display_name = display_name
+        self.description = description
+        self._overrides = weights
+
+    def apply(self, dimensions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        result = []
+        for d in dimensions:
+            nd = dict(d)
+            if d["id"] in self._overrides:
+                nd["weight"] = self._overrides[d["id"]]
+            elif d["category"] in self._overrides:
+                nd["weight"] = self._overrides[d["category"]]
+            result.append(nd)
+        return result
+
+    def summary(self) -> dict[str, Any]:
+        return {"name": self.name, "display_name": self.display_name,
+                "description": self.description, "override_count": len(self._overrides)}
+
+
+WEIGHT_PRESETS: dict[str, WeightPreset] = {
+    "default": WeightPreset("default", "默认均衡", "所有维度使用默认权重", {}),
+    "security-heavy": WeightPreset(
+        "security-heavy", "安全优先", "安全类维度权重x2.0，合规x1.8，适合金融/医疗/政务场景",
+        {"security": 2.0, "compliance": 1.8, "D11": 2.5, "D12": 2.5, "D14": 2.0, "D15": 2.0},
+    ),
+    "quality-balanced": WeightPreset(
+        "quality-balanced", "质量均衡", "结构与质量类权重x1.5，安全x1.2，适合通用生产环境",
+        {"structure": 1.5, "quality": 1.5, "security": 1.2, "clarity": 1.3},
+    ),
+    "performance-first": WeightPreset(
+        "performance-first", "性能优先", "效率/延迟/成本维度权重x2.0，安全x1.0，适合高并发推理场景",
+        {"efficiency": 2.0, "D46": 2.5, "D47": 2.5, "D48": 2.0, "D49": 2.0, "D129": 2.0},
+    ),
+    "harmonyos-strict": WeightPreset(
+        "harmonyos-strict", "鸿蒙严苛", "鸿蒙/安全/合规权重x2.0，适合鸿蒙NEXT上架审核场景",
+        {"security": 2.0, "compliance": 2.0, "harmonyos": 2.5, "D121": 2.5, "D130": 2.5},
+    ),
+    "redteam-ready": WeightPreset(
+        "redteam-ready", "红队就绪", "安全/对抗/鲁棒性权重x2.5，适合红队评估场景",
+        {"security": 2.5, "adversarial": 2.5, "D11": 3.0, "D14": 2.5, "D128": 2.5},
+    ),
+    "cost-efficient": WeightPreset(
+        "cost-efficient", "成本敏感", "成本/效率权重x2.0，安全x0.8，适合预算受限的MVP场景",
+        {"efficiency": 2.0, "D129": 2.5, "security": 0.8, "D46": 2.0, "D47": 2.0},
+    ),
+}
+
+
+def get_weight_preset(name: str) -> WeightPreset | None:
+    return WEIGHT_PRESETS.get(name)
+
+
+def list_weight_presets() -> list[dict[str, Any]]:
+    return [p.summary() for p in WEIGHT_PRESETS.values()]
