@@ -688,9 +688,13 @@ _CHECKERS_EXTENDED.extend([
 from ai_prompt_toolkit.linter.rules_p181_p185 import (  # noqa: E402
     check_p181, check_p182, check_p183, check_p184, check_p185,
 )
+from ai_prompt_toolkit.linter.rules_p186_p190 import (  # noqa: E402
+    check_p186, check_p187, check_p188, check_p189, check_p190,
+)
 
 _CHECKERS_EXTENDED.extend([
     check_p181, check_p182, check_p183, check_p184, check_p185,
+    check_p186, check_p187, check_p188, check_p189, check_p190,
 ])
 
 
