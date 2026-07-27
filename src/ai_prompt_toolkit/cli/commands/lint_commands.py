@@ -181,8 +181,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
+@click.option("--explain", is_flag=True, help="交互式解释: 每个安全发现的详细说明+修复建议")
 def scan(target: str, provider: str | None, fmt: str, output: str | None,
-         incremental: bool) -> None:
+         incremental: bool, explain: bool) -> None:
     """安全扫描：检测Prompt注入、敏感信息泄露等安全风险"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
@@ -214,6 +215,11 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
                 sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 marker = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                 click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
+                if explain:
+                    click.echo(f"      规则: {f.rule_id} | 严重度: {sev}")
+                    click.echo(f"      描述: {f.description}")
+                    if hasattr(f, "remediation") and f.remediation:
+                        click.echo(f"      修复: {f.remediation}")
 
     click.echo(f"\n扫描完成 | 文件: {len(templates)} | 安全发现: {total_findings}")
 

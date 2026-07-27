@@ -72,7 +72,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回170条规则(P001-P170)的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回180条规则(P001-P180)的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -840,6 +840,35 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": [],
             },
         },
+        {
+            "name": "rollback_safety_check",
+            "description": "Prompt回滚安全检查: 对比两个版本检测安全降级(安全声明删除/约束丢失/评分下降)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "old_text": {"type": "string", "description": "旧版本Prompt文本"},
+                    "new_text": {"type": "string", "description": "新版本Prompt文本"},
+                },
+                "required": ["old_text", "new_text"],
+            },
+        },
+        {
+            "name": "html_report_generate",
+            "description": "生成交互式HTML报告: 带折叠/主题切换/搜索过滤的独立HTML",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "findings": {"type": "array", "description": "Lint结果列表", "items": {"type": "object"}},
+                    "target": {"type": "string", "description": "目标名称", "default": "unknown"},
+                },
+                "required": ["findings"],
+            },
+        },
+        {
+            "name": "weight_preset_list",
+            "description": "列出评估维度权重预设: 7个行业场景(security-heavy/quality-balanced/performance-first/harmonyos-strict/redteam-ready/cost-efficient)",
+            "inputSchema": {"type": "object", "properties": {}, "required": []},
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -977,6 +1006,9 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "prompt_lint_json_schema": _tool_prompt_lint_json_schema,
             "output_scan": _tool_output_scan,
             "deveco_config": _tool_deveco_config,
+            "rollback_safety_check": _tool_rollback_safety_check,
+            "html_report_generate": _tool_html_report_generate,
+            "weight_preset_list": _tool_weight_preset_list,
         }
     return _TOOL_DISPATCH
 
@@ -2483,6 +2515,28 @@ def _tool_deveco_config(args: dict[str, Any]) -> dict[str, Any]:
         "build_hook_lines": len(build_hook.splitlines()),
         "workflow_yaml_lines": len(workflow_yaml.splitlines()),
     }
+
+
+def _tool_rollback_safety_check(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.prompt_diff import rollback_safety_check
+    old_text = args.get("old_text", "")
+    new_text = args.get("new_text", "")
+    result = rollback_safety_check(old_text, new_text)
+    return result.to_dict()
+
+
+def _tool_html_report_generate(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.html_report import generate_html_report
+    findings = args.get("findings", [])
+    target = args.get("target", "unknown")
+    html = generate_html_report(findings, target)
+    return {"html_length": len(html), "target": target}
+
+
+def _tool_weight_preset_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.evaluator import list_weight_presets
+    presets = list_weight_presets()
+    return {"presets": presets, "count": len(presets)}
 
 
 if __name__ == "__main__":
