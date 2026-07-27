@@ -301,14 +301,14 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 @click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
 @click.option("--categories", help="指定类别(逗号分隔，如structure,security)")
 @click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
-@click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli", "table", "yaml"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
 def evaluate(target: str, dimensions: str | None, categories: str | None,
              threshold: float, fmt: str, output: str | None, quick: bool,
              save_history: bool) -> None:
-    """80维度质量评估：全面评估Prompt质量"""
+    """130维度质量评估：全面评估Prompt质量"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report, empty_state_tip
     from ai_prompt_toolkit.evaluator import evaluate_template
 
@@ -363,7 +363,33 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         if output:
             write_report(data, output, fmt="json")
             click.echo(f"报告已保存: {output}")
-        else:
+
+    elif fmt == "table":
+        try:
+            from rich.console import Console as _TConsole
+            from rich.table import Table as _Table
+            _tc = _TConsole()
+            for report in reports:
+                t = _Table(title=f"评估: {report.template_id}")
+                t.add_column("维度", style="cyan")
+                t.add_column("名称")
+                t.add_column("类别")
+                t.add_column("分数", justify="right")
+                t.add_column("权重", justify="right")
+                for s in report.scores[:30]:
+                    t.add_row(s.dimension_id, s.name, s.category, f"{s.score:.1f}", f"{s.weight:.1f}")
+                _tc.print(t)
+        except ImportError:
+            click.echo("Table format requires 'rich' package")
+
+    elif fmt == "yaml":
+        try:
+            import yaml as _yaml
+            data = [r.to_dict() for r in reports]
+            click.echo(_yaml.dump(data, allow_unicode=True, default_flow_style=False))
+        except ImportError:
+            import json as _json
+            data = [r.to_dict() for r in reports]
             click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
     else:
         if _has_rich_ev:
