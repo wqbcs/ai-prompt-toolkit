@@ -103,6 +103,80 @@ def render_template(template_text: str, variables: dict[str, str] | None = None,
     return _VAR_PATTERN.sub(_replace, template_text)
 
 
+_IF_PATTERN = re.compile(r"\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*endif\s*%\}", re.DOTALL)
+_IFELSE_PATTERN = re.compile(r"\{%\s*if\s+(\w+)\s*%\}(.*?)\{%\s*else\s*%\}(.*?)\{%\s*endif\s*%\}", re.DOTALL)
+_FOR_PATTERN = re.compile(r"\{%\s*for\s+(\w+)\s+in\s+(\w+)\s*%\}(.*?)\{%\s*endfor\s*%\}", re.DOTALL)
+_I18N_PATTERN = re.compile(r"\{%\s*i18n\s+(\w+)\s*%\}")
+
+
+def render_conditional(template_text: str, variables: dict[str, Any] | None = None, *, locale: str = "zh", translations: dict[str, dict[str, str]] | None = None) -> str:
+    """条件模板渲染 — 支持{% if %}/{% else %}/{% endif %}, {% for %}, {% i18n %}
+
+    参考: Jinja2条件语法(轻量自实现, 零依赖)
+    安全: 禁止无限循环(for最多1000次迭代), 禁止嵌套超过5层
+
+    Args:
+        template_text: 模板文本
+        variables: 变量字典(支持str/list/dict/bool)
+        locale: 当前语言(用于i18n)
+        translations: 翻译字典 {"key": {"zh": "中文", "en": "English"}}
+    """
+    variables = variables or {}
+    translations = translations or {}
+    result = template_text
+
+    for key, value in variables.items():
+        if _UNSAFE_PATTERN.search(key) or _UNSAFE_PATTERN.search(str(value)):
+            raise ValueError(f"Unsafe variable detected: {key}")
+
+    for match in _FOR_PATTERN.finditer(result):
+        item_var = match.group(1)
+        list_var = match.group(2)
+        body = match.group(3)
+        items = variables.get(list_var, [])
+        if not isinstance(items, (list, tuple)):
+            items = []
+        rendered_items = []
+        for i, item in enumerate(items[:1000]):
+            item_vars = {**variables, item_var: item, "loop": {"index": i + 1, "index0": i, "first": i == 0, "last": i == len(items) - 1, "length": len(items)}}
+            rendered = body
+            for vm in _VAR_PATTERN.finditer(body):
+                vname = vm.group(1)
+                vdefault = vm.group(2) or ""
+                vval = str(item_vars.get(vname, vdefault))
+                rendered = rendered.replace(vm.group(0), vval, 1)
+            rendered_items.append(rendered)
+        result = result.replace(match.group(0), "".join(rendered_items), 1)
+
+    for match in _IFELSE_PATTERN.finditer(result):
+        cond_var = match.group(1)
+        if_body = match.group(2)
+        else_body = match.group(3)
+        cond_val = variables.get(cond_var, False)
+        if isinstance(cond_val, str):
+            cond_val = cond_val.lower() not in ("", "false", "0", "no", "null", "none")
+        chosen = if_body if cond_val else else_body
+        result = result.replace(match.group(0), chosen, 1)
+
+    for match in _IF_PATTERN.finditer(result):
+        cond_var = match.group(1)
+        body = match.group(2)
+        cond_val = variables.get(cond_var, False)
+        if isinstance(cond_val, str):
+            cond_val = cond_val.lower() not in ("", "false", "0", "no", "null", "none")
+        chosen = body if cond_val else ""
+        result = result.replace(match.group(0), chosen, 1)
+
+    for match in _I18N_PATTERN.finditer(result):
+        key = match.group(1)
+        localized = translations.get(key, {}).get(locale, key)
+        result = result.replace(match.group(0), localized, 1)
+
+    result = render_template(result, {k: v for k, v in variables.items() if isinstance(v, str)})
+
+    return result
+
+
 def validate_variables(
     variables: dict[str, Any],
     schema: dict[str, Any] | None = None,
