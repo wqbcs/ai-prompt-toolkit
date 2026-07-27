@@ -133,6 +133,16 @@ _DIMENSIONS: list[dict[str, Any]] = [
     {"id": "D118", "name": "Prompt分段质量", "category": "structure", "weight": 0.7, "description": "Prompt是否按角色/指令/约束/示例清晰分段"},
     {"id": "D119", "name": "Prompt国际化就绪", "category": "quality", "weight": 0.5, "description": "Prompt是否支持i18n(变量化文本/语言声明/翻译友好)"},
     {"id": "D120", "name": "Prompt元数据完备", "category": "structure", "weight": 0.6, "description": "Prompt是否包含元数据(作者/版本/标签/创建时间/用途)"},
+    {"id": "D121", "name": "输出安全完备", "category": "security", "weight": 0.9, "description": "Prompt是否声明输出过滤/幻觉防护/偏见检测/毒性过滤/引用验证"},
+    {"id": "D122", "name": "合规框架覆盖", "category": "compliance", "weight": 0.8, "description": "Prompt是否声明OWASP/NIST AI RMF/EU AI Act合规要求"},
+    {"id": "D123", "name": "条件逻辑安全", "category": "security", "weight": 0.7, "description": "Prompt条件分支是否完整(所有if有else/无死分支/无矛盾条件)"},
+    {"id": "D124", "name": "模板复用质量", "category": "quality", "weight": 0.6, "description": "Prompt模板是否参数化良好(变量抽取/默认值/类型约束)"},
+    {"id": "D125", "name": "多语言适配度", "category": "quality", "weight": 0.5, "description": "Prompt是否支持多语言(i18n声明/翻译占位/文化适配)"},
+    {"id": "D126", "name": "观测性就绪", "category": "performance", "weight": 0.6, "description": "Prompt是否包含追踪标记(TraceID/SpanID/版本戳)"},
+    {"id": "D127", "name": "降级容灾", "category": "security", "weight": 0.7, "description": "Prompt是否声明降级策略(备选模型/简化响应/超时回退)"},
+    {"id": "D128", "name": "成本效率", "category": "performance", "weight": 0.5, "description": "Prompt的Token效率(信息密度/冗余度/压缩潜力)"},
+    {"id": "D129", "name": "红队就绪", "category": "security", "weight": 0.8, "description": "Prompt是否经过红队测试(探测类型/通过率/修复状态)"},
+    {"id": "D130", "name": "鸿蒙NEXT适配", "category": "compliance", "weight": 0.7, "description": "Prompt是否适配HarmonyOS NEXT API 14(@Builder/LazyForEach/@Reusable/UIAbility)"},
 ]
 
 

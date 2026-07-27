@@ -116,7 +116,7 @@ class TestR75OwaspMapping:
 class TestR75Dimensions:
     def test_dimension_count_120(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS
-        assert len(_DIMENSIONS) == 120
+        assert len(_DIMENSIONS) == 130
 
     def test_d111_d120_exist(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS
