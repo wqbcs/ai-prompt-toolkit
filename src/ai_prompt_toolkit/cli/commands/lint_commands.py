@@ -22,8 +22,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
+@click.option("--color-theme", type=click.Choice(["default", "monokai", "solarized", "nord", "dracula"]), default="default", help="颜色主题")
+@click.option("--html", "html_report", is_flag=True, help="生成交互式HTML报告(同--format html)")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
-         output: str | None, gate: bool, multimodal: bool) -> None:
+         output: str | None, gate: bool, multimodal: bool, color_theme: str,
+         html_report: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -34,6 +37,11 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         sys.exit(0)
 
     linter = PromptLinter()
+    if html_report:
+        fmt = "html"
+    if color_theme != "default":
+        import os
+        os.environ["PROMPT_TOOLKIT_THEME"] = color_theme
     all_results = []
     total_findings = 0
     total_score = 0.0
@@ -138,6 +146,19 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         import json as _json
         Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
         click.echo(f"SARIF报告: {output}")
+    elif fmt == "html":
+        from ai_prompt_toolkit.html_report import generate_html_report
+        findings_list = []
+        for r in all_results:
+            for f in r.findings:
+                findings_list.append({
+                    "rule_id": f.rule_id, "severity": str(f.severity.value if hasattr(f.severity, "value") else f.severity),
+                    "category": getattr(f, "category", "other"), "name": getattr(f, "name", ""),
+                    "message": f.description, "remediation": getattr(f, "remediation", ""),
+                })
+        html_path = output or "lint-report.html"
+        generate_html_report(findings_list, target, output_path=html_path)
+        click.echo(f"HTML报告: {html_path}")
     else:
         if output:
             report_data = {
