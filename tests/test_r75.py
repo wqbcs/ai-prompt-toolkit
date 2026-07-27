@@ -82,10 +82,10 @@ class TestP161P165Rules:
 
 
 class TestR75RuleCount:
-    def test_total_rules_170(self):
+    def test_total_rules_175(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
         rules = get_all_rules()
-        assert len(rules) == 170
+        assert len(rules) == 175
 
     def test_p161_severity_critical(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
@@ -130,6 +130,6 @@ class TestR75JsonSchemaCLI:
         from ai_prompt_toolkit.linter.rules import get_all_rules
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         rules = get_all_rules()
-        assert len(rules) == 170
+        assert len(rules) == 175
         auto_count = len(AUTO_FIXABLE_RULES)
-        assert auto_count >= 111
+        assert auto_count >= 116

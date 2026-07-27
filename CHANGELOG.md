@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v50.0.0] - 2026-07-27
+
+### Added (R76-R80: 输出安全+DevEco集成+条件模板+合规映射+LSP增强)
+
+#### R80: LSP Server增强
+- textDocument/hover: 悬浮显示规则详情+修复建议+自动修复标识
+- textDocument/codeAction: QuickFix快速修复+查看详情
+
+#### R79: lint并行处理
+- lint --parallel/-j: 多线程并行lint(0=CPU核数)
+- lint类别统计+严重度统计输出
+
+#### R78: 条件模板渲染+NIST AI RMF
+- render_conditional: {% if %}/{% else %}/{% endif %}, {% for %}, {% i18n %}
+- NIST AI RMF 1.0映射: GOVERN/MAP/MEASURE/MANAGE 4大功能37子类别
+- EU AI Act映射: Article5/9/10/14/15/52合规
+
+#### R77: Glitch Probe+描述更新
+- 4个Glitch Probe: glitch_token/glitch_repeat/glitch_zerowidth/glitch_separator
+- MCP描述更新: 130→170规则
+
+#### R76: 输出安全+DevEco配置
+- P166-P170输出安全Lint规则(内容过滤/幻觉防护/偏见检测/毒性过滤/引用验证)
+- output_scanners.py: 6类输出安全扫描器(NoRefusal/Bias/Toxicity/Relevance/FactualConsistency/Citation)
+- DevEco Studio配置生成: generate_deveco_config + hvigorfile.ts + GitHub Actions
+- lint --explain: 交互式修复建议(规则详情+双语+OWASP+自动修复+鸿蒙模板)
+- AUTO_FIXABLE: 106→111条, OWASP映射补充
+
+### Stats
+- Lint规则: 170 (P001-P170)
+- 自动修复: 111条
+- 评估维度: 120
+- MCP工具: 46+
+- Provider: 25
+- Probe: 116 (含4个glitch)
+
 ## [v42.0.0] - 2026-07-18
 
 ### Added (第二十三轮成熟度循环 R23: v41→v42 — lintlang参考检测器+PII+Quality Gate+中文注入库)

@@ -244,6 +244,11 @@ class PromptLinter:
             "P168": "\n\n[偏见检测] 输出需公平无歧视, 覆盖多样代表性, 保持中立立场",
             "P169": "\n\n[毒性内容过滤] 禁止仇恨言论/骚扰/自残/暴力内容, 检测并拒绝毒性输出",
             "P170": "\n\n[引用验证] 所有事实声明需附来源, URL需可达, 与参考文档事实一致",
+            "P171": "\n\n[@Builder参数校验] @Builder函数必须声明参数类型和默认值",
+            "P172": "\n\n[LazyForEach数据源] 实现IDataSource接口: totalCount/getData/registerDataChangeListener/unregisterDataChangeListener",
+            "P173": "\n\n[@Reusable状态重置] 在aboutToReuse()中重置组件状态, 清理上一次实例残留数据",
+            "P174": "\n\n[UIAbility生命周期] 实现onForeground/onBackground回调, 保存/恢复应用状态和Prompt上下文",
+            "P175": "\n\n[分布式数据安全] 为分布式数据配置access权限组和加密策略, 禁止敏感Prompt明文同步",
         }
         if rule_id in _AUTO_APPEND:
             return FixAction(
