@@ -137,6 +137,23 @@ class EvalStore:
                 FOREIGN KEY (snapshot_id) REFERENCES eval_snapshots(snapshot_id)
             );
             CREATE INDEX IF NOT EXISTS idx_alerts_snapshot ON regression_alerts(snapshot_id);
+
+            CREATE TABLE IF NOT EXISTS eval_traces (
+                trace_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                snapshot_id INTEGER NOT NULL,
+                operation TEXT NOT NULL DEFAULT '',
+                dimension_id TEXT NOT NULL DEFAULT '',
+                input_hash TEXT NOT NULL DEFAULT '',
+                output_hash TEXT NOT NULL DEFAULT '',
+                latency_ms REAL NOT NULL DEFAULT 0,
+                token_count INTEGER NOT NULL DEFAULT 0,
+                cost REAL NOT NULL DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'ok',
+                created_at TEXT NOT NULL DEFAULT '',
+                FOREIGN KEY (snapshot_id) REFERENCES eval_snapshots(snapshot_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_traces_snapshot ON eval_traces(snapshot_id);
+            CREATE INDEX IF NOT EXISTS idx_traces_operation ON eval_traces(operation);
         """)
         conn.commit()
 
@@ -349,6 +366,44 @@ class EvalStore:
         if self._conn:
             self._conn.close()
             self._conn = None
+
+    def record_trace(self, snapshot_id: int, operation: str, dimension_id: str = "",
+                      input_hash: str = "", output_hash: str = "",
+                      latency_ms: float = 0, token_count: int = 0, cost: float = 0,
+                      status: str = "ok") -> int:
+        import datetime
+        conn = self._connect()
+        now = datetime.datetime.now().isoformat()
+        cur = conn.execute(
+            "INSERT INTO eval_traces (snapshot_id, operation, dimension_id, input_hash, output_hash, latency_ms, token_count, cost, status, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (snapshot_id, operation, dimension_id, input_hash, output_hash, latency_ms, token_count, cost, status, now),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_traces(self, snapshot_id: int | None = None, operation: str | None = None,
+                    limit: int = 100) -> list[dict[str, Any]]:
+        conn = self._connect()
+        clauses = []
+        params: list[Any] = []
+        if snapshot_id is not None:
+            clauses.append("snapshot_id=?")
+            params.append(snapshot_id)
+        if operation is not None:
+            clauses.append("operation=?")
+            params.append(operation)
+        where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+        rows = conn.execute(f"SELECT * FROM eval_traces {where} ORDER BY trace_id DESC LIMIT ?", params + [limit]).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_trace_stats(self, operation: str | None = None) -> dict[str, Any]:
+        conn = self._connect()
+        where = f"WHERE operation='{operation}'" if operation else ""
+        try:
+            row = conn.execute(f"SELECT COUNT(*) as cnt, AVG(latency_ms) as avg_latency, SUM(token_count) as total_tokens, SUM(cost) as total_cost FROM eval_traces {where}").fetchone()
+            return {"count": row["cnt"], "avg_latency_ms": round(row["avg_latency"] or 0, 2), "total_tokens": row["total_tokens"] or 0, "total_cost": round(row["total_cost"] or 0, 4)}
+        except Exception:
+            return {"count": 0, "avg_latency_ms": 0, "total_tokens": 0, "total_cost": 0}
 
 
 def _compute_hash(template_id: str) -> str:

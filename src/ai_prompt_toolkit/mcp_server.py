@@ -887,6 +887,32 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template_type"],
             },
         },
+        {
+            "name": "prompt_version_create",
+            "description": "创建Prompt版本记录(版本链管理+语义变更检测)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template_id": {"type": "string", "description": "模板ID"},
+                    "content": {"type": "string", "description": "Prompt内容"},
+                    "author": {"type": "string", "description": "作者", "default": ""},
+                    "score": {"type": "number", "description": "评分", "default": 0},
+                    "grade": {"type": "string", "description": "等级", "default": ""},
+                },
+                "required": ["template_id", "content"],
+            },
+        },
+        {
+            "name": "prompt_version_list",
+            "description": "列出Prompt版本历史(版本链追踪)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template_id": {"type": "string", "description": "模板ID"},
+                },
+                "required": ["template_id"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -1029,6 +1055,8 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "weight_preset_list": _tool_weight_preset_list,
             "fg_template_list": _tool_fg_template_list,
             "fg_template_generate": _tool_fg_template_generate,
+            "prompt_version_create": _tool_prompt_version_create,
+            "prompt_version_list": _tool_prompt_version_list,
         }
     return _TOOL_DISPATCH
 
@@ -2590,6 +2618,26 @@ def _tool_fg_template_generate(args: dict[str, Any]) -> dict[str, Any]:
         "prompt_variables": template.prompt_variables,
         "version": template.version,
     }
+
+
+def _tool_prompt_version_create(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+    vm = PromptVersionManager()
+    template_id = args.get("template_id", "")
+    content = args.get("content", "")
+    author = args.get("author", "")
+    score = args.get("score", 0.0)
+    grade = args.get("grade", "")
+    pv = vm.create_version(template_id, content, author=author, score=score, grade=grade)
+    return {"version_id": pv.version_id, "template_id": template_id, "change_type": pv.change_type, "parent_version": pv.parent_version}
+
+
+def _tool_prompt_version_list(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+    vm = PromptVersionManager()
+    template_id = args.get("template_id", "")
+    versions = vm.get_versions(template_id)
+    return {"template_id": template_id, "versions": [{"version_id": v.version_id, "change_type": v.change_type, "score": v.score, "grade": v.grade, "timestamp": v.timestamp} for v in versions], "count": len(versions)}
 
 
 if __name__ == "__main__":

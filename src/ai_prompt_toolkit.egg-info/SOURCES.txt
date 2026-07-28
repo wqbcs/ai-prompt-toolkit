@@ -133,6 +133,8 @@ src/ai_prompt_toolkit/compiler/parser.py
 src/ai_prompt_toolkit/compiler/renderer.py
 src/ai_prompt_toolkit/compiler/types.py
 src/ai_prompt_toolkit/frontmatter/__init__.py
+src/ai_prompt_toolkit/huawei_cloud/__init__.py
+src/ai_prompt_toolkit/huawei_cloud/fg_template.py
 src/ai_prompt_toolkit/i18n/__init__.py
 src/ai_prompt_toolkit/i18n/fallback.py
 src/ai_prompt_toolkit/i18n/glossary.py
@@ -143,6 +145,7 @@ src/ai_prompt_toolkit/i18n/resource.py
 src/ai_prompt_toolkit/i18n/translation.py
 src/ai_prompt_toolkit/i18n/types.py
 src/ai_prompt_toolkit/linter/__init__.py
+src/ai_prompt_toolkit/linter/custom_rules.py
 src/ai_prompt_toolkit/linter/fix_suggestions.py
 src/ai_prompt_toolkit/linter/fixer.py
 src/ai_prompt_toolkit/linter/friendly_descriptions.py
@@ -152,6 +155,7 @@ src/ai_prompt_toolkit/linter/lsp_server.py
 src/ai_prompt_toolkit/linter/multimodal.py
 src/ai_prompt_toolkit/linter/nist_rmf_mapping.py
 src/ai_prompt_toolkit/linter/owasp_mapping.py
+src/ai_prompt_toolkit/linter/prompt_version.py
 src/ai_prompt_toolkit/linter/quality_gate.py
 src/ai_prompt_toolkit/linter/rule_loader.py
 src/ai_prompt_toolkit/linter/rule_loader_yaml.py
@@ -179,6 +183,8 @@ src/ai_prompt_toolkit/linter/rules_p166_p170.py
 src/ai_prompt_toolkit/linter/rules_p171_p175.py
 src/ai_prompt_toolkit/linter/rules_p176_p180.py
 src/ai_prompt_toolkit/linter/rules_p181_p185.py
+src/ai_prompt_toolkit/linter/rules_p186_p190.py
+src/ai_prompt_toolkit/linter/rules_p191_p195.py
 src/ai_prompt_toolkit/linter/token_analyzer.py
 src/ai_prompt_toolkit/market/__init__.py
 src/ai_prompt_toolkit/market/api.py
@@ -273,6 +279,13 @@ tests/test_p3_extended.py
 tests/test_p3_features.py
 tests/test_provider_split.py
 tests/test_quality_gate_pii.py
+tests/test_r100.py
+tests/test_r101.py
+tests/test_r102.py
+tests/test_r103.py
+tests/test_r104.py
+tests/test_r105.py
+tests/test_r106.py
 tests/test_r28.py
 tests/test_r29.py
 tests/test_r31.py
@@ -325,6 +338,8 @@ tests/test_r92.py
 tests/test_r93.py
 tests/test_r94.py
 tests/test_r96.py
+tests/test_r97.py
+tests/test_r98.py
 tests/test_redteam.py
 tests/test_report.py
 tests/test_result_cache.py
