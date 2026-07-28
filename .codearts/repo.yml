@@ -1,0 +1,29 @@
+project:
+  name: ai-prompt-toolkit
+  description: AI提示词体系工具链 - ESLint for Prompts
+  language: python
+  version: "53.0.0"
+
+quality:
+  lint:
+    enabled: true
+    rules_count: 210
+    auto_fixable: 151
+  security_scan:
+    enabled: true
+  test_coverage:
+    minimum: 80
+  quality_gate:
+    enabled: true
+    score_threshold: 70
+    max_critical: 0
+    max_high: 5
+
+codearts:
+  pipeline: .codearts/pipeline.yml
+  check:
+    enabled: true
+    tools:
+      - ruff
+      - mypy
+      - pytest
