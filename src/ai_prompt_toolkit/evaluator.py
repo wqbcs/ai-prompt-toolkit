@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
@@ -1649,4 +1650,54 @@ def score_to_grade(score: float) -> str:
 
 def score_to_decision(score: float, threshold: float = 5.0) -> str:
     return "PASS" if score >= threshold else "FAIL"
+
+
+@dataclass
+class BenchmarkResult:
+    template_name: str
+    current_score: float
+    previous_score: float | None
+    delta: float | None
+    grade: str
+    decision: str
+    timestamp: str
+
+
+def run_benchmark(
+    templates: list[tuple[str, str]],
+    history_path: str | None = None,
+) -> list[BenchmarkResult]:
+    import json
+    from datetime import datetime
+
+    results = []
+    history = {}
+    _history_path = history_path or ".prompt-toolkit-cache/benchmark_history.json"
+    hp = Path(_history_path)
+    if hp.exists():
+        try:
+            history = json.loads(hp.read_text(encoding="utf-8"))
+        except Exception:
+            history = {}
+
+    now = datetime.now().isoformat()
+    for name, text in templates:
+        report = evaluate_template(name, text)
+        current = report.overall_score
+        prev = history.get(name)
+        delta = round(current - prev, 2) if prev is not None else None
+        results.append(BenchmarkResult(
+            template_name=name,
+            current_score=round(current, 2),
+            previous_score=prev,
+            delta=delta,
+            grade=score_to_grade(current),
+            decision=score_to_decision(current),
+            timestamp=now,
+        ))
+        history[name] = round(current, 2)
+
+    hp.parent.mkdir(parents=True, exist_ok=True)
+    hp.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+    return results
 
