@@ -2,6 +2,18 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v55.0.0] - 2026-07-28
+
+### Added (R121-R122: eval markdown+MCP version_diff+多模态安全)
+
+#### R122: P216-P220 多模态安全规则
+- P216: 图像注入风险 | P217: 音频指令注入 | P218: 跨模态信息泄露 | P219: 模态降级安全 | P220: 多模态输出验证
+- 总规则215→220, AUTO_FIXABLE 156→161
+
+#### R121: eval --format markdown + MCP prompt_version_diff
+- evaluate --format markdown: Markdown表格格式输出(维度/名称/类别/分数/权重)
+- MCP prompt_version_diff: 对比两个Prompt版本差异(语义+结构)
+
 ## [v54.0.0] - 2026-07-28
 
 ### Added (R117-R120: CodeArts Repo+鸿蒙API16+benchmark)
