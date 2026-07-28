@@ -28,9 +28,12 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
 @click.option("--tui", "tui_mode", is_flag=True, help="TUI交互式浏览: Rich树形+表格展示lint结果")
 @click.option("--watch", is_flag=True, help="实时监听: 文件变更时自动重新lint")
+@click.option("--ci", "ci_mode", is_flag=True, help="CI模式: 精简输出+exit code(适合pipeline)")
+@click.option("--diff", "show_diff", is_flag=True, help="修复差异: 展示修复前后对比(类似git diff)")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
-         html_report: bool, changed_only: bool, cache_dir: str | None, tui_mode: bool, watch: bool) -> None:
+         html_report: bool, changed_only: bool, cache_dir: str | None,
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -118,7 +121,13 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 all_results[i].findings.extend(mm_findings)
                 total_findings += len(mm_findings)
 
-    if tui_mode:
+    if ci_mode:
+        click.echo(f"files={len(templates)} findings={total_findings} score={avg_score:.1f}")
+        if total_findings == 0:
+            click.echo("PASS")
+        else:
+            click.echo("FAIL")
+    elif tui_mode:
         from ai_prompt_toolkit.tui_browser import render_interactive_results
         render_interactive_results(all_results, avg_score, total_findings, len(templates))
     elif fmt == "cli":
@@ -136,6 +145,16 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
         click.echo(f"自动修复: {fixed} 处")
+
+    if show_diff and any(r.auto_fixed for r in all_results):
+        import difflib
+        for r in all_results:
+            if r.auto_fixed and hasattr(r, "original_text") and hasattr(r, "fixed_text"):
+                orig_lines = (r.original_text or "").splitlines(keepends=True)
+                fixed_lines = (r.fixed_text or "").splitlines(keepends=True)
+                diff_lines = difflib.unified_diff(orig_lines, fixed_lines, fromfile="original", tofile="fixed", lineterm="")
+                for dl in diff_lines:
+                    click.echo(dl)
 
     if output:
         report_data = {
