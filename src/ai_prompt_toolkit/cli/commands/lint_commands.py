@@ -26,9 +26,10 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--html", "html_report", is_flag=True, help="生成交互式HTML报告(同--format html)")
 @click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
 @click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
+@click.option("--tui", "tui_mode", is_flag=True, help="TUI交互式浏览: Rich树形+表格展示lint结果")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
-         html_report: bool, changed_only: bool, cache_dir: str | None) -> None:
+         html_report: bool, changed_only: bool, cache_dir: str | None, tui_mode: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -116,7 +117,10 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 all_results[i].findings.extend(mm_findings)
                 total_findings += len(mm_findings)
 
-    if fmt == "cli":
+    if tui_mode:
+        from ai_prompt_toolkit.tui_browser import render_interactive_results
+        render_interactive_results(all_results, avg_score, total_findings, len(templates))
+    elif fmt == "cli":
         for result in all_results:
             if result.findings:
                 for f in result.findings:
