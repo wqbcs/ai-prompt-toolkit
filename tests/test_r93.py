@@ -54,7 +54,7 @@ class TestP181P185Rules:
 
     def test_total_rules_185(self):
         rules = get_all_rules()
-        assert len(rules) == 200
+        assert len(rules) == 205
 
     def test_p181_p185_category(self):
         for rid in ("P181", "P182", "P183", "P184", "P185"):
