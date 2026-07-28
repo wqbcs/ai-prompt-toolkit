@@ -9,10 +9,10 @@ from ai_prompt_toolkit.types import Severity
 class TestR111RuleCount:
     def test_total_rules_205(self):
         rules = get_all_rules()
-        assert len(rules) == 205
+        assert len(rules) == 210
 
     def test_auto_fixable_count(self):
-        assert len(AUTO_FIXABLE_RULES) >= 146
+        assert len(AUTO_FIXABLE_RULES) >= 151
 
 
 class TestR111P201P205Registration:
