@@ -754,3 +754,27 @@ def run_all_checks(text: str) -> list[Finding]:
             if f.rule_id == "P017":
                 f.severity = Severity.LOW
     return findings
+
+
+def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, object]]]:
+    import time
+    findings: list[Finding] = []
+    profile_data: list[dict[str, object]] = []
+    for checker in _CHECKERS_EXTENDED:
+        name = getattr(checker, "__name__", str(checker))
+        t0 = time.perf_counter()
+        result = checker(text)
+        elapsed = time.perf_counter() - t0
+        if result is not None:
+            if isinstance(result, list):
+                findings.extend(result)
+            else:
+                findings.append(result)
+        profile_data.append({"checker": name, "elapsed_ms": round(elapsed * 1000, 3), "findings": len(result) if isinstance(result, list) else (1 if result else 0)})
+    p017_triggered = any(f.rule_id == "P017" for f in findings)
+    p023_triggered = any(f.rule_id == "P023" for f in findings)
+    if p017_triggered and p023_triggered:
+        for f in findings:
+            if f.rule_id == "P017":
+                f.severity = Severity.LOW
+    return findings, profile_data

@@ -30,10 +30,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--watch", is_flag=True, help="实时监听: 文件变更时自动重新lint")
 @click.option("--ci", "ci_mode", is_flag=True, help="CI模式: 精简输出+exit code(适合pipeline)")
 @click.option("--diff", "show_diff", is_flag=True, help="修复差异: 展示修复前后对比(类似git diff)")
+@click.option("--profile", "profile_mode", is_flag=True, help="性能分析: 显示每条规则执行耗时")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -141,6 +142,18 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     avg_score = total_score / max(len(all_results), 1)
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
+
+    if profile_mode:
+        from ai_prompt_toolkit.linter.rules import run_all_checks_profiled
+        click.echo("\n── 性能分析 (Profile) ──")
+        sample_text = templates[0].read_text(encoding="utf-8") if templates else ""
+        if sample_text:
+            _, profile_data = run_all_checks_profiled(sample_text)
+            total_ms = sum(p["elapsed_ms"] for p in profile_data)
+            top10 = sorted(profile_data, key=lambda p: p["elapsed_ms"], reverse=True)[:10]
+            click.echo(f"  总耗时: {total_ms:.1f}ms | 规则数: {len(profile_data)} | Top10慢规则:")
+            for p in top10:
+                click.echo(f"    {p['checker']}: {p['elapsed_ms']:.3f}ms (findings={p['findings']})")
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
