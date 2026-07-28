@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v52.0.0] - 2026-07-28
+
+### Added (R108-R110: LLM推理安全+TUI浏览+版本升级)
+
+#### R110: 版本升级 v52.0.0
+- __init__.py: v51.0.0→v52.0.0
+- pyproject.toml: version 52.0.0
+
+#### R109: lint --tui交互式终端界面
+- tui_browser.py: Rich Tree+Table交互式浏览lint结果
+- lint --tui选项: 交互式浏览模式
+- 颜色编码: CRITICAL/HIGH/MEDIUM/LOW分级着色
+- 统计摘要: 分类统计+评分+等级(SABCDF)
+- 基于开源调查: Rich(56K stars)轻量方案
+
+#### R108: P196-P200 LLM推理安全规则
+- P196: LLM推理超时风险(未设置timeout)
+- P197: LLM输出长度失控(未限制max_tokens)
+- P198: LLM温度参数不当(temperature>1.5)
+- P199: LLM采样参数冲突(top_p+temperature双重随机)
+- P200: LLM流式响应安全(未做实时内容审核)
+- 总规则195→200, AUTO_FIXABLE 136→141
+
 ## [v51.0.0] - 2026-07-28
 
 ### Added (R99-R104: 改进循环+Agent安全+ModelArts增强+评分等级+CodeArts Pipeline)
