@@ -2,6 +2,30 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v53.0.0] - 2026-07-28
+
+### Added (R111-R115: 合规规则+RAG安全+CI模式+diff)
+
+#### R115: lint --ci + lint --diff
+- --ci: CI模式精简输出(files/findings/score + PASS/FAIL)
+- --diff: 修复前后unified diff展示(参考difflib)
+
+#### R114: P206-P210 RAG/知识库安全规则
+- P206: 检索注入风险 | P207: 幻觉检测缺失 | P208: 来源溯源缺失
+- P209: 上下文窗口溢出 | P210: 嵌入偏移风险
+- 总规则205→210, AUTO_FIXABLE 146→151
+
+#### R113: 改进清单文档v2.0
+- 功能增添7项+内容改进4项+细节优化4项+用户体验5项+赛事贴合4项
+
+#### R112: lint --watch实时监听
+- 文件变更自动重新lint(mtime轮询+Ctrl+C退出)
+
+#### R111: P201-P205 Prompt合规规则
+- P201: 数据合规声明 | P202: 用户同意机制 | P203: AI输出标识
+- P204: 偏见公平声明 | P205: 数据留存策略
+- 总规则200→205, AUTO_FIXABLE 141→146
+
 ## [v52.0.0] - 2026-07-28
 
 ### Added (R108-R110: LLM推理安全+TUI浏览+版本升级)
