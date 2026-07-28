@@ -7,10 +7,10 @@ from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 
 class TestR115CIAndDiff:
     def test_rules_count_stable(self):
-        assert len(get_all_rules()) == 210
+        assert len(get_all_rules()) == 215
 
     def test_auto_fixable_stable(self):
-        assert len(AUTO_FIXABLE_RULES) >= 151
+        assert len(AUTO_FIXABLE_RULES) >= 156
 
     def test_difflib_available(self):
         import difflib

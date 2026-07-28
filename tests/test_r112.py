@@ -8,10 +8,10 @@ from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 class TestR112WatchOption:
     def test_rules_count_unchanged(self):
         rules = get_all_rules()
-        assert len(rules) == 210
+        assert len(rules) == 215
 
     def test_auto_fixable_stable(self):
-        assert len(AUTO_FIXABLE_RULES) >= 151
+        assert len(AUTO_FIXABLE_RULES) >= 156
 
 
 class TestR112FirstRunGuide:

@@ -38,7 +38,7 @@ class TestP171P175Rules:
     def test_total_rules_185(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
         rules = get_all_rules()
-        assert len(rules) == 210
+        assert len(rules) == 215
 
     def test_p171_p175_bilingual(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
