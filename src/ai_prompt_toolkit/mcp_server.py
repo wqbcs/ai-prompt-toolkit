@@ -913,6 +913,19 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template_id"],
             },
         },
+        {
+            "name": "prompt_version_diff",
+            "description": "对比两个Prompt版本的差异(语义+结构)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "template_id": {"type": "string", "description": "模板ID"},
+                    "version_id_1": {"type": "string", "description": "版本1 ID"},
+                    "version_id_2": {"type": "string", "description": "版本2 ID"},
+                },
+                "required": ["template_id", "version_id_1", "version_id_2"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -1057,6 +1070,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "fg_template_generate": _tool_fg_template_generate,
             "prompt_version_create": _tool_prompt_version_create,
             "prompt_version_list": _tool_prompt_version_list,
+            "prompt_version_diff": _tool_prompt_version_diff,
         }
     return _TOOL_DISPATCH
 
@@ -2638,6 +2652,18 @@ def _tool_prompt_version_list(args: dict[str, Any]) -> dict[str, Any]:
     template_id = args.get("template_id", "")
     versions = vm.get_versions(template_id)
     return {"template_id": template_id, "versions": [{"version_id": v.version_id, "change_type": v.change_type, "score": v.score, "grade": v.grade, "timestamp": v.timestamp} for v in versions], "count": len(versions)}
+
+
+def _tool_prompt_version_diff(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+    vm = PromptVersionManager()
+    template_id = args.get("template_id", "")
+    v1 = args.get("version_id_1", "")
+    v2 = args.get("version_id_2", "")
+    diff_result = vm.diff_versions(template_id, v1, v2)
+    if not diff_result:
+        return {"error": f"版本不存在: {v1} 或 {v2}"}
+    return {"template_id": template_id, "from": v1, "to": v2, "diff": diff_result}
 
 
 if __name__ == "__main__":
