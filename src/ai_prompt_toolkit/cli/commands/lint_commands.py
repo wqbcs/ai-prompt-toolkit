@@ -27,9 +27,10 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
 @click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
 @click.option("--tui", "tui_mode", is_flag=True, help="TUI交互式浏览: Rich树形+表格展示lint结果")
+@click.option("--watch", is_flag=True, help="实时监听: 文件变更时自动重新lint")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
-         html_report: bool, changed_only: bool, cache_dir: str | None, tui_mode: bool) -> None:
+         html_report: bool, changed_only: bool, cache_dir: str | None, tui_mode: bool, watch: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -198,6 +199,39 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             }
             write_report(report_data, output, fmt=fmt)
             click.echo(f"报告: {output}")
+
+    if watch:
+        from ai_prompt_toolkit.linter.linter import PromptLinter as _PL
+        import time as _time
+        click.echo(f"lint --watch: 监听 {target} (Ctrl+C退出)...")
+        _watch_linter = _PL()
+        _last_mtimes: dict[str, float] = {}
+        while True:
+            try:
+                _current_templates = discover_templates(target)
+                _changed = False
+                for _tp in _current_templates:
+                    _mt = _tp.stat().st_mtime
+                    if _last_mtimes.get(str(_tp)) != _mt:
+                        _last_mtimes[str(_tp)] = _mt
+                        _changed = True
+                if _changed:
+                    click.echo(f"\n--- [{_time.strftime('%H:%M:%S')}] 文件变更, 重新lint ---")
+                    for _tp in _current_templates:
+                        _text = _tp.read_text(encoding="utf-8")
+                        _res = _watch_linter.lint(_tp.name, _text, fix=False, template_type=_detect_template_type(_text))
+                        if _res.findings:
+                            for _f in _res.findings:
+                                _sv = _f.severity.value if hasattr(_f.severity, "value") else str(_f.severity)
+                                _mk = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(_sv, "•")
+                                click.echo(f"  {_mk} [{_tp.name}] {_f.rule_id}: {_f.description}")
+                        else:
+                            click.echo(f"  ✓ [{_tp.name}] 通过")
+                _time.sleep(1.0)
+            except KeyboardInterrupt:
+                click.echo("\nlint --watch: 已停止")
+                break
+        sys.exit(0)
 
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
 
