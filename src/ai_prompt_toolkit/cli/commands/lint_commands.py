@@ -31,10 +31,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--ci", "ci_mode", is_flag=True, help="CI模式: 精简输出+exit code(适合pipeline)")
 @click.option("--diff", "show_diff", is_flag=True, help="修复差异: 展示修复前后对比(类似git diff)")
 @click.option("--profile", "profile_mode", is_flag=True, help="性能分析: 显示每条规则执行耗时")
+@click.option("--owasp-report", "owasp_report", is_flag=True, help="OWASP映射覆盖率报告")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -154,6 +155,10 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             click.echo(f"  总耗时: {total_ms:.1f}ms | 规则数: {len(profile_data)} | Top10慢规则:")
             for p in top10:
                 click.echo(f"    {p['checker']}: {p['elapsed_ms']:.3f}ms (findings={p['findings']})")
+
+    if owasp_report:
+        from ai_prompt_toolkit.linter.owasp_mapping import generate_owasp_report
+        click.echo(generate_owasp_report())
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)

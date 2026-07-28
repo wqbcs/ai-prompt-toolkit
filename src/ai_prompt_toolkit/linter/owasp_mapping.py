@@ -114,3 +114,26 @@ def get_owasp_coverage() -> dict[str, dict[str, Any]]:
             "lint_coverage": len(rule_ids),
         }
     return result
+
+
+def generate_owasp_report() -> str:
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+    coverage = get_owasp_coverage()
+    total_rules = len(get_all_rules())
+    mapped_rules = set()
+    for ref, data in coverage.items():
+        mapped_rules.update(data["lint_rules"])
+    lines = [
+        "── OWASP LLM Top 10 映射覆盖率报告 ──",
+        f"总Lint规则: {total_rules} | 已映射: {len(mapped_rules)} | 覆盖率: {len(mapped_rules)/total_rules*100:.1f}%",
+        "",
+    ]
+    for ref in sorted(coverage.keys()):
+        data = coverage[ref]
+        lines.append(f"{ref}: {data['name']}")
+        lines.append(f"  Lint规则: {data['lint_coverage']}条 | Probe: {len(data['probes'])}个")
+        if data["lint_rules"]:
+            lines.append(f"  规则: {', '.join(data['lint_rules'][:10])}{'...' if len(data['lint_rules']) > 10 else ''}")
+    unmapped = total_rules - len(mapped_rules)
+    lines.append(f"\n未映射规则数: {unmapped}")
+    return "\n".join(lines)
