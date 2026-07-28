@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v54.0.0] - 2026-07-28
+
+### Added (R117-R120: CodeArts Repo+鸿蒙API16+benchmark)
+
+#### R120: 版本升级 v54.0.0
+- __init__.py: v53.0.0→v54.0.0
+
+#### R119: eval --benchmark基准测试
+- BenchmarkResult + run_benchmark() 评分历史趋势对比
+- JSON存储历史评分, 支持delta计算
+
+#### R118: P211-P215 鸿蒙NEXT API 16规则
+- P211: LazyForEach懒加载 | P212: @ObservedV2 | P213: NAPI安全 | P214: 权限 | P215: 分布式安全
+- 总规则210→215, AUTO_FIXABLE 151→156
+
+#### R117: 华为云CodeArts Repo规范
+- repo_check.py: 7项仓库规范检查 + .codearts/repo.yml
+
 ## [v53.0.0] - 2026-07-28
 
 ### Added (R111-R115: 合规规则+RAG安全+CI模式+diff)
