@@ -41,10 +41,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
+@click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
 def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool, export_lcov_path: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -268,6 +269,16 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, in
         for expl in explanations:
             click.echo(format_explanation(expl))
             click.echo()
+
+    if export_lcov_path:
+        from ai_prompt_toolkit.linter.lcov_export import generate_lcov_report, generate_coverage_summary
+        all_findings_for_lcov = []
+        for r in all_results:
+            all_findings_for_lcov.extend(r.findings)
+        lcov_data = generate_lcov_report(all_findings_for_lcov)
+        Path(export_lcov_path).write_text(lcov_data, encoding="utf-8")
+        summary = generate_coverage_summary(all_findings_for_lcov)
+        click.echo(f"\nlcov覆盖率: {summary['hit_rules']}/{summary['total_rules']} ({summary['coverage_pct']}%) → {export_lcov_path}")
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
