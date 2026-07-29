@@ -65,8 +65,8 @@ class TestR128SupplyChain:
 
     def test_total_rule_count(self):
         all_rules = get_all_rules()
-        assert len(all_rules) == 240
+        assert len(all_rules) == 245
 
     def test_auto_fixable_count(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
-        assert len(AUTO_FIXABLE_RULES) == 181
+        assert len(AUTO_FIXABLE_RULES) == 186
