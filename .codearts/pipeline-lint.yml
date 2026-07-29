@@ -1,0 +1,104 @@
+# 华为云 CodeArts Pipeline — Prompt Lint 集成模板
+# 使用方法: 将此文件放入 .codearts/pipeline.yml
+# 文档: https://support.huaweicloud.com/usermanual-codearts/pipeline.html
+
+name: prompt-lint-pipeline
+description: AI Prompt质量检查流水线
+
+trigger:
+  push:
+    branches:
+      - main
+      - develop
+  merge_request:
+    target_branches:
+      - main
+
+variables:
+  PROMPT_DIR: prompts
+  LINT_THRESHOLD: "80"
+  EVAL_THRESHOLD: "6.0"
+
+stages:
+  - name: lint
+    jobs:
+      - job: prompt-lint
+        steps:
+          - name: install-toolkit
+            run: |
+              pip install ai-prompt-toolkit --upgrade
+              echo "ai-prompt-toolkit $(prompt-toolkit --version) installed"
+
+          - name: lint-check
+            run: |
+              echo "=== Prompt Lint 检查 ==="
+              prompt-toolkit lint -t $PROMPT_DIR --ci
+              LINT_EXIT=$?
+              if [ $LINT_EXIT -ne 0 ]; then
+                echo "Lint检查未通过, 请修复后重新提交"
+                exit $LINT_EXIT
+              fi
+              echo "Lint检查通过"
+
+          - name: lint-profile
+            run: |
+              echo "=== L9性能分析 ==="
+              prompt-toolkit lint -t $PROMPT_DIR --profile
+
+          - name: lint-owasp
+            run: |
+              echo "=== OWASP覆盖率 ==="
+              prompt-toolkit lint -t $PROMPT_DIR --owasp-report
+
+  - name: evaluate
+    jobs:
+      - job: prompt-eval
+        steps:
+          - name: eval-check
+            run: |
+              echo "=== Prompt质量评估 ==="
+              prompt-toolkit evaluate -t $PROMPT_DIR --quick --threshold $EVAL_THRESHOLD
+              EVAL_EXIT=$?
+              if [ $EVAL_EXIT -ne 0 ]; then
+                echo "评估分数低于阈值 $EVAL_THRESHOLD, 请改进Prompt质量"
+                exit $EVAL_EXIT
+              fi
+              echo "评估通过"
+
+          - name: eval-benchmark
+            run: |
+              echo "=== 基准测试 ==="
+              prompt-toolkit evaluate -t $PROMPT_DIR --benchmark
+
+  - name: security
+    jobs:
+      - job: prompt-security
+        steps:
+          - name: security-scan
+            run: |
+              echo "=== 安全扫描 ===?===
+              prompt-toolkit security scan -t $PROMPT_DIR
+              echo "安全扫描完成"
+
+          - name: probe-check
+            run: |
+              echo "=== Prompt注入探测 ==="
+              prompt-toolkit probe run -t $PROMPT_DIR --quick
+              echo "探测完成"
+
+  - name: report
+    jobs:
+      - job: generate-report
+        steps:
+          - name: html-report
+            run: |
+              echo "=== 生成HTML报告 ==="
+              prompt-toolkit lint -t $PROMPT_DIR --html -o lint-report.html
+              prompt-toolkit evaluate -t $PROMPT_DIR --format json -o eval-report.json
+              echo "报告已生成: lint-report.html, eval-report.json"
+
+          - name: sarif-report
+            run: |
+              echo "=== SARIF格式报告 ==="
+              prompt-toolkit lint -t $PROMPT_DIR --format sarif -o lint-report.sarif
+              echo "SARIF报告已生成: lint-report.sarif"
