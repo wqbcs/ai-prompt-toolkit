@@ -147,7 +147,8 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, in
                     sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                     marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                     prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
-                    click.echo(f"  {marker} [{result.template_id}] {prefix}{f.rule_id}: {f.description}")
+                    loc = f" L{f.location}" if f.location and str(f.location) != "1" and str(f.location) != "0" else ""
+                    click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
 
     avg_score = total_score / max(len(all_results), 1)
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")

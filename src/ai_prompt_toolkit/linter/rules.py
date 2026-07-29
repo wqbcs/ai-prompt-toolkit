@@ -742,6 +742,13 @@ def get_rule(rule_id: str) -> LintRule | None:
     return _RULE_MAP.get(rule_id)
 
 
+def find_line(text: str, pattern: re.Pattern[str]) -> int:
+    match = pattern.search(text)
+    if match:
+        return text[:match.start()].count("\n") + 1
+    return 1
+
+
 def run_all_checks(text: str) -> list[Finding]:
     findings: list[Finding] = []
     for checker in _CHECKERS_EXTENDED:
