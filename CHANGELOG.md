@@ -2,6 +2,26 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v62.0.0] - 2026-07-30
+
+### Added (R150-R152: 解释增强+合规审计+lcov导出)
+
+#### R152: lint --export-lcov覆盖率导出
+- lcov_export.py: generate_lcov_report+generate_coverage_summary
+- lint --export-lcov: lcov格式规则覆盖率(TN/FN/DA+按类别统计)
+
+#### R151: P241-P245 Prompt合规审计规则
+- P241: GDPR数据最小化违规
+- P242: AI Act透明度缺失
+- P243: 数据保留策略缺失
+- P244: 审计日志不完整
+- P245: 跨境数据传输合规
+- 240→245条规则, 181→186可自动修复
+
+#### R150: lint --explain交互式解释增强
+- explain.py: explain_finding+OWASP参考+风险等级+修复方案
+- lint --explain: 详细说明+中英文支持
+
 ## [v61.0.0] - 2026-07-30
 
 ### Added (R147-R148: JSON diff+推理引擎安全)
