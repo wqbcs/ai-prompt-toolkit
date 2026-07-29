@@ -825,3 +825,44 @@ def search_rules(query: str, category: str | None = None, owasp: str | None = No
             results.append({"rule_id": rule.rule_id, "name": rule.name, "category": rule.category, "severity": rule.severity.value, "description": rule.description[:80], "owasp_refs": rule.owasp_refs, "score": score})
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:limit]
+
+
+def compute_rule_statistics(findings: list[Finding]) -> dict[str, object]:
+    if not findings:
+        return {"total_findings": 0, "unique_rules": 0, "rules": [], "by_category": {}, "by_severity": {}}
+    rule_counts: dict[str, int] = {}
+    rule_info: dict[str, LintRule] = {}
+    for f in findings:
+        rid = f.rule_id
+        rule_counts[rid] = rule_counts.get(rid, 0) + 1
+        if rid not in rule_info and rid in _RULE_MAP:
+            rule_info[rid] = _RULE_MAP[rid]
+    total = sum(rule_counts.values())
+    sorted_rules = sorted(rule_counts.items(), key=lambda x: x[1], reverse=True)
+    rules_list = []
+    for rid, count in sorted_rules:
+        r = rule_info.get(rid)
+        hit_rate = count / total * 100
+        rules_list.append({
+            "rule_id": rid,
+            "name": r.name if r else rid,
+            "category": r.category if r else "unknown",
+            "severity": r.severity.value if r else "unknown",
+            "hit_count": count,
+            "hit_rate": round(hit_rate, 2),
+        })
+    by_category: dict[str, int] = {}
+    by_severity: dict[str, int] = {}
+    for f in findings:
+        r = rule_info.get(f.rule_id)
+        cat = r.category if r else "unknown"
+        sev = (r.severity.value if r else f.severity.value if hasattr(f.severity, "value") else str(f.severity))
+        by_category[cat] = by_category.get(cat, 0) + 1
+        by_severity[sev] = by_severity.get(sev, 0) + 1
+    return {
+        "total_findings": total,
+        "unique_rules": len(rule_counts),
+        "rules": rules_list,
+        "by_category": dict(sorted(by_category.items(), key=lambda x: x[1], reverse=True)),
+        "by_severity": dict(sorted(by_severity.items(), key=lambda x: x[1], reverse=True)),
+    }

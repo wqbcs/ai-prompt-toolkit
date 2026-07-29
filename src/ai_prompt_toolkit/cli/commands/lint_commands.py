@@ -35,10 +35,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--owasp-report", "owasp_report", is_flag=True, help="OWASP映射覆盖率报告")
 @click.option("--rules-search", "rules_search", help="规则搜索: 按关键词搜索规则(如injection/privacy/LLM01)")
 @click.option("--ignore-file", "ignore_file", help="忽略文件路径(默认.promptignore)")
+@click.option("--statistics", "statistics_mode", is_flag=True, help="规则命中率统计: 显示每条规则命中次数和占比")
 def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -178,6 +179,23 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, in
             owasp_str = ",".join(r["owasp_refs"]) if r["owasp_refs"] else ""
             click.echo(f"  {r['rule_id']}: {r['name']} [{r['category']}] {r['severity']} {'OWASP:'+owasp_str if owasp_str else ''}")
             click.echo(f"    {r['description']}")
+
+    if statistics_mode:
+        from ai_prompt_toolkit.linter.rules import compute_rule_statistics
+        all_findings_flat = []
+        for r in all_results:
+            all_findings_flat.extend(r.findings)
+        stats = compute_rule_statistics(all_findings_flat)
+        click.echo(f"\n── 规则命中率统计 ──")
+        click.echo(f"  总命中: {stats['total_findings']} | 涉及规则: {stats['unique_rules']}")
+        if stats["by_category"]:
+            click.echo(f"  按类别: {', '.join(f'{k}={v}' for k, v in stats['by_category'].items())}")
+        if stats["by_severity"]:
+            click.echo(f"  按严重度: {', '.join(f'{k}={v}' for k, v in stats['by_severity'].items())}")
+        click.echo(f"  {'规则ID':<8} {'命中':>5} {'占比':>8} {'名称'}")
+        click.echo(f"  {'─'*8} {'─'*5} {'─'*8} {'─'*30}")
+        for rs in stats["rules"]:
+            click.echo(f"  {rs['rule_id']:<8} {rs['hit_count']:>5} {rs['hit_rate']:>7.1f}% {rs['name']}")
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
