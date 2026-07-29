@@ -32,10 +32,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--diff", "show_diff", is_flag=True, help="修复差异: 展示修复前后对比(类似git diff)")
 @click.option("--profile", "profile_mode", is_flag=True, help="性能分析: 显示每条规则执行耗时")
 @click.option("--owasp-report", "owasp_report", is_flag=True, help="OWASP映射覆盖率报告")
+@click.option("--rules-search", "rules_search", help="规则搜索: 按关键词搜索规则(如injection/privacy/LLM01)")
 def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -159,6 +160,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if owasp_report:
         from ai_prompt_toolkit.linter.owasp_mapping import generate_owasp_report
         click.echo(generate_owasp_report())
+
+    if rules_search:
+        from ai_prompt_toolkit.linter.rules import search_rules
+        results = search_rules(rules_search)
+        click.echo(f"\n── 规则搜索: '{rules_search}' ({len(results)}条结果) ──")
+        for r in results:
+            owasp_str = ",".join(r["owasp_refs"]) if r["owasp_refs"] else ""
+            click.echo(f"  {r['rule_id']}: {r['name']} [{r['category']}] {r['severity']} {'OWASP:'+owasp_str if owasp_str else ''}")
+            click.echo(f"    {r['description']}")
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)

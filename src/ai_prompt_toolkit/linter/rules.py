@@ -782,3 +782,39 @@ def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, ob
             if f.rule_id == "P017":
                 f.severity = Severity.LOW
     return findings, profile_data
+
+
+def search_rules(query: str, category: str | None = None, owasp: str | None = None, limit: int = 20) -> list[dict[str, object]]:
+    import re
+    results = []
+    q_lower = query.lower()
+    q_pattern = re.compile(re.escape(q_lower), re.IGNORECASE)
+    for rule in _RULE_MAP.values():
+        if category and rule.category != category:
+            continue
+        if owasp and owasp not in rule.owasp_refs:
+            continue
+        score = 0
+        if q_lower in rule.rule_id.lower():
+            score += 10
+        if q_pattern.search(rule.name):
+            score += 8
+        if q_pattern.search(rule.description):
+            score += 5
+        if q_pattern.search(rule.remediation):
+            score += 3
+        if q_pattern.search(rule.category):
+            score += 2
+        desc_en = getattr(rule, "description_en", "") or ""
+        rem_en = getattr(rule, "remediation_en", "") or ""
+        if q_pattern.search(desc_en):
+            score += 5
+        if q_pattern.search(rem_en):
+            score += 3
+        for ref in rule.owasp_refs:
+            if q_lower in ref.lower():
+                score += 4
+        if score > 0:
+            results.append({"rule_id": rule.rule_id, "name": rule.name, "category": rule.category, "severity": rule.severity.value, "description": rule.description[:80], "owasp_refs": rule.owasp_refs, "score": score})
+    results.sort(key=lambda x: x["score"], reverse=True)
+    return results[:limit]
