@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v64.0.0] - 2026-07-30
+
+### Added (R156-R157: MCP热重载+配置文件)
+
+#### R157: lint --config配置文件支持
+- lint_config.py: LintConfig+load_lint_config+merge_config_with_cli
+- YAML/JSON配置: severity_threshold/exclude_categories/include_categories/include_rules/exclude_rules/max_findings/fail_on/parallel/timeout_ms
+- CLI选项覆盖配置文件
+
+#### R156: MCP热重载(mcp_reload)
+- _tool_mcp_reload: importlib.reload+dispatch清空
+- 支持指定模块热重载(默认rules)
+
 ## [v63.0.0] - 2026-07-30
 
 ### Added (R154: Prompt治理与运营安全)

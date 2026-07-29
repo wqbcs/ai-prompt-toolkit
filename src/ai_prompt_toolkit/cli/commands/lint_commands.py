@@ -14,7 +14,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
-@click.option("--config", help="Lint配置YAML文件路径")
+@click.option("--config", "config_path", help="Lint配置YAML文件路径(新格式: severity_threshold/exclude_categories/include_categories等)")
 @click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
@@ -42,13 +42,22 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
-def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
+def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
          tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool, export_lcov_path: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
+    lint_cfg = None
+    if config_path:
+        from ai_prompt_toolkit.linter.lint_config import load_lint_config
+        lint_cfg = load_lint_config(config_path)
+        if lint_cfg.include_categories or lint_cfg.exclude_categories:
+            click.echo(f"配置: categories=include{lint_cfg.include_categories}/exclude{lint_cfg.exclude_categories}")
+        if lint_cfg.include_rules or lint_cfg.exclude_rules:
+            click.echo(f"配置: rules=include{lint_cfg.include_rules}/exclude{lint_cfg.exclude_rules}")
 
     templates = discover_templates_with_ignore(target, ignore_file) if ignore_file or Path(target).is_dir() else discover_templates(target)
     if not templates:
