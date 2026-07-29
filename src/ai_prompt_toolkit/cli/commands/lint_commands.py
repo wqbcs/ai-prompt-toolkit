@@ -34,15 +34,16 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--profile", "profile_mode", is_flag=True, help="性能分析: 显示每条规则执行耗时")
 @click.option("--owasp-report", "owasp_report", is_flag=True, help="OWASP映射覆盖率报告")
 @click.option("--rules-search", "rules_search", help="规则搜索: 按关键词搜索规则(如injection/privacy/LLM01)")
+@click.option("--ignore-file", "ignore_file", help="忽略文件路径(默认.promptignore)")
 def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None) -> None:
     """Prompt Linter：静态检查提示词质量"""
-    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
 
-    templates = discover_templates(target)
+    templates = discover_templates_with_ignore(target, ignore_file) if ignore_file or Path(target).is_dir() else discover_templates(target)
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)

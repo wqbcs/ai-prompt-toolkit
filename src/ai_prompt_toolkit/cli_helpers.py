@@ -54,6 +54,49 @@ def discover_templates(target: str | Path) -> list[Path]:
     raise ValidationError(f"目标不存在 — {p}", field="target")
 
 
+def load_promptignore(directory: Path) -> list[str]:
+    ignore_file = directory / ".promptignore"
+    if not ignore_file.exists():
+        return []
+    lines = ignore_file.read_text(encoding="utf-8").splitlines()
+    return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]
+
+
+def should_ignore(filepath: Path, base_dir: Path, patterns: list[str]) -> bool:
+    import fnmatch
+    try:
+        rel = filepath.relative_to(base_dir)
+        rel_str = str(rel).replace("\\", "/")
+    except ValueError:
+        return False
+    ignored = False
+    for pat in patterns:
+        if pat.startswith("!"):
+            if fnmatch.fnmatch(rel_str, pat[1:]):
+                ignored = False
+        else:
+            if fnmatch.fnmatch(rel_str, pat) or fnmatch.fnmatch(rel_str, pat.rstrip("/") + "/*"):
+                ignored = True
+    return ignored
+
+
+def discover_templates_with_ignore(target: str | Path, ignore_file: str | None = None) -> list[Path]:
+    templates = discover_templates(target)
+    base = Path(target) if not isinstance(target, Path) else target
+    if not base.is_dir():
+        return templates
+    patterns = []
+    if ignore_file:
+        ip = Path(ignore_file)
+        if ip.exists():
+            patterns = [l.strip() for l in ip.read_text(encoding="utf-8").splitlines() if l.strip() and not l.strip().startswith("#")]
+    if not patterns:
+        patterns = load_promptignore(base)
+    if not patterns:
+        return templates
+    return [t for t in templates if not should_ignore(t, base, patterns)]
+
+
 def auto_discover_targets(target: str | None = None) -> list[Path]:
     if target:
         return discover_templates(target)
