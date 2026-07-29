@@ -40,10 +40,11 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--baseline-save", "baseline_save", is_flag=True, help="基线保存: 保存当前lint结果为基线快照")
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
+@click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -256,6 +257,17 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, in
             click.echo(f"     修复: {s.remediation}")
             if s.action_steps:
                 click.echo(f"     步骤: {' → '.join(s.action_steps[:3])}")
+
+    if explain_mode:
+        from ai_prompt_toolkit.linter.explain import explain_results, format_explanation
+        all_findings_for_explain = []
+        for r in all_results:
+            all_findings_for_explain.extend(r.findings)
+        explanations = explain_results(all_findings_for_explain)
+        click.echo(f"\n── 详细解释 ({len(explanations)}条) ──")
+        for expl in explanations:
+            click.echo(format_explanation(expl))
+            click.echo()
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
