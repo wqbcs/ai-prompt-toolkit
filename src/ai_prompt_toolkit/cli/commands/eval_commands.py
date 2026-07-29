@@ -17,7 +17,7 @@ from ai_prompt_toolkit.cli_core import main
 @click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
 @click.option("--categories", help="指定类别(逗号分隔，如structure,security)")
 @click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
-@click.option("--format", "fmt", type=click.Choice(["json", "cli", "table", "yaml", "markdown"]), default="cli", help="输出格式")
+@click.option("--format", "fmt", type=click.Choice(["json", "cli", "table", "yaml", "markdown", "csv"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
@@ -128,6 +128,13 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
                 click.echo(f"| {s.dimension_id} | {s.name} | {s.category} | {s.score:.1f} | {s.weight:.1f} |")
             avg = sum(s.score for s in report.scores) / len(report.scores) if report.scores else 0
             click.echo(f"\n**均分**: {avg:.1f}/10\n")
+
+    elif fmt == "csv":
+        click.echo("template_id,dimension_id,name,category,score,weight")
+        for report in reports:
+            for s in report.scores:
+                name_escaped = s.name.replace('"', '""')
+                click.echo(f'{report.template_id},{s.dimension_id},"{name_escaped}",{s.category},{s.score:.1f},{s.weight:.1f}')
 
     else:
         total_score = 0.0
