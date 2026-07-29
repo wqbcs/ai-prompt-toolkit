@@ -36,10 +36,12 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--rules-search", "rules_search", help="规则搜索: 按关键词搜索规则(如injection/privacy/LLM01)")
 @click.option("--ignore-file", "ignore_file", help="忽略文件路径(默认.promptignore)")
 @click.option("--statistics", "statistics_mode", is_flag=True, help="规则命中率统计: 显示每条规则命中次数和占比")
+@click.option("--baseline", "baseline_path", help="基线管理: 指定基线文件路径(save=保存, compare=对比)")
+@click.option("--baseline-save", "baseline_save", is_flag=True, help="基线保存: 保存当前lint结果为基线快照")
 def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -196,6 +198,33 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, in
         click.echo(f"  {'─'*8} {'─'*5} {'─'*8} {'─'*30}")
         for rs in stats["rules"]:
             click.echo(f"  {rs['rule_id']:<8} {rs['hit_count']:>5} {rs['hit_rate']:>7.1f}% {rs['name']}")
+
+    if baseline_path:
+        from ai_prompt_toolkit.linter.baseline import save_baseline, load_baseline, compare_baseline
+        all_findings_for_baseline = []
+        for r in all_results:
+            for f in r.findings:
+                all_findings_for_baseline.append({"rule_id": f.rule_id, "description": f.description, "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity)})
+        if baseline_save:
+            save_baseline(all_findings_for_baseline, baseline_path, template_id=target, score=avg_score)
+            click.echo(f"\n基线已保存: {baseline_path} (findings={len(all_findings_for_baseline)}, score={avg_score:.1f})")
+        else:
+            bp = Path(baseline_path)
+            if bp.exists():
+                baseline = load_baseline(baseline_path)
+                diff = compare_baseline(all_findings_for_baseline, baseline)
+                click.echo(f"\n── 基线对比 ──")
+                click.echo(f"  基线: {baseline.total_findings} (score={baseline.score:.1f}) | 当前: {diff.current_total} | Δ={diff.delta:+d}")
+                if diff.new_findings:
+                    click.echo(f"  新增({len(diff.new_findings)}): {', '.join(f['rule_id'] for f in diff.new_findings[:10])}")
+                if diff.fixed_findings:
+                    click.echo(f"  修复({len(diff.fixed_findings)}): {', '.join(f['rule_id'] for f in diff.fixed_findings[:10])}")
+                if diff.regressions:
+                    click.echo(f"  回归({len(diff.regressions)}): {', '.join(f'{r[\"rule_id\"]}(+{r[\"delta\"]})' for r in diff.regressions)}")
+                status = "⚠️ 回归" if diff.is_regression else "✅ 改善" if diff.delta < 0 else "➡️ 不变"
+                click.echo(f"  状态: {status}")
+            else:
+                click.echo(f"\n基线文件不存在: {baseline_path} (使用--baseline-save先保存)")
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
