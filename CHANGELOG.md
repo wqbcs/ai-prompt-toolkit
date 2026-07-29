@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v59.0.0] - 2026-07-30
+
+### Added (R139-R142: .promptignore+statistics+ArkTS+baseline)
+
+#### R142: lint --baseline基线管理
+- baseline.py: BaselineSnapshot/BaselineDiff/save/load/compare
+- lint --baseline指定基线文件, --baseline-save保存基线快照
+- 对比检测: 新增/修复/回归分类+回归告警
+
+#### R141: P226-P230 ArkTS安全规则
+- P226: ArkTS动态类型滥用(@ts-ignore/any绕过类型安全)
+- P227: ArkUI状态管理风险(敏感@State未加密)
+- P228: 鸿蒙权限声明缺失(Ability缺ohos.permission)
+- P229: ArkTS跨组件通信风险(router/Emitter未校验)
+- P230: 鸿蒙沙箱隔离违规(越界路径/网络无域名)
+- 225→230条Lint规则, 166→171可自动修复
+
+#### R140: lint --statistics规则命中率统计
+- compute_rule_statistics: 命中次数+占比+按类别/严重度分组
+- lint --statistics: 显示规则命中率排行表
+
+#### R139: .promptignore忽略文件支持
+- load_promptignore/should_ignore/discover_templates_with_ignore
+- lint --ignore-file: 支持自定义忽略文件+!否定模式
+
 ## [v58.0.0] - 2026-07-30
 
 ### Added (R135-R137: Finding行号+eval-multi+Pipeline模板)
