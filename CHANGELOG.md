@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v58.0.0] - 2026-07-30
+
+### Added (R135-R137: Finding行号+eval-multi+Pipeline模板)
+
+#### R137: 华为云CodeArts Pipeline模板
+- .codearts/pipeline-lint.yml: lint+eval+security+probe+报告生成流水线
+
+#### R136: eval-multi多模板评估对比
+- eval-multi --targets: 并排表格对比+最优标记+均分对比
+
+#### R135: Finding行号定位
+- find_line()辅助函数 + lint CLI显示行号
+
 ## [v57.0.0] - 2026-07-30
 
 ### Added (R132-R133: csv+规则文档)
