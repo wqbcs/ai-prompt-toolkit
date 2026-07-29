@@ -2,6 +2,32 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v56.0.0] - 2026-07-30
+
+### Added (R124-R130: profile+owasp+search+supply_chain+dry-run)
+
+#### R130: lint --fix --dry-run 干运行修复预览
+- --dry-run: 预览修复内容但不实际修改文件
+
+#### R129: lint --rules-search 规则搜索引擎
+- search_rules() 中英文双语fuzzy评分 + OWASP/category过滤
+
+#### R128: P221-P225 供应链安全规则
+- P221: 模型来源验证 | P222: 依赖审计 | P223: 数据溯源 | P224: 版本锁定 | P225: 签名验证
+- 总规则220→225, AUTO_FIXABLE 161→166
+
+#### R127: OWASP映射100%覆盖
+- 44条未映射规则补全, 覆盖率80%→100%
+
+#### R126: 改进清单v3.0
+- 功能7+内容4+细节5+体验5+赛事4项改进清单文档
+
+#### R125: OWASP映射覆盖率报告
+- lint --owasp-report + generate_owasp_report()
+
+#### R124: lint --profile 性能分析
+- run_all_checks_profiled() + Top10慢规则 + 总耗时统计
+
 ## [v55.0.0] - 2026-07-28
 
 ### Added (R121-R122: eval markdown+MCP version_diff+多模态安全)
