@@ -2,6 +2,16 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v57.0.0] - 2026-07-30
+
+### Added (R132-R133: csv+规则文档)
+
+#### R133: 规则文档自动生成
+- docs/rules.md: 全部225条规则详细列表(类别/等级/OWASP/可修复)
+
+#### R132: eval --format csv
+- 标准CSV格式输出(header行+转义处理)
+
 ## [v56.0.0] - 2026-07-30
 
 ### Added (R124-R130: profile+owasp+search+supply_chain+dry-run)
