@@ -926,6 +926,16 @@ def _handle_tools_list(id_val: Any) -> str:
                 "required": ["template_id", "version_id_1", "version_id_2"],
             },
         },
+        {
+            "name": "mcp_reload",
+            "description": "MCP热重载: 重新加载指定模块(默认rules)并刷新dispatch表",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "module": {"type": "string", "description": "模块名(默认ai_prompt_toolkit.linter.rules)", "default": "ai_prompt_toolkit.linter.rules"},
+                },
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -1071,6 +1081,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "prompt_version_create": _tool_prompt_version_create,
             "prompt_version_list": _tool_prompt_version_list,
             "prompt_version_diff": _tool_prompt_version_diff,
+            "mcp_reload": _tool_mcp_reload,
         }
     return _TOOL_DISPATCH
 
@@ -2664,6 +2675,25 @@ def _tool_prompt_version_diff(args: dict[str, Any]) -> dict[str, Any]:
     if not diff_result:
         return {"error": f"版本不存在: {v1} 或 {v2}"}
     return {"template_id": template_id, "from": v1, "to": v2, "diff": diff_result}
+
+
+def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
+    global _TOOL_DISPATCH
+    import importlib
+    import sys
+    module_name = args.get("module", "ai_prompt_toolkit.linter.rules")
+    try:
+        if module_name in sys.modules:
+            mod = sys.modules[module_name]
+            importlib.reload(mod)
+        else:
+            importlib.import_module(module_name)
+        _TOOL_DISPATCH = None
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+        rule_count = len(get_all_rules())
+        return {"status": "reloaded", "module": module_name, "rule_count": rule_count}
+    except Exception as e:
+        return {"status": "error", "module": module_name, "error": str(e)}
 
 
 if __name__ == "__main__":
