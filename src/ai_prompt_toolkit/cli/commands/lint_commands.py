@@ -18,6 +18,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
               default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
+@click.option("--dry-run", is_flag=True, help="干运行: 预览修复内容但不实际修改文件(需配合--fix)")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
@@ -33,7 +34,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--profile", "profile_mode", is_flag=True, help="性能分析: 显示每条规则执行耗时")
 @click.option("--owasp-report", "owasp_report", is_flag=True, help="OWASP映射覆盖率报告")
 @click.option("--rules-search", "rules_search", help="规则搜索: 按关键词搜索规则(如injection/privacy/LLM01)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool,
+def lint(target: str, config: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
          tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None) -> None:
@@ -93,8 +94,12 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(tpl_path.name, text, fix=fix or interactive, template_type=template_type)
-                if interactive and result.fixes_applied:
+                result = linter.lint(tpl_path.name, text, fix=fix or interactive or dry_run, template_type=template_type)
+                if dry_run and result.auto_fixed:
+                    click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
+                    for ff in result.fixed_findings:
+                        click.echo(f"    预览: {ff.rule_id}: {ff.description}")
+                elif interactive and result.auto_fixed:
                     for fix_info in result.fixes_applied:
                         click.echo(f"  修复: {fix_info}")
                         if not click.confirm("  应用此修复?", default=True):
@@ -108,7 +113,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         for tpl_path in templates:
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
-            result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
+            result = linter.lint(tpl_path.name, text, fix=fix or dry_run, template_type=template_type)
+            if dry_run and result.auto_fixed:
+                click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
             all_results.append(result)
             total_findings += result.failed_count
             total_score += result.score
