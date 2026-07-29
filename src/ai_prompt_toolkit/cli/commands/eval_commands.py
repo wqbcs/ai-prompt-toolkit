@@ -12,6 +12,54 @@ import click
 from ai_prompt_toolkit.cli_core import main
 
 
+@main.command("eval-multi")
+@click.option("--targets", "-t", required=True, help="对比目标(逗号分隔多个文件,如 a.md,b.md,c.md)")
+@click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度")
+def eval_multi(targets: str, quick: bool) -> None:
+    """评估对比: 并排比较多个Prompt模板的评估结果"""
+    from ai_prompt_toolkit.evaluator import evaluate_template
+    target_files = [t.strip() for t in targets.split(",") if t.strip()]
+    if len(target_files) < 2:
+        click.echo("需要至少2个目标文件进行对比")
+        sys.exit(1)
+    results = []
+    for tf in target_files:
+        p = Path(tf)
+        if not p.exists():
+            click.echo(f"文件不存在: {tf}")
+            continue
+        text = p.read_text(encoding="utf-8")
+        report = evaluate_template(p.name, text)
+        avg = sum(s.score for s in report.scores) / len(report.scores) if report.scores else 0
+        results.append({"name": p.name, "avg": avg, "scores": report.scores, "total": len(report.scores)})
+    if len(results) < 2:
+        click.echo("有效文件不足2个, 无法对比")
+        sys.exit(1)
+    click.echo("\n── 评估对比 ──\n")
+    names = [r["name"] for r in results]
+    header = "| 维度 |" + "|".join(f" {n} |" for n in names)
+    click.echo(header)
+    sep = "|------|" + "|".join("------|" for _ in names)
+    click.echo(sep)
+    dim_ids = []
+    if results:
+        dim_ids = [s.dimension_id for s in results[0]["scores"][:20]]
+    for i, dim_id in enumerate(dim_ids):
+        row = f"| {dim_id} |"
+        for r in results:
+            if i < len(r["scores"]):
+                row += f" {r['scores'][i].score:.1f} |"
+            else:
+                row += " - |"
+        click.echo(row)
+    avg_row = "| **均分** |"
+    for r in results:
+        avg_row += f" **{r['avg']:.1f}** |"
+    click.echo(avg_row)
+    best = max(results, key=lambda x: x["avg"])
+    click.echo(f"\n最优: {best['name']} (均分 {best['avg']:.1f}/10)")
+
+
 @main.command()
 @click.option("--target", "-t", required=True, help="评估目标(文件或目录)")
 @click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
