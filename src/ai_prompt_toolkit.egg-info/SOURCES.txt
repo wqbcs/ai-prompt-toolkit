@@ -64,6 +64,7 @@ src/ai_prompt_toolkit/template_recommender.py
 src/ai_prompt_toolkit/test_generator.py
 src/ai_prompt_toolkit/textgrad.py
 src/ai_prompt_toolkit/tracing.py
+src/ai_prompt_toolkit/tui_browser.py
 src/ai_prompt_toolkit/types.py
 src/ai_prompt_toolkit/ux_enhanced.py
 src/ai_prompt_toolkit/version_store.py
@@ -135,6 +136,7 @@ src/ai_prompt_toolkit/compiler/types.py
 src/ai_prompt_toolkit/frontmatter/__init__.py
 src/ai_prompt_toolkit/huawei_cloud/__init__.py
 src/ai_prompt_toolkit/huawei_cloud/fg_template.py
+src/ai_prompt_toolkit/huawei_cloud/repo_check.py
 src/ai_prompt_toolkit/i18n/__init__.py
 src/ai_prompt_toolkit/i18n/fallback.py
 src/ai_prompt_toolkit/i18n/glossary.py
@@ -185,6 +187,10 @@ src/ai_prompt_toolkit/linter/rules_p176_p180.py
 src/ai_prompt_toolkit/linter/rules_p181_p185.py
 src/ai_prompt_toolkit/linter/rules_p186_p190.py
 src/ai_prompt_toolkit/linter/rules_p191_p195.py
+src/ai_prompt_toolkit/linter/rules_p196_p200.py
+src/ai_prompt_toolkit/linter/rules_p201_p205.py
+src/ai_prompt_toolkit/linter/rules_p206_p210.py
+src/ai_prompt_toolkit/linter/rules_p211_p215.py
 src/ai_prompt_toolkit/linter/token_analyzer.py
 src/ai_prompt_toolkit/market/__init__.py
 src/ai_prompt_toolkit/market/api.py
@@ -286,6 +292,17 @@ tests/test_r103.py
 tests/test_r104.py
 tests/test_r105.py
 tests/test_r106.py
+tests/test_r107.py
+tests/test_r108.py
+tests/test_r109.py
+tests/test_r111.py
+tests/test_r112.py
+tests/test_r114.py
+tests/test_r115.py
+tests/test_r117.py
+tests/test_r118.py
+tests/test_r119.py
+tests/test_r121.py
 tests/test_r28.py
 tests/test_r29.py
 tests/test_r31.py
