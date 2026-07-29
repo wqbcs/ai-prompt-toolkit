@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v60.0.0] - 2026-07-30
+
+### Added (R144-R145: 修复建议+联邦学习安全)
+
+#### R145: P231-P235联邦学习安全规则
+- P231: 梯度泄露风险(梯度反转攻击还原训练数据)
+- P232: 差分隐私缺失(联邦聚合未添加DP噪声)
+- P233: 模型投毒防护缺失(无Krum/鲁棒聚合)
+- P234: 安全聚合协议缺失(梯度未加密)
+- P235: 客户端身份验证缺失(Sybil伪装攻击)
+- 230→235条Lint规则, 171→176可自动修复
+
+#### R144: lint --suggest修复建议智能推荐
+- suggest.py: generate_suggestions+Suggestion+优先级排序+影响评估
+- lint --suggest: 按严重度/频率排序+操作步骤+中英文支持
+
 ## [v59.0.0] - 2026-07-30
 
 ### Added (R139-R142: .promptignore+statistics+ArkTS+baseline)
