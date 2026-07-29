@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v61.0.0] - 2026-07-30
+
+### Added (R147-R148: JSON diff+推理引擎安全)
+
+#### R148: P236-P240 LLM推理引擎安全规则
+- P236: 模型量化安全(量化后对抗鲁棒性降级)
+- P237: 推理侧信道风险(时序/功耗/缓存泄露)
+- P238: KV缓存污染(注入/越界读写)
+- P239: 推理资源耗尽(无速率限制DoS)
+- P240: 模型权重完整性(加载未校验替换攻击)
+- 235→240条Lint规则, 176→181可自动修复
+
+#### R147: lint --json-diff结构化对比输出
+- structured_diff.py: generate_structured_diff+format_diff_json
+- lint --json-diff: JSON格式diff(verdict/摘要/规则级统计), CI/CD集成
+
 ## [v60.0.0] - 2026-07-30
 
 ### Added (R144-R145: 修复建议+联邦学习安全)
