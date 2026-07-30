@@ -2,6 +2,26 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.0.0] - 2026-07-30
+
+### Added (R161-R163: 测试套件+配置发现+成本追踪)
+
+#### R163: 成本追踪维度(借鉴Langfuse)
+- cost_tracker.py: CostRecord+CostTracker+多模型定价(GPT/Claude/鹏鹏/DeepSeek/Qwen)
+- Token使用+成本USD+延迟追踪+按模型分组统计
+
+#### R162: 配置文件自动发现+退出码语义化
+- 自动发现.lint-rc.yml/.prompt-toolkit.yml
+- 退出码: 0=PASS, 1=WARN, 2=FAIL, 3=ERROR
+
+#### R161: 声明式Lint+Eval测试套件(借鉴promptfoo)
+- test_suite.py: TestSuite/TestGroup/Assertion+YAML/JSON配置
+- MCP工具test_suite_run
+
+## [v66.0.0] - 2026-07-30
+
+### Added (R159-R160: 包幻觉+PII增强+Lint过滤)
+
 ## [v65.0.0] - 2026-07-30
 
 ### Added (R159: 包幻觉+PII增强探测)
