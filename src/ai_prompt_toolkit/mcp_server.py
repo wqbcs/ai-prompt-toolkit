@@ -936,6 +936,18 @@ def _handle_tools_list(id_val: Any) -> str:
                 },
             },
         },
+        {
+            "name": "test_suite_run",
+            "description": "执行声明式测试套件(YAML配置驱动的Lint+Eval测试)",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "suite_path": {"type": "string", "description": "测试套件YAML文件路径"},
+                    "base_dir": {"type": "string", "description": "基础目录(默认当前目录)", "default": "."},
+                },
+                "required": ["suite_path"],
+            },
+        },
     ]
     return _make_response(id_val, {"tools": tools})
 
@@ -1082,6 +1094,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "prompt_version_list": _tool_prompt_version_list,
             "prompt_version_diff": _tool_prompt_version_diff,
             "mcp_reload": _tool_mcp_reload,
+            "test_suite_run": _tool_test_suite_run,
         }
     return _TOOL_DISPATCH
 
@@ -2694,6 +2707,20 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
         return {"status": "reloaded", "module": module_name, "rule_count": rule_count}
     except Exception as e:
         return {"status": "error", "module": module_name, "error": str(e)}
+
+
+def _tool_test_suite_run(args: dict[str, Any]) -> dict[str, Any]:
+    from ai_prompt_toolkit.linter.test_suite import load_test_suite, run_test_suite
+    suite_path = args.get("suite_path", "")
+    base_dir = args.get("base_dir", ".")
+    if not suite_path:
+        return {"error": "suite_path is required"}
+    try:
+        suite = load_test_suite(suite_path)
+        result = run_test_suite(suite, base_dir=base_dir)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
 
 
 if __name__ == "__main__":
