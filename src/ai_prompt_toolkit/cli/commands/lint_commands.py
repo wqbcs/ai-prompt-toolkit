@@ -111,7 +111,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(tpl_path.name, text, fix=fix or interactive or dry_run, template_type=template_type)
+                result = linter.lint(tpl_path.name, text, fix=fix or interactive or dry_run, template_type=template_type, lint_config=lint_cfg)
                 if dry_run and result.auto_fixed:
                     click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
                     for ff in result.fixed_findings:
@@ -130,7 +130,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         for tpl_path in templates:
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
-            result = linter.lint(tpl_path.name, text, fix=fix or dry_run, template_type=template_type)
+            result = linter.lint(tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg)
             if dry_run and result.auto_fixed:
                 click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
             all_results.append(result)

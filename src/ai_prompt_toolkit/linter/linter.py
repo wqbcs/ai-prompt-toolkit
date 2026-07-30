@@ -88,12 +88,30 @@ class PromptLinter:
     _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020", "P025", "P028", "P030"})
 
     def lint(self, template_id: str, text: str, *, fix: bool = False,
-            template_type: str = "prompt") -> LintResult:
+            template_type: str = "prompt", lint_config: Any = None) -> LintResult:
         start = time.perf_counter()
 
         rule_ids = self._rule_ids
         if template_type == "knowledge":
             rule_ids = rule_ids - self._KNOWLEDGE_EXCLUDED_RULES
+
+        if lint_config:
+            if lint_config.include_categories or lint_config.exclude_categories:
+                all_rules = get_all_rules()
+                filtered = set()
+                for r in all_rules:
+                    if r.rule_id not in rule_ids:
+                        continue
+                    if lint_config.include_categories and r.category not in lint_config.include_categories:
+                        continue
+                    if lint_config.exclude_categories and r.category in lint_config.exclude_categories:
+                        continue
+                    filtered.add(r.rule_id)
+                rule_ids = filtered
+            if lint_config.include_rules:
+                rule_ids = rule_ids & set(lint_config.include_rules)
+            if lint_config.exclude_rules:
+                rule_ids = rule_ids - set(lint_config.exclude_rules)
 
         all_findings = run_all_checks(text)
         findings = [f for f in all_findings if f.rule_id in rule_ids]
