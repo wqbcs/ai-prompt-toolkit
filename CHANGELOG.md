@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v65.0.0] - 2026-07-30
+
+### Added (R159: 包幻觉+PII增强探测)
+
+#### R159: P251-P255 包幻觉+PII增强探测
+- P251: 包幻觉检测(模型推荐不存在的包/库/模块)
+- P252: 生物特征PII泄露(指纹/面部/虹膜/声纹) - CRITICAL
+- P253: 金融PII泄露(银行卡/信用卡/证券) - CRITICAL
+- P254: 医疗PII泄露(诊断/处方/病历/基因) - CRITICAL
+- P255: 未成年人信息泄露(年龄<18/学籍/监护人) - CRITICAL
+- 借鉴garak packagehallucination+ProPILE
+- 250→255条规则, 191→196可自动修复
+
 ## [v64.0.0] - 2026-07-30
 
 ### Added (R156-R157: MCP热重载+配置文件)
