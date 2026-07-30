@@ -58,6 +58,13 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             click.echo(f"配置: categories=include{lint_cfg.include_categories}/exclude{lint_cfg.exclude_categories}")
         if lint_cfg.include_rules or lint_cfg.exclude_rules:
             click.echo(f"配置: rules=include{lint_cfg.include_rules}/exclude{lint_cfg.exclude_rules}")
+    elif not config_path:
+        for candidate in [".lint-rc.yml", ".lint-rc.yaml", ".prompt-toolkit.yml", ".prompt-toolkit.yaml"]:
+            if Path(candidate).exists():
+                from ai_prompt_toolkit.linter.lint_config import load_lint_config
+                lint_cfg = load_lint_config(candidate)
+                click.echo(f"自动发现配置: {candidate}")
+                break
 
     templates = discover_templates_with_ignore(target, ignore_file) if ignore_file or Path(target).is_dir() else discover_templates(target)
     if not templates:
