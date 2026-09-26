@@ -266,8 +266,14 @@ def check_p034(text: str) -> Finding | None:
 
 def check_p035(text: str) -> Finding | None:
     rule = _RULE_MAP["P035"]
+    # R180: 需RAG检索语境证据 — "订单查询"等业务查询不构成RAG面
     has_retrieval = bool(
-        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
+        re.search(
+            r"(?:检索|RAG|知识库|knowledge\s+base|retriev|向量库|vector.{0,6}store|文档库|"
+            r"(?:search|query).{0,10}(?:engine|index))",
+            text,
+            re.IGNORECASE,
+        )
     )
     if not has_retrieval:
         return None

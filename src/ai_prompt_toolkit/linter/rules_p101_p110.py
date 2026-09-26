@@ -36,7 +36,8 @@ _RULES_P101_P110: list[LintRule] = [
         "P102",
         "逻辑矛盾检测",
         "quality",
-        Severity.HIGH,
+        # R180: 伪语义检测(正则词对)精度天花板低, 与P016/P023同属MEDIUM advisory
+        Severity.MEDIUM,
         "Prompt中存在自相矛盾的指令，可能导致模型行为混乱",
         "统一矛盾指令，确保所有要求方向一致",
         description_en="Contradictory instructions detected in Prompt, may confuse model behavior",
@@ -200,7 +201,7 @@ def check_p101(text: str) -> Finding | None:
 
 _CONTRADICTION_PATTERNS = [
     (re.compile(r"必须.*?禁止|禁止.*?必须", re.IGNORECASE), "必须/禁止矛盾"),
-    (re.compile(r"不要.*?请|请.*?不要", re.IGNORECASE), "请/不要矛盾"),
+    # R180: 移除"请/不要矛盾" — "请做X, 不要Y"是正常指令形态, 此pattern大量误报
     (re.compile(r"always.*?never|never.*?always", re.IGNORECASE), "always/never矛盾"),
     (re.compile(r"必须.{0,20}(?:不要|禁止|不能)|不要.{0,20}必须", re.IGNORECASE), "必须/不要矛盾"),
 ]

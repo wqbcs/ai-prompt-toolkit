@@ -8,10 +8,12 @@ from collections.abc import Callable
 from ai_prompt_toolkit.types import Finding, Severity
 
 _P021_PATTERNS = [
-    re.compile(r"[A-Za-z0-9+/]{40,}={0,2}"),
+    # R180: 长串须含数字(真编码串数字频率高; 驼峰方法名列表无数字误报)
+    re.compile(r"(?<![A-Za-z0-9+/])(?=[A-Za-z0-9+/]*[0-9])[A-Za-z0-9+/]{40,}={0,2}"),
     re.compile(r"\\u[0-9a-fA-F]{4}"),
     re.compile(r"\\x[0-9a-fA-F]{2}"),
-    re.compile(r"(?:decode|atob|fromCharCode|unhex)", re.IGNORECASE),
+    # R180: API名精确大小写(atob/fromCharCode), 排除大写开头的普通英文词"Decode"
+    re.compile(r"(?:atob|fromCharCode|unhex)|\bdecode\b", re.IGNORECASE),
 ]
 
 _P022_PATTERNS = [
@@ -127,7 +129,11 @@ def check_p023(text: str) -> Finding | None:
     if not positives or not negatives:
         return None
     conflicts = []
+    _NEG_WORDS = re.compile(r"(?:不得|不要|禁止|不能|避免|切勿|no|not|never)", re.IGNORECASE)
     for p in positives:
+        # R180: positive短语本身含否定词(如"必须基于事实…不得编造")是防御声明, 非冲突
+        if _NEG_WORDS.search(p):
+            continue
         p_norm = re.sub(r"\s+", " ", p.lower().strip())
         for n in negatives:
             n_norm = re.sub(r"\s+", " ", n.lower().strip())

@@ -293,7 +293,8 @@ _ALL_RULES: list[LintRule] = [
         "P023",
         "指令冲突",
         "quality",
-        Severity.HIGH,
+        # R180: 伪语义检测(正则词对)精度天花板低, 与P016歧义同属MEDIUM advisory
+        Severity.MEDIUM,
         "Prompt 中存在正向与负向指令指向同一动作对象",
         "审查并统一矛盾的指令，确保逻辑一致",
         description_en="Prompt has positive and negative instructions targeting the same action",
@@ -660,7 +661,9 @@ def check_p015(text: str) -> Finding | None:
 
 def check_p016(text: str) -> Finding | None:
     rule = _RULE_MAP["P016"]
-    matches = _AMBIGUOUS_WORDS.findall(text)
+    # R180: 引号内内容是被引用/禁止的词(如'避免"可能"等模糊词汇'), 不是使用
+    quoted = re.compile(r"[\"'\u201c\u201d\u300c\u300d][^\"'\u201c\u201d\u300c\u300d]*[\"'\u201c\u201d\u300c\u300d]")
+    matches = _AMBIGUOUS_WORDS.findall(quoted.sub('""', text))
     if not matches:
         return None
     return Finding(

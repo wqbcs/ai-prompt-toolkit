@@ -104,7 +104,8 @@ _JAILBREAK_CTX = re.compile(
 )
 
 _JAILBREAK_DECL = re.compile(
-    r"(?:越狱.*防护|jailbreak.*protect|固化|anchor|锚定|锁定|lock|不可.*覆盖|cannot.*override|不可.*修改|immutable|拒绝.*策略|deny.*policy|禁止.*列表|deny.*list|角色.*固定|role.*fix|身份.*不可变|identity.*immutable)",
+    # R180: 防御性禁止声明("不得建议绕过/不得提供攻击方法")本身即越狱防护
+    r"(?:越狱.*防护|jailbreak.*protect|固化|anchor|锚定|锁定|lock|不可.*覆盖|cannot.*override|不可.*修改|immutable|拒绝.*策略|deny.*policy|禁止.*列表|deny.*list|角色.*固定|role.*fix|身份.*不可变|identity.*immutable|不得.{0,6}(?:建议|提供|帮助|协助).{0,12}(?:绕过|攻击|越狱|漏洞))",
     re.IGNORECASE,
 )
 

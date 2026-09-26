@@ -3,23 +3,16 @@
     "high_findings": []
   },
   "customer-service.md": {
-    "high_findings": [
-      "P035:high"
-    ]
+    "high_findings": []
   },
   "deepseek-r1-reasoning.md": {
-    "high_findings": [
-      "P016:high"
-    ]
+    "high_findings": []
   },
   "edu-course-designer.md": {
     "high_findings": []
   },
   "financial-risk-analyzer.md": {
-    "high_findings": [
-      "P023:high",
-      "P102:high"
-    ]
+    "high_findings": []
   },
   "general-assistant.md": {
     "high_findings": []
@@ -34,26 +27,16 @@
     "high_findings": []
   },
   "harmonyos-distributed.md": {
-    "high_findings": [
-      "P023:high",
-      "P102:high"
-    ]
+    "high_findings": []
   },
   "harmonyos-performance.md": {
-    "high_findings": [
-      "P016:high",
-      "P163:critical"
-    ]
+    "high_findings": []
   },
   "harmonyos-security-audit.md": {
-    "high_findings": [
-      "P163:critical"
-    ]
+    "high_findings": []
   },
   "harmonyos-stage-model.md": {
-    "high_findings": [
-      "P021:high"
-    ]
+    "high_findings": []
   },
   "huawei-cloud-assistant.md": {
     "high_findings": []
@@ -62,15 +45,10 @@
     "high_findings": []
   },
   "huawei-modelarts-deploy.md": {
-    "high_findings": [
-      "P023:high",
-      "P102:high"
-    ]
+    "high_findings": []
   },
   "mcp-server-dev.md": {
-    "high_findings": [
-      "P021:high"
-    ]
+    "high_findings": []
   },
   "mfg-quality-inspector.md": {
     "high_findings": []
@@ -79,15 +57,10 @@
     "high_findings": []
   },
   "pangu-multimodal.md": {
-    "high_findings": [
-      "P023:high"
-    ]
+    "high_findings": []
   },
   "pangu-nlp-assistant.md": {
-    "high_findings": [
-      "P023:high",
-      "P102:high"
-    ]
+    "high_findings": []
   },
   "pangu-prediction.md": {
     "high_findings": []
