@@ -1419,6 +1419,15 @@ def get_all_rules() -> list[LintRule]:
     return list(_RULE_MAP.values())
 
 
+_FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n?", re.DOTALL)
+
+
+def strip_frontmatter(text: str) -> str:
+    """剥离YAML frontmatter — 资产元数据(model_compatibility/version等)是声明而非正文,
+    模型/部署类语境规则的正文匹配应基于剥离后的文本(R178)。"""
+    return _FRONTMATTER_RE.sub("", text, count=1)
+
+
 def get_rule(rule_id: str) -> LintRule | None:
     return _RULE_MAP.get(rule_id)
 

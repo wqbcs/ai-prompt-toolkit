@@ -1,0 +1,369 @@
+{
+  "code-reviewer.md": {
+    "high_findings": [
+      "P065:high",
+      "P131:high",
+      "P132:high",
+      "P138:high",
+      "P139:high",
+      "P159:high",
+      "P161:critical",
+      "P177:critical",
+      "P216:high",
+      "P241:high",
+      "P255:critical"
+    ],
+    "score": 83.9
+  },
+  "customer-service.md": {
+    "high_findings": [
+      "P035:high",
+      "P161:critical",
+      "P241:high",
+      "P253:critical"
+    ],
+    "score": 87.5
+  },
+  "deepseek-r1-reasoning.md": {
+    "high_findings": [
+      "P016:high",
+      "P159:high",
+      "P161:critical",
+      "P221:high",
+      "P241:high",
+      "P249:high"
+    ],
+    "score": 87.5
+  },
+  "edu-course-designer.md": {
+    "high_findings": [
+      "P065:high",
+      "P079:high",
+      "P114:high",
+      "P161:critical",
+      "P231:high",
+      "P241:high"
+    ],
+    "score": 85.9
+  },
+  "financial-risk-analyzer.md": {
+    "high_findings": [
+      "P023:high",
+      "P102:high",
+      "P131:high",
+      "P138:high",
+      "P139:high",
+      "P162:high",
+      "P194:high",
+      "P216:high"
+    ],
+    "score": 86.7
+  },
+  "general-assistant.md": {
+    "high_findings": [
+      "P100:high",
+      "P114:high",
+      "P162:high",
+      "P180:critical",
+      "P202:high",
+      "P205:high",
+      "P241:high"
+    ],
+    "score": 87.8
+  },
+  "gov-policy-advisor.md": {
+    "high_findings": [
+      "P065:high",
+      "P114:high",
+      "P131:high",
+      "P138:high",
+      "P139:high",
+      "P161:critical",
+      "P162:high",
+      "P181:high",
+      "P207:high",
+      "P209:high",
+      "P216:high",
+      "P241:high",
+      "P248:high"
+    ],
+    "score": 82.7
+  },
+  "harmonyos-arkts-codegen.md": {
+    "high_findings": [
+      "P022:critical",
+      "P065:high",
+      "P089:high",
+      "P094:high",
+      "P121:high",
+      "P124:high",
+      "P161:critical",
+      "P186:high",
+      "P211:high",
+      "P224:high"
+    ],
+    "score": 81.6
+  },
+  "harmonyos-dev.md": {
+    "high_findings": [
+      "P065:high",
+      "P089:high",
+      "P094:high",
+      "P122:high",
+      "P124:high",
+      "P146:high",
+      "P161:critical",
+      "P177:critical",
+      "P186:high",
+      "P224:high",
+      "P248:high"
+    ],
+    "score": 81.6
+  },
+  "harmonyos-distributed.md": {
+    "high_findings": [
+      "P023:high",
+      "P102:high",
+      "P121:high",
+      "P122:high",
+      "P124:high",
+      "P127:high",
+      "P146:high",
+      "P162:high",
+      "P177:critical",
+      "P205:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 83.1
+  },
+  "harmonyos-performance.md": {
+    "high_findings": [
+      "P016:high",
+      "P039:high",
+      "P087:high",
+      "P089:high",
+      "P094:high",
+      "P162:high",
+      "P163:critical",
+      "P172:high",
+      "P177:critical",
+      "P180:critical",
+      "P186:high",
+      "P202:high",
+      "P205:high",
+      "P237:high"
+    ],
+    "score": 80.4
+  },
+  "harmonyos-security-audit.md": {
+    "high_findings": [
+      "P087:high",
+      "P121:high",
+      "P124:high",
+      "P162:high",
+      "P163:critical",
+      "P177:critical",
+      "P202:high",
+      "P205:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 86.3
+  },
+  "harmonyos-stage-model.md": {
+    "high_findings": [
+      "P021:high",
+      "P089:high",
+      "P094:high",
+      "P124:high",
+      "P162:high",
+      "P177:critical",
+      "P186:high",
+      "P202:high",
+      "P205:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 82.4
+  },
+  "huawei-cloud-assistant.md": {
+    "high_findings": [
+      "P065:high",
+      "P100:high",
+      "P161:critical",
+      "P162:high",
+      "P177:critical",
+      "P241:high",
+      "P248:high"
+    ],
+    "score": 85.5
+  },
+  "huawei-cloud-deploy.md": {
+    "high_findings": [
+      "P065:high",
+      "P100:high",
+      "P131:high",
+      "P132:high",
+      "P138:high",
+      "P139:high",
+      "P161:critical",
+      "P162:high",
+      "P177:critical",
+      "P216:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 83.5
+  },
+  "huawei-modelarts-deploy.md": {
+    "high_findings": [
+      "P022:critical",
+      "P023:high",
+      "P100:high",
+      "P102:high",
+      "P162:high",
+      "P197:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 86.7
+  },
+  "mcp-server-dev.md": {
+    "high_findings": [
+      "P021:high",
+      "P114:high",
+      "P177:critical",
+      "P194:high",
+      "P201:high",
+      "P202:high",
+      "P205:high",
+      "P239:high"
+    ],
+    "score": 86.7
+  },
+  "mfg-quality-inspector.md": {
+    "high_findings": [
+      "P065:high",
+      "P161:critical",
+      "P177:critical",
+      "P181:high",
+      "P201:high",
+      "P202:high",
+      "P205:high",
+      "P221:high",
+      "P241:high",
+      "P255:critical"
+    ],
+    "score": 82.7
+  },
+  "pangu-cv.md": {
+    "high_findings": [
+      "P039:high",
+      "P100:high",
+      "P131:high",
+      "P132:high",
+      "P138:high",
+      "P139:high",
+      "P162:high",
+      "P180:critical",
+      "P196:high",
+      "P197:high",
+      "P205:high",
+      "P216:high",
+      "P224:high"
+    ],
+    "score": 83.9
+  },
+  "pangu-multimodal.md": {
+    "high_findings": [
+      "P023:high",
+      "P039:high",
+      "P100:high",
+      "P114:high",
+      "P131:high",
+      "P132:high",
+      "P133:high",
+      "P138:high",
+      "P139:high",
+      "P180:critical",
+      "P196:high",
+      "P197:high",
+      "P216:high",
+      "P218:high",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 84.3
+  },
+  "pangu-nlp-assistant.md": {
+    "high_findings": [
+      "P023:high",
+      "P102:high",
+      "P180:critical",
+      "P241:high"
+    ],
+    "score": 89.4
+  },
+  "pangu-prediction.md": {
+    "high_findings": [
+      "P100:high",
+      "P162:high",
+      "P180:critical",
+      "P196:high",
+      "P197:high",
+      "P202:high",
+      "P205:high",
+      "P224:high",
+      "P237:high",
+      "P241:high"
+    ],
+    "score": 85.1
+  },
+  "pangu-scientific.md": {
+    "high_findings": [
+      "P100:high",
+      "P180:critical",
+      "P224:high",
+      "P241:high"
+    ],
+    "score": 88.2
+  },
+  "rag-assistant.md": {
+    "high_findings": [
+      "P100:high",
+      "P114:high",
+      "P180:critical",
+      "P202:high",
+      "P205:high",
+      "P206:high",
+      "P207:high"
+    ],
+    "score": 87.8
+  },
+  "security-auditor.md": {
+    "high_findings": [
+      "P159:high",
+      "P161:critical",
+      "P241:high"
+    ],
+    "score": 85.1
+  },
+  "translator-pro.md": {
+    "high_findings": [
+      "P131:high",
+      "P132:high",
+      "P138:high",
+      "P139:high",
+      "P159:high",
+      "P161:critical",
+      "P194:high",
+      "P206:high",
+      "P207:high",
+      "P209:high",
+      "P216:high",
+      "P241:high"
+    ],
+    "score": 85.9
+  }
+}

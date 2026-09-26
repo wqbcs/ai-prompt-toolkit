@@ -121,6 +121,9 @@ _MODEL_NO_PIN_PATTERN = re.compile(
 
 def check_p221(text: str) -> list[Finding]:
     findings = []
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R178
     if _MODEL_PATTERN.search(text) and not _MODEL_VERIFY_PATTERN.search(text):
         findings.append(Finding("P221", Severity.HIGH, "LLM模型来源未验证(缺model card/发布者签名/社区评分)", 1, 1))
     return findings
@@ -142,6 +145,9 @@ def check_p223(text: str) -> list[Finding]:
 
 def check_p224(text: str) -> list[Finding]:
     findings = []
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R178
     if _MODEL_NO_PIN_PATTERN.search(text) and not _VERSION_PIN_PATTERN.search(text):
         findings.append(Finding("P224", Severity.HIGH, "模型版本未锁定(使用latest或未固定具体版本)", 1, 1))
     elif _VERSION_PATTERN.search(text) and not _VERSION_PIN_PATTERN.search(text):
@@ -151,6 +157,9 @@ def check_p224(text: str) -> list[Finding]:
 
 def check_p225(text: str) -> list[Finding]:
     findings = []
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R178
     if _MODEL_PATTERN.search(text) and not _SIGN_PATTERN.search(text):
         findings.append(Finding("P225", Severity.MEDIUM, "模型/配置缺少签名和校验和验证", 1, 1))
     return findings

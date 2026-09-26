@@ -207,6 +207,9 @@ _SAFETY_DECL_PATTERN = re.compile(
 
 def check_p100(text: str) -> Finding | None:
     rule = _RULE_MAP["P100"]
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R178: frontmatter的model_compatibility是元数据非部署事实
     if not _PANGU_CTX.search(text):
         return None
     if not _SAFETY_PATTERN.search(text):

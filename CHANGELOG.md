@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.12.0] - 2026-09-26
+
+### Fixed (R178: 内置模板自洽专项 — golden快照守护)
+
+#### 误报修复(规则语境再校准)
+- P100/P221/P224/P225: 模型/部署语境规则剥离YAML frontmatter —
+  model_compatibility元数据是资产声明而非部署事实(修复30+误报)
+- P180(CRITICAL): 链式编排需"步骤间数据传递"证据 — 裸"步骤/流程/链式思考"
+  是普通工作流描述, 不再触发链式注入CRITICAL
+- rules.py新增strip_frontmatter共享helper(单一实现)
+
+#### 自洽守护机制(golden快照)
+- tests/fixtures/template_high_baseline.json: 26个模板的237条HIGH显式记账
+- 守护测试: 快照外新增HIGH即红(新误报必须先审查); 债务只允许收缩;
+  修复后重新生成快照固化成果 — 模板自洽债务渐进消化(R179+)
+- baseline机制dogfooding: 用项目自身的记账思想守护自身资产
+
 ## [v67.11.0] - 2026-09-26
 
 ### Fixed (R177: 死代码手术3248行 + 功能回归修复 + coverage达标73%)

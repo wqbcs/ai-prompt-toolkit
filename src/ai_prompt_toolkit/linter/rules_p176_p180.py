@@ -164,8 +164,14 @@ def check_p179(text: str) -> list[Finding]:
 
 def check_p180(text: str) -> list[Finding]:
     findings = []
+    # R178收紧: 需"步骤间数据传递"的链式编排证据 — 裸"步骤/流程/链式思考"是普通工作流描述
     has_chain = _CHAIN_REF.search(text) or bool(
-        re.search(r"(?:步骤|step|阶段|phase|流程|pipeline|链式|chain)", text, re.IGNORECASE)
+        re.search(
+            r"(?:上一步|前一步|步骤.{0,8}输出|输出.{0,8}(?:作为|传入|交给| feeding)|previous.{0,6}step|step.{0,6}output"
+            r"|串联调用|级联调用|链式Prompt|多步骤.{0,8}(?:执行|调用)|中间结果.{0,8}(?:传递|输入))",
+            text,
+            re.IGNORECASE,
+        )
     )
     if has_chain:
         has_sanitize = bool(re.search(r"(?:清洗|sanitize|消毒|clean|过滤|filter|检查|check)", text, re.IGNORECASE))
