@@ -17,6 +17,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+from ai_prompt_toolkit.pricing import get_catalog
 from ai_prompt_toolkit.types import Finding, Severity
 
 _TOKEN_RATIOS: dict[str, float] = {
@@ -44,38 +45,6 @@ _TOKEN_RATIOS_V2: dict[str, float] = {
     "mistral": 0.72,
     "yi": 0.60,
     "baichuan": 0.58,
-}
-
-_PRICING: dict[str, tuple[float, float]] = {
-    "gpt-4": (0.03, 0.06),
-    "gpt-4o": (0.005, 0.015),
-    "gpt-4o-mini": (0.00015, 0.0006),
-    "gpt-3.5-turbo": (0.0005, 0.0015),
-    "claude-3": (0.003, 0.015),
-    "claude-3.5": (0.003, 0.015),
-    "claude-4": (0.003, 0.015),
-    "deepseek": (0.00014, 0.00028),
-    "deepseek-r1": (0.00055, 0.00219),
-    "qwen": (0.0004, 0.0012),
-    "qwen-max": (0.002, 0.006),
-    "pangu": (0.0012, 0.004),
-    "pangu-nlp": (0.003, 0.009),
-    "pangu-nlp-65b": (0.004, 0.012),
-    "pangu-nlp-7b": (0.001, 0.003),
-    "pangu-vision": (0.008, 0.024),
-    "pangu-multimodal": (0.008, 0.024),
-    "pangu-prediction": (0.005, 0.015),
-    "pangu-scientific": (0.010, 0.030),
-    "pangu-code": (0.006, 0.018),
-    "ernie-4.0": (0.0012, 0.012),
-    "glm-4": (0.001, 0.001),
-    "kimi": (0.0012, 0.0012),
-    "minimax": (0.001, 0.001),
-    "gemini-pro": (0.000375, 0.0015),
-    "gemini-2.0": (0.0, 0.0),
-    "mistral-large": (0.002, 0.006),
-    "llama-3": (0.0, 0.0),
-    "default": (0.003, 0.015),
 }
 
 _REDUNDANCY_PATTERNS = [
@@ -192,13 +161,11 @@ def estimate_tokens(text: str, model: str = "default") -> TokenEstimate:
                 ratio = _TOKEN_RATIOS[key]
                 break
         estimated_tokens = max(int(char_count * ratio), 1)
-    pricing = _PRICING.get("default", (0.003, 0.015))
-    for key in _PRICING:
-        if model.lower().startswith(key):
-            pricing = _PRICING[key]
-            break
-    input_cost = estimated_tokens / 1000 * pricing[0]
-    output_cost = estimated_tokens / 1000 * pricing[1]
+    # F3: 定价经PricingCatalog统一加载(LiteLLM schema); 最长前缀匹配修复了
+    # 历史上"gpt-4o"被"gpt-4"首个前缀命中挡住的计价错误
+    pricing = get_catalog().get_or_default(model)
+    input_cost = estimated_tokens * pricing.input_cost_per_token
+    output_cost = estimated_tokens * pricing.output_cost_per_token
     return TokenEstimate(
         model=model, char_count=char_count, estimated_tokens=estimated_tokens,
         estimated_input_cost_usd=input_cost, estimated_output_cost_usd=output_cost,

@@ -1,8 +1,10 @@
 """R112 测试: lint --watch实时监听 + 首次运行引导"""
 from __future__ import annotations
 
-from ai_prompt_toolkit.linter.rules import get_all_rules
+import re
+
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import get_all_rules
 
 
 class TestR112WatchOption:
@@ -26,4 +28,7 @@ class TestR112FirstRunGuide:
 
     def test_version_is_52(self):
         from ai_prompt_toolkit import __version__
-        assert __version__ == "67.0.0"  # R164扩容后实际值
+
+        # 语义化格式校验+主版本下限: 版本bump不应破坏测试
+        assert re.match(r"^\d+\.\d+\.\d+$", __version__), f"版本号须为语义化格式: {__version__}"
+        assert int(__version__.split(".")[0]) >= 52, "主版本不应回退"

@@ -139,3 +139,77 @@ class TestOTLPExport:
     def test_empty_tracer_export(self):
         d = json.loads(OTelTracer().to_otlp_json())
         assert d["resourceSpans"][0]["scopeSpans"][0]["spans"] == []
+
+
+class TestTracerAbstraction:
+    """A2: Tracer协议 + NoopTracer + 工厂选择"""
+
+    def test_noop_tracer_zero_spans(self):
+        from ai_prompt_toolkit.linter.otel_tracer import NoopTracer
+
+        t = NoopTracer()
+        s = t.start_span("x", attributes={"a": 1})
+        t.end_span(s)
+        assert t.to_dict()["spans"] == []
+        assert t.to_dict()["backend"] == "noop"
+
+    def test_noop_current_span_stack(self):
+        from ai_prompt_toolkit.linter.otel_tracer import NoopTracer
+
+        t = NoopTracer()
+        s = t.start_span("x")
+        assert t.current_span is s
+        t.end_span(s)
+        assert t.current_span is None
+
+    def test_factory_default_noop(self, monkeypatch):
+        from ai_prompt_toolkit.linter.otel_tracer import NoopTracer, get_tracer
+
+        monkeypatch.delenv("PROMPT_TOOLKIT_TRACING", raising=False)
+        assert isinstance(get_tracer(), NoopTracer)
+
+    def test_factory_memory_selects_otel(self, monkeypatch):
+        from ai_prompt_toolkit.linter.otel_tracer import OTelTracer, get_tracer
+
+        monkeypatch.setenv("PROMPT_TOOLKIT_TRACING", "memory")
+        assert isinstance(get_tracer(), OTelTracer)
+
+    def test_otel_tracer_satisfies_protocol(self):
+        from ai_prompt_toolkit.linter.otel_tracer import NoopTracer, Tracer
+
+        assert isinstance(OTelTracer(), Tracer)
+        assert isinstance(NoopTracer(), Tracer)
+
+
+class TestGenAISemconvAttrs:
+    """F1: gen_ai.*语义约定属性"""
+
+    def test_lint_operation_name(self):
+        t = OTelTracer()
+        s = t.trace_lint("tpl", 0, 95.0, 12.0)
+        assert s.attributes["gen_ai.operation.name"] == "lint"
+
+    def test_eval_operation_name(self):
+        t = OTelTracer()
+        s = t.trace_eval("tpl", 88.0, "B", 20.0)
+        assert s.attributes["gen_ai.operation.name"] == "eval"
+
+    def test_optional_model_and_usage(self):
+        t = OTelTracer()
+        s = t.trace_lint("tpl", 1, 80.0, 10.0, model="gpt-4o", token_usage=(120, 30))
+        assert s.attributes["gen_ai.request.model"] == "gpt-4o"
+        assert s.attributes["gen_ai.usage.input_tokens"] == 120
+        assert s.attributes["gen_ai.usage.output_tokens"] == 30
+
+    def test_semconv_attr_names_exact(self):
+        from ai_prompt_toolkit.linter.otel_tracer import (
+            GENAI_ATTR_OPERATION_NAME,
+            GENAI_ATTR_REQUEST_MODEL,
+            GENAI_ATTR_USAGE_INPUT_TOKENS,
+            GENAI_ATTR_USAGE_OUTPUT_TOKENS,
+        )
+
+        assert GENAI_ATTR_OPERATION_NAME == "gen_ai.operation.name"
+        assert GENAI_ATTR_REQUEST_MODEL == "gen_ai.request.model"
+        assert GENAI_ATTR_USAGE_INPUT_TOKENS == "gen_ai.usage.input_tokens"
+        assert GENAI_ATTR_USAGE_OUTPUT_TOKENS == "gen_ai.usage.output_tokens"

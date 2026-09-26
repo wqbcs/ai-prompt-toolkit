@@ -1,14 +1,18 @@
 """R92: scan --explain + MCP工具扩展 + __init__.py版本"""
 from __future__ import annotations
 
+import re
+
 from ai_prompt_toolkit import __version__
 from ai_prompt_toolkit.evaluator import list_weight_presets
-from ai_prompt_toolkit.prompt_diff import rollback_safety_check
 from ai_prompt_toolkit.html_report import generate_html_report
+from ai_prompt_toolkit.prompt_diff import rollback_safety_check
 
 
 def test_version_50():
-    assert __version__ == "67.0.0"  # R164扩容后实际值(原R92快照50.0.0已过期)
+    # 语义化格式校验+主版本下限: 版本bump不应破坏测试
+    assert re.match(r"^\d+\.\d+\.\d+$", __version__), f"版本号须为语义化格式: {__version__}"
+    assert int(__version__.split(".")[0]) >= 50, "主版本不应回退"
 
 
 def test_weight_preset_list_callable():
@@ -42,6 +46,7 @@ def test_mcp_dispatch_has_new_tools():
 
 def test_mcp_tools_list_has_new_tools():
     import json
+
     from ai_prompt_toolkit.mcp_server import _handle_tools_list
     response = _handle_tools_list(1)
     data = json.loads(response)

@@ -1,26 +1,35 @@
 """OpenTelemetry可观测性集成 — 标准化追踪Lint/Eval执行
 
-借鉴Langfuse的OpenTelemetry集成 + OpenTelemetry GenAI语义约定:
-- setup_otel: 创建Tracer(默认no-op/file/otel可选后端)
-- trace_lint: Lint执行追踪(span+attributes+metrics)
-- trace_eval: Eval执行追踪
-- to_otlp_json: 导出OTLP-JSON格式资源/跨度(可被Langfuse/Jaeger/Grafana消费)
+借鉴Langfuse的OpenTelemetry集成 + OpenTelemetry GenAI语义约定
+(open-telemetry/semantic-conventions-genai):
+- Tracer协议 + NoopTracer/file/memory三实现: CLI/MCP不感知具体后端(A2)
+- setup_otel: 创建OTelTracer; get_tracer: 按环境变量选择实现
+- trace_lint/trace_eval: Lint/Eval执行追踪(span+attributes+metrics)
+- to_otlp_json: 导出OTLP-JSON格式(可被Langfuse/Jaeger/Grafana消费)
 
-GenAI语义约定属性(与Langfuse/OTel GenAI对齐):
+GenAI语义约定属性(F1, 对齐gen_ai.*命名空间):
 - gen_ai.system: 工具标识("ai-prompt-toolkit")
-- prompt.template.id: 模板ID
-- prompt.lint.findings.count / prompt.lint.score
-- prompt.eval.score / prompt.eval.grade
+- gen_ai.operation.name: 操作名("lint"/"eval")
+- gen_ai.request.model: 请求模型(可选)
+- gen_ai.usage.input_tokens / gen_ai.usage.output_tokens: Token用量(可选)
+- prompt.template.id / prompt.lint.* / prompt.eval.*: 本工具域扩展属性
 """
 from __future__ import annotations
 
 import json
+import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 GEN_AI_SYSTEM = "ai-prompt-toolkit"
+
+# F1: GenAI语义约定属性名常量表 — 禁止散落硬编码属性名
+GENAI_ATTR_OPERATION_NAME = "gen_ai.operation.name"
+GENAI_ATTR_REQUEST_MODEL = "gen_ai.request.model"
+GENAI_ATTR_USAGE_INPUT_TOKENS = "gen_ai.usage.input_tokens"
+GENAI_ATTR_USAGE_OUTPUT_TOKENS = "gen_ai.usage.output_tokens"
 
 
 @dataclass
@@ -121,20 +130,32 @@ class OTelTracer:
     def record_metric(self, name: str, value: float) -> None:
         self._metrics.setdefault(name, []).append(value)
 
-    def trace_lint(self, template_id: str, findings_count: int, score: float, duration_ms: float) -> TraceSpan:
-        """Lint执行追踪 — 单次执行作为一个已完成span"""
+    def trace_lint(self, template_id: str, findings_count: int, score: float, duration_ms: float,
+                   model: str | None = None,
+                   token_usage: tuple[int, int] | None = None) -> TraceSpan:
+        """Lint执行追踪 — 单次执行作为一个已完成span
+
+        model/token_usage为可选: lint本身零LLM调用, 但A/B评测链路上的lint可挂载模型上下文。
+        """
         now = time.time()
+        attrs: dict[str, Any] = {
+            "gen_ai.system": GEN_AI_SYSTEM,
+            GENAI_ATTR_OPERATION_NAME: "lint",
+            "prompt.template.id": template_id,
+            "prompt.lint.findings.count": findings_count,
+            "prompt.lint.score": score,
+            "prompt.lint.duration_ms": duration_ms,
+        }
+        if model:
+            attrs[GENAI_ATTR_REQUEST_MODEL] = model
+        if token_usage is not None:
+            attrs[GENAI_ATTR_USAGE_INPUT_TOKENS] = token_usage[0]
+            attrs[GENAI_ATTR_USAGE_OUTPUT_TOKENS] = token_usage[1]
         span = TraceSpan(
             name="prompt.lint",
             start_time=now - duration_ms / 1000,
             end_time=now,
-            attributes={
-                "gen_ai.system": GEN_AI_SYSTEM,
-                "prompt.template.id": template_id,
-                "prompt.lint.findings.count": findings_count,
-                "prompt.lint.score": score,
-                "prompt.lint.duration_ms": duration_ms,
-            },
+            attributes=attrs,
             status="ok" if findings_count == 0 else "error" if score < 50 else "ok",
         )
         self._spans.append(span)
@@ -143,20 +164,29 @@ class OTelTracer:
         self.record_metric("prompt.lint.duration_ms", duration_ms)
         return span
 
-    def trace_eval(self, template_id: str, overall_score: float, grade: str, duration_ms: float) -> TraceSpan:
+    def trace_eval(self, template_id: str, overall_score: float, grade: str, duration_ms: float,
+                   model: str | None = None,
+                   token_usage: tuple[int, int] | None = None) -> TraceSpan:
         """Eval执行追踪 — 单次执行作为一个已完成span"""
         now = time.time()
+        attrs: dict[str, Any] = {
+            "gen_ai.system": GEN_AI_SYSTEM,
+            GENAI_ATTR_OPERATION_NAME: "eval",
+            "prompt.template.id": template_id,
+            "prompt.eval.score": overall_score,
+            "prompt.eval.grade": grade,
+            "prompt.eval.duration_ms": duration_ms,
+        }
+        if model:
+            attrs[GENAI_ATTR_REQUEST_MODEL] = model
+        if token_usage is not None:
+            attrs[GENAI_ATTR_USAGE_INPUT_TOKENS] = token_usage[0]
+            attrs[GENAI_ATTR_USAGE_OUTPUT_TOKENS] = token_usage[1]
         span = TraceSpan(
             name="prompt.eval",
             start_time=now - duration_ms / 1000,
             end_time=now,
-            attributes={
-                "gen_ai.system": GEN_AI_SYSTEM,
-                "prompt.template.id": template_id,
-                "prompt.eval.score": overall_score,
-                "prompt.eval.grade": grade,
-                "prompt.eval.duration_ms": duration_ms,
-            },
+            attributes=attrs,
             status="ok" if overall_score >= 80 else "error",
         )
         self._spans.append(span)
@@ -236,3 +266,68 @@ class OTelTracer:
 def setup_otel(config: OTelConfig | None = None) -> OTelTracer:
     """工厂函数 — 创建Tracer实例"""
     return OTelTracer(config)
+
+
+# ---------------------------------------------------------------------------
+# A2: Tracer抽象 — 端层(CLI/MCP)面向协议编程, 不感知具体后端
+# ---------------------------------------------------------------------------
+
+@runtime_checkable
+class Tracer(Protocol):
+    """可观测性最小协议 — OTelTracer/NoopTracer均满足"""
+
+    def start_span(self, name: str, attributes: dict[str, Any] | None = None,
+                   parent: Any = None) -> Any: ...
+
+    def end_span(self, span: Any = None, status: str = "ok",
+                 attributes: dict[str, Any] | None = None) -> Any: ...
+
+    def to_dict(self) -> dict[str, Any]: ...
+
+
+class NoopTracer:
+    """零开销空实现 — 默认后端(不追踪, 不落盘)"""
+
+    def __init__(self) -> None:
+        self._noop_span: TraceSpan | None = None
+
+    @property
+    def current_span(self) -> TraceSpan | None:
+        return self._noop_span
+
+    def start_span(self, name: str, attributes: dict[str, Any] | None = None,
+                   parent: TraceSpan | None = None) -> TraceSpan:
+        self._noop_span = TraceSpan(name=name)
+        return self._noop_span
+
+    def end_span(self, span: TraceSpan | None = None, status: str = "ok",
+                 attributes: dict[str, Any] | None = None) -> TraceSpan | None:
+        target = span or self._noop_span
+        self._noop_span = None
+        return target
+
+    def record_metric(self, name: str, value: float) -> None:  # 协议兼容
+        return None
+
+    def trace_lint(self, template_id: str, findings_count: int, score: float, duration_ms: float,
+                   model: str | None = None, token_usage: tuple[int, int] | None = None) -> TraceSpan:
+        return TraceSpan(name="prompt.lint")
+
+    def trace_eval(self, template_id: str, overall_score: float, grade: str, duration_ms: float,
+                   model: str | None = None, token_usage: tuple[int, int] | None = None) -> TraceSpan:
+        return TraceSpan(name="prompt.eval")
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"backend": "noop", "spans": []}
+
+
+def get_tracer() -> Tracer:
+    """按环境变量选择Tracer实现 — 端层唯一入口
+
+    PROMPT_TOOLKIT_TRACING:
+        off/noop(默认) → NoopTracer;  memory/otel → OTelTracer(内存span, 可OTLP导出)
+    """
+    backend = os.environ.get("PROMPT_TOOLKIT_TRACING", "noop").strip().lower()
+    if backend in ("memory", "otel", "otlp"):
+        return OTelTracer()
+    return NoopTracer()

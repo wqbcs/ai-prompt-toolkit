@@ -25,11 +25,10 @@ README = ROOT / "README.md"
 
 
 def collect_counts(with_tests: bool) -> dict[str, int | str]:
-    from ai_prompt_toolkit import __version__
-    from ai_prompt_toolkit.linter.rules import get_all_rules
-    from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+    from ai_prompt_toolkit import __version__, mcp_server
     from ai_prompt_toolkit.evaluator import get_all_dimensions
-    from ai_prompt_toolkit import mcp_server
+    from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+    from ai_prompt_toolkit.linter.rules import get_all_rules
     from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY
 
     counts: dict[str, int | str] = {

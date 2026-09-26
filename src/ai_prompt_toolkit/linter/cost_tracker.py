@@ -4,6 +4,9 @@
 - CostRecord: 单次推理成本记录
 - CostTracker: 累积成本追踪器
 - 支持多模型定价(OpenAI/Claude/华为云鹏鹏等)
+
+定价数据外部化(F3): 采用LiteLLM schema, 经 ai_prompt_toolkit.pricing.PricingCatalog
+统一加载(内置data/model_pricing.json + 用户覆盖), 不在本模块硬编码。
 """
 from __future__ import annotations
 
@@ -11,19 +14,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-
-_MODEL_PRICING: dict[str, dict[str, Any]] = {
-    "gpt-4o": {"input": 2.50, "output": 10.00, "unit": "1M_tokens"},
-    "gpt-4-turbo": {"input": 10.00, "output": 30.00, "unit": "1M_tokens"},
-    "gpt-3.5-turbo": {"input": 0.50, "output": 1.50, "unit": "1M_tokens"},
-    "claude-3-opus": {"input": 15.00, "output": 75.00, "unit": "1M_tokens"},
-    "claude-3-sonnet": {"input": 3.00, "output": 15.00, "unit": "1M_tokens"},
-    "claude-3-haiku": {"input": 0.25, "output": 1.25, "unit": "1M_tokens"},
-    "pangu-large": {"input": 8.00, "output": 24.00, "unit": "1M_tokens"},
-    "pangu-medium": {"input": 2.00, "output": 6.00, "unit": "1M_tokens"},
-    "deepseek-chat": {"input": 0.14, "output": 0.28, "unit": "1M_tokens"},
-    "qwen-max": {"input": 4.00, "output": 12.00, "unit": "1M_tokens"},
-}
+from ai_prompt_toolkit.pricing import get_catalog
 
 
 @dataclass
@@ -51,10 +42,7 @@ class CostTracker:
     records: list[CostRecord] = field(default_factory=list)
 
     def record(self, model: str, input_tokens: int, output_tokens: int, latency_ms: float = 0.0) -> CostRecord:
-        pricing = _MODEL_PRICING.get(model, {"input": 0.0, "output": 0.0, "unit": "1M_tokens"})
-        input_cost = (input_tokens / 1_000_000) * pricing.get("input", 0.0)
-        output_cost = (output_tokens / 1_000_000) * pricing.get("output", 0.0)
-        cost_usd = input_cost + output_cost
+        cost_usd = get_catalog().estimate_cost_usd(model, input_tokens, output_tokens)
         rec = CostRecord(
             model=model,
             input_tokens=input_tokens,

@@ -44,6 +44,9 @@ prompt-cli = "ai_prompt_toolkit.cli_core:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+ai_prompt_toolkit = ["data/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]

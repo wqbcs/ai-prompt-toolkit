@@ -17,6 +17,19 @@ class Verdict(str, Enum):
     FAIL = "fail"
 
 
+# D4: verdict→退出码唯一映射 — CLI/MCP/CI必须经此函数取退出码, 保证语义一致
+# (0=PASS, 1=WARN, 2=FAIL; 3=ERROR 属于执行层异常, 不由verdict产生)
+VERDICT_EXIT_CODES: dict[Verdict, int] = {
+    Verdict.PASS: 0,
+    Verdict.WARN: 1,
+    Verdict.FAIL: 2,
+}
+
+
+def verdict_to_exit_code(verdict: Verdict) -> int:
+    return VERDICT_EXIT_CODES[verdict]
+
+
 @dataclass
 class QualityGateResult:
     verdict: Verdict

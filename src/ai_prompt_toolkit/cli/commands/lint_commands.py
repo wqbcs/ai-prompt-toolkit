@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -42,12 +43,19 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
+@click.option("--trace-json", "trace_json_path", help="Trace导出: 将本次执行的OTel trace写入指定路径(JSON/OTLP兼容, 供Langfuse/Jaeger消费)")
 def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
          output: str | None, gate: bool, multimodal: bool, color_theme: str,
          html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool, export_lcov_path: str | None) -> None:
+         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool, export_lcov_path: str | None, trace_json_path: str | None = None) -> None:
     """Prompt Linter：静态检查提示词质量"""
-    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, discover_templates_with_ignore, empty_state_tip, write_report
+    from ai_prompt_toolkit.cli_helpers import (
+        determine_exit_code,
+        discover_templates,
+        discover_templates_with_ignore,
+        empty_state_tip,
+        write_report,
+    )
     from ai_prompt_toolkit.linter.linter import PromptLinter
 
     lint_cfg = None
@@ -93,6 +101,8 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     _cache_dir_path.mkdir(exist_ok=True)
 
     linter = PromptLinter()
+    from ai_prompt_toolkit.linter.otel_tracer import get_tracer
+    tracer = get_tracer()  # 默认Noop零开销; PROMPT_TOOLKIT_TRACING=memory启用
     if html_report:
         fmt = "html"
     if color_theme != "default":
@@ -128,6 +138,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                         click.echo(f"  修复: {fix_info}")
                         if not click.confirm("  应用此修复?", default=True):
                             pass
+                tracer.trace_lint(tpl_path.name, len(result.findings), float(result.score), result.lint_time_ms)
                 all_results.append(result)
                 total_findings += result.failed_count
                 total_score += result.score
@@ -140,9 +151,14 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             result = linter.lint(tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg)
             if dry_run and result.auto_fixed:
                 click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
+            tracer.trace_lint(tpl_path.name, len(result.findings), float(result.score), result.lint_time_ms)
             all_results.append(result)
             total_findings += result.failed_count
             total_score += result.score
+
+    if trace_json_path:
+        _write_trace_json(tracer, Path(trace_json_path))
+        click.echo(f"Trace: {trace_json_path}")
 
     mm_findings_total: list = []
     if multimodal:
@@ -154,6 +170,9 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                 mm_findings_total.extend(mm_findings)
                 all_results[i].findings.extend(mm_findings)
                 total_findings += len(mm_findings)
+
+    # avg_score须在ci_mode/tui_mode引用前计算(修复: 原先在引用之后赋值, --ci模式必NameError)
+    avg_score = total_score / max(len(all_results), 1)
 
     if ci_mode:
         click.echo(f"files={len(templates)} findings={total_findings} score={avg_score:.1f}")
@@ -174,7 +193,6 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                     loc = f" L{f.location}" if f.location and str(f.location) != "1" and str(f.location) != "0" else ""
                     click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
 
-    avg_score = total_score / max(len(all_results), 1)
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
 
     if profile_mode:
@@ -208,7 +226,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         for r in all_results:
             all_findings_flat.extend(r.findings)
         stats = compute_rule_statistics(all_findings_flat)
-        click.echo(f"\n── 规则命中率统计 ──")
+        click.echo("\n── 规则命中率统计 ──")
         click.echo(f"  总命中: {stats['total_findings']} | 涉及规则: {stats['unique_rules']}")
         if stats["by_category"]:
             click.echo(f"  按类别: {', '.join(f'{k}={v}' for k, v in stats['by_category'].items())}")
@@ -220,7 +238,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             click.echo(f"  {rs['rule_id']:<8} {rs['hit_count']:>5} {rs['hit_rate']:>7.1f}% {rs['name']}")
 
     if baseline_path:
-        from ai_prompt_toolkit.linter.baseline import save_baseline, load_baseline, compare_baseline
+        from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline, save_baseline
         all_findings_for_baseline = []
         for r in all_results:
             for f in r.findings:
@@ -233,7 +251,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             if bp.exists():
                 baseline = load_baseline(baseline_path)
                 diff = compare_baseline(all_findings_for_baseline, baseline)
-                click.echo(f"\n── 基线对比 ──")
+                click.echo("\n── 基线对比 ──")
                 click.echo(f"  基线: {baseline.total_findings} (score={baseline.score:.1f}) | 当前: {diff.current_total} | Δ={diff.delta:+d}")
                 if diff.new_findings:
                     click.echo(f"  新增({len(diff.new_findings)}): {', '.join(f['rule_id'] for f in diff.new_findings[:10])}")
@@ -250,8 +268,8 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                 click.echo(f"\n基线文件不存在: {baseline_path} (使用--baseline-save先保存)")
 
     if json_diff_path and baseline_path:
-        from ai_prompt_toolkit.linter.baseline import load_baseline, compare_baseline
-        from ai_prompt_toolkit.linter.structured_diff import generate_structured_diff, format_diff_json
+        from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline
+        from ai_prompt_toolkit.linter.structured_diff import format_diff_json, generate_structured_diff
         bp = Path(baseline_path)
         if bp.exists():
             baseline_obj = load_baseline(baseline_path)
@@ -290,7 +308,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             click.echo()
 
     if export_lcov_path:
-        from ai_prompt_toolkit.linter.lcov_export import generate_lcov_report, generate_coverage_summary
+        from ai_prompt_toolkit.linter.lcov_export import generate_coverage_summary, generate_lcov_report
         all_findings_for_lcov = []
         for r in all_results:
             all_findings_for_lcov.extend(r.findings)
@@ -328,7 +346,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     has_errors = any(r.has_errors for r in all_results)
 
     if gate:
-        from ai_prompt_toolkit.linter.quality_gate import QualityGate, Verdict
+        from ai_prompt_toolkit.linter.quality_gate import QualityGate
         qg = QualityGate()
         all_findings_flat = []
         for r in all_results:
@@ -338,12 +356,8 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         click.echo(f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}")
         if output:
             report_data["quality_gate"] = gate_result.to_dict()
-        if gate_result.verdict == Verdict.FAIL:
-            sys.exit(2)
-        elif gate_result.verdict == Verdict.WARN:
-            sys.exit(1)
-        else:
-            sys.exit(0)
+        from ai_prompt_toolkit.linter.quality_gate import verdict_to_exit_code
+        sys.exit(verdict_to_exit_code(gate_result.verdict))
 
     if fmt == "sarif" and output:
         sarif_data = _generate_sarif(all_results, target)
@@ -377,8 +391,9 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             click.echo(f"报告: {output}")
 
     if watch:
-        from ai_prompt_toolkit.linter.linter import PromptLinter as _PL
         import time as _time
+
+        from ai_prompt_toolkit.linter.linter import PromptLinter as _PL
         click.echo(f"lint --watch: 监听 {target} (Ctrl+C退出)...")
         _watch_linter = _PL()
         _last_mtimes: dict[str, float] = {}
@@ -518,3 +533,13 @@ def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | No
             if output:
                 import json as _json
                 Path(output).write_text(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _write_trace_json(tracer: object, path: Path) -> None:
+    """U1: 将tracer的span树落盘为JSON(OTLP兼容), 供Langfuse/Jaeger/Grafana消费"""
+    trace_data = tracer.to_dict()  # type: ignore[attr-defined]
+    to_otlp = getattr(tracer, "to_otlp_json", None)
+    if callable(to_otlp):
+        trace_data["otlp"] = json.loads(to_otlp())
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(trace_data, ensure_ascii=False, indent=2), encoding="utf-8")
