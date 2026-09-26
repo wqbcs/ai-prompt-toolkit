@@ -2,6 +2,33 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.9.0] - 2026-09-26
+
+### Fixed (R174: 新用户第一分钟 — 入口一致性治理)
+
+#### 核心断点: MCP Server无CLI入口
+- mcp_server.run_server()(stdio JSON-RPC循环)从未接线到CLI — README声称的
+  MCP Server能力对用户不可达; 新增 `prompt-cli mcp` 命令(含--validate-only校验模式)
+- serverInfo.version硬编码42.0.0(过期漂移) → 动态取包版本__version__
+- README功能表/优势/MCP章节: serve(playground HTTP)误标为MCP Server → 修正为mcp;
+  新增标准.mcp.json接入片段(args: ["mcp"])
+
+#### 文档入口漂移(命令引用 vs 注册表审计)
+- README: scorecard→score(实际命令名), diff→prompt-diff
+- pyproject: 新增 `prompt` 别名入口(文档/用户习惯的裸prompt命令可用)
+- OSC参赛示例/README: MCP工具数55+/53 → 73(注册表真实值)
+- 审计方法: 提取文档命令引用→比对click注册表, 全部引用可达
+
+## [v67.8.0] - 2026-09-26
+
+### Changed (R173: 同义规则治理)
+
+- 语料重叠率审计: 描述相似度粗筛71对→25个语料验证; P094~P130(checker同逻辑双登记, 重叠50%)为真冗余
+- 引擎: SYNONYM_RULE_GROUPS+suppress_synonym_findings(同触抑制从规则, 独立触发保留; 数据驱动)
+- 工具固化: scripts/audit_synonym_rules.py(相似度+重叠率两步审计)
+- 规则文档自动标注同义组; C5反模式查重结论: P015/P024/P002已覆盖, 零新增规则
+- P181决策反转: checker有生产语境动态severity(合理设计), 不降级
+
 ## [v67.7.0] - 2026-09-26
 
 ### Added (R172: U1 trace可视化完整版)
