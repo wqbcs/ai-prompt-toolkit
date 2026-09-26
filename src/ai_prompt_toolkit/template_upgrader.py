@@ -11,6 +11,7 @@
   version=1.0, locale=default_locale), 正文原样保留
 - 已有frontmatter → 视为v2.0, 不升级
 """
+
 from __future__ import annotations
 
 import re

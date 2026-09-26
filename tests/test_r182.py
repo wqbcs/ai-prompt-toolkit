@@ -1,12 +1,16 @@
 """R182测试: 命令层冒烟 — CliRunner逐一走正常路径(覆盖率+端可达双目标)"""
+
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from click.testing import CliRunner
 
 from ai_prompt_toolkit.cli_core import main
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(scope="module")
@@ -31,10 +35,13 @@ class TestDatasetCommands:
         assert result.exit_code == 0
         result = runner.invoke(main, ["dataset", "list"])
         assert result.exit_code == 0
-        result = runner.invoke(main, ["dataset", "import", "-f", str(tmp_path / "items.json"), "-n", "冒烟数据集"]) if False else None
+        result = (
+            runner.invoke(main, ["dataset", "import", "-f", str(tmp_path / "items.json"), "-n", "冒烟数据集"])
+            if False
+            else None
+        )
 
     def test_dataset_roundtrip(self, runner, tmp_path):
-        import re as _re
 
         (tmp_path / "cases.json").write_text(
             '[{"input": "问题1", "expected": "答案1"}, {"input": "问题2"}]', encoding="utf-8"
@@ -74,8 +81,18 @@ class TestSecurityCommands:
 class TestRedteamCommand:
     def test_redteam_offline(self, runner, prompt_file, tmp_path):
         result = runner.invoke(
-            main, ["redteam", "-t", str(prompt_file), "-p", "prompt_injection", "--format", "json",
-                   "-o", str(tmp_path / "rt.json")]
+            main,
+            [
+                "redteam",
+                "-t",
+                str(prompt_file),
+                "-p",
+                "prompt_injection",
+                "--format",
+                "json",
+                "-o",
+                str(tmp_path / "rt.json"),
+            ],
         )
         assert result.exit_code in (0, 1)
 
@@ -91,7 +108,7 @@ class TestTemplateCommands:
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(main, ["init"])
         assert result.exit_code == 0
-        assert (tmp_path / ".prompt-toolkit.yml").exists() or "已存在" in result.output or True
+        assert (tmp_path / ".prompt-toolkit.yml").exists() or True
 
 
 class TestTemplateCommandExtras:
