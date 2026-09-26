@@ -34,6 +34,8 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ai_prompt_toolkit import __version__
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -41,7 +43,8 @@ if TYPE_CHECKING:
 
 _MCP_VERSION = "2024-11-05"
 _SERVER_NAME = "ai-prompt-toolkit"
-_SERVER_VERSION = "42.0.0"
+# 版本动态取包版本, 避免硬编码漂移(R174前曾硬编码42.0.0)
+_SERVER_VERSION = __version__
 
 
 def _make_response(id_val: Any, result: dict[str, Any]) -> str:

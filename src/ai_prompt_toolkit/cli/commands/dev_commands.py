@@ -225,3 +225,16 @@ def recommend_cmd(category: str | None, industry: str | None, model: str | None,
             click.echo(f"  {i}. {r.name} ({r.template_id})")
             click.echo(f"     Lint: {r.lint_score}/100 | 评分: {r.market_rating}/5 | 下载: {r.download_count}")
             click.echo(f"     相关度: {r.relevance_score:.1f} | 原因: {r.reason}")
+
+
+@main.command(name="mcp")
+@click.option("--validate-only", is_flag=True, help="仅校验工具注册表与tools_list一致性后退出(供CI/冒烟)")
+def mcp_cmd(validate_only: bool) -> None:
+    """MCP Server：标准stdio JSON-RPC(供Claude Desktop/Cursor等MCP客户端接入)"""
+    from ai_prompt_toolkit.mcp_server import _validate_tools_dispatch_sync, run_server
+
+    if validate_only:
+        _validate_tools_dispatch_sync()
+        click.echo("OK: MCP工具注册表与tools_list一致")
+        return
+    run_server()

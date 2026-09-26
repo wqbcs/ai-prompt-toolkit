@@ -4,8 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.7.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-3595%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.9.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-3605%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-255-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
@@ -45,8 +45,8 @@
 | **A/B测试** | `prompt-cli ab-test` | 贝叶斯统计(Thompson Sampling+SPRT)，21种LLM Provider |
 | **版本管理** | `prompt-cli version` | Git-like diff/rollback，语义Diff(安全策略变更=critical) |
 | **Prompt优化** | `prompt-cli optimize` | 自动优化+7种断言验证(contains/not_contains/regex/length_min/max/no_pii/no_injection) |
-| **MCP Server** | `prompt-cli serve` | 53个MCP工具，标准JSON-RPC协议，字典O(1)路由 |
-| **评分卡** | `prompt-cli scorecard` | 5维度评分(安全/合规/质量/性能/可用性)，SVG徽章生成 |
+| **MCP Server** | `prompt-cli mcp` | 73个MCP工具，标准stdio JSON-RPC，字典O(1)路由 |
+| **评分卡** | `prompt-cli score` | 5维度评分(安全/合规/质量/性能/可用性)，SVG徽章生成 |
 | **安全评分** | `prompt-cli score` | CVSS-like安全评分+SVG Badge |
 | **Badge生成** | `prompt-cli badge` | 评分→SVG徽章，一键嵌入README |
 | **Token分析** | `prompt-cli token` | 多模型Token统计(GPT-4/Claude/盘古等) |
@@ -68,7 +68,7 @@
 - **Prompt消毒器**：8层检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言)
 - **21种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
 - **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
-- **MCP Server**：53个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
+- **MCP Server**：73个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
 
 ## 快速开始
 
@@ -117,13 +117,28 @@ prompt-cli version diff my_prompt.md
 prompt-cli version rollback my_prompt.md --rev 3
 
 # 语义Diff(安全策略变更=critical)
-prompt-cli diff old_prompt.md new_prompt.md --semantic
+prompt-cli prompt-diff old_prompt.md new_prompt.md --semantic
 
 # Prompt优化+断言验证
 prompt-cli optimize -s my_prompt.md
 prompt-cli assert -s my_prompt.md --assertion "contains:安全声明"
 
-# MCP Server(53个工具)
+# MCP Server(73个工具)
+
+## 接入MCP客户端(如Claude Desktop/Cursor等)
+
+在MCP客户端配置文件(如 `.mcp.json`)中添加:
+
+```json
+{
+  "mcpServers": {
+    "ai-prompt-toolkit": {
+      "command": "prompt-cli",
+      "args": ["mcp"]
+    }
+  }
+}
+```
 prompt-cli serve
 
 # Watch模式(变更自动Lint+合规)
@@ -160,7 +175,7 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 src/ai_prompt_toolkit/
 ├── cli.py                    # CLI兼容层
 ├── cli_core.py               # CLI实现(30+命令)
-├── mcp_server.py             # MCP Server(53工具,字典O(1)路由)
+├── mcp_server.py             # MCP Server(73工具,字典O(1)路由)
 ├── linter/                   # Prompt Linter引擎
 │   ├── linter.py             # Lint核心引擎
 │   ├── rules.py              # 规则注册中心(_RULE_MAP)
@@ -256,7 +271,7 @@ graph TB
         OPTIMIZE[optimize] --> ASSERT[断言验证]
     end
 
-    subgraph MCP["MCP Server (53工具)"]
+    subgraph MCP["MCP Server (73工具)"]
         MCP_LINT[prompt_lint]
         MCP_SCAN[prompt_scan]
         MCP_EVAL[prompt_evaluate]
@@ -429,7 +444,7 @@ prompt-cli compliance -t my_prompt.md --format markdown
 # 开发环境
 pip install -e ".[dev]"
 
-# 运行测试(3539个)
+# 运行测试(3600个)
 pytest tests/ -v
 
 # 代码格式化
