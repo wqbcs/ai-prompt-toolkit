@@ -1,20 +1,17 @@
 """R71测试: OWASP LLM Top 10映射 — P001-P150规则到LLM01-LLM10对照"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.linter.rules import _RULE_MAP
 from ai_prompt_toolkit.linter.owasp_mapping import (
-    apply_owasp_refs,
-    get_rules_by_owasp,
     get_owasp_coverage,
+    get_rules_by_owasp,
 )
+from ai_prompt_toolkit.linter.rules import _RULE_MAP
 
 
 class TestOWASPMapping:
     def test_all_owasp_refs_have_rules(self):
-        for ref in ("LLM01", "LLM02", "LLM03", "LLM04", "LLM05",
-                    "LLM06", "LLM07", "LLM08", "LLM09", "LLM10"):
+        for ref in ("LLM01", "LLM02", "LLM03", "LLM04", "LLM05", "LLM06", "LLM07", "LLM08", "LLM09", "LLM10"):
             rules = get_rules_by_owasp(ref)
             assert len(rules) > 0, f"{ref} has no mapped rules"
 
@@ -45,8 +42,7 @@ class TestOWASPMapping:
     def test_owasp_coverage_complete(self):
         coverage = get_owasp_coverage()
         assert len(coverage) == 10
-        for ref in ("LLM01", "LLM02", "LLM03", "LLM04", "LLM05",
-                    "LLM06", "LLM07", "LLM08", "LLM09", "LLM10"):
+        for ref in ("LLM01", "LLM02", "LLM03", "LLM04", "LLM05", "LLM06", "LLM07", "LLM08", "LLM09", "LLM10"):
             assert ref in coverage
             assert "name" in coverage[ref]
             assert "lint_rules" in coverage[ref]
@@ -61,6 +57,7 @@ class TestOWASPMapping:
 
     def test_no_owasp_refs_not_in_dict(self):
         from ai_prompt_toolkit.linter.rules import LintRule, Severity
+
         rule = LintRule("TEST", "test", "test", Severity.LOW, "test", "test")
         d = rule.to_dict()
         assert "owasp_refs" not in d

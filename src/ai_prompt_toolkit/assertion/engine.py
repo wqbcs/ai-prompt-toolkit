@@ -6,12 +6,13 @@
 - ReDoS防护: 正则搜索限制响应长度+超时兜底
 - 禁止exec/eval
 """
+
 from __future__ import annotations
 
 import re
 from typing import Any
 
-from ai_prompt_toolkit.assertion.types import AssertType, AssertionConfig, AssertionResult
+from ai_prompt_toolkit.assertion.types import AssertionConfig, AssertionResult, AssertType
 
 _REGEX_MAX_RESPONSE_LEN = 50000
 _REGEX_TIMEOUT_MS = 200
@@ -62,14 +63,15 @@ class AssertionEngine:
         cost: float = 0.0,
         context: dict[str, Any] | None = None,
     ) -> list[AssertionResult]:
-        return [
-            self.evaluate(c, response, latency_ms, cost, context or {})
-            for c in configs
-        ]
+        return [self.evaluate(c, response, latency_ms, cost, context or {}) for c in configs]
 
     def _eval_contains(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         values = config.value if isinstance(config.value, list) else [config.value]
         matched = [v for v in values if str(v) in response]
@@ -84,8 +86,12 @@ class AssertionEngine:
         )
 
     def _eval_not_contains(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         values = config.value if isinstance(config.value, list) else [config.value]
         found = [v for v in values if str(v) in response]
@@ -100,8 +106,12 @@ class AssertionEngine:
         )
 
     def _eval_regex(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         pattern_str = str(config.value)
         try:
@@ -131,10 +141,15 @@ class AssertionEngine:
         )
 
     def _eval_json_schema(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         import json
+
         try:
             data = json.loads(response)
         except json.JSONDecodeError as e:
@@ -184,8 +199,12 @@ class AssertionEngine:
         )
 
     def _eval_similarity(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         expected = str(config.value)
         if not expected:
@@ -207,8 +226,12 @@ class AssertionEngine:
         )
 
     def _eval_llm_rubric(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         rubric = str(config.value)
         if not rubric:
@@ -229,8 +252,12 @@ class AssertionEngine:
         )
 
     def _eval_latency(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         max_latency = float(config.value) if config.value else 5000.0
         passed = latency_ms <= max_latency
@@ -243,8 +270,12 @@ class AssertionEngine:
         )
 
     def _eval_cost(
-        self, config: AssertionConfig, response: str, latency_ms: float,
-        cost: float, context: dict[str, Any],
+        self,
+        config: AssertionConfig,
+        response: str,
+        latency_ms: float,
+        cost: float,
+        context: dict[str, Any],
     ) -> AssertionResult:
         max_cost = float(config.value) if config.value else 1.0
         passed = cost <= max_cost

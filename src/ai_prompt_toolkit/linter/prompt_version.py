@@ -9,6 +9,7 @@
 - 版本元数据(作者/时间/标签/评分)
 - JSON存储(无需数据库)
 """
+
 from __future__ import annotations
 
 import json
@@ -50,7 +51,7 @@ class PromptVersion:
         }
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "PromptVersion":
+    def from_dict(cls, d: dict[str, Any]) -> PromptVersion:
         return cls(**{k: v for k, v in d.items() if k in cls.__dataclass_fields__})
 
 
@@ -75,18 +76,30 @@ class PromptVersionManager:
             data[tid] = [v.to_dict() for v in versions]
         self._store_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def create_version(self, template_id: str, content: str, author: str = "",
-                        tags: list[str] | None = None, score: float = 0.0,
-                        grade: str = "", metadata: dict[str, Any] | None = None) -> PromptVersion:
+    def create_version(
+        self,
+        template_id: str,
+        content: str,
+        author: str = "",
+        tags: list[str] | None = None,
+        score: float = 0.0,
+        grade: str = "",
+        metadata: dict[str, Any] | None = None,
+    ) -> PromptVersion:
         versions = self._versions.setdefault(template_id, [])
         version_num = len(versions) + 1
         version_id = f"v{version_num}"
         parent = versions[-1].version_id if versions else ""
         change_type = self._detect_change_type(versions, content) if versions else "initial"
         pv = PromptVersion(
-            version_id=version_id, content=content, author=author,
-            tags=tags or [], score=score, grade=grade,
-            parent_version=parent, change_type=change_type,
+            version_id=version_id,
+            content=content,
+            author=author,
+            tags=tags or [],
+            score=score,
+            grade=grade,
+            parent_version=parent,
+            change_type=change_type,
             metadata=metadata or {},
         )
         versions.append(pv)
@@ -122,6 +135,7 @@ class PromptVersionManager:
         if not pv1 or not pv2:
             return {"error": "版本不存在"}
         from ai_prompt_toolkit.prompt_diff import semantic_diff
+
         diff_result = semantic_diff(pv1.content, pv2.content)
         return {
             "template_id": template_id,
@@ -129,7 +143,7 @@ class PromptVersionManager:
             "to_version": v2,
             "score_delta": pv2.score - pv1.score,
             "grade_change": f"{pv1.grade}→{pv2.grade}",
-            "diff": diff_result if hasattr(diff_result, '__dict__') else str(diff_result),
+            "diff": diff_result if hasattr(diff_result, "__dict__") else str(diff_result),
         }
 
     def list_templates(self) -> list[str]:

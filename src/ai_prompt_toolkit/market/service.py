@@ -1,15 +1,14 @@
 """MarketService — 模板市场主服务，提交/查询/安全门禁"""
+
 from __future__ import annotations
 
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from ai_prompt_toolkit.market.deploy import DeployManager
-
-_MAX_FINDINGS_DISPLAY = 10
 from ai_prompt_toolkit.market.review import ReviewPipeline
 from ai_prompt_toolkit.market.types import (
     DeployConfig,
@@ -19,6 +18,7 @@ from ai_prompt_toolkit.market.types import (
     TemplateStatus,
 )
 
+_MAX_FINDINGS_DISPLAY = 10
 logger = logging.getLogger(__name__)
 
 SECURITY_GATE_MIN_LINT_SCORE = 70.0
@@ -42,7 +42,7 @@ class MarketService:
         if not data_file.exists():
             return
         try:
-            with open(data_file, "r", encoding="utf-8") as f:
+            with open(data_file, encoding="utf-8") as f:
                 data = json.load(f)
             for item in data.get("templates", []):
                 tpl = Template(
@@ -155,14 +155,12 @@ class MarketService:
         if not template:
             raise ValueError(f"模板 {template_id} 不存在")
         from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
         detector = InjectionDetector()
         findings = detector.detect(content)
         critical_count = sum(1 for f in findings if f.severity.value == "critical")
         high_count = sum(1 for f in findings if f.severity.value == "high")
-        passed = (
-            critical_count <= SECURITY_GATE_MAX_CRITICAL_FINDINGS
-            and high_count <= SECURITY_GATE_MAX_HIGH_FINDINGS
-        )
+        passed = critical_count <= SECURITY_GATE_MAX_CRITICAL_FINDINGS and high_count <= SECURITY_GATE_MAX_HIGH_FINDINGS
         template.security_scan_passed = passed
         scan_result = {
             "passed": passed,
@@ -177,12 +175,12 @@ class MarketService:
         logger.info("安全扫描: %s passed=%s findings=%d", template_id, passed, len(findings))
         return scan_result
 
-    def run_lint(self, template_id: str, content: str, *,
-                 template_type: str = "prompt") -> dict[str, Any]:
+    def run_lint(self, template_id: str, content: str, *, template_type: str = "prompt") -> dict[str, Any]:
         template = self._templates.get(template_id)
         if not template:
             raise ValueError(f"模板 {template_id} 不存在")
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         linter = PromptLinter()
         result = linter.lint(template_id, content, template_type=template_type)
         template.lint_score = result.score

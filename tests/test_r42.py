@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES, Fixer
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_rule
 from ai_prompt_toolkit.linter.rules_p096_p100 import (
-    check_p096, check_p097, check_p098, check_p099, check_p100,
+    check_p096,
+    check_p097,
+    check_p098,
+    check_p099,
+    check_p100,
     run_checks_p096_p100,
 )
-from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP, get_rule
-from ai_prompt_toolkit.linter.fixer import Fixer, AUTO_FIXABLE_RULES
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -208,10 +210,7 @@ class TestRunChecksP096P100:
 
     def test_run_all_multiple_findings(self):
         text = (
-            "使用盘古大模型，调用工具获取数据\n"
-            "分析图片内容\n"
-            "需要内容安全审核\n"
-            "安全护栏防止有害输出\n"
+            "使用盘古大模型，调用工具获取数据\n分析图片内容\n需要内容安全审核\n安全护栏防止有害输出\n"
         ) + "很长的文本内容，用于测试token限制" * 500
         results = run_checks_p096_p100(text)
         rule_ids = [r.rule_id for r in results]
@@ -325,13 +324,16 @@ class TestP096P100Fixer:
 class TestF1VersionManagementEnhancement:
     def setup_method(self):
         import tempfile
+
         self.tmp = tempfile.mkdtemp()
         from ai_prompt_toolkit.prompt_version import PromptVersionStore
+
         self.store = PromptVersionStore(db_path=f"{self.tmp}/test_versions.db")
 
     def teardown_method(self):
         self.store.close()
         import shutil
+
         shutil.rmtree(self.tmp, ignore_errors=True)
 
     def test_save_with_auto_lint(self):
@@ -418,6 +420,7 @@ class TestF1VersionManagementEnhancement:
 class TestH2NewTemplates:
     def test_pangu_chat_template(self):
         from ai_prompt_toolkit.prompt_template import get_template_by_name
+
         t = get_template_by_name("pangu-chat")
         assert t is not None
         assert "盘古" in t.template
@@ -425,12 +428,14 @@ class TestH2NewTemplates:
 
     def test_pangu_function_call_template(self):
         from ai_prompt_toolkit.prompt_template import get_template_by_name
+
         t = get_template_by_name("pangu-function-call")
         assert t is not None
         assert "Function Calling" in t.template
 
     def test_harmonyos_ability_template(self):
         from ai_prompt_toolkit.prompt_template import get_template_by_name
+
         t = get_template_by_name("harmonyos-ability")
         assert t is not None
         assert "Ability" in t.template
@@ -438,6 +443,7 @@ class TestH2NewTemplates:
 
     def test_huaweicloud_maas_finetune_template(self):
         from ai_prompt_toolkit.prompt_template import get_template_by_name
+
         t = get_template_by_name("huaweicloud-maas-finetune")
         assert t is not None
         assert "ModelArts" in t.template
@@ -445,15 +451,22 @@ class TestH2NewTemplates:
 
     def test_huaweicloud_sec_audit_template(self):
         from ai_prompt_toolkit.prompt_template import get_template_by_name
+
         t = get_template_by_name("huaweicloud-sec-audit")
         assert t is not None
         assert "安全审计" in t.template
         assert "ModelArts" in t.template
 
     def test_all_new_templates_render(self):
-        from ai_prompt_toolkit.prompt_template import get_template_by_name, PromptTemplate
-        for name in ["pangu-chat", "pangu-function-call", "harmonyos-ability",
-                      "huaweicloud-maas-finetune", "huaweicloud-sec-audit"]:
+        from ai_prompt_toolkit.prompt_template import get_template_by_name
+
+        for name in [
+            "pangu-chat",
+            "pangu-function-call",
+            "harmonyos-ability",
+            "huaweicloud-maas-finetune",
+            "huaweicloud-sec-audit",
+        ]:
             t = get_template_by_name(name)
             assert t is not None, f"Template {name} not found"
             rendered = t.render()
@@ -461,6 +474,7 @@ class TestH2NewTemplates:
 
     def test_template_count(self):
         from ai_prompt_toolkit.prompt_template import get_builtin_templates
+
         assert len(get_builtin_templates()) == 18
 
 
@@ -471,7 +485,7 @@ class TestD1FixerConflictDetection:
     def test_no_conflict_single_rule(self):
         text = "短文本"
         findings = [Finding(rule_id="P005", severity=Severity.LOW, description="过短")]
-        fixed, results = self.fixer.fix(text, findings)
+        _fixed, results = self.fixer.fix(text, findings)
         assert len(results) == 1
 
     def test_no_conflict_different_categories(self):
@@ -480,7 +494,7 @@ class TestD1FixerConflictDetection:
             Finding(rule_id="P006", severity=Severity.HIGH, description="敏感信息"),
             Finding(rule_id="P016", severity=Severity.HIGH, description="歧义表述"),
         ]
-        fixed, results = self.fixer.fix(text, findings)
+        _fixed, results = self.fixer.fix(text, findings)
         assert len(results) == 2
 
     def test_sequential_fix_order(self):
@@ -489,7 +503,7 @@ class TestD1FixerConflictDetection:
             Finding(rule_id="P003", severity=Severity.MEDIUM, description="缺少约束"),
         ]
         text = "短"
-        fixed, results = self.fixer.fix(text, findings)
+        _fixed, results = self.fixer.fix(text, findings)
         assert len(results) >= 1
 
     def test_append_fixes_dont_overlap(self):
@@ -498,7 +512,7 @@ class TestD1FixerConflictDetection:
             Finding(rule_id="P068", severity=Severity.HIGH, description="幻觉预防缺失"),
         ]
         text = "你需要回答关于事实数据的问题"
-        fixed, results = self.fixer.fix(text, findings)
+        fixed, _results = self.fixer.fix(text, findings)
         assert "错误处理" in fixed
         assert "幻觉预防" in fixed
         assert fixed.count("# 错误处理") <= 1
@@ -510,6 +524,6 @@ class TestD1FixerConflictDetection:
             Finding(rule_id="P100", severity=Severity.HIGH, description="安全护栏缺失"),
         ]
         text = "使用盘古大模型"
-        fixed, results = self.fixer.fix(text, findings)
+        fixed, _results = self.fixer.fix(text, findings)
         assert "盘古对话格式" in fixed
         assert "盘古安全护栏" in fixed

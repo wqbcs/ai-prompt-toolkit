@@ -1,8 +1,11 @@
 """R98: 华为云FunctionGraph Prompt模板 + MCP工具"""
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.huawei_cloud.fg_template import (
-    FGTemplateType, get_fg_template, list_fg_templates,
+    FGTemplateType,
+    get_fg_template,
+    list_fg_templates,
 )
 
 
@@ -59,12 +62,14 @@ class TestR98FGTemplate:
 
     def test_mcp_fg_template_list(self):
         from ai_prompt_toolkit.mcp_server import _tool_fg_template_list
+
         result = _tool_fg_template_list({})
         assert "templates" in result
         assert result["count"] == 4
 
     def test_mcp_fg_template_generate(self):
         from ai_prompt_toolkit.mcp_server import _tool_fg_template_generate
+
         result = _tool_fg_template_generate({"template_type": "ai_inference", "name": "test_fn"})
         assert result["name"] == "test_fn"
         assert "code" in result

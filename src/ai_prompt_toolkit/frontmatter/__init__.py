@@ -18,6 +18,7 @@ v3新增字段:
 - published_at: ISO8601时间戳
 - expires_at: ISO8601时间戳(可选)
 """
+
 from __future__ import annotations
 
 import re
@@ -77,7 +78,7 @@ class FrontMatterV3:
             errors.append(f"Invalid market_status: {self.market_status}, expected one of {sorted(self._VALID_MARKET)}")
         if not (0 <= self.lint_score <= 100):
             errors.append(f"Invalid lint_score: {self.lint_score}, expected 0-100")
-        if self.locale and not re.match(r'^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$', self.locale):
+        if self.locale and not re.match(r"^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$", self.locale):
             errors.append(f"Invalid locale BCP 47: {self.locale}")
         if self.published_at and self.market_status not in ("live", "archived", "expired"):
             errors.append(f"published_at set but market_status={self.market_status}, expected live/archived/expired")
@@ -116,7 +117,7 @@ def parse_front_matter(text: str) -> tuple[dict[str, Any] | None, str]:
     if end == -1:
         return None, text
     fm_text = text[3:end].strip()
-    body = text[end + 3:].lstrip("\n")
+    body = text[end + 3 :].lstrip("\n")
     try:
         data = yaml.safe_load(fm_text)
         if not isinstance(data, dict):

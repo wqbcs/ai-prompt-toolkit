@@ -8,6 +8,7 @@
 定价数据外部化(F3): 采用LiteLLM schema, 经 ai_prompt_toolkit.pricing.PricingCatalog
 统一加载(内置data/model_pricing.json + 用户覆盖), 不在本模块硬编码。
 """
+
 from __future__ import annotations
 
 import time
@@ -81,7 +82,13 @@ class CostTracker:
         result: dict[str, dict[str, Any]] = {}
         for r in self.records:
             if r.model not in result:
-                result[r.model] = {"count": 0, "input_tokens": 0, "output_tokens": 0, "cost_usd": 0.0, "latency_ms": 0.0}
+                result[r.model] = {
+                    "count": 0,
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "cost_usd": 0.0,
+                    "latency_ms": 0.0,
+                }
             m = result[r.model]
             m["count"] += 1
             m["input_tokens"] += r.input_tokens

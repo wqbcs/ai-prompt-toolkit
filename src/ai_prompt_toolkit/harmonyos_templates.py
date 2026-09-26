@@ -7,11 +7,11 @@
 - 安全合规检查
 - 跨设备适配
 """
+
 from __future__ import annotations
 
 import json
 from typing import Any
-
 
 HARMONYOS_TEMPLATES: dict[str, dict[str, Any]] = {
     "harmonyos-arkts-developer": {
@@ -265,25 +265,28 @@ def get_harmonyos_template(template_id: str) -> dict[str, Any] | None:
 
 def register_harmonyos_to_market(db: Any) -> int:
     from datetime import datetime
+
     count = 0
     now = datetime.now().isoformat()
     for tid, tpl in HARMONYOS_TEMPLATES.items():
         try:
-            db.upsert_template({
-                "id": tid,
-                "name": tpl.get("name", tid),
-                "version": "1.0",
-                "status": "published",
-                "author": "ai-prompt-toolkit",
-                "description": tpl.get("template", "")[:200] + "...",
-                "tags": json.dumps(["harmonyos", tpl.get("category", "general"), "huawei-cloud"]),
-                "category": tpl.get("category", "development"),
-                "security_scan_passed": 1,
-                "lint_score": 85.0,
-                "i18n_status": "zh_only",
-                "created_at": now,
-                "updated_at": now,
-            })
+            db.upsert_template(
+                {
+                    "id": tid,
+                    "name": tpl.get("name", tid),
+                    "version": "1.0",
+                    "status": "published",
+                    "author": "ai-prompt-toolkit",
+                    "description": tpl.get("template", "")[:200] + "...",
+                    "tags": json.dumps(["harmonyos", tpl.get("category", "general"), "huawei-cloud"]),
+                    "category": tpl.get("category", "development"),
+                    "security_scan_passed": 1,
+                    "lint_score": 85.0,
+                    "i18n_status": "zh_only",
+                    "created_at": now,
+                    "updated_at": now,
+                }
+            )
             count += 1
         except Exception:
             pass

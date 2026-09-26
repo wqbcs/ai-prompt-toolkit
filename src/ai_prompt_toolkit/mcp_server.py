@@ -26,12 +26,18 @@
 1. 直接运行: python -m ai_prompt_toolkit.mcp_server
 2. Cursor/Claude配置: {"mcpServers": {"prompt-toolkit": {"command": "python", "args": ["-m", "ai_prompt_toolkit.mcp_server"]}}}
 """
+
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from ai_prompt_toolkit.types import Finding
 
 _MCP_VERSION = "2024-11-05"
 _SERVER_NAME = "ai-prompt-toolkit"
@@ -39,33 +45,40 @@ _SERVER_VERSION = "42.0.0"
 
 
 def _make_response(id_val: Any, result: dict[str, Any]) -> str:
-    return json.dumps({
-        "jsonrpc": "2.0",
-        "id": id_val,
-        "result": result,
-    })
+    return json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "id": id_val,
+            "result": result,
+        }
+    )
 
 
 def _make_error(id_val: Any, code: int, message: str) -> str:
-    return json.dumps({
-        "jsonrpc": "2.0",
-        "id": id_val,
-        "error": {"code": code, "message": message},
-    })
+    return json.dumps(
+        {
+            "jsonrpc": "2.0",
+            "id": id_val,
+            "error": {"code": code, "message": message},
+        }
+    )
 
 
 def _handle_initialize(id_val: Any, params: dict[str, Any]) -> str:
-    return _make_response(id_val, {
-        "protocolVersion": _MCP_VERSION,
-        "capabilities": {
-            "tools": {"listChanged": False},
-            "resources": {"subscribe": False, "listChanged": False},
+    return _make_response(
+        id_val,
+        {
+            "protocolVersion": _MCP_VERSION,
+            "capabilities": {
+                "tools": {"listChanged": False},
+                "resources": {"subscribe": False, "listChanged": False},
+            },
+            "serverInfo": {
+                "name": _SERVER_NAME,
+                "version": _SERVER_VERSION,
+            },
         },
-        "serverInfo": {
-            "name": _SERVER_NAME,
-            "version": _SERVER_VERSION,
-        },
-    })
+    )
 
 
 def _handle_tools_list(id_val: Any) -> str:
@@ -101,8 +114,17 @@ def _handle_tools_list(id_val: Any) -> str:
                 "properties": {
                     "question": {"type": "string", "description": "评估问题"},
                     "response": {"type": "string", "description": "待评估的回答"},
-                    "mode": {"type": "string", "enum": ["absolute", "pairwise"], "description": "评估模式", "default": "absolute"},
-                    "dimensions": {"type": "string", "description": "评估维度(逗号分隔)", "default": "relevance,accuracy,fluency,completeness,safety,helpfulness"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["absolute", "pairwise"],
+                        "description": "评估模式",
+                        "default": "absolute",
+                    },
+                    "dimensions": {
+                        "type": "string",
+                        "description": "评估维度(逗号分隔)",
+                        "default": "relevance,accuracy,fluency,completeness,safety,helpfulness",
+                    },
                 },
                 "required": ["question", "response"],
             },
@@ -150,7 +172,11 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "dataset_id": {"type": "string", "description": "数据集ID"},
-                    "run_type": {"type": "string", "description": "运行类型: all/lint/scan/evaluate", "enum": ["all", "lint", "scan", "evaluate"]},
+                    "run_type": {
+                        "type": "string",
+                        "description": "运行类型: all/lint/scan/evaluate",
+                        "enum": ["all", "lint", "scan", "evaluate"],
+                    },
                 },
                 "required": ["dataset_id"],
             },
@@ -173,7 +199,11 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "template": {"type": "string", "description": "Prompt模板文本"},
-                    "session_id": {"type": "string", "description": "会话ID(启用炎症级联, 跨轮对话累积风险)", "default": ""},
+                    "session_id": {
+                        "type": "string",
+                        "description": "会话ID(启用炎症级联, 跨轮对话累积风险)",
+                        "default": "",
+                    },
                 },
                 "required": ["template"],
             },
@@ -197,7 +227,11 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "template": {"type": "string", "description": "Prompt模板文本"},
-                    "model": {"type": "string", "description": "目标模型(如gpt-4o/deepseek/qwen/pangu)", "default": "default"},
+                    "model": {
+                        "type": "string",
+                        "description": "目标模型(如gpt-4o/deepseek/qwen/pangu)",
+                        "default": "default",
+                    },
                     "compare": {"type": "boolean", "description": "多模型成本对比模式", "default": False},
                 },
                 "required": ["template"],
@@ -238,8 +272,25 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "prompt": {"type": "string", "description": "待优化的Prompt文本"},
-                    "metric": {"type": "string", "enum": ["exact_match", "contains_match", "regex_match", "lint_score", "llm_judge", "pangu_judge"], "description": "Feedback metric类型", "default": "lint_score"},
-                    "auto": {"type": "string", "enum": ["light", "medium", "heavy"], "description": "优化预算(light=6/medium=12/heavy=18候选)", "default": "light"},
+                    "metric": {
+                        "type": "string",
+                        "enum": [
+                            "exact_match",
+                            "contains_match",
+                            "regex_match",
+                            "lint_score",
+                            "llm_judge",
+                            "pangu_judge",
+                        ],
+                        "description": "Feedback metric类型",
+                        "default": "lint_score",
+                    },
+                    "auto": {
+                        "type": "string",
+                        "enum": ["light", "medium", "heavy"],
+                        "description": "优化预算(light=6/medium=12/heavy=18候选)",
+                        "default": "light",
+                    },
                     "predictors": {"type": "string", "description": "预测器名称(逗号分隔)", "default": "main"},
                 },
                 "required": ["prompt"],
@@ -277,7 +328,11 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "flow_name": {"type": "string", "enum": ["lint-scan-flow", "gepa-optimize-flow"], "description": "预设Flow名称"},
+                    "flow_name": {
+                        "type": "string",
+                        "enum": ["lint-scan-flow", "gepa-optimize-flow"],
+                        "description": "预设Flow名称",
+                    },
                     "text": {"type": "string", "description": "输入文本"},
                 },
                 "required": ["flow_name", "text"],
@@ -342,7 +397,11 @@ def _handle_tools_list(id_val: Any) -> str:
                 "properties": {
                     "event": {"type": "string", "description": "事件类型(lint_failed/eval_passed/gepa_improved等)"},
                     "variables": {"type": "string", "description": "JSON格式的模板变量"},
-                    "webhook_type": {"type": "string", "description": "通知类型(dingtalk/feishu/slack/webhook)", "default": "webhook"},
+                    "webhook_type": {
+                        "type": "string",
+                        "description": "通知类型(dingtalk/feishu/slack/webhook)",
+                        "default": "webhook",
+                    },
                     "webhook_url": {"type": "string", "description": "Webhook URL"},
                     "secret": {"type": "string", "description": "签名密钥(可选)"},
                 },
@@ -365,7 +424,12 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "results": {"type": "string", "description": "JSON格式的lint/scan/eval结果"},
-                    "result_type": {"type": "string", "enum": ["lint", "scan", "eval"], "description": "结果类型", "default": "lint"},
+                    "result_type": {
+                        "type": "string",
+                        "enum": ["lint", "scan", "eval"],
+                        "description": "结果类型",
+                        "default": "lint",
+                    },
                     "output_path": {"type": "string", "description": "输出SARIF文件路径"},
                 },
                 "required": ["results"],
@@ -391,7 +455,12 @@ def _handle_tools_list(id_val: Any) -> str:
                 "properties": {
                     "ours_text": {"type": "string", "description": "我方Prompt文本"},
                     "theirs_text": {"type": "string", "description": "他方Prompt文本"},
-                    "strategy": {"type": "string", "enum": ["prefer_newer", "prefer_longer", "union"], "description": "合并策略", "default": "prefer_newer"},
+                    "strategy": {
+                        "type": "string",
+                        "enum": ["prefer_newer", "prefer_longer", "union"],
+                        "description": "合并策略",
+                        "default": "prefer_newer",
+                    },
                 },
                 "required": ["ours_text", "theirs_text"],
             },
@@ -427,7 +496,12 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "output_path": {"type": "string", "description": "输出OTLP JSON文件路径"},
-                    "format": {"type": "string", "enum": ["otlp", "json", "tree"], "description": "导出格式", "default": "otlp"},
+                    "format": {
+                        "type": "string",
+                        "enum": ["otlp", "json", "tree"],
+                        "description": "导出格式",
+                        "default": "otlp",
+                    },
                 },
                 "required": [],
             },
@@ -482,7 +556,19 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "攻击文本"},
-                    "attack_type": {"type": "string", "description": "攻击类型(如injection/sql_injection)", "enum": ["injection", "sql_injection", "xss", "ssrf", "command_injection", "path_traversal", "other"]},
+                    "attack_type": {
+                        "type": "string",
+                        "description": "攻击类型(如injection/sql_injection)",
+                        "enum": [
+                            "injection",
+                            "sql_injection",
+                            "xss",
+                            "ssrf",
+                            "command_injection",
+                            "path_traversal",
+                            "other",
+                        ],
+                    },
                 },
                 "required": ["text", "attack_type"],
             },
@@ -517,7 +603,12 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "text": {"type": "string", "description": "待消毒的Prompt文本"},
-                    "level": {"type": "string", "description": "消毒级别(none/standard/strict)", "enum": ["none", "standard", "strict"], "default": "standard"},
+                    "level": {
+                        "type": "string",
+                        "description": "消毒级别(none/standard/strict)",
+                        "enum": ["none", "standard", "strict"],
+                        "default": "standard",
+                    },
                 },
                 "required": ["text"],
             },
@@ -551,8 +642,16 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "model_type": {"type": "string", "description": "模型类型(pangu/chatglm/qwen等)", "default": "pangu"},
-                    "instance_type": {"type": "string", "description": "部署规格(如Ascend910/V100)", "default": "Ascend910"},
+                    "model_type": {
+                        "type": "string",
+                        "description": "模型类型(pangu/chatglm/qwen等)",
+                        "default": "pangu",
+                    },
+                    "instance_type": {
+                        "type": "string",
+                        "description": "部署规格(如Ascend910/V100)",
+                        "default": "Ascend910",
+                    },
                     "region": {"type": "string", "description": "区域(如cn-north-4)", "default": "cn-north-4"},
                 },
                 "required": [],
@@ -721,7 +820,12 @@ def _handle_tools_list(id_val: Any) -> str:
                     "text": {"type": "string", "description": "文本内容"},
                     "image_width": {"type": "integer", "description": "图像宽度(像素)", "default": 0},
                     "image_height": {"type": "integer", "description": "图像高度(像素)", "default": 0},
-                    "image_detail": {"type": "string", "enum": ["auto", "low", "high"], "description": "图像细节级别", "default": "auto"},
+                    "image_detail": {
+                        "type": "string",
+                        "enum": ["auto", "low", "high"],
+                        "description": "图像细节级别",
+                        "default": "auto",
+                    },
                     "audio_duration": {"type": "number", "description": "音频时长(秒)", "default": 0},
                     "video_duration": {"type": "number", "description": "视频时长(秒)", "default": 0},
                     "video_fps": {"type": "integer", "description": "视频帧率", "default": 1},
@@ -746,8 +850,18 @@ def _handle_tools_list(id_val: Any) -> str:
                 "type": "object",
                 "properties": {
                     "score": {"type": "integer", "description": "安全评分(0-100)", "default": 80},
-                    "grade": {"type": "string", "enum": ["A", "B", "C", "D", "F"], "description": "安全等级", "default": "B"},
-                    "theme": {"type": "string", "enum": ["light", "dark", "huawei"], "description": "主题", "default": "light"},
+                    "grade": {
+                        "type": "string",
+                        "enum": ["A", "B", "C", "D", "F"],
+                        "description": "安全等级",
+                        "default": "B",
+                    },
+                    "theme": {
+                        "type": "string",
+                        "enum": ["light", "dark", "huawei"],
+                        "description": "主题",
+                        "default": "light",
+                    },
                 },
                 "required": [],
             },
@@ -791,8 +905,16 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "rule_id": {"type": "string", "description": "Lint规则ID(如P121/P146等)", "enum": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"]},
-                    "scene": {"type": "string", "description": "应用场景(如chatbot/card/extension)", "default": "general"},
+                    "rule_id": {
+                        "type": "string",
+                        "description": "Lint规则ID(如P121/P146等)",
+                        "enum": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"],
+                    },
+                    "scene": {
+                        "type": "string",
+                        "description": "应用场景(如chatbot/card/extension)",
+                        "default": "general",
+                    },
                 },
                 "required": ["rule_id"],
             },
@@ -803,7 +925,11 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "category": {"type": "string", "description": "按类别过滤(如security/structure/performance)", "default": ""},
+                    "category": {
+                        "type": "string",
+                        "description": "按类别过滤(如security/structure/performance)",
+                        "default": "",
+                    },
                     "include_owasp": {"type": "boolean", "description": "包含OWASP映射", "default": True},
                 },
                 "required": [],
@@ -817,7 +943,11 @@ def _handle_tools_list(id_val: Any) -> str:
                 "properties": {
                     "text": {"type": "string", "description": "LLM输出文本"},
                     "context": {"type": "string", "description": "原始输入(用于相关性检测)", "default": ""},
-                    "scanners": {"type": "string", "description": "启用扫描器(逗号分隔): no_refusal,bias,toxicity,relevance,factual_consistency,citation", "default": ""},
+                    "scanners": {
+                        "type": "string",
+                        "description": "启用扫描器(逗号分隔): no_refusal,bias,toxicity,relevance,factual_consistency,citation",
+                        "default": "",
+                    },
                 },
                 "required": ["text"],
             },
@@ -880,7 +1010,11 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "template_type": {"type": "string", "enum": ["ai_inference", "conversation", "embedding", "content_moderation"], "description": "模板类型"},
+                    "template_type": {
+                        "type": "string",
+                        "enum": ["ai_inference", "conversation", "embedding", "content_moderation"],
+                        "description": "模板类型",
+                    },
                     "name": {"type": "string", "description": "函数名称", "default": ""},
                     "description": {"type": "string", "description": "函数描述", "default": ""},
                 },
@@ -932,7 +1066,11 @@ def _handle_tools_list(id_val: Any) -> str:
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "module": {"type": "string", "description": "模块名(默认ai_prompt_toolkit.linter.rules)", "default": "ai_prompt_toolkit.linter.rules"},
+                    "module": {
+                        "type": "string",
+                        "description": "模块名(默认ai_prompt_toolkit.linter.rules)",
+                        "default": "ai_prompt_toolkit.linter.rules",
+                    },
                 },
             },
         },
@@ -979,15 +1117,19 @@ def _handle_resources_list(id_val: Any) -> str:
 def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
     uri = params.get("uri", "")
     if uri == "prompt://templates":
-        from ai_prompt_toolkit.cli_helpers import discover_templates
         scenarios_dir = Path(__file__).parent.parent.parent / "_scenarios"
         templates = []
         if scenarios_dir.exists():
             for tpl in sorted(scenarios_dir.rglob("*.md")):
                 templates.append({"name": tpl.stem, "path": str(tpl), "category": tpl.parent.name})
-        return _make_response(id_val, {
-            "contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(templates, ensure_ascii=False)}]
-        })
+        return _make_response(
+            id_val,
+            {
+                "contents": [
+                    {"uri": uri, "mimeType": "application/json", "text": json.dumps(templates, ensure_ascii=False)}
+                ]
+            },
+        )
     elif uri == "prompt://rules":
         rules = []
         for i in range(1, 131):
@@ -997,21 +1139,32 @@ def _handle_resources_read(id_val: Any, params: dict[str, Any]) -> str:
             rules.append({"rule_id": f"INJ-ZH-{i:03d}", "category": "security_zh"})
         for r in ["UNI-001", "UNI-002", "UNI-003", "CANARY-001", "CANARY-002", "CANARY-003"]:
             rules.append({"rule_id": r, "category": "unicode_canary"})
-        return _make_response(id_val, {
-            "contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(rules, ensure_ascii=False)}]
-        })
+        return _make_response(
+            id_val,
+            {"contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps(rules, ensure_ascii=False)}]},
+        )
     elif uri == "prompt://datasets":
         from ai_prompt_toolkit.dataset import DatasetStore
+
         try:
             store = DatasetStore()
-            datasets, total = store.list_datasets()
+            datasets, _total = store.list_datasets()
             data = [{"id": d.dataset_id, "name": d.name, "cases": d.case_count} for d in datasets]
             store.close()
         except Exception:
             data = []
-        return _make_response(id_val, {
-            "contents": [{"uri": uri, "mimeType": "application/json", "text": json.dumps({"total": len(data), "datasets": data}, ensure_ascii=False)}]
-        })
+        return _make_response(
+            id_val,
+            {
+                "contents": [
+                    {
+                        "uri": uri,
+                        "mimeType": "application/json",
+                        "text": json.dumps({"total": len(data), "datasets": data}, ensure_ascii=False),
+                    }
+                ]
+            },
+        )
     return _make_error(id_val, -32602, f"Unknown resource URI: {uri}")
 
 
@@ -1101,6 +1254,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
 
 def _check_auth(params: dict[str, Any]) -> str | None:
     import os
+
     expected_key = os.getenv("PROMPT_MCP_API_KEY", "")
     if not expected_key:
         return None
@@ -1127,9 +1281,9 @@ def _handle_tool_call(id_val: Any, params: dict[str, Any]) -> str:
             return _make_error(id_val, -32601, f"Unknown tool: {tool_name}")
         result = handler(arguments)
 
-        return _make_response(id_val, {
-            "content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, indent=2)}]
-        })
+        return _make_response(
+            id_val, {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False, indent=2)}]}
+        )
     except Exception as e:
         return _make_error(id_val, -32603, f"Tool execution error: {e}")
 
@@ -1151,8 +1305,11 @@ def _tool_lint(args: dict[str, Any]) -> dict[str, Any]:
         "score": result.score,
         "findings_count": result.failed_count,
         "findings": [
-            {"rule_id": f.rule_id, "severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity),
-             "description": f.description}
+            {
+                "rule_id": f.rule_id,
+                "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
+                "description": f.description,
+            }
             for f in result.findings
         ],
     }
@@ -1169,11 +1326,11 @@ def _tool_lint(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_scan(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
-    from ai_prompt_toolkit.security.pii_detector import PIIDetector
     from ai_prompt_toolkit.security.defender import PromptDefender
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
     from ai_prompt_toolkit.security.unicode_guard import scan_unicode_and_canary
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     file_path = Path(args["file_path"])
     if not file_path.exists():
@@ -1202,16 +1359,20 @@ def _tool_scan(args: dict[str, Any]) -> dict[str, Any]:
         "risk_score": defense.risk_score,
         "findings_count": len(findings),
         "findings": [
-            {"rule_id": f.rule_id, "severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity),
-             "description": f.description}
+            {
+                "rule_id": f.rule_id,
+                "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
+                "description": f.description,
+            }
             for f in findings[:20]
         ],
     }
 
 
 def _tool_judge(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.ab_test.judge import create_judge
     import asyncio
+
+    from ai_prompt_toolkit.ab_test.judge import create_judge
 
     question = args["question"]
     response = args["response"]
@@ -1231,7 +1392,9 @@ def _tool_judge(args: dict[str, Any]) -> dict[str, Any]:
             "results": [r.to_dict() for r in results],
             "overall_score": round(
                 sum(r.score * r.dimension.weight for r in results) / max(sum(r.dimension.weight for r in results), 1), 2
-            ) if results else 0,
+            )
+            if results
+            else 0,
         }
 
 
@@ -1249,12 +1412,11 @@ def _tool_canary_inject(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_canary_check(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.security.unicode_guard import check_canary_leakage, CanaryToken
+    from ai_prompt_toolkit.security.unicode_guard import CanaryToken, check_canary_leakage
 
     output = args["output"]
     tokens_data = json.loads(args["tokens"]) if isinstance(args["tokens"], str) else args["tokens"]
-    tokens = [CanaryToken(token_id=t.get("token_id", ""), token_string=t.get("token_string", ""))
-              for t in tokens_data]
+    tokens = [CanaryToken(token_id=t.get("token_id", ""), token_string=t.get("token_string", "")) for t in tokens_data]
 
     findings = check_canary_leakage(output, tokens)
     return {
@@ -1269,6 +1431,7 @@ def _validate_tools_dispatch_sync() -> None:
     for tool_name in dispatch:
         if tool_name not in tools_list_str:
             import logging as _l
+
             _l.getLogger(__name__).warning(f"MCP工具dispatch与tools_list不同步: {tool_name}在dispatch但不在tools_list")
 
 
@@ -1317,6 +1480,7 @@ def run_server() -> None:
 
 def _tool_evaluate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.evaluator import evaluate_template
+
     template = args.get("template", "")
     dimensions_str = args.get("dimensions", "")
     dimensions = [d.strip() for d in dimensions_str.split(",") if d.strip()] if dimensions_str else None
@@ -1331,6 +1495,7 @@ def _tool_evaluate(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_dataset_run(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.dataset import DatasetStore
+
     dataset_id = args.get("dataset_id", "")
     run_type = args.get("run_type", "all")
     store = DatasetStore()
@@ -1350,10 +1515,10 @@ def _tool_dataset_run(args: dict[str, Any]) -> dict[str, Any]:
 def _tool_scorecard(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.structural_analyzer import check_structural
     from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     template = args.get("template", "")
     if not template.strip():
@@ -1361,7 +1526,7 @@ def _tool_scorecard(args: dict[str, Any]) -> dict[str, Any]:
 
     linter = PromptLinter()
     lint_result = linter.lint("mcp", template)
-    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+    lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
     detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
     sec_findings = detector.detect(template)
@@ -1376,7 +1541,7 @@ def _tool_scorecard(args: dict[str, Any]) -> dict[str, Any]:
         sec_findings.append(struct_finding)
 
     all_findings = list(lint_findings) + sec_findings
-    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
     return scorecard.to_dict()
 
 
@@ -1395,12 +1560,12 @@ def _tool_engine(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
-    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
-    from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
     from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     template = args.get("template", "")
     compact = args.get("compact", False)
@@ -1410,7 +1575,7 @@ def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
 
     linter = PromptLinter()
     lint_result = linter.lint("mcp", template)
-    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+    lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
     detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
     sec_findings = detector.detect(template)
@@ -1425,7 +1590,7 @@ def _tool_badge(args: dict[str, Any]) -> dict[str, Any]:
         sec_findings.append(struct_finding)
 
     all_findings = list(lint_findings) + sec_findings
-    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
     svg = generate_scorecard_badge(scorecard, compact=compact, theme=theme)
     return {
@@ -1457,9 +1622,9 @@ def _tool_token_analyze(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_redteam(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
-    from ai_prompt_toolkit.redteam.detector import LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.detector import ComplianceDetector, LeakageDetector, RefusalDetector
     from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
 
     template = args["template"]
     probes_str = args.get("probes", "")
@@ -1496,7 +1661,7 @@ def _tool_redteam(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_compile(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+    from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
     template = args["template"]
     model = args.get("model", "")
@@ -1524,7 +1689,10 @@ def _tool_gepa_optimize(args: dict[str, Any]) -> dict[str, Any]:
     predictor_names = [p.strip() for p in predictors_str.split(",")]
 
     result = gepa_optimize(
-        prompt, metric=metric, auto=auto, predictor_names=predictor_names,
+        prompt,
+        metric=metric,
+        auto=auto,
+        predictor_names=predictor_names,
     )
     return result.to_dict()
 
@@ -1549,11 +1717,12 @@ def _tool_prompt_version_save(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_contest_eval(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.huawei_eval import evaluate_contest_readiness
+
     return evaluate_contest_readiness(args["prompt"])
 
 
 def _tool_flow_run(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.flow_dag import FlowExecutor, create_lint_scan_flow, create_gepa_optimize_flow
+    from ai_prompt_toolkit.flow_dag import FlowExecutor, create_gepa_optimize_flow, create_lint_scan_flow
 
     flow_name = args["flow_name"]
     text = args["text"]
@@ -1711,7 +1880,7 @@ def _tool_plugin_list(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_sarif_report(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.sarif_report import lint_results_to_sarif, scan_results_to_sarif, eval_results_to_sarif
+    from ai_prompt_toolkit.sarif_report import eval_results_to_sarif, lint_results_to_sarif, scan_results_to_sarif
 
     results_json = args.get("results", "[]")
     result_type = args.get("result_type", "lint")
@@ -1759,7 +1928,8 @@ def _tool_prompt_diff(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_prompt_merge(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.prompt_diff import prompt_merge as do_merge, prompt_hash
+    from ai_prompt_toolkit.prompt_diff import prompt_hash
+    from ai_prompt_toolkit.prompt_diff import prompt_merge as do_merge
 
     ours_text = args.get("ours_text", "")
     theirs_text = args.get("theirs_text", "")
@@ -1778,7 +1948,7 @@ def _tool_prompt_merge(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_template_render(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.prompt_template import render_template, extract_variables
+    from ai_prompt_toolkit.prompt_template import extract_variables, render_template
 
     template = args.get("template", "")
     variables_json = args.get("variables", "{}")
@@ -1840,12 +2010,14 @@ def _tool_trace_export(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_cache_stats(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_cache import get_cache
+
     cache = get_cache()
     return cache.stats()
 
 
 def _tool_cache_lookup(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.prompt_cache import get_cache, PromptCache
+    from ai_prompt_toolkit.prompt_cache import PromptCache, get_cache
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -1859,6 +2031,7 @@ def _tool_cache_lookup(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_cache_invalidate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_cache import get_cache
+
     cache = get_cache()
     if args.get("all", False):
         cache.clear()
@@ -1872,6 +2045,7 @@ def _tool_cache_invalidate(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_attack_vault_check(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.attack_vault import get_attack_vault
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -1890,18 +2064,20 @@ def _tool_attack_vault_check(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_attack_vault_learn(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.attack_vault import get_attack_vault
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
     attack_type = args.get("attack_type", "unknown")
     vault = get_attack_vault()
-    sig = vault.learn(text, attack_type=attack_type)
+    vault.learn(text, attack_type=attack_type)
     return {"status": "learned", "attack_type": attack_type, "vault_size": vault.size}
 
 
 def _tool_pangu_compat_check(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.linter.rules_p096_p100 import run_checks_p096_p100
     from ai_prompt_toolkit.linter.rules import _RULE_MAP
+    from ai_prompt_toolkit.linter.rules_p096_p100 import run_checks_p096_p100
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -1925,7 +2101,8 @@ def _tool_pangu_compat_check(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_pangu_safety_audit(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.linter.rules_p096_p100 import check_p100, _PANGU_CTX
+    from ai_prompt_toolkit.linter.rules_p096_p100 import _PANGU_CTX, check_p100
+
     text = args.get("text", "")
     threshold = args.get("threshold", 0.8)
     if not text:
@@ -1941,7 +2118,13 @@ def _tool_pangu_safety_audit(args: dict[str, Any]) -> dict[str, Any]:
         audit_items.append({"item": "safety_guardrail", "status": "pass", "detail": "安全护栏已声明"})
     else:
         audit_items.append({"item": "safety_guardrail", "status": "fail", "detail": "安全护栏未声明"})
-    audit_items.append({"item": "safety_score", "status": "pass" if safety_score >= threshold else "fail", "detail": f"安全评分{safety_score}(阈值{threshold})"})
+    audit_items.append(
+        {
+            "item": "safety_score",
+            "status": "pass" if safety_score >= threshold else "fail",
+            "detail": f"安全评分{safety_score}(阈值{threshold})",
+        }
+    )
     return {
         "is_pangu_prompt": is_pangu,
         "safety_score": safety_score,
@@ -1952,12 +2135,15 @@ def _tool_pangu_safety_audit(args: dict[str, Any]) -> dict[str, Any]:
             "rule_id": finding.rule_id,
             "description": finding.description,
             "remediation": finding.remediation,
-        } if finding else None,
+        }
+        if finding
+        else None,
     }
 
 
 def _tool_prompt_sanitize(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_sanitizer import sanitize_prompt
+
     text = args.get("text", "")
     level = args.get("level", "standard")
     if not text:
@@ -1974,6 +2160,7 @@ def _tool_prompt_sanitize(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_prompt_auto_optimize(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+
     text = args.get("text", "")
     max_iter = args.get("max_iterations", 3)
     if not text:
@@ -1993,6 +2180,7 @@ def _tool_eval_matrix_compare(args: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(prompts, dict) or not prompts:
         return {"error": "prompts must be a non-empty JSON object"}
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
     linter = PromptLinter()
     cells = []
     for name, content in prompts.items():
@@ -2058,7 +2246,7 @@ payload = {{
     "model": "pangu",
     "messages": [
         {{"role": "system", "content": "You are a helpful assistant."}},
-        {{"role": "user", "content": {repr(prompt)}}}
+        {{"role": "user", "content": {prompt!r}}}
     ],
     "temperature": 0.7,
     "max_tokens": 2048
@@ -2180,11 +2368,16 @@ from huaweicloudsdkcore.auth.credentials import BasicCredentials
 credentials = BasicCredentials(ak, sk, project_id='{region}')
 print('认证初始化完成，建议使用AK/SK而非密码方式')
 """,
-            "security": ["不推荐密码认证方式，优先使用AK/SK", "如必须使用密码，请通过DEW(数据加密服务)获取", "Token有效期24小时，需定时刷新", "建议使用IAM代理而非主账号"],
+            "security": [
+                "不推荐密码认证方式，优先使用AK/SK",
+                "如必须使用密码，请通过DEW(数据加密服务)获取",
+                "Token有效期24小时，需定时刷新",
+                "建议使用IAM代理而非主账号",
+            ],
         },
         "agency": {
             "description": "委托认证（跨账号授权）",
-            "code": f"""import os
+            "code": """import os
 from huaweicloudsdkcore.auth.credentials import GlobalCredentials
 
 ak = os.getenv('HWCLOUD_AK')
@@ -2213,6 +2406,7 @@ print('委托认证初始化完成，可通过agency方式跨账号访问')
 
 def _tool_probe_run(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import ProbeRunner
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2224,12 +2418,14 @@ def _tool_probe_run(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_probe_list(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.probe_framework import list_probes, list_detectors
+    from ai_prompt_toolkit.probe_framework import list_detectors, list_probes
+
     return {"probes": list_probes(), "detectors": list_detectors()}
 
 
 def _tool_probe_detect(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2248,6 +2444,7 @@ def _tool_probe_detect(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_probe_owasp_report(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import ProbeRunner
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2258,6 +2455,7 @@ def _tool_probe_owasp_report(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_probe_detector_run(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2267,7 +2465,7 @@ def _tool_probe_detector_run(args: dict[str, Any]) -> dict[str, Any]:
         detector_names = [d.strip() for d in detectors_str.split(",") if d.strip()]
         invalid = [n for n in detector_names if n not in _DETECTOR_REGISTRY]
         if invalid:
-            return {"error": f"Unknown detectors: {', '.join(invalid)}", "available": list(sorted(_DETECTOR_REGISTRY.keys()))}
+            return {"error": f"Unknown detectors: {', '.join(invalid)}", "available": sorted(_DETECTOR_REGISTRY.keys())}
         detectors = [_DETECTOR_REGISTRY[n]() for n in detector_names]
     else:
         detectors = [_DETECTOR_REGISTRY[n]() for n in sorted(_DETECTOR_REGISTRY)]
@@ -2275,7 +2473,11 @@ def _tool_probe_detector_run(args: dict[str, Any]) -> dict[str, Any]:
     total_detected = 0
     for det in detectors:
         result = det.detect("", text)
-        entry = {"detector": det.name, "is_detected": result.get("is_detected", False), "confidence": result.get("confidence", 0.0)}
+        entry = {
+            "detector": det.name,
+            "is_detected": result.get("is_detected", False),
+            "confidence": result.get("confidence", 0.0),
+        }
         if verbose:
             entry["details"] = result
         if result.get("is_detected"):
@@ -2293,6 +2495,7 @@ def _tool_probe_detector_run(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_probe_owasp_summary(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import ProbeRunner
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2313,8 +2516,13 @@ def _tool_probe_owasp_summary(args: dict[str, Any]) -> dict[str, Any]:
     for ref, info in full_owasp.get("owasp_findings", {}).items():
         if info.get("total_findings", 0) > 0:
             for finding in info.get("findings", [])[:1]:
-                top_findings.append({"owasp_ref": ref, "name": info.get("name", ""), "severity": finding.get("severity", "unknown")})
-    top_findings = sorted(top_findings, key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x.get("severity", "medium"), 2))[:3]
+                top_findings.append(
+                    {"owasp_ref": ref, "name": info.get("name", ""), "severity": finding.get("severity", "unknown")}
+                )
+    top_findings = sorted(
+        top_findings,
+        key=lambda x: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(x.get("severity", "medium"), 2),
+    )[:3]
     return {
         "risk_level": risk_level,
         "risk_score": risk_score,
@@ -2322,12 +2530,17 @@ def _tool_probe_owasp_summary(args: dict[str, Any]) -> dict[str, Any]:
         "total_categories": 10,
         "compliance_pct": round((10 - affected) / 10 * 100, 1),
         "top_3_findings": top_findings,
-        "recommendation": "全面加固" if risk_level in ("CRITICAL", "HIGH") else "针对性修复" if risk_level == "MEDIUM" else "持续监控",
+        "recommendation": "全面加固"
+        if risk_level in ("CRITICAL", "HIGH")
+        else "针对性修复"
+        if risk_level == "MEDIUM"
+        else "持续监控",
     }
 
 
 def _tool_probe_ethics_scan(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY
+
     text = args.get("text", "")
     if not text:
         return {"error": "text is required"}
@@ -2344,7 +2557,9 @@ def _tool_probe_ethics_scan(args: dict[str, Any]) -> dict[str, Any]:
     is_compliant = overall_score >= threshold
     recommendations = []
     if ethics_result.get("is_detected"):
-        recommendations.append(f"[伦理对齐] 检测到有害内容关键词: {', '.join(ethics_result.get('harm_keywords_found', [])[:3])}")
+        recommendations.append(
+            f"[伦理对齐] 检测到有害内容关键词: {', '.join(ethics_result.get('harm_keywords_found', [])[:3])}"
+        )
         recommendations.append("建议添加安全护栏声明，明确禁止生成有害/违法/不道德内容")
     if bias_result.get("is_detected"):
         recommendations.append(f"[偏见公平] 检测到偏见表述模式({bias_result.get('bias_matches_count', 0)}处)")
@@ -2374,7 +2589,7 @@ def _tool_probe_ethics_scan(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_huaweicloud_compliance(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
-    from ai_prompt_toolkit.types import Finding, Severity
+
     text = args.get("text", "")
     template_id = args.get("template_id", "")
     owasp_pct = args.get("owasp_compliance_pct", 0.0)
@@ -2382,11 +2597,10 @@ def _tool_huaweicloud_compliance(args: dict[str, Any]) -> dict[str, Any]:
         return {"error": "text is required"}
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
     from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    all_findings: list[Finding] = []
-    for f in InjectionDetector().detect(text):
-        all_findings.append(f)
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+
+    all_findings: list[Finding] = list(InjectionDetector().detect(text))
     pii_f = PIIDetector().check(text)
     if pii_f:
         all_findings.append(pii_f)
@@ -2402,6 +2616,7 @@ def _tool_huaweicloud_compliance(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_prompt_semantic_diff(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_diff import semantic_diff
+
     old_text = args.get("old_text", "")
     new_text = args.get("new_text", "")
     if not old_text or not new_text:
@@ -2412,6 +2627,7 @@ def _tool_prompt_semantic_diff(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_multimodal_token_estimate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.multimodal_token_counter import MultimodalTokenCounter
+
     text = args.get("text", "")
     image_width = args.get("image_width", 0)
     image_height = args.get("image_height", 0)
@@ -2434,8 +2650,11 @@ def _tool_multimodal_token_estimate(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_config_hot_reload_status(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.config import get_watcher
+
     watcher = get_watcher()
-    watches = [{"path": str(ws.path), "mtime": ws.mtime, "content_hash": ws.content_hash[:8]} for ws in watcher._watches]
+    watches = [
+        {"path": str(ws.path), "mtime": ws.mtime, "content_hash": ws.content_hash[:8]} for ws in watcher._watches
+    ]
     return {
         "running": watcher._running,
         "watch_count": len(watcher._watches),
@@ -2446,8 +2665,9 @@ def _tool_config_hot_reload_status(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_badge_generate_themed(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.security.badge import generate_score_svg, generate_scorecard_badge, Theme
+    from ai_prompt_toolkit.security.badge import generate_score_svg
     from ai_prompt_toolkit.security.prompt_scorecard import Grade
+
     score = args.get("score", 80)
     grade_str = args.get("grade", "B")
     theme = args.get("theme", "light")
@@ -2466,15 +2686,30 @@ def _tool_harmonyos_arkui_check(args: dict[str, Any]) -> dict[str, Any]:
     if not text:
         return {"error": "text is required"}
     import re
-    arkui_keywords = re.compile(r'(?:ArkUI|ArkTS|Component|@Component|@Entry|@Builder|Row|Column|Text|Image|List|Grid|Tabs|Navigation|Swiper|@State|@Prop|@Link|@Watch|@Provide|@Consume)', re.IGNORECASE)
-    best_practice = re.compile(r'(?:组件.*推荐|component.*recommend|自定义组件|custom.*component|@Builder.*封装|@Extend|样式.*复用|style.*reuse|懒加载|lazy.*load|复用.*策略|reuse.*strategy)', re.IGNORECASE)
+
+    arkui_keywords = re.compile(
+        r"(?:ArkUI|ArkTS|Component|@Component|@Entry|@Builder|Row|Column|Text|Image|List|Grid|Tabs|Navigation|Swiper|@State|@Prop|@Link|@Watch|@Provide|@Consume)",
+        re.IGNORECASE,
+    )
+    best_practice = re.compile(
+        r"(?:组件.*推荐|component.*recommend|自定义组件|custom.*component|@Builder.*封装|@Extend|样式.*复用|style.*reuse|懒加载|lazy.*load|复用.*策略|reuse.*strategy)",
+        re.IGNORECASE,
+    )
     has_arkui = bool(arkui_keywords.search(text))
     has_best_practice = bool(best_practice.search(text))
     checks = []
     if has_arkui and not has_best_practice:
-        checks.append({"check": "ArkUI最佳实践缺失", "severity": "warn", "suggestion": "声明组件复用策略、懒加载、自定义组件封装等ArkUI最佳实践"})
-    if not re.search(r'@Component|@Entry', text) and has_arkui:
-        checks.append({"check": "ArkUI组件装饰器缺失", "severity": "warn", "suggestion": "使用@Component/@Entry装饰器声明组件"})
+        checks.append(
+            {
+                "check": "ArkUI最佳实践缺失",
+                "severity": "warn",
+                "suggestion": "声明组件复用策略、懒加载、自定义组件封装等ArkUI最佳实践",
+            }
+        )
+    if not re.search(r"@Component|@Entry", text) and has_arkui:
+        checks.append(
+            {"check": "ArkUI组件装饰器缺失", "severity": "warn", "suggestion": "使用@Component/@Entry装饰器声明组件"}
+        )
     return {"pass": len(checks) == 0, "has_arkui_context": has_arkui, "checks": checks}
 
 
@@ -2483,15 +2718,34 @@ def _tool_harmonyos_stage_model_check(args: dict[str, Any]) -> dict[str, Any]:
     if not text:
         return {"error": "text is required"}
     import re
-    stage_keywords = re.compile(r'(?:Stage|Ability|UIAbility|ExtensionAbility|onCreate|onDestroy|onWindowStageCreate|onForeground|onBackground|AbilityStage|Context|HAP|HSP)', re.IGNORECASE)
-    lifecycle_decl = re.compile(r'(?:生命周期|lifecycle|onCreate|onDestroy|onForeground|onBackground|onWindowStageCreate|状态.*管理|state.*manage)', re.IGNORECASE)
+
+    stage_keywords = re.compile(
+        r"(?:Stage|Ability|UIAbility|ExtensionAbility|onCreate|onDestroy|onWindowStageCreate|onForeground|onBackground|AbilityStage|Context|HAP|HSP)",
+        re.IGNORECASE,
+    )
+    lifecycle_decl = re.compile(
+        r"(?:生命周期|lifecycle|onCreate|onDestroy|onForeground|onBackground|onWindowStageCreate|状态.*管理|state.*manage)",
+        re.IGNORECASE,
+    )
     has_stage = bool(stage_keywords.search(text))
     has_lifecycle = bool(lifecycle_decl.search(text))
     checks = []
     if has_stage and not has_lifecycle:
-        checks.append({"check": "Stage模型生命周期声明缺失", "severity": "warn", "suggestion": "声明UIAbility生命周期回调(onCreate/onDestroy/onForeground/onBackground)"})
-    if has_stage and not re.search(r'Context|want|AbilityResult', text, re.IGNORECASE):
-        checks.append({"check": "Stage模型Ability交互声明缺失", "severity": "info", "suggestion": "声明Ability间交互方式(Context/want/AbilityResult)"})
+        checks.append(
+            {
+                "check": "Stage模型生命周期声明缺失",
+                "severity": "warn",
+                "suggestion": "声明UIAbility生命周期回调(onCreate/onDestroy/onForeground/onBackground)",
+            }
+        )
+    if has_stage and not re.search(r"Context|want|AbilityResult", text, re.IGNORECASE):
+        checks.append(
+            {
+                "check": "Stage模型Ability交互声明缺失",
+                "severity": "info",
+                "suggestion": "声明Ability间交互方式(Context/want/AbilityResult)",
+            }
+        )
     return {"pass": len(checks) == 0, "has_stage_context": has_stage, "checks": checks}
 
 
@@ -2500,33 +2754,57 @@ def _tool_harmonyos_distributed_check(args: dict[str, Any]) -> dict[str, Any]:
     if not text:
         return {"error": "text is required"}
     import re
-    dist_keywords = re.compile(r'(?:分布式|distributed|设备.*发现|device.*discover|数据.*迁移|data.*migrat|跨设备|cross.?device|流转|flow|协同|collaborat|Continuation|RemoteObject|DistributedData|DeviceManager)', re.IGNORECASE)
-    conflict_decl = re.compile(r'(?:冲突.*解决|conflict.*resolut|数据.*同步|data.*sync|一致性|consistency|锁|lock|互斥|mutex|仲裁|arbitrat|超时|timeout)', re.IGNORECASE)
+
+    dist_keywords = re.compile(
+        r"(?:分布式|distributed|设备.*发现|device.*discover|数据.*迁移|data.*migrat|跨设备|cross.?device|流转|flow|协同|collaborat|Continuation|RemoteObject|DistributedData|DeviceManager)",
+        re.IGNORECASE,
+    )
+    conflict_decl = re.compile(
+        r"(?:冲突.*解决|conflict.*resolut|数据.*同步|data.*sync|一致性|consistency|锁|lock|互斥|mutex|仲裁|arbitrat|超时|timeout)",
+        re.IGNORECASE,
+    )
     has_dist = bool(dist_keywords.search(text))
     has_conflict = bool(conflict_decl.search(text))
     checks = []
     if has_dist and not has_conflict:
-        checks.append({"check": "分布式冲突解决策略缺失", "severity": "warn", "suggestion": "声明数据同步策略、冲突解决机制、锁/互斥机制、超时处理"})
-    if has_dist and not re.search(r'Continuation|RemoteObject|DistributedData|DeviceManager', text, re.IGNORECASE):
-        checks.append({"check": "分布式API声明缺失", "severity": "info", "suggestion": "声明使用的分布式API(Continuation/RemoteObject/DistributedData/DeviceManager)"})
+        checks.append(
+            {
+                "check": "分布式冲突解决策略缺失",
+                "severity": "warn",
+                "suggestion": "声明数据同步策略、冲突解决机制、锁/互斥机制、超时处理",
+            }
+        )
+    if has_dist and not re.search(r"Continuation|RemoteObject|DistributedData|DeviceManager", text, re.IGNORECASE):
+        checks.append(
+            {
+                "check": "分布式API声明缺失",
+                "severity": "info",
+                "suggestion": "声明使用的分布式API(Continuation/RemoteObject/DistributedData/DeviceManager)",
+            }
+        )
     return {"pass": len(checks) == 0, "has_distributed_context": has_dist, "checks": checks}
 
 
 def _tool_harmonyos_template_generate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.harmonyos_templates import get_template
+
     rule_id = args.get("rule_id", "")
     scene = args.get("scene", "general")
     if not rule_id:
         return {"error": "rule_id is required"}
     template = get_template(rule_id)
     if template is None:
-        return {"error": f"No template found for rule {rule_id}", "available_rules": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"]}
+        return {
+            "error": f"No template found for rule {rule_id}",
+            "available_rules": ["P121", "P122", "P124", "P146", "P147", "P148", "P149", "P150"],
+        }
     return {"rule_id": rule_id, "scene": scene, "template": template, "language": "ArkTS"}
 
 
 def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.linter.rules import get_all_rules
     from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+
     category = args.get("category", "")
     include_owasp = args.get("include_owasp", True)
     rules = get_all_rules()
@@ -2544,7 +2822,20 @@ def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
                     "properties": {
                         "rule_id": {"type": "string", "pattern": "^P\\d{3}$"},
                         "name": {"type": "string"},
-                        "category": {"type": "string", "enum": ["structure", "security", "performance", "quality", "compliance", "agent", "rag", "harmonyos", "multimodal"]},
+                        "category": {
+                            "type": "string",
+                            "enum": [
+                                "structure",
+                                "security",
+                                "performance",
+                                "quality",
+                                "compliance",
+                                "agent",
+                                "rag",
+                                "harmonyos",
+                                "multimodal",
+                            ],
+                        },
                         "severity": {"type": "string", "enum": ["critical", "high", "medium", "low", "info"]},
                         "description": {"type": "string"},
                         "remediation": {"type": "string"},
@@ -2556,17 +2847,26 @@ def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
         },
     }
     if include_owasp:
-        schema["properties"]["rules"]["items"]["properties"]["owasp_refs"] = {"type": "array", "items": {"type": "string", "pattern": "^LLM\\d{2}$"}}
+        schema["properties"]["rules"]["items"]["properties"]["owasp_refs"] = {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^LLM\\d{2}$"},
+        }
     rules_data = []
     for r in rules:
         entry = r.to_dict()
         entry["auto_fixable"] = r.rule_id in AUTO_FIXABLE_RULES
         rules_data.append(entry)
-    return {"schema": schema, "rules": rules_data, "total_count": len(rules_data), "auto_fixable_count": sum(1 for r in rules if r.rule_id in AUTO_FIXABLE_RULES)}
+    return {
+        "schema": schema,
+        "rules": rules_data,
+        "total_count": len(rules_data),
+        "auto_fixable_count": sum(1 for r in rules if r.rule_id in AUTO_FIXABLE_RULES),
+    }
 
 
 def _tool_output_scan(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.security.output_scanners import OutputScanEngine
+
     text = args.get("text", "")
     context = args.get("context", "")
     scanners = args.get("scanners", "")
@@ -2589,7 +2889,12 @@ def _tool_output_scan(args: dict[str, Any]) -> dict[str, Any]:
 
 
 def _tool_deveco_config(args: dict[str, Any]) -> dict[str, Any]:
-    from ai_prompt_toolkit.linter.harmonyos_templates import generate_deveco_config, generate_deveco_build_hook, generate_deveco_workflow_yaml
+    from ai_prompt_toolkit.linter.harmonyos_templates import (
+        generate_deveco_build_hook,
+        generate_deveco_config,
+        generate_deveco_workflow_yaml,
+    )
+
     project_name = args.get("project_name", "MyHarmonyApp")
     bundle_name = args.get("bundle_name", "com.example.myapp")
     min_api = int(args.get("min_api", 12))
@@ -2615,6 +2920,7 @@ def _tool_deveco_config(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_rollback_safety_check(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.prompt_diff import rollback_safety_check
+
     old_text = args.get("old_text", "")
     new_text = args.get("new_text", "")
     result = rollback_safety_check(old_text, new_text)
@@ -2623,6 +2929,7 @@ def _tool_rollback_safety_check(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_html_report_generate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.html_report import generate_html_report
+
     findings = args.get("findings", [])
     target = args.get("target", "unknown")
     html = generate_html_report(findings, target)
@@ -2631,18 +2938,21 @@ def _tool_html_report_generate(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_weight_preset_list(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.evaluator import list_weight_presets
+
     presets = list_weight_presets()
     return {"presets": presets, "count": len(presets)}
 
 
 def _tool_fg_template_list(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.huawei_cloud.fg_template import list_fg_templates
+
     templates = list_fg_templates()
     return {"templates": templates, "count": len(templates)}
 
 
 def _tool_fg_template_generate(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.huawei_cloud.fg_template import get_fg_template
+
     template_type = args.get("template_type", "ai_inference")
     name = args.get("name", "")
     description = args.get("description", "")
@@ -2660,6 +2970,7 @@ def _tool_fg_template_generate(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_prompt_version_create(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+
     vm = PromptVersionManager()
     template_id = args.get("template_id", "")
     content = args.get("content", "")
@@ -2667,19 +2978,39 @@ def _tool_prompt_version_create(args: dict[str, Any]) -> dict[str, Any]:
     score = args.get("score", 0.0)
     grade = args.get("grade", "")
     pv = vm.create_version(template_id, content, author=author, score=score, grade=grade)
-    return {"version_id": pv.version_id, "template_id": template_id, "change_type": pv.change_type, "parent_version": pv.parent_version}
+    return {
+        "version_id": pv.version_id,
+        "template_id": template_id,
+        "change_type": pv.change_type,
+        "parent_version": pv.parent_version,
+    }
 
 
 def _tool_prompt_version_list(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+
     vm = PromptVersionManager()
     template_id = args.get("template_id", "")
     versions = vm.get_versions(template_id)
-    return {"template_id": template_id, "versions": [{"version_id": v.version_id, "change_type": v.change_type, "score": v.score, "grade": v.grade, "timestamp": v.timestamp} for v in versions], "count": len(versions)}
+    return {
+        "template_id": template_id,
+        "versions": [
+            {
+                "version_id": v.version_id,
+                "change_type": v.change_type,
+                "score": v.score,
+                "grade": v.grade,
+                "timestamp": v.timestamp,
+            }
+            for v in versions
+        ],
+        "count": len(versions),
+    }
 
 
 def _tool_prompt_version_diff(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
+
     vm = PromptVersionManager()
     template_id = args.get("template_id", "")
     v1 = args.get("version_id_1", "")
@@ -2694,15 +3025,18 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
     global _TOOL_DISPATCH
     import importlib
     import sys
+
     # 类身份保护: linter.rules 定义 LintRule/Finding 等核心类, in-process reload 会重建
     # 类对象, 导致 rule_loader/引擎等持有旧类引用的模块 isinstance 跨重载边界失效
     # (自定义规则被静默丢弃、RuleLoader 返回类型校验失败)。核心类模块不做 reload,
     # 仅热重载数据型扩展模块(rules_p*/owasp_mapping)——它们以 rule_id 为键把规则
     # 重新注册进现有 _RULE_MAP, 幂等且规则数稳定 255。核心类本身的变更需重启进程。
-    _CORE_IDENTITY_MODULES = frozenset({
-        "ai_prompt_toolkit.linter.rules",
-        "ai_prompt_toolkit.types",
-    })
+    _CORE_IDENTITY_MODULES = frozenset(
+        {
+            "ai_prompt_toolkit.linter.rules",
+            "ai_prompt_toolkit.types",
+        }
+    )
     module_name = args.get("module", "ai_prompt_toolkit.linter.rules")
     try:
         is_core = module_name in _CORE_IDENTITY_MODULES
@@ -2722,6 +3056,7 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
                 importlib.reload(owasp_mod)
         _TOOL_DISPATCH = None
         from ai_prompt_toolkit.linter.rules import get_all_rules
+
         rule_count = len(get_all_rules())
         result: dict[str, Any] = {"status": "reloaded", "module": module_name, "rule_count": rule_count}
         if is_core:
@@ -2733,6 +3068,7 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
 
 def _tool_test_suite_run(args: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.test_suite import load_test_suite, run_test_suite
+
     suite_path = args.get("suite_path", "")
     base_dir = args.get("base_dir", ".")
     if not suite_path:

@@ -7,9 +7,11 @@
 - 元数据: 时间戳/Lint分数/来源/标签
 - SQLite持久化
 """
+
 from __future__ import annotations
 
 import difflib
+import hashlib
 import json
 import logging
 import sqlite3
@@ -157,9 +159,8 @@ class PromptVersionStore:
         auto_lint: bool = False,
     ) -> PromptVersion:
         import hashlib
-        version_id = hashlib.sha256(
-            f"{prompt_name}:{content}:{time.time()}".encode()
-        ).hexdigest()[:12]
+
+        version_id = hashlib.sha256(f"{prompt_name}:{content}:{time.time()}".encode()).hexdigest()[:12]
 
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -169,6 +170,7 @@ class PromptVersionStore:
         if auto_lint and score == 0.0:
             try:
                 from ai_prompt_toolkit.linter.linter import PromptLinter
+
                 linter = PromptLinter()
                 result = linter.lint(f"{prompt_name}.prompt", content)
                 final_score = result.score
@@ -211,9 +213,7 @@ class PromptVersionStore:
 
     def load(self, version_id: str) -> PromptVersion | None:
         conn = self._get_conn()
-        row = conn.execute(
-            "SELECT * FROM prompt_versions WHERE version_id = ?", (version_id,)
-        ).fetchone()
+        row = conn.execute("SELECT * FROM prompt_versions WHERE version_id = ?", (version_id,)).fetchone()
         if not row:
             return None
         return self._row_to_version(row)
@@ -276,8 +276,9 @@ class PromptVersionStore:
         lines_a = a.content.splitlines(keepends=True)
         lines_b = b.content.splitlines(keepends=True)
 
-        diff_lines = list(difflib.unified_diff(lines_a, lines_b, lineterm="",
-                                                fromfile=version_a_id, tofile=version_b_id))
+        diff_lines = list(
+            difflib.unified_diff(lines_a, lines_b, lineterm="", fromfile=version_a_id, tofile=version_b_id)
+        )
         diff_text = "\n".join(diff_lines)
 
         matcher = difflib.SequenceMatcher(None, a.content, b.content)
@@ -431,7 +432,10 @@ class PromptVersionStore:
             "SELECT branch_name, head_version_id, created_at FROM version_branches WHERE prompt_name = ? ORDER BY created_at",
             (prompt_name,),
         ).fetchall()
-        return [{"branch_name": r["branch_name"], "head_version_id": r["head_version_id"], "created_at": r["created_at"]} for r in rows]
+        return [
+            {"branch_name": r["branch_name"], "head_version_id": r["head_version_id"], "created_at": r["created_at"]}
+            for r in rows
+        ]
 
     def search_by_content_hash(self, content: str) -> list[PromptVersion]:
         content_hash = hashlib.sha256(content.encode()).hexdigest()[:16]

@@ -1,4 +1,5 @@
 """统一异常体系测试"""
+
 from __future__ import annotations
 
 import pytest
@@ -114,9 +115,15 @@ class TestDomainErrors:
 class TestInheritance:
     def test_all_domain_errors_are_toolkit_errors(self):
         errors = [
-            LintError("t"), SecurityError("t"), CompilerError("t"),
-            AbTestError("t"), ConfigError("t"), MarketError("t"),
-            VersionError("t"), RedteamError("t"), McpError("t"),
+            LintError("t"),
+            SecurityError("t"),
+            CompilerError("t"),
+            AbTestError("t"),
+            ConfigError("t"),
+            MarketError("t"),
+            VersionError("t"),
+            RedteamError("t"),
+            McpError("t"),
             ValidationError("t"),
         ]
         for e in errors:
@@ -147,30 +154,35 @@ class TestCliHelpers:
 class TestCliHelpersMigration:
     def test_resolve_path_raises_validation_error(self):
         from ai_prompt_toolkit.cli_helpers import resolve_path
+
         with pytest.raises(ValidationError) as exc_info:
             resolve_path("/nonexistent/path/that/does/not/exist")
         assert "路径不存在" in str(exc_info.value)
 
     def test_load_context_raises_config_error(self):
         from ai_prompt_toolkit.cli_helpers import load_context
+
         with pytest.raises(ConfigError) as exc_info:
             load_context("/nonexistent/context.json")
         assert "上下文文件不存在" in str(exc_info.value)
 
     def test_load_config_raises_config_error(self):
         from ai_prompt_toolkit.cli_helpers import load_config
+
         with pytest.raises(ConfigError) as exc_info:
             load_config("/nonexistent/config.yaml")
         assert "配置文件不存在" in str(exc_info.value)
 
     def test_discover_templates_raises_validation_error(self):
         from ai_prompt_toolkit.cli_helpers import discover_templates
+
         with pytest.raises(ValidationError) as exc_info:
             discover_templates("/nonexistent/target")
         assert "目标不存在" in str(exc_info.value)
 
     def test_resolve_path_existing(self, tmp_path):
         from ai_prompt_toolkit.cli_helpers import resolve_path
+
         test_file = tmp_path / "test.md"
         test_file.write_text("hello")
         result = resolve_path(str(test_file))
@@ -178,6 +190,7 @@ class TestCliHelpersMigration:
 
     def test_discover_templates_with_file(self, tmp_path):
         from ai_prompt_toolkit.cli_helpers import discover_templates
+
         test_file = tmp_path / "test.md"
         test_file.write_text("hello")
         result = discover_templates(str(test_file))

@@ -16,6 +16,7 @@
 SARIF核心结构:
 $schema + version → runs[] → results[] + tool → rules[]
 """
+
 from __future__ import annotations
 
 import json
@@ -142,14 +143,16 @@ class SarifRun:
         remediation: str = "",
     ) -> None:
         level_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
-        self.results.append(SarifResult(
-            rule_id=rule_id,
-            level=level_map.get(severity, "note"),
-            message=description,
-            uri=uri,
-            start_line=line,
-            remediation=remediation,
-        ))
+        self.results.append(
+            SarifResult(
+                rule_id=rule_id,
+                level=level_map.get(severity, "note"),
+                message=description,
+                uri=uri,
+                start_line=line,
+                remediation=remediation,
+            )
+        )
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -203,15 +206,11 @@ class SarifReport:
 
     @property
     def error_count(self) -> int:
-        return sum(
-            1 for r in self.runs for res in r.results if res.level == "error"
-        )
+        return sum(1 for r in self.runs for res in r.results if res.level == "error")
 
     @property
     def warning_count(self) -> int:
-        return sum(
-            1 for r in self.runs for res in r.results if res.level == "warning"
-        )
+        return sum(1 for r in self.runs for res in r.results if res.level == "warning")
 
 
 def lint_results_to_sarif(
@@ -232,12 +231,14 @@ def lint_results_to_sarif(
         remediation = f.get("remediation", "")
 
         if rule_id and rule_id not in seen_rules:
-            run.add_rule(SarifRule(
-                id=rule_id,
-                name=rule_id,
-                short_description=description[:80] if description else rule_id,
-                default_severity=severity,
-            ))
+            run.add_rule(
+                SarifRule(
+                    id=rule_id,
+                    name=rule_id,
+                    short_description=description[:80] if description else rule_id,
+                    default_severity=severity,
+                )
+            )
             seen_rules.add(rule_id)
 
         run.add_lint_finding(
@@ -270,13 +271,15 @@ def scan_results_to_sarif(
         remediation = f.get("remediation", f.get("recommendation", ""))
 
         if rule_id and rule_id not in seen_rules:
-            run.add_rule(SarifRule(
-                id=rule_id,
-                name=rule_id,
-                short_description=description[:80] if description else rule_id,
-                default_severity=severity,
-                help_uri=f.get("reference", ""),
-            ))
+            run.add_rule(
+                SarifRule(
+                    id=rule_id,
+                    name=rule_id,
+                    short_description=description[:80] if description else rule_id,
+                    default_severity=severity,
+                    help_uri=f.get("reference", ""),
+                )
+            )
             seen_rules.add(rule_id)
 
         run.add_lint_finding(
@@ -307,20 +310,24 @@ def eval_results_to_sarif(
 
         rule_id = f"EVAL-{dimension}"
         if rule_id not in {r.id for r in run.rules}:
-            run.add_rule(SarifRule(
-                id=rule_id,
-                name=dimension,
-                short_description=f"Evaluation dimension: {dimension}",
-                default_severity="note",
-            ))
+            run.add_rule(
+                SarifRule(
+                    id=rule_id,
+                    name=dimension,
+                    short_description=f"Evaluation dimension: {dimension}",
+                    default_severity="note",
+                )
+            )
 
-        run.add_result(SarifResult(
-            rule_id=rule_id,
-            level="note" if passed else "warning",
-            message=f"Score: {score:.1f}/{threshold:.0f} ({'PASS' if passed else 'FAIL'})",
-            uri=item.get("file_path", target_uri),
-            properties={"score": score, "threshold": threshold, "passed": passed},
-        ))
+        run.add_result(
+            SarifResult(
+                rule_id=rule_id,
+                level="note" if passed else "warning",
+                message=f"Score: {score:.1f}/{threshold:.0f} ({'PASS' if passed else 'FAIL'})",
+                uri=item.get("file_path", target_uri),
+                properties={"score": score, "threshold": threshold, "passed": passed},
+            )
+        )
 
     report.add_run(run)
     return report

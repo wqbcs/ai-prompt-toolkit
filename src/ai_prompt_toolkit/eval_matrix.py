@@ -12,16 +12,14 @@
 - 内嵌CSS/JS, 无外部依赖
 - Alpine.js轻量交互(可选CDN)
 """
+
 from __future__ import annotations
 
 import html
-import json
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
-from ai_prompt_toolkit.types import Finding, Severity
 
 
 @dataclass
@@ -201,6 +199,7 @@ def generate_eval_matrix_html(
 ) -> str:
     try:
         from jinja2 import Template
+
         template = Template(_EVAL_MATRIX_HTML_TEMPLATE)
     except ImportError:
         template = None
@@ -257,7 +256,9 @@ def _render_simple_html(report: MatrixReport, context: dict) -> str:
             cell = _get_cell(report.cells, prompt, ev)
             if cell:
                 cls = "pass" if cell.passed else "fail"
-                parts.append(f"<td class='{cls}'>{cell.score:.1f}/{cell.max_score} {'PASS' if cell.passed else 'FAIL'}</td>")
+                parts.append(
+                    f"<td class='{cls}'>{cell.score:.1f}/{cell.max_score} {'PASS' if cell.passed else 'FAIL'}</td>"
+                )
             else:
                 parts.append("<td>-</td>")
         parts.append("</tr>")
@@ -291,7 +292,9 @@ def generate_gepa_history_html(
         score = h.get("score", 0)
         parent = h.get("parent_id", "-")
         cls = event
-        parts.append(f"<tr class='{cls}'><td>{i}</td><td>{html.escape(event)}</td><td>{cid}</td><td>{score:.4f}</td><td>{parent}</td></tr>")
+        parts.append(
+            f"<tr class='{cls}'><td>{i}</td><td>{html.escape(event)}</td><td>{cid}</td><td>{score:.4f}</td><td>{parent}</td></tr>"
+        )
     parts.append("</tbody></table></body></html>")
 
     content = "".join(parts)

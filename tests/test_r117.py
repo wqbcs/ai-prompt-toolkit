@@ -1,4 +1,5 @@
 """R117 测试: 华为云CodeArts Repo规范检查"""
+
 from __future__ import annotations
 
 from pathlib import Path

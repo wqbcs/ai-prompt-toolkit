@@ -1,11 +1,11 @@
 """62维度评估框架测试 — evaluate_template/EvaluationReport/DimensionScore/维度API"""
+
 from __future__ import annotations
 
 import pytest
 
 from ai_prompt_toolkit.evaluator import (
     DimensionScore,
-    EvaluationReport,
     evaluate_template,
     get_all_dimensions,
     get_dimensions_by_category,
@@ -94,7 +94,9 @@ class TestDimensionScore:
         assert d["score"] == 8.5
 
     def test_normalized(self):
-        ds = DimensionScore(dimension_id="D01", name="测试", category="structure", weight=1.0, score=8.0, max_score=10.0)
+        ds = DimensionScore(
+            dimension_id="D01", name="测试", category="structure", weight=1.0, score=8.0, max_score=10.0
+        )
         assert ds.normalized == pytest.approx(0.8)
 
 

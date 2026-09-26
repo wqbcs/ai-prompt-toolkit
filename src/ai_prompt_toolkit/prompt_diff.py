@@ -13,6 +13,7 @@
 - google/diff-match-patch (patch应用)
 - thefuzz (模糊匹配相似度)
 """
+
 from __future__ import annotations
 
 import difflib
@@ -46,7 +47,7 @@ def _parse_sections(text: str) -> dict[str, str]:
         matched = False
         for section_name, keywords in _PROMPT_SECTIONS:
             if any(kw in stripped for kw in keywords):
-                if stripped.startswith("#") or stripped.startswith("**") or any(c in stripped[:5] for c in "#*_-"):
+                if stripped.startswith(("#", "**")) or any(c in stripped[:5] for c in "#*_-"):
                     if current_lines:
                         sections[current_section] = "\n".join(current_lines)
                     current_section = section_name
@@ -125,11 +126,15 @@ class DiffReport:
     def to_unified_diff(self, context_lines: int = 3) -> str:
         old_lines = self.old_text.splitlines(keepends=True)
         new_lines = self.new_text.splitlines(keepends=True)
-        return "".join(difflib.unified_diff(
-            old_lines, new_lines,
-            fromfile="old", tofile="new",
-            n=context_lines,
-        ))
+        return "".join(
+            difflib.unified_diff(
+                old_lines,
+                new_lines,
+                fromfile="old",
+                tofile="new",
+                n=context_lines,
+            )
+        )
 
     def summary(self) -> str:
         parts = [f"相似度: {self.overall_similarity:.1%}"]
@@ -215,7 +220,9 @@ def prompt_diff(old_text: str, new_text: str) -> DiffReport:
                 section_name=section_name,
                 similarity=0.0,
                 added_lines=len(new_content.splitlines()),
-                lines=[DiffLine(tag="+", content=line, line_new=i + 1) for i, line in enumerate(new_content.splitlines())],
+                lines=[
+                    DiffLine(tag="+", content=line, line_new=i + 1) for i, line in enumerate(new_content.splitlines())
+                ],
             )
         elif section_name not in new_sections:
             report.sections_removed.append(section_name)
@@ -223,7 +230,9 @@ def prompt_diff(old_text: str, new_text: str) -> DiffReport:
                 section_name=section_name,
                 similarity=0.0,
                 removed_lines=len(old_content.splitlines()),
-                lines=[DiffLine(tag="-", content=line, line_old=i + 1) for i, line in enumerate(old_content.splitlines())],
+                lines=[
+                    DiffLine(tag="-", content=line, line_old=i + 1) for i, line in enumerate(old_content.splitlines())
+                ],
             )
         else:
             sec_diff = _diff_section(old_content, new_content, section_name)
@@ -259,15 +268,15 @@ def prompt_merge(
 
         if not ours_content:
             merged_sections[section_name] = theirs_content
-        elif not theirs_content:
-            merged_sections[section_name] = ours_content
-        elif ours_content == theirs_content:
+        elif not theirs_content or ours_content == theirs_content:
             merged_sections[section_name] = ours_content
         else:
             if strategy == "prefer_newer":
                 merged_sections[section_name] = theirs_content
             elif strategy == "prefer_longer":
-                merged_sections[section_name] = theirs_content if len(theirs_content) > len(ours_content) else ours_content
+                merged_sections[section_name] = (
+                    theirs_content if len(theirs_content) > len(ours_content) else ours_content
+                )
             elif strategy == "union":
                 ours_lines = set(ours_content.splitlines())
                 theirs_lines = theirs_content.splitlines()
@@ -279,7 +288,16 @@ def prompt_merge(
             else:
                 merged_sections[section_name] = theirs_content
 
-    section_order = ["role", "instruction", "examples", "constraints", "output_format", "security", "error_handling", "header"]
+    section_order = [
+        "role",
+        "instruction",
+        "examples",
+        "constraints",
+        "output_format",
+        "security",
+        "error_handling",
+        "header",
+    ]
 
     result_parts: list[str] = []
     for s in section_order:
@@ -346,24 +364,28 @@ def semantic_diff(old_text: str, new_text: str) -> SemanticDiffReport:
     for section in new_sections:
         if section not in old_sections:
             sections_added.append(section)
-            changes.append(SemanticChange(
-                change_type="section_added",
-                section=section,
-                description=f"新增'{section}'段",
-                impact="medium",
-                detail=new_sections[section][:100],
-            ))
+            changes.append(
+                SemanticChange(
+                    change_type="section_added",
+                    section=section,
+                    description=f"新增'{section}'段",
+                    impact="medium",
+                    detail=new_sections[section][:100],
+                )
+            )
 
     for section in old_sections:
         if section not in new_sections:
             sections_removed.append(section)
-            changes.append(SemanticChange(
-                change_type="section_removed",
-                section=section,
-                description=f"删除'{section}'段",
-                impact="high",
-                detail=old_sections[section][:100],
-            ))
+            changes.append(
+                SemanticChange(
+                    change_type="section_removed",
+                    section=section,
+                    description=f"删除'{section}'段",
+                    impact="high",
+                    detail=old_sections[section][:100],
+                )
+            )
 
     for section in old_sections:
         if section in new_sections:
@@ -399,13 +421,15 @@ def semantic_diff(old_text: str, new_text: str) -> SemanticDiffReport:
                 if removed_lines:
                     detail_parts.append(f"删除{len(removed_lines)}行")
 
-                changes.append(SemanticChange(
-                    change_type="section_modified",
-                    section=section,
-                    description=desc,
-                    impact=impact,
-                    detail=", ".join(detail_parts),
-                ))
+                changes.append(
+                    SemanticChange(
+                        change_type="section_modified",
+                        section=section,
+                        description=desc,
+                        impact=impact,
+                        detail=", ".join(detail_parts),
+                    )
+                )
 
     high_count = sum(1 for c in changes if c.impact in ("high", "critical"))
     crit_count = sum(1 for c in changes if c.impact == "critical")
@@ -449,7 +473,8 @@ class RollbackCheckResult:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "is_safe": self.is_safe, "risk_level": self.risk_level,
+            "is_safe": self.is_safe,
+            "risk_level": self.risk_level,
             "security_section_removed": self.security_section_removed,
             "constraints_section_removed": self.constraints_section_removed,
             "security_lines_removed": self.security_lines_removed,
@@ -460,18 +485,18 @@ class RollbackCheckResult:
 
 
 _SECURITY_KW = re.compile(
-    r'(?:禁止|不允许|不得|do not|must not|never|forbidden|'
-    r'验证|校验|validate|verify|authenticate|'
-    r'过滤|filter|sanitize|escape|encode|'
-    r'加密|encrypt|decrypt|hash|'
-    r'角色|role|权限|permission|auth|'
-    r'注入|inject|XSS|CSRF|SQL)',
+    r"(?:禁止|不允许|不得|do not|must not|never|forbidden|"
+    r"验证|校验|validate|verify|authenticate|"
+    r"过滤|filter|sanitize|escape|encode|"
+    r"加密|encrypt|decrypt|hash|"
+    r"角色|role|权限|permission|auth|"
+    r"注入|inject|XSS|CSRF|SQL)",
     re.IGNORECASE,
 )
 _CONSTRAINT_KW = re.compile(
-    r'(?:约束|constraint|限制|limit|边界|boundary|'
-    r'不得|禁止|must not|shall not|'
-    r'范围|range|上限|upper|下限|lower)',
+    r"(?:约束|constraint|限制|limit|边界|boundary|"
+    r"不得|禁止|must not|shall not|"
+    r"范围|range|上限|upper|下限|lower)",
     re.IGNORECASE,
 )
 

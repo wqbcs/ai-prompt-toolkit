@@ -13,6 +13,7 @@
 - RAG专用维度: Faithfulness/Answer Relevancy/Context Precision/Recall
 - 6大通用维度: Relevance/Accuracy/Fluency/Completeness/Safety/Helpfulness
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -65,7 +66,9 @@ BUILTIN_DIMENSIONS: dict[str, JudgeDimension] = {
     "helpfulness": JudgeDimension("helpfulness", "有用性", "回答是否对用户有实际帮助", 1.2),
     "faithfulness": JudgeDimension("faithfulness", "忠实性", "RAG: 生成内容与检索上下文的一致性", 1.5),
     "answer_relevancy": JudgeDimension("answer_relevancy", "答案相关性", "RAG: 回答与问题的语义相关度", 1.0),
-    "context_precision": JudgeDimension("context_precision", "上下文精确度", "RAG: 检索上下文中相关信息的排名质量", 1.0),
+    "context_precision": JudgeDimension(
+        "context_precision", "上下文精确度", "RAG: 检索上下文中相关信息的排名质量", 1.0
+    ),
     "context_recall": JudgeDimension("context_recall", "上下文召回率", "RAG: 检索上下文对回答所需信息的覆盖度", 1.0),
 }
 
@@ -196,17 +199,24 @@ class LLMJudge:
             )
             model_result = await self._provider.invoke(prompt)
             if model_result.status != TestStatus.COMPLETED:
-                results.append(AbsoluteJudgeResult(
-                    dimension=dim, score=0.0,
-                    reasoning=f"Judge调用失败: {model_result.error_message}",
-                    judge_model=self._judge_config.model_name,
-                ))
+                results.append(
+                    AbsoluteJudgeResult(
+                        dimension=dim,
+                        score=0.0,
+                        reasoning=f"Judge调用失败: {model_result.error_message}",
+                        judge_model=self._judge_config.model_name,
+                    )
+                )
                 continue
             score, reasoning = self._parse_absolute(model_result.response)
-            results.append(AbsoluteJudgeResult(
-                dimension=dim, score=score, reasoning=reasoning,
-                judge_model=self._judge_config.model_name,
-            ))
+            results.append(
+                AbsoluteJudgeResult(
+                    dimension=dim,
+                    score=score,
+                    reasoning=reasoning,
+                    judge_model=self._judge_config.model_name,
+                )
+            )
         return results
 
     async def evaluate_pairwise(
@@ -223,13 +233,16 @@ class LLMJudge:
         model_result = await self._provider.invoke(prompt)
         if model_result.status != TestStatus.COMPLETED:
             return PairwiseJudgeResult(
-                winner="C", confidence=0.0,
+                winner="C",
+                confidence=0.0,
                 reasoning=f"Judge调用失败: {model_result.error_message}",
                 judge_model=self._judge_config.model_name,
             )
         winner, reasoning = self._parse_pairwise(model_result.response)
         return PairwiseJudgeResult(
-            winner=winner, confidence=1.0, reasoning=reasoning,
+            winner=winner,
+            confidence=1.0,
+            reasoning=reasoning,
             judge_model=self._judge_config.model_name,
         )
 
@@ -240,7 +253,7 @@ class LLMJudge:
             score = max(1.0, min(5.0, score))
         else:
             score = 3.0
-        reasoning = text[:match.start()].strip() if match else text.strip()
+        reasoning = text[: match.start()].strip() if match else text.strip()
         return score, reasoning
 
     def _parse_pairwise(self, text: str) -> tuple[str, str]:
@@ -251,7 +264,7 @@ class LLMJudge:
                 winner = "C"
         else:
             winner = "C"
-        reasoning = text[:match.start()].strip() if match else text.strip()
+        reasoning = text[: match.start()].strip() if match else text.strip()
         return winner, reasoning
 
 
@@ -293,8 +306,8 @@ class MultiJudgeEnsemble:
             scores = [r.score for r in dim_results]
 
             if self._aggregation == AggregationMethod.WEIGHTED_AVERAGE:
-                weighted = sum(s * w for s, w in zip(scores, self._weights[:len(scores)]))
-                avg = weighted / sum(self._weights[:len(scores)])
+                weighted = sum(s * w for s, w in zip(scores, self._weights[: len(scores)]))
+                avg = weighted / sum(self._weights[: len(scores)])
             else:
                 rounded = [round(s) for s in scores]
                 counts = Counter(rounded)
@@ -308,15 +321,20 @@ class MultiJudgeEnsemble:
                             total_agreement += 1
 
             reasoning_combined = " | ".join(r.reasoning[:100] for r in dim_results[:3])
-            aggregated.append(AbsoluteJudgeResult(
-                dimension=dim, score=round(avg, 2),
-                reasoning=reasoning_combined,
-                judge_model=f"ensemble({len(self._judges)})",
-            ))
+            aggregated.append(
+                AbsoluteJudgeResult(
+                    dimension=dim,
+                    score=round(avg, 2),
+                    reasoning=reasoning_combined,
+                    judge_model=f"ensemble({len(self._judges)})",
+                )
+            )
 
-        overall = sum(r.score * r.dimension.weight for r in aggregated) / max(
-            sum(r.dimension.weight for r in aggregated), 1
-        ) if aggregated else 0.0
+        overall = (
+            sum(r.score * r.dimension.weight for r in aggregated) / max(sum(r.dimension.weight for r in aggregated), 1)
+            if aggregated
+            else 0.0
+        )
 
         agreement_ratio = total_agreement / max(total_comparisons, 1)
 
@@ -348,7 +366,7 @@ class MultiJudgeEnsemble:
             winner = counts.most_common(1)[0][0]
         else:
             score_map = {"A": 1.0, "B": -1.0, "C": 0.0}
-            weighted = sum(score_map.get(v, 0.0) * w for v, w in zip(verdicts, self._weights[:len(verdicts)]))
+            weighted = sum(score_map.get(v, 0.0) * w for v, w in zip(verdicts, self._weights[: len(verdicts)]))
             if weighted > 0.5:
                 winner = "A"
             elif weighted < -0.5:
@@ -420,9 +438,11 @@ class MultiJudgeEnsemble:
             pairwise_result=PairwiseJudgeResult(
                 winner=winner,
                 confidence=round(confidence, 2),
-                reasoning=(f"Swap-Debias平均偏移: {avg_debiased:.3f} | "
-                           f"swap一致性: {swap_consistency:.0%}"
-                           + (f" (位置偏置伪影: {inconsistent_count}个判定)" if inconsistent_count else "")),
+                reasoning=(
+                    f"Swap-Debias平均偏移: {avg_debiased:.3f} | "
+                    f"swap一致性: {swap_consistency:.0%}"
+                    + (f" (位置偏置伪影: {inconsistent_count}个判定)" if inconsistent_count else "")
+                ),
                 judge_model=f"ensemble-swap({len(self._judges)})",
             ),
             agreement_ratio=round(confidence, 2),
@@ -449,8 +469,9 @@ class StableJudge:
         return self._judge
 
     async def evaluate_pairwise(self, question: str, response_a: str, response_b: str) -> PairwiseJudgeResult:
-        results = [await self._judge.evaluate_pairwise(question, response_a, response_b)
-                   for _ in range(1 + self._retries)]
+        results = [
+            await self._judge.evaluate_pairwise(question, response_a, response_b) for _ in range(1 + self._retries)
+        ]
         winners = [r.winner for r in results]
         counts = Counter(winners)
         winner, votes = counts.most_common(1)[0]
@@ -472,8 +493,9 @@ class StableJudge:
         response: str,
         reference_answer: str = "",
     ) -> list[AbsoluteJudgeResult]:
-        runs = [await self._judge.evaluate_absolute(question, response, reference_answer)
-                for _ in range(1 + self._retries)]
+        runs = [
+            await self._judge.evaluate_absolute(question, response, reference_answer) for _ in range(1 + self._retries)
+        ]
         if not runs:
             return []
         aggregated: list[AbsoluteJudgeResult] = []
@@ -482,14 +504,15 @@ class StableJudge:
             rounded = [round(s) for s in scores]
             counts = Counter(rounded)
             majority_score, votes = counts.most_common(1)[0]
-            agreement = votes / len(scores)
             note = f"[stable {votes}/{len(scores)}]" if votes > len(scores) / 2 else f"[flaky 分歧: {rounded}]"
-            aggregated.append(AbsoluteJudgeResult(
-                dimension=dim_result.dimension,
-                score=round(sum(scores) / len(scores), 2) if votes <= len(scores) / 2 else float(majority_score),
-                reasoning=f"{note} {dim_result.reasoning[:80]}".strip(),
-                judge_model=f"stable({1 + self._retries}x)",
-            ))
+            aggregated.append(
+                AbsoluteJudgeResult(
+                    dimension=dim_result.dimension,
+                    score=round(sum(scores) / len(scores), 2) if votes <= len(scores) / 2 else float(majority_score),
+                    reasoning=f"{note} {dim_result.reasoning[:80]}".strip(),
+                    judge_model=f"stable({1 + self._retries}x)",
+                )
+            )
         return aggregated
 
 
@@ -527,7 +550,5 @@ def create_multi_judge(
         configs.append(ModelConfig(provider=pt, model_name=m.get("model", "gpt-4o-mini"), temperature=0.0))
 
     dims = [BUILTIN_DIMENSIONS[d] for d in dimensions if d in BUILTIN_DIMENSIONS] if dimensions else None
-    ensemble = MultiJudgeEnsemble(
-        configs, dims, JudgeMode(mode), AggregationMethod(aggregation), weights
-    )
+    ensemble = MultiJudgeEnsemble(configs, dims, JudgeMode(mode), AggregationMethod(aggregation), weights)
     return StableJudge(ensemble, flaky_retries) if flaky_retries > 0 else ensemble

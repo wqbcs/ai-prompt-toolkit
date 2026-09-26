@@ -7,6 +7,7 @@
 - FP16/INT8量化自动选择
 - 与HuaweiProvider联动(MaaS远程+NPU本地混合推理)
 """
+
 from __future__ import annotations
 
 import time
@@ -46,32 +47,22 @@ class NPUProvider(BaseProvider):
     def validate(self) -> bool:
         if not self._npu_info.available:
             return False
-        if not self._npu_info.cann_version:
-            return False
-        return True
+        return self._npu_info.cann_version
 
     async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
         start = time.perf_counter()
 
         if not self._npu_info.available:
-            return self._make_error_result(
-                prompt,
-                f"昇腾NPU不可用: 未检测到NPU设备(请检查npu-smi和CANN安装)"
-            )
+            return self._make_error_result(prompt, "昇腾NPU不可用: 未检测到NPU设备(请检查npu-smi和CANN安装)")
 
         if not should_use_npu(self._config.model_name):
-            return self._make_error_result(
-                prompt,
-                f"NPU推理未启用: 设置环境变量 PROMPT_CLI_USE_NPU=1 启用"
-            )
+            return self._make_error_result(prompt, "NPU推理未启用: 设置环境变量 PROMPT_CLI_USE_NPU=1 启用")
 
         if SIMULATED_MODE:
             return self._make_simulated_result(prompt, start, self._PROVIDER_LABEL)
 
         if _global_cost_tracker.limit_reached:
-            return self._make_error_result(
-                prompt, f"费用超限(${_global_cost_tracker.limit:.2f})"
-            )
+            return self._make_error_result(prompt, f"费用超限(${_global_cost_tracker.limit:.2f})")
 
         try:
             result = await self._invoke_mindspore(prompt, **kwargs)
@@ -85,13 +76,11 @@ class NPUProvider(BaseProvider):
         try:
             import mindspore_lite as msl
         except ImportError:
-            return self._make_fallback_result(prompt, start,
-                "MindSpore Lite未安装, 使用模拟推理")
+            return self._make_fallback_result(prompt, start, "MindSpore Lite未安装, 使用模拟推理")
 
         model_path = kwargs.get("model_path", "")
         if not model_path:
-            return self._make_fallback_result(prompt, start,
-                "未指定模型路径(model_path), 使用模拟推理")
+            return self._make_fallback_result(prompt, start, "未指定模型路径(model_path), 使用模拟推理")
 
         try:
             context = msl.Context()

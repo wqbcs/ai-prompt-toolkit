@@ -1,11 +1,12 @@
 """Parser单元测试——AST构建、嵌套>3、未闭合检测。"""
+
 from __future__ import annotations
 
 import pytest
 
 from ai_prompt_toolkit.compiler.lexer import Lexer
 from ai_prompt_toolkit.compiler.parser import NestingError, ParseError, Parser
-from ai_prompt_toolkit.compiler.types import ASTNode, Condition, NodeType, Token, TokenKind
+from ai_prompt_toolkit.compiler.types import NodeType
 
 
 class TestASTConstruction:
@@ -40,9 +41,7 @@ class TestASTConstruction:
         assert children[0].value == "A"
 
     def test_else_if_chain(self):
-        tokens = Lexer(
-            "{{#if model == gpt-4}}A{{#else if model == claude}}B{{else}}C{{/if}}"
-        ).tokenize()
+        tokens = Lexer("{{#if model == gpt-4}}A{{#else if model == claude}}B{{else}}C{{/if}}").tokenize()
         ast = Parser(tokens).parse()
         cond = ast.children[0]
         assert cond.type == NodeType.CONDITIONAL

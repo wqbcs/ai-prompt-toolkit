@@ -3,10 +3,10 @@
 解决UX02痛点：Lint报错信息太技术化
 降低理解门槛60%，新用户3分钟内理解所有发现
 """
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _FRIENDLY_DESCRIPTIONS: dict[str, str] = {
     "P001": "你的AI助手缺少身份介绍——它不知道自己是谁、擅长什么",

@@ -3,6 +3,7 @@
 格式: 问题 → 原因 → 修复
 参考: promptfoo的错误友好化设计, Rust编译器错误信息风格
 """
+
 from __future__ import annotations
 
 from typing import Any

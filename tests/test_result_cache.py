@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 import time
 from pathlib import Path
 
-import pytest
-
-from ai_prompt_toolkit.result_cache import ResultCache, CacheEntry, _content_hash
+from ai_prompt_toolkit.result_cache import CacheEntry, ResultCache, _content_hash
 
 
 class TestContentHash:
@@ -23,25 +20,37 @@ class TestContentHash:
 class TestCacheEntry:
     def test_not_expired(self):
         entry = CacheEntry(
-            key="test", category="lint", file_path="a.md",
-            content_hash="abc", timestamp=time.time(),
-            ttl=3600, data={"score": 90},
+            key="test",
+            category="lint",
+            file_path="a.md",
+            content_hash="abc",
+            timestamp=time.time(),
+            ttl=3600,
+            data={"score": 90},
         )
         assert entry.is_expired() is False
 
     def test_expired(self):
         entry = CacheEntry(
-            key="test", category="lint", file_path="a.md",
-            content_hash="abc", timestamp=time.time() - 7200,
-            ttl=3600, data={"score": 90},
+            key="test",
+            category="lint",
+            file_path="a.md",
+            content_hash="abc",
+            timestamp=time.time() - 7200,
+            ttl=3600,
+            data={"score": 90},
         )
         assert entry.is_expired() is True
 
     def test_to_dict(self):
         entry = CacheEntry(
-            key="test", category="lint", file_path="a.md",
-            content_hash="abc", timestamp=1000.0,
-            ttl=3600, data={"score": 90},
+            key="test",
+            category="lint",
+            file_path="a.md",
+            content_hash="abc",
+            timestamp=1000.0,
+            ttl=3600,
+            data={"score": 90},
         )
         d = entry.to_dict()
         assert d["key"] == "test"

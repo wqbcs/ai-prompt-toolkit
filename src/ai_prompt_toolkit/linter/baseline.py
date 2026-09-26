@@ -6,6 +6,7 @@
 - compare_baseline: 对比当前结果与基线, 检测回归
 - BaselineDiff: 新增/修复/未变/回归 分类统计
 """
+
 from __future__ import annotations
 
 import json
@@ -71,7 +72,9 @@ def _finding_key(f: dict[str, Any]) -> str:
     return f"{f.get('rule_id', '')}:{f.get('description', '')}"
 
 
-def save_baseline(findings_data: list[dict[str, Any]], path: str | Path, template_id: str = "", score: float = 0.0) -> None:
+def save_baseline(
+    findings_data: list[dict[str, Any]], path: str | Path, template_id: str = "", score: float = 0.0
+) -> None:
     snapshot = BaselineSnapshot(
         created_at=datetime.now().isoformat(),
         total_findings=len(findings_data),
@@ -107,12 +110,14 @@ def compare_baseline(current_findings: list[dict[str, Any]], baseline: BaselineS
     for rid, count in current_rule_counts.items():
         baseline_count = baseline_rule_counts.get(rid, 0)
         if count > baseline_count:
-            regressions.append({
-                "rule_id": rid,
-                "baseline_count": baseline_count,
-                "current_count": count,
-                "delta": count - baseline_count,
-            })
+            regressions.append(
+                {
+                    "rule_id": rid,
+                    "baseline_count": baseline_count,
+                    "current_count": count,
+                    "delta": count - baseline_count,
+                }
+            )
     diff = BaselineDiff(
         new_findings=[current_map[k] for k in new_keys],
         fixed_findings=[baseline_map[k] for k in fixed_keys],

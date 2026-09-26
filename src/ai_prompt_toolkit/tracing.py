@@ -11,6 +11,7 @@ P3-03: Prompt编译/评估/红队操作的端到端Tracing
 - 后端: 本地JSON + 华为云LTS/AOM
 - gen_ai.*语义约定: 标准化LLM可观测性属性(参考OpenTelemetry GenAI Semantic Conventions)
 """
+
 from __future__ import annotations
 
 import contextvars
@@ -24,7 +25,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Generator
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +77,13 @@ class Span:
 
     def record_exception(self, exception: Exception) -> None:
         self.status = "error"
-        self.add_event("exception", {
-            "exception.type": type(exception).__name__,
-            "exception.message": str(exception),
-        })
+        self.add_event(
+            "exception",
+            {
+                "exception.type": type(exception).__name__,
+                "exception.message": str(exception),
+            },
+        )
 
     def w3c_traceparent(self) -> str:
         flags = "01" if self.status == "ok" else "00"
@@ -139,21 +146,25 @@ class Trace:
         }
 
     def to_otlp_json(self, service_name: str = "ai-prompt-toolkit", service_version: str = "42.0.0") -> dict[str, Any]:
-        scope_spans: list[dict[str, Any]] = [{
-            "scope": {"name": service_name, "version": service_version},
-            "spans": [s.to_otlp_dict() for s in self.spans],
-        }]
+        scope_spans: list[dict[str, Any]] = [
+            {
+                "scope": {"name": service_name, "version": service_version},
+                "spans": [s.to_otlp_dict() for s in self.spans],
+            }
+        ]
         return {
-            "resourceSpans": [{
-                "resource": {
-                    "attributes": [
-                        {"key": "service.name", "value": {"stringValue": service_name}},
-                        {"key": "service.version", "value": {"stringValue": service_version}},
-                        {"key": "telemetry.sdk.name", "value": {"stringValue": "promptkit-tracing"}},
-                    ]
-                },
-                "scopeSpans": scope_spans,
-            }]
+            "resourceSpans": [
+                {
+                    "resource": {
+                        "attributes": [
+                            {"key": "service.name", "value": {"stringValue": service_name}},
+                            {"key": "service.version", "value": {"stringValue": service_version}},
+                            {"key": "telemetry.sdk.name", "value": {"stringValue": "promptkit-tracing"}},
+                        ]
+                    },
+                    "scopeSpans": scope_spans,
+                }
+            ]
         }
 
     def w3c_traceparent(self) -> str:
@@ -207,7 +218,9 @@ class Tracer:
         return trace
 
     @contextmanager
-    def span(self, name: str, attributes: dict[str, Any] | None = None, kind: str = "internal") -> Generator[Span, None, None]:
+    def span(
+        self, name: str, attributes: dict[str, Any] | None = None, kind: str = "internal"
+    ) -> Generator[Span, None, None]:
         parent_id = _current_span_id.get()
         trace_id = _current_trace_id.get() or ""
         s = Span(
@@ -279,9 +292,7 @@ class Tracer:
     def save_otlp(self, output_path: str | Path) -> Path:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = {
-            "resourceSpans": []
-        }
+        data = {"resourceSpans": []}
         for t in self._traces:
             otlp = t.to_otlp_json()
             data["resourceSpans"].extend(otlp.get("resourceSpans", []))
@@ -311,14 +322,15 @@ class Tracer:
                     spans_by_parent.setdefault(s.parent_span_id, []).append(s)
                 else:
                     roots.append(s)
-            span_map = {s.span_id: s for s in t.spans}
             tree_nodes = [_build_span_tree_node(r, spans_by_parent) for r in roots]
-            result.append({
-                "trace_id": t.trace_id,
-                "name": t.name,
-                "duration_ms": round(t.duration_ms, 2),
-                "spans": tree_nodes,
-            })
+            result.append(
+                {
+                    "trace_id": t.trace_id,
+                    "name": t.name,
+                    "duration_ms": round(t.duration_ms, 2),
+                    "spans": tree_nodes,
+                }
+            )
         return {"traces": result, "total": len(result)}
 
 
@@ -397,8 +409,9 @@ class HuaweiAOMExporter:
         }
 
         try:
-            import urllib.request
             import urllib.error
+            import urllib.request
+
             url = f"{self.config.endpoint}/v1/{self.config.project_id}/traces"
             req = urllib.request.Request(
                 url,
@@ -448,7 +461,7 @@ def _format_tree_node(node: dict[str, Any], lines: list[str], indent: int) -> No
         _format_tree_node(child, lines, indent + 1)
 
 
-class trace:
+class trace:  # noqa: N801 — 公开API名(以with trace(...)使用), 保持小写
     def __init__(self, name: str, *, metadata: dict[str, Any] | None = None) -> None:
         self._name = name
         self._metadata = metadata
@@ -459,7 +472,7 @@ class trace:
         _current_trace_id.set(self._tracer._current_trace.trace_id if self._tracer._current_trace else "")
         return self._tracer
 
-    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         self._tracer.end_trace()
         _current_trace_id.set("")
         _current_span_id.set("")
@@ -516,7 +529,6 @@ def trace_workflow(name: str | None = None) -> Callable:
 
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            tracer = Tracer.get_instance()
             with trace(span_name, metadata={"type": "workflow"}):
                 return func(*args, **kwargs)
 

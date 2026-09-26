@@ -1,17 +1,16 @@
 """R63: Probe Framework新增3个Probe + 2个Detector测试"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.probe_framework import (
-    GrandmaProbe,
+    _DETECTOR_REGISTRY,
+    _PROBE_REGISTRY,
+    OWASP_LLM_TOP_10_2025,
     ContinuationProbe,
     DonotAnswerProbe,
+    GrandmaProbe,
     MisleadingDetector,
     RefusalDetector,
-    _PROBE_REGISTRY,
-    _DETECTOR_REGISTRY,
-    OWASP_LLM_TOP_10_2025,
 )
 
 

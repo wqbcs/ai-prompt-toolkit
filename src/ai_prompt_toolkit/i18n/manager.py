@@ -1,10 +1,11 @@
 """I18nManager — i18n框架主入口，参考Fabric v1.4.356完整i18n模式"""
+
 from __future__ import annotations
 
 import json
 import logging
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from ai_prompt_toolkit.i18n.fallback import FallbackChain
 from ai_prompt_toolkit.i18n.glossary import Glossary
@@ -12,7 +13,6 @@ from ai_prompt_toolkit.i18n.resource import ResourceManager
 from ai_prompt_toolkit.i18n.translation import TranslationEngine
 from ai_prompt_toolkit.i18n.types import (
     CoverageReport,
-    Locale,
     TranslationEntry,
     TranslationStatus,
 )
@@ -96,7 +96,7 @@ class I18nManager:
         default: str = "",
     ) -> str:
         available = self._resource_mgr.available_locales()
-        resolved_locale, used_fallback = self._fallback.resolve(locale, available)
+        resolved_locale, _used_fallback = self._fallback.resolve(locale, available)
         entry = self._resource_mgr.get_entry(resolved_locale, key)
         if entry and entry.value:
             return entry.value
@@ -129,6 +129,10 @@ class I18nManager:
         source: str = "manual",
     ) -> None:
         entry = TranslationEntry(
-            key=key, locale=locale, value=value, status=status, source=source,
+            key=key,
+            locale=locale,
+            value=value,
+            status=status,
+            source=source,
         )
         self._resource_mgr.set_entry(locale, entry)

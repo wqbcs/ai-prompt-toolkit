@@ -1,8 +1,9 @@
 """R115 测试: lint --ci + lint --diff"""
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.linter.rules import get_all_rules
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import get_all_rules
 
 
 class TestR115CIAndDiff:
@@ -14,5 +15,6 @@ class TestR115CIAndDiff:
 
     def test_difflib_available(self):
         import difflib
+
         diff = list(difflib.unified_diff(["a\n", "b\n"], ["a\n", "c\n"], lineterm=""))
         assert len(diff) > 0

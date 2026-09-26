@@ -1,16 +1,15 @@
 """A/B测试推荐器——胜率+显著性模式、综合评分模式、5条排除规则。"""
+
 from __future__ import annotations
 
 from typing import Any
 
-from ai_prompt_toolkit.ab_test.statistics import auto_select_test, cohens_d
+from ai_prompt_toolkit.ab_test.statistics import auto_select_test
 from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
     EvaluationDimension,
-    ModelConfig,
     ModelResult,
     OptimalMatch,
-    ProviderType,
     StatisticalReport,
     WinRateCell,
 )
@@ -82,9 +81,7 @@ class Recommender:
 
         for model_key, stats in model_stats.items():
             for rule in self.EXCLUSION_RULES:
-                threshold = self._get_threshold(
-                    rule["threshold_key"], rule["default_threshold"]
-                )
+                threshold = self._get_threshold(rule["threshold_key"], rule["default_threshold"])
                 value = stats.get(rule["field"])
 
                 if value is None:
@@ -96,35 +93,43 @@ class Recommender:
                     failure_rate = failed / max(total, 1)
                     if failure_rate > threshold:
                         excluded.add(model_key)
-                        self._excluded.append({
-                            "model": model_key,
-                            "rule_id": rule["id"],
-                            "reason": f"失败率 {failure_rate:.1%} > {threshold:.1%}",
-                        })
+                        self._excluded.append(
+                            {
+                                "model": model_key,
+                                "rule_id": rule["id"],
+                                "reason": f"失败率 {failure_rate:.1%} > {threshold:.1%}",
+                            }
+                        )
                 elif rule["id"] == "R005":
                     sample_size = stats.get("sample_size", 0)
                     if sample_size < threshold:
                         excluded.add(model_key)
-                        self._excluded.append({
-                            "model": model_key,
-                            "rule_id": rule["id"],
-                            "reason": f"样本量 {sample_size} < {threshold}",
-                        })
+                        self._excluded.append(
+                            {
+                                "model": model_key,
+                                "rule_id": rule["id"],
+                                "reason": f"样本量 {sample_size} < {threshold}",
+                            }
+                        )
                 else:
                     if rule["field"] in ("cost", "latency_ms") and value > threshold:
                         excluded.add(model_key)
-                        self._excluded.append({
-                            "model": model_key,
-                            "rule_id": rule["id"],
-                            "reason": f"{rule['field']} {value} > {threshold}",
-                        })
+                        self._excluded.append(
+                            {
+                                "model": model_key,
+                                "rule_id": rule["id"],
+                                "reason": f"{rule['field']} {value} > {threshold}",
+                            }
+                        )
                     elif rule["field"] == "overall_score" and value < threshold:
                         excluded.add(model_key)
-                        self._excluded.append({
-                            "model": model_key,
-                            "rule_id": rule["id"],
-                            "reason": f"综合评分 {value} < {threshold}",
-                        })
+                        self._excluded.append(
+                            {
+                                "model": model_key,
+                                "rule_id": rule["id"],
+                                "reason": f"综合评分 {value} < {threshold}",
+                            }
+                        )
 
         return excluded
 
@@ -161,12 +166,8 @@ class Recommender:
                     for dim_id, score in result.scores.items():
                         entry["scores"].setdefault(dim_id, []).append(score)
 
-        for key, entry in stats.items():
-            avg_latency = (
-                sum(entry["latency_ms"]) / len(entry["latency_ms"])
-                if entry["latency_ms"]
-                else 0.0
-            )
+        for _key, entry in stats.items():
+            avg_latency = sum(entry["latency_ms"]) / len(entry["latency_ms"]) if entry["latency_ms"] else 0.0
             entry["latency_ms"] = avg_latency
 
             weighted_sum = 0.0
@@ -178,9 +179,7 @@ class Recommender:
                     weighted_sum += avg_score * dim.weight
                     weight_total += dim.weight
 
-            entry["overall_score"] = (
-                weighted_sum / weight_total if weight_total > 0 else 0.0
-            )
+            entry["overall_score"] = weighted_sum / weight_total if weight_total > 0 else 0.0
 
         return stats
 
@@ -229,7 +228,7 @@ class Recommender:
         for key, pairs in win_counts.items():
             if key in excluded:
                 continue
-            for pair_key, wins in pairs.items():
+            for _pair_key, wins in pairs.items():
                 model_wins[key] = model_wins.get(key, 0) + wins
                 model_total[key] = model_total.get(key, 0) + max(wins, 1)
 
@@ -311,9 +310,7 @@ class Recommender:
         dims = dimensions or self._config.dimensions
 
         if mode == "win_rate":
-            return self.recommend_by_win_rate(
-                results, dims, significance_level=significance_level
-            )
+            return self.recommend_by_win_rate(results, dims, significance_level=significance_level)
         elif mode == "composite":
             return self.recommend_by_score(results, dims)
         else:
@@ -333,7 +330,7 @@ class Recommender:
 
         for dim in dims:
             for i, key_a in enumerate(model_keys):
-                for key_b in model_keys[i + 1:]:
+                for key_b in model_keys[i + 1 :]:
                     scores_a: list[float] = []
                     scores_b: list[float] = []
 
@@ -341,12 +338,12 @@ class Recommender:
                         ra_key = f"{result_a.model_config.provider.value}:{result_a.model_config.model_name}"
                         rb_key = f"{result_b.model_config.provider.value}:{result_b.model_config.model_name}"
 
-                        if (ra_key == key_a and rb_key == key_b):
+                        if ra_key == key_a and rb_key == key_b:
                             sa = result_a.scores.get(dim.dimension_id, 0.0)
                             sb = result_b.scores.get(dim.dimension_id, 0.0)
                             scores_a.append(sa)
                             scores_b.append(sb)
-                        elif (ra_key == key_b and rb_key == key_a):
+                        elif ra_key == key_b and rb_key == key_a:
                             sa = result_b.scores.get(dim.dimension_id, 0.0)
                             sb = result_a.scores.get(dim.dimension_id, 0.0)
                             scores_a.append(sa)
@@ -392,14 +389,18 @@ class Recommender:
         return StatisticalReport(
             test_id=self._config.test_id,
             total_tests=len(results),
-            completed_tests=sum(1 for a, b in results if a.status.value == "completed" and b.status.value == "completed"),
+            completed_tests=sum(
+                1 for a, b in results if a.status.value == "completed" and b.status.value == "completed"
+            ),
             failed_tests=sum(1 for a, b in results if a.status.value == "failed" or b.status.value == "failed"),
             win_rate_matrix=matrix,
             summary={
                 "models_tested": len(model_keys),
                 "models_excluded": len(excluded),
                 "exclusion_details": self._excluded,
-                "model_stats": {k: {kk: vv for kk, vv in v.items() if kk != "model_config"} for k, v in model_stats.items()},
+                "model_stats": {
+                    k: {kk: vv for kk, vv in v.items() if kk != "model_config"} for k, v in model_stats.items()
+                },
             },
             recommendations=recs_dicts,
             timestamp=datetime.datetime.now(datetime.timezone.utc).isoformat(),

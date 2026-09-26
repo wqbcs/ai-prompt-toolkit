@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import json
@@ -15,16 +16,24 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
-@click.option("--config", "config_path", help="Lint配置YAML文件路径(新格式: severity_threshold/exclude_categories/include_categories等)")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]),
-              default="cli", help="输出格式")
+@click.option(
+    "--config",
+    "config_path",
+    help="Lint配置YAML文件路径(新格式: severity_threshold/exclude_categories/include_categories等)",
+)
+@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]), default="cli", help="输出格式")
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--dry-run", is_flag=True, help="干运行: 预览修复内容但不实际修改文件(需配合--fix)")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
-@click.option("--color-theme", type=click.Choice(["default", "monokai", "solarized", "nord", "dracula"]), default="default", help="颜色主题")
+@click.option(
+    "--color-theme",
+    type=click.Choice(["default", "monokai", "solarized", "nord", "dracula"]),
+    default="default",
+    help="颜色主题",
+)
 @click.option("--html", "html_report", is_flag=True, help="生成交互式HTML报告(同--format html)")
 @click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
 @click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
@@ -43,11 +52,42 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
-@click.option("--trace-json", "trace_json_path", help="Trace导出: 将本次执行的OTel trace写入指定路径(JSON/OTLP兼容, 供Langfuse/Jaeger消费)")
-def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: bool, interactive: bool,
-         output: str | None, gate: bool, multimodal: bool, color_theme: str,
-         html_report: bool, changed_only: bool, cache_dir: str | None,
-         tui_mode: bool, watch: bool, ci_mode: bool, show_diff: bool, profile_mode: bool, owasp_report: bool, rules_search: str | None, ignore_file: str | None, statistics_mode: bool, baseline_path: str | None, baseline_save: bool, suggest_mode: bool, json_diff_path: str | None, explain_mode: bool, export_lcov_path: str | None, trace_json_path: str | None = None) -> None:
+@click.option(
+    "--trace-json",
+    "trace_json_path",
+    help="Trace导出: 将本次执行的OTel trace写入指定路径(JSON/OTLP兼容, 供Langfuse/Jaeger消费)",
+)
+def lint(
+    target: str,
+    config_path: str | None,
+    fmt: str,
+    fix: bool,
+    dry_run: bool,
+    interactive: bool,
+    output: str | None,
+    gate: bool,
+    multimodal: bool,
+    color_theme: str,
+    html_report: bool,
+    changed_only: bool,
+    cache_dir: str | None,
+    tui_mode: bool,
+    watch: bool,
+    ci_mode: bool,
+    show_diff: bool,
+    profile_mode: bool,
+    owasp_report: bool,
+    rules_search: str | None,
+    ignore_file: str | None,
+    statistics_mode: bool,
+    baseline_path: str | None,
+    baseline_save: bool,
+    suggest_mode: bool,
+    json_diff_path: str | None,
+    explain_mode: bool,
+    export_lcov_path: str | None,
+    trace_json_path: str | None = None,
+) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import (
         determine_exit_code,
@@ -61,6 +101,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     lint_cfg = None
     if config_path:
         from ai_prompt_toolkit.linter.lint_config import load_lint_config
+
         lint_cfg = load_lint_config(config_path)
         if lint_cfg.include_categories or lint_cfg.exclude_categories:
             click.echo(f"配置: categories=include{lint_cfg.include_categories}/exclude{lint_cfg.exclude_categories}")
@@ -70,21 +111,37 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         for candidate in [".lint-rc.yml", ".lint-rc.yaml", ".prompt-toolkit.yml", ".prompt-toolkit.yaml"]:
             if Path(candidate).exists():
                 from ai_prompt_toolkit.linter.lint_config import load_lint_config
+
                 lint_cfg = load_lint_config(candidate)
                 click.echo(f"自动发现配置: {candidate}")
                 break
 
-    templates = discover_templates_with_ignore(target, ignore_file) if ignore_file or Path(target).is_dir() else discover_templates(target)
+    templates = (
+        discover_templates_with_ignore(target, ignore_file)
+        if ignore_file or Path(target).is_dir()
+        else discover_templates(target)
+    )
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
 
     if changed_only:
         import subprocess as _sp
+
         try:
-            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _r = _sp.run(
+                ["git", "diff", "--name-only", "--diff-filter=ACMR"],
+                capture_output=True,
+                text=True,
+                cwd=Path(target).parent if Path(target).is_file() else target,
+            )
             _changed_files = set(_r.stdout.strip().split("\n")) if _r.stdout.strip() else set()
-            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=Path(target).parent if Path(target).is_file() else target)
+            _r2 = _sp.run(
+                ["git", "ls-files", "--others", "--exclude-standard"],
+                capture_output=True,
+                text=True,
+                cwd=Path(target).parent if Path(target).is_file() else target,
+            )
             _untracked = set(_r2.stdout.strip().split("\n")) if _r2.stdout.strip() else set()
             _git_changed = _changed_files | _untracked
             _git_changed = {f for f in _git_changed if f.endswith((".md", ".txt", ".prompt", ".yaml", ".yml"))}
@@ -102,11 +159,13 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     linter = PromptLinter()
     from ai_prompt_toolkit.linter.otel_tracer import get_tracer
+
     tracer = get_tracer()  # 默认Noop零开销; PROMPT_TOOLKIT_TRACING=memory启用
     if html_report:
         fmt = "html"
     if color_theme != "default":
         import os
+
         os.environ["PROMPT_TOOLKIT_THEME"] = color_theme
     all_results = []
     total_findings = 0
@@ -115,6 +174,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     try:
         from rich.console import Console
         from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+
         _has_rich = True
         console = Console()
     except ImportError:
@@ -122,13 +182,25 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if _has_rich:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"),
-                      BarColumn(), TaskProgressColumn(), console=console) as progress:
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            console=console,
+        ) as progress:
             task = progress.add_task("Lint检查中...", total=len(templates))
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(tpl_path.name, text, fix=fix or interactive or dry_run, template_type=template_type, lint_config=lint_cfg)
+                result = linter.lint(
+                    tpl_path.name,
+                    text,
+                    fix=fix or interactive or dry_run,
+                    template_type=template_type,
+                    lint_config=lint_cfg,
+                )
                 if dry_run and result.auto_fixed:
                     click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
                     for ff in result.fixed_findings:
@@ -148,7 +220,9 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         for tpl_path in templates:
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
-            result = linter.lint(tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg)
+            result = linter.lint(
+                tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg
+            )
             if dry_run and result.auto_fixed:
                 click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
             tracer.trace_lint(tpl_path.name, len(result.findings), float(result.score), result.lint_time_ms)
@@ -163,6 +237,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     mm_findings_total: list = []
     if multimodal:
         from ai_prompt_toolkit.linter.multimodal import check_multimodal_prompt
+
         for i, tpl_path in enumerate(templates):
             text = tpl_path.read_text(encoding="utf-8")
             mm_findings = check_multimodal_prompt(text)
@@ -182,6 +257,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
             click.echo("FAIL")
     elif tui_mode:
         from ai_prompt_toolkit.tui_browser import render_interactive_results
+
         render_interactive_results(all_results, avg_score, total_findings, len(templates))
     elif fmt == "cli":
         for result in all_results:
@@ -197,15 +273,16 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     # D3: 无高危发现时的下一步引导(CI模式已有PASS输出, 不重复; medium/info仍列出)
     has_blocking = any(
-        getattr(f.severity, "value", str(f.severity)) in ("high", "critical")
-        for r in all_results for f in r.findings
+        getattr(f.severity, "value", str(f.severity)) in ("high", "critical") for r in all_results for f in r.findings
     )
     if not has_blocking and not ci_mode:
         from ai_prompt_toolkit.cli_helpers import clean_result_next_steps
+
         click.echo(clean_result_next_steps(avg_score, len(templates)))
 
     if profile_mode:
         from ai_prompt_toolkit.linter.rules import run_all_checks_profiled
+
         click.echo("\n── 性能分析 (Profile) ──")
         sample_text = templates[0].read_text(encoding="utf-8") if templates else ""
         if sample_text:
@@ -218,19 +295,24 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if owasp_report:
         from ai_prompt_toolkit.linter.owasp_mapping import generate_owasp_report
+
         click.echo(generate_owasp_report())
 
     if rules_search:
         from ai_prompt_toolkit.linter.rules import search_rules
+
         results = search_rules(rules_search)
         click.echo(f"\n── 规则搜索: '{rules_search}' ({len(results)}条结果) ──")
         for r in results:
             owasp_str = ",".join(r["owasp_refs"]) if r["owasp_refs"] else ""
-            click.echo(f"  {r['rule_id']}: {r['name']} [{r['category']}] {r['severity']} {'OWASP:'+owasp_str if owasp_str else ''}")
+            click.echo(
+                f"  {r['rule_id']}: {r['name']} [{r['category']}] {r['severity']} {'OWASP:' + owasp_str if owasp_str else ''}"
+            )
             click.echo(f"    {r['description']}")
 
     if statistics_mode:
         from ai_prompt_toolkit.linter.rules import compute_rule_statistics
+
         all_findings_flat = []
         for r in all_results:
             all_findings_flat.extend(r.findings)
@@ -242,30 +324,45 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
         if stats["by_severity"]:
             click.echo(f"  按严重度: {', '.join(f'{k}={v}' for k, v in stats['by_severity'].items())}")
         click.echo(f"  {'规则ID':<8} {'命中':>5} {'占比':>8} {'名称'}")
-        click.echo(f"  {'─'*8} {'─'*5} {'─'*8} {'─'*30}")
+        click.echo(f"  {'─' * 8} {'─' * 5} {'─' * 8} {'─' * 30}")
         for rs in stats["rules"]:
             click.echo(f"  {rs['rule_id']:<8} {rs['hit_count']:>5} {rs['hit_rate']:>7.1f}% {rs['name']}")
 
     if baseline_path:
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline, save_baseline
+
         all_findings_for_baseline = []
         for r in all_results:
             for f in r.findings:
-                all_findings_for_baseline.append({"rule_id": f.rule_id, "description": f.description, "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity)})
+                all_findings_for_baseline.append(
+                    {
+                        "rule_id": f.rule_id,
+                        "description": f.description,
+                        "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
+                    }
+                )
         if baseline_save:
             save_baseline(all_findings_for_baseline, baseline_path, template_id=target, score=avg_score)
-            click.echo(f"\n基线已保存: {baseline_path} (findings={len(all_findings_for_baseline)}, score={avg_score:.1f})")
+            click.echo(
+                f"\n基线已保存: {baseline_path} (findings={len(all_findings_for_baseline)}, score={avg_score:.1f})"
+            )
         else:
             bp = Path(baseline_path)
             if bp.exists():
                 baseline = load_baseline(baseline_path)
                 diff = compare_baseline(all_findings_for_baseline, baseline)
                 click.echo("\n── 基线对比 ──")
-                click.echo(f"  基线: {baseline.total_findings} (score={baseline.score:.1f}) | 当前: {diff.current_total} | Δ={diff.delta:+d}")
+                click.echo(
+                    f"  基线: {baseline.total_findings} (score={baseline.score:.1f}) | 当前: {diff.current_total} | Δ={diff.delta:+d}"
+                )
                 if diff.new_findings:
-                    click.echo(f"  新增({len(diff.new_findings)}): {', '.join(f['rule_id'] for f in diff.new_findings[:10])}")
+                    click.echo(
+                        f"  新增({len(diff.new_findings)}): {', '.join(f['rule_id'] for f in diff.new_findings[:10])}"
+                    )
                 if diff.fixed_findings:
-                    click.echo(f"  修复({len(diff.fixed_findings)}): {', '.join(f['rule_id'] for f in diff.fixed_findings[:10])}")
+                    click.echo(
+                        f"  修复({len(diff.fixed_findings)}): {', '.join(f['rule_id'] for f in diff.fixed_findings[:10])}"
+                    )
                 if diff.regressions:
                     reg_parts = []
                     for r in diff.regressions:
@@ -279,13 +376,20 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     if json_diff_path and baseline_path:
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline
         from ai_prompt_toolkit.linter.structured_diff import format_diff_json, generate_structured_diff
+
         bp = Path(baseline_path)
         if bp.exists():
             baseline_obj = load_baseline(baseline_path)
             all_f_for_diff = []
             for r in all_results:
                 for f in r.findings:
-                    all_f_for_diff.append({"rule_id": f.rule_id, "description": f.description, "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity)})
+                    all_f_for_diff.append(
+                        {
+                            "rule_id": f.rule_id,
+                            "description": f.description,
+                            "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
+                        }
+                    )
             diff_obj = compare_baseline(all_f_for_diff, baseline_obj)
             structured = generate_structured_diff(diff_obj, baseline_obj, all_f_for_diff, target=target)
             Path(json_diff_path).write_text(format_diff_json(structured), encoding="utf-8")
@@ -293,6 +397,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if suggest_mode:
         from ai_prompt_toolkit.linter.suggest import generate_suggestions
+
         all_findings_for_suggest = []
         for r in all_results:
             all_findings_for_suggest.extend(r.findings)
@@ -307,6 +412,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if explain_mode:
         from ai_prompt_toolkit.linter.explain import explain_results, format_explanation
+
         all_findings_for_explain = []
         for r in all_results:
             all_findings_for_explain.extend(r.findings)
@@ -318,13 +424,16 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if export_lcov_path:
         from ai_prompt_toolkit.linter.lcov_export import generate_coverage_summary, generate_lcov_report
+
         all_findings_for_lcov = []
         for r in all_results:
             all_findings_for_lcov.extend(r.findings)
         lcov_data = generate_lcov_report(all_findings_for_lcov)
         Path(export_lcov_path).write_text(lcov_data, encoding="utf-8")
         summary = generate_coverage_summary(all_findings_for_lcov)
-        click.echo(f"\nlcov覆盖率: {summary['hit_rules']}/{summary['total_rules']} ({summary['coverage_pct']}%) → {export_lcov_path}")
+        click.echo(
+            f"\nlcov覆盖率: {summary['hit_rules']}/{summary['total_rules']} ({summary['coverage_pct']}%) → {export_lcov_path}"
+        )
 
     if fix and any(r.auto_fixed for r in all_results):
         fixed = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed)
@@ -332,11 +441,14 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if show_diff and any(r.auto_fixed for r in all_results):
         import difflib
+
         for r in all_results:
             if r.auto_fixed and hasattr(r, "original_text") and hasattr(r, "fixed_text"):
                 orig_lines = (r.original_text or "").splitlines(keepends=True)
                 fixed_lines = (r.fixed_text or "").splitlines(keepends=True)
-                diff_lines = difflib.unified_diff(orig_lines, fixed_lines, fromfile="original", tofile="fixed", lineterm="")
+                diff_lines = difflib.unified_diff(
+                    orig_lines, fixed_lines, fromfile="original", tofile="fixed", lineterm=""
+                )
                 for dl in diff_lines:
                     click.echo(dl)
 
@@ -356,33 +468,44 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate
+
         qg = QualityGate()
         all_findings_flat = []
         for r in all_results:
             all_findings_flat.extend(r.findings)
         gate_result = qg.evaluate(all_findings_flat, score=avg_score)
         verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
-        click.echo(f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}")
+        click.echo(
+            f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}"
+        )
         if output:
             report_data["quality_gate"] = gate_result.to_dict()
         from ai_prompt_toolkit.linter.quality_gate import verdict_to_exit_code
+
         sys.exit(verdict_to_exit_code(gate_result.verdict))
 
     if fmt == "sarif" and output:
         sarif_data = _generate_sarif(all_results, target)
         import json as _json
+
         Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
         click.echo(f"SARIF报告: {output}")
     elif fmt == "html":
         from ai_prompt_toolkit.html_report import generate_html_report
+
         findings_list = []
         for r in all_results:
             for f in r.findings:
-                findings_list.append({
-                    "rule_id": f.rule_id, "severity": str(f.severity.value if hasattr(f.severity, "value") else f.severity),
-                    "category": getattr(f, "category", "other"), "name": getattr(f, "name", ""),
-                    "message": f.description, "remediation": getattr(f, "remediation", ""),
-                })
+                findings_list.append(
+                    {
+                        "rule_id": f.rule_id,
+                        "severity": str(f.severity.value if hasattr(f.severity, "value") else f.severity),
+                        "category": getattr(f, "category", "other"),
+                        "name": getattr(f, "name", ""),
+                        "message": f.description,
+                        "remediation": getattr(f, "remediation", ""),
+                    }
+                )
         html_path = output or "lint-report.html"
         generate_html_report(findings_list, target, output_path=html_path)
         click.echo(f"HTML报告: {html_path}")
@@ -402,9 +525,10 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
     if watch:
         import time as _time
 
-        from ai_prompt_toolkit.linter.linter import PromptLinter as _PL
+        from ai_prompt_toolkit.linter.linter import PromptLinter
+
         click.echo(f"lint --watch: 监听 {target} (Ctrl+C退出)...")
-        _watch_linter = _PL()
+        _watch_linter = PromptLinter()
         _last_mtimes: dict[str, float] = {}
         while True:
             try:
@@ -419,7 +543,9 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                     click.echo(f"\n--- [{_time.strftime('%H:%M:%S')}] 文件变更, 重新lint ---")
                     for _tp in _current_templates:
                         _text = _tp.read_text(encoding="utf-8")
-                        _res = _watch_linter.lint(_tp.name, _text, fix=False, template_type=_detect_template_type(_text))
+                        _res = _watch_linter.lint(
+                            _tp.name, _text, fix=False, template_type=_detect_template_type(_text)
+                        )
                         if _res.findings:
                             for _f in _res.findings:
                                 _sv = _f.severity.value if hasattr(_f.severity, "value") else str(_f.severity)
@@ -443,8 +569,7 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
 @click.option("--explain", is_flag=True, help="交互式解释: 每个安全发现的详细说明+修复建议")
-def scan(target: str, provider: str | None, fmt: str, output: str | None,
-         incremental: bool, explain: bool) -> None:
+def scan(target: str, provider: str | None, fmt: str, output: str | None, incremental: bool, explain: bool) -> None:
     """安全扫描：检测Prompt注入、敏感信息泄露等安全风险"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
@@ -458,9 +583,10 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
     if provider:
         import yaml as _yaml
 
-        from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider as DTP
+        from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider
+
         prov_data = _yaml.safe_load(Path(provider).read_text(encoding="utf-8"))
-        prov = DTP(prov_data or {})
+        prov = DictTemplateProvider(prov_data or {})
 
     all_results = []
     total_findings = 0
@@ -495,10 +621,7 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None,
         write_report(report_data, output, fmt=fmt)
         click.echo(f"报告: {output}")
 
-    has_critical = any(
-        any(f.severity.value in ("critical", "high") for f in r.findings)
-        for r in all_results
-    )
+    has_critical = any(any(f.severity.value in ("critical", "high") for f in r.findings) for r in all_results)
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_critical else None))
 
 
@@ -525,22 +648,27 @@ def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | No
             comp = compare_models(text)
             click.echo(f"\n📊 [{tpl_path.name}] 多模型Token对比 (文本长度: {len(text)} chars)")
             click.echo(f"  {'模型':<16} {'Token数':>8} {'输入成本($)':>12} {'输出成本($)':>12}")
-            click.echo(f"  {'─'*16} {'─'*8} {'─'*12} {'─'*12}")
+            click.echo(f"  {'─' * 16} {'─' * 8} {'─' * 12} {'─' * 12}")
             for est in comp.estimates:
-                click.echo(f"  {est.model:<16} {est.estimated_tokens:>8} {est.estimated_input_cost_usd:>12.6f} {est.estimated_output_cost_usd:>12.6f}")
+                click.echo(
+                    f"  {est.model:<16} {est.estimated_tokens:>8} {est.estimated_input_cost_usd:>12.6f} {est.estimated_output_cost_usd:>12.6f}"
+                )
             click.echo(f"\n  💰 最便宜: {comp.cheapest_model} | 🎯 最少Token: {comp.most_efficient_model}")
         else:
             result = analyze_prompt_tokens(text, model)
             est = result.estimate
             click.echo(f"\n📊 [{tpl_path.name}] Token分析")
             click.echo(f"  模型: {est.model} | 字符数: {est.char_count} | Token数: {est.estimated_tokens}")
-            click.echo(f"  输入成本: ${est.estimated_input_cost_usd:.6f}/1K | 输出成本: ${est.estimated_output_cost_usd:.6f}/1K")
+            click.echo(
+                f"  输入成本: ${est.estimated_input_cost_usd:.6f}/1K | 输出成本: ${est.estimated_output_cost_usd:.6f}/1K"
+            )
             if result.savings_tokens > 0:
                 click.echo(f"  💡 可优化: {result.savings_tokens} tokens ({result.savings_percent:.1f}%)")
             for s in result.suggestions[:3]:
                 click.echo(f"    - [{s.priority}] {s.description}")
             if output:
                 import json as _json
+
                 Path(output).write_text(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
 
 

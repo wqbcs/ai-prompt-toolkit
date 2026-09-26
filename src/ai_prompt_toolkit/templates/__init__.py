@@ -1,4 +1,5 @@
 """场景模板目录 — 内置.md模板文件集合"""
+
 from __future__ import annotations
 
 from pathlib import Path

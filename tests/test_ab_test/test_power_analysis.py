@@ -1,7 +1,6 @@
 """统计功效分析测试 — power_analysis/power_curve/min_detectable_effect"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.ab_test.statistics import (
     min_detectable_effect,

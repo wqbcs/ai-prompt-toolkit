@@ -1,10 +1,9 @@
 """测试供应链攻击检测器和安全评分体系"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
+from ai_prompt_toolkit.types import Severity
 
 
 class TestSupplyChainDetector:

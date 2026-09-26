@@ -1,14 +1,18 @@
 """CLI编排辅助模块 — 路径校验/配置加载/报告写入/退出码判定"""
+
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any
 
+import click
 import yaml
 
 from ai_prompt_toolkit.errors import ConfigError, ValidationError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 def resolve_path(path_str: str, must_exist: bool = True) -> Path:
@@ -23,7 +27,7 @@ def load_context(path: str | Path) -> dict[str, Any]:
     if not p.exists():
         raise ConfigError(f"上下文文件不存在 — {p}")
     try:
-        with open(p, "r", encoding="utf-8") as f:
+        with open(p, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
         raise ConfigError(f"JSON格式错误 — {p}:{e.lineno}:{e.colno} {e.msg}") from e
@@ -35,7 +39,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if not p.exists():
         raise ConfigError(f"配置文件不存在 — {p}")
     try:
-        with open(p, "r", encoding="utf-8") as f:
+        with open(p, encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         raise ConfigError(f"YAML格式错误 — {p}: {e}") from e
@@ -64,6 +68,7 @@ def load_promptignore(directory: Path) -> list[str]:
 
 def should_ignore(filepath: Path, base_dir: Path, patterns: list[str]) -> bool:
     import fnmatch
+
     try:
         rel = filepath.relative_to(base_dir)
         rel_str = str(rel).replace("\\", "/")
@@ -89,7 +94,11 @@ def discover_templates_with_ignore(target: str | Path, ignore_file: str | None =
     if ignore_file:
         ip = Path(ignore_file)
         if ip.exists():
-            patterns = [l.strip() for l in ip.read_text(encoding="utf-8").splitlines() if l.strip() and not l.strip().startswith("#")]
+            patterns = [
+                l.strip()
+                for l in ip.read_text(encoding="utf-8").splitlines()
+                if l.strip() and not l.strip().startswith("#")
+            ]
     if not patterns:
         patterns = load_promptignore(base)
     if not patterns:
@@ -129,6 +138,7 @@ def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> N
             f.write(md)
     elif fmt == "yaml":
         import yaml
+
         with open(p, "w", encoding="utf-8") as f:
             yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
     elif fmt == "csv":
@@ -137,6 +147,7 @@ def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> N
 
 def _generate_csv_report(data: dict[str, Any], path: Path) -> None:
     import csv
+
     results = data.get("results", [])
     with open(path, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
@@ -152,11 +163,13 @@ def _generate_csv_report(data: dict[str, Any], path: Path) -> None:
 
 def _generate_html_report(data: dict[str, Any]) -> str:
     from ai_prompt_toolkit.report.html_reporter import generate_html_report
+
     return generate_html_report(data)
 
 
 def _generate_markdown_report(data: dict[str, Any]) -> str:
     from ai_prompt_toolkit.report.markdown_reporter import generate_markdown_report
+
     return generate_markdown_report(data)
 
 
@@ -188,6 +201,7 @@ def format_findings_table(findings: Sequence[dict[str, Any]]) -> str:
     if not findings:
         return "无发现项"
     from ai_prompt_toolkit.output import findings_list
+
     findings_list(findings)
     return ""
 
@@ -278,12 +292,12 @@ def friendly_progress_label(stage: str, current: int, total: int, elapsed_ms: fl
     }
     label = labels.get(stage, labels["default"])
     pct = int(current / max(total, 1) * 100)
-    elapsed_str = f" ({elapsed_ms/1000:.1f}s)" if elapsed_ms > 0 else ""
+    elapsed_str = f" ({elapsed_ms / 1000:.1f}s)" if elapsed_ms > 0 else ""
     eta_str = ""
     if elapsed_ms > 0 and current > 0:
         remaining = (elapsed_ms / current) * (total - current)
         if remaining > 1000:
-            eta_str = f" ~{remaining/1000:.0f}s剩余"
+            eta_str = f" ~{remaining / 1000:.0f}s剩余"
     return f"{label}: {current}/{total} ({pct}%){elapsed_str}{eta_str}"
 
 
@@ -324,7 +338,9 @@ def friendly_score(score: float) -> str:
     return f"{score:.1f}/100"
 
 
-def friendly_finding_line(template_id: str, rule_id: str, severity: str, description: str, is_multimodal: bool = False) -> str:
+def friendly_finding_line(
+    template_id: str, rule_id: str, severity: str, description: str, is_multimodal: bool = False
+) -> str:
     marker, label = friendly_severity(severity)
     prefix = "[MM] " if is_multimodal else ""
     return f"  {marker} [{template_id}] {prefix}{rule_id} ({label}): {description}"
@@ -332,20 +348,20 @@ def friendly_finding_line(template_id: str, rule_id: str, severity: str, descrip
 
 def friendly_lint_summary(total_files: int, avg_score: float, total_findings: int, fixed: int = 0) -> str:
     lines = [
-        f"\n{'='*50}",
+        f"\n{'=' * 50}",
         f"  Lint完成 | 文件: {total_files} | 评分: {friendly_score(avg_score)} | 问题: {total_findings}",
     ]
     if fixed:
         lines.append(f"  🔧 自动修复: {fixed} 处")
     if avg_score >= 90:
-        lines.append(f"  🎉 优秀！Prompt质量超过90分")
+        lines.append("  🎉 优秀！Prompt质量超过90分")
     elif avg_score >= 80:
-        lines.append(f"  👍 良好！小优化可达90+")
+        lines.append("  👍 良好！小优化可达90+")
     elif avg_score >= 70:
-        lines.append(f"  💡 建议关注标记问题，提升Prompt质量")
+        lines.append("  💡 建议关注标记问题，提升Prompt质量")
     else:
-        lines.append(f"  ⚡ 建议优先修复HIGH/CRITICAL问题")
-    lines.append(f"{'='*50}")
+        lines.append("  ⚡ 建议优先修复HIGH/CRITICAL问题")
+    lines.append(f"{'=' * 50}")
     return "\n".join(lines)
 
 
@@ -367,12 +383,12 @@ def friendly_fix_suggestion(rule_id: str, description: str) -> str:
 def print_rich_findings(results: list, console: Any = None) -> None:
     try:
         from rich.console import Console as _Console
+        from rich.panel import Panel as _Panel  # noqa: F401 — 可用性探测
         from rich.text import Text as _Text
-        from rich.panel import Panel as _Panel
     except ImportError:
         for result in results:
             for f in result.findings:
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description))
         return
 
@@ -384,7 +400,7 @@ def print_rich_findings(results: list, console: Any = None) -> None:
             console.print(f"  [green]✓[/green] {result.template_id}: [green]No issues[/green]")
             continue
         for f in result.findings:
-            sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+            sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
             sev_key = sev.lower()
             style = _SEVERITY_RICH_STYLE.get(sev_key, "white")
             marker, label = friendly_severity(sev)
@@ -402,11 +418,12 @@ def print_rich_findings(results: list, console: Any = None) -> None:
                 console.print(f"    [dim]{suggestion}[/dim]")
 
 
-def print_rich_lint_summary(total_files: int, avg_score: float, total_findings: int, fixed: int = 0, console: Any = None) -> None:
+def print_rich_lint_summary(
+    total_files: int, avg_score: float, total_findings: int, fixed: int = 0, console: Any = None
+) -> None:
     try:
         from rich.console import Console as _Console
         from rich.panel import Panel as _Panel
-        from rich.text import Text as _Text
     except ImportError:
         click.echo(friendly_lint_summary(total_files, avg_score, total_findings, fixed))
         return
@@ -459,7 +476,7 @@ def print_rich_evaluate_summary(reports: list, threshold: float = 0.0, console: 
         if not scores:
             continue
         avg = sum(s.score for s in scores) / len(scores)
-        tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+        tid = report.template_id if hasattr(report, "template_id") else "unknown"
         if avg >= 8:
             status = "[green]✓[/green]"
         elif avg >= 6:

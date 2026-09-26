@@ -1,8 +1,9 @@
 """R102: 华为云ModelArts Provider增强 + 昇腾NPU验证"""
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.ab_test.providers.huawei_modelarts import HuaweiModelArtsProvider
 from ai_prompt_toolkit.ab_test.providers.ascend_npu import NPUProvider
+from ai_prompt_toolkit.ab_test.providers.huawei_modelarts import HuaweiModelArtsProvider
 
 
 class TestR102ModelArtsAndNPU:

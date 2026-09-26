@@ -9,6 +9,7 @@
 
 参考: 华为云FunctionGraph Python运行时 + ModelArts推理
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -271,24 +272,36 @@ _TEMPLATES: dict[FGTemplateType, str] = {
 
 _TEMPLATE_META: dict[FGTemplateType, FGTemplate] = {
     FGTemplateType.AI_INFERENCE: FGTemplate(
-        name="ai_inference", template_type=FGTemplateType.AI_INFERENCE,
-        description="AI推理函数(文本生成/摘要/翻译)", description_en="AI inference function (text generation/summary/translation)",
-        env_vars={"MODEL_ENDPOINT": "ModelArts推理端点ID"}, prompt_variables=["prompt"],
+        name="ai_inference",
+        template_type=FGTemplateType.AI_INFERENCE,
+        description="AI推理函数(文本生成/摘要/翻译)",
+        description_en="AI inference function (text generation/summary/translation)",
+        env_vars={"MODEL_ENDPOINT": "ModelArts推理端点ID"},
+        prompt_variables=["prompt"],
     ),
     FGTemplateType.CONVERSATION: FGTemplate(
-        name="conversation", template_type=FGTemplateType.CONVERSATION,
-        description="对话函数(多轮对话+OBS历史存储)", description_en="Conversation function (multi-turn + OBS history)",
-        env_vars={"MODEL_ENDPOINT": "对话模型端点ID", "HISTORY_BUCKET": "OBS历史桶名"}, prompt_variables=["prompt", "session_id"],
+        name="conversation",
+        template_type=FGTemplateType.CONVERSATION,
+        description="对话函数(多轮对话+OBS历史存储)",
+        description_en="Conversation function (multi-turn + OBS history)",
+        env_vars={"MODEL_ENDPOINT": "对话模型端点ID", "HISTORY_BUCKET": "OBS历史桶名"},
+        prompt_variables=["prompt", "session_id"],
     ),
     FGTemplateType.EMBEDDING: FGTemplate(
-        name="embedding", template_type=FGTemplateType.EMBEDDING,
-        description="向量嵌入函数(文本向量化)", description_en="Embedding function (text vectorization)",
-        env_vars={"EMBEDDING_ENDPOINT": "嵌入模型端点ID"}, prompt_variables=["text"],
+        name="embedding",
+        template_type=FGTemplateType.EMBEDDING,
+        description="向量嵌入函数(文本向量化)",
+        description_en="Embedding function (text vectorization)",
+        env_vars={"EMBEDDING_ENDPOINT": "嵌入模型端点ID"},
+        prompt_variables=["text"],
     ),
     FGTemplateType.CONTENT_MODERATION: FGTemplate(
-        name="content_moderation", template_type=FGTemplateType.CONTENT_MODERATION,
-        description="内容审核函数(华为云Moderation)", description_en="Content moderation function (Huawei Cloud Moderation)",
-        env_vars={"PROJECT_ID": "华为云项目ID"}, prompt_variables=["text"],
+        name="content_moderation",
+        template_type=FGTemplateType.CONTENT_MODERATION,
+        description="内容审核函数(华为云Moderation)",
+        description_en="Content moderation function (Huawei Cloud Moderation)",
+        env_vars={"PROJECT_ID": "华为云项目ID"},
+        prompt_variables=["text"],
     ),
 }
 
@@ -298,10 +311,12 @@ def get_fg_template(template_type: str, name: str = "", description: str = "") -
     meta = _TEMPLATE_META[tt]
     code = _TEMPLATES[tt].format(name=name or meta.name, description=description or meta.description)
     return FGTemplate(
-        name=name or meta.name, template_type=tt,
+        name=name or meta.name,
+        template_type=tt,
         description=description or meta.description,
         description_en=meta.description_en,
-        code=code, env_vars=dict(meta.env_vars),
+        code=code,
+        env_vars=dict(meta.env_vars),
         dependencies=list(meta.dependencies),
         prompt_variables=list(meta.prompt_variables),
     )
@@ -309,7 +324,14 @@ def get_fg_template(template_type: str, name: str = "", description: str = "") -
 
 def list_fg_templates() -> list[dict[str, Any]]:
     return [
-        {"type": tt.value, "name": m.name, "description": m.description, "description_en": m.description_en,
-         "env_vars": m.env_vars, "prompt_variables": m.prompt_variables, "runtime": m.runtime}
+        {
+            "type": tt.value,
+            "name": m.name,
+            "description": m.description,
+            "description_en": m.description_en,
+            "env_vars": m.env_vars,
+            "prompt_variables": m.prompt_variables,
+            "runtime": m.runtime,
+        }
         for tt, m in _TEMPLATE_META.items()
     ]

@@ -6,6 +6,7 @@
 - lint --resume: 从中断处继续
 - 参考: pytest --lf(last-failed)机制
 """
+
 from __future__ import annotations
 
 import json

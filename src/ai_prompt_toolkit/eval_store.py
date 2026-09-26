@@ -6,6 +6,7 @@
 - 回归检测: 任一维度评分下降>15%自动告警
 - A/B对比: 两个版本评分并排对比
 """
+
 from __future__ import annotations
 
 import json
@@ -245,9 +246,13 @@ class EvalStore:
                         current_score, change_percent, severity, created_at)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
                     (
-                        snapshot.snapshot_id, dim_id, alert.dimension_name,
-                        alert.previous_score, alert.current_score,
-                        round(alert.change_percent, 2), alert.severity,
+                        snapshot.snapshot_id,
+                        dim_id,
+                        alert.dimension_name,
+                        alert.previous_score,
+                        alert.current_score,
+                        round(alert.change_percent, 2),
+                        alert.severity,
                         snapshot.created_at,
                     ),
                 )
@@ -315,10 +320,12 @@ class EvalStore:
     def compare(self, snapshot_id_a: int, snapshot_id_b: int) -> dict[str, Any]:
         conn = self._connect()
         row_a = conn.execute(
-            "SELECT * FROM eval_snapshots WHERE snapshot_id = ?", (snapshot_id_a,),
+            "SELECT * FROM eval_snapshots WHERE snapshot_id = ?",
+            (snapshot_id_a,),
         ).fetchone()
         row_b = conn.execute(
-            "SELECT * FROM eval_snapshots WHERE snapshot_id = ?", (snapshot_id_b,),
+            "SELECT * FROM eval_snapshots WHERE snapshot_id = ?",
+            (snapshot_id_b,),
         ).fetchone()
         if not row_a or not row_b:
             return {"error": "snapshot not found"}
@@ -332,13 +339,15 @@ class EvalStore:
             va = dims_a.get(dim_id, 0)
             vb = dims_b.get(dim_id, 0)
             diff = vb - va
-            diffs.append({
-                "dimension_id": dim_id,
-                "score_a": round(va, 2),
-                "score_b": round(vb, 2),
-                "diff": round(diff, 2),
-                "direction": "improved" if diff > 0 else "regressed" if diff < 0 else "unchanged",
-            })
+            diffs.append(
+                {
+                    "dimension_id": dim_id,
+                    "score_a": round(va, 2),
+                    "score_b": round(vb, 2),
+                    "diff": round(diff, 2),
+                    "direction": "improved" if diff > 0 else "regressed" if diff < 0 else "unchanged",
+                }
+            )
 
         return {
             "snapshot_a": self._row_to_snapshot(row_a).to_dict(),
@@ -367,11 +376,20 @@ class EvalStore:
             self._conn.close()
             self._conn = None
 
-    def record_trace(self, snapshot_id: int, operation: str, dimension_id: str = "",
-                      input_hash: str = "", output_hash: str = "",
-                      latency_ms: float = 0, token_count: int = 0, cost: float = 0,
-                      status: str = "ok") -> int:
+    def record_trace(
+        self,
+        snapshot_id: int,
+        operation: str,
+        dimension_id: str = "",
+        input_hash: str = "",
+        output_hash: str = "",
+        latency_ms: float = 0,
+        token_count: int = 0,
+        cost: float = 0,
+        status: str = "ok",
+    ) -> int:
         import datetime
+
         conn = self._connect()
         now = datetime.datetime.now().isoformat()
         cur = conn.execute(
@@ -381,8 +399,9 @@ class EvalStore:
         conn.commit()
         return cur.lastrowid
 
-    def get_traces(self, snapshot_id: int | None = None, operation: str | None = None,
-                    limit: int = 100) -> list[dict[str, Any]]:
+    def get_traces(
+        self, snapshot_id: int | None = None, operation: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         conn = self._connect()
         clauses = []
         params: list[Any] = []
@@ -393,19 +412,29 @@ class EvalStore:
             clauses.append("operation=?")
             params.append(operation)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
-        rows = conn.execute(f"SELECT * FROM eval_traces {where} ORDER BY trace_id DESC LIMIT ?", params + [limit]).fetchall()
+        rows = conn.execute(
+            f"SELECT * FROM eval_traces {where} ORDER BY trace_id DESC LIMIT ?", [*params, limit]
+        ).fetchall()
         return [dict(r) for r in rows]
 
     def get_trace_stats(self, operation: str | None = None) -> dict[str, Any]:
         conn = self._connect()
         where = f"WHERE operation='{operation}'" if operation else ""
         try:
-            row = conn.execute(f"SELECT COUNT(*) as cnt, AVG(latency_ms) as avg_latency, SUM(token_count) as total_tokens, SUM(cost) as total_cost FROM eval_traces {where}").fetchone()
-            return {"count": row["cnt"], "avg_latency_ms": round(row["avg_latency"] or 0, 2), "total_tokens": row["total_tokens"] or 0, "total_cost": round(row["total_cost"] or 0, 4)}
+            row = conn.execute(
+                f"SELECT COUNT(*) as cnt, AVG(latency_ms) as avg_latency, SUM(token_count) as total_tokens, SUM(cost) as total_cost FROM eval_traces {where}"
+            ).fetchone()
+            return {
+                "count": row["cnt"],
+                "avg_latency_ms": round(row["avg_latency"] or 0, 2),
+                "total_tokens": row["total_tokens"] or 0,
+                "total_cost": round(row["total_cost"] or 0, 4),
+            }
         except Exception:
             return {"count": 0, "avg_latency_ms": 0, "total_tokens": 0, "total_cost": 0}
 
 
 def _compute_hash(template_id: str) -> str:
     import hashlib
+
     return hashlib.sha256(template_id.encode()).hexdigest()[:16]

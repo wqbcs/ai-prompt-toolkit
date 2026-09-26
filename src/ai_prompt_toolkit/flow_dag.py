@@ -11,11 +11,10 @@
 - Promptflow: flow.dag.yaml可视化DAG编排
 - Dify: 可视化Workflow画布
 """
+
 from __future__ import annotations
 
-import copy
 import logging
-import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -130,7 +129,7 @@ class FlowDAG:
         self._adjacency[source].append(target)
 
     def topological_sort(self) -> list[str]:
-        in_degree: dict[str, int] = {n: 0 for n in self.nodes}
+        in_degree: dict[str, int] = dict.fromkeys(self.nodes, 0)
         for edge in self.edges:
             in_degree[edge.target] = in_degree.get(edge.target, 0) + 1
 
@@ -197,11 +196,15 @@ class FlowDAG:
                 positions[name] = (x, y)
 
         lines: list[str] = []
-        lines.append(f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">')
+        lines.append(
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
+        )
         lines.append(f'<rect width="{width}" height="{height}" fill="#1a1a2e" rx="8"/>')
 
         if self.name:
-            lines.append(f'<text x="{width/2}" y="30" text-anchor="middle" fill="#e0e0e0" font-family="monospace" font-size="16" font-weight="bold">{_svg_escape(self.name)}</text>')
+            lines.append(
+                f'<text x="{width / 2}" y="30" text-anchor="middle" fill="#e0e0e0" font-family="monospace" font-size="16" font-weight="bold">{_svg_escape(self.name)}</text>'
+            )
 
         for edge in self.edges:
             if edge.source in positions and edge.target in positions:
@@ -212,37 +215,51 @@ class FlowDAG:
                 x2 = tx
                 y2 = ty + node_height / 2
                 mx = (x1 + x2) / 2
-                lines.append(f'<path d="M{x1},{y1} C{mx},{y1} {mx},{y2} {x2},{y2}" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>')
+                lines.append(
+                    f'<path d="M{x1},{y1} C{mx},{y1} {mx},{y2} {x2},{y2}" stroke="#555" stroke-width="1.5" fill="none" marker-end="url(#arrow)"/>'
+                )
                 if edge.condition:
                     cond_text = _svg_escape(edge.condition[:20])
-                    lines.append(f'<text x="{mx}" y="{(y1+y2)/2 - 8}" text-anchor="middle" fill="#888" font-family="monospace" font-size="9">{cond_text}</text>')
+                    lines.append(
+                        f'<text x="{mx}" y="{(y1 + y2) / 2 - 8}" text-anchor="middle" fill="#888" font-family="monospace" font-size="9">{cond_text}</text>'
+                    )
 
-        lines.append('<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#555"/></marker></defs>')
+        lines.append(
+            '<defs><marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="#555"/></marker></defs>'
+        )
 
         for name, (x, y) in positions.items():
             node = self.nodes[name]
             color = self._NODE_COLORS.get(node.node_type, "#4A90D9")
-            lines.append(f'<rect x="{x}" y="{y}" width="{node_width}" height="{node_height}" rx="6" fill="{color}" opacity="0.9"/>')
+            lines.append(
+                f'<rect x="{x}" y="{y}" width="{node_width}" height="{node_height}" rx="6" fill="{color}" opacity="0.9"/>'
+            )
             label = _svg_escape(name[:18])
             type_label = _svg_escape(node.node_type.value)
-            lines.append(f'<text x="{x + node_width/2}" y="{y + 22}" text-anchor="middle" fill="white" font-family="monospace" font-size="12" font-weight="bold">{label}</text>')
-            lines.append(f'<text x="{x + node_width/2}" y="{y + 40}" text-anchor="middle" fill="#ddd" font-family="monospace" font-size="10">{type_label}</text>')
+            lines.append(
+                f'<text x="{x + node_width / 2}" y="{y + 22}" text-anchor="middle" fill="white" font-family="monospace" font-size="12" font-weight="bold">{label}</text>'
+            )
+            lines.append(
+                f'<text x="{x + node_width / 2}" y="{y + 40}" text-anchor="middle" fill="#ddd" font-family="monospace" font-size="10">{type_label}</text>'
+            )
 
-        lines.append('</svg>')
-        return '\n'.join(lines)
+        lines.append("</svg>")
+        return "\n".join(lines)
 
     def to_dot(self) -> str:
         lines = [f'digraph "{_dot_escape(self.name)}" {{']
-        lines.append('  rankdir=LR;')
+        lines.append("  rankdir=LR;")
         lines.append('  node [shape=box, style="rounded,filled", fontname="monospace"];')
         for name, node in self.nodes.items():
             color = self._NODE_COLORS.get(node.node_type, "#4A90D9")
-            lines.append(f'  "{_dot_escape(name)}" [label="{_dot_escape(name)}\\n{_dot_escape(node.node_type.value)}", fillcolor="{color}", fontcolor="white"];')
+            lines.append(
+                f'  "{_dot_escape(name)}" [label="{_dot_escape(name)}\\n{_dot_escape(node.node_type.value)}", fillcolor="{color}", fontcolor="white"];'
+            )
         for edge in self.edges:
-            cond = f' [label="{_dot_escape(edge.condition)}"]' if edge.condition else ''
+            cond = f' [label="{_dot_escape(edge.condition)}"]' if edge.condition else ""
             lines.append(f'  "{_dot_escape(edge.source)}" -> "{_dot_escape(edge.target)}"{cond};')
-        lines.append('}')
-        return '\n'.join(lines)
+        lines.append("}")
+        return "\n".join(lines)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -274,8 +291,10 @@ class FlowDAG:
 
     @classmethod
     def from_yaml(cls, yaml_path: str | Any) -> FlowDAG:
-        import yaml
         from pathlib import Path
+
+        import yaml
+
         content = Path(yaml_path).read_text(encoding="utf-8")
         data = yaml.safe_load(content)
         return cls.from_dict(data)
@@ -360,6 +379,7 @@ class FlowExecutor:
 
         elif node.node_type == NodeType.LINT:
             from ai_prompt_toolkit.linter.linter import PromptLinter
+
             text = inputs.get("text", inputs.get("rendered", ""))
             linter = PromptLinter()
             result = linter.lint(node.name, str(text))
@@ -367,13 +387,18 @@ class FlowExecutor:
 
         elif node.node_type == NodeType.EVALUATE:
             from ai_prompt_toolkit.evaluator import PromptEvaluator
+
             text = inputs.get("text", inputs.get("rendered", ""))
             evaluator = PromptEvaluator()
             eval_result = evaluator.evaluate(node.name, str(text))
-            return {"overall_score": eval_result.overall_score if hasattr(eval_result, 'overall_score') else 0.0, "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, 'dimensions') else 0}
+            return {
+                "overall_score": eval_result.overall_score if hasattr(eval_result, "overall_score") else 0.0,
+                "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, "dimensions") else 0,
+            }
 
         elif node.node_type == NodeType.SCAN:
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
             text = inputs.get("text", inputs.get("rendered", ""))
             detector = InjectionDetector()
             results = detector.detect(str(text), template_id=node.name)
@@ -381,6 +406,7 @@ class FlowExecutor:
 
         elif node.node_type == NodeType.GEPA:
             from ai_prompt_toolkit.gepa import gepa_optimize
+
             text = inputs.get("text", inputs.get("rendered", ""))
             auto = node.config.get("auto", "light")
             metric = node.config.get("metric", "lint_score")
@@ -392,22 +418,20 @@ class FlowExecutor:
             }
 
         elif node.node_type == NodeType.CONDITION:
-            condition = node.config.get("expression", "")
+            _condition = node.config.get("expression", "")  # 表达式求值未实现, 当前语义为阈值比较
             value = inputs.get("value", inputs.get("score", 0))
             if isinstance(value, (int, float)):
                 threshold = node.config.get("threshold", 0)
                 return {"passed": value >= threshold, "value": value}
 
         elif node.node_type == NodeType.AGGREGATE:
-            aggregated = {}
-            for key, value in inputs.items():
-                aggregated[key] = value
-            return aggregated
+            return dict(inputs)
 
         elif node.node_type == NodeType.PYTHON:
             func_name = node.config.get("function", "")
             if func_name:
                 import importlib
+
                 parts = func_name.rsplit(".", 1)
                 if len(parts) == 2:
                     module = importlib.import_module(parts[0])
@@ -430,10 +454,12 @@ class InteractiveFlowExecutor:
         self._snapshots: list[dict[str, Any]] = []
 
     def _save_snapshot(self) -> None:
-        self._snapshots.append({
-            "step_index": self._step_index,
-            "context": {k: (v if not isinstance(v, dict) else dict(v)) for k, v in self._context.items()},
-        })
+        self._snapshots.append(
+            {
+                "step_index": self._step_index,
+                "context": {k: (v if not isinstance(v, dict) else dict(v)) for k, v in self._context.items()},
+            }
+        )
 
     def rollback(self, step_index: int) -> dict[str, Any]:
         if not self._snapshots:
@@ -545,7 +571,8 @@ class InteractiveFlowExecutor:
         total_elapsed = (time.perf_counter() - self._start_time) * 1000
         self._execution.total_time_ms = total_elapsed
         self._execution.status = (
-            "success" if all(r.status == "success" for r in self._execution.results.values())
+            "success"
+            if all(r.status == "success" for r in self._execution.results.values())
             else ("partial" if self._step_index < len(self._order) else "error")
         )
         return {
@@ -584,24 +611,30 @@ class InteractiveFlowExecutor:
             return {"rendered": template}
         elif node.node_type == NodeType.LINT:
             from ai_prompt_toolkit.linter.linter import PromptLinter
+
             text = inputs.get("text", inputs.get("rendered", ""))
             linter = PromptLinter()
             result = linter.lint(node.name, str(text))
             return {"score": result.score, "findings_count": len(result.findings)}
         elif node.node_type == NodeType.EVALUATE:
             from ai_prompt_toolkit.evaluator import PromptEvaluator
+
             text = inputs.get("text", inputs.get("rendered", ""))
             evaluator = PromptEvaluator()
             eval_result = evaluator.evaluate(node.name, str(text))
-            return {"overall_score": eval_result.overall_score if hasattr(eval_result, 'overall_score') else 0.0, "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, 'dimensions') else 0}
+            return {
+                "overall_score": eval_result.overall_score if hasattr(eval_result, "overall_score") else 0.0,
+                "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, "dimensions") else 0,
+            }
         elif node.node_type == NodeType.SCAN:
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
             text = inputs.get("text", inputs.get("rendered", ""))
             detector = InjectionDetector()
             results = detector.detect(str(text), template_id=node.name)
             return {"injection_count": len(results) if isinstance(results, list) else 0}
         elif node.node_type == NodeType.CONDITION:
-            condition = node.config.get("expression", "")
+            _condition = node.config.get("expression", "")  # 表达式求值未实现, 当前语义为阈值比较
             value = inputs.get("value", inputs.get("score", 0))
             if isinstance(value, (int, float)):
                 threshold = node.config.get("threshold", 0)
@@ -613,10 +646,18 @@ class InteractiveFlowExecutor:
 
 def create_lint_scan_flow(name: str = "lint-scan-flow") -> FlowDAG:
     dag = FlowDAG(name=name)
-    dag.add_node(FlowNode(name="input", node_type=NodeType.PROMPT, config={"template": "{{text}}"}, inputs={"text": "${$inputs.text}"}))
+    dag.add_node(
+        FlowNode(
+            name="input", node_type=NodeType.PROMPT, config={"template": "{{text}}"}, inputs={"text": "${$inputs.text}"}
+        )
+    )
     dag.add_node(FlowNode(name="lint", node_type=NodeType.LINT, inputs={"text": "${input.rendered}"}))
     dag.add_node(FlowNode(name="scan", node_type=NodeType.SCAN, inputs={"text": "${input.rendered}"}))
-    dag.add_node(FlowNode(name="aggregate", node_type=NodeType.AGGREGATE, inputs={"lint_result": "${lint}", "scan_result": "${scan}"}))
+    dag.add_node(
+        FlowNode(
+            name="aggregate", node_type=NodeType.AGGREGATE, inputs={"lint_result": "${lint}", "scan_result": "${scan}"}
+        )
+    )
     dag.add_edge("input", "lint")
     dag.add_edge("input", "scan")
     dag.add_edge("lint", "aggregate")
@@ -626,10 +667,25 @@ def create_lint_scan_flow(name: str = "lint-scan-flow") -> FlowDAG:
 
 def create_gepa_optimize_flow(name: str = "gepa-optimize-flow") -> FlowDAG:
     dag = FlowDAG(name=name)
-    dag.add_node(FlowNode(name="input", node_type=NodeType.PROMPT, config={"template": "{{text}}"}, inputs={"text": "${$inputs.text}"}))
+    dag.add_node(
+        FlowNode(
+            name="input", node_type=NodeType.PROMPT, config={"template": "{{text}}"}, inputs={"text": "${$inputs.text}"}
+        )
+    )
     dag.add_node(FlowNode(name="lint_before", node_type=NodeType.LINT, inputs={"text": "${input.rendered}"}))
-    dag.add_node(FlowNode(name="gepa", node_type=NodeType.GEPA, inputs={"text": "${input.rendered}"}, config={"auto": "light", "metric": "lint_score"}))
-    dag.add_node(FlowNode(name="aggregate", node_type=NodeType.AGGREGATE, inputs={"before": "${lint_before}", "optimized": "${gepa}"}))
+    dag.add_node(
+        FlowNode(
+            name="gepa",
+            node_type=NodeType.GEPA,
+            inputs={"text": "${input.rendered}"},
+            config={"auto": "light", "metric": "lint_score"},
+        )
+    )
+    dag.add_node(
+        FlowNode(
+            name="aggregate", node_type=NodeType.AGGREGATE, inputs={"before": "${lint_before}", "optimized": "${gepa}"}
+        )
+    )
     dag.add_edge("input", "lint_before")
     dag.add_edge("input", "gepa")
     dag.add_edge("lint_before", "aggregate")
@@ -656,13 +712,15 @@ class PromptChain:
         return self
 
     def conditional(self, node_name: str, condition: str, true_branch: str, false_branch: str) -> PromptChain:
-        self._steps.append({
-            "name": node_name,
-            "mode": "conditional",
-            "condition": condition,
-            "true_branch": true_branch,
-            "false_branch": false_branch,
-        })
+        self._steps.append(
+            {
+                "name": node_name,
+                "mode": "conditional",
+                "condition": condition,
+                "true_branch": true_branch,
+                "false_branch": false_branch,
+            }
+        )
         return self
 
     def build(self) -> FlowDAG:

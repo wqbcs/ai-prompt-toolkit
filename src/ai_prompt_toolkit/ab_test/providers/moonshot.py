@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.ab_test.provider import BaseProvider
-from ai_prompt_toolkit.ab_test.types import ModelResult
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.ab_test.types import ModelResult
 
 
 class MoonshotProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "moonshot-v1-8k": (0.001, 0.001), "moonshot-v1-32k": (0.001, 0.001),
+        "moonshot-v1-8k": (0.001, 0.001),
+        "moonshot-v1-32k": (0.001, 0.001),
         "moonshot-v1-128k": (0.001, 0.001),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)

@@ -1,6 +1,6 @@
 """R144: lint --suggest修复建议智能推荐"""
-import pytest
-from ai_prompt_toolkit.linter.suggest import generate_suggestions, Suggestion
+
+from ai_prompt_toolkit.linter.suggest import Suggestion, generate_suggestions
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -60,9 +60,15 @@ def test_generate_suggestions_english():
 
 def test_suggestion_to_dict():
     s = Suggestion(
-        priority=1, rule_id="P001", rule_name="test", severity="high",
-        category="structure", remediation="fix it", hit_count=1,
-        estimated_impact="高", action_steps=["step1"],
+        priority=1,
+        rule_id="P001",
+        rule_name="test",
+        severity="high",
+        category="structure",
+        remediation="fix it",
+        hit_count=1,
+        estimated_impact="高",
+        action_steps=["step1"],
     )
     d = s.to_dict()
     assert d["rule_id"] == "P001"

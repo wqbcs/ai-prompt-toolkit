@@ -36,9 +36,8 @@ class TestTracer:
 
     def test_span_error(self):
         self.tracer.start_trace("test")
-        with pytest.raises(ValueError):
-            with self.tracer.span("error_span"):
-                raise ValueError("test error")
+        with pytest.raises(ValueError), self.tracer.span("error_span"):
+            raise ValueError("test error")
         ended = self.tracer.end_trace()
         assert len(ended.spans) == 1
         assert ended.spans[0].status == "error"
@@ -179,9 +178,8 @@ class TestObserveDecorator:
         def failing() -> None:
             raise RuntimeError("test error")
 
-        with trace("test") as tracer:
-            with pytest.raises(RuntimeError):
-                failing()
+        with trace("test") as tracer, pytest.raises(RuntimeError):
+            failing()
         traces = tracer.get_traces()
         assert traces[0].spans[0].status == "error"
 

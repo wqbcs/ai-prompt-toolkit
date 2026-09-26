@@ -6,9 +6,9 @@
 - 华为云安全基线检查
 - 数据安全法/个人信息保护法合规
 """
+
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
@@ -68,10 +68,10 @@ class ComplianceReport:
 
     def to_markdown(self) -> str:
         lines = [
-            f"# 华为云合规认证报告",
-            f"",
-            f"| 字段 | 值 |",
-            f"|---|---|",
+            "# 华为云合规认证报告",
+            "",
+            "| 字段 | 值 |",
+            "|---|---|",
             f"| 报告编号 | {self.report_id} |",
             f"| 项目名称 | {self.project_name} |",
             f"| 报告日期 | {self.report_date} |",
@@ -81,9 +81,9 @@ class ComplianceReport:
             f"| 不通过 | {self.failed_items} |",
             f"| 警告 | {self.warning_items} |",
             f"| 通过率 | {round(self.passed_items / max(self.total_items, 1) * 100, 1)}% |",
-            f"",
-            f"## OWASP LLM Top 10 2025 合规",
-            f"",
+            "",
+            "## OWASP LLM Top 10 2025 合规",
+            "",
         ]
         for key, value in self.owasp_summary.items():
             lines.append(f"- **{key}**: {value}")
@@ -94,7 +94,9 @@ class ComplianceReport:
         lines.append("|---|---|---|---|---|")
         for item in self.items:
             status_icon = {"pass": "✅", "fail": "❌", "warn": "⚠️", "not_checked": "⏳"}.get(item.status, "?")
-            lines.append(f"| {item.requirement_id} | {item.requirement_name} | {item.category} | {status_icon} {item.status} | {item.severity} |")
+            lines.append(
+                f"| {item.requirement_id} | {item.requirement_name} | {item.category} | {status_icon} {item.status} | {item.severity} |"
+            )
         if self.recommendations:
             lines.append("")
             lines.append("## 改进建议")
@@ -105,71 +107,103 @@ class ComplianceReport:
 
 
 _OWASP_REQUIREMENTS = [
-    ComplianceItem("OWASP-LLM01", "Prompt注入防护", "owasp", "not_checked", "critical",
-                   "", "实施输入边界校验和指令层级隔离"),
-    ComplianceItem("OWASP-LLM02", "敏感信息泄露防护", "owasp", "not_checked", "critical",
-                   "", "添加防泄露声明和Canary Token检测"),
-    ComplianceItem("OWASP-LLM03", "供应链安全", "owasp", "not_checked", "high",
-                   "", "验证第三方包名真实性"),
-    ComplianceItem("OWASP-LLM04", "数据和模型投毒防护", "owasp", "not_checked", "high",
-                   "", "实施来源验证和完整性校验"),
-    ComplianceItem("OWASP-LLM05", "不当输出处理防护", "owasp", "not_checked", "high",
-                   "", "对LLM输出进行编码转义"),
-    ComplianceItem("OWASP-LLM06", "过度授权防护", "owasp", "not_checked", "critical",
-                   "", "限制LLM调用权限，实施最小权限原则"),
-    ComplianceItem("OWASP-LLM07", "系统提示词泄露防护", "owasp", "not_checked", "high",
-                   "", "分段存储系统提示词，添加泄露检测"),
-    ComplianceItem("OWASP-LLM08", "向量和嵌入安全", "owasp", "not_checked", "medium",
-                   "", "向量数据库访问控制和相似度阈值过滤"),
-    ComplianceItem("OWASP-LLM09", "错误信息防护", "owasp", "not_checked", "medium",
-                   "", "添加事实性校验和知识截止声明"),
-    ComplianceItem("OWASP-LLM10", "无界消费防护", "owasp", "not_checked", "medium",
-                   "", "实施速率限制和Token消耗监控"),
+    ComplianceItem(
+        "OWASP-LLM01", "Prompt注入防护", "owasp", "not_checked", "critical", "", "实施输入边界校验和指令层级隔离"
+    ),
+    ComplianceItem(
+        "OWASP-LLM02", "敏感信息泄露防护", "owasp", "not_checked", "critical", "", "添加防泄露声明和Canary Token检测"
+    ),
+    ComplianceItem("OWASP-LLM03", "供应链安全", "owasp", "not_checked", "high", "", "验证第三方包名真实性"),
+    ComplianceItem("OWASP-LLM04", "数据和模型投毒防护", "owasp", "not_checked", "high", "", "实施来源验证和完整性校验"),
+    ComplianceItem("OWASP-LLM05", "不当输出处理防护", "owasp", "not_checked", "high", "", "对LLM输出进行编码转义"),
+    ComplianceItem(
+        "OWASP-LLM06", "过度授权防护", "owasp", "not_checked", "critical", "", "限制LLM调用权限，实施最小权限原则"
+    ),
+    ComplianceItem(
+        "OWASP-LLM07", "系统提示词泄露防护", "owasp", "not_checked", "high", "", "分段存储系统提示词，添加泄露检测"
+    ),
+    ComplianceItem(
+        "OWASP-LLM08", "向量和嵌入安全", "owasp", "not_checked", "medium", "", "向量数据库访问控制和相似度阈值过滤"
+    ),
+    ComplianceItem("OWASP-LLM09", "错误信息防护", "owasp", "not_checked", "medium", "", "添加事实性校验和知识截止声明"),
+    ComplianceItem("OWASP-LLM10", "无界消费防护", "owasp", "not_checked", "medium", "", "实施速率限制和Token消耗监控"),
 ]
 
 _DJBF_REQUIREMENTS = [
-    ComplianceItem("DJBF-2.0-01", "身份鉴别", "djbf", "not_checked", "high",
-                   "", "LLM调用需身份认证，禁止匿名访问"),
-    ComplianceItem("DJBF-2.0-02", "访问控制", "djbf", "not_checked", "high",
-                   "", "实施基于角色的访问控制(RBAC)"),
-    ComplianceItem("DJBF-2.0-03", "安全审计", "djbf", "not_checked", "high",
-                   "", "记录所有LLM调用的审计日志"),
-    ComplianceItem("DJBF-2.0-04", "入侵防范", "djbf", "not_checked", "high",
-                   "", "检测和防御Prompt注入攻击"),
-    ComplianceItem("DJBF-2.0-05", "数据完整性", "djbf", "not_checked", "medium",
-                   "", "确保Prompt和响应的完整性校验"),
-    ComplianceItem("DJBF-2.0-06", "数据保密性", "djbf", "not_checked", "high",
-                   "", "敏感数据传输和存储加密"),
-    ComplianceItem("DJBF-2.0-07", "个人信息保护", "djbf", "not_checked", "critical",
-                   "", "遵循个人信息保护法，PII脱敏处理"),
-    ComplianceItem("DJBF-2.0-08", "备份恢复", "djbf", "not_checked", "medium",
-                   "", "Prompt模板和配置定期备份"),
+    ComplianceItem("DJBF-2.0-01", "身份鉴别", "djbf", "not_checked", "high", "", "LLM调用需身份认证，禁止匿名访问"),
+    ComplianceItem("DJBF-2.0-02", "访问控制", "djbf", "not_checked", "high", "", "实施基于角色的访问控制(RBAC)"),
+    ComplianceItem("DJBF-2.0-03", "安全审计", "djbf", "not_checked", "high", "", "记录所有LLM调用的审计日志"),
+    ComplianceItem("DJBF-2.0-04", "入侵防范", "djbf", "not_checked", "high", "", "检测和防御Prompt注入攻击"),
+    ComplianceItem("DJBF-2.0-05", "数据完整性", "djbf", "not_checked", "medium", "", "确保Prompt和响应的完整性校验"),
+    ComplianceItem("DJBF-2.0-06", "数据保密性", "djbf", "not_checked", "high", "", "敏感数据传输和存储加密"),
+    ComplianceItem(
+        "DJBF-2.0-07", "个人信息保护", "djbf", "not_checked", "critical", "", "遵循个人信息保护法，PII脱敏处理"
+    ),
+    ComplianceItem("DJBF-2.0-08", "备份恢复", "djbf", "not_checked", "medium", "", "Prompt模板和配置定期备份"),
 ]
 
 _HWCLOUD_BASELINE = [
-    ComplianceItem("HW-BL-01", "AK/SK安全管理", "hwcloud", "not_checked", "critical",
-                   "", "AK/SK通过IAM委托或密钥管理服务获取，禁止硬编码"),
-    ComplianceItem("HW-BL-02", "VPC网络隔离", "hwcloud", "not_checked", "high",
-                   "", "LLM服务部署在VPC内，通过API网关暴露"),
-    ComplianceItem("HW-BL-03", "数据加密存储", "hwcloud", "not_checked", "high",
-                   "", "使用KMS加密敏感Prompt数据"),
-    ComplianceItem("HW-BL-04", "ModelArts合规", "hwcloud", "not_checked", "high",
-                   "", "ModelArts推理服务遵循华为云安全基线"),
-    ComplianceItem("HW-BL-05", "日志审计AOM", "hwcloud", "not_checked", "medium",
-                   "", "应用运维管理(AOM)采集LLM调用日志"),
-    ComplianceItem("HW-BL-06", "API网关限流", "hwcloud", "not_checked", "medium",
-                   "", "通过API网关实施限流和防重放攻击"),
+    ComplianceItem(
+        "HW-BL-01",
+        "AK/SK安全管理",
+        "hwcloud",
+        "not_checked",
+        "critical",
+        "",
+        "AK/SK通过IAM委托或密钥管理服务获取，禁止硬编码",
+    ),
+    ComplianceItem(
+        "HW-BL-02", "VPC网络隔离", "hwcloud", "not_checked", "high", "", "LLM服务部署在VPC内，通过API网关暴露"
+    ),
+    ComplianceItem("HW-BL-03", "数据加密存储", "hwcloud", "not_checked", "high", "", "使用KMS加密敏感Prompt数据"),
+    ComplianceItem(
+        "HW-BL-04", "ModelArts合规", "hwcloud", "not_checked", "high", "", "ModelArts推理服务遵循华为云安全基线"
+    ),
+    ComplianceItem(
+        "HW-BL-05", "日志审计AOM", "hwcloud", "not_checked", "medium", "", "应用运维管理(AOM)采集LLM调用日志"
+    ),
+    ComplianceItem(
+        "HW-BL-06", "API网关限流", "hwcloud", "not_checked", "medium", "", "通过API网关实施限流和防重放攻击"
+    ),
 ]
 
 _HWCLOUD_SECURITY_BASELINE = [
-    ComplianceItem("HWC-SEC-01", "IAM最小权限", "hwcloud_security", "not_checked", "critical",
-                   "", "Prompt声明华为云IAM最小权限原则，禁止使用root账号或管理员权限"),
-    ComplianceItem("HWC-SEC-02", "OBS数据加密(KMS)", "hwcloud_security", "not_checked", "high",
-                   "", "Prompt声明OBS数据使用KMS加密，禁止明文存储敏感数据"),
-    ComplianceItem("HWC-SEC-03", "VPC网络隔离", "hwcloud_security", "not_checked", "high",
-                   "", "Prompt声明VPC网络隔离，LLM服务不直接暴露公网"),
-    ComplianceItem("HWC-SEC-04", "数据留存合规(GDPR/PIPL)", "hwcloud_security", "not_checked", "critical",
-                   "", "Prompt声明数据留存策略，符合GDPR/PIPL要求，明确数据保留期限和删除机制"),
+    ComplianceItem(
+        "HWC-SEC-01",
+        "IAM最小权限",
+        "hwcloud_security",
+        "not_checked",
+        "critical",
+        "",
+        "Prompt声明华为云IAM最小权限原则，禁止使用root账号或管理员权限",
+    ),
+    ComplianceItem(
+        "HWC-SEC-02",
+        "OBS数据加密(KMS)",
+        "hwcloud_security",
+        "not_checked",
+        "high",
+        "",
+        "Prompt声明OBS数据使用KMS加密，禁止明文存储敏感数据",
+    ),
+    ComplianceItem(
+        "HWC-SEC-03",
+        "VPC网络隔离",
+        "hwcloud_security",
+        "not_checked",
+        "high",
+        "",
+        "Prompt声明VPC网络隔离，LLM服务不直接暴露公网",
+    ),
+    ComplianceItem(
+        "HWC-SEC-04",
+        "数据留存合规(GDPR/PIPL)",
+        "hwcloud_security",
+        "not_checked",
+        "critical",
+        "",
+        "Prompt声明数据留存策略，符合GDPR/PIPL要求，明确数据保留期限和删除机制",
+    ),
 ]
 
 
@@ -188,13 +222,13 @@ def generate_compliance_report(
 
     all_items: list[ComplianceItem] = []
     for item in _OWASP_REQUIREMENTS:
-        all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
+        all_items.append(ComplianceItem(**dict(item.to_dict().items())))
     for item in _DJBF_REQUIREMENTS:
-        all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
+        all_items.append(ComplianceItem(**dict(item.to_dict().items())))
     for item in _HWCLOUD_BASELINE:
-        all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
+        all_items.append(ComplianceItem(**dict(item.to_dict().items())))
     for item in _HWCLOUD_SECURITY_BASELINE:
-        all_items.append(ComplianceItem(**{k: v for k, v in item.to_dict().items()}))
+        all_items.append(ComplianceItem(**dict(item.to_dict().items())))
 
     lint_severity = {}
     if lint_findings:
@@ -246,7 +280,7 @@ def generate_compliance_report(
     for item in all_items:
         if item.status == "not_checked":
             security_rules = {"P006", "P007", "P008", "P009", "P010", "P127", "P130", "P132", "P133", "P138", "P139"}
-            has_security_finding = any(lint_severity.get(r, None) for r in security_rules)
+            has_security_finding = any(lint_severity.get(r) for r in security_rules)
             if has_security_finding:
                 item.status = "warn"
                 item.evidence = "存在安全相关Lint发现项"
@@ -261,6 +295,7 @@ def generate_compliance_report(
     report.warning_items = sum(1 for i in all_items if i.status == "warn")
 
     from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2025
+
     report.owasp_summary = {k: v["name"] for k, v in OWASP_LLM_TOP_10_2025.items()}
 
     if report.failed_items > 0:
@@ -274,10 +309,12 @@ def generate_compliance_report(
         report.recommendations.append("立即修复所有不通过项(critical/high)，确保OWASP LLM Top 10合规")
     if report.warning_items > 0:
         report.recommendations.append("关注警告项，补充安全声明和防护措施")
-    report.recommendations.extend([
-        "定期运行Probe扫描和Lint检查，建立持续合规监控",
-        "将合规报告纳入CI/CD流水线，实施自动化安全门禁",
-        "参考华为云安全白皮书完善安全基线配置",
-    ])
+    report.recommendations.extend(
+        [
+            "定期运行Probe扫描和Lint检查，建立持续合规监控",
+            "将合规报告纳入CI/CD流水线，实施自动化安全门禁",
+            "参考华为云安全白皮书完善安全基线配置",
+        ]
+    )
 
     return report

@@ -5,11 +5,11 @@
 - SIGINT优雅中断支持
 - 可选禁用(--no-progress)
 """
+
 from __future__ import annotations
 
-import sys
 from contextlib import contextmanager
-from typing import Any, Generator, Sequence
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
 from rich.progress import (
@@ -22,6 +22,9 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Sequence
 
 _console = Console(stderr=True)
 
@@ -52,7 +55,9 @@ def progress_bar(
         with progress:
             yield progress
     except KeyboardInterrupt:
-        progress.console.print(f"\n[yellow]中断: {progress.tasks[task_id].completed}/{progress.tasks[task_id].total} 已完成[/yellow]")
+        progress.console.print(
+            f"\n[yellow]中断: {progress.tasks[task_id].completed}/{progress.tasks[task_id].total} 已完成[/yellow]"
+        )
         raise
 
 
@@ -69,5 +74,5 @@ def progress_iter(
                 yield i, item
                 progress.update(task_id, advance=1)
     except KeyboardInterrupt:
-        progress.console.print(f"\n[yellow]中断: {i+1}/{len(items)} 已完成[/yellow]")
+        progress.console.print(f"\n[yellow]中断: {i + 1}/{len(items)} 已完成[/yellow]")
         raise

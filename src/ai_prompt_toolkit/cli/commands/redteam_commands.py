@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,10 +23,18 @@ from ai_prompt_toolkit.cli_core import main
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
 @click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm"]), help="合规报告框架")
 @click.option("--scorecard", is_flag=True, help="红队探测后自动运行安全评分卡")
-def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
-                output: str | None, fmt: str, owasp: str | None,
-                top_n: int, severity: str | None, compliance: str | None,
-                scorecard: bool) -> None:
+def redteam_cmd(
+    target: str | None,
+    probes: str | None,
+    provider: str | None,
+    output: str | None,
+    fmt: str,
+    owasp: str | None,
+    top_n: int,
+    severity: str | None,
+    compliance: str | None,
+    scorecard: bool,
+) -> None:
     """红队探测：对抗性安全测试"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.redteam.detector import (
@@ -59,10 +68,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
             if severity:
                 min_level = _SEVERITY_ORDER.get(severity, 3)
                 probe_inputs = probe.generate_inputs()
-                has_qualifying = any(
-                    _SEVERITY_ORDER.get(pi.severity, 3) <= min_level
-                    for pi in probe_inputs
-                )
+                has_qualifying = any(_SEVERITY_ORDER.get(pi.severity, 3) <= min_level for pi in probe_inputs)
                 if has_qualifying:
                     probe_instances.append(probe)
             else:
@@ -80,6 +86,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
     if provider:
         from ai_prompt_toolkit.ab_test.provider import create_provider
         from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
         parts = provider.split(":")
         if len(parts) == 2:
             try:
@@ -95,6 +102,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         report = orchestrator.run_with_provider(prov)
     elif target:
         from ai_prompt_toolkit.cli_helpers import resolve_path
+
         path = resolve_path(target)
         text = path.read_text(encoding="utf-8")
         report = orchestrator.run_offline(text)
@@ -104,17 +112,21 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
 
     if compliance:
         import json as _json
+
         compliance_data = report.generate_compliance_report(framework=compliance)
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(compliance_data, output, fmt="json")
             click.echo(f"合规报告已保存: {output}")
         else:
             click.echo(_json.dumps(compliance_data, ensure_ascii=False, indent=2))
     elif fmt == "json":
         import json as _json
+
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(report.to_dict(), output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
@@ -123,13 +135,11 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         click.echo(report.get_summary())
 
     if scorecard:
-        from pathlib import Path as _P
+        from pathlib import Path
 
         from ai_prompt_toolkit.security.badge import generate_scorecard_badge
-        findings_count = sum(len(pr.findings) for pr in report.probe_results)
-        total_probes = len(report.probe_results)
-        passed = sum(1 for pr in report.probe_results if not pr.findings)
+
         svg = generate_scorecard_badge(scorecard)
         badge_path = "redteam-scorecard.svg"
-        _P(badge_path).write_text(svg, encoding="utf-8")
+        Path(badge_path).write_text(svg, encoding="utf-8")
         click.echo(f"安全评分卡: {badge_path}")

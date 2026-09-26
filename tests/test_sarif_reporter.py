@@ -1,14 +1,21 @@
 """测试SARIF/JSONL报告输出"""
+
 from __future__ import annotations
 
 import json
-import pytest
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ai_prompt_toolkit.types import Finding, Severity
+import pytest
+
 from ai_prompt_toolkit.report.sarif_reporter import (
-    findings_to_sarif, write_sarif_report, write_jsonl_report,
+    findings_to_sarif,
+    write_jsonl_report,
+    write_sarif_report,
 )
+from ai_prompt_toolkit.types import Finding, Severity
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
@@ -52,7 +59,7 @@ class TestFindingsToSarif:
 
     def test_rules_deduplicated(self, sample_findings: list[Finding]):
         extra = Finding(rule_id="INJ-001", severity=Severity.LOW, description="another")
-        sarif = findings_to_sarif(sample_findings + [extra])
+        sarif = findings_to_sarif([*sample_findings, extra])
         rules = sarif["runs"][0]["tool"]["driver"]["rules"]
         rule_ids = [r["id"] for r in rules]
         assert rule_ids.count("INJ-001") == 1

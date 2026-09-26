@@ -5,9 +5,10 @@
 - 图像Token: 基于分辨率计算(低/中/高细节)
 - 音频Token: 基于时长计算(Whisper格式)
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 
@@ -47,6 +48,7 @@ class TokenBudget:
 def estimate_text_tokens(text: str, model: str = "gpt-4") -> int:
     try:
         import tiktoken
+
         enc = tiktoken.encoding_for_model(model)
         return len(enc.encode(text))
     except Exception:

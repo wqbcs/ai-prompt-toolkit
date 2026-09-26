@@ -1,11 +1,12 @@
 """R103: 评分等级 + 首次运行引导"""
+
 from __future__ import annotations
 
 import os
 import tempfile
 from pathlib import Path
 
-from ai_prompt_toolkit.evaluator import score_to_grade, score_to_decision
+from ai_prompt_toolkit.evaluator import score_to_decision, score_to_grade
 
 
 class TestR103GradeAndDecision:
@@ -46,8 +47,10 @@ class TestR103GradeAndDecision:
         assert score_to_decision(8.5, threshold=8.0) == "PASS"
 
     def test_doctor_init_shows_guide(self):
-        from ai_prompt_toolkit.cli_core import main
         from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
         runner = CliRunner()
         with tempfile.TemporaryDirectory() as td:
             old_cwd = os.getcwd()

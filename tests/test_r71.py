@@ -1,11 +1,10 @@
 """R71测试: 统一注册表 + Shell补全 + Rich进度条 + 进度保存/恢复 + P133修复"""
-import json
-import pytest
 
 
 class TestUnifiedRegistry:
     def test_global_probe_registry(self):
         from ai_prompt_toolkit.redteam.registry import get_global_probe_registry
+
         reg = get_global_probe_registry()
         assert len(reg) >= 23
         assert "dan" in reg
@@ -13,6 +12,7 @@ class TestUnifiedRegistry:
 
     def test_global_detector_registry(self):
         from ai_prompt_toolkit.redteam.registry import get_global_detector_registry
+
         reg = get_global_detector_registry()
         assert len(reg) >= 11
         assert "leakage" in reg
@@ -20,39 +20,47 @@ class TestUnifiedRegistry:
 
     def test_list_all_probes(self):
         from ai_prompt_toolkit.redteam.registry import list_all_probes
+
         probes = list_all_probes()
         assert len(probes) >= 23
         assert "dan" in probes
 
     def test_list_all_detectors(self):
         from ai_prompt_toolkit.redteam.registry import list_all_detectors
+
         detectors = list_all_detectors()
         assert len(detectors) >= 6
         assert "leakage" in detectors
 
     def test_find_probe(self):
         from ai_prompt_toolkit.redteam.registry import find_probe
+
         info = find_probe("dan")
         assert info is not None
         assert info["source"] == "probe_framework"
 
     def test_find_nonexistent_probe(self):
         from ai_prompt_toolkit.redteam.registry import find_probe
+
         assert find_probe("nonexistent_xyz") is None
 
     def test_probe_count(self):
         from ai_prompt_toolkit.redteam.registry import get_probe_count
+
         assert get_probe_count() >= 23
 
     def test_detector_count(self):
         from ai_prompt_toolkit.redteam.registry import get_detector_count
+
         assert get_detector_count() >= 11
 
 
 class TestShellCompletion:
     def test_bash_completion_generation(self):
-        from ai_prompt_toolkit.cli_core import main
         from click.shell_completion import get_completion_class
+
+        from ai_prompt_toolkit.cli_core import main
+
         comp = get_completion_class("bash")(main, {}, "apt", "_APT_COMPLETE=bash_source")
         script = comp.source()
         assert "_apt_completion" in script
@@ -60,15 +68,19 @@ class TestShellCompletion:
         assert len(script) > 100
 
     def test_zsh_completion_generation(self):
-        from ai_prompt_toolkit.cli_core import main
         from click.shell_completion import get_completion_class
+
+        from ai_prompt_toolkit.cli_core import main
+
         comp = get_completion_class("zsh")(main, {}, "apt", "_APT_COMPLETE=zsh_source")
         script = comp.source()
         assert len(script) > 50
 
     def test_fish_completion_generation(self):
-        from ai_prompt_toolkit.cli_core import main
         from click.shell_completion import get_completion_class
+
+        from ai_prompt_toolkit.cli_core import main
+
         comp = get_completion_class("fish")(main, {}, "apt", "_APT_COMPLETE=fish_source")
         script = comp.source()
         assert len(script) > 50
@@ -77,27 +89,31 @@ class TestShellCompletion:
 class TestProgressBar:
     def test_create_progress(self):
         from ai_prompt_toolkit.progress import create_progress
+
         p = create_progress(disable=True)
         assert p is not None
 
     def test_progress_bar_context(self):
         from ai_prompt_toolkit.progress import progress_bar
+
         with progress_bar("测试", total=10, disable=True) as progress:
             assert progress is not None
 
     def test_progress_iter(self):
         from ai_prompt_toolkit.progress import progress_iter
+
         items = ["a", "b", "c"]
         result = []
-        for i, item in progress_iter(items, "迭代", disable=True):
+        for _i, item in progress_iter(items, "迭代", disable=True):
             result.append(item)
         assert result == ["a", "b", "c"]
 
 
 class TestResumeState:
     def test_save_and_load_progress(self, tmp_path):
-        from ai_prompt_toolkit.resume_state import save_progress, load_progress, clear_progress
         import ai_prompt_toolkit.resume_state as rs
+        from ai_prompt_toolkit.resume_state import clear_progress, load_progress, save_progress
+
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache"
         try:
@@ -112,8 +128,9 @@ class TestResumeState:
             clear_progress("lint")
 
     def test_load_nonexistent_progress(self, tmp_path):
-        from ai_prompt_toolkit.resume_state import load_progress
         import ai_prompt_toolkit.resume_state as rs
+        from ai_prompt_toolkit.resume_state import load_progress
+
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache2"
         try:
@@ -122,8 +139,9 @@ class TestResumeState:
             rs._CACHE_DIR = old_cache
 
     def test_has_progress(self, tmp_path):
-        from ai_prompt_toolkit.resume_state import has_progress, save_progress, clear_progress
         import ai_prompt_toolkit.resume_state as rs
+        from ai_prompt_toolkit.resume_state import clear_progress, has_progress, save_progress
+
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache3"
         try:
@@ -135,8 +153,9 @@ class TestResumeState:
             clear_progress("lint")
 
     def test_clear_progress(self, tmp_path):
-        from ai_prompt_toolkit.resume_state import save_progress, has_progress, clear_progress
         import ai_prompt_toolkit.resume_state as rs
+        from ai_prompt_toolkit.resume_state import clear_progress, has_progress, save_progress
+
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache4"
         try:
@@ -151,12 +170,14 @@ class TestResumeState:
 class TestP133Fix:
     def test_p133_no_false_positive_on_declaration(self):
         from ai_prompt_toolkit.linter.rules_p131_p140 import check_p133
+
         text = "请明确声明信息不足。如果无法确定，请声明。"
         result = check_p133(text)
         assert result is None
 
     def test_p133_triggers_on_audio_context(self):
         from ai_prompt_toolkit.linter.rules_p131_p140 import check_p133
+
         text = "请对音频输入进行转录。"
         result = check_p133(text)
         assert result is not None
@@ -164,6 +185,7 @@ class TestP133Fix:
 
     def test_p133_triggers_on_voice(self):
         from ai_prompt_toolkit.linter.rules_p131_p140 import check_p133
+
         text = "处理语音输入。"
         result = check_p133(text)
         assert result is not None
@@ -174,7 +196,9 @@ class TestP133Fix:
 class TestCLIResumeOption:
     def test_lint_has_resume_option(self):
         import importlib
+
         import ai_prompt_toolkit.cli_core as m
+
         importlib.reload(m)
         lint_cmd = m.main.commands["lint"]
         param_names = [p.name for p in lint_cmd.params]
@@ -182,17 +206,22 @@ class TestCLIResumeOption:
 
     def test_scan_has_resume_option(self):
         import importlib
+
         import ai_prompt_toolkit.cli_core as m
+
         importlib.reload(m)
         scan_cmd = m.main.commands["scan"]
         param_names = [p.name for p in scan_cmd.params]
         assert "resume" in param_names
 
     def test_lint_resume_no_saved_progress(self, tmp_path):
-        from click.testing import CliRunner
         import importlib
+
+        from click.testing import CliRunner
+
         import ai_prompt_toolkit.cli_core as m
         import ai_prompt_toolkit.resume_state as rs
+
         importlib.reload(m)
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache"
@@ -206,10 +235,13 @@ class TestCLIResumeOption:
             rs._CACHE_DIR = old_cache
 
     def test_lint_resume_with_saved_progress(self, tmp_path):
-        from click.testing import CliRunner
         import importlib
+
+        from click.testing import CliRunner
+
         import ai_prompt_toolkit.cli_core as m
         import ai_prompt_toolkit.resume_state as rs
+
         importlib.reload(m)
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache"

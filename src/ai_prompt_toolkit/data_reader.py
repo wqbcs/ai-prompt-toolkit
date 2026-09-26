@@ -7,6 +7,7 @@
 - DatabaseReader: SQLite查询加载
 - DataReaderFactory: 注册/创建连接器
 """
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,10 @@ import sqlite3
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +44,7 @@ class Document:
 
 class BaseReader(ABC):
     @abstractmethod
-    def load_data(self) -> list[Document]:
-        ...
+    def load_data(self) -> list[Document]: ...
 
     def iter_data(self) -> Iterator[list[Document]]:
         yield self.load_data()
@@ -92,9 +95,12 @@ class FileSystemReader(BaseReader):
         elif ext in (".yaml", ".yml"):
             try:
                 import yaml
+
                 with open(path, encoding="utf-8") as f:
                     data = yaml.safe_load(f)
-                    text = json.dumps(data, ensure_ascii=False, indent=2) if isinstance(data, (dict, list)) else str(data)
+                    text = (
+                        json.dumps(data, ensure_ascii=False, indent=2) if isinstance(data, (dict, list)) else str(data)
+                    )
             except ImportError:
                 text = path.read_text(encoding="utf-8")
         else:
@@ -142,17 +148,19 @@ class DatabaseReader(BaseReader):
                 else:
                     text = "\n".join(f"{col}: {val}" for col, val in zip(columns, row))
 
-                docs.append(Document(
-                    text=text,
-                    id=f"db-row-{i}",
-                    metadata={
-                        "source": "database",
-                        "connection": self.connection_string,
-                        "columns": columns,
-                        "row_index": i,
-                        "reader": "database",
-                    },
-                ))
+                docs.append(
+                    Document(
+                        text=text,
+                        id=f"db-row-{i}",
+                        metadata={
+                            "source": "database",
+                            "connection": self.connection_string,
+                            "columns": columns,
+                            "row_index": i,
+                            "reader": "database",
+                        },
+                    )
+                )
             return docs
         finally:
             conn.close()

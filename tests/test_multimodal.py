@@ -1,7 +1,6 @@
 """多模态Prompt Lint模块测试"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.linter.multimodal import (
     MultimodalMessage,
@@ -9,16 +8,20 @@ from ai_prompt_toolkit.linter.multimodal import (
     estimate_image_tokens,
     parse_multimodal_messages,
 )
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Severity
 
 
 class TestMultimodalMessage:
     def test_to_dict_truncates_long_fields(self):
         msg = MultimodalMessage(
-            role="user", content_type="image",
-            text="x" * 200, image_url="http://" + "a" * 200,
-            image_format="png", alt_text="y" * 100,
-            detail="auto", provider_format="openai",
+            role="user",
+            content_type="image",
+            text="x" * 200,
+            image_url="http://" + "a" * 200,
+            image_format="png",
+            alt_text="y" * 100,
+            detail="auto",
+            provider_format="openai",
         )
         d = msg.to_dict()
         assert len(d["text"]) == 100
@@ -45,14 +48,14 @@ class TestParseMultimodalMessages:
         assert md_msgs[0].image_url == "https://example.com/photo.png"
 
     def test_parse_openai_image_url(self):
-        text = '''
+        text = """
         {
           "role": "user",
           "content": [
             {"type": "image_url", "image_url": {"url": "https://example.com/cat.jpg", "detail": "high"}}
           ]
         }
-        '''
+        """
         msgs = parse_multimodal_messages(text)
         openai_msgs = [m for m in msgs if m.provider_format == "openai"]
         assert len(openai_msgs) == 1
@@ -60,21 +63,21 @@ class TestParseMultimodalMessages:
         assert openai_msgs[0].detail == "high"
 
     def test_parse_claude_base64_image(self):
-        text = '''
+        text = """
         {
           "type": "image",
           "source": {"type": "base64", "media_type": "image/png", "data": "iVBOR..."}
         }
-        '''
+        """
         msgs = parse_multimodal_messages(text)
         claude_msgs = [m for m in msgs if m.provider_format == "claude"]
         assert len(claude_msgs) == 1
         assert claude_msgs[0].image_format == "base64"
 
     def test_parse_gemini_inline_data(self):
-        text = '''
+        text = """
         {"inline_data": {"mime_type": "image/jpeg", "data": "/9j/4AAQ..."}}
-        '''
+        """
         msgs = parse_multimodal_messages(text)
         gemini_msgs = [m for m in msgs if m.provider_format == "gemini"]
         assert len(gemini_msgs) == 1
@@ -176,7 +179,7 @@ class TestCheckMultimodalPrompt:
         assert mm003[0].severity == Severity.MEDIUM
 
     def test_mm004_http_url(self):
-        text = '![图](http://example.com/photo.png)'
+        text = "![图](http://example.com/photo.png)"
         findings = check_multimodal_prompt(text)
         mm004 = [f for f in findings if f.rule_id == "MM-004"]
         assert len(mm004) == 1

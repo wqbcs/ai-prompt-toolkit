@@ -1,16 +1,15 @@
 """Front Matter v3 Schema与升级工具单元测试"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.frontmatter import (
     FrontMatterV3,
     I18nStatus,
     MarketStatus,
     parse_front_matter,
+    serialize_front_matter,
     upgrade_front_matter_v2_to_v3,
     upgrade_markdown_file,
-    serialize_front_matter,
 )
 
 
@@ -109,17 +108,17 @@ class TestParseFrontMatter:
 
     def test_no_front_matter(self):
         text = "Just body content"
-        data, body = parse_front_matter(text)
+        data, _body = parse_front_matter(text)
         assert data is None
 
     def test_unclosed_front_matter(self):
         text = "---\nversion: 1.0.0\nauthor: test\nBody without closing"
-        data, body = parse_front_matter(text)
+        data, _body = parse_front_matter(text)
         assert data is None
 
     def test_invalid_yaml(self):
         text = "---\n: : invalid\n---\nBody"
-        data, body = parse_front_matter(text)
+        data, _body = parse_front_matter(text)
         assert data is None
 
 
@@ -170,7 +169,7 @@ class TestSerializeFrontMatter:
 class TestUpgradeMarkdownFile:
     def test_upgrade_file(self):
         text = "---\nversion: 1.0.0\nauthor: test\ntags: [harmonyos]\n---\nBody"
-        new_text, errors = upgrade_markdown_file(text)
+        new_text, _errors = upgrade_markdown_file(text)
         assert "i18n_status" in new_text
         assert "market_status" in new_text
         assert "lint_score" in new_text
@@ -184,6 +183,6 @@ class TestUpgradeMarkdownFile:
 
     def test_preserves_body(self):
         text = "---\nversion: 1.0.0\n---\n# Title\n\nContent here"
-        new_text, errors = upgrade_markdown_file(text)
+        new_text, _errors = upgrade_markdown_file(text)
         assert "# Title" in new_text
         assert "Content here" in new_text

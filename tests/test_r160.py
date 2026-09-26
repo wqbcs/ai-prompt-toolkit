@@ -1,5 +1,5 @@
 """R160: Lint配置过滤(severity/category/rule)"""
-import pytest
+
 from ai_prompt_toolkit.linter.lint_config import LintConfig
 from ai_prompt_toolkit.linter.linter import PromptLinter
 from ai_prompt_toolkit.linter.rules import _RULE_MAP

@@ -1,7 +1,8 @@
 """R88: Prompt Diff回滚安全检查"""
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.prompt_diff import rollback_safety_check, prompt_diff, RollbackRisk
+from ai_prompt_toolkit.prompt_diff import RollbackRisk, prompt_diff, rollback_safety_check
 
 
 class TestRollbackSafetyCheck:

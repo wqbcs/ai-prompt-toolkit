@@ -6,12 +6,12 @@
 - 每个模板经Lint 90+分验证
 - 一键导入到Prompt Registry
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 from ai_prompt_toolkit.prompt_registry import PromptRegistry, RegistryEntry
-
 
 HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
     {

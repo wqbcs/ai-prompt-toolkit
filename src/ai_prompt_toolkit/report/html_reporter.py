@@ -8,6 +8,7 @@
 - 暗色/亮色主题切换
 - 响应式布局
 """
+
 from __future__ import annotations
 
 import html as html_mod
@@ -44,11 +45,9 @@ def generate_scan_html(data: dict[str, Any]) -> str:
 
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    donut_svg = _svg_donut(critical=len(critical), high=len(high),
-                           medium=len(medium), low=len(low))
+    donut_svg = _svg_donut(critical=len(critical), high=len(high), medium=len(medium), low=len(low))
 
-    summary_cards = _summary_cards(total, len(critical), len(high), len(medium), len(low),
-                                   total_files, scan_time)
+    summary_cards = _summary_cards(total, len(critical), len(high), len(medium), len(low), total_files, scan_time)
 
     grouped_sections = []
     for label, items, color, icon in [
@@ -63,8 +62,8 @@ def generate_scan_html(data: dict[str, Any]) -> str:
     return _wrap_template(
         title=f"安全扫描报告 — {html_mod.escape(str(scan_target))}",
         risk_badge=f'<span style="background:{risk_color};color:#fff;padding:4px 14px;'
-                   f'border-radius:20px;font-weight:700;font-size:1.1rem">'
-                   f'{html_mod.escape(risk_label)}</span>',
+        f'border-radius:20px;font-weight:700;font-size:1.1rem">'
+        f"{html_mod.escape(risk_label)}</span>",
         subtitle=f"扫描目标: {html_mod.escape(str(scan_target))}",
         donut=donut_svg,
         summary=summary_cards,
@@ -99,13 +98,13 @@ def generate_lint_html(data: dict[str, Any]) -> str:
     score_value_html = f'<span style="font-size:2rem;color:{score_color}">{avg_score:.1f}</span>/100'
     summary = (
         f'<div class="summary-grid">'
-        f'{_card("平均评分", score_value_html, "#1e293b")}'
-        f'{_card("总文件数", str(total_files), "#6366f1")}'
-        f'{_card("问题总数", str(total_findings), "#ef4444")}'
-        f'{_card("高危", str(len(high)), "#dc2626")}'
-        f'{_card("中危", str(len(medium)), "#f59e0b")}'
-        f'{_card("低危", str(len(low)), "#22c55e")}'
-        f'</div>'
+        f"{_card('平均评分', score_value_html, '#1e293b')}"
+        f"{_card('总文件数', str(total_files), '#6366f1')}"
+        f"{_card('问题总数', str(total_findings), '#ef4444')}"
+        f"{_card('高危', str(len(high)), '#dc2626')}"
+        f"{_card('中危', str(len(medium)), '#f59e0b')}"
+        f"{_card('低危', str(len(low)), '#22c55e')}"
+        f"</div>"
     )
 
     file_sections = []
@@ -123,23 +122,23 @@ def generate_lint_html(data: dict[str, Any]) -> str:
             items_html += (
                 f'<div class="finding-item">'
                 f'<span class="sev-badge" style="background:{sev_color}">{html_mod.escape(sev.upper())}</span>'
-                f'<code>{html_mod.escape(f.get("rule_id", ""))}</code> '
-                f'{html_mod.escape(f.get("description", ""))}'
-                f'{" — " + html_mod.escape(f.get("remediation", "")) if f.get("remediation") else ""}'
-                f'</div>'
+                f"<code>{html_mod.escape(f.get('rule_id', ''))}</code> "
+                f"{html_mod.escape(f.get('description', ''))}"
+                f"{' — ' + html_mod.escape(f.get('remediation', '')) if f.get('remediation') else ''}"
+                f"</div>"
             )
         file_sections.append(
             f'<details class="file-section"><summary>'
             f'<span class="file-score" style="background:{sc}">{score:.0f}</span> '
-            f'{html_mod.escape(tid)} ({len(r_findings)}个问题)</summary>'
+            f"{html_mod.escape(tid)} ({len(r_findings)}个问题)</summary>"
             f'<div class="findings-list">{items_html}</div></details>'
         )
 
     return _wrap_template(
         title=f"Lint质量报告 — {html_mod.escape(str(lint_target))}",
         risk_badge=f'<span style="background:{score_color};color:#fff;padding:4px 14px;'
-                   f'border-radius:20px;font-weight:700;font-size:1.1rem">'
-                   f'{avg_score:.0f}分</span>',
+        f'border-radius:20px;font-weight:700;font-size:1.1rem">'
+        f"{avg_score:.0f}分</span>",
         subtitle=f"Lint目标: {html_mod.escape(str(lint_target))}",
         donut=score_svg,
         summary=summary,
@@ -163,25 +162,32 @@ def _assess_overall_risk(findings: list[dict[str, Any]]) -> str:
 
 
 def _risk_color(level: str) -> str:
-    return {"critical": "#7f1d1d", "high": "#dc2626", "medium": "#f59e0b",
-            "low": "#22c55e", "none": "#6b7280"}.get(level, "#6b7280")
+    return {"critical": "#7f1d1d", "high": "#dc2626", "medium": "#f59e0b", "low": "#22c55e", "none": "#6b7280"}.get(
+        level, "#6b7280"
+    )
 
 
 def _risk_label(level: str) -> str:
-    return {"critical": "极高风险", "high": "高风险", "medium": "中等风险",
-            "low": "低风险", "none": "无风险"}.get(level, "未知")
+    return {"critical": "极高风险", "high": "高风险", "medium": "中等风险", "low": "低风险", "none": "无风险"}.get(
+        level, "未知"
+    )
 
 
 def _svg_donut(critical: int, high: int, medium: int, low: int) -> str:
     total = critical + high + medium + low
     if total == 0:
-        return ('<svg viewBox="0 0 120 120" width="120" height="120">'
-                '<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="14"/>'
-                '<text x="60" y="65" text-anchor="middle" font-size="18" font-weight="700" fill="#22c55e">'
-                '安全</text></svg>')
+        return (
+            '<svg viewBox="0 0 120 120" width="120" height="120">'
+            '<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="14"/>'
+            '<text x="60" y="65" text-anchor="middle" font-size="18" font-weight="700" fill="#22c55e">'
+            "安全</text></svg>"
+        )
 
     segments = [
-        (critical, "#7f1d1d"), (high, "#ef4444"), (medium, "#f59e0b"), (low, "#22c55e"),
+        (critical, "#7f1d1d"),
+        (high, "#ef4444"),
+        (medium, "#f59e0b"),
+        (low, "#22c55e"),
     ]
     circumference = 2 * 3.14159 * 50
     offset = 0
@@ -193,57 +199,63 @@ def _svg_donut(critical: int, high: int, medium: int, low: int) -> str:
         dash = pct * circumference
         gap = circumference - dash
         rotation = (offset / total) * 360 - 90
-        paths += (f'<circle cx="60" cy="60" r="50" fill="none" stroke="{color}" '
-                  f'stroke-width="14" stroke-dasharray="{dash:.2f} {gap:.2f}" '
-                  f'transform="rotate({rotation:.2f} 60 60)"/>')
+        paths += (
+            f'<circle cx="60" cy="60" r="50" fill="none" stroke="{color}" '
+            f'stroke-width="14" stroke-dasharray="{dash:.2f} {gap:.2f}" '
+            f'transform="rotate({rotation:.2f} 60 60)"/>'
+        )
         offset += count
 
-    return (f'<svg viewBox="0 0 120 120" width="140" height="140">'
-            f'{paths}'
-            f'<text x="60" y="55" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b">'
-            f'{total}</text>'
-            f'<text x="60" y="72" text-anchor="middle" font-size="10" fill="#64748b">发现项</text>'
-            f'</svg>')
+    return (
+        f'<svg viewBox="0 0 120 120" width="140" height="140">'
+        f"{paths}"
+        f'<text x="60" y="55" text-anchor="middle" font-size="22" font-weight="700" fill="#1e293b">'
+        f"{total}</text>"
+        f'<text x="60" y="72" text-anchor="middle" font-size="10" fill="#64748b">发现项</text>'
+        f"</svg>"
+    )
 
 
 def _svg_score_gauge(score: float, color: str) -> str:
     circumference = 2 * 3.14159 * 50
     dash = (score / 100) * circumference
     gap = circumference - dash
-    return (f'<svg viewBox="0 0 120 120" width="140" height="140">'
-            f'<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="14"/>'
-            f'<circle cx="60" cy="60" r="50" fill="none" stroke="{color}" stroke-width="14" '
-            f'stroke-dasharray="{dash:.2f} {gap:.2f}" transform="rotate(-90 60 60)" '
-            f'stroke-linecap="round"/>'
-            f'<text x="60" y="60" text-anchor="middle" font-size="24" font-weight="700" fill="{color}">'
-            f'{score:.0f}</text>'
-            f'<text x="60" y="75" text-anchor="middle" font-size="10" fill="#64748b">评分</text>'
-            f'</svg>')
-
-
-def _card(label: str, value: str, accent: str) -> str:
-    return (f'<div class="card" style="border-left:4px solid {accent}">'
-            f'<div class="card-label">{html_mod.escape(label)}</div>'
-            f'<div class="card-value">{value}</div></div>')
-
-
-def _summary_cards(total: int, critical: int, high: int, medium: int, low: int,
-                   files: int, elapsed: float) -> str:
     return (
-        f'<div class="summary-grid">'
-        f'{_card("发现项总数", str(total), "#6366f1")}'
-        f'{_card("严重", str(critical), "#7f1d1d")}'
-        f'{_card("高危", str(high), "#ef4444")}'
-        f'{_card("中危", str(medium), "#f59e0b")}'
-        f'{_card("低危/信息", str(low), "#22c55e")}'
-        f'{_card("扫描文件", str(files), "#3b82f6")}'
-        f'{_card("耗时", f"{elapsed:.1f}ms" if elapsed else "-", "#8b5cf6")}'
-        f'</div>'
+        f'<svg viewBox="0 0 120 120" width="140" height="140">'
+        f'<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="14"/>'
+        f'<circle cx="60" cy="60" r="50" fill="none" stroke="{color}" stroke-width="14" '
+        f'stroke-dasharray="{dash:.2f} {gap:.2f}" transform="rotate(-90 60 60)" '
+        f'stroke-linecap="round"/>'
+        f'<text x="60" y="60" text-anchor="middle" font-size="24" font-weight="700" fill="{color}">'
+        f"{score:.0f}</text>"
+        f'<text x="60" y="75" text-anchor="middle" font-size="10" fill="#64748b">评分</text>'
+        f"</svg>"
     )
 
 
-def _findings_section(label: str, items: list[dict[str, Any]], color: str,
-                      icon: str) -> str:
+def _card(label: str, value: str, accent: str) -> str:
+    return (
+        f'<div class="card" style="border-left:4px solid {accent}">'
+        f'<div class="card-label">{html_mod.escape(label)}</div>'
+        f'<div class="card-value">{value}</div></div>'
+    )
+
+
+def _summary_cards(total: int, critical: int, high: int, medium: int, low: int, files: int, elapsed: float) -> str:
+    return (
+        f'<div class="summary-grid">'
+        f"{_card('发现项总数', str(total), '#6366f1')}"
+        f"{_card('严重', str(critical), '#7f1d1d')}"
+        f"{_card('高危', str(high), '#ef4444')}"
+        f"{_card('中危', str(medium), '#f59e0b')}"
+        f"{_card('低危/信息', str(low), '#22c55e')}"
+        f"{_card('扫描文件', str(files), '#3b82f6')}"
+        f"{_card('耗时', f'{elapsed:.1f}ms' if elapsed else '-', '#8b5cf6')}"
+        f"</div>"
+    )
+
+
+def _findings_section(label: str, items: list[dict[str, Any]], color: str, icon: str) -> str:
     rows = ""
     for idx, f in enumerate(items, 1):
         sev = f.get("severity", "info")
@@ -257,7 +269,11 @@ def _findings_section(label: str, items: list[dict[str, Any]], color: str,
         if details:
             details_items = ""
             for k, v in details.items():
-                val = html_mod.escape(str(v)) if not isinstance(v, list) else html_mod.escape(", ".join(str(x) for x in v))
+                val = (
+                    html_mod.escape(str(v))
+                    if not isinstance(v, list)
+                    else html_mod.escape(", ".join(str(x) for x in v))
+                )
                 details_items += f"<dt>{html_mod.escape(str(k))}</dt><dd>{val}</dd>"
             details_html = f'<details class="details-expand"><summary>详情</summary><dl class="details-dl">{details_items}</dl></details>'
 
@@ -265,31 +281,41 @@ def _findings_section(label: str, items: list[dict[str, Any]], color: str,
         if remediation:
             remediation_html = f'<div class="remediation"><strong>修复建议:</strong> {remediation}</div>'
 
+        # R171: f-string内转义引号在Python 3.10/3.11是语法错误(PEP 701), 提取为变量
+        location_html = f'<div class="finding-location"><strong>位置:</strong> {location}</div>' if location else ""
         rows += (
             f'<div class="finding-item" data-severity="{html_mod.escape(sev)}">'
             f'<div class="finding-header">'
             f'<span class="sev-badge" style="background:{color}">{html_mod.escape(sev.upper())}</span>'
             f'<code class="rule-id">{rid}</code>'
             f'<span class="finding-num">#{idx}</span>'
-            f'</div>'
+            f"</div>"
             f'<div class="finding-desc">{desc}</div>'
-            f'{"<div class=\"finding-location\"><strong>位置:</strong> " + location + "</div>" if location else ""}'
-            f'{remediation_html}'
-            f'{details_html}'
-            f'</div>'
+            f"{location_html}"
+            f"{remediation_html}"
+            f"{details_html}"
+            f"</div>"
         )
 
     return (
         f'<section class="severity-group">'
         f'<h3 style="color:{color};border-bottom:2px solid {color}">'
-        f'{icon} {html_mod.escape(label)} ({len(items)})</h3>'
+        f"{icon} {html_mod.escape(label)} ({len(items)})</h3>"
         f'<div class="findings-list">{rows}</div>'
-        f'</section>'
+        f"</section>"
     )
 
 
-def _wrap_template(title: str, risk_badge: str, subtitle: str, donut: str,
-                   summary: str, body: str, timestamp: str, version: str = "0.0.0") -> str:
+def _wrap_template(
+    title: str,
+    risk_badge: str,
+    subtitle: str,
+    donut: str,
+    summary: str,
+    body: str,
+    timestamp: str,
+    version: str = "0.0.0",
+) -> str:
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>

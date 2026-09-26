@@ -1,11 +1,14 @@
 """R71测试: P146-P150 鸿蒙Stage模型深度检测规则"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.linter.rules import _RULE_MAP, _CHECKERS_EXTENDED
+from ai_prompt_toolkit.linter.rules import _CHECKERS_EXTENDED, _RULE_MAP
 from ai_prompt_toolkit.linter.rules_p146_p150 import (
-    check_p146, check_p147, check_p148, check_p149, check_p150,
+    check_p146,
+    check_p147,
+    check_p148,
+    check_p149,
+    check_p150,
 )
 
 

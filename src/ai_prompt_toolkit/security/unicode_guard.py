@@ -12,6 +12,7 @@
 4. 同形字攻击检测: 检测Unicode混淆字符(如西里尔字母冒充拉丁字母)
 5. RTL覆盖检测: 检测U+202E右到左覆盖攻击
 """
+
 from __future__ import annotations
 
 import re
@@ -21,7 +22,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _INVISIBLE_CHARS = {
     "\u200b": "ZWSP(零宽空格)",
@@ -156,13 +156,15 @@ def detect_homoglyphs(text: str) -> list[dict[str, Any]]:
                 context_start = max(0, i - 10)
                 context_end = min(len(text), i + 10)
                 context = text[context_start:context_end]
-                findings.append({
-                    "position": i,
-                    "character": ch,
-                    "unicode": f"U+{ord(ch):04X}",
-                    "looks_like": latin_char or "?",
-                    "context": context,
-                })
+                findings.append(
+                    {
+                        "position": i,
+                        "character": ch,
+                        "unicode": f"U+{ord(ch):04X}",
+                        "looks_like": latin_char or "?",
+                        "context": context,
+                    }
+                )
                 seen_positions.add(i)
 
     return findings
@@ -174,25 +176,31 @@ def check_unicode_threats(text: str) -> list[Finding]:
     _, clean_result = clean_unicode(text)
 
     for name, count in clean_result.invisible_chars_found.items():
-        findings.append(Finding(
-            rule_id="UNI-001",
-            severity=Severity.HIGH,
-            description=f"不可见字符检测: {name} ×{count}",
-        ))
+        findings.append(
+            Finding(
+                rule_id="UNI-001",
+                severity=Severity.HIGH,
+                description=f"不可见字符检测: {name} ×{count}",
+            )
+        )
 
     for name, count in clean_result.rtl_overrides_found.items():
-        findings.append(Finding(
-            rule_id="UNI-002",
-            severity=Severity.CRITICAL,
-            description=f"RTL覆盖攻击: {name} ×{count}",
-        ))
+        findings.append(
+            Finding(
+                rule_id="UNI-002",
+                severity=Severity.CRITICAL,
+                description=f"RTL覆盖攻击: {name} ×{count}",
+            )
+        )
 
     for hg in clean_result.homoglyphs_found:
-        findings.append(Finding(
-            rule_id="UNI-003",
-            severity=Severity.MEDIUM,
-            description=f"同形字混淆: U+{hg['unicode']}({hg['looks_like']}) 位置{hg['position']}",
-        ))
+        findings.append(
+            Finding(
+                rule_id="UNI-003",
+                severity=Severity.MEDIUM,
+                description=f"同形字混淆: U+{hg['unicode']}({hg['looks_like']}) 位置{hg['position']}",
+            )
+        )
 
     return findings
 
@@ -225,7 +233,7 @@ def inject_canary_tokens(prompt: str, count: int = 3) -> tuple[str, list[CanaryT
     lines = prompt.split("\n")
     if lines:
         insert_positions = [0, len(lines) // 2, len(lines) - 1]
-        for i, token in enumerate(tokens[:min(count, 3)]):
+        for i, token in enumerate(tokens[: min(count, 3)]):
             pos = insert_positions[i % len(insert_positions)]
             lines.insert(pos + i, token.token_string)
     return "\n".join(lines), tokens
@@ -242,17 +250,21 @@ def check_canary_leakage(output: str, tokens: list[CanaryToken]) -> list[Finding
     all_canary_matches = _CANARY_PATTERN.findall(output)
 
     if leaked_tokens:
-        findings.append(Finding(
-            rule_id="CANARY-001",
-            severity=Severity.CRITICAL,
-            description=f"系统Prompt泄露! 检测到{len(leaked_tokens)}个Canary Token在输出中出现: {', '.join(leaked_tokens)}",
-        ))
+        findings.append(
+            Finding(
+                rule_id="CANARY-001",
+                severity=Severity.CRITICAL,
+                description=f"系统Prompt泄露! 检测到{len(leaked_tokens)}个Canary Token在输出中出现: {', '.join(leaked_tokens)}",
+            )
+        )
     elif all_canary_matches:
-        findings.append(Finding(
-            rule_id="CANARY-002",
-            severity=Severity.HIGH,
-            description=f"疑似Prompt泄露! 检测到{len(all_canary_matches)}个未知Canary格式标记",
-        ))
+        findings.append(
+            Finding(
+                rule_id="CANARY-002",
+                severity=Severity.HIGH,
+                description=f"疑似Prompt泄露! 检测到{len(all_canary_matches)}个未知Canary格式标记",
+            )
+        )
 
     return findings
 
@@ -261,9 +273,11 @@ def scan_unicode_and_canary(text: str) -> list[Finding]:
     findings = check_unicode_threats(text)
     canary_matches = _CANARY_PATTERN.findall(text)
     if canary_matches:
-        findings.append(Finding(
-            rule_id="CANARY-003",
-            severity=Severity.MEDIUM,
-            description=f"文本中包含{len(canary_matches)}个Canary Token标记(可能为已注入的泄露追踪标记)",
-        ))
+        findings.append(
+            Finding(
+                rule_id="CANARY-003",
+                severity=Severity.MEDIUM,
+                description=f"文本中包含{len(canary_matches)}个Canary Token标记(可能为已注入的泄露追踪标记)",
+            )
+        )
     return findings

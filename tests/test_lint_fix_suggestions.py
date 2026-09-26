@@ -1,17 +1,14 @@
 """Lint智能修复建议+LSP服务端测试 — P2-01/P2-02"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.linter.fix_suggestions import (
-    FixSuggestion,
+    _MANUAL_FIX_STEPS,
     compute_score_impact,
     format_suggestions,
     get_fix_suggestions,
-    _SEVERITY_IMPACT,
-    _MANUAL_FIX_STEPS,
 )
-from ai_prompt_toolkit.linter.lsp_server import _lint_to_diagnostics, _compute_score, _HAS_LSP
+from ai_prompt_toolkit.linter.lsp_server import _HAS_LSP, _compute_score, _lint_to_diagnostics
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -58,8 +55,9 @@ class TestGetFixSuggestions:
 
     def test_auto_fixable_detection(self):
         findings = [
-            Finding(rule_id="P016", severity=Severity.MEDIUM, description="歧义词检测",
-                    details={"ambiguous_word": "可能"}),
+            Finding(
+                rule_id="P016", severity=Severity.MEDIUM, description="歧义词检测", details={"ambiguous_word": "可能"}
+            ),
         ]
         text = "你可能会完成这个任务"
         suggestions = get_fix_suggestions(findings, text)
@@ -75,8 +73,7 @@ class TestGetFixSuggestions:
 
     def test_priority_rank_assigned(self):
         findings = [
-            Finding(rule_id=f"P{i:03d}", severity=Severity.MEDIUM, description=f"issue {i}")
-            for i in range(1, 6)
+            Finding(rule_id=f"P{i:03d}", severity=Severity.MEDIUM, description=f"issue {i}") for i in range(1, 6)
         ]
         suggestions = get_fix_suggestions(findings, "test")
         ranks = [s.priority_rank for s in suggestions]

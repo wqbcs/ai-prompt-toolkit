@@ -16,6 +16,7 @@ L5 Anomaly:  异常检测 (已有anomaly_detector)
 5. Confidence = 2 × |calibrated - 0.5|
 6. Gate决策: threshold jitter + ALLOW/WARN/BLOCK
 """
+
 from __future__ import annotations
 
 import math
@@ -27,12 +28,12 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from ai_prompt_toolkit.types import Finding, Severity
-from ai_prompt_toolkit.security.prompt_scorecard import Decision, Grade
+from ai_prompt_toolkit.security.anomaly_detector import compute_anomaly_score, extract_features
 from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+from ai_prompt_toolkit.security.prompt_scorecard import Decision
 from ai_prompt_toolkit.security.structural_analyzer import analyze_structure
-from ai_prompt_toolkit.security.anomaly_detector import extract_features, compute_anomaly_score
+from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 class LayerProtocol(Protocol):
@@ -71,7 +72,12 @@ class EngineResult:
             "confidence": round(self.confidence, 4),
             "decision": self.decision.value,
             "layer_results": [
-                {"layer": lr.layer, "score": round(lr.score, 4), "evidence": lr.evidence[:3], "latency_ms": round(lr.latency_ms, 2)}
+                {
+                    "layer": lr.layer,
+                    "score": round(lr.score, 4),
+                    "evidence": lr.evidence[:3],
+                    "latency_ms": round(lr.latency_ms, 2),
+                }
                 for lr in self.layer_results
             ],
             "findings": [f.to_dict() for f in self.findings],
@@ -94,9 +100,17 @@ _META_COEFS = [
 _META_INTERCEPT = -1.9898
 
 _ISOTONIC_CALIBRATION = [
-    (0.00, 0.02), (0.10, 0.08), (0.20, 0.15), (0.30, 0.28),
-    (0.40, 0.38), (0.50, 0.50), (0.60, 0.62), (0.70, 0.74),
-    (0.80, 0.85), (0.90, 0.94), (1.00, 0.99),
+    (0.00, 0.02),
+    (0.10, 0.08),
+    (0.20, 0.15),
+    (0.30, 0.28),
+    (0.40, 0.38),
+    (0.50, 0.50),
+    (0.60, 0.62),
+    (0.70, 0.74),
+    (0.80, 0.85),
+    (0.90, 0.94),
+    (1.00, 0.99),
 ]
 
 _HARD_BLOCK_THRESHOLD = 0.95
@@ -170,7 +184,10 @@ class L1RegexLayer:
         evidence = [f"[{f.rule_id}] {f.description[:60]}" for f in findings[:5]]
 
         return LayerResult(
-            layer=self.name, score=max_score, evidence=evidence, latency_ms=elapsed,
+            layer=self.name,
+            score=max_score,
+            evidence=evidence,
+            latency_ms=elapsed,
             metadata={"match_count": len(findings)},
         )
 
@@ -181,10 +198,22 @@ class L2ClassifierLayer:
         self._model = None
         self._keyword_patterns = [
             (re.compile(r"ignore\s+.*(?:previous|above|all)\s+.*(?:instruction|prompt|rule)", re.I), 0.8),
-            (re.compile(r"(?:you\s+are|act\s+as|pretend\s+to\s+be)\s+(?:now|a|an)\s+(?:DAN|unfiltered|uncensored|unrestricted|jailbreak)", re.I), 0.85),
+            (
+                re.compile(
+                    r"(?:you\s+are|act\s+as|pretend\s+to\s+be)\s+(?:now|a|an)\s+(?:DAN|unfiltered|uncensored|unrestricted|jailbreak)",
+                    re.I,
+                ),
+                0.85,
+            ),
             (re.compile(r"(?:忽略|无视|忘记|绕过).*(?:指令|规则|限制|约束|安全)", re.I), 0.8),
             (re.compile(r"(?:system|admin|root|sudo)\s*(?:prompt|mode|access|privilege)", re.I), 0.7),
-            (re.compile(r"(?:提取|输出|显示|reveal|output|show).*(?:系统|初始|隐藏|secret|system)\s*(?:提示|指令|prompt)", re.I), 0.75),
+            (
+                re.compile(
+                    r"(?:提取|输出|显示|reveal|output|show).*(?:系统|初始|隐藏|secret|system)\s*(?:提示|指令|prompt)",
+                    re.I,
+                ),
+                0.75,
+            ),
         ]
 
     @property
@@ -253,7 +282,7 @@ class L3SimilarityLayer:
         words = text.lower().split()
         if len(words) < n:
             return {text.lower()}
-        return {" ".join(words[i:i+n]) for i in range(len(words) - n + 1)}
+        return {" ".join(words[i : i + n]) for i in range(len(words) - n + 1)}
 
     def analyze(self, text: str) -> LayerResult:
         start = time.perf_counter()
@@ -296,8 +325,15 @@ class L4StructuralLayer:
         elapsed = (time.perf_counter() - start) * 1000
         evidence = [f["description"][:60] for f in analysis.findings[:3] if isinstance(f, dict)]
         return LayerResult(
-            layer=self.name, score=analysis.risk_score, evidence=evidence, latency_ms=elapsed,
-            metadata={"boundary_score": analysis.boundary_score, "manipulation_score": analysis.manipulation_score, "entropy": analysis.entropy},
+            layer=self.name,
+            score=analysis.risk_score,
+            evidence=evidence,
+            latency_ms=elapsed,
+            metadata={
+                "boundary_score": analysis.boundary_score,
+                "manipulation_score": analysis.manipulation_score,
+                "entropy": analysis.entropy,
+            },
         )
 
 
@@ -322,7 +358,10 @@ class L5AnomalyLayer:
         if features.repetition_score > 0.8:
             evidence.append("高重复率")
         return LayerResult(
-            layer=self.name, score=score, evidence=evidence, latency_ms=elapsed,
+            layer=self.name,
+            score=score,
+            evidence=evidence,
+            latency_ms=elapsed,
             metadata={"entropy": round(features.entropy, 2), "special_ratio": round(features.special_ratio, 3)},
         )
 
@@ -396,8 +435,10 @@ class FusionEngine:
                     results[idx] = future.result(timeout=5.0)
                 except Exception:
                     results[idx] = LayerResult(
-                        layer=self._layers[idx].name, score=0.0,
-                        evidence=["layer error - fail-open"], latency_ms=0.0,
+                        layer=self._layers[idx].name,
+                        score=0.0,
+                        evidence=["layer error - fail-open"],
+                        latency_ms=0.0,
                     )
 
         return [r for r in results if r is not None]
@@ -478,13 +519,15 @@ class FusionEngine:
 
             rule_id = f"FUSION-{lr.layer.replace('_', '-').upper()}"
             evidence_text = "; ".join(lr.evidence[:2]) if lr.evidence else f"score={lr.score:.2f}"
-            findings.append(Finding(
-                rule_id=rule_id,
-                severity=severity,
-                description=f"融合检测层 {lr.layer} 触发: {evidence_text}",
-                remediation="检查该层检测到的问题并修复",
-                details={"layer": lr.layer, "score": round(lr.score, 4), "latency_ms": round(lr.latency_ms, 2)},
-            ))
+            findings.append(
+                Finding(
+                    rule_id=rule_id,
+                    severity=severity,
+                    description=f"融合检测层 {lr.layer} 触发: {evidence_text}",
+                    remediation="检查该层检测到的问题并修复",
+                    details={"layer": lr.layer, "score": round(lr.score, 4), "latency_ms": round(lr.latency_ms, 2)},
+                )
+            )
         return findings
 
     def reset_inflammation(self) -> None:

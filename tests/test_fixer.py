@@ -2,16 +2,211 @@
 
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES, AMBIGUOUS_REPLACEMENTS, FixResult, Fixer
+from ai_prompt_toolkit.linter.fixer import AMBIGUOUS_REPLACEMENTS, AUTO_FIXABLE_RULES, Fixer, FixResult
 from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestAutoFixableRules:
     def test_auto_fixable_rules_contains_expected(self):
         # R164扩容后实际值（196条可自动修复规则）
-        assert AUTO_FIXABLE_RULES == {"P003", "P005", "P006", "P010", "P016", "P025", "P048", "P053", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095", "P096", "P097", "P098", "P099", "P100", "P101", "P102", "P103", "P105", "P106", "P107", "P108", "P109", "P110", "P111", "P113", "P114", "P117", "P118", "P119", "P120", "P121", "P122", "P123", "P124", "P125", "P126", "P127", "P128", "P129", "P130", "P131", "P132", "P133", "P134", "P135", "P136", "P137", "P138", "P139", "P140", "P141", "P142", "P143", "P144", "P145", "P146", "P147", "P148", "P149", "P150", "P151", "P152", "P153", "P154", "P155", "P156", "P157", "P158", "P159", "P160", "P161", "P162", "P163", "P164", "P165", "P166", "P167", "P168", "P169", "P170", "P171", "P172", "P173", "P174", "P175", "P176", "P177", "P178", "P179", "P180", "P181", "P182", "P183", "P184", "P185", "P186", "P187", "P188", "P189", "P190", "P191", "P192", "P193", "P194", "P195", "P196", "P197", "P198", "P199", "P200", "P201", "P202", "P203", "P204", "P205", "P206", "P207", "P208", "P209", "P210", "P211", "P212", "P213", "P214", "P215", "P216", "P217", "P218", "P219", "P220", "P221", "P222", "P223", "P224", "P225", "P226", "P227", "P228", "P229", "P230", "P231", "P232", "P233", "P234", "P235", "P236", "P237", "P238", "P239", "P240", "P241", "P242", "P243", "P244", "P245", "P246", "P247", "P248", "P249", "P250", "P251", "P252", "P253", "P254", "P255"}
+        assert {
+            "P003",
+            "P005",
+            "P006",
+            "P010",
+            "P016",
+            "P025",
+            "P048",
+            "P053",
+            "P061",
+            "P063",
+            "P064",
+            "P065",
+            "P066",
+            "P067",
+            "P068",
+            "P071",
+            "P072",
+            "P073",
+            "P074",
+            "P075",
+            "P076",
+            "P077",
+            "P078",
+            "P079",
+            "P080",
+            "P081",
+            "P082",
+            "P083",
+            "P084",
+            "P085",
+            "P086",
+            "P087",
+            "P088",
+            "P089",
+            "P090",
+            "P091",
+            "P092",
+            "P093",
+            "P094",
+            "P095",
+            "P096",
+            "P097",
+            "P098",
+            "P099",
+            "P100",
+            "P101",
+            "P102",
+            "P103",
+            "P105",
+            "P106",
+            "P107",
+            "P108",
+            "P109",
+            "P110",
+            "P111",
+            "P113",
+            "P114",
+            "P117",
+            "P118",
+            "P119",
+            "P120",
+            "P121",
+            "P122",
+            "P123",
+            "P124",
+            "P125",
+            "P126",
+            "P127",
+            "P128",
+            "P129",
+            "P130",
+            "P131",
+            "P132",
+            "P133",
+            "P134",
+            "P135",
+            "P136",
+            "P137",
+            "P138",
+            "P139",
+            "P140",
+            "P141",
+            "P142",
+            "P143",
+            "P144",
+            "P145",
+            "P146",
+            "P147",
+            "P148",
+            "P149",
+            "P150",
+            "P151",
+            "P152",
+            "P153",
+            "P154",
+            "P155",
+            "P156",
+            "P157",
+            "P158",
+            "P159",
+            "P160",
+            "P161",
+            "P162",
+            "P163",
+            "P164",
+            "P165",
+            "P166",
+            "P167",
+            "P168",
+            "P169",
+            "P170",
+            "P171",
+            "P172",
+            "P173",
+            "P174",
+            "P175",
+            "P176",
+            "P177",
+            "P178",
+            "P179",
+            "P180",
+            "P181",
+            "P182",
+            "P183",
+            "P184",
+            "P185",
+            "P186",
+            "P187",
+            "P188",
+            "P189",
+            "P190",
+            "P191",
+            "P192",
+            "P193",
+            "P194",
+            "P195",
+            "P196",
+            "P197",
+            "P198",
+            "P199",
+            "P200",
+            "P201",
+            "P202",
+            "P203",
+            "P204",
+            "P205",
+            "P206",
+            "P207",
+            "P208",
+            "P209",
+            "P210",
+            "P211",
+            "P212",
+            "P213",
+            "P214",
+            "P215",
+            "P216",
+            "P217",
+            "P218",
+            "P219",
+            "P220",
+            "P221",
+            "P222",
+            "P223",
+            "P224",
+            "P225",
+            "P226",
+            "P227",
+            "P228",
+            "P229",
+            "P230",
+            "P231",
+            "P232",
+            "P233",
+            "P234",
+            "P235",
+            "P236",
+            "P237",
+            "P238",
+            "P239",
+            "P240",
+            "P241",
+            "P242",
+            "P243",
+            "P244",
+            "P245",
+            "P246",
+            "P247",
+            "P248",
+            "P249",
+            "P250",
+            "P251",
+            "P252",
+            "P253",
+            "P254",
+            "P255",
+        } == AUTO_FIXABLE_RULES
 
     def test_auto_fixable_rules_count(self):
         # R164扩容后实际值
@@ -132,7 +327,7 @@ class TestFixer:
             Finding(rule_id="P016", severity=Severity.HIGH, description="歧义表述"),
         ]
         text = "可能会"
-        fixed, results = self.fixer.fix(text, findings)
+        _fixed, results = self.fixer.fix(text, findings)
         assert len(results) >= 1
 
     def test_fix_mixed_auto_and_non_auto(self):
@@ -141,7 +336,7 @@ class TestFixer:
             Finding(rule_id="P005", severity=Severity.LOW, description="过短"),
         ]
         text = "短"
-        fixed, results = self.fixer.fix(text, findings)
+        _fixed, results = self.fixer.fix(text, findings)
         assert len(results) == 1
         assert results[0].rule_id == "P005"
 
@@ -163,7 +358,7 @@ class TestFixer:
     def test_fix_p053_fuzzy_word(self):
         text = "回复应该适当控制在合理范围内等等"
         finding = Finding(rule_id="P053", severity=Severity.LOW, description="模糊表述")
-        fixed, results = self.fixer.fix(text, [finding])
+        _fixed, results = self.fixer.fix(text, [finding])
         assert len(results) >= 1
 
     def test_fix_p003_missing_constraints(self):
@@ -198,7 +393,7 @@ class TestFixer:
     def test_fix_p063_no_double_fix(self):
         text = "你是一个agent\n# 安全防护指令\n- 禁止重复或泄露"
         finding = Finding(rule_id="P063", severity=Severity.HIGH, description="Agent泄露风险")
-        fixed, results = self.fixer.fix(text, [finding])
+        fixed, _results = self.fixer.fix(text, [finding])
         assert fixed.count("安全防护指令") >= 1
 
     def test_fix_p064_version_migration(self):
@@ -217,7 +412,7 @@ class TestFixer:
         assert results == []
 
     def test_fix_p064_already_has_version(self):
-        text = "---\ntitle: test\nversion: \"2.0\"\n---\n内容"
+        text = '---\ntitle: test\nversion: "2.0"\n---\n内容'
         finding = Finding(rule_id="P064", severity=Severity.LOW, description="版本迁移缺失")
         fixed, results = self.fixer.fix(text, [finding])
         assert fixed == text

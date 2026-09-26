@@ -1,9 +1,8 @@
 """R73测试: 语义缓存(SimHash + SemanticCache)"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.semantic_cache import SimHash, SemanticCache
+from ai_prompt_toolkit.semantic_cache import SemanticCache, SimHash
 
 
 class TestSimHash:

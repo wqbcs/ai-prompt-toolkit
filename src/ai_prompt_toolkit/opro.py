@@ -13,13 +13,17 @@
 
 注意: 本实现不依赖LLM API调用, 使用规则化元Prompt+评估驱动
 """
+
 from __future__ import annotations
 
 import logging
 import random
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -45,9 +49,15 @@ class OPROConfig:
     population_size: int = 5
     top_k: int = 3
     convergence_rounds: int = 3
-    mutation_strategies: list[str] = field(default_factory=lambda: [
-        "rephrase", "elaborate", "simplify", "restructure", "specialize",
-    ])
+    mutation_strategies: list[str] = field(
+        default_factory=lambda: [
+            "rephrase",
+            "elaborate",
+            "simplify",
+            "restructure",
+            "specialize",
+        ]
+    )
     seed: int = 42
 
 
@@ -106,25 +116,25 @@ class OPROOptimizer:
         best_score = initial_score
 
         for gen in range(1, self.config.max_generations + 1):
-            top_k = sorted(population, key=lambda c: c.score, reverse=True)[:self.config.top_k]
+            top_k = sorted(population, key=lambda c: c.score, reverse=True)[: self.config.top_k]
 
             meta_prompt = self._build_meta_prompt(top_k, instruction)
 
-            new_candidates = self._generate_candidates(
-                meta_prompt, top_k, gen, eval_fn
-            )
+            new_candidates = self._generate_candidates(meta_prompt, top_k, gen, eval_fn)
 
             population.extend(new_candidates)
-            population = sorted(population, key=lambda c: c.score, reverse=True)[:self.config.population_size * 3]
+            population = sorted(population, key=lambda c: c.score, reverse=True)[: self.config.population_size * 3]
 
             gen_best = population[0].score
 
-            result.history.append({
-                "generation": gen,
-                "best_score": round(gen_best, 2),
-                "new_candidates": len(new_candidates),
-                "population_size": len(population),
-            })
+            result.history.append(
+                {
+                    "generation": gen,
+                    "best_score": round(gen_best, 2),
+                    "new_candidates": len(new_candidates),
+                    "population_size": len(population),
+                }
+            )
 
             if gen_best > best_score:
                 best_score = gen_best
@@ -162,14 +172,16 @@ class OPROOptimizer:
             lines.append(f"```\n{cand.instruction}\n```")
             lines.append("")
 
-        lines.extend([
-            "## 任务要求",
-            "基于以上历史候选指令及其得分，生成一条新的优化指令。",
-            "新指令应该:",
-            "1. 继承高分候选的优点",
-            "2. 改进低分候选的不足",
-            "3. 尝试新的表达方式和结构",
-        ])
+        lines.extend(
+            [
+                "## 任务要求",
+                "基于以上历史候选指令及其得分，生成一条新的优化指令。",
+                "新指令应该:",
+                "1. 继承高分候选的优点",
+                "2. 改进低分候选的不足",
+                "3. 尝试新的表达方式和结构",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -187,12 +199,14 @@ class OPROOptimizer:
             new_instruction = self._mutate(parent.instruction, strategy)
             score = eval_fn(new_instruction)
 
-            candidates.append(OPROCandidate(
-                instruction=new_instruction,
-                score=score,
-                generation=generation,
-                parent=parent.instruction[:50],
-            ))
+            candidates.append(
+                OPROCandidate(
+                    instruction=new_instruction,
+                    score=score,
+                    generation=generation,
+                    parent=parent.instruction[:50],
+                )
+            )
 
         return candidates
 
@@ -272,11 +286,13 @@ def _mutate_specialize(text: str, rng: random.Random) -> str:
 def _opro_default_eval_fn(text: str) -> float:
     try:
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         linter = PromptLinter()
         result = linter.lint("opro-optimize", text)
         return result.score
     except Exception:
         from ai_prompt_toolkit.textgrad import _default_eval_fn
+
         return _default_eval_fn(text)
 
 

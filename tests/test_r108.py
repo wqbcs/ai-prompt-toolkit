@@ -1,10 +1,9 @@
 """R108 测试: P196-P200 LLM推理安全Lint规则"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules, run_all_checks
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules, run_all_checks
 from ai_prompt_toolkit.types import Severity
 
 

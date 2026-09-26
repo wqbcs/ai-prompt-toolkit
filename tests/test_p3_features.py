@@ -1,24 +1,24 @@
 """P3功能测试: Prompt优化+Tracing+PromptBuilder"""
+
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.prompt_builder import PromptBuilder, build_from_template
 from ai_prompt_toolkit.prompt_optimizer import (
-    optimize_prompt,
-    _detect_issues,
-    _evaluate_text,
-    _apply_strategy,
     _OPTIMIZATION_STRATEGIES,
     OptimizationResult,
     OptimizationStep,
+    _detect_issues,
+    _evaluate_text,
+    optimize_prompt,
 )
-from ai_prompt_toolkit.tracing import Tracer, Trace, Span
-from ai_prompt_toolkit.prompt_builder import PromptBuilder, build_from_template
+from ai_prompt_toolkit.tracing import Span, Trace, Tracer
 
 
 class TestPromptOptimizer:
     def test_detect_issues_empty(self):
-        issues = _detect_issues("你是一个专业的AI助手。请按照以下步骤执行：1. 分析 2. 回答。输出格式：JSON。约束：不超过500字。如果无法回答请说明。")
+        issues = _detect_issues(
+            "你是一个专业的AI助手。请按照以下步骤执行：1. 分析 2. 回答。输出格式：JSON。约束：不超过500字。如果无法回答请说明。"
+        )
         assert isinstance(issues, list)
 
     def test_detect_issues_short(self):
@@ -55,9 +55,13 @@ class TestPromptOptimizer:
 
     def test_optimization_step_to_dict(self):
         step = OptimizationStep(
-            strategy="add_role", strategy_name="角色定义强化",
-            original_text="a", optimized_text="b",
-            score_before=50.0, score_after=60.0, improvement=10.0,
+            strategy="add_role",
+            strategy_name="角色定义强化",
+            original_text="a",
+            optimized_text="b",
+            score_before=50.0,
+            score_after=60.0,
+            improvement=10.0,
         )
         d = step.to_dict()
         assert d["strategy"] == "add_role"
@@ -65,9 +69,12 @@ class TestPromptOptimizer:
 
     def test_optimization_result_to_dict(self):
         result = OptimizationResult(
-            original_text="a", optimized_text="b",
-            original_score=50.0, final_score=70.0,
-            total_improvement=20.0, iterations=2,
+            original_text="a",
+            optimized_text="b",
+            original_score=50.0,
+            final_score=70.0,
+            total_improvement=20.0,
+            iterations=2,
         )
         d = result.to_dict()
         assert d["final_score"] == 70.0
@@ -172,72 +179,65 @@ class TestPromptBuilder:
         assert "翻译以下内容" in prompt
 
     def test_add_steps(self):
-        prompt = (PromptBuilder()
-                  .set_role("助手")
-                  .add_steps(["分析输入", "生成回答", "校验输出"])
-                  .build())
+        prompt = PromptBuilder().set_role("助手").add_steps(["分析输入", "生成回答", "校验输出"]).build()
         assert "1." in prompt
         assert "2." in prompt
         assert "3." in prompt
 
     def test_add_example(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("翻译")
-                  .add_example("Hello", "你好")
-                  .build())
+        prompt = PromptBuilder().add_instruction("翻译").add_example("Hello", "你好").build()
         assert "示例" in prompt
         assert "Hello" in prompt
 
     def test_add_constraint(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("回答问题")
-                  .add_constraint("不超过500字")
-                  .add_constraint("使用中文")
-                  .build())
+        prompt = (
+            PromptBuilder().add_instruction("回答问题").add_constraint("不超过500字").add_constraint("使用中文").build()
+        )
         assert "约束条件" in prompt
         assert "不超过500字" in prompt
 
     def test_add_variable(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("翻译{{content}}")
-                  .add_variable("content")
-                  .build(context={"content": "Hello World"})
-                  )
+        prompt = (
+            PromptBuilder()
+            .add_instruction("翻译{{content}}")
+            .add_variable("content")
+            .build(context={"content": "Hello World"})
+        )
         assert "Hello World" in prompt
 
     def test_add_output_format(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("分析")
-                  .add_output_format("JSON格式: {result: string}")
-                  .build())
+        prompt = PromptBuilder().add_instruction("分析").add_output_format("JSON格式: {result: string}").build()
         assert "输出格式" in prompt
 
     def test_add_error_handling(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("回答")
-                  .add_error_handling()
-                  .build())
+        prompt = PromptBuilder().add_instruction("回答").add_error_handling().build()
         assert "无法完成" in prompt
 
     def test_few_shot(self):
-        prompt = (PromptBuilder()
-                  .add_instruction("翻译")
-                  .add_few_shot([
-                      {"input": "Hello", "output": "你好"},
-                      {"input": "World", "output": "世界"},
-                  ])
-                  .build())
+        prompt = (
+            PromptBuilder()
+            .add_instruction("翻译")
+            .add_few_shot(
+                [
+                    {"input": "Hello", "output": "你好"},
+                    {"input": "World", "output": "世界"},
+                ]
+            )
+            .build()
+        )
         assert "Hello" in prompt
         assert "World" in prompt
 
     def test_chaining(self):
-        prompt = (PromptBuilder()
-                  .set_role("助手", skills=["分析", "推理"])
-                  .add_instruction("回答问题")
-                  .add_steps(["思考", "回答"])
-                  .add_constraint("简洁")
-                  .add_error_handling()
-                  .build())
+        prompt = (
+            PromptBuilder()
+            .set_role("助手", skills=["分析", "推理"])
+            .add_instruction("回答问题")
+            .add_steps(["思考", "回答"])
+            .add_constraint("简洁")
+            .add_error_handling()
+            .build()
+        )
         assert "助手" in prompt
         assert "回答问题" in prompt
 

@@ -1,10 +1,10 @@
 """R101: P191-P195 AI Agent安全Lint规则"""
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.linter import lint_template
-from ai_prompt_toolkit.linter.rules import get_all_rules, _RULE_MAP
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
-from ai_prompt_toolkit.types import Severity
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules
 
 
 class TestP191P195Rules:

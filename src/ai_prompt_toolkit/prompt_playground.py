@@ -12,12 +12,10 @@
 - FastAPI后端(可选)
 - 不引入React/Next.js等重框架
 """
+
 from __future__ import annotations
 
-import html
-import json
 import re
-import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -31,7 +29,7 @@ class PlaygroundTemplate:
     variable_values: dict[str, str] = field(default_factory=dict)
 
     def extract_variables(self) -> list[str]:
-        pattern = r'\{\{(\w+)\}\}'
+        pattern = r"\{\{(\w+)\}\}"
         self.variables = list(dict.fromkeys(re.findall(pattern, self.content)))
         return self.variables
 
@@ -165,7 +163,7 @@ def generate_playground_html(output_path: str | Path | None = None) -> str:
 
 
 def extract_template_variables(template: str) -> list[str]:
-    return list(dict.fromkeys(re.findall(r'\{\{(\w+)\}\}', template)))
+    return list(dict.fromkeys(re.findall(r"\{\{(\w+)\}\}", template)))
 
 
 def render_template(template: str, variables: dict[str, str]) -> str:

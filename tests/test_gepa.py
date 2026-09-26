@@ -1,4 +1,5 @@
 """GEPA反射式Prompt进化引擎 + Feedback Metric体系 + Prompt版本管理 测试套件"""
+
 from __future__ import annotations
 
 import tempfile
@@ -24,15 +25,14 @@ from ai_prompt_toolkit.gepa import (
 )
 from ai_prompt_toolkit.prompt_version import (
     ABCompareResult,
-    PromptVersion,
     PromptVersionStore,
     VersionDiff,
 )
 
-
 # ═══════════════════════════════════════
 # ScoreWithFeedback 测试
 # ═══════════════════════════════════════
+
 
 class TestScoreWithFeedback:
     def test_basic_creation(self):
@@ -55,6 +55,7 @@ class TestScoreWithFeedback:
 # ═══════════════════════════════════════
 # Trace 测试
 # ═══════════════════════════════════════
+
 
 class TestTrace:
     def test_basic_creation(self):
@@ -82,6 +83,7 @@ class TestTrace:
 # Candidate 测试
 # ═══════════════════════════════════════
 
+
 class TestCandidate:
     def test_basic_creation(self):
         c = Candidate(id=1, instructions={"main": "test prompt"})
@@ -92,8 +94,12 @@ class TestCandidate:
 
     def test_to_dict(self):
         c = Candidate(
-            id=2, instructions={"main": "test"}, parent_id=1,
-            per_example_scores={0: 0.8, 1: 0.9}, aggregate_score=0.85, generation=2,
+            id=2,
+            instructions={"main": "test"},
+            parent_id=1,
+            per_example_scores={0: 0.8, 1: 0.9},
+            aggregate_score=0.85,
+            generation=2,
         )
         d = c.to_dict()
         assert d["id"] == 2
@@ -106,36 +112,52 @@ class TestCandidate:
 # ReflectiveProposer 测试
 # ═══════════════════════════════════════
 
+
 class TestReflectiveProposer:
     def test_heuristic_propose_no_lm(self):
         proposer = ReflectiveProposer()
-        traces = [Trace(
-            predictor_name="main", instruction="test",
-            inputs={"q": "hello"}, outputs={"a": "hi"}, score=0.3,
-            feedback="Output quality is critically low",
-        )]
+        traces = [
+            Trace(
+                predictor_name="main",
+                instruction="test",
+                inputs={"q": "hello"},
+                outputs={"a": "hi"},
+                score=0.3,
+                feedback="Output quality is critically low",
+            )
+        ]
         result = proposer.propose("Answer the question", traces, "main")
         assert "Answer the question" in result
         assert len(result) > len("Answer the question")
 
     def test_heuristic_propose_with_missing_feedback(self):
         proposer = ReflectiveProposer()
-        traces = [Trace(
-            predictor_name="main", instruction="test",
-            inputs={"q": "hello"}, outputs={"a": "hi"}, score=0.5,
-            feedback="missing required content",
-        )]
+        traces = [
+            Trace(
+                predictor_name="main",
+                instruction="test",
+                inputs={"q": "hello"},
+                outputs={"a": "hi"},
+                score=0.5,
+                feedback="missing required content",
+            )
+        ]
         result = proposer.propose("Answer the question", traces, "main")
         assert len(result) > len("Answer the question")
 
     def test_reflection_lm_propose(self):
         mock_lm = MagicMock(return_value="Improved instruction: Be specific and concise.")
         proposer = ReflectiveProposer(reflection_lm=mock_lm)
-        traces = [Trace(
-            predictor_name="main", instruction="test",
-            inputs={"q": "hello"}, outputs={"a": "hi"}, score=0.3,
-            feedback="Too vague",
-        )]
+        traces = [
+            Trace(
+                predictor_name="main",
+                instruction="test",
+                inputs={"q": "hello"},
+                outputs={"a": "hi"},
+                score=0.3,
+                feedback="Too vague",
+            )
+        ]
         result = proposer.propose("Answer the question", traces, "main")
         assert "Improved" in result
         mock_lm.assert_called_once()
@@ -143,20 +165,32 @@ class TestReflectiveProposer:
     def test_reflection_lm_fallback_on_error(self):
         mock_lm = MagicMock(side_effect=RuntimeError("LM unavailable"))
         proposer = ReflectiveProposer(reflection_lm=mock_lm)
-        traces = [Trace(
-            predictor_name="main", instruction="test",
-            inputs={}, outputs={}, score=0.3, feedback="Low quality",
-        )]
+        traces = [
+            Trace(
+                predictor_name="main",
+                instruction="test",
+                inputs={},
+                outputs={},
+                score=0.3,
+                feedback="Low quality",
+            )
+        ]
         result = proposer.propose("Original", traces, "main")
         assert "Original" in result
 
     def test_reflection_lm_returns_empty(self):
         mock_lm = MagicMock(return_value="")
         proposer = ReflectiveProposer(reflection_lm=mock_lm)
-        traces = [Trace(
-            predictor_name="main", instruction="test",
-            inputs={}, outputs={}, score=0.3, feedback="Low",
-        )]
+        traces = [
+            Trace(
+                predictor_name="main",
+                instruction="test",
+                inputs={},
+                outputs={},
+                score=0.3,
+                feedback="Low",
+            )
+        ]
         result = proposer.propose("Original", traces, "main")
         assert result == "Original"
 
@@ -164,6 +198,7 @@ class TestReflectiveProposer:
 # ═══════════════════════════════════════
 # ParetoFrontier 测试
 # ═══════════════════════════════════════
+
 
 class TestParetoFrontier:
     def test_empty_frontier(self):
@@ -196,6 +231,7 @@ class TestParetoFrontier:
 
     def test_sample_parent(self):
         import random
+
         frontier = ParetoFrontier()
         c1 = Candidate(id=0, instructions={"main": "a"}, per_example_scores={0: 0.8}, aggregate_score=0.8)
         frontier.update(c1)
@@ -209,13 +245,22 @@ class TestParetoFrontier:
 # MergeStrategy 测试
 # ═══════════════════════════════════════
 
+
 class TestMergeStrategy:
     def test_merge_prefers_higher_scoring(self):
         merger = MergeStrategy()
-        a = Candidate(id=0, instructions={"main": "prompt A", "helper": "help A"},
-                      per_example_scores={0: 0.9, 1: 0.3}, aggregate_score=0.6)
-        b = Candidate(id=1, instructions={"main": "prompt B", "helper": "help B"},
-                      per_example_scores={0: 0.3, 1: 0.9}, aggregate_score=0.6)
+        a = Candidate(
+            id=0,
+            instructions={"main": "prompt A", "helper": "help A"},
+            per_example_scores={0: 0.9, 1: 0.3},
+            aggregate_score=0.6,
+        )
+        b = Candidate(
+            id=1,
+            instructions={"main": "prompt B", "helper": "help B"},
+            per_example_scores={0: 0.3, 1: 0.9},
+            aggregate_score=0.6,
+        )
         merged = merger.merge(a, b, ["main", "helper"])
         assert "main" in merged
         assert "helper" in merged
@@ -224,6 +269,7 @@ class TestMergeStrategy:
 # ═══════════════════════════════════════
 # RoundRobinSelector 测试
 # ═══════════════════════════════════════
+
 
 class TestRoundRobinSelector:
     def test_round_robin(self):
@@ -243,6 +289,7 @@ class TestRoundRobinSelector:
 # GEPAOptimizer 测试
 # ═══════════════════════════════════════
 
+
 class TestGEPAOptimizer:
     @pytest.fixture
     def simple_metric(self):
@@ -254,12 +301,14 @@ class TestGEPAOptimizer:
             if "professional" in answer.lower():
                 return ScoreWithFeedback(score=0.7, feedback="Contains professional but not exact match")
             return ScoreWithFeedback(score=0.0, feedback=f"Expected '{expected}' not found in output")
+
         return metric
 
     @pytest.fixture
     def simple_execute(self):
         def execute(instructions, inputs):
             return {"answer": instructions.get("main", "")}
+
         return execute
 
     def _fast_optimizer(self, metric, execute_fn, **kwargs):
@@ -290,6 +339,7 @@ class TestGEPAOptimizer:
 
     def test_optimization_with_reflection_lm(self, simple_metric, simple_execute):
         call_count = 0
+
         def mock_lm(prompt):
             nonlocal call_count
             call_count += 1
@@ -373,25 +423,20 @@ class TestGEPAOptimizer:
 # FeedbackMetric 测试
 # ═══════════════════════════════════════
 
+
 class TestFeedbackMetric:
     def test_exact_match_success(self):
-        result = FeedbackMetric.exact_match(
-            gold={"expected": "hello"}, pred={"answer": "hello"}
-        )
+        result = FeedbackMetric.exact_match(gold={"expected": "hello"}, pred={"answer": "hello"})
         assert result.score == 1.0
         assert result.feedback is None
 
     def test_exact_match_failure(self):
-        result = FeedbackMetric.exact_match(
-            gold={"expected": "hello"}, pred={"answer": "world"}
-        )
+        result = FeedbackMetric.exact_match(gold={"expected": "hello"}, pred={"answer": "world"})
         assert result.score == 0.0
         assert result.feedback is not None
 
     def test_exact_match_case_insensitive(self):
-        result = FeedbackMetric.exact_match(
-            gold={"expected": "Hello"}, pred={"answer": "hello"}
-        )
+        result = FeedbackMetric.exact_match(gold={"expected": "Hello"}, pred={"answer": "hello"})
         assert result.score == 1.0
 
     def test_contains_match_all_found(self):
@@ -425,21 +470,20 @@ class TestFeedbackMetric:
         assert result.score == 0.0
 
     def test_regex_match_no_pattern(self):
-        result = FeedbackMetric.regex_match(
-            gold={}, pred={"answer": "anything"}
-        )
+        result = FeedbackMetric.regex_match(gold={}, pred={"answer": "anything"})
         assert result.score == 1.0
 
     def test_lint_score_high(self):
         result = FeedbackMetric.lint_score(
-            gold={}, pred={"answer": "You are a professional AI assistant. Your task: analyze the input. Constraints: be concise."}
+            gold={},
+            pred={
+                "answer": "You are a professional AI assistant. Your task: analyze the input. Constraints: be concise."
+            },
         )
         assert result.score > 0.0
 
     def test_llm_judge_no_judge_fallback(self):
-        result = FeedbackMetric.llm_judge(
-            gold={}, pred={"answer": "test output"}
-        )
+        result = FeedbackMetric.llm_judge(gold={}, pred={"answer": "test output"})
         assert isinstance(result, ScoreWithFeedback)
 
     def test_llm_judge_with_mock(self):
@@ -465,6 +509,7 @@ class TestFeedbackMetric:
 # ═══════════════════════════════════════
 # gepa_optimize 便捷函数测试
 # ═══════════════════════════════════════
+
 
 class TestGepaOptimizeFunction:
     def test_basic_usage(self):
@@ -510,6 +555,7 @@ class TestGepaOptimizeFunction:
 # GEPAEvaluator 测试
 # ═══════════════════════════════════════
 
+
 class TestGEPAEvaluator:
     def test_evaluate(self):
         def fast_metric(gold, pred, **kwargs):
@@ -530,6 +576,7 @@ class TestGEPAEvaluator:
 # ═══════════════════════════════════════
 # PromptVersionStore 测试
 # ═══════════════════════════════════════
+
 
 class TestPromptVersionStore:
     @pytest.fixture

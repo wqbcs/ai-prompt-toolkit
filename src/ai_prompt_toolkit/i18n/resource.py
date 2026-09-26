@@ -1,4 +1,5 @@
 """ResourceManager — JSON格式资源文件加载和保存"""
+
 from __future__ import annotations
 
 import json
@@ -26,7 +27,7 @@ class ResourceManager:
             return {}
         entries: dict[str, TranslationEntry] = {}
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict):
                 templates = data.get("templates", data)

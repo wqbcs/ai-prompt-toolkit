@@ -10,6 +10,7 @@
   ├── RedTeamError (红队测试相关)
   └── MarketError (模板市场相关)
 """
+
 from __future__ import annotations
 
 
@@ -18,8 +19,9 @@ class PromptToolkitError(Exception):
     user_message: str = "操作失败"
     debug_detail: str = ""
 
-    def __init__(self, message: str = "", *, error_code: str = "",
-                 user_message: str = "", debug_detail: str = "") -> None:
+    def __init__(
+        self, message: str = "", *, error_code: str = "", user_message: str = "", debug_detail: str = ""
+    ) -> None:
         super().__init__(message)
         if error_code:
             self.error_code = error_code
@@ -45,8 +47,7 @@ class CompileError(PromptToolkitError):
     error_code = "E100"
     user_message = "编译失败"
 
-    def __init__(self, message: str = "", *, line: int = 0, directive: str = "",
-                 suggestion: str = "") -> None:
+    def __init__(self, message: str = "", *, line: int = 0, directive: str = "", suggestion: str = "") -> None:
         detail = f"Line {line}: {directive}" if line else message
         user_msg = f"编译失败: {directive}" if directive else "编译失败"
         if suggestion:
@@ -73,8 +74,7 @@ class ProviderError(ABTestError):
     error_code = "E410"
     user_message = "Provider连接失败"
 
-    def __init__(self, message: str = "", *, provider: str = "",
-                 suggestion: str = "") -> None:
+    def __init__(self, message: str = "", *, provider: str = "", suggestion: str = "") -> None:
         user_msg = f"Provider {provider} 连接失败" if provider else "Provider连接失败"
         if suggestion:
             user_msg += f" — 建议: {suggestion}"

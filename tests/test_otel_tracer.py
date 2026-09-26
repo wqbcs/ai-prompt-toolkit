@@ -1,9 +1,8 @@
 """otel_tracer 单元测试 — OTel语义约定对齐 + OTLP-JSON导出"""
+
 from __future__ import annotations
 
 import json
-
-import pytest
 
 from ai_prompt_toolkit.linter.otel_tracer import (
     GEN_AI_SYSTEM,

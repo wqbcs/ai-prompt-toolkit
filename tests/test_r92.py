@@ -1,4 +1,5 @@
 """R92: scan --explain + MCP工具扩展 + __init__.py版本"""
+
 from __future__ import annotations
 
 import re
@@ -38,6 +39,7 @@ def test_html_report_mcp_style():
 
 def test_mcp_dispatch_has_new_tools():
     from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
+
     dispatch = _get_tool_dispatch()
     assert "rollback_safety_check" in dispatch
     assert "html_report_generate" in dispatch
@@ -48,6 +50,7 @@ def test_mcp_tools_list_has_new_tools():
     import json
 
     from ai_prompt_toolkit.mcp_server import _handle_tools_list
+
     response = _handle_tools_list(1)
     data = json.loads(response)
     tool_names = [t["name"] for t in data["result"]["tools"]]

@@ -6,6 +6,7 @@
 - 模糊搜索(标题+描述+标签)
 - 分页(默认20/页，最大100/页)
 """
+
 from __future__ import annotations
 
 import json
@@ -145,13 +146,9 @@ class MarketDB:
                 pass
 
         if current_version < 2:
-            conn.execute(
-                "INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '2')"
-            )
+            conn.execute("INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '2')")
         elif current_version < 1:
-            conn.execute(
-                "INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '1')"
-            )
+            conn.execute("INSERT OR REPLACE INTO _schema_version (key, value) VALUES ('version', '1')")
         conn.commit()
 
     def upsert_template(self, t: MarketTemplate) -> None:
@@ -168,10 +165,21 @@ class MarketDB:
                  category=excluded.category, security_scan_passed=excluded.security_scan_passed,
                  lint_score=excluded.lint_score, i18n_status=excluded.i18n_status,
                  updated_at=excluded.updated_at""",
-            (t.id, t.name, t.version, t.status, t.author, t.description,
-             json.dumps(t.tags, ensure_ascii=False), t.category,
-             1 if t.security_scan_passed else 0, t.lint_score,
-             t.i18n_status, now, now),
+            (
+                t.id,
+                t.name,
+                t.version,
+                t.status,
+                t.author,
+                t.description,
+                json.dumps(t.tags, ensure_ascii=False),
+                t.category,
+                1 if t.security_scan_passed else 0,
+                t.lint_score,
+                t.i18n_status,
+                now,
+                now,
+            ),
         )
         conn.commit()
 
@@ -219,7 +227,7 @@ class MarketDB:
         offset = (page - 1) * page_size
         rows = conn.execute(
             f"SELECT * FROM market_templates{where} ORDER BY {sort_by} {order} LIMIT ? OFFSET ?",
-            params + [page_size, offset],
+            [*params, page_size, offset],
         ).fetchall()
 
         templates = [self._row_to_template(r) for r in rows]
@@ -228,7 +236,8 @@ class MarketDB:
     def get_template(self, template_id: str) -> MarketTemplate | None:
         conn = self._connect()
         row = conn.execute(
-            "SELECT * FROM market_templates WHERE id = ?", (template_id,),
+            "SELECT * FROM market_templates WHERE id = ?",
+            (template_id,),
         ).fetchone()
         return self._row_to_template(row) if row else None
 
@@ -424,11 +433,16 @@ async def api_review_template(template_id: str, body: dict[str, Any]):
     approved = body.get("approved", False)
     new_status = "canary" if approved else "draft"
     from ai_prompt_toolkit.market.types import Template
-    tpl = Template(id=t.id, name=t.name, version=t.version,
-                   status=next((s for s in ["draft", "review", "canary", "stable", "deprecated"]
-                                if s == t.status), "draft"))
-    from ai_prompt_toolkit.market.types import TemplateStatus, LifecycleManager
-    lm = LifecycleManager()
+
+    tpl = Template(
+        id=t.id,
+        name=t.name,
+        version=t.version,
+        status=next((s for s in ["draft", "review", "canary", "stable", "deprecated"] if s == t.status), "draft"),
+    )
+    from ai_prompt_toolkit.market.types import LifecycleManager, TemplateStatus
+
+    LifecycleManager()
     try:
         tpl.status = TemplateStatus(new_status)
     except ValueError:

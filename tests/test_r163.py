@@ -1,6 +1,6 @@
 """R163: 成本追踪维度"""
-import pytest
-from ai_prompt_toolkit.linter.cost_tracker import CostTracker, CostRecord
+
+from ai_prompt_toolkit.linter.cost_tracker import CostTracker
 
 
 def test_cost_record_gpt4o():

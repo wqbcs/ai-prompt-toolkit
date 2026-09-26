@@ -4,22 +4,222 @@
 输出修复diff
 非--fix模式禁止修改任何文件
 """
+
 from __future__ import annotations
 
 import difflib
 import logging
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.linter.rules import (
     _AMBIGUOUS_WORDS,
     _SENSITIVE_PATTERNS,
 )
-from ai_prompt_toolkit.types import Finding
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 logger = logging.getLogger(__name__)
 
-AUTO_FIXABLE_RULES = {"P005", "P006", "P016", "P003", "P010", "P025", "P053", "P048", "P061", "P063", "P064", "P065", "P066", "P067", "P068", "P071", "P072", "P073", "P074", "P075", "P076", "P077", "P078", "P079", "P080", "P081", "P082", "P083", "P084", "P085", "P086", "P087", "P088", "P089", "P090", "P091", "P092", "P093", "P094", "P095", "P096", "P097", "P098", "P099", "P100", "P101", "P102", "P103", "P105", "P106", "P107", "P108", "P109", "P110", "P111", "P113", "P114", "P117", "P118", "P119", "P120", "P121", "P122", "P123", "P124", "P125", "P126", "P127", "P128", "P129", "P130", "P131", "P132", "P133", "P134", "P135", "P136", "P137", "P138", "P139", "P140", "P141", "P142", "P143", "P144", "P145", "P146", "P147", "P148", "P149", "P150", "P151", "P152", "P153", "P154", "P155", "P156", "P157", "P158", "P159", "P160", "P161", "P162", "P163", "P164", "P165", "P166", "P167", "P168", "P169", "P170", "P171", "P172", "P173", "P174", "P175", "P176", "P177", "P178", "P179", "P180", "P181", "P182", "P183", "P184", "P185", "P186", "P187", "P188", "P189", "P190", "P191", "P192", "P193", "P194", "P195", "P196", "P197", "P198", "P199", "P200", "P201", "P202", "P203", "P204", "P205", "P206", "P207", "P208", "P209", "P210", "P211", "P212", "P213", "P214", "P215", "P216", "P217", "P218", "P219", "P220", "P221", "P222", "P223", "P224", "P225", "P226", "P227", "P228", "P229", "P230", "P231", "P232", "P233", "P234", "P235", "P236", "P237", "P238", "P239", "P240", "P241", "P242", "P243", "P244", "P245", "P246", "P247", "P248", "P249", "P250", "P251", "P252", "P253", "P254", "P255"}
+AUTO_FIXABLE_RULES = {
+    "P005",
+    "P006",
+    "P016",
+    "P003",
+    "P010",
+    "P025",
+    "P053",
+    "P048",
+    "P061",
+    "P063",
+    "P064",
+    "P065",
+    "P066",
+    "P067",
+    "P068",
+    "P071",
+    "P072",
+    "P073",
+    "P074",
+    "P075",
+    "P076",
+    "P077",
+    "P078",
+    "P079",
+    "P080",
+    "P081",
+    "P082",
+    "P083",
+    "P084",
+    "P085",
+    "P086",
+    "P087",
+    "P088",
+    "P089",
+    "P090",
+    "P091",
+    "P092",
+    "P093",
+    "P094",
+    "P095",
+    "P096",
+    "P097",
+    "P098",
+    "P099",
+    "P100",
+    "P101",
+    "P102",
+    "P103",
+    "P105",
+    "P106",
+    "P107",
+    "P108",
+    "P109",
+    "P110",
+    "P111",
+    "P113",
+    "P114",
+    "P117",
+    "P118",
+    "P119",
+    "P120",
+    "P121",
+    "P122",
+    "P123",
+    "P124",
+    "P125",
+    "P126",
+    "P127",
+    "P128",
+    "P129",
+    "P130",
+    "P131",
+    "P132",
+    "P133",
+    "P134",
+    "P135",
+    "P136",
+    "P137",
+    "P138",
+    "P139",
+    "P140",
+    "P141",
+    "P142",
+    "P143",
+    "P144",
+    "P145",
+    "P146",
+    "P147",
+    "P148",
+    "P149",
+    "P150",
+    "P151",
+    "P152",
+    "P153",
+    "P154",
+    "P155",
+    "P156",
+    "P157",
+    "P158",
+    "P159",
+    "P160",
+    "P161",
+    "P162",
+    "P163",
+    "P164",
+    "P165",
+    "P166",
+    "P167",
+    "P168",
+    "P169",
+    "P170",
+    "P171",
+    "P172",
+    "P173",
+    "P174",
+    "P175",
+    "P176",
+    "P177",
+    "P178",
+    "P179",
+    "P180",
+    "P181",
+    "P182",
+    "P183",
+    "P184",
+    "P185",
+    "P186",
+    "P187",
+    "P188",
+    "P189",
+    "P190",
+    "P191",
+    "P192",
+    "P193",
+    "P194",
+    "P195",
+    "P196",
+    "P197",
+    "P198",
+    "P199",
+    "P200",
+    "P201",
+    "P202",
+    "P203",
+    "P204",
+    "P205",
+    "P206",
+    "P207",
+    "P208",
+    "P209",
+    "P210",
+    "P211",
+    "P212",
+    "P213",
+    "P214",
+    "P215",
+    "P216",
+    "P217",
+    "P218",
+    "P219",
+    "P220",
+    "P221",
+    "P222",
+    "P223",
+    "P224",
+    "P225",
+    "P226",
+    "P227",
+    "P228",
+    "P229",
+    "P230",
+    "P231",
+    "P232",
+    "P233",
+    "P234",
+    "P235",
+    "P236",
+    "P237",
+    "P238",
+    "P239",
+    "P240",
+    "P241",
+    "P242",
+    "P243",
+    "P244",
+    "P245",
+    "P246",
+    "P247",
+    "P248",
+    "P249",
+    "P250",
+    "P251",
+    "P252",
+    "P253",
+    "P254",
+    "P255",
+}
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
     "可能": "需要",
@@ -45,14 +245,21 @@ FUZZY_REPLACEMENTS: dict[str, str] = {
 }
 
 _ZH_PUNCT_TO_EN: dict[str, str] = {
-    "，": ", ", "。": ". ", "！": "! ", "？": "? ",
-    "；": "; ", "：": ": ", "（": " (", "）": ") ",
+    "，": ", ",
+    "。": ". ",
+    "！": "! ",
+    "？": "? ",
+    "；": "; ",
+    "：": ": ",
+    "（": " (",
+    "）": ") ",
 }
 
 
 def _fix_p048_mixed_punctuation(text: str) -> str:
     import re
-    has_zh_punct = bool(re.search(r"[，。！？；：""''（）【】《》]", text))
+
+    has_zh_punct = bool(re.search(r"[，。！？；：" "''（）【】《》]", text))
     if not has_zh_punct:
         return text
     for zh, en in _ZH_PUNCT_TO_EN.items():
@@ -62,6 +269,7 @@ def _fix_p048_mixed_punctuation(text: str) -> str:
 
 def _fix_p061_blank_lines(text: str) -> str:
     import re
+
     return re.sub(r"\n{4,}", "\n\n", text)
 
 
@@ -88,6 +296,7 @@ def _fix_p064_version_migration(text: str) -> str:
     if "version:" in frontmatter.lower():
         return text
     import datetime
+
     version_line = '\nversion: "1.0.0"'
     updated_date = f'\nupdated: "{datetime.date.today().isoformat()}"'
     new_frontmatter = frontmatter.rstrip() + version_line + updated_date + "\n"
@@ -96,6 +305,7 @@ def _fix_p064_version_migration(text: str) -> str:
 
 def _fix_p065_chain_isolation(text: str) -> str:
     import re
+
     chain_steps = re.findall(r"(第[一二三四五六七八九十]+步|Step\s*\d+|首先|然后|接着|最后)", text, re.IGNORECASE)
     if len(chain_steps) < 2:
         return text
@@ -120,6 +330,7 @@ def _fix_p066_context_window(text: str) -> str:
 
 def _fix_p067_knowledge_cutoff(text: str) -> str:
     import datetime
+
     now = datetime.datetime.now()
     cutoff_month = f"{now.year}-{now.month:02d}"
     cutoff_block = f"\n\n# 知识截止声明\n- 本指令基于截至{cutoff_month}的信息，超出此范围的信息可能不准确"
@@ -138,21 +349,19 @@ def _fix_p068_hallucination_prevention(text: str) -> str:
 
 def _fix_p071_endpoint(text: str) -> str:
     import re
+
     maas_match = re.search(r"maas", text, re.IGNORECASE)
     if maas_match:
         endpoint = "https://maas.cn-north-4.myhuaweicloud.com"
     else:
         endpoint = "https://myhuaweicloud.com"
-    block = (
-        "\n\n# API Endpoint\n"
-        f"- 服务端点: {endpoint}\n"
-        "- 请根据实际项目替换为正确的endpoint地址"
-    )
+    block = f"\n\n# API Endpoint\n- 服务端点: {endpoint}\n- 请根据实际项目替换为正确的endpoint地址"
     return text + block
 
 
 def _fix_p072_npu_adapt(text: str) -> str:
     import re
+
     has_train = bool(re.search(r"训练|train", text, re.IGNORECASE))
     has_infer = bool(re.search(r"推理|inference", text, re.IGNORECASE))
     if has_train:
@@ -161,11 +370,7 @@ def _fix_p072_npu_adapt(text: str) -> str:
         detail = "推理场景: 使用MindSpore Lite, 支持FP16/INT8量化, CANN推理引擎"
     else:
         detail = "本任务适配华为昇腾NPU, 使用CANN算子库, 支持MindSpore框架"
-    block = (
-        "\n\n# 昇腾NPU适配声明\n"
-        f"- {detail}\n"
-        "- 如需GPU回退, 请在部署配置中声明"
-    )
+    block = f"\n\n# 昇腾NPU适配声明\n- {detail}\n- 如需GPU回退, 请在部署配置中声明"
     return text + block
 
 
@@ -181,14 +386,10 @@ def _fix_p073_iam_auth(text: str) -> str:
 
 def _fix_p074_api_version(text: str) -> str:
     import re
+
     has_next = bool(re.search(r"NEXT", text))
     version = "HarmonyOS NEXT 5.0" if has_next else "HarmonyOS 5.0"
-    block = (
-        "\n\n# 鸿蒙API版本兼容性\n"
-        f"- 目标版本: {version}\n"
-        "- 最低兼容: API 12\n"
-        "- 使用条件编译适配多版本差异"
-    )
+    block = f"\n\n# 鸿蒙API版本兼容性\n- 目标版本: {version}\n- 最低兼容: API 12\n- 使用条件编译适配多版本差异"
     return text + block
 
 
@@ -204,16 +405,14 @@ def _fix_p075_region(text: str) -> str:
 
 def _fix_p076_modelarts_deploy(text: str) -> str:
     import re
+
     has_train = bool(re.search(r"训练|train", text, re.IGNORECASE))
     if has_train:
         spec = "GPU: Ascend 910 1卡 | 内存: 64GB | 并发: 4"
     else:
         spec = "GPU: V100 1卡 | 内存: 32GB | 并发: 10"
     block = (
-        "\n\n# ModelArts部署配置\n"
-        f"- 部署规格: {spec}\n"
-        "- 自动扩缩容: 最小1实例, 最大5实例\n"
-        "- 请根据实际业务负载调整配置"
+        f"\n\n# ModelArts部署配置\n- 部署规格: {spec}\n- 自动扩缩容: 最小1实例, 最大5实例\n- 请根据实际业务负载调整配置"
     )
     return text + block
 
@@ -260,52 +459,41 @@ def _fix_p080_sla(text: str) -> str:
 
 def _fix_p081_template_var_defaults(text: str) -> str:
     import re
+
     _VAR_PATTERN = re.compile(r"\{\{\s*(\w+)(?!\s*\|\s*default)\s*\}\}")
     return _VAR_PATTERN.sub(r"{{\1|default('')}}", text)
 
 
 def _fix_p082_trace_observability(text: str) -> str:
-    block = (
-        "\n\n## Trace: enabled\n"
-        "- 本Prompt已启用可观测性追踪\n"
-        "- 使用trace()上下文管理器捕获执行链路"
-    )
+    block = "\n\n## Trace: enabled\n- 本Prompt已启用可观测性追踪\n- 使用trace()上下文管理器捕获执行链路"
     return text + block
 
 
 def _fix_p083_doctor_hint(text: str) -> str:
-    block = (
-        "\n\n<!-- Doctor: 建议运行 promptkit prompt-doctor 获取健康诊断报告 -->"
-    )
+    block = "\n\n<!-- Doctor: 建议运行 promptkit prompt-doctor 获取健康诊断报告 -->"
     return text + block
 
 
 def _fix_p084_output_schema(text: str) -> str:
     import re
-    has_json = bool(re.search(r'JSON|json', text))
+
+    has_json = bool(re.search(r"JSON|json", text))
     if has_json:
-        block = (
-            "\n\n# 输出Schema\n"
-            '- 返回JSON格式示例: {"key": "value", "items": []}\n'
-            "- 所有字段必须有明确类型定义"
-        )
+        block = '\n\n# 输出Schema\n- 返回JSON格式示例: {"key": "value", "items": []}\n- 所有字段必须有明确类型定义'
     else:
-        block = (
-            "\n\n# 输出格式示例\n"
-            "- 使用Markdown标题和列表组织输出\n"
-            "- 关键信息使用**加粗**标注"
-        )
+        block = "\n\n# 输出格式示例\n- 使用Markdown标题和列表组织输出\n- 关键信息使用**加粗**标注"
     return text + block
 
 
 def _fix_p085_model_compat(text: str) -> str:
     import re
+
     model_specific = []
-    if re.search(r'<\|im_start\|>|system_prompt', text):
+    if re.search(r"<\|im_start\|>|system_prompt", text):
         model_specific.append("ChatML")
-    if re.search(r'\[INST\]|\[/INST\]', text):
+    if re.search(r"\[INST\]|\[/INST\]", text):
         model_specific.append("Llama")
-    if re.search(r'Human:|Assistant:', text):
+    if re.search(r"Human:|Assistant:", text):
         model_specific.append("Claude/Alpaca")
     models_str = "、".join(model_specific) if model_specific else "多模型"
     block = (
@@ -487,25 +675,27 @@ def _fix_p100_pangu_safety(text: str) -> str:
 
 def _fix_p101_semantic_redundancy(text: str) -> str:
     import re
-    sentences = re.split(r'[。！？\n]', text)
+
+    sentences = re.split(r"[。！？\n]", text)
     seen = {}
     duplicates = []
     for s in sentences:
-        key = re.sub(r'\s+', '', s.strip().lower())
+        key = re.sub(r"\s+", "", s.strip().lower())
         if len(key) > 5 and key in seen:
             duplicates.append(s.strip())
         elif len(key) > 5:
             seen[key] = True
     for d in duplicates:
-        text = text.replace(d, '', 1)
-    return re.sub(r'\n{3,}', '\n\n', text)
+        text = text.replace(d, "", 1)
+    return re.sub(r"\n{3,}", "\n\n", text)
 
 
 def _fix_p102_contradiction(text: str) -> str:
     import re
+
     patterns = [
-        (re.compile(r'必须(.{0,20})禁止', re.IGNORECASE), r'必须\1'),
-        (re.compile(r'禁止(.{0,20})必须', re.IGNORECASE), r'禁止\1'),
+        (re.compile(r"必须(.{0,20})禁止", re.IGNORECASE), r"必须\1"),
+        (re.compile(r"禁止(.{0,20})必须", re.IGNORECASE), r"禁止\1"),
     ]
     for pattern, repl in patterns:
         text = pattern.sub(repl, text)
@@ -514,13 +704,14 @@ def _fix_p102_contradiction(text: str) -> str:
 
 def _fix_p103_conflict(text: str) -> str:
     import re
+
     conflicts = [
-        (re.compile(r'简短.*?详细', re.IGNORECASE), '详细'),
-        (re.compile(r'详细.*?简短', re.IGNORECASE), '详细'),
-        (re.compile(r'简洁.*?全面', re.IGNORECASE), '全面'),
-        (re.compile(r'全面.*?简洁', re.IGNORECASE), '全面'),
-        (re.compile(r'严格.*?灵活', re.IGNORECASE), '适度灵活但保持核心严格'),
-        (re.compile(r'灵活.*?严格', re.IGNORECASE), '适度灵活但保持核心严格'),
+        (re.compile(r"简短.*?详细", re.IGNORECASE), "详细"),
+        (re.compile(r"详细.*?简短", re.IGNORECASE), "详细"),
+        (re.compile(r"简洁.*?全面", re.IGNORECASE), "全面"),
+        (re.compile(r"全面.*?简洁", re.IGNORECASE), "全面"),
+        (re.compile(r"严格.*?灵活", re.IGNORECASE), "适度灵活但保持核心严格"),
+        (re.compile(r"灵活.*?严格", re.IGNORECASE), "适度灵活但保持核心严格"),
     ]
     for pattern, replacement in conflicts:
         if pattern.search(text):
@@ -636,6 +827,7 @@ def _fix_p117_factual_constraint(text: str) -> str:
 
 def _fix_p118_knowledge_cutoff(text: str) -> str:
     import datetime
+
     now = datetime.datetime.now()
     cutoff = f"{now.year}-{now.month:02d}"
     block = (
@@ -788,8 +980,10 @@ class FixResult:
         original_lines = self.original_text.splitlines(keepends=True)
         fixed_lines = self.fixed_text.splitlines(keepends=True)
         diff = difflib.unified_diff(
-            original_lines, fixed_lines,
-            fromfile="original", tofile="fixed",
+            original_lines,
+            fixed_lines,
+            fromfile="original",
+            tofile="fixed",
             lineterm="",
         )
         return "".join(diff)
@@ -813,12 +1007,14 @@ class Fixer:
             before = current
             current = self._apply_fix(finding, current)
             if current != before:
-                results.append(FixResult(
-                    rule_id=finding.rule_id,
-                    original_text=before,
-                    fixed_text=current,
-                    description=f"修复规则 {finding.rule_id}",
-                ))
+                results.append(
+                    FixResult(
+                        rule_id=finding.rule_id,
+                        original_text=before,
+                        fixed_text=current,
+                        description=f"修复规则 {finding.rule_id}",
+                    )
+                )
         if dry_run:
             logger.info("dry-run模式: 不实际修改文件，共 %d 处可修复", len(results))
             return text, results
@@ -855,6 +1051,7 @@ class Fixer:
                 return text + "\n\n# 错误处理与回退\n\n- 信息不足时请求补充\n- 执行失败时提供备选方案"
         elif rule_id == "P025":
             import re
+
             length_match = re.search(r"(\d+)\s*(?:字|词|words?)", text)
             if not length_match:
                 return text + "\n- 回复不超过800字"

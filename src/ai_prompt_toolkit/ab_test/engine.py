@@ -1,21 +1,19 @@
 """A/B测试并行引擎——asyncio.gather并行调度、超时、重试、错误隔离、进度追踪。"""
+
 from __future__ import annotations
 
 import asyncio
-import time
 from dataclasses import dataclass, field
 from typing import Any
 
+from ai_prompt_toolkit.ab_test.provider import BaseProvider, create_provider
 from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
-    EvaluationDimension,
     ModelConfig,
     ModelResult,
     TestDataset,
-    TestResult,
     TestStatus,
 )
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, create_provider
 
 
 @dataclass
@@ -126,7 +124,7 @@ class ParallelEngine:
                 last_error = f"{type(e).__name__}: {e}"
 
             if attempt < retries:
-                backoff = min(2 ** attempt, 10)
+                backoff = min(2**attempt, 10)
                 await asyncio.sleep(backoff)
 
         return TaskOutput(
@@ -178,8 +176,8 @@ class ParallelEngine:
 
         tasks: list[asyncio.Task[TaskOutput]] = []
         total = 0
-        for model in models:
-            for template in templates:
+        for _model in models:
+            for _template in templates:
                 for dataset in datasets:
                     total += len(dataset.items)
 
@@ -195,9 +193,7 @@ class ParallelEngine:
                 for dataset in datasets:
                     for item in dataset.items:
                         prompt = template.format(**{k: v for k, v in item.items() if v})
-                        task = asyncio.create_task(
-                            self._run_task(provider, prompt, item, semaphore)
-                        )
+                        task = asyncio.create_task(self._run_task(provider, prompt, item, semaphore))
                         tasks.append(task)
 
         async def _monitor() -> None:
@@ -270,15 +266,11 @@ class ParallelEngine:
                 "success": len(successes),
                 "failed": len(outputs) - len(successes),
                 "avg_latency_ms": (
-                    sum(o.model_result.latency_ms for o in successes) / len(successes)
-                    if successes
-                    else 0.0
+                    sum(o.model_result.latency_ms for o in successes) / len(successes) if successes else 0.0
                 ),
                 "total_cost": sum(o.model_result.cost for o in successes),
                 "avg_token_count": (
-                    sum(o.model_result.token_count for o in successes) / len(successes)
-                    if successes
-                    else 0
+                    sum(o.model_result.token_count for o in successes) / len(successes) if successes else 0
                 ),
             }
 

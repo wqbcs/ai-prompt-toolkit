@@ -2,12 +2,12 @@
 
 R22增强: 安全健康分(0-100) + CVSS评分 + 修复SOP + 防御Prompt + 合规报告
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
-
 
 _SEVERITY_WEIGHTS = {"critical": 10.0, "high": 7.0, "medium": 4.0, "low": 1.0}
 
@@ -180,15 +180,17 @@ class RedTeamReport:
             else:
                 sev = "low"
 
-            details.append(VulnerabilityDetail(
-                probe_name=r.probe_name,
-                input_category=category,
-                cvss_score=cvss,
-                severity=sev,
-                description=f"Probe {r.probe_name} 检测到{category}类型漏洞(置信度{r.confidence:.0%})",
-                fix_sop=template["sop"],
-                defense_prompt=template["defense_prompt"],
-            ))
+            details.append(
+                VulnerabilityDetail(
+                    probe_name=r.probe_name,
+                    input_category=category,
+                    cvss_score=cvss,
+                    severity=sev,
+                    description=f"Probe {r.probe_name} 检测到{category}类型漏洞(置信度{r.confidence:.0%})",
+                    fix_sop=template["sop"],
+                    defense_prompt=template["defense_prompt"],
+                )
+            )
         return details
 
     def generate_compliance_report(self, framework: str = "eu_ai_act") -> dict[str, Any]:
@@ -215,13 +217,19 @@ class RedTeamReport:
                 "article_15": "PASSED" if health.score >= 70 else "FAILED",
                 "article_9": "PASSED" if self.vulnerability_rate < 0.3 else "FAILED",
                 "annex_iv": "REQUIRES_REVIEW" if vuln_details else "PASSED",
-                "risk_classification": "high_risk" if health.score < 50 else "limited_risk" if health.score < 80 else "minimal_risk",
+                "risk_classification": "high_risk"
+                if health.score < 50
+                else "limited_risk"
+                if health.score < 80
+                else "minimal_risk",
             }
         elif framework == "china_algorithm":
             report["china_algorithm_compliance"] = {
                 "security_assessment": "PASSED" if health.score >= 60 else "FAILED",
                 "content_safety": "PASSED" if not any(d.severity == "critical" for d in vuln_details) else "FAILED",
-                "data_protection": "PASSED" if not any(d.input_category == "privacy" for d in vuln_details) else "REQUIRES_REVIEW",
+                "data_protection": "PASSED"
+                if not any(d.input_category == "privacy" for d in vuln_details)
+                else "REQUIRES_REVIEW",
             }
         elif framework == "owasp_llm_top10":
             owasp_categories = {
@@ -237,14 +245,19 @@ class RedTeamReport:
                 "LLM10": "Model Theft",
             }
             from ai_prompt_toolkit.redteam.probe import get_probes_by_owasp
+
             owasp_results = {}
             for ref, name in owasp_categories.items():
                 probe_names = get_probes_by_owasp(ref)
                 vulnerable = [r for r in self.probe_results if r.probe_name in probe_names and r.findings]
                 safe = [r for r in self.probe_results if r.probe_name in probe_names and not r.findings]
-                status = "PASSED" if not vulnerable else "FAILED" if any(
-                    any(f.severity in ("critical", "high") for f in r.findings) for r in vulnerable
-                ) else "PARTIAL"
+                status = (
+                    "PASSED"
+                    if not vulnerable
+                    else "FAILED"
+                    if any(any(f.severity in ("critical", "high") for f in r.findings) for r in vulnerable)
+                    else "PARTIAL"
+                )
                 owasp_results[ref] = {
                     "name": name,
                     "status": status,
@@ -318,11 +331,21 @@ class RedTeamReport:
         vuln_details = self.get_vulnerability_details()
         compliance = self.generate_compliance_report(framework)
 
-        grade_color = {"A": "#22c55e", "B+": "#84cc16", "B": "#eab308", "C+": "#f97316", "C": "#ef4444", "D": "#dc2626", "F": "#991b1b"}.get(health.grade, "#6b7280")
+        grade_color = {
+            "A": "#22c55e",
+            "B+": "#84cc16",
+            "B": "#eab308",
+            "C+": "#f97316",
+            "C": "#ef4444",
+            "D": "#dc2626",
+            "F": "#991b1b",
+        }.get(health.grade, "#6b7280")
 
         rows = ""
         for d in vuln_details[:20]:
-            sev_color = {"critical": "#dc2626", "high": "#ef4444", "medium": "#f97316", "low": "#eab308"}.get(d.severity, "#6b7280")
+            sev_color = {"critical": "#dc2626", "high": "#ef4444", "medium": "#f97316", "low": "#eab308"}.get(
+                d.severity, "#6b7280"
+            )
             rows += f'<tr><td style="color:{sev_color};font-weight:bold">{d.severity.upper()}</td><td>{d.probe_name}</td><td>{d.cvss_score:.1f}</td><td>{d.input_category}</td><td>{d.fix_sop[:60]}</td></tr>\n'
 
         owasp_section = ""
@@ -330,19 +353,21 @@ class RedTeamReport:
             owasp_data = compliance["owasp_llm_top10_compliance"]
             owasp_rows = ""
             for ref, info in owasp_data.get("categories", {}).items():
-                status_color = "#22c55e" if info["status"] == "PASSED" else "#ef4444" if info["status"] == "FAILED" else "#f97316"
+                status_color = (
+                    "#22c55e" if info["status"] == "PASSED" else "#ef4444" if info["status"] == "FAILED" else "#f97316"
+                )
                 owasp_rows += f'<tr><td><strong>{ref}</strong></td><td>{info["name"]}</td><td style="color:{status_color};font-weight:bold">{info["status"]}</td><td>{info["probes_tested"]}</td><td>{info["probes_vulnerable"]}</td></tr>\n'
             overall = owasp_data.get("overall", "N/A")
             overall_color = "#22c55e" if overall == "COMPLIANT" else "#ef4444"
-            owasp_section = f'''
+            owasp_section = f"""
             <div class="section">
                 <h2>OWASP LLM Top 10 Compliance</h2>
                 <div class="score-badge" style="background:{overall_color};color:white;font-size:24px;padding:12px 24px;border-radius:8px;display:inline-block">{overall}</div>
                 <table><tr><th>ID</th><th>Category</th><th>Status</th><th>Tested</th><th>Vulnerable</th></tr>
                 {owasp_rows}</table>
-            </div>'''
+            </div>"""
 
-        return f'''<!DOCTYPE html>
+        return f"""<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><title>AI Prompt Security Report</title>
 <style>
 body{{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:960px;margin:0 auto;padding:20px;background:#f8fafc;color:#1e293b}}
@@ -377,4 +402,4 @@ th{{background:#f1f5f9;font-weight:600}}
     <ul>{"".join(f"<li>{r}</li>" for r in compliance.get("recommendations", ["No specific recommendations"]))}</ul>
 </div>
 <footer style="text-align:center;color:#94a3b8;font-size:12px;margin-top:24px">Generated by AI Prompt Toolkit v42.0.0 | Framework: {framework}</footer>
-</body></html>'''
+</body></html>"""

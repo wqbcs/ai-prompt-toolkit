@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.linter.rules import _RULE_MAP
 from ai_prompt_toolkit.linter.rules_p071_p080 import (
-    check_p071, check_p072, check_p073, check_p074, check_p075,
-    check_p076, check_p077, check_p078, check_p079, check_p080,
+    check_p071,
+    check_p072,
+    check_p073,
+    check_p074,
+    check_p075,
+    check_p076,
+    check_p077,
+    check_p078,
+    check_p079,
+    check_p080,
     run_checks_p071_p080,
 )
-from ai_prompt_toolkit.linter.rules import _RULE_MAP
 
 
 class TestP071HWCloudEndpoint:

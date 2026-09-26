@@ -1,12 +1,17 @@
 """Unicode清洗+Canary Token泄露防护测试"""
-import pytest
+
 from ai_prompt_toolkit.security.unicode_guard import (
-    clean_unicode, detect_homoglyphs, check_unicode_threats,
-    generate_canary_tokens, inject_canary_tokens,
-    check_canary_leakage, scan_unicode_and_canary,
-    _CANARY_PREFIX, _CANARY_SUFFIX,
+    _CANARY_PREFIX,
+    _CANARY_SUFFIX,
+    check_canary_leakage,
+    check_unicode_threats,
+    clean_unicode,
+    detect_homoglyphs,
+    generate_canary_tokens,
+    inject_canary_tokens,
+    scan_unicode_and_canary,
 )
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Severity
 
 
 class TestCleanUnicode:
@@ -26,7 +31,7 @@ class TestCleanUnicode:
 
     def test_nfc_normalization(self):
         text = "caf\u0065\u0301"
-        cleaned, result = clean_unicode(text)
+        cleaned, _result = clean_unicode(text)
         assert cleaned == "caf\u00e9"
 
     def test_no_issues(self):
@@ -38,7 +43,7 @@ class TestCleanUnicode:
 
     def test_multiple_invisible(self):
         text = "\u200b\u200chello\u200d\u00adworld"
-        cleaned, result = clean_unicode(text)
+        _cleaned, result = clean_unicode(text)
         assert len(result.invisible_chars_found) >= 3
         assert result.risk_level in ("medium", "high", "critical")
 

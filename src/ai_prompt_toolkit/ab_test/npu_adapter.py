@@ -5,6 +5,7 @@
 - MindSpore Lite推理适配
 - 模型量化(FP16→INT8)支持
 """
+
 from __future__ import annotations
 
 import os
@@ -37,7 +38,9 @@ def detect_npu() -> NPUInfo:
     try:
         result = subprocess.run(
             ["npu-smi", "info"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0:
             info.available = True
@@ -59,7 +62,8 @@ def detect_npu() -> NPUInfo:
         version_file = os.path.join(cann_path, "latest", "version.cfg")
         if os.path.isfile(version_file):
             try:
-                info.cann_version = open(version_file, encoding="utf-8").read().strip()
+                with open(version_file, encoding="utf-8") as _vf:
+                    info.cann_version = _vf.read().strip()
             except OSError:
                 pass
         if not info.cann_version:

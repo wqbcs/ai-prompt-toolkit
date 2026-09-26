@@ -12,12 +12,16 @@
 - AdalFlow Trainer: 统一训练循环 + 多策略组合
 - Agent Lightning: 框架无关设计 + LightningStore中央存储
 """
+
 from __future__ import annotations
 
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -108,15 +112,14 @@ class OptPipeline:
             current_text = prompt
             current_score = result.initial_score
 
-            for i, stage in enumerate(enabled_stages):
+            for _i, stage in enumerate(enabled_stages):
                 if self.config.fail_fast and current_score >= self.config.score_threshold:
                     logger.info("Score threshold reached, skipping remaining stages")
                     break
 
-                if stage.condition:
-                    if not self._evaluate_condition(stage.condition, current_score):
-                        logger.info("Condition not met, skipping stage %s", stage.name)
-                        continue
+                if stage.condition and not self._evaluate_condition(stage.condition, current_score):
+                    logger.info("Condition not met, skipping stage %s", stage.name)
+                    continue
 
                 stage_result = self._run_stage(stage, current_text, eval_fn)
                 result.stage_results.append(stage_result)
@@ -168,7 +171,8 @@ class OptPipeline:
 
         try:
             if stage.optimizer == "tgd":
-                from ai_prompt_toolkit.textgrad import TGDOptimizer, TGDConfig
+                from ai_prompt_toolkit.textgrad import TGDConfig, TGDOptimizer
+
                 config = TGDConfig(
                     max_iterations=stage.config.get("max_iterations", 5),
                     momentum=stage.config.get("momentum", 0.9),
@@ -180,7 +184,8 @@ class OptPipeline:
                 stage_result["iterations"] = tgd_result.iterations
 
             elif stage.optimizer == "opro":
-                from ai_prompt_toolkit.opro import OPROOptimizer, OPROConfig
+                from ai_prompt_toolkit.opro import OPROConfig, OPROOptimizer
+
                 config = OPROConfig(
                     max_generations=stage.config.get("max_generations", 3),
                     population_size=stage.config.get("population_size", 3),
@@ -193,6 +198,7 @@ class OptPipeline:
 
             elif stage.optimizer == "gepa":
                 from ai_prompt_toolkit.gepa import gepa_optimize
+
                 custom_metric = stage.config.get("custom_metric")
                 gepa_result = gepa_optimize(
                     text,
@@ -204,8 +210,9 @@ class OptPipeline:
                 stage_result["candidates"] = gepa_result.candidates_explored
 
             elif stage.optimizer == "lint-fix":
-                from ai_prompt_toolkit.linter.linter import PromptLinter
                 from ai_prompt_toolkit.linter.fixer import PromptFixer
+                from ai_prompt_toolkit.linter.linter import PromptLinter
+
                 linter = PromptLinter()
                 lint_result = linter.lint("pipeline", text)
                 fixer = PromptFixer()
@@ -216,6 +223,7 @@ class OptPipeline:
 
             elif stage.optimizer == "strategy":
                 from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
+
                 opt_result = optimize_prompt(text)
                 stage_result["text"] = opt_result.optimized_text
                 stage_result["score"] = opt_result.final_score
@@ -244,34 +252,42 @@ class OptPipeline:
 
 def create_default_pipeline(mode: str = "sequential") -> OptPipeline:
     pipeline = OptPipeline(PipelineConfig(mode=mode))
-    pipeline.add_stage(PipelineStage(
-        name="lint-fix",
-        optimizer="lint-fix",
-        condition="always",
-    ))
-    pipeline.add_stage(PipelineStage(
-        name="tgd",
-        optimizer="tgd",
-        config={"max_iterations": 5},
-        condition="score_below_threshold",
-    ))
-    pipeline.add_stage(PipelineStage(
-        name="opro",
-        optimizer="opro",
-        config={"max_generations": 3, "population_size": 3},
-        condition="score_below_95",
-    ))
+    pipeline.add_stage(
+        PipelineStage(
+            name="lint-fix",
+            optimizer="lint-fix",
+            condition="always",
+        )
+    )
+    pipeline.add_stage(
+        PipelineStage(
+            name="tgd",
+            optimizer="tgd",
+            config={"max_iterations": 5},
+            condition="score_below_threshold",
+        )
+    )
+    pipeline.add_stage(
+        PipelineStage(
+            name="opro",
+            optimizer="opro",
+            config={"max_generations": 3, "population_size": 3},
+            condition="score_below_95",
+        )
+    )
     return pipeline
 
 
 def _pipeline_default_eval(text: str) -> float:
     try:
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         linter = PromptLinter()
         result = linter.lint("pipeline", text)
         return result.score
     except Exception:
         from ai_prompt_toolkit.textgrad import _default_eval_fn
+
         return _default_eval_fn(text)
 
 
@@ -288,13 +304,15 @@ def pipeline_optimize(
 
     if stages:
         for s in stages:
-            pipeline.add_stage(PipelineStage(
-                name=s.get("name", ""),
-                optimizer=s.get("optimizer", "tgd"),
-                config=s.get("config", {}),
-                condition=s.get("condition", ""),
-                enabled=s.get("enabled", True),
-            ))
+            pipeline.add_stage(
+                PipelineStage(
+                    name=s.get("name", ""),
+                    optimizer=s.get("optimizer", "tgd"),
+                    config=s.get("config", {}),
+                    condition=s.get("condition", ""),
+                    enabled=s.get("enabled", True),
+                )
+            )
     else:
         pipeline = create_default_pipeline(mode)
         pipeline.config = config

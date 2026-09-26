@@ -11,6 +11,7 @@
 3. 压缩建议: 给出具体的Token优化建议
 4. 成本估算: 根据模型定价估算API调用成本
 """
+
 from __future__ import annotations
 
 import re
@@ -167,8 +168,11 @@ def estimate_tokens(text: str, model: str = "default") -> TokenEstimate:
     input_cost = estimated_tokens * pricing.input_cost_per_token
     output_cost = estimated_tokens * pricing.output_cost_per_token
     return TokenEstimate(
-        model=model, char_count=char_count, estimated_tokens=estimated_tokens,
-        estimated_input_cost_usd=input_cost, estimated_output_cost_usd=output_cost,
+        model=model,
+        char_count=char_count,
+        estimated_tokens=estimated_tokens,
+        estimated_input_cost_usd=input_cost,
+        estimated_output_cost_usd=output_cost,
         ratio=ratio,
     )
 
@@ -181,14 +185,16 @@ def detect_redundancy(text: str) -> list[CompressionSuggestion]:
         if matches:
             sid += 1
             savings = int(len(str(matches[0])) * savings_factor * 0.7)
-            suggestions.append(CompressionSuggestion(
-                suggestion_id=f"COMP-{sid:03d}",
-                category="redundancy",
-                description=f"{name}: 发现{len(matches)}处, 清理可节省约{max(savings, 1)} tokens",
-                estimated_savings_tokens=max(savings, 1),
-                estimated_savings_percent=min(savings / max(len(text) * 0.7, 1) * 100, 50),
-                priority="medium" if savings < 50 else "high",
-            ))
+            suggestions.append(
+                CompressionSuggestion(
+                    suggestion_id=f"COMP-{sid:03d}",
+                    category="redundancy",
+                    description=f"{name}: 发现{len(matches)}处, 清理可节省约{max(savings, 1)} tokens",
+                    estimated_savings_tokens=max(savings, 1),
+                    estimated_savings_percent=min(savings / max(len(text) * 0.7, 1) * 100, 50),
+                    priority="medium" if savings < 50 else "high",
+                )
+            )
     return suggestions
 
 
@@ -205,31 +211,37 @@ def analyze_prompt_tokens(text: str, model: str = "default") -> TokenAnalysisRes
 
     char_count = len(text)
     if original_tokens > 8000 or char_count > 12000:
-        findings.append(Finding(
-            rule_id="TOKEN-001",
-            severity=Severity.MEDIUM,
-            description=f"Prompt过长({original_tokens} tokens, {char_count} chars), 建议压缩到4000 tokens以内",
-        ))
+        findings.append(
+            Finding(
+                rule_id="TOKEN-001",
+                severity=Severity.MEDIUM,
+                description=f"Prompt过长({original_tokens} tokens, {char_count} chars), 建议压缩到4000 tokens以内",
+            )
+        )
 
     if original_tokens > 4000 or char_count > 6000:
-        suggestions.append(CompressionSuggestion(
-            suggestion_id="COMP-STR-001",
-            category="structure",
-            description="使用变量模板替代重复内容, 考虑条件编译按场景裁剪",
-            estimated_savings_tokens=original_tokens // 4,
-            estimated_savings_percent=25.0,
-            priority="high",
-        ))
+        suggestions.append(
+            CompressionSuggestion(
+                suggestion_id="COMP-STR-001",
+                category="structure",
+                description="使用变量模板替代重复内容, 考虑条件编译按场景裁剪",
+                estimated_savings_tokens=original_tokens // 4,
+                estimated_savings_percent=25.0,
+                priority="high",
+            )
+        )
 
     if text.count("\n") > len(text) / 30:
-        suggestions.append(CompressionSuggestion(
-            suggestion_id="COMP-FMT-001",
-            category="formatting",
-            description="过多换行, 合并短行为段落可节省5-10% tokens",
-            estimated_savings_tokens=original_tokens // 15,
-            estimated_savings_percent=7.0,
-            priority="low",
-        ))
+        suggestions.append(
+            CompressionSuggestion(
+                suggestion_id="COMP-FMT-001",
+                category="formatting",
+                description="过多换行, 合并短行为段落可节省5-10% tokens",
+                estimated_savings_tokens=original_tokens // 15,
+                estimated_savings_percent=7.0,
+                priority="low",
+            )
+        )
 
     total_savings = sum(s.estimated_savings_tokens for s in suggestions)
     optimized_tokens = max(original_tokens - total_savings, 1)
@@ -263,7 +275,14 @@ class MultiModelComparison:
 
 
 _DEFAULT_COMPARE_MODELS = [
-    "gpt-4o", "claude-3.5", "deepseek", "qwen", "pangu", "glm-4", "kimi", "gemini-pro",
+    "gpt-4o",
+    "claude-3.5",
+    "deepseek",
+    "qwen",
+    "pangu",
+    "glm-4",
+    "kimi",
+    "gemini-pro",
 ]
 
 

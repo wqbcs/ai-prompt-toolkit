@@ -1,4 +1,5 @@
 """条件编译专用类型定义。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -104,7 +105,9 @@ class BranchInfo:
 
     def __repr__(self) -> str:
         preview = f", preview={self.content_preview!r}" if self.content_preview else ""
-        return f"BranchInfo({self.condition!r}, L{self.line_start}-{self.line_end}, depth={self.nesting_level}{preview})"
+        return (
+            f"BranchInfo({self.condition!r}, L{self.line_start}-{self.line_end}, depth={self.nesting_level}{preview})"
+        )
 
 
 @dataclass

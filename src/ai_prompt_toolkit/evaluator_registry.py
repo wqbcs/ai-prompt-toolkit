@@ -13,6 +13,7 @@
     registry.register(MyEvaluator())
     result = registry.evaluate("template-id", "prompt text", evaluator_names=["my_eval"])
 """
+
 from __future__ import annotations
 
 import time
@@ -92,8 +93,7 @@ class BaseEvaluator(ABC):
         *,
         threshold: float = 0.0,
         **kwargs: Any,
-    ) -> EvaluatorResult:
-        ...
+    ) -> EvaluatorResult: ...
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
@@ -217,7 +217,8 @@ class DimensionEvaluator(BaseEvaluator):
 
         start = time.perf_counter()
         report = evaluate_template(
-            template_id, text,
+            template_id,
+            text,
             dimensions=self._dimensions,
             categories=self._categories,
         )
@@ -303,14 +304,16 @@ class AssertionEvaluator(BaseEvaluator):
             if isinstance(a, AssertionDef):
                 assertion_defs.append(a)
             elif isinstance(a, dict):
-                assertion_defs.append(AssertionDef(
-                    name=a.get("name", ""),
-                    contains=a.get("contains", []),
-                    contains_any=a.get("contains_any", []),
-                    regex=a.get("regex", ""),
-                    not_contains=a.get("not_contains", []),
-                    icontains=a.get("icontains", []),
-                ))
+                assertion_defs.append(
+                    AssertionDef(
+                        name=a.get("name", ""),
+                        contains=a.get("contains", []),
+                        contains_any=a.get("contains_any", []),
+                        regex=a.get("regex", ""),
+                        not_contains=a.get("not_contains", []),
+                        icontains=a.get("icontains", []),
+                    )
+                )
 
         results = [run_assertion(text, ad) for ad in assertion_defs]
         elapsed = (time.perf_counter() - start) * 1000
@@ -398,8 +401,7 @@ class EvaluatorRegistry:
         self._register_defaults()
 
     def _register_defaults(self) -> None:
-        for ev in [LintEvaluator(), SecurityEvaluator(), DimensionEvaluator(),
-                    TokenEvaluator(), RedTeamEvaluator()]:
+        for ev in [LintEvaluator(), SecurityEvaluator(), DimensionEvaluator(), TokenEvaluator(), RedTeamEvaluator()]:
             self._evaluators[ev.name] = ev
 
     def register(self, evaluator: BaseEvaluator) -> None:
@@ -480,13 +482,15 @@ class EvaluatorRegistry:
 
             evaluator = self._evaluators.get(name)
             if not evaluator:
-                results.append(EvaluatorResult(
-                    evaluator_name=name,
-                    evaluator_type="unknown",
-                    score=0.0,
-                    passed=False,
-                    details={"error": f"评估器 '{name}' 未注册"},
-                ))
+                results.append(
+                    EvaluatorResult(
+                        evaluator_name=name,
+                        evaluator_type="unknown",
+                        score=0.0,
+                        passed=False,
+                        details={"error": f"评估器 '{name}' 未注册"},
+                    )
+                )
                 continue
 
             result = evaluator.evaluate(template_id, text, threshold=threshold, **config)

@@ -5,6 +5,7 @@ ArkTS/ArkUI代码片段模板，帮助开发者快速修复Lint发现的问题�
 
 参考: HarmonyOS Stage Model Development Guide, ArkUI Best Practices
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -1,5 +1,5 @@
 """R150: lint --explain交互式解释增强"""
-import pytest
+
 from ai_prompt_toolkit.linter.explain import explain_finding, explain_results, format_explanation
 from ai_prompt_toolkit.types import Finding, Severity
 

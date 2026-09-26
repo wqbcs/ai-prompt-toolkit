@@ -6,16 +6,15 @@ P2-05: 减少不必要的评估执行，降低API成本
 - 预算控制: 月度/每日API预算限制
 - 缓存策略: 相同内容跳过重复评估
 """
+
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, field
+import sqlite3
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
-import sqlite3
-
 
 _DEFAULT_DB = Path.home() / ".prompt-toolkit" / "eval_frequency.db"
 
@@ -87,9 +86,7 @@ class EvalFrequencyManager:
 
     def should_evaluate(self, template_id: str, content: str, estimated_cost: float = 0.01) -> EvalDecision:
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        budget_row = self._conn.execute(
-            "SELECT cost FROM eval_budget WHERE date = ?", (today,)
-        ).fetchone()
+        budget_row = self._conn.execute("SELECT cost FROM eval_budget WHERE date = ?", (today,)).fetchone()
         today_spent = budget_row[0] if budget_row else 0.0
 
         if today_spent + estimated_cost > self._config.daily_budget:

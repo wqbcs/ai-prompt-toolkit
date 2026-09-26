@@ -1,21 +1,19 @@
 """编译缓存与渲染器单元测试"""
+
 from __future__ import annotations
 
 import time
 
-import pytest
-
 from ai_prompt_toolkit.compiler import (
     CompileCache,
     CompileContext,
-    CompileResult,
     CompileReport,
+    CompileResult,
     Lexer,
     Parser,
     Renderer,
     compile_template,
 )
-from ai_prompt_toolkit.compiler.types import ASTNode, NodeType
 
 
 def _make_result(text: str = "output", tid: str = "test") -> CompileResult:
@@ -64,7 +62,6 @@ class TestCompileCache:
         cache = CompileCache(ttl_seconds=0)
         result = _make_result()
         cache.set("template", {}, result)
-        import time
         time.sleep(0.05)
         assert cache.get("template", {}) is None
 

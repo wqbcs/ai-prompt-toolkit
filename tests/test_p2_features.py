@@ -1,25 +1,21 @@
 """性能基准+评估降频+模板推荐测试 — P2-04/P2-05/P2-06"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.benchmark import (
-    BenchmarkResult,
     BenchmarkDB,
-    RegressionAlert,
+    BenchmarkResult,
     run_benchmark,
     run_full_benchmark,
-    _BENCHMARK_CASES,
 )
 from ai_prompt_toolkit.eval_frequency import (
     EvalFrequencyConfig,
     EvalFrequencyManager,
-    EvalDecision,
 )
 from ai_prompt_toolkit.template_recommender import (
-    TemplateRecommender,
-    TemplateRecommendation,
     _BUILTIN_TEMPLATES,
+    TemplateRecommendation,
+    TemplateRecommender,
 )
 
 
@@ -155,7 +151,11 @@ class TestTemplateRecommender:
 
     def test_recommend_by_industry(self):
         rec = TemplateRecommender()
-        results = rec.recommender.recommend(industry="华为云") if hasattr(rec, 'recommender') else rec.recommend(industry="华为云")
+        results = (
+            rec.recommender.recommend(industry="华为云")
+            if hasattr(rec, "recommender")
+            else rec.recommend(industry="华为云")
+        )
         assert len(results) > 0
 
     def test_recommend_by_model(self):

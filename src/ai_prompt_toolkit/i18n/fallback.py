@@ -1,10 +1,14 @@
 """BCP 47 回退链 — 参考 Fabric v1.4.317 locale 规范化"""
+
 from __future__ import annotations
 
 import os
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from ai_prompt_toolkit.i18n.types import Locale
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 _DEFAULT_FALLBACK_CHAIN: dict[str, list[str]] = {
     "zh-CN": ["zh-CN", "zh-Hans", "zh", "en-US", "en"],

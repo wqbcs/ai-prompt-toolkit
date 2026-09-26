@@ -1,4 +1,5 @@
 """条件编译词法分析器，将模板源码拆分为 Token 流。"""
+
 from __future__ import annotations
 
 import re

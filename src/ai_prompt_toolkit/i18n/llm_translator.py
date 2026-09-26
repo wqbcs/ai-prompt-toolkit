@@ -6,15 +6,16 @@ P2-03: LLM辅助翻译+术语一致性
 - 一致性检查: 检测翻译结果与术语表冲突
 - 批量翻译: 支持batch_translate_with_llm()
 """
+
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from ai_prompt_toolkit.i18n.glossary import Glossary
-from ai_prompt_toolkit.i18n.types import TranslationEntry, TranslationStatus
 from ai_prompt_toolkit.i18n.translation import TranslationEngine
+from ai_prompt_toolkit.i18n.types import TranslationEntry, TranslationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -79,11 +80,16 @@ class LLMTranslator:
 
     def _locale_to_lang(self, locale: str) -> str:
         mapping = {
-            "zh-CN": "简体中文", "en-US": "English",
-            "ja-JP": "日本語", "ko-KR": "한국어",
-            "de-DE": "Deutsch", "fr-FR": "Français",
-            "es-ES": "Español", "pt-BR": "Português",
-            "ru-RU": "Русский", "zh-TW": "繁體中文",
+            "zh-CN": "简体中文",
+            "en-US": "English",
+            "ja-JP": "日本語",
+            "ko-KR": "한국어",
+            "de-DE": "Deutsch",
+            "fr-FR": "Français",
+            "es-ES": "Español",
+            "pt-BR": "Português",
+            "ru-RU": "Русский",
+            "zh-TW": "繁體中文",
             "it-IT": "Italiano",
         }
         return mapping.get(locale, locale)
@@ -197,6 +203,7 @@ class LLMTranslator:
         target_locale: str,
     ) -> dict[str, Any]:
         import re
+
         var_pattern = re.compile(r"\{\{(\w+)\}\}")
         variables = var_pattern.findall(template_text)
         placeholder_map = {f"__VAR_{i}__": f"{{{{{v}}}}}" for i, v in enumerate(variables)}

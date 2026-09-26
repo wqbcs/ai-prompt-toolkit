@@ -1,16 +1,26 @@
 """Lint规则P031-P040测试 — Agent/RAG/Multimodal"""
+
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.linter.rules import get_all_rules, run_all_checks
 from ai_prompt_toolkit.linter.rules_p031_p040 import (
-    check_p031, check_p032, check_p033, check_p034, check_p035,
-    check_p036, check_p037, check_p038, check_p039, check_p040,
+    check_p031,
+    check_p032,
+    check_p033,
+    check_p034,
+    check_p035,
+    check_p036,
+    check_p037,
+    check_p038,
+    check_p039,
+    check_p040,
     run_checks_p031_p040,
 )
-from ai_prompt_toolkit.linter.rules import get_all_rules, run_all_checks
 from ai_prompt_toolkit.security.finding_enhancer import (
-    enhance_finding, enhance_findings, EnhancedFinding, _ENHANCEMENT_TEMPLATES,
+    _ENHANCEMENT_TEMPLATES,
+    EnhancedFinding,
+    enhance_finding,
+    enhance_findings,
 )
 from ai_prompt_toolkit.types import Finding, Severity
 

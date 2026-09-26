@@ -2,41 +2,70 @@
 
 参考: promptfoo assertion规则 + OWASP LLM Top10 + 鸿蒙开发规范
 """
+
 from __future__ import annotations
 
 import re
-from typing import Any
 
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
-from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
-
 
 _RULES_P051_P055: list[LintRule] = [
-    LintRule("P051", "硬编码凭据检测", "security", Severity.HIGH,
-             "Prompt中存在硬编码的密码/API密钥/Token",
-             "使用环境变量替代硬编码凭据，如{{API_KEY}}占位符",
-             description_en="Prompt contains hardcoded passwords/API keys/tokens",
-             remediation_en="Replace hardcoded credentials with environment variables, e.g., {{API_KEY}} placeholder", family="hardcoded_credential"),
-    LintRule("P052", "缺少输出格式约束", "quality", Severity.MEDIUM,
-             "长Prompt未指定输出格式要求",
-             "明确指定输出格式(JSON/Markdown/列表等)",
-             description_en="Long Prompt does not specify output format requirements",
-             remediation_en="Explicitly specify output format (JSON/Markdown/list, etc.)", family="output_format"),
-    LintRule("P053", "模糊指令检测", "quality", Severity.LOW,
-             "Prompt中存在模糊表述(等等/之类的/可能/适当等)",
-             "使用确定性表述，明确列举所有项和具体数值",
-             description_en="Prompt contains vague expressions (etc./and so on/maybe/appropriate, etc.)",
-             remediation_en="Use deterministic expressions, explicitly list all items and specific values", family="fuzzy_instruction"),
-    LintRule("P054", "鸿蒙兼容性检查", "toolchain", Severity.MEDIUM,
-             "Prompt中包含Android专用API/组件",
-             "替换为鸿蒙等效接口(@ohos/Ability/ArkTS)",
-             description_en="Prompt contains Android-specific APIs/components",
-             remediation_en="Replace with HarmonyOS equivalent interfaces (@ohos/Ability/ArkTS)", family="harmony_compat"),
-    LintRule("P055", "版本标记缺失", "toolchain", Severity.LOW,
-             "Prompt缺少版本标记/Front Matter",
-             "添加Front Matter version字段或版本注释",
-             description_en="Prompt missing version tag/Front Matter",
-             remediation_en="Add Front Matter version field or version comment", family="version_tag"),
+    LintRule(
+        "P051",
+        "硬编码凭据检测",
+        "security",
+        Severity.HIGH,
+        "Prompt中存在硬编码的密码/API密钥/Token",
+        "使用环境变量替代硬编码凭据，如{{API_KEY}}占位符",
+        description_en="Prompt contains hardcoded passwords/API keys/tokens",
+        remediation_en="Replace hardcoded credentials with environment variables, e.g., {{API_KEY}} placeholder",
+        family="hardcoded_credential",
+    ),
+    LintRule(
+        "P052",
+        "缺少输出格式约束",
+        "quality",
+        Severity.MEDIUM,
+        "长Prompt未指定输出格式要求",
+        "明确指定输出格式(JSON/Markdown/列表等)",
+        description_en="Long Prompt does not specify output format requirements",
+        remediation_en="Explicitly specify output format (JSON/Markdown/list, etc.)",
+        family="output_format",
+    ),
+    LintRule(
+        "P053",
+        "模糊指令检测",
+        "quality",
+        Severity.LOW,
+        "Prompt中存在模糊表述(等等/之类的/可能/适当等)",
+        "使用确定性表述，明确列举所有项和具体数值",
+        description_en="Prompt contains vague expressions (etc./and so on/maybe/appropriate, etc.)",
+        remediation_en="Use deterministic expressions, explicitly list all items and specific values",
+        family="fuzzy_instruction",
+    ),
+    LintRule(
+        "P054",
+        "鸿蒙兼容性检查",
+        "toolchain",
+        Severity.MEDIUM,
+        "Prompt中包含Android专用API/组件",
+        "替换为鸿蒙等效接口(@ohos/Ability/ArkTS)",
+        description_en="Prompt contains Android-specific APIs/components",
+        remediation_en="Replace with HarmonyOS equivalent interfaces (@ohos/Ability/ArkTS)",
+        family="harmony_compat",
+    ),
+    LintRule(
+        "P055",
+        "版本标记缺失",
+        "toolchain",
+        Severity.LOW,
+        "Prompt缺少版本标记/Front Matter",
+        "添加Front Matter version字段或版本注释",
+        description_en="Prompt missing version tag/Front Matter",
+        remediation_en="Add Front Matter version field or version comment",
+        family="version_tag",
+    ),
 ]
 
 for r in _RULES_P051_P055:
@@ -44,22 +73,25 @@ for r in _RULES_P051_P055:
 
 
 _CRED_PATTERNS = [
-    (re.compile(r'(?:password|passwd|pwd)\s*[:=]\s*\S{6,}', re.IGNORECASE), "硬编码密码"),
-    (re.compile(r'(?:api[_-]?key|apikey|secret[_-]?key)\s*[:=]\s*[A-Za-z0-9_\-]{20,}', re.IGNORECASE), "硬编码API密钥"),
-    (re.compile(r'(?:token|auth[_-]?token|bearer)\s*[:=]\s*[A-Za-z0-9_\-\.]{20,}', re.IGNORECASE), "硬编码Token"),
+    (re.compile(r"(?:password|passwd|pwd)\s*[:=]\s*\S{6,}", re.IGNORECASE), "硬编码密码"),
+    (re.compile(r"(?:api[_-]?key|apikey|secret[_-]?key)\s*[:=]\s*[A-Za-z0-9_\-]{20,}", re.IGNORECASE), "硬编码API密钥"),
+    (re.compile(r"(?:token|auth[_-]?token|bearer)\s*[:=]\s*[A-Za-z0-9_\-\.]{20,}", re.IGNORECASE), "硬编码Token"),
 ]
 
 _AMBIGUOUS_ZH = [
-    (re.compile(r'等等'), "模糊结尾'等等' — 请明确列举所有项"),
-    (re.compile(r'之类的'), "模糊表述'之类的' — 请明确指定范围"),
-    (re.compile(r'可能|大概|也许|应该|尽量'), "模糊词汇 — 请使用确定性表述"),
-    (re.compile(r'适当|合理|一定|相关'), "模糊量词 — 请提供具体数值或标准"),
+    (re.compile(r"等等"), "模糊结尾'等等' — 请明确列举所有项"),
+    (re.compile(r"之类的"), "模糊表述'之类的' — 请明确指定范围"),
+    (re.compile(r"可能|大概|也许|应该|尽量"), "模糊词汇 — 请使用确定性表述"),
+    (re.compile(r"适当|合理|一定|相关"), "模糊量词 — 请提供具体数值或标准"),
 ]
 
 _HARMONYOS_ANDROID = [
-    (re.compile(r'android\.(?:os|content|widget|app|intent)'), "Android专用API — 鸿蒙需替换为@ohos等效接口"),
-    (re.compile(r'java\.(?:lang|util|io)'), "Java包引用 — 鸿蒙ArkTS/ETS需替换"),
-    (re.compile(r'(?:Activity|Fragment|Service|BroadcastReceiver)', re.MULTILINE), "Android四大组件 — 鸿蒙需替换为Ability"),
+    (re.compile(r"android\.(?:os|content|widget|app|intent)"), "Android专用API — 鸿蒙需替换为@ohos等效接口"),
+    (re.compile(r"java\.(?:lang|util|io)"), "Java包引用 — 鸿蒙ArkTS/ETS需替换"),
+    (
+        re.compile(r"(?:Activity|Fragment|Service|BroadcastReceiver)", re.MULTILINE),
+        "Android四大组件 — 鸿蒙需替换为Ability",
+    ),
 ]
 
 
@@ -67,12 +99,13 @@ def check_p051(text: str) -> Finding | None:
     rule = _RULE_MAP["P051"]
     matches = []
     for pattern, desc in _CRED_PATTERNS:
-        for m in pattern.finditer(text):
+        for _m in pattern.finditer(text):
             matches.append(desc)
     if not matches:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (发现 {len(matches)} 处: {', '.join(matches[:3])})",
         remediation=rule.remediation,
         details={"count": len(matches), "types": matches[:5]},
@@ -81,12 +114,15 @@ def check_p051(text: str) -> Finding | None:
 
 def check_p052(text: str) -> Finding | None:
     rule = _RULE_MAP["P052"]
-    has_output_hint = bool(re.search(
-        r'(?:输出|回答|返回|格式|format|output|JSON|XML|markdown|列表)', text, re.IGNORECASE))
+    has_output_hint = bool(
+        re.search(r"(?:输出|回答|返回|格式|format|output|JSON|XML|markdown|列表)", text, re.IGNORECASE)
+    )
     if len(text) > 200 and not has_output_hint:
         return Finding(
-            rule_id=rule.rule_id, severity=rule.severity,
-            description=rule.description, remediation=rule.remediation,
+            rule_id=rule.rule_id,
+            severity=rule.severity,
+            description=rule.description,
+            remediation=rule.remediation,
         )
     return None
 
@@ -96,11 +132,12 @@ def check_p053(text: str) -> Finding | None:
     found = []
     for pattern, desc in _AMBIGUOUS_ZH:
         for m in pattern.finditer(text):
-            found.append({"word": m.group(), "hint": desc, "line": text[:m.start()].count("\n") + 1})
+            found.append({"word": m.group(), "hint": desc, "line": text[: m.start()].count("\n") + 1})
     if not found:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (发现 {len(found)} 处模糊表述)",
         remediation=rule.remediation,
         details={"ambiguous": found[:5]},
@@ -110,20 +147,24 @@ def check_p053(text: str) -> Finding | None:
 def check_p054(text: str) -> Finding | None:
     rule = _RULE_MAP["P054"]
     found = []
-    is_android_context = bool(re.search(
-        r'(?:android|Android|安卓|apk|gradle|sdk|移动端|手机端|鸿蒙|harmony|ohos|Ability|ArkTS|ETS|app开发|移动应用)',
-        text, re.IGNORECASE,
-    ))
+    is_android_context = bool(
+        re.search(
+            r"(?:android|Android|安卓|apk|gradle|sdk|移动端|手机端|鸿蒙|harmony|ohos|Ability|ArkTS|ETS|app开发|移动应用)",
+            text,
+            re.IGNORECASE,
+        )
+    )
     for pattern, desc in _HARMONYOS_ANDROID:
         for m in pattern.finditer(text):
             match_word = m.group()
             if match_word == "Service" and not is_android_context:
                 continue
-            found.append({"match": match_word, "hint": desc, "line": text[:m.start()].count("\n") + 1})
+            found.append({"match": match_word, "hint": desc, "line": text[: m.start()].count("\n") + 1})
     if not found:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (发现 {len(found)} 处Android专用引用)",
         remediation=rule.remediation,
         details={"android_refs": found[:5]},
@@ -135,12 +176,14 @@ def check_p055(text: str) -> Finding | None:
     if text.startswith("---"):
         try:
             import yaml
+
             end = text.find("---", 3)
             if end != -1:
                 fm = yaml.safe_load(text[3:end].strip())
                 if isinstance(fm, dict) and "version" not in fm and "v" not in fm:
                     return Finding(
-                        rule_id=rule.rule_id, severity=rule.severity,
+                        rule_id=rule.rule_id,
+                        severity=rule.severity,
                         description="Front Matter缺少version字段 — 建议添加版本号便于追踪变更",
                         remediation=rule.remediation,
                     )
@@ -148,7 +191,8 @@ def check_p055(text: str) -> Finding | None:
             pass
     elif len(text) > 100:
         return Finding(
-            rule_id=rule.rule_id, severity=rule.severity,
+            rule_id=rule.rule_id,
+            severity=rule.severity,
             description="长Prompt缺少版本标记 — 建议添加Front Matter或版本注释",
             remediation=rule.remediation,
         )

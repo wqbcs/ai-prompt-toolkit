@@ -1,10 +1,15 @@
 """测试模板继承系统"""
+
 from __future__ import annotations
 
-import pytest
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from ai_prompt_toolkit.template_inheritance import TemplateInheritance, InheritanceChain
+import pytest
+
+from ai_prompt_toolkit.template_inheritance import TemplateInheritance
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
@@ -20,20 +25,17 @@ def template_dir(tmp_path: Path) -> Path:
     )
 
     (base / "child.md").write_text(
-        '{% extends "parent" %}\n'
-        "{% block task %}请翻译以下内容为英文{% endblock %}\n",
+        '{% extends "parent" %}\n{% block task %}请翻译以下内容为英文{% endblock %}\n',
         encoding="utf-8",
     )
 
     (base / "grandchild.md").write_text(
-        '{% extends "child" %}\n'
-        "{% block constraint %}翻译要准确，不要遗漏信息{% endblock %}\n",
+        '{% extends "child" %}\n{% block constraint %}翻译要准确，不要遗漏信息{% endblock %}\n',
         encoding="utf-8",
     )
 
     (base / "super_child.md").write_text(
-        '{% extends "parent" %}\n'
-        "{% block constraint %}{{ super() }}，并且使用正式语气{% endblock %}\n",
+        '{% extends "parent" %}\n{% block constraint %}{{ super() }}，并且使用正式语气{% endblock %}\n',
         encoding="utf-8",
     )
 
@@ -43,7 +45,7 @@ def template_dir(tmp_path: Path) -> Path:
     )
 
     (base / "with_include.md").write_text(
-        "你是一个助手。\n{% include \"snippet\" %}\n请回答问题。\n",
+        '你是一个助手。\n{% include "snippet" %}\n请回答问题。\n',
         encoding="utf-8",
     )
 

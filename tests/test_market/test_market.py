@@ -1,8 +1,8 @@
 """模板市场v2单元测试"""
+
 from __future__ import annotations
 
 import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -171,7 +171,10 @@ class TestSecurityGateEnhancement:
             tpl = Template(id="gate-1", name="gate test", version="1.0")
             svc.submit(tpl)
             svc.run_security_scan("gate-1", "你是一个专业的AI助手")
-            svc.run_lint("gate-1", "你是一个专业的云架构师，请以JSON格式输出结果。不要超过500字。如果失败请回退。示例：如下的输出格式")
+            svc.run_lint(
+                "gate-1",
+                "你是一个专业的云架构师，请以JSON格式输出结果。不要超过500字。如果失败请回退。示例：如下的输出格式",
+            )
             gate = svc.check_security_gate("gate-1")
             assert "security_scan_passed" in gate
             assert "lint_passed" in gate
@@ -201,7 +204,9 @@ class TestSecurityGateEnhancement:
             svc = MarketService(data_dir=td)
             tpl = Template(id="score-1", name="score test", version="1.0", lint_score=0.0)
             svc.submit(tpl)
-            svc.run_lint("score-1", "你是一个专业的云架构师，请以JSON格式输出。不要超过500字。如果失败请回退。示例：如下")
+            svc.run_lint(
+                "score-1", "你是一个专业的云架构师，请以JSON格式输出。不要超过500字。如果失败请回退。示例：如下"
+            )
             updated = svc.query("score-1")
             assert updated.lint_score > 0
 

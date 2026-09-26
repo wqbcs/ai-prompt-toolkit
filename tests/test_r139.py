@@ -1,12 +1,11 @@
 """R139 测试: .promptignore忽略文件支持"""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
 
-from ai_prompt_toolkit.cli_helpers import (
-    discover_templates_with_ignore, load_promptignore, should_ignore
-)
+from ai_prompt_toolkit.cli_helpers import discover_templates_with_ignore, load_promptignore, should_ignore
 
 
 class TestR139Promptignore:

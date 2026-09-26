@@ -5,14 +5,16 @@
 - Suggestion: 优先级+操作步骤+预估影响+相关规则
 - 按严重度和出现频率排序
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP
-from ai_prompt_toolkit.types import Finding, Severity
 
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 _PRIORITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
@@ -88,16 +90,18 @@ def generate_suggestions(findings: list[Finding], lang: str = "zh") -> list[Sugg
             rem = rule.remediation
             name = rule.name
         priority = _PRIORITY_ORDER.get(sev, 3) * 100 - min(count, 10)
-        suggestions.append(Suggestion(
-            priority=priority,
-            rule_id=rid,
-            rule_name=name,
-            severity=sev,
-            category=cat,
-            remediation=rem,
-            hit_count=count,
-            estimated_impact=_estimate_impact(sev, count),
-            action_steps=_extract_steps(rem),
-        ))
+        suggestions.append(
+            Suggestion(
+                priority=priority,
+                rule_id=rid,
+                rule_name=name,
+                severity=sev,
+                category=cat,
+                remediation=rem,
+                hit_count=count,
+                estimated_impact=_estimate_impact(sev, count),
+                action_steps=_extract_steps(rem),
+            )
+        )
     suggestions.sort(key=lambda s: s.priority)
     return suggestions

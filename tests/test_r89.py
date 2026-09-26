@@ -1,4 +1,5 @@
 """R89: HTML报告交互式折叠"""
+
 from __future__ import annotations
 
 import tempfile
@@ -9,10 +10,20 @@ from ai_prompt_toolkit.html_report import generate_html_report
 
 def test_html_report_basic():
     results = [
-        {"rule_id": "P001", "severity": "HIGH", "category": "structure",
-         "name": "角色清晰度", "message": "缺少角色定义"},
-        {"rule_id": "P011", "severity": "CRITICAL", "category": "security",
-         "name": "注入防御", "message": "存在注入风险"},
+        {
+            "rule_id": "P001",
+            "severity": "HIGH",
+            "category": "structure",
+            "name": "角色清晰度",
+            "message": "缺少角色定义",
+        },
+        {
+            "rule_id": "P011",
+            "severity": "CRITICAL",
+            "category": "security",
+            "name": "注入防御",
+            "message": "存在注入风险",
+        },
     ]
     html = generate_html_report(results, "test.md")
     assert "<!DOCTYPE html>" in html

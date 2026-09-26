@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 import os
-import pytest
 
 from ai_prompt_toolkit.huawei_cloud import (
-    IAMCredential, OBSConfig, LTSConfig,
-    AuditLogEntry, HuaweiCloudService, sign_request,
+    AuditLogEntry,
+    HuaweiCloudService,
+    IAMCredential,
+    LTSConfig,
+    OBSConfig,
+    sign_request,
 )
 
 
@@ -35,20 +38,22 @@ class TestIAMCredential:
 class TestSignRequest:
     def test_sign_adds_headers(self):
         cred = IAMCredential(
-            access_key_id="AKTEST", secret_access_key="SKTEST",
+            access_key_id="AKTEST",
+            secret_access_key="SKTEST",
             region="cn-north-4",
         )
         headers = {"Content-Type": "application/json"}
-        signed = sign_request("POST", "https://obs.cn-north-4.myhuaweicloud.com/bucket/key",
-                              headers, "{}", cred)
+        signed = sign_request("POST", "https://obs.cn-north-4.myhuaweicloud.com/bucket/key", headers, "{}", cred)
         assert "Authorization" in signed
         assert "SDK-HMAC-SHA256" in signed["Authorization"]
         assert "X-Sdk-Date" in signed
 
     def test_sign_with_security_token(self):
         cred = IAMCredential(
-            access_key_id="AK", secret_access_key="SK",
-            security_token="TOKEN123", region="cn-north-4",
+            access_key_id="AK",
+            secret_access_key="SK",
+            security_token="TOKEN123",
+            region="cn-north-4",
         )
         headers = {}
         signed = sign_request("GET", "https://example.com/api", headers, "", cred)
@@ -88,8 +93,10 @@ class TestLTSConfig:
 class TestAuditLogEntry:
     def test_to_dict(self):
         entry = AuditLogEntry(
-            action="lint.run", resource_type="template",
-            resource_id="test.md", user="cli",
+            action="lint.run",
+            resource_type="template",
+            resource_id="test.md",
+            user="cli",
         )
         d = entry.to_dict()
         assert d["action"] == "lint.run"

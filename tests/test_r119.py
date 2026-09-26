@@ -1,10 +1,11 @@
 """R119 测试: eval --benchmark基准测试"""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
 
-from ai_prompt_toolkit.evaluator import run_benchmark, BenchmarkResult
+from ai_prompt_toolkit.evaluator import BenchmarkResult, run_benchmark
 
 
 class TestR119Benchmark:

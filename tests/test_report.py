@@ -1,17 +1,14 @@
 """HTML报告生成器单元测试"""
+
 from __future__ import annotations
 
-import re
-
-import pytest
-
 from ai_prompt_toolkit.report.html_reporter import (
-    generate_scan_html,
-    generate_lint_html,
-    generate_html_report,
     _assess_overall_risk,
     _svg_donut,
     _svg_score_gauge,
+    generate_html_report,
+    generate_lint_html,
+    generate_scan_html,
 )
 
 
@@ -32,9 +29,16 @@ class TestAssessOverallRisk:
         assert _assess_overall_risk([{"severity": "low"}]) == "low"
 
     def test_mixed_takes_highest(self):
-        assert _assess_overall_risk([
-            {"severity": "low"}, {"severity": "high"}, {"severity": "medium"},
-        ]) == "high"
+        assert (
+            _assess_overall_risk(
+                [
+                    {"severity": "low"},
+                    {"severity": "high"},
+                    {"severity": "medium"},
+                ]
+            )
+            == "high"
+        )
 
 
 class TestSvgDonut:
@@ -72,8 +76,7 @@ class TestGenerateScanHtml:
             "scan_target": "test_dir",
             "total_files": 3,
             "findings": [
-                {"severity": "high", "rule_id": "INJ-001", "description": "注入风险",
-                 "remediation": "请过滤用户输入"},
+                {"severity": "high", "rule_id": "INJ-001", "description": "注入风险", "remediation": "请过滤用户输入"},
                 {"severity": "medium", "rule_id": "INJ-002", "description": "中等问题"},
             ],
         }
@@ -106,8 +109,12 @@ class TestGenerateScanHtml:
         data = {
             "scan_target": "test",
             "findings": [
-                {"severity": "high", "rule_id": "R1", "description": "test",
-                 "details": {"chain": ["a", "b"], "depth": 2}},
+                {
+                    "severity": "high",
+                    "rule_id": "R1",
+                    "description": "test",
+                    "details": {"chain": ["a", "b"], "depth": 2},
+                },
             ],
         }
         html = generate_scan_html(data)
@@ -127,8 +134,7 @@ class TestGenerateScanHtml:
         data = {
             "scan_target": "<script>alert(1)</script>",
             "findings": [
-                {"severity": "high", "rule_id": "R1",
-                 "description": "<img onerror=alert(1)>"},
+                {"severity": "high", "rule_id": "R1", "description": "<img onerror=alert(1)>"},
             ],
         }
         html = generate_scan_html(data)
@@ -198,8 +204,14 @@ class TestGenerateHtmlReportDispatch:
         assert "安全扫描报告" in html
 
     def test_dispatches_lint(self):
-        data = {"_report_type": "lint", "findings": [], "results": [],
-                "lint_target": "x", "average_score": 100, "total_findings": 0}
+        data = {
+            "_report_type": "lint",
+            "findings": [],
+            "results": [],
+            "lint_target": "x",
+            "average_score": 100,
+            "total_findings": 0,
+        }
         html = generate_html_report(data)
         assert "Lint质量报告" in html
 

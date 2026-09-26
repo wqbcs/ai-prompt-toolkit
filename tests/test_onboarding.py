@@ -1,7 +1,6 @@
 """新用户3步引导v3单元测试"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.onboarding import run_onboarding
 
@@ -51,6 +50,7 @@ class TestOnboarding:
 
     def test_context_json_valid(self, tmp_path):
         import json
+
         run_onboarding(str(tmp_path), non_interactive=True)
         ctx = json.loads((tmp_path / "context.json").read_text(encoding="utf-8"))
         assert "model" in ctx

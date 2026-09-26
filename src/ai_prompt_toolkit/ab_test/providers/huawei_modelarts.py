@@ -14,6 +14,7 @@
 - HUAWEI_MODELARTS_ENDPOINT: ModelArts推理端点URL(可选, 默认华北-北京四)
 - HUAWEI_MODELARTS_PROJECT_ID: 华为云项目ID(MaaS V2需要)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -23,7 +24,7 @@ from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlparse
 
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, ProviderError, SIMULATED_MODE
+from ai_prompt_toolkit.ab_test.provider import SIMULATED_MODE, BaseProvider, ProviderError
 from ai_prompt_toolkit.ab_test.types import ModelResult, TestStatus
 
 
@@ -69,6 +70,7 @@ class HuaweiModelArtsProvider(BaseProvider):
         if val:
             return val
         import os
+
         val = os.environ.get(ak, "")
         if not val:
             raise ProviderError(self._config.provider.value, f"华为云AK未设置, 请设置环境变量 {ak}")
@@ -82,6 +84,7 @@ class HuaweiModelArtsProvider(BaseProvider):
         if val:
             return val
         import os
+
         val = os.environ.get(sk, "")
         if not val:
             raise ProviderError(self._config.provider.value, f"华为云SK未设置, 请设置环境变量 {sk}")
@@ -92,6 +95,7 @@ class HuaweiModelArtsProvider(BaseProvider):
         if custom:
             return custom.rstrip("/")
         import os
+
         endpoint = os.environ.get("HUAWEI_MODELARTS_ENDPOINT", "")
         if endpoint:
             return endpoint.rstrip("/")
@@ -105,7 +109,9 @@ class HuaweiModelArtsProvider(BaseProvider):
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         content_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
         signed_headers = "host;x-sdk-date"
-        canonical_request = f"{method}\n{path}\n\nhost:{host}\nx-sdk-date:{timestamp}\n\n{signed_headers}\n{content_hash}"
+        canonical_request = (
+            f"{method}\n{path}\n\nhost:{host}\nx-sdk-date:{timestamp}\n\n{signed_headers}\n{content_hash}"
+        )
         string_to_sign = f"SDK-HMAC-SHA256\n{timestamp}\n{sha256hex(canonical_request)}"
         signature = hmac.new(sk.encode("utf-8"), string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
         return {
@@ -134,6 +140,7 @@ class HuaweiModelArtsProvider(BaseProvider):
         try:
             url = api_base.rstrip("/") + "/v1/chat/completions"
             import json
+
             payload: dict[str, Any] = {
                 "model": self._config.model_name,
                 "messages": [{"role": "user", "content": prompt}],
@@ -152,20 +159,26 @@ class HuaweiModelArtsProvider(BaseProvider):
             _global_cost_tracker.record(cost)
             latency = (time.perf_counter() - start) * 1000
             return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
+                model_config=self._config,
+                prompt_template=prompt,
+                response=content,
+                latency_ms=round(latency, 2),
+                token_count=input_tokens + output_tokens,
+                cost=cost,
+                status=TestStatus.COMPLETED,
             )
         except Exception as e:
             return self._make_error_result(prompt, str(e))
 
     async def _http_post_signed(self, url: str, headers: dict[str, str], body: str) -> dict[str, Any]:
         try:
-            import httpx
-        except ImportError:
-            raise ProviderError(self._config.provider.value, "httpx未安装，请运行: pip install httpx")
-        from ai_prompt_toolkit.ab_test.provider import _RETRY_BASE_DELAY, _MAX_RETRIES
+            import httpx  # noqa: F401 — 可用性探测
+        except ImportError as e:
+            raise ProviderError(self._config.provider.value, "httpx未安装，请运行: pip install httpx") from e
         import asyncio as _asyncio
+
+        from ai_prompt_toolkit.ab_test.provider import _MAX_RETRIES, _RETRY_BASE_DELAY
+
         client = self._get_client()
         delay = _RETRY_BASE_DELAY
         last_error: Exception | None = None
@@ -189,8 +202,8 @@ class HuaweiModelArtsProvider(BaseProvider):
     def _get_client(self) -> Any:
         try:
             import httpx
-        except ImportError:
-            raise ProviderError(self._config.provider.value, "httpx未安装")
+        except ImportError as e:
+            raise ProviderError(self._config.provider.value, "httpx未安装") from e
         return httpx.AsyncClient(timeout=30.0)
 
 

@@ -1,8 +1,8 @@
 """Linter扩展规则测试——P021-P030 (R15新增)。"""
+
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.linter.linter import PromptLinter
 from ai_prompt_toolkit.linter.rules import (
     check_p021,
     check_p022,
@@ -15,11 +15,9 @@ from ai_prompt_toolkit.linter.rules import (
     check_p029,
     check_p030,
     get_all_rules,
-    get_rule,
     run_all_checks,
 )
 from ai_prompt_toolkit.linter.rules_p021_p030 import run_checks_p021_p030
-from ai_prompt_toolkit.linter.linter import PromptLinter
 from ai_prompt_toolkit.types import Severity
 
 

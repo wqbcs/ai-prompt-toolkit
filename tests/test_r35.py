@@ -1,10 +1,9 @@
 """R35: 华为云鸿蒙赛事模板集 测试套件"""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from ai_prompt_toolkit.builtin_templates import (
     HARMONY_OS_TEMPLATES,
@@ -14,7 +13,7 @@ from ai_prompt_toolkit.builtin_templates import (
     get_template_names,
     seed_builtin_templates,
 )
-from ai_prompt_toolkit.prompt_registry import PromptRegistry, RegistryEntry
+from ai_prompt_toolkit.prompt_registry import PromptRegistry
 
 
 class TestBuiltinTemplateIntegrity:

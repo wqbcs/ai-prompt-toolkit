@@ -1,4 +1,5 @@
 """条件编译渲染器，深度优先遍历 AST 并生成最终文本。"""
+
 from __future__ import annotations
 
 import time
@@ -14,7 +15,6 @@ from ai_prompt_toolkit.compiler.types import (
     Condition,
     NodeType,
 )
-
 
 FallbackStrategy = Literal["empty", "skip", "warn"]
 
@@ -93,8 +93,7 @@ class Renderer:
         for child in node.children:
             if child.type == NodeType.BLOCK and child.condition is None:
                 current = else_body
-                for sub in child.children:
-                    else_body.append(sub)
+                else_body.extend(child.children)
                 continue
             current.append(child)
 
@@ -182,16 +181,11 @@ class Renderer:
 
     def _handle_no_match(self, node: ASTNode, nesting: int) -> None:
         """处理无匹配分支的情况。"""
-        if self._fallback == "empty":
-            pass
-        elif self._fallback == "skip":
+        if self._fallback == "empty" or self._fallback == "skip":
             pass
         elif self._fallback == "warn":
             cond_str = str(node.condition) if node.condition else "<unknown>"
-            self._report.add_warning(
-                f"条件块无匹配分支且无 else 回退: {cond_str} "
-                f"(L{node.line_start}-{node.line_end})"
-            )
+            self._report.add_warning(f"条件块无匹配分支且无 else 回退: {cond_str} (L{node.line_start}-{node.line_end})")
             self._report.uncovered_conditions.append(cond_str)
 
     @staticmethod

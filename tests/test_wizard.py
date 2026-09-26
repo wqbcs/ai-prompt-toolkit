@@ -1,16 +1,16 @@
 """交互式向导模式测试 — wizard模块"""
+
 from __future__ import annotations
 
-import pytest
 from click.testing import CliRunner
 
+from ai_prompt_toolkit.cli import main
 from ai_prompt_toolkit.wizard import (
+    _WIZARD_MAP,
     _discover_md_files,
     _pick_from_list,
-    _WIZARD_MAP,
     run_wizard,
 )
-from ai_prompt_toolkit.cli import main
 
 
 class TestWizardHelpers:
@@ -33,18 +33,21 @@ class TestWizardHelpers:
 
     def test_pick_from_list_single(self):
         from unittest.mock import patch
+
         with patch("click.prompt", return_value=1):
             result = _pick_from_list("选择", ["option_a", "option_b"])
             assert result == "option_a"
 
     def test_pick_from_list_custom(self):
         from unittest.mock import patch
+
         with patch("click.prompt", side_effect=[0, "custom_value"]):
             result = _pick_from_list("选择", ["option_a"])
             assert result == "custom_value"
 
     def test_pick_from_list_empty_with_custom(self):
         from unittest.mock import patch
+
         with patch("click.prompt", return_value="my_input"):
             result = _pick_from_list("输入", [], allow_custom=True)
             assert result == "my_input"

@@ -1,9 +1,13 @@
 """R151: P241-P245 Prompt合规审计规则"""
-import pytest
-from ai_prompt_toolkit.linter.rules_p241_p245 import (
-    check_p241, check_p242, check_p243, check_p244, check_p245,
-)
+
 from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.linter.rules_p241_p245 import (
+    check_p241,
+    check_p242,
+    check_p243,
+    check_p244,
+    check_p245,
+)
 
 
 def test_p241_gdpr_no_minimize():

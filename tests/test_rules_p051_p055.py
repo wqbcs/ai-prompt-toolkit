@@ -1,13 +1,16 @@
 """测试 P051-P055 安全合规+可维护性+鸿蒙适配规则"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.linter.rules_p051_p055 import (
-    check_p051, check_p052, check_p053, check_p054, check_p055,
+    check_p051,
+    check_p052,
+    check_p053,
+    check_p054,
+    check_p055,
     run_checks_p051_p055,
 )
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Severity
 
 
 class TestP051HardcodedCredentials:

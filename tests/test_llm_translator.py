@@ -1,16 +1,15 @@
 """LLM辅助i18n翻译测试 — P2-03"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.i18n.llm_translator import (
-    LLMTranslator,
-    LLMTranslationResult,
-    _TRANSLATION_PROMPT_TEMPLATE,
-)
 from ai_prompt_toolkit.i18n.glossary import Glossary
-from ai_prompt_toolkit.i18n.types import TranslationEntry, TranslationStatus
+from ai_prompt_toolkit.i18n.llm_translator import (
+    _TRANSLATION_PROMPT_TEMPLATE,
+    LLMTranslationResult,
+    LLMTranslator,
+)
 from ai_prompt_toolkit.i18n.translation import TranslationEngine
+from ai_prompt_toolkit.i18n.types import TranslationEntry, TranslationStatus
 
 
 class TestLLMTranslatorBasic:
@@ -95,10 +94,7 @@ class TestTranslateTemplate:
         glossary = Glossary(data={})
         engine = TranslationEngine()
         translator = LLMTranslator(glossary=glossary, engine=engine)
-        result = translator.translate_template(
-            "你好{{name}}，欢迎使用华为云",
-            "zh-CN", "en-US"
-        )
+        result = translator.translate_template("你好{{name}}，欢迎使用华为云", "zh-CN", "en-US")
         assert result["variables_preserved"] == 1
         assert "source_locale" in result
         assert "target_locale" in result

@@ -19,6 +19,7 @@
 - 合规等级: A(90+)/B(75+)/C(60+)/D(40+)/F(<40)
 - 决策: PASS/CONDITIONAL/FAIL
 """
+
 from __future__ import annotations
 
 import json
@@ -218,22 +219,22 @@ class HuaweiCloudComplianceReport:
 
     def to_markdown(self) -> str:
         lines = [
-            f"# 华为云安全合规报告",
-            f"",
-            f"| 字段 | 值 |",
-            f"|---|---|",
+            "# 华为云安全合规报告",
+            "",
+            "| 字段 | 值 |",
+            "|---|---|",
             f"| 报告ID | {self.report_id} |",
             f"| 时间 | {self.timestamp} |",
-            f"| 平台 | 华为云 ModelArts |",
+            "| 平台 | 华为云 ModelArts |",
             f"| 综合评分 | **{self.overall_score}/100** ({self.grade.value}) |",
             f"| 决策 | {self.decision.value} |",
             f"| OWASP合规率 | {self.owasp_compliance_pct}% |",
             f"| 发现总数 | {self.total_findings} (CRITICAL:{self.critical_count} HIGH:{self.high_count}) |",
-            f"",
-            f"## 合规域详情",
-            f"",
-            f"| 域 | 评分 | 通过率 | 发现 | CRITICAL | HIGH | 修复建议 |",
-            f"|---|---|---|---|---|---|---|",
+            "",
+            "## 合规域详情",
+            "",
+            "| 域 | 评分 | 通过率 | 发现 | CRITICAL | HIGH | 修复建议 |",
+            "|---|---|---|---|---|---|---|",
         ]
         for d in self.domains:
             lines.append(
@@ -241,7 +242,7 @@ class HuaweiCloudComplianceReport:
                 f"{d.findings_count} | {d.critical_count} | {d.high_count} | {d.remediation[:30]} |"
             )
         if self.summary:
-            lines.extend(["", f"## 总结", "", self.summary])
+            lines.extend(["", "## 总结", "", self.summary])
         return "\n".join(lines)
 
 

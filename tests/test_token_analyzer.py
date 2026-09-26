@@ -1,10 +1,10 @@
 """Token压缩分析模块测试"""
-import pytest
+
 from ai_prompt_toolkit.linter.token_analyzer import (
-    estimate_tokens, detect_redundancy, analyze_prompt_tokens,
-    _TOKEN_RATIOS,
+    analyze_prompt_tokens,
+    detect_redundancy,
+    estimate_tokens,
 )
-from ai_prompt_toolkit.pricing import get_catalog
 
 
 class TestEstimateTokens:

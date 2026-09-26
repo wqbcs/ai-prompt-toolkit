@@ -11,13 +11,13 @@
 - 标记偏离正常模式的文本
 - 无需已知攻击库即可检测零日攻击
 """
+
 from __future__ import annotations
 
 import math
 import re
 from collections import Counter
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -70,9 +70,9 @@ def extract_features(text: str) -> AnomalyFeatures:
     upper_count = sum(1 for c in text if c.isupper())
     special_count = sum(1 for c in text if not c.isalnum() and not c.isspace())
     whitespace_count = sum(1 for c in text if c.isspace())
-    zh_count = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
+    zh_count = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
 
-    lines = text.split('\n')
+    lines = text.split("\n")
     line_count = len(lines)
     avg_line_length = char_count / max(line_count, 1)
 
@@ -84,18 +84,20 @@ def extract_features(text: str) -> AnomalyFeatures:
             if p > 0:
                 entropy -= p * math.log2(p)
 
-    has_system_marker = bool(re.search(r'<\|im_start\|>|<\|system\|>|\[INST\]|<<SYS>>|###\s*Instruction', text, re.IGNORECASE))
-    has_url = bool(re.search(r'https?://', text))
-    has_base64 = bool(re.search(r'[A-Za-z0-9+/]{40,}={0,2}', text))
+    has_system_marker = bool(
+        re.search(r"<\|im_start\|>|<\|system\|>|\[INST\]|<<SYS>>|###\s*Instruction", text, re.IGNORECASE)
+    )
+    has_url = bool(re.search(r"https?://", text))
+    has_base64 = bool(re.search(r"[A-Za-z0-9+/]{40,}={0,2}", text))
 
     if char_count > 0:
         chunk_size = max(char_count // 10, 10)
-        chunks = [text[i:i+chunk_size] for i in range(0, char_count, chunk_size)]
+        chunks = [text[i : i + chunk_size] for i in range(0, char_count, chunk_size)]
         if len(chunks) > 1:
             chunk_sims = []
             for i in range(len(chunks) - 1):
                 c1 = Counter(chunks[i])
-                c2 = Counter(chunks[i+1])
+                c2 = Counter(chunks[i + 1])
                 intersection = sum((c1 & c2).values())
                 union = sum((c1 | c2).values())
                 if union > 0:
@@ -126,13 +128,125 @@ def extract_features(text: str) -> AnomalyFeatures:
 
 
 _BENIGN_PROFILES: list[dict[str, float]] = [
-    {"char_count": 0.15, "word_count": 0.12, "avg_word_length": 0.45, "digit_ratio": 0.02, "upper_ratio": 0.03, "special_ratio": 0.05, "whitespace_ratio": 0.15, "zh_char_ratio": 0.6, "line_count": 0.1, "avg_line_length": 0.15, "entropy": 0.6, "has_system_marker": 0.0, "has_url": 0.0, "has_base64": 0.0, "repetition_score": 0.1},
-    {"char_count": 0.25, "word_count": 0.2, "avg_word_length": 0.5, "digit_ratio": 0.01, "upper_ratio": 0.05, "special_ratio": 0.03, "whitespace_ratio": 0.18, "zh_char_ratio": 0.3, "line_count": 0.15, "avg_line_length": 0.2, "entropy": 0.65, "has_system_marker": 0.0, "has_url": 0.0, "has_base64": 0.0, "repetition_score": 0.15},
-    {"char_count": 0.02, "word_count": 0.02, "avg_word_length": 0.35, "digit_ratio": 0.01, "upper_ratio": 0.01, "special_ratio": 0.08, "whitespace_ratio": 0.05, "zh_char_ratio": 0.85, "line_count": 0.02, "avg_line_length": 0.03, "entropy": 0.8, "has_system_marker": 0.0, "has_url": 0.0, "has_base64": 0.0, "repetition_score": 0.05},
-    {"char_count": 0.4, "word_count": 0.35, "avg_word_length": 0.55, "digit_ratio": 0.01, "upper_ratio": 0.04, "special_ratio": 0.06, "whitespace_ratio": 0.2, "zh_char_ratio": 0.1, "line_count": 0.3, "avg_line_length": 0.3, "entropy": 0.7, "has_system_marker": 0.0, "has_url": 0.1, "has_base64": 0.0, "repetition_score": 0.12},
-    {"char_count": 0.2, "word_count": 0.15, "avg_word_length": 0.48, "digit_ratio": 0.02, "upper_ratio": 0.03, "special_ratio": 0.04, "whitespace_ratio": 0.16, "zh_char_ratio": 0.5, "line_count": 0.12, "avg_line_length": 0.18, "entropy": 0.62, "has_system_marker": 0.0, "has_url": 0.0, "has_base64": 0.0, "repetition_score": 0.08},
-    {"char_count": 0.03, "word_count": 0.03, "avg_word_length": 0.4, "digit_ratio": 0.01, "upper_ratio": 0.02, "special_ratio": 0.09, "whitespace_ratio": 0.06, "zh_char_ratio": 0.75, "line_count": 0.03, "avg_line_length": 0.04, "entropy": 0.78, "has_system_marker": 0.0, "has_url": 0.0, "has_base64": 0.0, "repetition_score": 0.04},
-    {"char_count": 0.5, "word_count": 0.4, "avg_word_length": 0.52, "digit_ratio": 0.02, "upper_ratio": 0.03, "special_ratio": 0.05, "whitespace_ratio": 0.17, "zh_char_ratio": 0.4, "line_count": 0.4, "avg_line_length": 0.35, "entropy": 0.68, "has_system_marker": 0.0, "has_url": 0.05, "has_base64": 0.0, "repetition_score": 0.1},
+    {
+        "char_count": 0.15,
+        "word_count": 0.12,
+        "avg_word_length": 0.45,
+        "digit_ratio": 0.02,
+        "upper_ratio": 0.03,
+        "special_ratio": 0.05,
+        "whitespace_ratio": 0.15,
+        "zh_char_ratio": 0.6,
+        "line_count": 0.1,
+        "avg_line_length": 0.15,
+        "entropy": 0.6,
+        "has_system_marker": 0.0,
+        "has_url": 0.0,
+        "has_base64": 0.0,
+        "repetition_score": 0.1,
+    },
+    {
+        "char_count": 0.25,
+        "word_count": 0.2,
+        "avg_word_length": 0.5,
+        "digit_ratio": 0.01,
+        "upper_ratio": 0.05,
+        "special_ratio": 0.03,
+        "whitespace_ratio": 0.18,
+        "zh_char_ratio": 0.3,
+        "line_count": 0.15,
+        "avg_line_length": 0.2,
+        "entropy": 0.65,
+        "has_system_marker": 0.0,
+        "has_url": 0.0,
+        "has_base64": 0.0,
+        "repetition_score": 0.15,
+    },
+    {
+        "char_count": 0.02,
+        "word_count": 0.02,
+        "avg_word_length": 0.35,
+        "digit_ratio": 0.01,
+        "upper_ratio": 0.01,
+        "special_ratio": 0.08,
+        "whitespace_ratio": 0.05,
+        "zh_char_ratio": 0.85,
+        "line_count": 0.02,
+        "avg_line_length": 0.03,
+        "entropy": 0.8,
+        "has_system_marker": 0.0,
+        "has_url": 0.0,
+        "has_base64": 0.0,
+        "repetition_score": 0.05,
+    },
+    {
+        "char_count": 0.4,
+        "word_count": 0.35,
+        "avg_word_length": 0.55,
+        "digit_ratio": 0.01,
+        "upper_ratio": 0.04,
+        "special_ratio": 0.06,
+        "whitespace_ratio": 0.2,
+        "zh_char_ratio": 0.1,
+        "line_count": 0.3,
+        "avg_line_length": 0.3,
+        "entropy": 0.7,
+        "has_system_marker": 0.0,
+        "has_url": 0.1,
+        "has_base64": 0.0,
+        "repetition_score": 0.12,
+    },
+    {
+        "char_count": 0.2,
+        "word_count": 0.15,
+        "avg_word_length": 0.48,
+        "digit_ratio": 0.02,
+        "upper_ratio": 0.03,
+        "special_ratio": 0.04,
+        "whitespace_ratio": 0.16,
+        "zh_char_ratio": 0.5,
+        "line_count": 0.12,
+        "avg_line_length": 0.18,
+        "entropy": 0.62,
+        "has_system_marker": 0.0,
+        "has_url": 0.0,
+        "has_base64": 0.0,
+        "repetition_score": 0.08,
+    },
+    {
+        "char_count": 0.03,
+        "word_count": 0.03,
+        "avg_word_length": 0.4,
+        "digit_ratio": 0.01,
+        "upper_ratio": 0.02,
+        "special_ratio": 0.09,
+        "whitespace_ratio": 0.06,
+        "zh_char_ratio": 0.75,
+        "line_count": 0.03,
+        "avg_line_length": 0.04,
+        "entropy": 0.78,
+        "has_system_marker": 0.0,
+        "has_url": 0.0,
+        "has_base64": 0.0,
+        "repetition_score": 0.04,
+    },
+    {
+        "char_count": 0.5,
+        "word_count": 0.4,
+        "avg_word_length": 0.52,
+        "digit_ratio": 0.02,
+        "upper_ratio": 0.03,
+        "special_ratio": 0.05,
+        "whitespace_ratio": 0.17,
+        "zh_char_ratio": 0.4,
+        "line_count": 0.4,
+        "avg_line_length": 0.35,
+        "entropy": 0.68,
+        "has_system_marker": 0.0,
+        "has_url": 0.05,
+        "has_base64": 0.0,
+        "repetition_score": 0.1,
+    },
 ]
 
 
@@ -143,14 +257,28 @@ def _euclidean_distance(a: list[float], b: list[float]) -> float:
 def compute_anomaly_score(features: AnomalyFeatures) -> float:
     vector = features.to_vector()
 
-    min_dist = float('inf')
+    min_dist = float("inf")
     for profile in _BENIGN_PROFILES:
-        profile_vec = [profile.get(k, 0.0) for k in [
-            "char_count", "word_count", "avg_word_length", "digit_ratio",
-            "upper_ratio", "special_ratio", "whitespace_ratio", "zh_char_ratio",
-            "line_count", "avg_line_length", "entropy", "has_system_marker",
-            "has_url", "has_base64", "repetition_score",
-        ]]
+        profile_vec = [
+            profile.get(k, 0.0)
+            for k in [
+                "char_count",
+                "word_count",
+                "avg_word_length",
+                "digit_ratio",
+                "upper_ratio",
+                "special_ratio",
+                "whitespace_ratio",
+                "zh_char_ratio",
+                "line_count",
+                "avg_line_length",
+                "entropy",
+                "has_system_marker",
+                "has_url",
+                "has_base64",
+                "repetition_score",
+            ]
+        ]
         dist = _euclidean_distance(vector, profile_vec)
         min_dist = min(min_dist, dist)
 
@@ -207,12 +335,15 @@ def check_anomaly(text: str) -> Finding | None:
         severity=severity,
         description=f"异常检测: {reason_text} (anomaly={score:.2f})",
         remediation="检查Prompt是否包含非预期的编码、标记或异常内容",
-        details={"anomaly_score": round(score, 3), "features": {
-            "char_count": features.char_count,
-            "entropy": round(features.entropy, 2),
-            "repetition_score": round(features.repetition_score, 2),
-            "special_ratio": round(features.special_ratio, 3),
-            "has_system_marker": features.has_system_marker,
-            "has_base64": features.has_base64,
-        }},
+        details={
+            "anomaly_score": round(score, 3),
+            "features": {
+                "char_count": features.char_count,
+                "entropy": round(features.entropy, 2),
+                "repetition_score": round(features.repetition_score, 2),
+                "special_ratio": round(features.special_ratio, 3),
+                "has_system_marker": features.has_system_marker,
+                "has_base64": features.has_base64,
+            },
+        },
     )

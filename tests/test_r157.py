@@ -1,7 +1,7 @@
 """R157: lint --config配置文件支持"""
+
 import json
-import pytest
-from pathlib import Path
+
 from ai_prompt_toolkit.linter.lint_config import LintConfig, load_lint_config, merge_config_with_cli
 
 
@@ -31,11 +31,15 @@ timeout_ms: 60000
 
 def test_load_lint_config_json(tmp_path):
     cfg = tmp_path / "lint.json"
-    cfg.write_text(json.dumps({
-        "severity_threshold": "medium",
-        "exclude_rules": ["P005"],
-        "fail_on": "high",
-    }))
+    cfg.write_text(
+        json.dumps(
+            {
+                "severity_threshold": "medium",
+                "exclude_rules": ["P005"],
+                "fail_on": "high",
+            }
+        )
+    )
     config = load_lint_config(cfg)
     assert config.severity_threshold == "medium"
     assert "P005" in config.exclude_rules

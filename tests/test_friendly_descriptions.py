@@ -1,10 +1,9 @@
 """测试友好描述翻译"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.linter.friendly_descriptions import translate_finding, translate_findings
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestFriendlyDescriptions:

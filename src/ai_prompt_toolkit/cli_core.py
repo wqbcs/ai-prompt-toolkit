@@ -1,4 +1,5 @@
 """prompt-cli统一入口"""
+
 from __future__ import annotations
 
 import json
@@ -6,6 +7,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -16,6 +18,7 @@ def _detect_template_type(text: str) -> str:
     if not text.startswith("---"):
         return "prompt"
     import yaml as _yaml
+
     end = text.find("---", 3)
     if end == -1:
         return "prompt"
@@ -29,22 +32,24 @@ def _detect_template_type(text: str) -> str:
 
 
 def _generate_sarif(results: list, target: str) -> dict:
-    import json as _json
     from ai_prompt_toolkit.linter.rules import get_rule
+
     sarif = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
         "version": "2.1.0",
-        "runs": [{
-            "tool": {
-                "driver": {
-                    "name": "ai-prompt-toolkit",
-                    "version": __version__,
-                    "informationUri": "https://github.com/ai-prompt-toolkit",
-                    "rules": [],
-                }
-            },
-            "results": [],
-        }]
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "ai-prompt-toolkit",
+                        "version": __version__,
+                        "informationUri": "https://github.com/ai-prompt-toolkit",
+                        "rules": [],
+                    }
+                },
+                "results": [],
+            }
+        ],
     }
     rules_seen = set()
     for result in results:
@@ -55,33 +60,42 @@ def _generate_sarif(results: list, target: str) -> dict:
                 rule_entry = {
                     "id": f.rule_id,
                     "shortDescription": {"text": f.description},
-                    "properties": {"severity": f.severity.value if hasattr(f.severity, 'value') else str(f.severity)},
+                    "properties": {"severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity)},
                 }
                 if rule_def:
                     rule_entry["helpUri"] = f"https://ai-prompt-toolkit.dev/rules/{f.rule_id}"
                     if rule_def.remediation:
-                        rule_entry["fullDescription"] = {"text": f"{rule_def.description}\n\nFix: {rule_def.remediation}"}
+                        rule_entry["fullDescription"] = {
+                            "text": f"{rule_def.description}\n\nFix: {rule_def.remediation}"
+                        }
                     if rule_def.owasp_refs:
                         rule_entry["properties"]["owaspRefs"] = rule_def.owasp_refs
                     rule_entry["properties"]["category"] = rule_def.category
                     rule_entry["properties"]["precision"] = "high" if rule_def.category == "security" else "medium"
                 sarif["runs"][0]["tool"]["driver"]["rules"].append(rule_entry)
             sev_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
-            sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
-            sarif["runs"][0]["results"].append({
-                "ruleId": f.rule_id,
-                "level": sev_map.get(sev, "warning"),
-                "message": {"text": f.description},
-                "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.template_id}}}],
-            })
+            sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
+            sarif["runs"][0]["results"].append(
+                {
+                    "ruleId": f.rule_id,
+                    "level": sev_map.get(sev, "warning"),
+                    "message": {"text": f.description},
+                    "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.template_id}}}],
+                }
+            )
     return sarif
 
 
 @click.group()
-@click.version_option(version=__version__, prog_name="prompt-cli", message="%(prog)s %(version)s\n\n组件统计: 150条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers")
+@click.version_option(
+    version=__version__,
+    prog_name="prompt-cli",
+    message="%(prog)s %(version)s\n\n组件统计: 150条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers",
+)
 def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
+
     if is_first_run():
         show_welcome()
 
@@ -97,6 +111,7 @@ def completion(shell: str) -> None:
       apt completion fish > ~/.config/fish/completions/apt.fish
     """
     from click.shell_completion import get_completion_class
+
     prog_name = "apt"
     complete_var = f"_APT_COMPLETE={shell}_source"
     comp_class = get_completion_class(shell)
@@ -106,13 +121,14 @@ def completion(shell: str) -> None:
     comp = comp_class(main, {}, prog_name, complete_var)
     script = comp.source()
     click.echo(script)
+
+
 @main.result_callback()
 def _handle_result(result: Any, **kwargs: Any) -> None:
     pass
 
 
 def _install_exception_handler() -> None:
-    import functools
     import signal
 
     original_invoke = main.invoke
@@ -123,11 +139,12 @@ def _install_exception_handler() -> None:
         nonlocal _graceful_exit_active
         if _graceful_exit_active:
             import sys
+
             sys.exit(130)
         _graceful_exit_active = True
         try:
             from ai_prompt_toolkit.resume_state import save_progress
-            import inspect
+
             _local = frame.f_locals if frame else {}
             _cf = _local.get("_completed_files", [])
             _af = _local.get("_all_file_names", [])
@@ -135,12 +152,15 @@ def _install_exception_handler() -> None:
             if _cf and _af:
                 pending = [f for f in _af if f not in set(_cf)]
                 save_progress(_cmd, [], _cf, pending)
-                click.echo(f"\n\n⏹ 操作已取消。进度已保存({_cmd}: {len(_cf)}/{len(_af)})，使用 --resume 恢复。", err=True)
+                click.echo(
+                    f"\n\n⏹ 操作已取消。进度已保存({_cmd}: {len(_cf)}/{len(_af)})，使用 --resume 恢复。", err=True
+                )
             else:
                 click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
         except Exception:
             click.echo("\n\n⏹ 操作已取消。进度已保存，可重新运行继续。", err=True)
         import sys
+
         sys.exit(130)
 
     try:
@@ -150,6 +170,7 @@ def _install_exception_handler() -> None:
 
     def _wrapped_invoke(ctx: click.Context) -> None:
         from ai_prompt_toolkit.errors import ToolkitError, format_error_for_cli, toolkit_exit_code
+
         try:
             original_invoke(ctx)
         except ToolkitError as e:
@@ -163,6 +184,7 @@ def _install_exception_handler() -> None:
 
     main.invoke = _wrapped_invoke  # type: ignore[method-assign]
 
+
 _install_exception_handler()
 
 
@@ -172,11 +194,10 @@ _install_exception_handler()
 @click.option("--config", help="编译配置YAML文件路径")
 @click.option("--output", "-o", help="输出文件路径")
 @click.option("--report", help="编译报告输出路径(JSON)")
-def compile(source: str, context: str | None, config: str | None,
-            output: str | None, report: str | None) -> None:
+def compile(source: str, context: str | None, config: str | None, output: str | None, report: str | None) -> None:
     """条件编译：按模型/语言/行业条件编译提示词模板"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_context, write_report, determine_exit_code
-    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, load_context, resolve_path, write_report
+    from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
     src_path = resolve_path(source)
     template_text = src_path.read_text(encoding="utf-8")
@@ -186,11 +207,14 @@ def compile(source: str, context: str | None, config: str | None,
         model = ctx_data.get("model", "")
         language = ctx_data.get("language", "")
         industry = ctx_data.get("industry", "")
-        flags = {k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)}
+        flags = {
+            k: v for k, v in ctx_data.items() if k not in ("model", "language", "industry") and isinstance(v, bool)
+        }
         ctx = CompileContext(model=model, language=language, industry=industry, flags=flags)
         result = compile_template(template_text, ctx)
     except Exception as e:
         from ai_prompt_toolkit.errors import CompilerError
+
         if isinstance(e, CompilerError):
             raise
         raise CompilerError(str(e)) from e
@@ -199,9 +223,11 @@ def compile(source: str, context: str | None, config: str | None,
         Path(output).write_text(result.compiled_text, encoding="utf-8")
         click.echo(f"已输出: {output}")
 
-    click.echo(f"编译完成 | 激活分支: {len(result.report.activated_branches)} "
-               f"| 忽略分支: {len(result.report.ignored_branches)} "
-               f"| 警告: {len(result.report.warnings)}")
+    click.echo(
+        f"编译完成 | 激活分支: {len(result.report.activated_branches)} "
+        f"| 忽略分支: {len(result.report.ignored_branches)} "
+        f"| 警告: {len(result.report.warnings)}"
+    )
 
     if report:
         write_report(result.report.to_dict(), report, fmt="json")
@@ -216,15 +242,13 @@ def compile(source: str, context: str | None, config: str | None,
 @click.option("--dataset", "-d", help="测试数据集路径")
 @click.option("--output", "-o", help="输出报告路径")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def ab_test(config: str, models: str | None, dataset: str | None,
-            output: str | None, fmt: str) -> None:
+def ab_test(config: str, models: str | None, dataset: str | None, output: str | None, fmt: str) -> None:
     """A/B测试：多模型并行对比提示词效果"""
     import asyncio
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report, empty_state_tip
-    from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
+
     from ai_prompt_toolkit.ab_test.engine import ParallelEngine
-    from ai_prompt_toolkit.ab_test.statistics import StatisticalAnalyzer
-    from ai_prompt_toolkit.ab_test.recommender import Recommender
+    from ai_prompt_toolkit.ab_test.types import ABTestConfig, ModelConfig, ProviderType, TestDataset
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip, load_config, resolve_path, write_report
 
     cfg = load_config(config)
     model_list = models.split(",") if models else cfg.get("models", [])
@@ -251,6 +275,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
     items = [{"input": "测试输入"}]
     if dataset:
         import json as _json
+
         ds_path = resolve_path(dataset)
         with open(ds_path, encoding="utf-8") as f:
             data = _json.load(f)
@@ -291,6 +316,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
             click.echo(f"    平均Token: {stats['avg_token_count']:.0f}")
 
     from ai_prompt_toolkit.ab_test.provider import get_cost_tracker
+
     cost_tracker = get_cost_tracker()
     if cost_tracker.spent > 0:
         click.echo(f"\n总费用: ${cost_tracker.spent:.4f} (剩余: ${cost_tracker.remaining:.2f})")
@@ -305,12 +331,35 @@ def ab_test(config: str, models: str | None, dataset: str | None,
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
-@click.option("--preset", type=click.Choice(["default", "security-heavy", "quality-balanced", "performance-first", "harmonyos-strict", "redteam-ready", "cost-efficient"]), default="default", help="权重预设(行业场景)")
-def evaluate(target: str, dimensions: str | None, categories: str | None,
-             threshold: float, fmt: str, output: str | None, quick: bool,
-             save_history: bool, preset: str) -> None:
+@click.option(
+    "--preset",
+    type=click.Choice(
+        [
+            "default",
+            "security-heavy",
+            "quality-balanced",
+            "performance-first",
+            "harmonyos-strict",
+            "redteam-ready",
+            "cost-efficient",
+        ]
+    ),
+    default="default",
+    help="权重预设(行业场景)",
+)
+def evaluate(
+    target: str,
+    dimensions: str | None,
+    categories: str | None,
+    threshold: float,
+    fmt: str,
+    output: str | None,
+    quick: bool,
+    save_history: bool,
+    preset: str,
+) -> None:
     """130维度质量评估：全面评估Prompt质量(支持行业权重预设)"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path, write_report, empty_state_tip
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip, resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template, get_weight_preset
 
     weight_preset_obj = get_weight_preset(preset)
@@ -336,8 +385,18 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     reports = []
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console as _EvConsole
+        from rich.progress import (
+            BarColumn,
+            MofNCompleteColumn,
+            Progress,
+            SpinnerColumn,
+            TaskProgressColumn,
+            TextColumn,
+            TimeElapsedColumn,
+            TimeRemainingColumn,
+        )
+
         _has_rich_ev = True
         _ev_console = _EvConsole()
     except ImportError:
@@ -345,26 +404,33 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 
     if _has_rich_ev:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            console=_ev_console,
+        ) as progress:
             task = progress.add_task("质量评估中...", total=len(files))
             for i, f in enumerate(files, 1):
                 text = f.read_text(encoding="utf-8")
-                report = evaluate_template(
-                    str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
-                )
+                report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
                 reports.append(report)
                 progress.update(task, description=friendly_progress_label("evaluate", i, len(files)))
                 progress.advance(task)
     else:
         for f in files:
             text = f.read_text(encoding="utf-8")
-            report = evaluate_template(
-                str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
-            )
+            report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
             reports.append(report)
 
     if fmt == "json":
         import json as _json
+
         data = {"reports": [r.to_dict() for r in reports]}
         if output:
             write_report(data, output, fmt="json")
@@ -374,6 +440,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         try:
             from rich.console import Console as _TConsole
             from rich.table import Table as _Table
+
             _tc = _TConsole()
             for report in reports:
                 t = _Table(title=f"评估: {report.template_id}")
@@ -391,15 +458,18 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     elif fmt == "yaml":
         try:
             import yaml as _yaml
+
             data = [r.to_dict() for r in reports]
             click.echo(_yaml.dump(data, allow_unicode=True, default_flow_style=False))
         except ImportError:
             import json as _json
+
             data = [r.to_dict() for r in reports]
             click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
     else:
         if _has_rich_ev:
             from ai_prompt_toolkit.cli_helpers import print_rich_evaluate_summary
+
             print_rich_evaluate_summary(reports, threshold=threshold, console=_ev_console)
             total_score_val = 0.0
             total_count = 0
@@ -412,10 +482,13 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
                 total_count += 1
             if total_count > 0:
                 _avg = total_score_val / total_count
-                from ai_prompt_toolkit.evaluator import score_to_grade, score_to_decision
+                from ai_prompt_toolkit.evaluator import score_to_decision, score_to_grade
+
                 _grade = score_to_grade(_avg)
                 _decision = score_to_decision(_avg, threshold)
-                _ev_console.print(f"\n总均分: [bold]{_avg:.1f}/10[/bold]  等级: [bold]{_grade}[/bold]  决策: [bold]{_decision}[/bold]")
+                _ev_console.print(
+                    f"\n总均分: [bold]{_avg:.1f}/10[/bold]  等级: [bold]{_grade}[/bold]  决策: [bold]{_decision}[/bold]"
+                )
         else:
             total_score = 0.0
             total_count = 0
@@ -427,14 +500,15 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
                 avg = sum(s.score for s in scores) / len(scores) if scores else 0
                 total_score += avg
                 total_count += 1
-                tid = report.template_id if hasattr(report, 'template_id') else 'unknown'
+                tid = report.template_id if hasattr(report, "template_id") else "unknown"
                 click.echo(f"  {tid}: 均分 {avg:.1f}/10 ({len(scores)}维度)")
                 if threshold > 0 and avg < threshold:
                     low_items.append((tid, avg))
 
             if total_count > 0:
                 _avg2 = total_score / total_count
-                from ai_prompt_toolkit.evaluator import score_to_grade, score_to_decision
+                from ai_prompt_toolkit.evaluator import score_to_decision, score_to_grade
+
                 _g2 = score_to_grade(_avg2)
                 _d2 = score_to_decision(_avg2, threshold)
                 click.echo(f"\n总均分: {_avg2:.1f}/10  等级: {_g2}  决策: {_d2}")
@@ -455,6 +529,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 
     if save_history:
         from ai_prompt_toolkit.eval_store import EvalStore
+
         store = EvalStore()
         for report in reports:
             snapshot = store.save(report)
@@ -462,7 +537,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
             alerts = store.get_alerts(template_id=report.template_id, limit=5)
             if alerts:
                 for a in alerts:
-                    click.echo(f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+                    click.echo(
+                        f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)"
+                    )
         store.close()
 
     sys.exit(exit_code)
@@ -472,22 +549,41 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 @click.option("--target", "-t", required=True, help="扫描目标(文件或目录)")
 @click.option("--config", help="安全扫描配置YAML文件路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
-@click.option("--depth", type=click.Choice(["quick", "standard", "deep"]),
-              default="standard", help="扫描深度: quick=仅注入, standard=5层检测, deep=5层+Probe+评分卡")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "jsonl"]),
-              default="cli", help="输出格式")
+@click.option(
+    "--depth",
+    type=click.Choice(["quick", "standard", "deep"]),
+    default="standard",
+    help="扫描深度: quick=仅注入, standard=5层检测, deep=5层+Probe+评分卡",
+)
+@click.option(
+    "--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "jsonl"]), default="cli", help="输出格式"
+)
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
 @click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复scan相似prompt)")
-def scan(target: str, config: str | None, incremental: bool, depth: str,
-         fmt: str, output: str | None, resume: bool, semantic_cache: bool) -> None:
+def scan(
+    target: str,
+    config: str | None,
+    incremental: bool,
+    depth: str,
+    fmt: str,
+    output: str | None,
+    resume: bool,
+    semantic_cache: bool,
+) -> None:
     """安全扫描：5层融合检测(注入/PII/供应链/结构/消毒)+可选Probe+评分卡"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code, empty_state_tip, friendly_progress_label
+    from ai_prompt_toolkit.cli_helpers import (
+        determine_exit_code,
+        discover_templates,
+        empty_state_tip,
+        friendly_progress_label,
+        write_report,
+    )
+    from ai_prompt_toolkit.prompt_sanitizer import PromptSanitizer
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
     from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    from ai_prompt_toolkit.prompt_sanitizer import PromptSanitizer
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
     from ai_prompt_toolkit.types import Finding, Severity
 
     templates = discover_templates(target)
@@ -497,9 +593,9 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 
     _completed_files: list[str] = []
     _all_file_names = [str(t) for t in templates]
-    resume_cmd_hint = "scan"
     if resume:
-        from ai_prompt_toolkit.resume_state import load_progress, clear_progress
+        from ai_prompt_toolkit.resume_state import load_progress
+
         saved = load_progress("scan")
         if saved:
             _completed_files = saved.get("completed_files", [])
@@ -520,6 +616,7 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
     _sem_cache = None
     if semantic_cache:
         from ai_prompt_toolkit.semantic_cache import SemanticCache
+
         _sem_cache = SemanticCache(threshold=0.85, max_size=500, ttl_seconds=86400.0)
 
     _SCAN_LAYERS = {
@@ -530,8 +627,18 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
     active_layers = _SCAN_LAYERS[depth]
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console as _Console
+        from rich.progress import (
+            BarColumn,
+            MofNCompleteColumn,
+            Progress,
+            SpinnerColumn,
+            TaskProgressColumn,
+            TextColumn,
+            TimeElapsedColumn,
+            TimeRemainingColumn,
+        )
+
         _has_rich = True
     except ImportError:
         _has_rich = False
@@ -566,16 +673,19 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
         if "probe" in active_layers:
             try:
                 from ai_prompt_toolkit.probe_framework import ProbeRunner
+
                 runner = ProbeRunner()
                 report = runner.run(text, probes="auto")
                 for pr in report.results:
                     for det_result in pr.detection_results:
                         if det_result.detected:
-                            findings_data.append({
-                                "rule_id": f"PROBE-{pr.probe_name}",
-                                "severity": "high" if det_result.confidence > 0.7 else "medium",
-                                "description": f"[{pr.probe_name}] {det_result.detector_name}: {det_result.reason}",
-                            })
+                            findings_data.append(
+                                {
+                                    "rule_id": f"PROBE-{pr.probe_name}",
+                                    "severity": "high" if det_result.confidence > 0.7 else "medium",
+                                    "description": f"[{pr.probe_name}] {det_result.detector_name}: {det_result.reason}",
+                                }
+                            )
                             detector_stats["probe"] += 1
             except Exception:
                 pass
@@ -583,7 +693,16 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 
     if _has_rich:
         _console = _Console()
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            console=_console,
+        ) as progress:
             task = progress.add_task(f"安全扫描[{depth}]...", total=total)
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
@@ -592,18 +711,20 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
                 _completed_files.append(str(tpl_path))
                 if resume:
                     from ai_prompt_toolkit.resume_state import save_progress
+
                     pending = [f for f in _all_file_names if f not in set(_completed_files)]
                     save_progress("scan", [], _completed_files, pending)
                 progress.update(task, description=friendly_progress_label("scan", i, total))
                 progress.advance(task)
     else:
-        for i, tpl_path in enumerate(templates, 1):
+        for _i, tpl_path in enumerate(templates, 1):
             text = tpl_path.read_text(encoding="utf-8")
             findings_data = _scan_single(text)
             all_findings.extend(findings_data)
             _completed_files.append(str(tpl_path))
             if resume:
                 from ai_prompt_toolkit.resume_state import save_progress
+
                 pending = [f for f in _all_file_names if f not in set(_completed_files)]
                 save_progress("scan", [], _completed_files, pending)
             if fmt == "cli" and findings_data:
@@ -621,18 +742,43 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
         from rich.console import Console
         from rich.panel import Panel
         from rich.table import Table
+
         console = Console()
-        risk_label = "CRITICAL" if critical_count > 0 else "HIGH" if high_count > 0 else "MEDIUM" if medium_count > 0 else "LOW" if low_count > 0 else "SAFE"
-        risk_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green", "SAFE": "green"}[risk_label]
-        top5 = sorted(all_findings, key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3))[:5]
-        summary_lines = [f"[bold]风险等级: [{risk_color}]{risk_label}[/{risk_color}][/bold]",
-                         f"扫描深度: {depth} | 层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)}",
-                         f"CRITICAL: {critical_count} | HIGH: {high_count - critical_count} | MEDIUM: {medium_count} | LOW: {low_count}"]
+        risk_label = (
+            "CRITICAL"
+            if critical_count > 0
+            else "HIGH"
+            if high_count > 0
+            else "MEDIUM"
+            if medium_count > 0
+            else "LOW"
+            if low_count > 0
+            else "SAFE"
+        )
+        risk_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green", "SAFE": "green"}[
+            risk_label
+        ]
+        top5 = sorted(
+            all_findings,
+            key=lambda f: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(f.get("severity", "low"), 3),
+        )[:5]
+        summary_lines = [
+            f"[bold]风险等级: [{risk_color}]{risk_label}[/{risk_color}][/bold]",
+            f"扫描深度: {depth} | 层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)}",
+            f"CRITICAL: {critical_count} | HIGH: {high_count - critical_count} | MEDIUM: {medium_count} | LOW: {low_count}",
+        ]
 
         layer_table = Table(title="检测层统计", show_header=True, header_style="bold")
         layer_table.add_column("检测层", style="cyan")
         layer_table.add_column("发现数", justify="right")
-        layer_names = {"injection": "注入检测", "pii": "PII隐私", "supply_chain": "供应链", "structural": "结构分析", "sanitizer": "Prompt消毒", "probe": "Probe探测"}
+        layer_names = {
+            "injection": "注入检测",
+            "pii": "PII隐私",
+            "supply_chain": "供应链",
+            "structural": "结构分析",
+            "sanitizer": "Prompt消毒",
+            "probe": "Probe探测",
+        }
         for layer_key in active_layers:
             layer_table.add_row(layer_names.get(layer_key, layer_key), str(detector_stats.get(layer_key, 0)))
         summary_lines_str = "\n".join(summary_lines)
@@ -647,22 +793,48 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
         if depth == "deep":
             try:
                 from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
-                findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
-                                         description=f.get("description", "")) for f in all_findings]
+
+                findings_objs = [
+                    Finding(
+                        rule_id=f.get("rule_id", ""),
+                        severity=Severity(f.get("severity", "info")),
+                        description=f.get("description", ""),
+                    )
+                    for f in all_findings
+                ]
                 scorecard = compute_scorecard(findings_objs)
-                score_lines = [f"[bold]安全评分: {scorecard.overall_score}/100 ({scorecard.grade.value})[/bold]",
-                               f"决策: {scorecard.decision.value}"]
+                score_lines = [
+                    f"[bold]安全评分: {scorecard.overall_score}/100 ({scorecard.grade.value})[/bold]",
+                    f"决策: {scorecard.decision.value}",
+                ]
                 for dim in scorecard.dimensions:
                     bar_filled = int(dim.ratio * 20)
                     bar = "█" * bar_filled + "░" * (20 - bar_filled)
                     score_lines.append(f"  {dim.name}: {dim.earned}/{dim.max_points} [{bar}]")
-                console.print(Panel("\n".join(score_lines), title="安全评分卡", border_style="green" if scorecard.overall_score >= 75 else "yellow" if scorecard.overall_score >= 50 else "red"))
+                console.print(
+                    Panel(
+                        "\n".join(score_lines),
+                        title="安全评分卡",
+                        border_style="green"
+                        if scorecard.overall_score >= 75
+                        else "yellow"
+                        if scorecard.overall_score >= 50
+                        else "red",
+                    )
+                )
             except Exception:
                 pass
 
         from ai_prompt_toolkit.security.finding_enhancer import enhance_findings
-        findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
-                                 description=f.get("description", "")) for f in all_findings[:10]]
+
+        findings_objs = [
+            Finding(
+                rule_id=f.get("rule_id", ""),
+                severity=Severity(f.get("severity", "info")),
+                description=f.get("description", ""),
+            )
+            for f in all_findings[:10]
+        ]
         enhanced = enhance_findings(findings_objs)
         if enhanced:
             console.print("\n[bold]详细解释(TOP10):[/bold]")
@@ -672,10 +844,21 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
                     console.print(f"    [dim]风险: {ef.risk_reason}[/dim]")
     except ImportError:
         click.echo(f"\n=== 安全扫描摘要 [{depth}] ===")
-        click.echo(f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}")
-        click.echo(f"层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})")
+        click.echo(
+            f"风险等级: {'CRITICAL' if critical_count > 0 else 'HIGH' if high_count > 0 else 'MEDIUM' if medium_count > 0 else 'LOW' if low_count > 0 else 'SAFE'}"
+        )
+        click.echo(
+            f"层数: {len(active_layers)} | 文件: {total} | 发现: {len(all_findings)} (CRITICAL:{critical_count} HIGH:{high_count - critical_count} MEDIUM:{medium_count} LOW:{low_count})"
+        )
         for layer_key in active_layers:
-            layer_names = {"injection": "注入检测", "pii": "PII隐私", "supply_chain": "供应链", "structural": "结构分析", "sanitizer": "Prompt消毒", "probe": "Probe探测"}
+            layer_names = {
+                "injection": "注入检测",
+                "pii": "PII隐私",
+                "supply_chain": "供应链",
+                "structural": "结构分析",
+                "sanitizer": "Prompt消毒",
+                "probe": "Probe探测",
+            }
             click.echo(f"  {layer_names.get(layer_key, layer_key)}: {detector_stats.get(layer_key, 0)}")
 
     if output and all_findings:
@@ -686,30 +869,56 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
             "detector_stats": detector_stats,
             "total_files": total,
             "findings": all_findings,
-            "risk_level": "critical" if high_count > 0 and any(f.get("severity") == "critical" for f in all_findings)
-                         else "high" if high_count > 0
-                         else "medium" if medium_count > 0
-                         else "low" if low_count > 0 else "none",
+            "risk_level": "critical"
+            if high_count > 0 and any(f.get("severity") == "critical" for f in all_findings)
+            else "high"
+            if high_count > 0
+            else "medium"
+            if medium_count > 0
+            else "low"
+            if low_count > 0
+            else "none",
         }
         if depth == "deep":
             try:
                 from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
-                findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
-                                         description=f.get("description", "")) for f in all_findings]
+
+                findings_objs = [
+                    Finding(
+                        rule_id=f.get("rule_id", ""),
+                        severity=Severity(f.get("severity", "info")),
+                        description=f.get("description", ""),
+                    )
+                    for f in all_findings
+                ]
                 scorecard = compute_scorecard(findings_objs)
                 report_data["scorecard"] = scorecard.to_dict()
             except Exception:
                 pass
         if fmt == "sarif" and output:
             from ai_prompt_toolkit.report.sarif_reporter import write_sarif_report
-            findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
-                                     description=f.get("description", "")) for f in all_findings]
+
+            findings_objs = [
+                Finding(
+                    rule_id=f.get("rule_id", ""),
+                    severity=Severity(f.get("severity", "info")),
+                    description=f.get("description", ""),
+                )
+                for f in all_findings
+            ]
             write_sarif_report(findings_objs, output, source_file=target)
             click.echo(f"SARIF报告: {output}")
         elif fmt == "jsonl" and output:
             from ai_prompt_toolkit.report.sarif_reporter import write_jsonl_report
-            findings_objs = [Finding(rule_id=f.get("rule_id", ""), severity=Severity(f.get("severity", "info")),
-                                     description=f.get("description", "")) for f in all_findings]
+
+            findings_objs = [
+                Finding(
+                    rule_id=f.get("rule_id", ""),
+                    severity=Severity(f.get("severity", "info")),
+                    description=f.get("description", ""),
+                )
+                for f in all_findings
+            ]
             write_jsonl_report(findings_objs, output, source_file=target)
             click.echo(f"JSONL报告: {output}")
         else:
@@ -717,24 +926,35 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
             if output:
                 click.echo(f"报告: {output}")
 
-    sys.exit(determine_exit_code(has_findings=len(all_findings) > 0,
-                                  error_severity="high" if high_count > 0 else None))
+    sys.exit(determine_exit_code(has_findings=len(all_findings) > 0, error_severity="high" if high_count > 0 else None))
 
 
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option("--config", help="Lint配置YAML文件路径")
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "table", "yaml", "csv"]),
-              default="cli", help="输出格式(json/html/cli/sarif/table/yaml/csv)")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["json", "html", "cli", "sarif", "table", "yaml", "csv"]),
+    default="cli",
+    help="输出格式(json/html/cli/sarif/table/yaml/csv)",
+)
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
-@click.option("--fail-on", "fail_on", type=click.Choice(["none", "low", "medium", "high", "critical"]),
-              default="none", help="CI失败阈值: 发现该级别及以上问题时退出码非0")
+@click.option(
+    "--fail-on",
+    "fail_on",
+    type=click.Choice(["none", "low", "medium", "high", "critical"]),
+    default="none",
+    help="CI失败阈值: 发现该级别及以上问题时退出码非0",
+)
 @click.option("--baseline", type=click.Path(exists=True), help="基线JSON文件路径(仅报告新增问题)")
-@click.option("--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)")
+@click.option(
+    "--inline-suppress", "inline_suppress", is_flag=True, help="识别并跳过行内抑制的规则(prompt-lint-disable)"
+)
 @click.option("--resume", is_flag=True, help="从上次中断处恢复进度")
 @click.option("--watch", is_flag=True, help="监视文件变化，自动重新执行lint")
 @click.option("--semantic-cache", "semantic_cache", is_flag=True, help="启用语义缓存(避免重复lint相似prompt)")
@@ -744,15 +964,38 @@ def scan(target: str, config: str | None, incremental: bool, depth: str,
 @click.option("--quiet", "-q", "quiet", is_flag=True, help="精简模式: 仅输出PASS/FAIL和分数(CI友好)")
 @click.option("--changed", "changed_only", is_flag=True, help="增量模式: 仅lint git变更/未提交文件")
 @click.option("--cache-dir", "cache_dir", type=click.Path(), help="增量缓存目录(默认.prompt-toolkit-cache/)")
-def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool, output: str | None, gate: bool, multimodal: bool, fail_on: str, baseline: str | None, inline_suppress: bool, resume: bool, watch: bool, semantic_cache: bool, json_schema: bool, explain: bool, parallel: int, quiet: bool, changed_only: bool, cache_dir: str | None) -> None:
+def lint(
+    target: str,
+    config: str | None,
+    fmt: str,
+    fix: bool,
+    interactive: bool,
+    output: str | None,
+    gate: bool,
+    multimodal: bool,
+    fail_on: str,
+    baseline: str | None,
+    inline_suppress: bool,
+    resume: bool,
+    watch: bool,
+    semantic_cache: bool,
+    json_schema: bool,
+    explain: bool,
+    parallel: int,
+    quiet: bool,
+    changed_only: bool,
+    cache_dir: str | None,
+) -> None:
     """Prompt Linter：静态检查提示词质量"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, write_report, determine_exit_code
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, write_report
     from ai_prompt_toolkit.linter.linter import PromptLinter
 
     if json_schema:
-        from ai_prompt_toolkit.linter.rules import get_all_rules
-        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         import json as _json
+
+        from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+
         rules = get_all_rules()
         schema = {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -796,16 +1039,34 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if changed_only:
         import subprocess as _sp
+
         try:
             _target_dir = Path(target).parent if Path(target).is_file() else Path(target)
-            _r = _sp.run(["git", "diff", "--name-only", "--diff-filter=ACMR"], capture_output=True, text=True, cwd=str(_target_dir))
+            _r = _sp.run(
+                ["git", "diff", "--name-only", "--diff-filter=ACMR"],
+                capture_output=True,
+                text=True,
+                cwd=str(_target_dir),
+            )
             _changed_files = set(_r.stdout.strip().split("\n")) if _r.stdout.strip() else set()
-            _r2 = _sp.run(["git", "ls-files", "--others", "--exclude-standard"], capture_output=True, text=True, cwd=str(_target_dir))
+            _r2 = _sp.run(
+                ["git", "ls-files", "--others", "--exclude-standard"],
+                capture_output=True,
+                text=True,
+                cwd=str(_target_dir),
+            )
             _untracked = set(_r2.stdout.strip().split("\n")) if _r2.stdout.strip() else set()
             _git_changed = _changed_files | _untracked
             _git_changed = {f for f in _git_changed if f.endswith((".md", ".txt", ".prompt", ".yaml", ".yml"))}
             if _git_changed:
-                templates = [t for t in templates if t.name in _git_changed or any(f.endswith(t.name) for f in _git_changed) or str(t.relative_to(_target_dir)) in _git_changed if t.is_relative_to(_target_dir)]
+                templates = [
+                    t
+                    for t in templates
+                    if t.name in _git_changed
+                    or any(f.endswith(t.name) for f in _git_changed)
+                    or str(t.relative_to(_target_dir)) in _git_changed
+                    if t.is_relative_to(_target_dir)
+                ]
                 if quiet:
                     pass
                 else:
@@ -822,9 +1083,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     _completed_files: list[str] = []
     _all_file_names = [str(t) for t in templates]
-    resume_cmd_hint = "lint"
     if resume:
-        from ai_prompt_toolkit.resume_state import load_progress, load_results, clear_progress
+        from ai_prompt_toolkit.resume_state import load_progress
+
         saved = load_progress("lint")
         if saved:
             _completed_files = saved.get("completed_files", [])
@@ -841,17 +1102,29 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if parallel == 0:
         import os
+
         parallel = os.cpu_count() or 4
     _use_parallel = parallel > 1 and len(templates) > 1
 
     _sem_cache = None
     if semantic_cache:
         from ai_prompt_toolkit.semantic_cache import SemanticCache
+
         _sem_cache = SemanticCache(threshold=0.85, max_size=1000, ttl_seconds=86400.0)
 
     try:
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn, MofNCompleteColumn, TimeElapsedColumn, TimeRemainingColumn
         from rich.console import Console
+        from rich.progress import (
+            BarColumn,
+            MofNCompleteColumn,
+            Progress,
+            SpinnerColumn,
+            TaskProgressColumn,
+            TextColumn,
+            TimeElapsedColumn,
+            TimeRemainingColumn,
+        )
+
         _has_rich = True
         console = Console()
     except ImportError:
@@ -859,7 +1132,17 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if _has_rich:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
-        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), TaskProgressColumn(), MofNCompleteColumn(), TimeElapsedColumn(), TimeRemainingColumn(), console=console) as progress:
+
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TaskProgressColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            TimeRemainingColumn(),
+            console=console,
+        ) as progress:
             task = progress.add_task("Lint检查中...", total=len(templates))
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
@@ -869,7 +1152,14 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                     _cached = _sem_cache.lookup(text)
                     if _cached is not None:
                         from ai_prompt_toolkit.linter.linter import LintResult
-                        result = LintResult(template_id=tpl_path.name, findings=[], score=_cached.get("score", 0), passed=True, fixes_applied=[])
+
+                        result = LintResult(
+                            template_id=tpl_path.name,
+                            findings=[],
+                            score=_cached.get("score", 0),
+                            passed=True,
+                            fixes_applied=[],
+                        )
                         _cache_hit = True
                 if not _cache_hit:
                     result = linter.lint(tpl_path.name, text, fix=fix or interactive, template_type=template_type)
@@ -886,6 +1176,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 _completed_files.append(str(tpl_path))
                 if resume:
                     from ai_prompt_toolkit.resume_state import save_progress
+
                     pending = [f for f in _all_file_names if f not in set(_completed_files)]
                     save_progress("lint", [], _completed_files, pending)
                 progress.update(task, description=friendly_progress_label("lint", i, len(templates)))
@@ -899,7 +1190,14 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 _cached = _sem_cache.lookup(text)
                 if _cached is not None:
                     from ai_prompt_toolkit.linter.linter import LintResult
-                    result = LintResult(template_id=tpl_path.name, findings=[], score=_cached.get("score", 0), passed=True, fixes_applied=[])
+
+                    result = LintResult(
+                        template_id=tpl_path.name,
+                        findings=[],
+                        score=_cached.get("score", 0),
+                        passed=True,
+                        fixes_applied=[],
+                    )
                     _cache_hit = True
             if not _cache_hit:
                 result = linter.lint(tpl_path.name, text, fix=fix, template_type=template_type)
@@ -911,11 +1209,13 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             _completed_files.append(str(tpl_path))
             if resume:
                 from ai_prompt_toolkit.resume_state import save_progress
+
                 pending = [f for f in _all_file_names if f not in set(_completed_files)]
                 save_progress("lint", [], _completed_files, pending)
 
     if _use_parallel and not _has_rich:
         from concurrent.futures import ThreadPoolExecutor, as_completed
+
         def _lint_single(tpl_path):
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
@@ -923,6 +1223,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             if _sem_cache:
                 _sem_cache.store(text, {"score": result.score, "findings_count": result.failed_count})
             return result, tpl_path
+
         with ThreadPoolExecutor(max_workers=parallel) as executor:
             futures = {executor.submit(_lint_single, tpl): tpl for tpl in templates}
             for future in as_completed(futures):
@@ -936,6 +1237,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     mm_findings_total: list = []
     if multimodal:
         from ai_prompt_toolkit.linter.multimodal import check_multimodal_prompt
+
         for i, tpl_path in enumerate(templates):
             text = tpl_path.read_text(encoding="utf-8")
             mm_findings = check_multimodal_prompt(text)
@@ -946,15 +1248,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if inline_suppress:
         import re as _re
+
         _SUPPRESS_RE = _re.compile(r"prompt-lint-disable\s+(.+?)(?:\s*--\s*(.+))?$")
         for result in all_results:
-            suppressed = []
+            suppressed = []  # noqa: F841 — lint-disable抑制功能预留, 未完整实现
             for finding in result.findings:
                 if finding.details and isinstance(finding.details, dict):
                     line_num = finding.details.get("line", 0)
                 else:
-                    line_num = 0
-            remaining = []
+                    line_num = 0  # noqa: F841 — 同上
             text_for_suppress = ""
             for tpl_path in templates:
                 if tpl_path.name == result.template_id or result.template_id.startswith(tpl_path.stem):
@@ -973,8 +1275,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if baseline:
         import json as _json
+
         try:
-            with open(baseline, "r", encoding="utf-8") as bf:
+            with open(baseline, encoding="utf-8") as bf:
                 baseline_data = _json.load(bf)
             baseline_ids = set()
             if isinstance(baseline_data, dict):
@@ -986,8 +1289,9 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                     baseline_ids.add(f"{f.get('template_id', '')}:{f.get('rule_id', '')}")
             for result in all_results:
                 before = len(result.findings)
-                result.findings = [f for f in result.findings
-                                   if f"{result.template_id}:{f.rule_id}" not in baseline_ids]
+                result.findings = [
+                    f for f in result.findings if f"{result.template_id}:{f.rule_id}" not in baseline_ids
+                ]
                 if len(result.findings) < before:
                     click.echo(f"  基线过滤: {result.template_id} 跳过{before - len(result.findings)}条已知问题")
             total_findings = sum(len(r.findings) for r in all_results)
@@ -1000,7 +1304,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
         fail_findings = []
         for result in all_results:
             for f in result.findings:
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 if _SEV_ORDER.get(sev, 0) >= threshold:
                     fail_findings.append((result.template_id, f.rule_id, sev))
         if fail_findings:
@@ -1012,17 +1316,18 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             sys.exit(2)
 
     if explain:
-        from ai_prompt_toolkit.linter.rules import get_rule, _RULE_MAP
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.harmonyos_templates import get_template
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+
         for result in all_results:
             if not result.findings:
                 continue
-            click.echo(f"\n{'='*60}")
+            click.echo(f"\n{'=' * 60}")
             click.echo(f"文件: {result.template_id} ({len(result.findings)}个问题)")
-            click.echo(f"{'='*60}")
+            click.echo(f"{'=' * 60}")
             for i, f in enumerate(result.findings, 1):
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 click.echo(f"\n  [{i}] {f.rule_id} [{sev.upper()}]")
                 rule = _RULE_MAP.get(f.rule_id)
                 if rule:
@@ -1039,19 +1344,20 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 if rule and rule.remediation_en:
                     click.echo(f"  Fix:   {rule.remediation_en}")
                 if f.rule_id in AUTO_FIXABLE_RULES:
-                    click.echo(f"  可自动修复: 是 (使用 --fix)")
+                    click.echo("  可自动修复: 是 (使用 --fix)")
                 template = get_template(f.rule_id)
                 if template:
-                    click.echo(f"  鸿蒙模板: 可用 (使用 harmonyos_template_generate 获取)")
+                    click.echo("  鸿蒙模板: 可用 (使用 harmonyos_template_generate 获取)")
                 if rule and rule.owasp_refs:
                     click.echo(f"  OWASP: {', '.join(rule.owasp_refs)}")
-                click.echo(f"  {'─'*50}")
+                click.echo(f"  {'─' * 50}")
         click.echo()
 
     if fmt == "table":
         try:
             from rich.console import Console
             from rich.table import Table
+
             console = Console()
             for result in all_results:
                 table = Table(title=f"Lint: {result.template_id}", show_lines=False)
@@ -1059,7 +1365,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 table.add_column("Severity", width=10)
                 table.add_column("Description", style="white")
                 for f in result.findings:
-                    sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                    sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                     sev_style = "bold red" if sev in ("critical", "high") else "yellow" if sev == "medium" else "dim"
                     table.add_row(f.rule_id, f"[{sev_style}]{sev.upper()}[/{sev_style}]", f.description[:80])
                 if result.findings:
@@ -1070,6 +1376,8 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
             click.echo("Table format requires 'rich' package. Install with: pip install rich")
             fmt = "cli"
 
+    # R171修复: quiet分支引用avg_score但从未计算(运行时NameError)
+    avg_score = total_score / max(len(all_results), 1)
     if quiet:
         for result in all_results:
             status = "PASS" if result.passed else "FAIL"
@@ -1081,13 +1389,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     elif fmt == "cli":
         if _has_rich:
             from ai_prompt_toolkit.cli_helpers import print_rich_findings
+
             print_rich_findings(all_results, console=console)
         else:
             for result in all_results:
                 if result.findings:
                     for f in result.findings:
-                        sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                        sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                         from ai_prompt_toolkit.cli_helpers import friendly_finding_line, friendly_fix_suggestion
+
                         is_mm = f.rule_id.startswith("MM-")
                         click.echo(friendly_finding_line(result.template_id, f.rule_id, sev, f.description, is_mm))
                         if sev in ("high", "critical"):
@@ -1095,16 +1405,20 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     avg_score = total_score / max(len(all_results), 1)
     from ai_prompt_toolkit.cli_helpers import friendly_lint_summary
+
     fixed_count = sum(len(r.fixed_findings) for r in all_results if r.auto_fixed) if fix else 0
     if _has_rich and fmt == "cli":
         from ai_prompt_toolkit.cli_helpers import print_rich_lint_summary
+
         print_rich_lint_summary(len(templates), avg_score, total_findings, fixed_count, console=console)
     else:
         click.echo(friendly_lint_summary(len(templates), avg_score, total_findings, fixed_count))
 
     if total_findings > 0 and fmt == "cli":
         from collections import Counter
+
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
+
         category_counts = Counter()
         severity_counts = Counter()
         for result in all_results:
@@ -1112,7 +1426,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                 rule = _RULE_MAP.get(f.rule_id)
                 cat = rule.category if rule else "unknown"
                 category_counts[cat] += 1
-                sev = f.severity.value if hasattr(f.severity, 'value') else str(f.severity)
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 severity_counts[sev] += 1
         cat_summary = " | ".join(f"{k}: {v}" for k, v in sorted(category_counts.items(), key=lambda x: -x[1]))
         sev_summary = " | ".join(f"{k.upper()}: {v}" for k, v in sorted(severity_counts.items(), key=lambda x: -x[1]))
@@ -1121,6 +1435,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if avg_score >= 100.0 and total_findings == 0:
         from ai_prompt_toolkit.easter_eggs import show_perfect_score_celebration
+
         celebration = show_perfect_score_celebration(avg_score)
         if celebration:
             click.echo(celebration)
@@ -1141,13 +1456,16 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate, Verdict
+
         qg = QualityGate()
         all_findings_flat = []
         for r in all_results:
             all_findings_flat.extend(r.findings)
         gate_result = qg.evaluate(all_findings_flat, score=avg_score)
         verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
-        click.echo(f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}")
+        click.echo(
+            f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}"
+        )
         if output:
             report_data["quality_gate"] = gate_result.to_dict()
         if gate_result.verdict == Verdict.FAIL:
@@ -1160,6 +1478,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
     if fmt == "sarif" and output:
         sarif_data = _generate_sarif(all_results, target)
         import json as _json
+
         Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
         click.echo(f"SARIF报告: {output}")
     else:
@@ -1177,11 +1496,15 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 
     if _sem_cache:
         _cache_stats = _sem_cache.stats()
-        click.echo(f"语义缓存: 命中{_cache_stats['hits']}次 / 未命中{_cache_stats['misses']}次 / 命中率{_cache_stats['hit_rate']:.1%}")
+        click.echo(
+            f"语义缓存: 命中{_cache_stats['hits']}次 / 未命中{_cache_stats['misses']}次 / 命中率{_cache_stats['hit_rate']:.1%}"
+        )
 
     if watch:
-        from ai_prompt_toolkit.config import ConfigWatcher
         import time
+
+        from ai_prompt_toolkit.config import ConfigWatcher
+
         watcher = ConfigWatcher(poll_interval=2.0, debounce_seconds=1.0)
         target_path = Path(target)
         if target_path.is_dir():
@@ -1190,7 +1513,7 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
                     watcher.add_watch(p)
         elif target_path.is_file():
             watcher.add_watch(target_path)
-        click.echo(f"👀 监视中... (Ctrl+C退出)")
+        click.echo("👀 监视中... (Ctrl+C退出)")
         try:
             while True:
                 time.sleep(2.0)
@@ -1221,20 +1544,22 @@ def lint(target: str, config: str | None, fmt: str, fix: bool, interactive: bool
 @click.option("--base-dir", help="i18n资源基础目录")
 @click.option("--llm", is_flag=True, help="启用LLM辅助翻译(需配置Provider)")
 @click.option("--provider", help="LLM Provider(provider:model_name)")
-def i18n(source_locale: str, target_locale: str, output: str | None,
-         base_dir: str | None, llm: bool, provider: str | None) -> None:
+def i18n(
+    source_locale: str, target_locale: str, output: str | None, base_dir: str | None, llm: bool, provider: str | None
+) -> None:
     """国际化：多语言翻译和质量报告"""
     from ai_prompt_toolkit.i18n.manager import I18nManager
 
     if llm:
-        from ai_prompt_toolkit.i18n.llm_translator import LLMTranslator
         from ai_prompt_toolkit.i18n.glossary import Glossary
+        from ai_prompt_toolkit.i18n.llm_translator import LLMTranslator
         from ai_prompt_toolkit.i18n.translation import TranslationEngine
 
         prov = None
         if provider:
-            from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
             from ai_prompt_toolkit.ab_test.provider import create_provider
+            from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             parts = provider.split(":")
             if len(parts) == 2:
                 try:
@@ -1256,9 +1581,7 @@ def i18n(source_locale: str, target_locale: str, output: str | None,
         click.echo(f"LLM辅助翻译: {source_locale} → {target_locale}")
         if not prov:
             click.echo("警告: 未指定Provider，仅使用术语表+缓存翻译")
-        result = translator.translate_template(
-            "你是一个专业的AI助手。", source_locale, target_locale
-        )
+        result = translator.translate_template("你是一个专业的AI助手。", source_locale, target_locale)
         click.echo(f"翻译结果: {result['translated']}")
         click.echo(f"术语命中: {result['glossary_hit']} | 一致性: {result['consistency_ok']}")
         return
@@ -1274,14 +1597,16 @@ def i18n(source_locale: str, target_locale: str, output: str | None,
 
 
 @main.command()
-@click.option("--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]),
-              required=True, help="市场操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]), required=True, help="市场操作"
+)
 @click.option("--template", "-t", help="模板ID或文件路径")
 @click.option("--config", help="市场配置YAML文件路径")
 def market(action: str, template: str | None, config: str | None) -> None:
     """模板市场：提交、评审、灰度发布"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.market.service import MarketService
+
     svc = MarketService()
 
     if action == "status" and template:
@@ -1289,6 +1614,7 @@ def market(action: str, template: str | None, config: str | None) -> None:
         click.echo(json.dumps(status, ensure_ascii=False, indent=2))
     elif action == "submit" and template:
         from ai_prompt_toolkit.market.types import Template
+
         tpl = Template(id=template, name=template, version="1.0")
         try:
             svc.submit(tpl)
@@ -1344,7 +1670,12 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 @click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
 @click.option("--non-interactive", is_flag=True, help="非交互模式")
 @click.option("--ci", is_flag=True, help="生成CI/CD配置(GitHub Action+Docker+pre-commit)")
-@click.option("--template", type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]), default=None, help="项目模板")
+@click.option(
+    "--template",
+    type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]),
+    default=None,
+    help="项目模板",
+)
 def init_project(target: str, non_interactive: bool, ci: bool, template: str | None) -> None:
     """新用户引导：3步创建AI提示词项目"""
     if ci:
@@ -1410,6 +1741,7 @@ def _apply_template(target: str, template_name: str) -> None:
 
 def _generate_ci_config(target: str) -> None:
     from pathlib import Path as _Path
+
     project_dir = _Path(target).resolve()
 
     github_dir = project_dir / ".github" / "workflows"
@@ -1477,9 +1809,9 @@ ENTRYPOINT ["prompt-cli"]
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 def assert_cmd(response: str, config: str, fmt: str) -> None:
     """断言验证：对LLM响应执行质量断言检查"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path, load_config, write_report
-    from ai_prompt_toolkit.assertion.types import AssertType, AssertionConfig
     from ai_prompt_toolkit.assertion.engine import AssertionEngine
+    from ai_prompt_toolkit.assertion.types import AssertionConfig, AssertType
+    from ai_prompt_toolkit.cli_helpers import load_config, resolve_path
 
     resp_path = resolve_path(response)
     resp_text = resp_path.read_text(encoding="utf-8")
@@ -1489,12 +1821,14 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
     configs = []
     for item in assertions_cfg:
         atype = AssertType(item.get("type", "contains"))
-        configs.append(AssertionConfig(
-            assert_type=atype,
-            value=item.get("value", ""),
-            threshold=item.get("threshold", 0.8),
-            weight=item.get("weight", 1.0),
-        ))
+        configs.append(
+            AssertionConfig(
+                assert_type=atype,
+                value=item.get("value", ""),
+                threshold=item.get("threshold", 0.8),
+                weight=item.get("weight", 1.0),
+            )
+        )
 
     if not configs:
         click.echo("错误: 未配置任何断言", err=True)
@@ -1508,6 +1842,7 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
+
         data = {"passed": passed, "total": total, "results": [r.to_dict() for r in results]}
         click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
     else:
@@ -1544,17 +1879,31 @@ def serve(host: str, port: int, do_reload: bool) -> None:
 @click.option("--owasp", help="按OWASP LLM Top 10分类过滤(如LLM01,LLM06)")
 @click.option("--top-n", type=int, default=0, help="仅运行前N个Probe")
 @click.option("--severity", type=click.Choice(["critical", "high", "medium", "low"]), help="最低严重性过滤")
-@click.option("--compliance", type=click.Choice(["eu_ai_act", "china_algorithm", "owasp_llm_top10"]), help="合规报告框架")
+@click.option(
+    "--compliance", type=click.Choice(["eu_ai_act", "china_algorithm", "owasp_llm_top10"]), help="合规报告框架"
+)
 @click.option("--scorecard", is_flag=True, help="红队探测后自动运行安全评分卡")
-def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
-                output: str | None, fmt: str, owasp: str | None,
-                top_n: int, severity: str | None, compliance: str | None,
-                scorecard: bool) -> None:
+def redteam_cmd(
+    target: str | None,
+    probes: str | None,
+    provider: str | None,
+    output: str | None,
+    fmt: str,
+    owasp: str | None,
+    top_n: int,
+    severity: str | None,
+    compliance: str | None,
+    scorecard: bool,
+) -> None:
     """红队探测：对抗性安全测试"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
-    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
-    from ai_prompt_toolkit.redteam.detector import create_detector, get_available_detectors, LeakageDetector, ComplianceDetector, RefusalDetector
+    from ai_prompt_toolkit.redteam.detector import (
+        ComplianceDetector,
+        LeakageDetector,
+        RefusalDetector,
+    )
     from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+    from ai_prompt_toolkit.redteam.probe import create_probe, get_available_probes, get_probes_by_owasp
 
     available = get_available_probes()
 
@@ -1579,10 +1928,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
             if severity:
                 min_level = _SEVERITY_ORDER.get(severity, 3)
                 probe_inputs = probe.generate_inputs()
-                has_qualifying = any(
-                    _SEVERITY_ORDER.get(pi.severity, 3) <= min_level
-                    for pi in probe_inputs
-                )
+                has_qualifying = any(_SEVERITY_ORDER.get(pi.severity, 3) <= min_level for pi in probe_inputs)
                 if has_qualifying:
                     probe_instances.append(probe)
             else:
@@ -1598,8 +1944,9 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
     orchestrator = ExplorationOrchestrator(probes=probe_instances, detectors=detectors)
 
     if provider:
-        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
         from ai_prompt_toolkit.ab_test.provider import create_provider
+        from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
         parts = provider.split(":")
         if len(parts) == 2:
             try:
@@ -1615,6 +1962,7 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
         report = orchestrator.run_with_provider(prov)
     elif target:
         from ai_prompt_toolkit.cli_helpers import resolve_path
+
         path = resolve_path(target)
         text = path.read_text(encoding="utf-8")
         report = orchestrator.run_offline(text)
@@ -1624,17 +1972,21 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
 
     if compliance:
         import json as _json
+
         compliance_data = report.generate_compliance_report(framework=compliance)
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(compliance_data, output, fmt="json")
             click.echo(f"合规报告已保存: {output}")
         else:
             click.echo(_json.dumps(compliance_data, ensure_ascii=False, indent=2))
     elif fmt == "json":
         import json as _json
+
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(report.to_dict(), output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
@@ -1658,19 +2010,36 @@ def redteam_cmd(target: str | None, probes: str | None, provider: str | None,
 @click.option("--response-b", help="第二回答(成对比较模式)")
 @click.option("--reference", help="参考答案(可选)")
 @click.option("--judge-model", "-j", default="gpt-4o-mini", help="裁判模型(provider:model_name)")
-@click.option("--dimensions", "-d", help="评估维度(逗号分隔: relevance,accuracy,fluency,completeness,safety,helpfulness)")
+@click.option(
+    "--dimensions", "-d", help="评估维度(逗号分隔: relevance,accuracy,fluency,completeness,safety,helpfulness)"
+)
 @click.option("--mode", type=click.Choice(["absolute", "pairwise"]), default="absolute", help="评估模式")
-@click.option("--aggregation", type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
-              default="majority_vote", help="多裁判集成方式")
+@click.option(
+    "--aggregation",
+    type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
+    default="majority_vote",
+    help="多裁判集成方式",
+)
 @click.option("--multi-judge", is_flag=True, help="启用多裁判模式(3个裁判)")
 @click.option("--output", "-o", help="输出报告路径")
-def judge_cmd(question: str, response: str, response_b: str | None, reference: str | None,
-              judge_model: str, dimensions: str | None, mode: str, aggregation: str,
-              multi_judge: bool, output: str | None) -> None:
+def judge_cmd(
+    question: str,
+    response: str,
+    response_b: str | None,
+    reference: str | None,
+    judge_model: str,
+    dimensions: str | None,
+    mode: str,
+    aggregation: str,
+    multi_judge: bool,
+    output: str | None,
+) -> None:
     """LLM-as-Judge评估：用LLM作为裁判评估Prompt回答质量"""
     import asyncio
+
     from ai_prompt_toolkit.ab_test.judge import (
-        create_judge, create_multi_judge, BUILTIN_DIMENSIONS,
+        create_judge,
+        create_multi_judge,
     )
 
     resp_text = response
@@ -1703,10 +2072,12 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(result.to_dict(), output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
             import json as _json
+
             click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         judge = create_judge(judge_model, dimensions=dim_list, mode=mode)
@@ -1732,6 +2103,7 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
             if output:
                 from ai_prompt_toolkit.cli_helpers import write_report
+
                 report_data = {
                     "mode": mode,
                     "question": question[:200],
@@ -1743,8 +2115,9 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
 
 @main.command(name="version")
-@click.option("--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]),
-              required=True, help="版本操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]), required=True, help="版本操作"
+)
 @click.option("--template", "-t", help="模板ID")
 @click.option("--source", "-s", help="源文件路径(create时读取)")
 @click.option("--version", "ver", type=int, help="版本号(show/diff/rollback)")
@@ -1754,9 +2127,18 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 @click.option("--message", "-m", help="变更说明")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--semantic", is_flag=True, help="使用语义差异分析(按段比较+安全策略变更检测)")
-def version_cmd(action: str, template: str | None, source: str | None, ver: int | None,
-                version_a: int | None, version_b: int | None, author: str | None,
-                message: str | None, fmt: str, semantic: bool) -> None:
+def version_cmd(
+    action: str,
+    template: str | None,
+    source: str | None,
+    ver: int | None,
+    version_a: int | None,
+    version_b: int | None,
+    author: str | None,
+    message: str | None,
+    fmt: str,
+    semantic: bool,
+) -> None:
     """Prompt版本管理：版本创建/列表/diff/回滚"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.version_store import VersionStore
@@ -1771,6 +2153,7 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
             content = ""
             if source:
                 from ai_prompt_toolkit.cli_helpers import resolve_path
+
                 content = resolve_path(source).read_text(encoding="utf-8")
             elif not click.get_text_stream("stdin").isatty():
                 content = click.get_text_stream("stdin").read()
@@ -1791,10 +2174,13 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 sys.exit(0)
             if fmt == "json":
                 import json as _json
+
                 click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
             else:
                 for v in versions:
-                    click.echo(f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}")
+                    click.echo(
+                        f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}"
+                    )
 
         elif action == "show":
             if not template or not ver:
@@ -1811,8 +2197,10 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 click.echo("错误: 请指定--template --version-a --version-b", err=True)
                 sys.exit(2)
             if semantic:
-                from ai_prompt_toolkit.prompt_diff import semantic_diff
                 import json as _json
+
+                from ai_prompt_toolkit.prompt_diff import semantic_diff
+
                 va = store.get_version(template, version_a)
                 vb = store.get_version(template, version_b)
                 if not va or not vb:
@@ -1824,11 +2212,15 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 result = store.diff(template, version_a, version_b)
                 if fmt == "json":
                     import json as _json
+
                     click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
                 else:
                     from ai_prompt_toolkit.output import console
+
                     console.print(f"[bold]Diff: {template} v{version_a} → v{version_b}[/bold]")
-                    console.print(f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}")
+                    console.print(
+                        f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}"
+                    )
                     for line in result.unified_diff:
                         if line.startswith("+") and not line.startswith("+++"):
                             console.print(f"  [green]{line}[/green]")
@@ -1871,11 +2263,18 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
-        click.echo(_json.dumps({
-            "snapshots": [s.to_dict() for s in snapshots],
-            "trend": [t.to_dict() for t in trend],
-            "alerts": [a.to_dict() for a in alerts],
-        }, ensure_ascii=False, indent=2))
+
+        click.echo(
+            _json.dumps(
+                {
+                    "snapshots": [s.to_dict() for s in snapshots],
+                    "trend": [t.to_dict() for t in trend],
+                    "alerts": [a.to_dict() for a in alerts],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         from rich.console import Console
         from rich.table import Table
@@ -1891,8 +2290,10 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
             table.add_column("维度数", width=6)
             for s in snapshots:
                 table.add_row(
-                    str(s.snapshot_id), s.created_at,
-                    f"{s.overall_score:.2f}", f"{s.percentage:.1f}%",
+                    str(s.snapshot_id),
+                    s.created_at,
+                    f"{s.overall_score:.2f}",
+                    f"{s.percentage:.1f}%",
                     str(s.dimension_count),
                 )
             console.print(table)
@@ -1908,7 +2309,9 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
             console.print(f"\n[bold red]回归告警 ({len(alerts)}条)[/bold red]")
             for a in alerts:
                 icon = "🔴" if a.severity == "critical" else "🟡"
-                console.print(f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+                console.print(
+                    f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)"
+                )
 
     store.close()
 
@@ -1931,6 +2334,7 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
+
         click.echo(_json.dumps(result, ensure_ascii=False, indent=2))
     else:
         from rich.console import Console
@@ -1947,13 +2351,12 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
         for d in result["dimension_diffs"]:
             diff = d["diff"]
             if diff > 0:
-                trend_icon = "[green]↑ +{:.1f}[/green]".format(diff)
+                trend_icon = f"[green]↑ +{diff:.1f}[/green]"
             elif diff < 0:
-                trend_icon = "[red]↓ {:.1f}[/red]".format(diff)
+                trend_icon = f"[red]↓ {diff:.1f}[/red]"
             else:
                 trend_icon = "[dim]= 0[/dim]"
-            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]),
-                         f"{diff:+.1f}", trend_icon)
+            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]), f"{diff:+.1f}", trend_icon)
 
         console.print(table)
         overall = result["overall_diff"]
@@ -1969,8 +2372,9 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
 def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | None) -> None:
     """Canary Token泄露防护：注入追踪标记/检测系统Prompt泄露"""
     from ai_prompt_toolkit.security.unicode_guard import (
-        generate_canary_tokens, inject_canary_tokens,
-        check_canary_leakage, clean_unicode, check_unicode_threats,
+        check_unicode_threats,
+        clean_unicode,
+        inject_canary_tokens,
     )
 
     if check:
@@ -2030,7 +2434,7 @@ def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | 
             click.echo("\n--- 注入后内容 ---")
             click.echo(injected[:500] + ("..." if len(injected) > 500 else ""))
 
-        click.echo(f"\n检测方法: 将LLM输出通过 'prompt-cli canary -c <output_file>' 检查泄露")
+        click.echo("\n检测方法: 将LLM输出通过 'prompt-cli canary -c <output_file>' 检查泄露")
     else:
         click.echo("错误: 请指定 --prompt(注入) 或 --check(检测)", err=True)
         sys.exit(2)
@@ -2042,7 +2446,7 @@ def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | 
 @click.option("--output", "-o", help="输出报告路径")
 def token_cmd(target: str, model: str, output: str | None) -> None:
     """Token压缩分析：估算Token消耗+检测冗余+优化建议"""
-    from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, estimate_tokens
+    from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens
 
     target_path = Path(target)
     if not target_path.exists():
@@ -2066,22 +2470,30 @@ def token_cmd(target: str, model: str, output: str | None) -> None:
             click.echo(f"     预计节省: {s.estimated_savings_tokens} tokens ({s.estimated_savings_percent:.1f}%)")
 
     if result.findings:
-        click.echo(f"\n警告:")
+        click.echo("\n警告:")
         for f in result.findings:
             click.echo(f"  ⚠ [{f.rule_id}] {f.description}")
 
-    click.echo(f"\n优化后: {result.optimized_tokens} tokens | 节省: {result.savings_tokens} ({result.savings_percent:.1f}%)")
+    click.echo(
+        f"\n优化后: {result.optimized_tokens} tokens | 节省: {result.savings_tokens} ({result.savings_percent:.1f}%)"
+    )
 
     if output:
         from ai_prompt_toolkit.cli_helpers import write_report
+
         write_report(result.to_dict(), output, fmt="json")
         click.echo(f"报告: {output}")
 
 
 @main.command(name="watch")
 @click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
-@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "compliance"]),
-              default="lint", help="文件变更时执行的命令")
+@click.option(
+    "--command",
+    "-c",
+    type=click.Choice(["lint", "scan", "evaluate", "compliance"]),
+    default="lint",
+    help="文件变更时执行的命令",
+)
 @click.option("--interval", type=float, default=1.0, help="轮询间隔(秒)")
 @click.option("--debounce", type=float, default=0.5, help="变更防抖延迟(秒)")
 @click.option("--gate", is_flag=True, help="lint模式启用Quality Gate")
@@ -2116,8 +2528,9 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
 
     def run_command_on_target(t: str) -> None:
         if command == "lint":
-            from ai_prompt_toolkit.linter.linter import PromptLinter
             from ai_prompt_toolkit.cli_helpers import discover_templates
+            from ai_prompt_toolkit.linter.linter import PromptLinter
+
             templates = discover_templates(t)
             linter = PromptLinter()
             total_findings = 0
@@ -2129,8 +2542,9 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
             if gate and total_findings > 0:
                 click.echo("[gate] WARN: 发现Lint问题")
         elif command == "scan":
-            from ai_prompt_toolkit.security.injection_detector import InjectionDetector
             from ai_prompt_toolkit.cli_helpers import discover_templates
+            from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
             templates = discover_templates(t)
             detector = InjectionDetector()
             total_findings = 0
@@ -2140,8 +2554,9 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
                 total_findings += len(findings)
             click.echo(f"[scan] {len(templates)} 文件 | {total_findings} 风险")
         elif command == "evaluate":
-            from ai_prompt_toolkit.evaluator import evaluate_template
             from ai_prompt_toolkit.cli_helpers import resolve_path
+            from ai_prompt_toolkit.evaluator import evaluate_template
+
             tp = resolve_path(t, must_exist=False)
             if tp.is_file():
                 text = tp.read_text(encoding="utf-8")
@@ -2150,10 +2565,11 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
                 avg = sum(s.score for s in scores) / len(scores) if scores else 0
                 click.echo(f"[evaluate] {tp.name} | 均分: {avg:.1f}/10")
         elif command == "compliance":
+            from ai_prompt_toolkit.cli_helpers import discover_templates
             from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
             from ai_prompt_toolkit.security.pii_detector import PIIDetector
-            from ai_prompt_toolkit.cli_helpers import discover_templates
+
             templates = discover_templates(t)
             all_findings = []
             for tpl in templates:
@@ -2163,12 +2579,15 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
                 if pii_f:
                     all_findings.append(pii_f)
             comp_report = compute_huaweicloud_compliance(all_findings)
-            click.echo(f"[compliance] {comp_report.overall_score}/100 ({comp_report.grade.value}) {comp_report.decision.value}")
+            click.echo(
+                f"[compliance] {comp_report.overall_score}/100 ({comp_report.grade.value}) {comp_report.decision.value}"
+            )
 
     try:
         click.echo("按 Ctrl+C 停止监视")
         while True:
             import time as _time
+
             _time.sleep(interval)
 
             current_files: list[Path] = []
@@ -2216,8 +2635,9 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
 def doctor_cmd(provider: str | None, as_json: bool, init_config: bool) -> None:
     """健康检查：检测Provider连接状态和API Key配置"""
     if init_config:
-        from pathlib import Path as _P
-        config_path = _P(".prompt-toolkit.yml")
+        from pathlib import Path as _ConfigPath
+
+        config_path = _ConfigPath(".prompt-toolkit.yml")
         if config_path.exists():
             click.echo(f"配置文件已存在: {config_path}")
         else:
@@ -2255,7 +2675,9 @@ weight_preset: default
             click.echo(f"配置模板已生成: {config_path}")
         return
 
-    _config_path = _P(".prompt-toolkit.yml") if (_P := __import__("pathlib").Path)(".prompt-toolkit.yml").exists() else None
+    from pathlib import Path as _ConfigPath
+
+    _config_path = _ConfigPath(".prompt-toolkit.yml") if _ConfigPath(".prompt-toolkit.yml").exists() else None
     if not _config_path and not as_json:
         # U3: 首次运行引导 — 快速入门+配置模板生成提示
         click.echo(
@@ -2285,12 +2707,25 @@ weight_preset: default
 
     if as_json:
         import json as _json
-        click.echo(_json.dumps([
-            {"provider": r.provider.value, "label": r.label, "status": r.status,
-             "latency_ms": r.latency_ms, "error": r.error,
-             "api_key_configured": r.api_key_configured, "endpoint": r.endpoint}
-            for r in results
-        ], ensure_ascii=False, indent=2))
+
+        click.echo(
+            _json.dumps(
+                [
+                    {
+                        "provider": r.provider.value,
+                        "label": r.label,
+                        "status": r.status,
+                        "latency_ms": r.latency_ms,
+                        "error": r.error,
+                        "api_key_configured": r.api_key_configured,
+                        "endpoint": r.endpoint,
+                    }
+                    for r in results
+                ],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
         return
 
     from rich.console import Console
@@ -2339,6 +2774,7 @@ weight_preset: default
         verdict = "ℹ️ 部分Provider异常"
 
     from rich.panel import Panel
+
     summary_lines = [
         f"[bold]健康: {healthy}/{total}[/bold]  |  未配置: {no_key}  |  不可达: {unreachable}",
         verdict,
@@ -2354,11 +2790,16 @@ weight_preset: default
 
 
 @main.command(name="wizard")
-@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "ab-test", "redteam"]),
-              help="直接指定命令(跳过功能选择)")
+@click.option(
+    "--command",
+    "-c",
+    type=click.Choice(["lint", "scan", "evaluate", "ab-test", "redteam"]),
+    help="直接指定命令(跳过功能选择)",
+)
 def wizard_cmd(command: str | None) -> None:
     """交互式向导：5步引导你完成Prompt工具链操作"""
     from ai_prompt_toolkit.wizard import run_wizard
+
     exit_code = run_wizard(command)
     sys.exit(exit_code)
 
@@ -2390,12 +2831,13 @@ def lsp_cmd(mode: str, host: str, port: int) -> None:
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
 def benchmark_cmd(case: str | None, save: bool, threshold: float, as_json: bool) -> None:
     """性能基准：Lint/Scan/Evaluate执行时间基准"""
-    from ai_prompt_toolkit.benchmark import run_benchmark, run_full_benchmark, BenchmarkDB
+    from ai_prompt_toolkit.benchmark import run_benchmark, run_full_benchmark
 
     if save:
         report = run_full_benchmark(threshold_pct=threshold)
         if as_json:
             import json as _json
+
             click.echo(_json.dumps(report, ensure_ascii=False, indent=2))
         else:
             click.echo("性能基准测试结果:")
@@ -2405,11 +2847,14 @@ def benchmark_cmd(case: str | None, save: bool, threshold: float, as_json: bool)
                 click.echo("\n回归告警:")
                 for a in report["regression_alerts"]:
                     click.echo(f"  [{a['case_id']}] {a['regression_pct']:.1f}% 回归 (基线: {a['baseline_ms']:.2f}ms)")
-            click.echo(f"\n平均耗时: {report['summary']['avg_duration_ms']:.2f}ms | 回归数: {report['summary']['regressions']}")
+            click.echo(
+                f"\n平均耗时: {report['summary']['avg_duration_ms']:.2f}ms | 回归数: {report['summary']['regressions']}"
+            )
     else:
         results = run_benchmark(case)
         if as_json:
             import json as _json
+
             click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
         else:
             click.echo("性能基准测试:")
@@ -2423,8 +2868,7 @@ def benchmark_cmd(case: str | None, save: bool, threshold: float, as_json: bool)
 @click.option("--model", "-m", help="模型(如gpt-4,qwen,deepseek)")
 @click.option("--top-n", type=int, default=5, help="推荐数量")
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
-def recommend_cmd(category: str | None, industry: str | None, model: str | None,
-                  top_n: int, as_json: bool) -> None:
+def recommend_cmd(category: str | None, industry: str | None, model: str | None, top_n: int, as_json: bool) -> None:
     """智能推荐：基于场景/行业/模型推荐最佳Prompt模板"""
     from ai_prompt_toolkit.template_recommender import TemplateRecommender
 
@@ -2433,6 +2877,7 @@ def recommend_cmd(category: str | None, industry: str | None, model: str | None,
 
     if as_json:
         import json as _json
+
         click.echo(_json.dumps([r.to_dict() for r in results], ensure_ascii=False, indent=2))
     else:
         click.echo(f"模板推荐(Top {len(results)}):")
@@ -2449,8 +2894,8 @@ def recommend_cmd(category: str | None, industry: str | None, model: str | None,
 @click.option("--output", "-o", help="输出优化后文件路径")
 def optimize_cmd(source: str, max_iterations: int, min_improvement: float, output: str | None) -> None:
     """Prompt自动优化：基于Lint评估的迭代式自动优化"""
-    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
     from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
 
     path = resolve_path(source)
     text = path.read_text(encoding="utf-8")
@@ -2458,7 +2903,7 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
     click.echo(f"优化Prompt: {path.name} (最大{max_iterations}轮)")
     result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
 
-    click.echo(f"\n优化完成:")
+    click.echo("\n优化完成:")
     click.echo(f"  原始评分: {result.original_score:.1f}/100")
     click.echo(f"  优化评分: {result.final_score:.1f}/100")
     click.echo(f"  提升: +{result.total_improvement:.1f}分 ({result.iterations}步)")
@@ -2469,6 +2914,7 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
 
     if output:
         from ai_prompt_toolkit.cli_helpers import resolve_path as rp
+
         out_path = rp(output)
         out_path.write_text(result.optimized_text, encoding="utf-8")
         click.echo(f"\n已保存: {output}")
@@ -2484,7 +2930,8 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
 def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_payloads: int, quick: bool) -> None:
     """Red Team Probe扫描: garak风格探针类别自动检测Prompt安全漏洞"""
     from ai_prompt_toolkit.cli_helpers import resolve_path
-    from ai_prompt_toolkit.probe_framework import ProbeRunner, list_probes, list_detectors as list_det
+    from ai_prompt_toolkit.probe_framework import ProbeRunner, list_probes
+    from ai_prompt_toolkit.probe_framework import list_detectors as list_det
 
     if target == "list":
         probe_list = list_probes()
@@ -2492,7 +2939,7 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
         click.echo("可用探针(Probe):")
         for p in probe_list:
             click.echo(f"  {p['name']:25s} [{p['severity']:8s}] {p['description']}")
-        click.echo(f"\n可用检测器(Detector):")
+        click.echo("\n可用检测器(Detector):")
         for d in det_list:
             click.echo(f"  {d['name']:25s} {d['description']}")
         return
@@ -2518,30 +2965,31 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
 
     report = runner.run(target_path.name, text)
 
-    click.echo(f"\n{'='*60}")
+    click.echo(f"\n{'=' * 60}")
     click.echo(f"Probe扫描报告: {report.template_id}")
-    click.echo(f"{'='*60}")
+    click.echo(f"{'=' * 60}")
     click.echo(f"探针数: {report.total_probes} | Payload数: {report.total_payloads} | 检出: {report.total_detections}")
     click.echo(f"风险评分: {report.risk_score:.1f}/10.0")
 
     if report.probe_summary:
-        click.echo(f"\n探针检出统计:")
+        click.echo("\n探针检出统计:")
         for name, count in sorted(report.probe_summary.items(), key=lambda x: -x[1]):
             if count > 0:
                 click.echo(f"  {name:25s} {count} 检出")
 
     if report.detector_summary:
-        click.echo(f"\n检测器统计:")
+        click.echo("\n检测器统计:")
         for name, count in sorted(report.detector_summary.items(), key=lambda x: -x[1]):
             click.echo(f"  {name:25s} {count} 次")
 
     if report.recommendations:
-        click.echo(f"\n防御建议:")
+        click.echo("\n防御建议:")
         for rec in report.recommendations:
             click.echo(f"  {rec}")
 
     if output:
         import json as _json
+
         Path(output).write_text(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
         click.echo(f"\n报告已保存: {output}")
 
@@ -2557,7 +3005,13 @@ if __name__ == "__main__":
 
 @main.command()
 @click.option("--target", "-t", required=True, help="监听目标(文件或目录)")
-@click.option("--command", "-c", type=click.Choice(["lint", "scan", "evaluate", "compliance"]), default="lint", help="变更时执行的命令")
+@click.option(
+    "--command",
+    "-c",
+    type=click.Choice(["lint", "scan", "evaluate", "compliance"]),
+    default="lint",
+    help="变更时执行的命令",
+)
 @click.option("--debounce", type=float, default=1.0, help="防抖延迟(秒)")
 def watch(target: str, command: str, debounce: float) -> None:
     """Watch模式：文件变更自动重新检查"""
@@ -2596,12 +3050,12 @@ def watch(target: str, command: str, debounce: float) -> None:
             for path_str, h in new_hashes.items():
                 if file_hashes.get(path_str) != h:
                     changed.append(path_str)
-            for path_str in set(file_hashes) - set(new_hashes):
-                changed.append(path_str)
+            changed.extend(set(file_hashes) - set(new_hashes))
             if changed:
                 file_hashes = new_hashes
                 console.print(f"\n[bold]检测到 {len(changed)} 个文件变更[/bold]")
                 from click.testing import CliRunner
+
                 runner = CliRunner()
                 cmd_args = [command, "-t", target]
                 result = runner.invoke(main, cmd_args, catch_exceptions=False)
@@ -2623,7 +3077,8 @@ def dataset_group() -> None:
 def dataset_create(name: str, description: str, tags: str) -> None:
     """创建新数据集"""
     from ai_prompt_toolkit.dataset import DatasetStore
-    from ai_prompt_toolkit.output import console, success
+    from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
     ds = store.create_dataset(name, description=description, tags=tag_list)
@@ -2636,9 +3091,11 @@ def dataset_create(name: str, description: str, tags: str) -> None:
 @click.option("--page-size", default=20, help="每页数量")
 def dataset_list(page: int, page_size: int) -> None:
     """列出所有数据集"""
+    from rich.table import Table
+
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import console
-    from rich.table import Table
+
     store = DatasetStore()
     datasets, total = store.list_datasets(page, page_size)
     table = Table(title=f"数据集 (共{total}个)")
@@ -2649,7 +3106,9 @@ def dataset_list(page: int, page_size: int) -> None:
     table.add_column("标签")
     table.add_column("更新时间")
     for ds in datasets:
-        table.add_row(ds.dataset_id, ds.name, ds.description[:30], str(ds.case_count), ",".join(ds.tags[:3]), ds.updated_at[:16])
+        table.add_row(
+            ds.dataset_id, ds.name, ds.description[:30], str(ds.case_count), ",".join(ds.tags[:3]), ds.updated_at[:16]
+        )
     console.print(table)
     store.close()
 
@@ -2663,6 +3122,7 @@ def dataset_add_case(dataset: str, input: str, expected: str, tags: str) -> None
     """添加测试用例"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
     c = store.add_case(dataset, input, expected_output=expected, tags=tag_list)
@@ -2677,6 +3137,7 @@ def dataset_import(dataset: str, file: str) -> None:
     """从JSON/CSV文件导入用例"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     p = Path(file)
     if not p.exists():
@@ -2685,6 +3146,7 @@ def dataset_import(dataset: str, file: str) -> None:
     content = p.read_text(encoding="utf-8")
     if p.suffix == ".json":
         import json
+
         items = json.loads(content)
         count = store.import_json(dataset, items)
     elif p.suffix == ".csv":
@@ -2704,6 +3166,7 @@ def dataset_export(dataset: str, format: str, output: str | None) -> None:
     """导出数据集"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     if format == "csv":
         data = store.export_csv(dataset)
@@ -2722,9 +3185,11 @@ def dataset_export(dataset: str, format: str, output: str | None) -> None:
 @click.option("--type", "-t", type=click.Choice(["all", "lint", "scan", "evaluate"]), default="all", help="运行类型")
 def dataset_run(dataset: str, type: str) -> None:
     """对数据集批量运行lint/scan/evaluate"""
+    from rich.table import Table
+
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import console
-    from rich.table import Table
+
     store = DatasetStore()
     results = store.run_dataset(dataset, run_type=type)
     table = Table(title=f"数据集运行结果 ({type})")
@@ -2735,7 +3200,13 @@ def dataset_run(dataset: str, type: str) -> None:
     table.add_column("评估分数")
     for r in results:
         status_style = "green" if r.status == "completed" else "red"
-        table.add_row(r.case_id[:8], f"[{status_style}]{r.status}[/]", f"{r.lint_score:.1f}", str(r.scan_findings), f"{r.eval_score:.1f}")
+        table.add_row(
+            r.case_id[:8],
+            f"[{status_style}]{r.status}[/]",
+            f"{r.lint_score:.1f}",
+            str(r.scan_findings),
+            f"{r.eval_score:.1f}",
+        )
     console.print(table)
     store.close()
 
@@ -2746,6 +3217,7 @@ def dataset_delete(dataset: str) -> None:
     """删除数据集"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     if store.delete_dataset(dataset):
         success(f"数据集已删除: {dataset}")
@@ -2763,9 +3235,11 @@ def plugin_group() -> None:
 @plugin_group.command(name="list")
 def plugin_list() -> None:
     """列出已注册插件"""
-    from ai_prompt_toolkit.plugin import PluginManager
-    from ai_prompt_toolkit.output import console
     from rich.table import Table
+
+    from ai_prompt_toolkit.output import console
+    from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     plugins = mgr.list_plugins()
     if not plugins:
@@ -2787,8 +3261,9 @@ def plugin_list() -> None:
 @click.option("--file", "-f", help="插件文件路径")
 def plugin_load(module: str | None, file: str | None) -> None:
     """加载插件"""
-    from ai_prompt_toolkit.plugin import PluginManager
     from ai_prompt_toolkit.output import success
+    from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     if module:
         p = mgr.load_from_module(module)
@@ -2810,8 +3285,9 @@ def plugin_load(module: str | None, file: str | None) -> None:
 @click.option("--name", "-n", required=True, help="插件名称")
 def plugin_enable(name: str) -> None:
     """启用插件"""
-    from ai_prompt_toolkit.plugin import PluginManager
     from ai_prompt_toolkit.output import success
+    from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     p = mgr.get_plugin(name)
     if not p:
@@ -2825,8 +3301,9 @@ def plugin_enable(name: str) -> None:
 @click.option("--name", "-n", required=True, help="插件名称")
 def plugin_disable(name: str) -> None:
     """禁用插件"""
-    from ai_prompt_toolkit.plugin import PluginManager
     from ai_prompt_toolkit.output import success
+    from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     p = mgr.get_plugin(name)
     if not p:
@@ -2841,7 +3318,9 @@ def plugin_disable(name: str) -> None:
 @click.option("--list", "-l", "list_locales", is_flag=True, help="列出支持的语言")
 def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
     """查看/设置界面语言"""
-    from ai_prompt_toolkit.i18n.messages import t, set_locale as msg_set_locale, get_current_locale, get_supported_locales
+    from ai_prompt_toolkit.i18n.messages import get_current_locale, get_supported_locales
+    from ai_prompt_toolkit.i18n.messages import set_locale as msg_set_locale
+
     if list_locales:
         current = get_current_locale()
         for loc in get_supported_locales():
@@ -2859,12 +3338,18 @@ def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
 
 @main.command(name="feedback")
 @click.option("--message", "-m", help="反馈内容(最长2000字)")
-@click.option("--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型")
-@click.option("--action", type=click.Choice(["submit", "list", "stats"]), default="submit", help="操作: submit/list/stats")
+@click.option(
+    "--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型"
+)
+@click.option(
+    "--action", type=click.Choice(["submit", "list", "stats"]), default="submit", help="操作: submit/list/stats"
+)
 def feedback_cmd(message: str | None, type: str, action: str) -> None:
     """提交/查看用户反馈"""
     import json
-    from ai_prompt_toolkit.output import success, console
+
+    from ai_prompt_toolkit.output import console, success
+
     feedback_dir = Path.home() / ".ai-prompt-toolkit" / "feedback"
 
     if action == "list":
@@ -2876,7 +3361,9 @@ def feedback_cmd(message: str | None, type: str, action: str) -> None:
         for entry in entries[-20:]:
             try:
                 data = json.loads(entry.read_text(encoding="utf-8"))
-                console.print(f"  [{data.get('type', '?')}] {data.get('message', '')[:60]}  [dim]{data.get('timestamp', '')}[/dim]")
+                console.print(
+                    f"  [{data.get('type', '?')}] {data.get('message', '')[:60]}  [dim]{data.get('timestamp', '')}[/dim]"
+                )
             except Exception:
                 pass
         return
@@ -2909,6 +3396,7 @@ def feedback_cmd(message: str | None, type: str, action: str) -> None:
 
     feedback_dir.mkdir(parents=True, exist_ok=True)
     import time
+
     entry = {
         "message": message,
         "type": type,
@@ -2925,8 +3413,9 @@ def feedback_cmd(message: str | None, type: str, action: str) -> None:
 @click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
 def stats_cmd(target: str | None, fmt: str) -> None:
     """查看项目/文件的Prompt统计数据"""
-    from ai_prompt_toolkit.output import console
     import json as _json
+
+    from ai_prompt_toolkit.output import console
 
     target_path = Path(target) if target else Path(".")
 
@@ -2949,7 +3438,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
             text = f.read_text(encoding="utf-8")
             total_chars += len(text)
             total_lines += text.count("\n") + 1
-            zh_chars = sum(1 for c in text if '\u4e00' <= c <= '\u9fff')
+            zh_chars = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
             en_chars = sum(1 for c in text if c.isascii() and c.isalpha())
             if zh_chars > en_chars:
                 lang_dist["中文"] = lang_dist.get("中文", 0) + 1
@@ -2958,8 +3447,8 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         except Exception:
             pass
 
-    from ai_prompt_toolkit.version_store import VersionStore
     from ai_prompt_toolkit.dataset import DatasetStore
+    from ai_prompt_toolkit.version_store import VersionStore
 
     version_count = 0
     try:
@@ -2974,7 +3463,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     dataset_count = 0
     try:
         ds = DatasetStore()
-        datasets, total = ds.list_datasets()
+        _datasets, total = ds.list_datasets()
         dataset_count = total
         ds.close()
     except Exception:
@@ -2983,8 +3472,9 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     lint_rules_count = 0
     auto_fixable_count = 0
     try:
-        from ai_prompt_toolkit.linter.rules import _RULE_MAP
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+
         lint_rules_count = len(_RULE_MAP)
         auto_fixable_count = len(AUTO_FIXABLE_RULES)
     except Exception:
@@ -2994,6 +3484,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     try:
         from ai_prompt_toolkit.security.injection_detector import InjectionDetector
         from ai_prompt_toolkit.security.pii_detector import PIIDetector
+
         sec_counts = []
         try:
             sec_counts.append(len(InjectionDetector.RULES))
@@ -3010,7 +3501,8 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     probe_count = 0
     detector_count = 0
     try:
-        from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY, _DETECTOR_REGISTRY
+        from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY, _PROBE_REGISTRY
+
         probe_count = len(_PROBE_REGISTRY)
         detector_count = len(_DETECTOR_REGISTRY)
     except Exception:
@@ -3019,6 +3511,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     eval_dims_count = 0
     try:
         from ai_prompt_toolkit.evaluator import get_all_dimensions
+
         eval_dims_count = len(get_all_dimensions())
     except Exception:
         pass
@@ -3026,6 +3519,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     mcp_tools_count = 0
     try:
         from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
+
         mcp_tools_count = len(_get_tool_dispatch())
     except Exception:
         pass
@@ -3033,6 +3527,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     template_count = 0
     try:
         from ai_prompt_toolkit.prompt_template import list_templates
+
         template_count = len(list_templates())
     except Exception:
         pass
@@ -3066,8 +3561,12 @@ def stats_cmd(target: str | None, fmt: str) -> None:
                 console.print(f"  🌐 语言分布: {lang} {cnt}个文件")
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
-        console.print(f"  🔍 Lint规则: [bold]{lint_rules_count}[/bold]条(自动修复:[bold]{auto_fixable_count}[/bold]) | 安全规则: [bold]{security_rules_count}[/bold]条")
-        console.print(f"  🎯 评估维度: [bold]{eval_dims_count}[/bold]个 | Probe: [bold]{probe_count}[/bold]个 | Detector: [bold]{detector_count}[/bold]个")
+        console.print(
+            f"  🔍 Lint规则: [bold]{lint_rules_count}[/bold]条(自动修复:[bold]{auto_fixable_count}[/bold]) | 安全规则: [bold]{security_rules_count}[/bold]条"
+        )
+        console.print(
+            f"  🎯 评估维度: [bold]{eval_dims_count}[/bold]个 | Probe: [bold]{probe_count}[/bold]个 | Detector: [bold]{detector_count}[/bold]个"
+        )
         console.print(f"  🔧 MCP工具: [bold]{mcp_tools_count}[/bold]个 | 内置模板: [bold]{template_count}[/bold]个")
 
 
@@ -3076,9 +3575,10 @@ def stats_cmd(target: str | None, fmt: str) -> None:
 @click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
 def score_cmd(target: str, fmt: str) -> None:
     """一键安全评分(0-100分)"""
-    from ai_prompt_toolkit.output import console
-    from ai_prompt_toolkit.cli_helpers import resolve_path
     import json as _json
+
+    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.output import console
 
     target_path = resolve_path(target)
     if not target_path.exists():
@@ -3089,14 +3589,14 @@ def score_cmd(target: str, fmt: str) -> None:
 
     from ai_prompt_toolkit.linter.linter import PromptLinter
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.prompt_scorecard import Decision, compute_scorecard
     from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard, Decision
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     linter = PromptLinter()
     lint_result = linter.lint(target_path.name, text)
-    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+    lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
     detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
     sec_findings = detector.detect(text)
@@ -3111,16 +3611,20 @@ def score_cmd(target: str, fmt: str) -> None:
         sec_findings.append(struct_finding)
 
     all_findings = list(lint_findings) + sec_findings
-    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
     if fmt == "json":
         click.echo(_json.dumps(scorecard.to_dict(), ensure_ascii=False, indent=2))
     else:
         grade_colors = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "bold red"}
         gc = grade_colors.get(scorecard.grade.value, "white")
-        console.print(f"\n[bold]安全评分卡: [{gc}]{scorecard.overall_score}/100 ({scorecard.grade.value})[/{gc}][/bold]")
+        console.print(
+            f"\n[bold]安全评分卡: [{gc}]{scorecard.overall_score}/100 ({scorecard.grade.value})[/{gc}][/bold]"
+        )
         console.print(f"  决策: [bold]{scorecard.decision.value.upper()}[/bold] | {scorecard.summary}")
-        console.print(f"  发现: {scorecard.total_findings} (严重:{scorecard.critical_count} 高危:{scorecard.high_count} 中危:{scorecard.medium_count} 低危:{scorecard.low_count})")
+        console.print(
+            f"  发现: {scorecard.total_findings} (严重:{scorecard.critical_count} 高危:{scorecard.high_count} 中危:{scorecard.medium_count} 低危:{scorecard.low_count})"
+        )
         console.print("\n  [bold]维度评分:[/bold]")
         for dim in scorecard.dimensions:
             bar_len = 20
@@ -3141,11 +3645,12 @@ def score_cmd(target: str, fmt: str) -> None:
 @click.option("--no-inflammation", is_flag=True, help="禁用炎症级联")
 def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> None:
     """多层融合注入检测引擎(5层+元分类器融合)"""
-    from ai_prompt_toolkit.output import console
+    import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.output import console
     from ai_prompt_toolkit.security.engine import FusionEngine
     from ai_prompt_toolkit.security.prompt_scorecard import Decision
-    import json as _json
 
     target_path = resolve_path(target)
     if not target_path.exists():
@@ -3161,8 +3666,10 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
     else:
         decision_colors = {"allow": "green", "warn": "yellow", "block": "bold red"}
         dc = decision_colors.get(result.decision.value, "white")
-        console.print(f"\n[bold]融合引擎分析结果:[/bold]")
-        console.print(f"  风险分数: {result.risk_score:.4f} | 校准分数: {result.calibrated_score:.4f} | 置信度: {result.confidence:.4f}")
+        console.print("\n[bold]融合引擎分析结果:[/bold]")
+        console.print(
+            f"  风险分数: {result.risk_score:.4f} | 校准分数: {result.calibrated_score:.4f} | 置信度: {result.confidence:.4f}"
+        )
         console.print(f"  决策: [{dc}]{result.decision.value.upper()}[/{dc}]")
         console.print(f"  耗时: {result.scan_time_ms:.2f}ms")
 
@@ -3189,18 +3696,20 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
 @click.option("--target", "-t", required=True, help="目标Prompt文件")
 @click.option("--output", "-o", required=True, help="输出SVG文件路径")
 @click.option("--compact", is_flag=True, help="紧凑模式(仅评分+等级)")
-@click.option("--theme", type=click.Choice(["light", "dark", "huawei"]), default="light", help="主题(light/dark/huawei)")
+@click.option(
+    "--theme", type=click.Choice(["light", "dark", "huawei"]), default="light", help="主题(light/dark/huawei)"
+)
 def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     """生成安全评分徽章SVG"""
-    from ai_prompt_toolkit.output import console, success
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.linter.linter import PromptLinter
-    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
-    from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.output import success
     from ai_prompt_toolkit.security.badge import generate_scorecard_badge_file
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     target_path = resolve_path(target)
     if not target_path.exists():
@@ -3211,7 +3720,7 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
 
     linter = PromptLinter()
     lint_result = linter.lint(target_path.name, text)
-    lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+    lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
     detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
     sec_findings = detector.detect(text)
@@ -3226,7 +3735,7 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
         sec_findings.append(struct_finding)
 
     all_findings = list(lint_findings) + sec_findings
-    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+    scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
     generate_scorecard_badge_file(scorecard, output, compact=compact, theme=theme)
     success(f"评分徽章已生成到 {output} (评分: {scorecard.overall_score}/100 {scorecard.grade.value})")
@@ -3238,8 +3747,8 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
 @click.option("--target", "-t", help="使用自定义规则检查的目标文件")
 def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | None) -> None:
     """管理自定义Lint规则(YAML)"""
-    from ai_prompt_toolkit.output import console, success, error
-    from ai_prompt_toolkit.linter.rule_loader_yaml import load_rules_from_yaml, check_custom_rules, generate_sample_yaml
+    from ai_prompt_toolkit.linter.rule_loader_yaml import check_custom_rules, generate_sample_yaml, load_rules_from_yaml
+    from ai_prompt_toolkit.output import console, error, success
 
     if init_path:
         generate_sample_yaml(init_path)
@@ -3254,11 +3763,16 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
                 return
             console.print(f"[bold]已加载 {len(rules)} 条自定义规则:[/bold]")
             for r in rules:
-                sev_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green"}.get(r["severity"].value, "white")
-                console.print(f"  [{sev_color}]{r['rule_id']}[/{sev_color}] {r['name']} ({r['severity'].value}) — {r['description'][:50]}")
+                sev_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green"}.get(
+                    r["severity"].value, "white"
+                )
+                console.print(
+                    f"  [{sev_color}]{r['rule_id']}[/{sev_color}] {r['name']} ({r['severity'].value}) — {r['description'][:50]}"
+                )
 
             if target:
                 from ai_prompt_toolkit.cli_helpers import resolve_path
+
                 target_path = resolve_path(target)
                 if not target_path.exists():
                     error(f"目标文件不存在: {target}")
@@ -3280,8 +3794,9 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
 
 @main.command(name="compliance")
 @click.option("--target", "-t", required=True, help="合规扫描目标(文件或目录)")
-@click.option("--format", "fmt", type=click.Choice(["cli", "json", "markdown", "sarif"]),
-              default="cli", help="输出格式")
+@click.option(
+    "--format", "fmt", type=click.Choice(["cli", "json", "markdown", "sarif"]), default="cli", help="输出格式"
+)
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--owasp-pct", "owasp_pct", type=float, default=0.0, help="OWASP LLM Top 10合规百分比(0-100)")
 def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) -> None:
@@ -3290,8 +3805,8 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
     from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
     from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
     from ai_prompt_toolkit.types import Finding, Severity
 
     templates = discover_templates(target)
@@ -3327,14 +3842,21 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
             click.echo(report.to_json())
     elif fmt == "sarif":
         from ai_prompt_toolkit.report.sarif_reporter import write_sarif_report
+
         sarif_findings = []
         for d in report.domains:
             if d.findings_count > 0:
-                sarif_findings.append(Finding(
-                    rule_id=f"HC-{d.domain}",
-                    severity=Severity.HIGH if d.critical_count > 0 else Severity.MEDIUM if d.high_count > 0 else Severity.LOW,
-                    description=f"[{d.domain_name}] 评分{d.score}/{d.max_score} 发现{d.findings_count}个问题",
-                ))
+                sarif_findings.append(
+                    Finding(
+                        rule_id=f"HC-{d.domain}",
+                        severity=Severity.HIGH
+                        if d.critical_count > 0
+                        else Severity.MEDIUM
+                        if d.high_count > 0
+                        else Severity.LOW,
+                        description=f"[{d.domain_name}] 评分{d.score}/{d.max_score} 发现{d.findings_count}个问题",
+                    )
+                )
         output_path = output or "compliance-report.sarif.json"
         write_sarif_report(sarif_findings, output_path, source_file=target)
         click.echo(f"SARIF报告: {output_path}")
@@ -3350,13 +3872,14 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
             from rich.console import Console
             from rich.panel import Panel
             from rich.table import Table
+
             console = Console()
             grade_color = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "red bold"}[report.grade.value]
             summary_lines = [
                 f"[bold]综合评分: [{grade_color}]{report.overall_score}/100 ({report.grade.value})[/{grade_color}][/bold]",
                 f"决策: {report.decision.value} | OWASP合规: {report.owasp_compliance_pct}%",
                 f"文件: {len(templates)} | 发现: {report.total_findings} (CRITICAL:{report.critical_count} HIGH:{report.high_count})",
-                f"",
+                "",
                 f"[dim]{report.summary}[/dim]",
             ]
             console.print(Panel("\n".join(summary_lines), title="华为云安全合规报告", border_style=grade_color))
@@ -3388,7 +3911,9 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
             if remediation_table.rows:
                 console.print(remediation_table)
         except ImportError:
-            click.echo(f"华为云安全合规: {report.overall_score}/100 ({report.grade.value}) 决策:{report.decision.value}")
+            click.echo(
+                f"华为云安全合规: {report.overall_score}/100 ({report.grade.value}) 决策:{report.decision.value}"
+            )
             click.echo(f"发现: {report.total_findings} (CRITICAL:{report.critical_count} HIGH:{report.high_count})")
             click.echo(report.summary)
             for d in report.domains:
@@ -3397,6 +3922,7 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
     if output and fmt == "cli":
         report_data = report.to_dict()
         from ai_prompt_toolkit.cli_helpers import write_report
+
         write_report(report_data, output, fmt="json")
 
     exit_code = 0 if report.decision.value == "pass" else 1 if report.decision.value == "conditional" else 2
@@ -3404,15 +3930,14 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
 
 
 from ai_prompt_toolkit.cli.commands import (  # noqa: E402,F401
-    lint_commands,
-    redteam_commands,
-    compile_commands,
     abtest_commands,
-    eval_commands,
-    security_commands,
-    dev_commands,
+    compile_commands,
     dataset_commands,
+    dev_commands,
+    eval_commands,
+    lint_commands,
     plugin_commands,
+    redteam_commands,
+    security_commands,
     template_commands,
 )
-

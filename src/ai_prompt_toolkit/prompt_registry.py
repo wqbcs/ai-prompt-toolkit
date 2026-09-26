@@ -13,6 +13,7 @@
 - push(name, template): 推送模板
 - 搜索/发现社区模板
 """
+
 from __future__ import annotations
 
 import json
@@ -249,9 +250,7 @@ class PromptRegistry:
 
     def get_categories(self) -> list[str]:
         conn = self._get_conn()
-        rows = conn.execute(
-            "SELECT DISTINCT category FROM registry_entries WHERE category != ''"
-        ).fetchall()
+        rows = conn.execute("SELECT DISTINCT category FROM registry_entries WHERE category != ''").fetchall()
         return [r["category"] for r in rows]
 
     def export_json(self, output_path: str | Path, *, name: str = "") -> Path:

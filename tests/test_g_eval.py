@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry
 from ai_prompt_toolkit.g_eval import (
     AgentEvaluator,
     AnswerRelevancyEvaluator,
@@ -13,7 +12,6 @@ from ai_prompt_toolkit.g_eval import (
     HallucinationEvaluator,
     compute_g_eval,
 )
-from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry
 
 
 class TestComputeGEval:

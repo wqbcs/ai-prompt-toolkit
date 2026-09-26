@@ -5,23 +5,26 @@ from __future__ import annotations
 import hashlib
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Any, Iterable
+from typing import TYPE_CHECKING
 
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.security.anomaly_detector import check_anomaly
+from ai_prompt_toolkit.security.defender import PromptDefender
+from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
+from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+from ai_prompt_toolkit.security.pii_detector import PIIDetector
+from ai_prompt_toolkit.security.structural_analyzer import check_structural
+from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
 from ai_prompt_toolkit.security.types import (
     InheritanceFinding,
     RiskLevel,
     ScanResult,
 )
-from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-from ai_prompt_toolkit.security.inheritance_auditor import InheritanceAuditor, TemplateProvider
-from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
-from ai_prompt_toolkit.security.pii_detector import PIIDetector
-from ai_prompt_toolkit.security.supply_chain_detector import SupplyChainDetector
 from ai_prompt_toolkit.security.unicode_guard import scan_unicode_and_canary
-from ai_prompt_toolkit.security.defender import PromptDefender
-from ai_prompt_toolkit.security.structural_analyzer import check_structural
-from ai_prompt_toolkit.security.anomaly_detector import check_anomaly
+from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
+from ai_prompt_toolkit.types import Finding, Severity
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _DEFAULT_MAX_WORKERS = 4
 

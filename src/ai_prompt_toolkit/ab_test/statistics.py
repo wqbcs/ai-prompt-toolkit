@@ -1,4 +1,5 @@
 """A/B测试统计检验——t检验、Mann-Whitney U检验、Cohen's d、置信区间、自动选择检验。"""
+
 from __future__ import annotations
 
 import math
@@ -99,23 +100,33 @@ def _normal_ppf(p: float) -> float:
         return 8.0
 
     rational_coeffs = [
-        -3.969683028665376e+01, 2.209460984245205e+02,
-        -2.759285104469687e+02, 1.383577518672690e+02,
-        -3.066479806614716e+01, 2.506628277459239e+00,
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
     ]
     rational_coeffs2 = [
-        -5.447609879822406e+01, 1.615858368580409e+02,
-        -1.556989798598866e+02, 6.680131188771972e+01,
-        -1.328068155288572e+01,
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
     ]
     rational_coeffs3 = [
-        -7.784894002430293e-03, -3.223964580411365e-01,
-        -2.400758277161838e+00, -2.549732539343734e+00,
-        4.374664141464968e+00, 2.938163982698783e+00,
+        -7.784894002430293e-03,
+        -3.223964580411365e-01,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
     ]
     rational_coeffs4 = [
-        7.784695709041462e-03, 3.224671290700398e-01,
-        2.445134137142996e+00, 3.754408661907416e+00,
+        7.784695709041462e-03,
+        3.224671290700398e-01,
+        2.445134137142996e00,
+        3.754408661907416e00,
     ]
 
     p_low = 0.02425
@@ -123,23 +134,59 @@ def _normal_ppf(p: float) -> float:
 
     if p < p_low:
         q = math.sqrt(-2.0 * math.log(p))
-        return (((((rational_coeffs3[0]*q + rational_coeffs3[1])*q + rational_coeffs3[2])*q +
-                  rational_coeffs3[3])*q + rational_coeffs3[4])*q + rational_coeffs3[5]) / \
-               ((((rational_coeffs4[0]*q + rational_coeffs4[1])*q + rational_coeffs4[2])*q +
-                 rational_coeffs4[3])*q + 1.0)
+        return (
+            (
+                (((rational_coeffs3[0] * q + rational_coeffs3[1]) * q + rational_coeffs3[2]) * q + rational_coeffs3[3])
+                * q
+                + rational_coeffs3[4]
+            )
+            * q
+            + rational_coeffs3[5]
+        ) / (
+            (((rational_coeffs4[0] * q + rational_coeffs4[1]) * q + rational_coeffs4[2]) * q + rational_coeffs4[3]) * q
+            + 1.0
+        )
     elif p <= p_high:
         q = p - 0.5
         r = q * q
-        return (((((rational_coeffs[0]*r + rational_coeffs[1])*r + rational_coeffs[2])*r +
-                  rational_coeffs[3])*r + rational_coeffs[4])*r + rational_coeffs[5]) * q / \
-               (((((rational_coeffs2[0]*r + rational_coeffs2[1])*r + rational_coeffs2[2])*r +
-                  rational_coeffs2[3])*r + rational_coeffs2[4])*r + 1.0)
+        return (
+            (
+                (
+                    (((rational_coeffs[0] * r + rational_coeffs[1]) * r + rational_coeffs[2]) * r + rational_coeffs[3])
+                    * r
+                    + rational_coeffs[4]
+                )
+                * r
+                + rational_coeffs[5]
+            )
+            * q
+            / (
+                (
+                    (
+                        ((rational_coeffs2[0] * r + rational_coeffs2[1]) * r + rational_coeffs2[2]) * r
+                        + rational_coeffs2[3]
+                    )
+                    * r
+                    + rational_coeffs2[4]
+                )
+                * r
+                + 1.0
+            )
+        )
     else:
         q = math.sqrt(-2.0 * math.log(1.0 - p))
-        return -(((((rational_coeffs3[0]*q + rational_coeffs3[1])*q + rational_coeffs3[2])*q +
-                   rational_coeffs3[3])*q + rational_coeffs3[4])*q + rational_coeffs3[5]) / \
-                ((((rational_coeffs4[0]*q + rational_coeffs4[1])*q + rational_coeffs4[2])*q +
-                  rational_coeffs4[3])*q + 1.0)
+        return -(
+            (
+                (((rational_coeffs3[0] * q + rational_coeffs3[1]) * q + rational_coeffs3[2]) * q + rational_coeffs3[3])
+                * q
+                + rational_coeffs3[4]
+            )
+            * q
+            + rational_coeffs3[5]
+        ) / (
+            (((rational_coeffs4[0] * q + rational_coeffs4[1]) * q + rational_coeffs4[2]) * q + rational_coeffs4[3]) * q
+            + 1.0
+        )
 
 
 def t_test(
@@ -482,7 +529,11 @@ def bayesian_ab_test(
         "rate_a": round(rate_a, 6),
         "rate_b": round(rate_b, 6),
         "credible_interval_diff": _compute_credible_interval(
-            alpha_a, beta_a, alpha_b, beta_b, n_samples,
+            alpha_a,
+            beta_a,
+            alpha_b,
+            beta_b,
+            n_samples,
         ),
         "significant": prob_b_better > 0.95 or prob_b_better < 0.05,
         "recommendation": "B" if prob_b_better > 0.95 else "A" if prob_b_better < 0.05 else "insufficient_evidence",
@@ -491,6 +542,7 @@ def bayesian_ab_test(
 
 def _beta_sample(alpha: float, beta: float) -> float:
     import random
+
     if alpha <= 0 or beta <= 0:
         return 0.5
     x = random.gammavariate(alpha, 1.0)
@@ -499,11 +551,14 @@ def _beta_sample(alpha: float, beta: float) -> float:
 
 
 def _compute_credible_interval(
-    alpha_a: float, beta_a: float,
-    alpha_b: float, beta_b: float,
+    alpha_a: float,
+    beta_a: float,
+    alpha_b: float,
+    beta_b: float,
     n_samples: int,
 ) -> dict[str, float]:
     import random
+
     random.seed(42)
     diffs = []
     for _ in range(n_samples):
@@ -666,32 +721,32 @@ def recommend_statistical_method(
         if sample_size < 30:
             return {
                 "recommended": "bayesian_ab",
-                "reason": f"样本量{n=}<30，贝叶斯方法更稳定",
+                "reason": f"样本量{sample_size}<30，贝叶斯方法更稳定",
                 "alternatives": ["thompson_sampling", "sprt"],
             }
         elif sample_size < 100:
             return {
                 "recommended": "bayesian_ab",
-                "reason": f"样本量{n=}中等，贝叶斯方法可提供后验概率",
+                "reason": f"样本量{sample_size}中等，贝叶斯方法可提供后验概率",
                 "alternatives": ["t_test", "sprt"],
             }
         else:
             return {
                 "recommended": "t_test",
-                "reason": f"样本量{n=}>=100，频率学派方法稳健",
+                "reason": f"样本量{sample_size}>=100，频率学派方法稳健",
                 "alternatives": ["bayesian_ab", "mann_whitney_u"],
             }
     else:
         if sample_size < 30:
             return {
                 "recommended": "mann_whitney_u",
-                "reason": f"样本量{n=}<30，非参数检验更安全",
+                "reason": f"样本量{sample_size}<30，非参数检验更安全",
                 "alternatives": ["bayesian_ab"],
             }
         else:
             return {
                 "recommended": "t_test",
-                "reason": f"样本量{n=}>=30，参数检验适用",
+                "reason": f"样本量{sample_size}>=30，参数检验适用",
                 "alternatives": ["mann_whitney_u", "bayesian_ab"],
             }
 
@@ -735,9 +790,7 @@ def power_analysis(
         adjustment = 2.0
 
     if n_per_group is None:
-        n_required = math.ceil(
-            adjustment * ((z_alpha + z_beta) / effect_size) ** 2
-        )
+        n_required = math.ceil(adjustment * ((z_alpha + z_beta) / effect_size) ** 2)
         achieved_power = _compute_power(n_required, effect_size, alpha, test_type)
         return {
             "effect_size": effect_size,
@@ -754,9 +807,7 @@ def power_analysis(
 
     achieved_power = _compute_power(n_per_group, effect_size, alpha, test_type)
 
-    n_required = math.ceil(
-        adjustment * ((z_alpha + z_beta) / effect_size) ** 2
-    )
+    n_required = math.ceil(adjustment * ((z_alpha + z_beta) / effect_size) ** 2)
     n_deficit = max(0, n_required - n_per_group)
 
     return {
@@ -843,10 +894,7 @@ def power_curve(
         "sample_sizes": sample_sizes,
         "powers": powers,
         "n_for_80_power": min_80_n,
-        "data_points": [
-            {"n_per_group": n, "power": p}
-            for n, p in zip(sample_sizes, powers)
-        ],
+        "data_points": [{"n_per_group": n, "power": p} for n, p in zip(sample_sizes, powers)],
     }
 
 

@@ -1,76 +1,138 @@
 """Lint 规则集扩展——P031-P040 Agent/RAG/Multimodal质量检查规则 (R21新增)。"""
+
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
 
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
-from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
 
 _AGENT_RULES: list[LintRule] = [
-    LintRule("P031", "Agent缺失工具调用约束", "agent", Severity.HIGH,
-             "Agent型Prompt未定义工具调用的安全边界和权限限制",
-             "添加工具调用约束: 明确可调用工具列表、参数校验规则、权限边界",
-             description_en="Agent Prompt does not define security boundaries and permission limits for tool calls",
-             remediation_en="Add tool call constraints: specify callable tool list, parameter validation rules, permission boundaries", family="agent_tool"),
-    LintRule("P032", "Agent缺失错误处理策略", "agent", Severity.MEDIUM,
-             "Agent型Prompt未定义工具调用失败时的降级策略",
-             "添加错误处理: 定义工具不可用时的fallback行为、重试策略、超时处理",
-             description_en="Agent Prompt does not define degradation strategy for tool call failures",
-             remediation_en="Add error handling: define fallback behavior when tools unavailable, retry strategy, timeout handling", family="agent_error"),
-    LintRule("P033", "Agent缺失上下文边界", "agent", Severity.HIGH,
-             "Agent型Prompt未限制上下文传递范围，可能导致信息泄露",
-             "添加上下文边界: 明确哪些信息可以传递给工具、禁止传递敏感字段",
-             description_en="Agent Prompt does not limit context passing scope, may cause information leakage",
-             remediation_en="Add context boundary: specify which information can be passed to tools, prohibit passing sensitive fields", family="agent_boundary"),
-    LintRule("P034", "Agent缺失审批机制", "agent", Severity.MEDIUM,
-             "Agent型Prompt未对高风险操作设置人工审批流程",
-             "添加审批机制: 高风险操作(删除/支付/发送)需人工确认后才可执行",
-             description_en="Agent Prompt does not set up human approval workflow for high-risk operations",
-             remediation_en="Add approval mechanism: high-risk operations (delete/payment/send) require human confirmation before execution", family="agent_approval"),
+    LintRule(
+        "P031",
+        "Agent缺失工具调用约束",
+        "agent",
+        Severity.HIGH,
+        "Agent型Prompt未定义工具调用的安全边界和权限限制",
+        "添加工具调用约束: 明确可调用工具列表、参数校验规则、权限边界",
+        description_en="Agent Prompt does not define security boundaries and permission limits for tool calls",
+        remediation_en="Add tool call constraints: specify callable tool list, parameter validation rules, permission boundaries",
+        family="agent_tool",
+    ),
+    LintRule(
+        "P032",
+        "Agent缺失错误处理策略",
+        "agent",
+        Severity.MEDIUM,
+        "Agent型Prompt未定义工具调用失败时的降级策略",
+        "添加错误处理: 定义工具不可用时的fallback行为、重试策略、超时处理",
+        description_en="Agent Prompt does not define degradation strategy for tool call failures",
+        remediation_en="Add error handling: define fallback behavior when tools unavailable, retry strategy, timeout handling",
+        family="agent_error",
+    ),
+    LintRule(
+        "P033",
+        "Agent缺失上下文边界",
+        "agent",
+        Severity.HIGH,
+        "Agent型Prompt未限制上下文传递范围，可能导致信息泄露",
+        "添加上下文边界: 明确哪些信息可以传递给工具、禁止传递敏感字段",
+        description_en="Agent Prompt does not limit context passing scope, may cause information leakage",
+        remediation_en="Add context boundary: specify which information can be passed to tools, prohibit passing sensitive fields",
+        family="agent_boundary",
+    ),
+    LintRule(
+        "P034",
+        "Agent缺失审批机制",
+        "agent",
+        Severity.MEDIUM,
+        "Agent型Prompt未对高风险操作设置人工审批流程",
+        "添加审批机制: 高风险操作(删除/支付/发送)需人工确认后才可执行",
+        description_en="Agent Prompt does not set up human approval workflow for high-risk operations",
+        remediation_en="Add approval mechanism: high-risk operations (delete/payment/send) require human confirmation before execution",
+        family="agent_approval",
+    ),
 ]
 
 _RAG_RULES: list[LintRule] = [
-    LintRule("P035", "RAG缺失检索源验证", "rag", Severity.HIGH,
-             "RAG型Prompt未验证检索内容的可信度和来源",
-             "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源",
-             description_en="RAG Prompt does not verify the credibility and source of retrieved content",
-             remediation_en="Add retrieval source validation: annotate content sources, verify credibility, distinguish trusted from untrusted sources", family="rag_retrieval"),
-    LintRule("P036", "RAG缺失幻觉检测提示", "rag", Severity.MEDIUM,
-             "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
-             "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'",
-             description_en="RAG Prompt does not instruct the model to acknowledge when retrieval results contain no answer",
-             remediation_en="Add hallucination detection instruction: 'If retrieval results do not contain relevant information, please state so explicitly'", family="rag_hallucination"),
-    LintRule("P037", "RAG缺失引用标注要求", "rag", Severity.MEDIUM,
-             "RAG型Prompt未要求模型标注答案来源的引用",
-             "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记",
-             description_en="RAG Prompt does not require the model to annotate answer source citations",
-             remediation_en="Add citation annotation: require the model to annotate source paragraph numbers or citation markers after each statement", family="rag_citation"),
+    LintRule(
+        "P035",
+        "RAG缺失检索源验证",
+        "rag",
+        Severity.HIGH,
+        "RAG型Prompt未验证检索内容的可信度和来源",
+        "添加检索源验证: 标注内容来源、验证可信度、区分可信与不可信来源",
+        description_en="RAG Prompt does not verify the credibility and source of retrieved content",
+        remediation_en="Add retrieval source validation: annotate content sources, verify credibility, distinguish trusted from untrusted sources",
+        family="rag_retrieval",
+    ),
+    LintRule(
+        "P036",
+        "RAG缺失幻觉检测提示",
+        "rag",
+        Severity.MEDIUM,
+        "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
+        "添加幻觉检测指令: '如果检索结果中未包含相关信息，请明确说明'",
+        description_en="RAG Prompt does not instruct the model to acknowledge when retrieval results contain no answer",
+        remediation_en="Add hallucination detection instruction: 'If retrieval results do not contain relevant information, please state so explicitly'",
+        family="rag_hallucination",
+    ),
+    LintRule(
+        "P037",
+        "RAG缺失引用标注要求",
+        "rag",
+        Severity.MEDIUM,
+        "RAG型Prompt未要求模型标注答案来源的引用",
+        "添加引用标注: 要求模型在每个陈述后标注来源段落编号或引用标记",
+        description_en="RAG Prompt does not require the model to annotate answer source citations",
+        remediation_en="Add citation annotation: require the model to annotate source paragraph numbers or citation markers after each statement",
+        family="rag_citation",
+    ),
 ]
 
 _MULTIMODAL_RULES: list[LintRule] = [
-    LintRule("P038", "多模态缺失输入类型验证", "multimodal", Severity.HIGH,
-             "多模态Prompt未验证输入的类型(图片/音频/视频)和大小限制",
-             "添加输入验证: 限制接受的文件类型、最大文件大小、分辨率范围",
-             description_en="Multimodal Prompt does not validate input types (image/audio/video) and size limits",
-             remediation_en="Add input validation: restrict accepted file types, max file size, resolution range", family="multimodal_input"),
-    LintRule("P039", "多模态缺失内容安全检查", "multimodal", Severity.HIGH,
-             "多模态Prompt未对非文本输入进行内容安全检查",
-             "添加内容安全: 对图片/音频执行安全检测，过滤不当内容后再处理",
-             description_en="Multimodal Prompt does not perform content safety checks on non-text inputs",
-             remediation_en="Add content safety: perform safety detection on images/audio, filter inappropriate content before processing", family="multimodal_safety"),
-    LintRule("P040", "多模态缺失降级策略", "multimodal", Severity.MEDIUM,
-             "多模态Prompt未定义非文本输入不可用时的降级方案",
-             "添加降级策略: 定义图片/音频无法处理时的纯文本fallback行为",
-             description_en="Multimodal Prompt does not define degradation strategy when non-text input is unavailable",
-             remediation_en="Add degradation strategy: define text-only fallback behavior when images/audio cannot be processed", family="multimodal_fallback"),
+    LintRule(
+        "P038",
+        "多模态缺失输入类型验证",
+        "multimodal",
+        Severity.HIGH,
+        "多模态Prompt未验证输入的类型(图片/音频/视频)和大小限制",
+        "添加输入验证: 限制接受的文件类型、最大文件大小、分辨率范围",
+        description_en="Multimodal Prompt does not validate input types (image/audio/video) and size limits",
+        remediation_en="Add input validation: restrict accepted file types, max file size, resolution range",
+        family="multimodal_input",
+    ),
+    LintRule(
+        "P039",
+        "多模态缺失内容安全检查",
+        "multimodal",
+        Severity.HIGH,
+        "多模态Prompt未对非文本输入进行内容安全检查",
+        "添加内容安全: 对图片/音频执行安全检测，过滤不当内容后再处理",
+        description_en="Multimodal Prompt does not perform content safety checks on non-text inputs",
+        remediation_en="Add content safety: perform safety detection on images/audio, filter inappropriate content before processing",
+        family="multimodal_safety",
+    ),
+    LintRule(
+        "P040",
+        "多模态缺失降级策略",
+        "multimodal",
+        Severity.MEDIUM,
+        "多模态Prompt未定义非文本输入不可用时的降级方案",
+        "添加降级策略: 定义图片/音频无法处理时的纯文本fallback行为",
+        description_en="Multimodal Prompt does not define degradation strategy when non-text input is unavailable",
+        remediation_en="Add degradation strategy: define text-only fallback behavior when images/audio cannot be processed",
+        family="multimodal_fallback",
+    ),
 ]
 
 for r in _AGENT_RULES + _RAG_RULES + _MULTIMODAL_RULES:
     _RULE_MAP[r.rule_id] = r
 
 _AGENT_TOOL_PATTERNS = [
-    re.compile(r"(?:调用|执行|运行|invoke|call|execute|run)\s*(?:工具|函数|API|插件|tool|function|plugin|API)", re.IGNORECASE),
+    re.compile(
+        r"(?:调用|执行|运行|invoke|call|execute|run)\s*(?:工具|函数|API|插件|tool|function|plugin|API)", re.IGNORECASE
+    ),
     re.compile(r"(?:tool_call|function_call|plugin_use|use_tool)", re.IGNORECASE),
     re.compile(r"(?:搜索|查询|检索|search|query|retrieve)\s*(?:工具|引擎|tool|engine)", re.IGNORECASE),
 ]
@@ -81,9 +143,15 @@ _AGENT_ERROR_PATTERNS = [
 ]
 
 _AGENT_CONTEXT_PATTERNS = [
-    re.compile(r"(?:传递|发送|转发|pass|send|forward|transmit)\s*(?:上下文|参数|信息|context|param|info)", re.IGNORECASE),
-    re.compile(r"(?:上下文|参数|信息|context|param|info)\s*(?:传递|发送|转发|pass|send|forward|transmit)", re.IGNORECASE),
-    re.compile(r"(?:禁止|不允许|不得|forbidden|not\s+allowed|must\s+not)\s*(?:传递|发送|泄露|pass|send|leak)", re.IGNORECASE),
+    re.compile(
+        r"(?:传递|发送|转发|pass|send|forward|transmit)\s*(?:上下文|参数|信息|context|param|info)", re.IGNORECASE
+    ),
+    re.compile(
+        r"(?:上下文|参数|信息|context|param|info)\s*(?:传递|发送|转发|pass|send|forward|transmit)", re.IGNORECASE
+    ),
+    re.compile(
+        r"(?:禁止|不允许|不得|forbidden|not\s+allowed|must\s+not)\s*(?:传递|发送|泄露|pass|send|leak)", re.IGNORECASE
+    ),
 ]
 
 _AGENT_APPROVAL_PATTERNS = [
@@ -97,7 +165,10 @@ _RAG_SOURCE_PATTERNS = [
 ]
 
 _RAG_HALLUCINATION_PATTERNS = [
-    re.compile(r"(?:不知|不确定|无法确定|找不到|未包含|I don't know|not sure|cannot determine|not found|not contain)", re.IGNORECASE),
+    re.compile(
+        r"(?:不知|不确定|无法确定|找不到|未包含|I don't know|not sure|cannot determine|not found|not contain)",
+        re.IGNORECASE,
+    ),
     re.compile(r"(?:如果.*不包含|如果.*未找到|if.*not\s+(?:found|contain|include))", re.IGNORECASE),
 ]
 
@@ -132,11 +203,18 @@ def check_p031(text: str) -> Finding | None:
     has_tool = any(p.search(text) for p in _AGENT_TOOL_PATTERNS)
     if not has_tool:
         return None
-    has_constraint = bool(re.search(r"(?:约束|限制|权限|边界|constraint|limit|permission|boundary|restrict|whitelist|白名单)", text, re.IGNORECASE))
+    has_constraint = bool(
+        re.search(
+            r"(?:约束|限制|权限|边界|constraint|limit|permission|boundary|restrict|whitelist|白名单)",
+            text,
+            re.IGNORECASE,
+        )
+    )
     if has_constraint:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p032(text: str) -> Finding | None:
@@ -147,8 +225,9 @@ def check_p032(text: str) -> Finding | None:
     has_error_handling = any(p.search(text) for p in _AGENT_ERROR_PATTERNS)
     if has_error_handling:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p033(text: str) -> Finding | None:
@@ -156,59 +235,78 @@ def check_p033(text: str) -> Finding | None:
     has_context = any(p.search(text) for p in _AGENT_CONTEXT_PATTERNS)
     if not has_context:
         return None
-    has_boundary = bool(re.search(r"(?:禁止|不允许|不得|敏感|脱敏|forbidden|not\s+allowed|must\s+not|sensitive|redact|mask)", text, re.IGNORECASE))
+    has_boundary = bool(
+        re.search(
+            r"(?:禁止|不允许|不得|敏感|脱敏|forbidden|not\s+allowed|must\s+not|sensitive|redact|mask)",
+            text,
+            re.IGNORECASE,
+        )
+    )
     if has_boundary:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p034(text: str) -> Finding | None:
     rule = _RULE_MAP["P034"]
-    has_high_risk = bool(re.search(r"(?:删除|支付|发送|执行命令|转账|delete|payment|send|execute|transfer)", text, re.IGNORECASE))
+    has_high_risk = bool(
+        re.search(r"(?:删除|支付|发送|执行命令|转账|delete|payment|send|execute|transfer)", text, re.IGNORECASE)
+    )
     if not has_high_risk:
         return None
     has_approval = any(p.search(text) for p in _AGENT_APPROVAL_PATTERNS)
     if has_approval:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p035(text: str) -> Finding | None:
     rule = _RULE_MAP["P035"]
-    has_retrieval = bool(re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE))
+    has_retrieval = bool(
+        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
+    )
     if not has_retrieval:
         return None
     has_source_validation = any(p.search(text) for p in _RAG_SOURCE_PATTERNS)
     if has_source_validation:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p036(text: str) -> Finding | None:
     rule = _RULE_MAP["P036"]
-    has_retrieval = bool(re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE))
+    has_retrieval = bool(
+        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
+    )
     if not has_retrieval:
         return None
     has_hallucination_check = any(p.search(text) for p in _RAG_HALLUCINATION_PATTERNS)
     if has_hallucination_check:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p037(text: str) -> Finding | None:
     rule = _RULE_MAP["P037"]
-    has_retrieval = bool(re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE))
+    has_retrieval = bool(
+        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
+    )
     if not has_retrieval:
         return None
     has_citation = any(p.search(text) for p in _RAG_CITATION_PATTERNS)
     if has_citation:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p038(text: str) -> Finding | None:
@@ -219,8 +317,9 @@ def check_p038(text: str) -> Finding | None:
     has_validation = any(p.search(text) for p in _MULTIMODAL_VALIDATION_PATTERNS)
     if has_validation:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p039(text: str) -> Finding | None:
@@ -231,8 +330,9 @@ def check_p039(text: str) -> Finding | None:
     has_safety = any(p.search(text) for p in _MULTIMODAL_SAFETY_PATTERNS)
     if has_safety:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def check_p040(text: str) -> Finding | None:
@@ -243,15 +343,25 @@ def check_p040(text: str) -> Finding | None:
     has_fallback = any(p.search(text) for p in _MULTIMODAL_FALLBACK_PATTERNS)
     if has_fallback:
         return None
-    return Finding(rule_id=rule.rule_id, severity=rule.severity,
-                   description=rule.description, remediation=rule.remediation)
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
 
 
 def run_checks_p031_p040(text: str) -> list[Finding]:
     findings: list[Finding] = []
-    for checker in [check_p031, check_p032, check_p033, check_p034,
-                    check_p035, check_p036, check_p037,
-                    check_p038, check_p039, check_p040]:
+    for checker in [
+        check_p031,
+        check_p032,
+        check_p033,
+        check_p034,
+        check_p035,
+        check_p036,
+        check_p037,
+        check_p038,
+        check_p039,
+        check_p040,
+    ]:
         result = checker(text)
         if result is not None:
             findings.append(result)

@@ -5,14 +5,14 @@ P2-02: 解决"修复哪个问题优先？"的决策疲劳
 - 支持自动修复的显示一键修复+预览
 - 不支持自动修复的显示手动修复步骤
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
 
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.linter.linter import FixAction, PromptLinter
-
+from ai_prompt_toolkit.types import Finding, Severity
 
 _SEVERITY_IMPACT = {
     Severity.CRITICAL: 15.0,
@@ -109,10 +109,13 @@ def get_fix_suggestions(
         fix_action = linter._get_fix_action(finding, text)
         auto_fixable = fix_action is not None
 
-        manual_steps = _MANUAL_FIX_STEPS.get(finding.rule_id, [
-            f"参考规则{finding.rule_id}的修复建议",
-            finding.remediation if finding.remediation else "手动调整Prompt内容",
-        ])
+        manual_steps = _MANUAL_FIX_STEPS.get(
+            finding.rule_id,
+            [
+                f"参考规则{finding.rule_id}的修复建议",
+                finding.remediation if finding.remediation else "手动调整Prompt内容",
+            ],
+        )
 
         preview = ""
         if fix_action:
@@ -120,15 +123,17 @@ def get_fix_suggestions(
             if len(fix_action.original) > 40 or len(fix_action.replacement) > 40:
                 preview += "..."
 
-        suggestions.append(FixSuggestion(
-            finding=finding,
-            score_impact=impact,
-            priority_rank=0,
-            auto_fixable=auto_fixable,
-            fix_action=fix_action,
-            manual_steps=manual_steps,
-            preview=preview,
-        ))
+        suggestions.append(
+            FixSuggestion(
+                finding=finding,
+                score_impact=impact,
+                priority_rank=0,
+                auto_fixable=auto_fixable,
+                fix_action=fix_action,
+                manual_steps=manual_steps,
+                preview=preview,
+            )
+        )
 
     suggestions.sort(key=lambda s: s.score_impact, reverse=True)
     for i, s in enumerate(suggestions, 1):

@@ -6,6 +6,7 @@
 3. CLI友好: error_code属性映射到退出码，CLI层统一处理
 4. 可追溯: 保留原始异常链(__cause__)
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -100,8 +101,14 @@ class AbTestError(ToolkitError):
 class ProviderError(AbTestError):
     """Provider连接/调用失败"""
 
-    def __init__(self, message: str, *, provider: str | None = None, endpoint: str | None = None,
-                 details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        provider: str | None = None,
+        endpoint: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         d = details or {}
         if endpoint:
             d["endpoint"] = endpoint
@@ -128,7 +135,14 @@ class MarketError(ToolkitError):
 class VersionError(ToolkitError):
     """版本管理相关错误"""
 
-    def __init__(self, message: str, *, template_id: str | None = None, version: str | None = None, details: dict[str, Any] | None = None) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        template_id: str | None = None,
+        version: str | None = None,
+        details: dict[str, Any] | None = None,
+    ) -> None:
         d = details or {}
         if template_id:
             d["template_id"] = template_id

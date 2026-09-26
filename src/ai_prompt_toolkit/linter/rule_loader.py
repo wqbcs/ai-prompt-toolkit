@@ -3,37 +3,93 @@
 支持recommended/strict/huawei-cloud三种内置规则集
 支持custom_rules_dir加载自定义规则
 """
+
 from __future__ import annotations
 
 import importlib
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Sequence
 
-from ai_prompt_toolkit.linter.rules import LintRule, get_all_rules, _ALL_RULES, _RULE_MAP
+from ai_prompt_toolkit.linter.rules import LintRule, get_all_rules
 
 logger = logging.getLogger(__name__)
 
 RULESETS: dict[str, list[str]] = {
     "recommended": [
-        "P001", "P002", "P003", "P004", "P005",
-        "P006", "P007", "P010",
-        "P011", "P012", "P016", "P017", "P018", "P020",
-        "P021", "P022", "P023", "P025", "P026", "P028", "P029",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P010",
+        "P011",
+        "P012",
+        "P016",
+        "P017",
+        "P018",
+        "P020",
+        "P021",
+        "P022",
+        "P023",
+        "P025",
+        "P026",
+        "P028",
+        "P029",
     ],
     "strict": [
-        "P001", "P002", "P003", "P004", "P005",
-        "P006", "P007", "P008", "P009", "P010",
-        "P011", "P012", "P013", "P014", "P015",
-        "P016", "P017", "P018", "P019", "P020",
-        "P021", "P022", "P023", "P024", "P025", "P026", "P027", "P028", "P029", "P030",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P005",
+        "P006",
+        "P007",
+        "P008",
+        "P009",
+        "P010",
+        "P011",
+        "P012",
+        "P013",
+        "P014",
+        "P015",
+        "P016",
+        "P017",
+        "P018",
+        "P019",
+        "P020",
+        "P021",
+        "P022",
+        "P023",
+        "P024",
+        "P025",
+        "P026",
+        "P027",
+        "P028",
+        "P029",
+        "P030",
     ],
     "huawei-cloud": [
-        "P001", "P002", "P003", "P004",
-        "P006", "P007", "P008", "P010",
-        "P012", "P016", "P017", "P018", "P020",
-        "P021", "P022", "P025", "P026", "P029",
+        "P001",
+        "P002",
+        "P003",
+        "P004",
+        "P006",
+        "P007",
+        "P008",
+        "P010",
+        "P012",
+        "P016",
+        "P017",
+        "P018",
+        "P020",
+        "P021",
+        "P022",
+        "P025",
+        "P026",
+        "P029",
     ],
 }
 
@@ -42,10 +98,13 @@ class RuleLoader:
     def __init__(self) -> None:
         self._custom_rules: list[LintRule] = []
 
-    def load(self, ruleset: str = "recommended",
-             custom_rules_dir: str | Path | None = None,
-             include: list[str] | None = None,
-             exclude: list[str] | None = None) -> list[LintRule]:
+    def load(
+        self,
+        ruleset: str = "recommended",
+        custom_rules_dir: str | Path | None = None,
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> list[LintRule]:
         base_ids = set(RULESETS.get(ruleset, RULESETS["recommended"]))
         rules: dict[str, LintRule] = {}
         for rule in get_all_rules():
@@ -58,8 +117,12 @@ class RuleLoader:
                     existing = rules[rule.rule_id]
                     if rule.severity > existing.severity:
                         rules[rule.rule_id] = rule
-                        logger.info("规则冲突 %s: 使用更严格级别 %s → %s",
-                                    rule.rule_id, existing.severity.value, rule.severity.value)
+                        logger.info(
+                            "规则冲突 %s: 使用更严格级别 %s → %s",
+                            rule.rule_id,
+                            existing.severity.value,
+                            rule.severity.value,
+                        )
                 else:
                     rules[rule.rule_id] = rule
         if include:

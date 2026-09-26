@@ -1,11 +1,10 @@
 """Scanner单元测试——注入检测5规则、继承链审计。"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.security.scanner import Scanner
-from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider, InheritanceAuditor
+from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+from ai_prompt_toolkit.security.scanner import Scanner
 from ai_prompt_toolkit.security.types import RiskLevel
 from ai_prompt_toolkit.types import Severity
 
@@ -60,6 +59,7 @@ class TestInjectionDetection:
 
     def test_custom_rule(self):
         from ai_prompt_toolkit.security.types import InjectionRule
+
         detector = InjectionDetector()
         custom = InjectionRule(
             rule_id="INJ-CUSTOM",
@@ -93,10 +93,12 @@ class TestInheritanceAudit:
         assert len(findings) == 0
 
     def test_normal_inheritance(self):
-        provider = self._make_provider({
-            "child": {"parent_id": "parent"},
-            "parent": {},
-        })
+        provider = self._make_provider(
+            {
+                "child": {"parent_id": "parent"},
+                "parent": {},
+            }
+        )
         auditor = InheritanceAuditor(provider)
         findings = auditor.audit("child")
         issue_types = [f.issue_type for f in findings]
@@ -104,44 +106,52 @@ class TestInheritanceAudit:
         assert "broken" not in issue_types
 
     def test_circular_inheritance(self):
-        provider = self._make_provider({
-            "a": {"parent_id": "b"},
-            "b": {"parent_id": "a"},
-        })
+        provider = self._make_provider(
+            {
+                "a": {"parent_id": "b"},
+                "b": {"parent_id": "a"},
+            }
+        )
         auditor = InheritanceAuditor(provider)
         findings = auditor.audit("a")
         issue_types = [f.issue_type for f in findings]
         assert "circular" in issue_types
 
     def test_broken_inheritance(self):
-        provider = self._make_provider({
-            "child": {"parent_id": "nonexistent"},
-        })
+        provider = self._make_provider(
+            {
+                "child": {"parent_id": "nonexistent"},
+            }
+        )
         auditor = InheritanceAuditor(provider)
         findings = auditor.audit("child")
         issue_types = [f.issue_type for f in findings]
         assert "broken" in issue_types
 
     def test_depth_exceeded(self):
-        provider = self._make_provider({
-            "l0": {"parent_id": "l1"},
-            "l1": {"parent_id": "l2"},
-            "l2": {"parent_id": "l3"},
-            "l3": {"parent_id": "l4"},
-            "l4": {"parent_id": "l5"},
-            "l5": {"parent_id": "l6"},
-            "l6": {},
-        })
+        provider = self._make_provider(
+            {
+                "l0": {"parent_id": "l1"},
+                "l1": {"parent_id": "l2"},
+                "l2": {"parent_id": "l3"},
+                "l3": {"parent_id": "l4"},
+                "l4": {"parent_id": "l5"},
+                "l5": {"parent_id": "l6"},
+                "l6": {},
+            }
+        )
         auditor = InheritanceAuditor(provider, max_depth=5)
         findings = auditor.audit("l0")
         depth_issues = [f for f in findings if f.issue_type == "depth_exceeded"]
         assert len(depth_issues) > 0
 
     def test_risk_propagation(self):
-        provider = self._make_provider({
-            "child": {"parent_id": "parent"},
-            "parent": {"risk_tags": ["pii", "sensitive"]},
-        })
+        provider = self._make_provider(
+            {
+                "child": {"parent_id": "parent"},
+                "parent": {"risk_tags": ["pii", "sensitive"]},
+            }
+        )
         auditor = InheritanceAuditor(provider)
         findings = auditor.audit("child")
         risk_issues = [f for f in findings if f.issue_type == "risk_propagation"]

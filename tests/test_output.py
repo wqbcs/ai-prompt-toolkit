@@ -1,9 +1,6 @@
 """R30: CLI输出体验增强 测试套件"""
+
 from __future__ import annotations
-
-from io import StringIO
-
-import pytest
 
 from ai_prompt_toolkit.output import (
     ScanSummary,
@@ -55,10 +52,12 @@ class TestBasicOutput:
 
     def test_findings_list_with_data(self):
         console.print = lambda *a, **kw: None
-        findings_list([
-            {"severity": "high", "rule_id": "P001", "description": "test"},
-            {"severity": "low", "rule_id": "P002", "description": "test2", "remediation": "fix"},
-        ])
+        findings_list(
+            [
+                {"severity": "high", "rule_id": "P001", "description": "test"},
+                {"severity": "low", "rule_id": "P002", "description": "test2", "remediation": "fix"},
+            ]
+        )
 
 
 class TestCreateProgress:
@@ -124,8 +123,20 @@ class TestPrintVersionTree:
     def test_basic_version_tree(self):
         console.print = lambda *a, **kw: None
         versions = [
-            {"version_id": "abc123456789", "prompt_name": "test", "score": 92.5, "source": "gepa", "created_at": "2025-01-01"},
-            {"version_id": "def123456789", "prompt_name": "test", "score": 65.0, "source": "manual", "created_at": "2025-01-02"},
+            {
+                "version_id": "abc123456789",
+                "prompt_name": "test",
+                "score": 92.5,
+                "source": "gepa",
+                "created_at": "2025-01-01",
+            },
+            {
+                "version_id": "def123456789",
+                "prompt_name": "test",
+                "score": 65.0,
+                "source": "manual",
+                "created_at": "2025-01-02",
+            },
         ]
         print_version_tree(versions)
 

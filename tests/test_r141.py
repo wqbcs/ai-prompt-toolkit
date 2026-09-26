@@ -1,10 +1,14 @@
 """R141: P226-P230 ArkTS安全规则"""
-import pytest
-from ai_prompt_toolkit.linter.rules import get_all_rules, run_all_checks
-from ai_prompt_toolkit.linter.rules_p226_p230 import (
-    check_p226, check_p227, check_p228, check_p229, check_p230,
-)
+
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.linter.rules_p226_p230 import (
+    check_p226,
+    check_p227,
+    check_p228,
+    check_p229,
+    check_p230,
+)
 
 
 def test_p226_ts_ignore():

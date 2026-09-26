@@ -1,10 +1,9 @@
 """测试安全严重性评分体系"""
+
 from __future__ import annotations
 
-import pytest
-
+from ai_prompt_toolkit.security.scorer import SecurityScore, SecurityScorer
 from ai_prompt_toolkit.types import Finding, Severity
-from ai_prompt_toolkit.security.scorer import SecurityScorer, SecurityScore
 
 
 class TestSecurityScorer:
@@ -69,12 +68,22 @@ class TestSecurityScorer:
 
     def test_severity_label(self):
         score = SecurityScore(
-            base_score=9.5, impact_score=9.0, exploitability_score=8.0,
+            base_score=9.5,
+            impact_score=9.0,
+            exploitability_score=8.0,
             severity=Severity.CRITICAL,
-            attack_vector=__import__("ai_prompt_toolkit.security.scorer", fromlist=["AttackVector"]).AttackVector.USER_INPUT,
-            attack_complexity=__import__("ai_prompt_toolkit.security.scorer", fromlist=["AttackComplexity"]).AttackComplexity.LOW,
-            privileges_required=__import__("ai_prompt_toolkit.security.scorer", fromlist=["PrivilegesRequired"]).PrivilegesRequired.NONE,
-            user_interaction=__import__("ai_prompt_toolkit.security.scorer", fromlist=["UserInteraction"]).UserInteraction.NONE,
+            attack_vector=__import__(
+                "ai_prompt_toolkit.security.scorer", fromlist=["AttackVector"]
+            ).AttackVector.USER_INPUT,
+            attack_complexity=__import__(
+                "ai_prompt_toolkit.security.scorer", fromlist=["AttackComplexity"]
+            ).AttackComplexity.LOW,
+            privileges_required=__import__(
+                "ai_prompt_toolkit.security.scorer", fromlist=["PrivilegesRequired"]
+            ).PrivilegesRequired.NONE,
+            user_interaction=__import__(
+                "ai_prompt_toolkit.security.scorer", fromlist=["UserInteraction"]
+            ).UserInteraction.NONE,
             scope=__import__("ai_prompt_toolkit.security.scorer", fromlist=["ImpactScope"]).ImpactScope.CHANGED,
         )
         assert score.severity_label == "CRITICAL"

@@ -12,6 +12,7 @@
 4. 分隔符注入 — 试图用特殊分隔符突破Prompt边界
 5. 格式操控 — 利用Markdown/HTML/XML标签操控输出
 """
+
 from __future__ import annotations
 
 import math
@@ -46,45 +47,69 @@ class StructuralAnalysis:
 
 
 _BOUNDARY_PATTERNS = [
-    (re.compile(r'<\|im_start\|>', re.IGNORECASE), "ChatML标记注入 — 试图突破对话边界", 0.9),
-    (re.compile(r'<\|im_end\|>', re.IGNORECASE), "ChatML结束标记注入", 0.85),
-    (re.compile(r'\[INST\]', re.IGNORECASE), "Llama指令标记注入", 0.85),
-    (re.compile(r'<<SYS>>', re.IGNORECASE), "Llama系统标记注入", 0.9),
-    (re.compile(r'<\|system\|>', re.IGNORECASE), "系统角色标记注入", 0.9),
-    (re.compile(r'<\|assistant\|>', re.IGNORECASE), "助手角色标记注入", 0.8),
-    (re.compile(r'<\|user\|>', re.IGNORECASE), "用户角色标记注入", 0.8),
-    (re.compile(r'###\s*Instruction\s*:', re.IGNORECASE), "Alpaca指令标记注入", 0.75),
-    (re.compile(r'System\s*:', re.IGNORECASE), "系统指令前缀注入", 0.7),
-    (re.compile(r'Human\s*:', re.IGNORECASE), "人类角色前缀注入", 0.6),
-    (re.compile(r'Assistant\s*:', re.IGNORECASE), "助手角色前缀注入", 0.6),
+    (re.compile(r"<\|im_start\|>", re.IGNORECASE), "ChatML标记注入 — 试图突破对话边界", 0.9),
+    (re.compile(r"<\|im_end\|>", re.IGNORECASE), "ChatML结束标记注入", 0.85),
+    (re.compile(r"\[INST\]", re.IGNORECASE), "Llama指令标记注入", 0.85),
+    (re.compile(r"<<SYS>>", re.IGNORECASE), "Llama系统标记注入", 0.9),
+    (re.compile(r"<\|system\|>", re.IGNORECASE), "系统角色标记注入", 0.9),
+    (re.compile(r"<\|assistant\|>", re.IGNORECASE), "助手角色标记注入", 0.8),
+    (re.compile(r"<\|user\|>", re.IGNORECASE), "用户角色标记注入", 0.8),
+    (re.compile(r"###\s*Instruction\s*:", re.IGNORECASE), "Alpaca指令标记注入", 0.75),
+    (re.compile(r"System\s*:", re.IGNORECASE), "系统指令前缀注入", 0.7),
+    (re.compile(r"Human\s*:", re.IGNORECASE), "人类角色前缀注入", 0.6),
+    (re.compile(r"Assistant\s*:", re.IGNORECASE), "助手角色前缀注入", 0.6),
 ]
 
 _CIALDINI_PATTERNS = [
-    (re.compile(r'(?:我是|I am|I\'m)\s*(?:管理员|开发者|admin|developer|owner|superuser)', re.IGNORECASE),
-     "权威操控 — 声称具有特权身份", "authority", 0.8),
-    (re.compile(r'(?:紧急|urgent|immediately|right now|asap|马上)', re.IGNORECASE),
-     "稀缺操控 — 制造紧迫感绕过安全检查", "scarcity", 0.5),
-    (re.compile(r'(?:我们|we|us)\s+(?:都知道|all know|agree|同意)', re.IGNORECASE),
-     "社会认同操控 — 利用群体压力", "social_proof", 0.4),
-    (re.compile(r'(?:你之前说过|you said before|you promised|你承诺过)', re.IGNORECASE),
-     "一致性操控 — 利用之前承诺迫使一致", "consistency", 0.5),
-    (re.compile(r'(?:帮帮我|help me out|please help|求求你)', re.IGNORECASE),
-     "互惠操控 — 利用感恩心理", "reciprocity", 0.3),
-    (re.compile(r'(?:我喜欢你|I like you|你是最好的|you are the best)', re.IGNORECASE),
-     "喜好操控 — 利用好感心理", "liking", 0.2),
+    (
+        re.compile(r"(?:我是|I am|I\'m)\s*(?:管理员|开发者|admin|developer|owner|superuser)", re.IGNORECASE),
+        "权威操控 — 声称具有特权身份",
+        "authority",
+        0.8,
+    ),
+    (
+        re.compile(r"(?:紧急|urgent|immediately|right now|asap|马上)", re.IGNORECASE),
+        "稀缺操控 — 制造紧迫感绕过安全检查",
+        "scarcity",
+        0.5,
+    ),
+    (
+        re.compile(r"(?:我们|we|us)\s+(?:都知道|all know|agree|同意)", re.IGNORECASE),
+        "社会认同操控 — 利用群体压力",
+        "social_proof",
+        0.4,
+    ),
+    (
+        re.compile(r"(?:你之前说过|you said before|you promised|你承诺过)", re.IGNORECASE),
+        "一致性操控 — 利用之前承诺迫使一致",
+        "consistency",
+        0.5,
+    ),
+    (
+        re.compile(r"(?:帮帮我|help me out|please help|求求你)", re.IGNORECASE),
+        "互惠操控 — 利用感恩心理",
+        "reciprocity",
+        0.3,
+    ),
+    (
+        re.compile(r"(?:我喜欢你|I like you|你是最好的|you are the best)", re.IGNORECASE),
+        "喜好操控 — 利用好感心理",
+        "liking",
+        0.2,
+    ),
 ]
 
 _DELIMITER_PATTERNS = [
-    re.compile(r'---+\s*\n.*?\n---+', re.DOTALL),
-    re.compile(r'===+\s*\n.*?\n===+', re.DOTALL),
-    re.compile(r'\*\*\*+\s*\n.*?\n\*\*\*+', re.DOTALL),
+    re.compile(r"---+\s*\n.*?\n---+", re.DOTALL),
+    re.compile(r"===+\s*\n.*?\n===+", re.DOTALL),
+    re.compile(r"\*\*\*+\s*\n.*?\n\*\*\*+", re.DOTALL),
 ]
 
 _FORMAT_MANIPULATION_PATTERNS = [
-    (re.compile(r'<script[^>]*>', re.IGNORECASE), "Script标签注入"),
-    (re.compile(r'<iframe[^>]*>', re.IGNORECASE), "Iframe标签注入"),
-    (re.compile(r'javascript\s*:', re.IGNORECASE), "JavaScript协议注入"),
-    (re.compile(r'data\s*:\s*text/html', re.IGNORECASE), "Data URI注入"),
+    (re.compile(r"<script[^>]*>", re.IGNORECASE), "Script标签注入"),
+    (re.compile(r"<iframe[^>]*>", re.IGNORECASE), "Iframe标签注入"),
+    (re.compile(r"javascript\s*:", re.IGNORECASE), "JavaScript协议注入"),
+    (re.compile(r"data\s*:\s*text/html", re.IGNORECASE), "Data URI注入"),
     (re.compile(r'on\w+\s*=\s*["\']', re.IGNORECASE), "事件处理器注入"),
 ]
 
@@ -109,12 +134,14 @@ def _check_boundary(text: str) -> tuple[float, list[dict[str, Any]]]:
         matches = pattern.findall(text)
         if matches:
             score += weight * len(matches)
-            findings.append({
-                "type": "boundary",
-                "description": desc,
-                "count": len(matches),
-                "weight": weight,
-            })
+            findings.append(
+                {
+                    "type": "boundary",
+                    "description": desc,
+                    "count": len(matches),
+                    "weight": weight,
+                }
+            )
     return min(1.0, score), findings
 
 
@@ -125,13 +152,15 @@ def _check_manipulation(text: str) -> tuple[float, list[dict[str, Any]]]:
         matches = pattern.findall(text)
         if matches:
             score += weight * min(len(matches), 3)
-            findings.append({
-                "type": "manipulation",
-                "principle": principle,
-                "description": desc,
-                "count": len(matches),
-                "weight": weight,
-            })
+            findings.append(
+                {
+                    "type": "manipulation",
+                    "principle": principle,
+                    "description": desc,
+                    "count": len(matches),
+                    "weight": weight,
+                }
+            )
     return min(1.0, score), findings
 
 
@@ -142,11 +171,13 @@ def _check_delimiters(text: str) -> tuple[int, list[dict[str, Any]]]:
         matches = pattern.findall(text)
         if matches:
             count += len(matches)
-            findings.append({
-                "type": "delimiter_injection",
-                "description": "可疑分隔符块 — 可能试图突破Prompt边界",
-                "count": len(matches),
-            })
+            findings.append(
+                {
+                    "type": "delimiter_injection",
+                    "description": "可疑分隔符块 — 可能试图突破Prompt边界",
+                    "count": len(matches),
+                }
+            )
     return count, findings
 
 
@@ -157,11 +188,13 @@ def _check_format_manipulation(text: str) -> tuple[int, list[dict[str, Any]]]:
         matches = pattern.findall(text)
         if matches:
             count += len(matches)
-            findings.append({
-                "type": "format_manipulation",
-                "description": desc,
-                "count": len(matches),
-            })
+            findings.append(
+                {
+                    "type": "format_manipulation",
+                    "description": desc,
+                    "count": len(matches),
+                }
+            )
     return count, findings
 
 
@@ -177,20 +210,31 @@ def analyze_structure(text: str) -> StructuralAnalysis:
     entropy_risk = 0.0
     if entropy > 5.5:
         entropy_risk = 0.3
-        all_findings.append({
-            "type": "entropy_high",
-            "description": f"Shannon熵异常偏高({entropy:.2f}) — 可能存在编码攻击",
-            "value": round(entropy, 4),
-        })
+        all_findings.append(
+            {
+                "type": "entropy_high",
+                "description": f"Shannon熵异常偏高({entropy:.2f}) — 可能存在编码攻击",
+                "value": round(entropy, 4),
+            }
+        )
     elif entropy < 1.5 and len(text) > 100:
         entropy_risk = 0.2
-        all_findings.append({
-            "type": "entropy_low",
-            "description": f"Shannon熵异常偏低({entropy:.2f}) — 可能存在重复注入",
-            "value": round(entropy, 4),
-        })
+        all_findings.append(
+            {
+                "type": "entropy_low",
+                "description": f"Shannon熵异常偏低({entropy:.2f}) — 可能存在重复注入",
+                "value": round(entropy, 4),
+            }
+        )
 
-    risk_score = min(1.0, boundary_score * 0.4 + manipulation_score * 0.25 + entropy_risk * 0.15 + delimiter_count * 0.1 + format_count * 0.1)
+    risk_score = min(
+        1.0,
+        boundary_score * 0.4
+        + manipulation_score * 0.25
+        + entropy_risk * 0.15
+        + delimiter_count * 0.1
+        + format_count * 0.1,
+    )
 
     return StructuralAnalysis(
         boundary_score=boundary_score,

@@ -1,7 +1,8 @@
 """pytest配置和共享fixtures"""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent
 SCENARIOS_DIR = PROJECT_ROOT / "_scenarios"

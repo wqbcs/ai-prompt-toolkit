@@ -1,9 +1,8 @@
 """R64: 语义Diff测试"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.prompt_diff import semantic_diff, SemanticDiffReport, SemanticChange
+from ai_prompt_toolkit.prompt_diff import SemanticChange, semantic_diff
 
 
 class TestSemanticDiff:
@@ -61,7 +60,9 @@ class TestSemanticDiff:
         assert "严重" in report.summary or "critical" in report.summary.lower()
 
     def test_semantic_change_to_dict(self):
-        c = SemanticChange(change_type="section_modified", section="role", description="角色变更", impact="high", detail="3行变更")
+        c = SemanticChange(
+            change_type="section_modified", section="role", description="角色变更", impact="high", detail="3行变更"
+        )
         d = c.to_dict()
         assert d["change_type"] == "section_modified"
         assert d["impact"] == "high"

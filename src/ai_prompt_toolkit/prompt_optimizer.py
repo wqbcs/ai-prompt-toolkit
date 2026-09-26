@@ -7,16 +7,13 @@ P3-01: 自动迭代优化Prompt，提升评估得分
 - 评估器注册表集成: 支持使用任意评估器作为优化目标
 - 迭代控制: 最大轮次+最小改进阈值+收敛检测
 """
+
 from __future__ import annotations
 
-import copy
-import hashlib
 import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any
-
-from ai_prompt_toolkit.types import Finding, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -119,6 +116,7 @@ class OptimizationResult:
 
 def _detect_issues(text: str) -> list[str]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
     linter = PromptLinter()
     result = linter.lint("optimize", text)
     issues = []
@@ -148,6 +146,7 @@ def _detect_issues(text: str) -> list[str]:
 
 def _evaluate_text(text: str) -> float:
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
     linter = PromptLinter()
     result = linter.lint("optimize", text)
     return result.score
@@ -270,43 +269,80 @@ def optimize_prompt(
 
 def verify_assertions(text: str, assertions: list[str]) -> dict[str, Any]:
     import re as _re
+
     results: list[dict[str, Any]] = []
     all_passed = True
     for assertion in assertions:
         passed = False
         if assertion.startswith("contains:"):
-            keyword = assertion[len("contains:"):]
+            keyword = assertion[len("contains:") :]
             passed = keyword in text
-            results.append({"assertion": assertion, "passed": passed, "detail": f"关键词'{keyword}'{'存在' if passed else '缺失'}"})
+            results.append(
+                {"assertion": assertion, "passed": passed, "detail": f"关键词'{keyword}'{'存在' if passed else '缺失'}"}
+            )
         elif assertion.startswith("not_contains:"):
-            keyword = assertion[len("not_contains:"):]
+            keyword = assertion[len("not_contains:") :]
             passed = keyword not in text
-            results.append({"assertion": assertion, "passed": passed, "detail": f"关键词'{keyword}'{'不存在' if passed else '存在(违规)'}"})
+            results.append(
+                {
+                    "assertion": assertion,
+                    "passed": passed,
+                    "detail": f"关键词'{keyword}'{'不存在' if passed else '存在(违规)'}",
+                }
+            )
         elif assertion.startswith("regex:"):
-            pattern = assertion[len("regex:"):]
+            pattern = assertion[len("regex:") :]
             try:
                 passed = bool(_re.search(pattern, text))
-                results.append({"assertion": assertion, "passed": passed, "detail": f"正则'{pattern}'{'匹配' if passed else '不匹配'}"})
+                results.append(
+                    {
+                        "assertion": assertion,
+                        "passed": passed,
+                        "detail": f"正则'{pattern}'{'匹配' if passed else '不匹配'}",
+                    }
+                )
             except _re.error:
                 results.append({"assertion": assertion, "passed": False, "detail": f"正则语法错误: {pattern}"})
         elif assertion.startswith("length_min:"):
-            min_len = int(assertion[len("length_min:"):])
+            min_len = int(assertion[len("length_min:") :])
             passed = len(text) >= min_len
-            results.append({"assertion": assertion, "passed": passed, "detail": f"长度{len(text)}{'≥' if passed else '<'}{min_len}"})
+            results.append(
+                {
+                    "assertion": assertion,
+                    "passed": passed,
+                    "detail": f"长度{len(text)}{'≥' if passed else '<'}{min_len}",
+                }
+            )
         elif assertion.startswith("length_max:"):
-            max_len = int(assertion[len("length_max:"):])
+            max_len = int(assertion[len("length_max:") :])
             passed = len(text) <= max_len
-            results.append({"assertion": assertion, "passed": passed, "detail": f"长度{len(text)}{'≤' if passed else '>'}{max_len}"})
+            results.append(
+                {
+                    "assertion": assertion,
+                    "passed": passed,
+                    "detail": f"长度{len(text)}{'≤' if passed else '>'}{max_len}",
+                }
+            )
         elif assertion.startswith("no_pii"):
             from ai_prompt_toolkit.security.pii_detector import PIIDetector
+
             finding = PIIDetector().check(text)
             passed = finding is None
-            results.append({"assertion": assertion, "passed": passed, "detail": "PII检测" + ("通过" if passed else "发现PII")})
+            results.append(
+                {"assertion": assertion, "passed": passed, "detail": "PII检测" + ("通过" if passed else "发现PII")}
+            )
         elif assertion.startswith("no_injection"):
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
             findings = InjectionDetector().detect(text)
             passed = len(findings) == 0
-            results.append({"assertion": assertion, "passed": passed, "detail": f"注入检测{'通过' if passed else f'发现{len(findings)}个风险'}"})
+            results.append(
+                {
+                    "assertion": assertion,
+                    "passed": passed,
+                    "detail": f"注入检测{'通过' if passed else f'发现{len(findings)}个风险'}",
+                }
+            )
         else:
             passed = True
             results.append({"assertion": assertion, "passed": True, "detail": "未知断言类型, 默认通过"})

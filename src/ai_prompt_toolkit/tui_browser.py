@@ -6,9 +6,9 @@
 - 代码片段: 展示问题代码上下文
 - 统计摘要: 分类统计+评分
 """
+
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 from rich.console import Console, Group
@@ -16,7 +16,6 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
-
 
 _SEVERITY_STYLES = {
     "critical": ("bold red", "CRITICAL"),
@@ -61,10 +60,12 @@ def render_interactive_results(
             for f in cat_findings:
                 sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 style, _ = _SEVERITY_STYLES.get(sev, ("", ""))
-                cat_node.add(Text.assemble(
-                    _sev_text(sev),
-                    Text(f" {f.rule_id}: {f.description}"),
-                ))
+                cat_node.add(
+                    Text.assemble(
+                        _sev_text(sev),
+                        Text(f" {f.rule_id}: {f.description}"),
+                    )
+                )
 
     table = Table(title="Summary", show_header=True, header_style="bold magenta")
     table.add_column("Metric", style="cyan")
@@ -84,7 +85,9 @@ def render_interactive_results(
             table.add_row(label, f"[{style}]{sev_counts[sev]}[/{style}]")
 
     grade = _score_to_grade(avg_score)
-    grade_style = {"S": "bold green", "A": "green", "B": "yellow", "C": "yellow", "D": "red", "F": "bold red"}.get(grade, "")
+    grade_style = {"S": "bold green", "A": "green", "B": "yellow", "C": "yellow", "D": "red", "F": "bold red"}.get(
+        grade, ""
+    )
     table.add_row("Grade", f"[{grade_style}]{grade}[/{grade_style}]")
 
     group = Group(tree, table)

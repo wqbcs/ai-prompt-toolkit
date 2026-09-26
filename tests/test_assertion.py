@@ -1,13 +1,14 @@
 """断言系统测试 — AssertType/AssertionConfig/AssertionResult/AssertionEngine/Levenshtein"""
+
 from __future__ import annotations
 
 import pytest
 
 from ai_prompt_toolkit.assertion import (
-    AssertType,
     AssertionConfig,
-    AssertionResult,
     AssertionEngine,
+    AssertionResult,
+    AssertType,
 )
 from ai_prompt_toolkit.assertion.engine import _levenshtein_distance
 

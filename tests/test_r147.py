@@ -1,8 +1,9 @@
 """R147: lint --json-diff结构化对比输出"""
+
 import json
-import pytest
-from ai_prompt_toolkit.linter.baseline import BaselineSnapshot, BaselineDiff, compare_baseline
-from ai_prompt_toolkit.linter.structured_diff import generate_structured_diff, format_diff_json
+
+from ai_prompt_toolkit.linter.baseline import BaselineSnapshot, compare_baseline
+from ai_prompt_toolkit.linter.structured_diff import format_diff_json, generate_structured_diff
 
 
 def test_generate_structured_diff_improved():

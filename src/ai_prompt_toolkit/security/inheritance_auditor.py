@@ -6,19 +6,15 @@ from typing import Any, Protocol
 
 from ai_prompt_toolkit.security.types import InheritanceFinding, RiskLevel
 
-
 MAX_INHERITANCE_DEPTH = 5
 
 
 class TemplateProvider(Protocol):
-    def get_parent_id(self, template_id: str) -> str | None:
-        ...
+    def get_parent_id(self, template_id: str) -> str | None: ...
 
-    def template_exists(self, template_id: str) -> bool:
-        ...
+    def template_exists(self, template_id: str) -> bool: ...
 
-    def get_risk_tags(self, template_id: str) -> list[str]:
-        ...
+    def get_risk_tags(self, template_id: str) -> list[str]: ...
 
 
 class DictTemplateProvider:
@@ -66,7 +62,7 @@ class InheritanceAuditor:
         findings: list[InheritanceFinding],
     ) -> None:
         if current_id in path_visited:
-            cycle_chain = chain + [current_id]
+            cycle_chain = [*chain, current_id]
             findings.append(
                 InheritanceFinding(
                     template_id=chain[0] if chain else current_id,
@@ -90,7 +86,7 @@ class InheritanceAuditor:
                     InheritanceFinding(
                         template_id=chain[0],
                         parent_id=current_id,
-                        chain=chain + [current_id],
+                        chain=[*chain, current_id],
                         depth=len(chain),
                         risk_level=RiskLevel.HIGH,
                         issue_type="broken",

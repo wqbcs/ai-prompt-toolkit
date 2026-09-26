@@ -2,6 +2,7 @@
 
 参考: lintlang的verdict-based gating机制
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -92,7 +93,11 @@ class QualityGate:
             verdict = Verdict.FAIL
             reasons.append(f"发现 {counts[Severity.CRITICAL]} 个严重(Critical)问题")
 
-        if verdict != Verdict.FAIL and self._config.get("fail_on_high") and counts[Severity.HIGH] > (self._config.get("fail_on_high_count", 0)):
+        if (
+            verdict != Verdict.FAIL
+            and self._config.get("fail_on_high")
+            and counts[Severity.HIGH] > (self._config.get("fail_on_high_count", 0))
+        ):
             verdict = Verdict.FAIL
             reasons.append(f"发现 {counts[Severity.HIGH]} 个高级(High)问题")
 
@@ -103,7 +108,11 @@ class QualityGate:
                 reasons.append(f"规则 {f.rule_id} 触发FAIL门禁")
                 break
 
-        if verdict == Verdict.PASS and self._config.get("warn_on_medium") and counts[Severity.MEDIUM] > (self._config.get("warn_on_medium_count", 3)):
+        if (
+            verdict == Verdict.PASS
+            and self._config.get("warn_on_medium")
+            and counts[Severity.MEDIUM] > (self._config.get("warn_on_medium_count", 3))
+        ):
             verdict = Verdict.WARN
             reasons.append(f"发现 {counts[Severity.MEDIUM]} 个中级(Medium)问题，超过告警阈值")
 

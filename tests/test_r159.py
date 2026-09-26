@@ -1,9 +1,13 @@
 """R159: P251包幻觉+P252-P255 PII增强探测"""
-import pytest
-from ai_prompt_toolkit.linter.rules_p251_p255 import (
-    check_p251, check_p252, check_p253, check_p254, check_p255,
-)
+
 from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.linter.rules_p251_p255 import (
+    check_p251,
+    check_p252,
+    check_p253,
+    check_p254,
+    check_p255,
+)
 
 
 def test_p251_hallucinated_package():

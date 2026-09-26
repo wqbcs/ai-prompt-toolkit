@@ -15,6 +15,7 @@ rules:
 
 支持: 正则匹配、关键词匹配、长度检查、存在性检查
 """
+
 from __future__ import annotations
 
 import re
@@ -22,9 +23,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _SEVERITY_MAP = {
     "low": Severity.LOW,
@@ -55,12 +55,14 @@ class CustomRuleDef:
 def _load_yaml(path: Path) -> dict[str, Any]:
     try:
         import yaml
+
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     except ImportError:
         import json
+
         if path.suffix == ".json":
             return json.loads(path.read_text(encoding="utf-8"))
-        raise ImportError("自定义规则需要PyYAML: pip install pyyaml")
+        raise ImportError("自定义规则需要PyYAML: pip install pyyaml") from None
 
 
 def load_custom_rules(rules_dir: str | Path) -> list[CustomRuleDef]:
@@ -72,34 +74,38 @@ def load_custom_rules(rules_dir: str | Path) -> list[CustomRuleDef]:
         data = _load_yaml(f)
         for r in data.get("rules", []):
             severity = _SEVERITY_MAP.get(r.get("severity", "medium"), Severity.MEDIUM)
-            custom_rules.append(CustomRuleDef(
-                rule_id=r.get("id", "CUSTOM000"),
-                name=r.get("name", ""),
-                category=r.get("category", "custom"),
-                severity=severity,
-                pattern=r.get("pattern", ""),
-                keywords=r.get("keywords", []),
-                message=r.get("message", ""),
-                remediation=r.get("remediation", ""),
-                check_type=r.get("check_type", "regex"),
-            ))
+            custom_rules.append(
+                CustomRuleDef(
+                    rule_id=r.get("id", "CUSTOM000"),
+                    name=r.get("name", ""),
+                    category=r.get("category", "custom"),
+                    severity=severity,
+                    pattern=r.get("pattern", ""),
+                    keywords=r.get("keywords", []),
+                    message=r.get("message", ""),
+                    remediation=r.get("remediation", ""),
+                    check_type=r.get("check_type", "regex"),
+                )
+            )
     for f in sorted(rules_dir.glob("*.yaml")):
         if f.suffix == ".G.yml":
             continue
         data = _load_yaml(f)
         for r in data.get("rules", []):
             severity = _SEVERITY_MAP.get(r.get("severity", "medium"), Severity.MEDIUM)
-            custom_rules.append(CustomRuleDef(
-                rule_id=r.get("id", "CUSTOM000"),
-                name=r.get("name", ""),
-                category=r.get("category", "custom"),
-                severity=severity,
-                pattern=r.get("pattern", ""),
-                keywords=r.get("keywords", []),
-                message=r.get("message", ""),
-                remediation=r.get("remediation", ""),
-                check_type=r.get("check_type", "regex"),
-            ))
+            custom_rules.append(
+                CustomRuleDef(
+                    rule_id=r.get("id", "CUSTOM000"),
+                    name=r.get("name", ""),
+                    category=r.get("category", "custom"),
+                    severity=severity,
+                    pattern=r.get("pattern", ""),
+                    keywords=r.get("keywords", []),
+                    message=r.get("message", ""),
+                    remediation=r.get("remediation", ""),
+                    check_type=r.get("check_type", "regex"),
+                )
+            )
     return custom_rules
 
 
@@ -107,8 +113,12 @@ def register_custom_rules(custom_rules: list[CustomRuleDef]) -> list[str]:
     registered = []
     for cr in custom_rules:
         rule = LintRule(
-            cr.rule_id, cr.name, cr.category, cr.severity,
-            cr.message, cr.remediation,
+            cr.rule_id,
+            cr.name,
+            cr.category,
+            cr.severity,
+            cr.message,
+            cr.remediation,
             family="custom",
         )
         _RULE_MAP[cr.rule_id] = rule

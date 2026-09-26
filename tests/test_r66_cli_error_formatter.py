@@ -1,8 +1,8 @@
 """R66测试: CLI错误友好化 + 3段式错误格式"""
-import pytest
+
 from ai_prompt_toolkit.cli_error_formatter import (
-    format_three_part_error,
     format_finding_three_part,
+    format_three_part_error,
     get_all_three_part_errors,
 )
 
@@ -41,6 +41,7 @@ class TestThreePartError:
         class FakeFinding:
             rule_id = "P001"
             description = "原始描述"
+
         result = format_finding_three_part(FakeFinding())
         assert "问题:" in result
 
@@ -48,5 +49,6 @@ class TestThreePartError:
         class FakeFinding:
             rule_id = "UNKNOWN"
             description = "原始描述"
+
         result = format_finding_three_part(FakeFinding())
         assert result == "原始描述"

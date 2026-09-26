@@ -6,6 +6,7 @@ P2-06: 智能推荐减少模板选择疲劳
 - 模型适配: 根据模型特性推荐
 - 评分排序: 综合lint_score+市场评分+下载量
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -40,25 +41,45 @@ class TemplateRecommendation:
 
 
 _BUILTIN_TEMPLATES: list[TemplateRecommendation] = [
-    TemplateRecommendation("general-assistant", "通用助手", "general", "通用", ["gpt-4", "claude-3", "deepseek"], 92.0, 4.5, 1200),
+    TemplateRecommendation(
+        "general-assistant", "通用助手", "general", "通用", ["gpt-4", "claude-3", "deepseek"], 92.0, 4.5, 1200
+    ),
     TemplateRecommendation("code-reviewer", "代码审查", "development", "科技", ["gpt-4", "claude-3"], 88.0, 4.7, 890),
-    TemplateRecommendation("translator-pro", "专业翻译", "translation", "通用", ["gpt-4", "deepseek", "qwen"], 95.0, 4.3, 2100),
+    TemplateRecommendation(
+        "translator-pro", "专业翻译", "translation", "通用", ["gpt-4", "deepseek", "qwen"], 95.0, 4.3, 2100
+    ),
     TemplateRecommendation("data-analyst", "数据分析", "analytics", "金融", ["gpt-4", "claude-3"], 85.0, 4.1, 650),
     TemplateRecommendation("doc-writer", "文档撰写", "writing", "通用", ["gpt-4", "qwen", "deepseek"], 90.0, 4.4, 1500),
     TemplateRecommendation("security-auditor", "安全审计", "security", "科技", ["gpt-4", "claude-3"], 82.0, 4.6, 420),
-    TemplateRecommendation("huawei-cloud-assistant", "华为云助手", "cloud", "华为云", ["qwen", "deepseek", "pangu"], 93.0, 4.8, 3200),
-    TemplateRecommendation("rag-assistant", "RAG助手", "retrieval", "通用", ["gpt-4", "claude-3", "qwen"], 87.0, 4.2, 780),
+    TemplateRecommendation(
+        "huawei-cloud-assistant", "华为云助手", "cloud", "华为云", ["qwen", "deepseek", "pangu"], 93.0, 4.8, 3200
+    ),
+    TemplateRecommendation(
+        "rag-assistant", "RAG助手", "retrieval", "通用", ["gpt-4", "claude-3", "qwen"], 87.0, 4.2, 780
+    ),
     TemplateRecommendation("customer-service", "客服助手", "service", "电商", ["qwen", "deepseek"], 91.0, 4.5, 2800),
     TemplateRecommendation("education-tutor", "教育辅导", "education", "教育", ["gpt-4", "qwen"], 89.0, 4.3, 950),
     TemplateRecommendation("medical-assistant", "医疗助手", "medical", "医疗", ["gpt-4", "pangu"], 86.0, 4.0, 320),
     TemplateRecommendation("legal-advisor", "法律顾问", "legal", "法律", ["gpt-4", "claude-3"], 84.0, 3.9, 280),
     TemplateRecommendation("creative-writer", "创意写作", "creative", "媒体", ["gpt-4", "claude-3"], 88.0, 4.6, 1100),
-    TemplateRecommendation("api-doc-generator", "API文档生成", "development", "科技", ["gpt-4", "deepseek"], 91.0, 4.4, 680),
-    TemplateRecommendation("harmonyos-dev", "鸿蒙开发助手", "development", "华为云", ["qwen", "pangu"], 90.0, 4.7, 1500),
-    TemplateRecommendation("pangu-nlp-assistant", "盘古NLP助手", "nlp", "华为云", ["pangu", "pangu-nlp", "pangu-nlp-65b"], 92.0, 4.6, 980),
-    TemplateRecommendation("harmonyos-arkts-codegen", "鸿蒙ArkTS代码生成", "development", "华为云", ["pangu-code", "qwen"], 97.0, 4.8, 760),
-    TemplateRecommendation("harmonyos-distributed", "鸿蒙分布式开发", "development", "华为云", ["pangu-code", "qwen"], 95.0, 4.5, 540),
-    TemplateRecommendation("huawei-modelarts-deploy", "ModelArts部署助手", "deployment", "华为云", ["pangu", "qwen"], 92.0, 4.7, 680),
+    TemplateRecommendation(
+        "api-doc-generator", "API文档生成", "development", "科技", ["gpt-4", "deepseek"], 91.0, 4.4, 680
+    ),
+    TemplateRecommendation(
+        "harmonyos-dev", "鸿蒙开发助手", "development", "华为云", ["qwen", "pangu"], 90.0, 4.7, 1500
+    ),
+    TemplateRecommendation(
+        "pangu-nlp-assistant", "盘古NLP助手", "nlp", "华为云", ["pangu", "pangu-nlp", "pangu-nlp-65b"], 92.0, 4.6, 980
+    ),
+    TemplateRecommendation(
+        "harmonyos-arkts-codegen", "鸿蒙ArkTS代码生成", "development", "华为云", ["pangu-code", "qwen"], 97.0, 4.8, 760
+    ),
+    TemplateRecommendation(
+        "harmonyos-distributed", "鸿蒙分布式开发", "development", "华为云", ["pangu-code", "qwen"], 95.0, 4.5, 540
+    ),
+    TemplateRecommendation(
+        "huawei-modelarts-deploy", "ModelArts部署助手", "deployment", "华为云", ["pangu", "qwen"], 92.0, 4.7, 680
+    ),
 ]
 
 _WEIGHT_CONFIG = {
@@ -101,10 +122,9 @@ class TemplateRecommender:
                 elif category in t.category:
                     score += _WEIGHT_CONFIG["category_match"] * 50
 
-            if industry:
-                if t.industry == industry:
-                    score += _WEIGHT_CONFIG["industry_match"] * 100
-                    reasons.append(f"行业匹配: {industry}")
+            if industry and t.industry == industry:
+                score += _WEIGHT_CONFIG["industry_match"] * 100
+                reasons.append(f"行业匹配: {industry}")
 
             if model:
                 model_lower = model.lower()
@@ -120,10 +140,10 @@ class TemplateRecommender:
         return results[:top_n]
 
     def get_categories(self) -> list[str]:
-        return sorted(set(t.category for t in self._templates))
+        return sorted({t.category for t in self._templates})
 
     def get_industries(self) -> list[str]:
-        return sorted(set(t.industry for t in self._templates))
+        return sorted({t.industry for t in self._templates})
 
     def get_template(self, template_id: str) -> TemplateRecommendation | None:
         for t in self._templates:

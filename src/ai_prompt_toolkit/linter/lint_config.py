@@ -5,6 +5,7 @@
 - LintConfig: 结构化配置数据
 - 合并CLI选项与配置文件(配置文件为默认值, CLI覆盖)
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -49,12 +50,15 @@ def load_lint_config(path: str | Path) -> LintConfig:
     content = p.read_text(encoding="utf-8")
     if p.suffix in (".yaml", ".yml"):
         import yaml
+
         data = yaml.safe_load(content) or {}
     elif p.suffix == ".json":
         import json
+
         data = json.loads(content)
     else:
         import yaml
+
         data = yaml.safe_load(content) or {}
     return LintConfig(
         severity_threshold=data.get("severity_threshold", "low"),
@@ -67,11 +71,23 @@ def load_lint_config(path: str | Path) -> LintConfig:
         custom_rules_dir=data.get("custom_rules_dir", ""),
         parallel=bool(data.get("parallel", False)),
         timeout_ms=int(data.get("timeout_ms", 30000)),
-        extra={k: v for k, v in data.items() if k not in {
-            "severity_threshold", "exclude_categories", "include_categories",
-            "exclude_rules", "include_rules", "max_findings", "fail_on",
-            "custom_rules_dir", "parallel", "timeout_ms",
-        }},
+        extra={
+            k: v
+            for k, v in data.items()
+            if k
+            not in {
+                "severity_threshold",
+                "exclude_categories",
+                "include_categories",
+                "exclude_rules",
+                "include_rules",
+                "max_findings",
+                "fail_on",
+                "custom_rules_dir",
+                "parallel",
+                "timeout_ms",
+            }
+        },
     )
 
 

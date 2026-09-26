@@ -1,4 +1,5 @@
 """条件编译语法分析器，将 Token 流解析为 AST。"""
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.compiler.types import (
@@ -60,9 +61,7 @@ class Parser:
         if tok is None:
             raise ParseError(f"期望 {kind.value!r}，但到达输入末尾")
         if tok.kind != kind:
-            raise ParseError(
-                f"期望 {kind.value!r}，实际为 {tok.kind.value!r}", tok.line
-            )
+            raise ParseError(f"期望 {kind.value!r}，实际为 {tok.kind.value!r}", tok.line)
         return self._advance()
 
     @staticmethod
@@ -92,11 +91,12 @@ class Parser:
         for op in ("not_in", "in", ">=", "<=", "!=", "==", ">", "<"):
             if op in ("in", "not_in"):
                 import re
-                pattern = r'\bin\b' if op == "in" else r'\bnot_in\b'
+
+                pattern = r"\bin\b" if op == "in" else r"\bnot_in\b"
                 match = re.search(pattern, expr)
                 if match:
-                    dimension = expr[:match.start()].strip()
-                    raw_value = expr[match.end():].strip()
+                    dimension = expr[: match.start()].strip()
+                    raw_value = expr[match.end() :].strip()
                     value: str | list[str] = [v.strip() for v in raw_value.split(",") if v.strip()]
                     return Condition(dimension=dimension, operator=op, value=value)
             elif op in expr:

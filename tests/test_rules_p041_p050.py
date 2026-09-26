@@ -1,14 +1,21 @@
 """测试 P041-P050 lintlang参考检测器 + 中文特有规则"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.linter.rules_p041_p050 import (
-    check_p041, check_p042, check_p043, check_p044, check_p045,
-    check_p046, check_p047, check_p048, check_p049, check_p050,
+    check_p041,
+    check_p042,
+    check_p043,
+    check_p044,
+    check_p045,
+    check_p046,
+    check_p047,
+    check_p048,
+    check_p049,
+    check_p050,
     run_checks_p041_p050,
 )
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Severity
 
 
 class TestP041ToolDescriptionAmbiguity:

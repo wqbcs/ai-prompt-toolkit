@@ -1,4 +1,5 @@
 """交互式向导模式 — 五步引导用户完成lint/scan/evaluate/ab-test/redteam"""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -26,7 +27,7 @@ def _pick_from_list(prompt_text: str, items: list[str], allow_custom: bool = Tru
         display = item if len(item) <= 80 else item[:77] + "..."
         click.echo(f"  {i}. {display}")
     if allow_custom:
-        click.echo(f"  0. 自定义输入")
+        click.echo("  0. 自定义输入")
     while True:
         choice = click.prompt("请选择", type=int, default=1)
         if 1 <= choice <= len(items):
@@ -37,9 +38,9 @@ def _pick_from_list(prompt_text: str, items: list[str], allow_custom: bool = Tru
 
 
 def _confirm_step(step_num: int, step_name: str, details: dict[str, Any]) -> bool:
-    click.echo(f"\n{'='*50}")
+    click.echo(f"\n{'=' * 50}")
     click.echo(f"步骤 {step_num}/5: {step_name}")
-    click.echo(f"{'='*50}")
+    click.echo(f"{'=' * 50}")
     for k, v in details.items():
         click.echo(f"  {k}: {v}")
     return click.confirm("确认以上配置?", default=True)
@@ -47,6 +48,7 @@ def _confirm_step(step_num: int, step_name: str, details: dict[str, Any]) -> boo
 
 def _build_and_execute(command: str, args: dict[str, Any]) -> int:
     from click.testing import CliRunner
+
     from ai_prompt_toolkit.cli import main
 
     cmd_parts = [command]
@@ -185,7 +187,7 @@ def wizard_ab_test() -> int:
 
     model_inputs = []
     while True:
-        m = click.prompt(f"模型#{len(model_inputs)+1}(留空结束)", default="", show_default=False)
+        m = click.prompt(f"模型#{len(model_inputs) + 1}(留空结束)", default="", show_default=False)
         if not m:
             break
         if ":" not in m:
@@ -193,7 +195,7 @@ def wizard_ab_test() -> int:
             try:
                 idx = int(provider_choice)
                 if 1 <= idx <= len(providers):
-                    m = f"{providers[idx-1]}:{m}"
+                    m = f"{providers[idx - 1]}:{m}"
             except ValueError:
                 m = f"{provider_choice}:{m}"
         model_inputs.append(m)
@@ -208,13 +210,14 @@ def wizard_ab_test() -> int:
     output = click.prompt("输出报告路径(留空不保存)", default="", show_default=False)
 
     import tempfile
+
     import yaml
 
     default_config = {
         "models": model_inputs,
         "prompt_templates": ["请根据以下内容生成回复：{input}"],
     }
-    tmp = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False, mode="w", encoding="utf-8")
+    tmp = tempfile.NamedTemporaryFile(suffix=".yaml", delete=False, mode="w", encoding="utf-8")  # noqa: SIM115 — Windows下子进程读取前须close
     tmp_name = tmp.name
     try:
         yaml.dump(default_config, tmp, allow_unicode=True, default_flow_style=False)
@@ -234,6 +237,7 @@ def wizard_ab_test() -> int:
     finally:
         try:
             import os
+
             os.unlink(tmp_name)
         except OSError:
             pass
@@ -261,7 +265,7 @@ def wizard_redteam() -> int:
     for i, p in enumerate(available[:20], 1):
         click.echo(f"  {i}. {p}")
     if len(available) > 20:
-        click.echo(f"  ... 还有{len(available)-20}个")
+        click.echo(f"  ... 还有{len(available) - 20}个")
 
     all_probes = click.confirm("运行全部Probe?", default=True)
     probes = ""
@@ -311,7 +315,16 @@ def wizard_recommend() -> int:
     click.echo("  根据你的场景推荐最佳Prompt模板")
     click.echo("=" * 50)
 
-    category_choices = ["general", "development", "security", "translation", "service", "nlp", "optimization", "deployment"]
+    category_choices = [
+        "general",
+        "development",
+        "security",
+        "translation",
+        "service",
+        "nlp",
+        "optimization",
+        "deployment",
+    ]
     click.echo("\n选择场景分类:")
     for i, c in enumerate(category_choices, 1):
         click.echo(f"  {i}. {c}")

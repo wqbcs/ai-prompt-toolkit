@@ -4,13 +4,15 @@
 - generate_structured_diff: 生成结构化JSON diff报告
 - 包含: 摘要/新增/修复/回归/规则级别统计/时间戳
 """
+
 from __future__ import annotations
 
 import json
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.linter.baseline import BaselineDiff, BaselineSnapshot
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.linter.baseline import BaselineDiff, BaselineSnapshot
 
 
 def generate_structured_diff(
@@ -32,13 +34,23 @@ def generate_structured_diff(
     for rid in all_rule_ids:
         bc = baseline_rule_counts.get(rid, 0)
         cc = current_rule_counts.get(rid, 0)
-        rule_level_stats.append({
-            "rule_id": rid,
-            "baseline_count": bc,
-            "current_count": cc,
-            "delta": cc - bc,
-            "status": "fixed" if bc > 0 and cc == 0 else "new" if bc == 0 and cc > 0 else "regression" if cc > bc else "improved" if cc < bc else "unchanged",
-        })
+        rule_level_stats.append(
+            {
+                "rule_id": rid,
+                "baseline_count": bc,
+                "current_count": cc,
+                "delta": cc - bc,
+                "status": "fixed"
+                if bc > 0 and cc == 0
+                else "new"
+                if bc == 0 and cc > 0
+                else "regression"
+                if cc > bc
+                else "improved"
+                if cc < bc
+                else "unchanged",
+            }
+        )
     verdict = "PASS"
     if diff.is_regression:
         verdict = "FAIL"

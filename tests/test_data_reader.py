@@ -1,4 +1,5 @@
 """R30: 数据连接器框架 测试套件"""
+
 from __future__ import annotations
 
 import json

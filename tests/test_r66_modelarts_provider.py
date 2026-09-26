@@ -1,7 +1,9 @@
 """R66测试: 华为云ModelArts Provider"""
+
 import pytest
-from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
 from ai_prompt_toolkit.ab_test.providers.huawei_modelarts import HuaweiModelArtsProvider
+from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
 
 
 class TestHuaweiModelArtsProvider:
@@ -10,6 +12,7 @@ class TestHuaweiModelArtsProvider:
 
     def test_provider_registered(self):
         from ai_prompt_toolkit.ab_test.providers import get_registry
+
         reg = get_registry()
         assert ProviderType.HUAWEI_MODELARTS in reg
         assert reg[ProviderType.HUAWEI_MODELARTS] is HuaweiModelArtsProvider
@@ -90,6 +93,7 @@ class TestHuaweiModelArtsProvider:
 
     def test_endpoint_env_vars(self):
         from ai_prompt_toolkit.ab_test.provider import _PROVIDER_DEFAULT_ENDPOINTS, _PROVIDER_ENV_VARS
+
         assert ProviderType.HUAWEI_MODELARTS in _PROVIDER_DEFAULT_ENDPOINTS
         assert ProviderType.HUAWEI_MODELARTS in _PROVIDER_ENV_VARS
         assert _PROVIDER_ENV_VARS[ProviderType.HUAWEI_MODELARTS] == "HUAWEI_CLOUD_AK"
@@ -108,5 +112,6 @@ class TestHuaweiModelArtsProvider:
 
     def test_total_provider_count(self):
         from ai_prompt_toolkit.ab_test.types import ProviderType
+
         providers = list(ProviderType)
         assert len(providers) == 25

@@ -1,16 +1,16 @@
 """R66测试: Agentic Probe(5种新Probe) + AgentBehaviorDetector"""
-import pytest
+
 from ai_prompt_toolkit.probe_framework import (
-    _PROBE_REGISTRY,
     _DETECTOR_REGISTRY,
+    _PROBE_REGISTRY,
+    OWASP_LLM_TOP_10_2025,
+    AgentBehaviorDetector,
     AgentInjectProbe,
-    ToolAbuseProbe,
-    PrivEscalationProbe,
     GoalHijackProbe,
     MultiAgentAdversaryProbe,
-    AgentBehaviorDetector,
+    PrivEscalationProbe,
     ProbeRunner,
-    OWASP_LLM_TOP_10_2025,
+    ToolAbuseProbe,
 )
 
 

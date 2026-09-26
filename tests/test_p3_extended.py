@@ -1,42 +1,41 @@
 """P3-04~P3-07测试: 鸿蒙模板+红队Probe扩展+情感彩蛋"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.harmonyos_templates import get_harmonyos_templates, get_harmonyos_template
 from ai_prompt_toolkit.easter_eggs import (
+    _MILESTONE_MESSAGES,
     UserProgress,
     check_milestone,
     check_time_egg,
-    get_motivational_quote,
     format_celebration,
-    _MILESTONE_MESSAGES,
+    get_motivational_quote,
 )
+from ai_prompt_toolkit.harmonyos_templates import get_harmonyos_template, get_harmonyos_templates
 from ai_prompt_toolkit.redteam.probes.extended import (
-    IndirectInjectionProbe,
-    TokenSmugglingProbe,
-    ContextOverflowProbe,
-    PromptLeakChainProbe,
-    StyleInjectionProbe,
-    MarkdownInjectionProbe,
-    SSFPInjectionProbe,
-    DataExfiltrationProbe,
-    TrainingDataExtractionProbe,
-    ModelPoisoningProbe,
-    DependencyConfusionProbe,
-    MaliciousPluginProbe,
-    CodeExecutionProbe,
     APIMisuseProbe,
-    SensitiveDataEnumProbe,
-    PIIExtractionProbe,
     AuthorityImpersonationProbe,
-    OverrelianceMedicalProbe,
-    OverrelianceLegalProbe,
-    OverrelianceFinancialProbe,
+    CodeExecutionProbe,
     CompetenceOverreachProbe,
+    ContextOverflowProbe,
+    DataExfiltrationProbe,
+    DependencyConfusionProbe,
     EvasionObfuscationProbe,
-    SocialEngineeringProbe,
+    IndirectInjectionProbe,
+    MaliciousPluginProbe,
+    MarkdownInjectionProbe,
+    ModelPoisoningProbe,
     MultiModalInjectionProbe,
+    OverrelianceFinancialProbe,
+    OverrelianceLegalProbe,
+    OverrelianceMedicalProbe,
+    PIIExtractionProbe,
+    PromptLeakChainProbe,
+    SensitiveDataEnumProbe,
+    SocialEngineeringProbe,
+    SSFPInjectionProbe,
+    StyleInjectionProbe,
+    TokenSmugglingProbe,
+    TrainingDataExtractionProbe,
 )
 
 
@@ -55,7 +54,7 @@ class TestHarmonyOSTemplates:
         assert t is None
 
     def test_template_has_required_fields(self):
-        for tid, t in get_harmonyos_templates().items():
+        for _tid, t in get_harmonyos_templates().items():
             assert "name" in t
             assert "category" in t
             assert "template" in t
@@ -76,15 +75,29 @@ class TestHarmonyOSTemplates:
 
 class TestExtendedProbes:
     PROBE_CLASSES = [
-        IndirectInjectionProbe, TokenSmugglingProbe, ContextOverflowProbe,
-        PromptLeakChainProbe, StyleInjectionProbe, MarkdownInjectionProbe,
-        SSFPInjectionProbe, DataExfiltrationProbe, TrainingDataExtractionProbe,
-        ModelPoisoningProbe, DependencyConfusionProbe, MaliciousPluginProbe,
-        CodeExecutionProbe, APIMisuseProbe, SensitiveDataEnumProbe,
-        PIIExtractionProbe, AuthorityImpersonationProbe,
-        OverrelianceMedicalProbe, OverrelianceLegalProbe,
-        OverrelianceFinancialProbe, CompetenceOverreachProbe,
-        EvasionObfuscationProbe, SocialEngineeringProbe,
+        IndirectInjectionProbe,
+        TokenSmugglingProbe,
+        ContextOverflowProbe,
+        PromptLeakChainProbe,
+        StyleInjectionProbe,
+        MarkdownInjectionProbe,
+        SSFPInjectionProbe,
+        DataExfiltrationProbe,
+        TrainingDataExtractionProbe,
+        ModelPoisoningProbe,
+        DependencyConfusionProbe,
+        MaliciousPluginProbe,
+        CodeExecutionProbe,
+        APIMisuseProbe,
+        SensitiveDataEnumProbe,
+        PIIExtractionProbe,
+        AuthorityImpersonationProbe,
+        OverrelianceMedicalProbe,
+        OverrelianceLegalProbe,
+        OverrelianceFinancialProbe,
+        CompetenceOverreachProbe,
+        EvasionObfuscationProbe,
+        SocialEngineeringProbe,
         MultiModalInjectionProbe,
     ]
 
@@ -123,21 +136,38 @@ class TestExtendedProbes:
 
     def test_total_probe_count_extended(self):
         from ai_prompt_toolkit.redteam.probe import get_available_probes
+
         total = len(get_available_probes())
         assert total >= 75, f"当前Probe总数: {total}，目标75+"
 
     def test_probes_registered(self):
         from ai_prompt_toolkit.redteam.probe import create_probe
+
         probe_names = [
-            "indirect_injection", "token_smuggling", "context_overflow",
-            "prompt_leak_chain", "style_injection", "markdown_injection",
-            "ssrf_injection", "data_exfiltration", "training_data_extraction",
-            "model_poisoning", "dependency_confusion", "malicious_plugin",
-            "code_execution", "api_misuse", "sensitive_data_enum",
-            "pii_extraction", "authority_impersonation",
-            "overreliance_medical", "overreliance_legal",
-            "overreliance_financial", "competence_overreach",
-            "evasion_obfuscation", "social_engineering", "multimodal_injection",
+            "indirect_injection",
+            "token_smuggling",
+            "context_overflow",
+            "prompt_leak_chain",
+            "style_injection",
+            "markdown_injection",
+            "ssrf_injection",
+            "data_exfiltration",
+            "training_data_extraction",
+            "model_poisoning",
+            "dependency_confusion",
+            "malicious_plugin",
+            "code_execution",
+            "api_misuse",
+            "sensitive_data_enum",
+            "pii_extraction",
+            "authority_impersonation",
+            "overreliance_medical",
+            "overreliance_legal",
+            "overreliance_financial",
+            "competence_overreach",
+            "evasion_obfuscation",
+            "social_engineering",
+            "multimodal_injection",
         ]
         registered = 0
         for name in probe_names:

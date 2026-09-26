@@ -14,11 +14,11 @@
 - PromptTemplate: 模板对象(变量元数据+渲染+校验)
 - TemplateStore: 模板存储(SQLite, 版本管理)
 """
+
 from __future__ import annotations
 
-import json
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -68,11 +68,13 @@ def extract_variables(template_text: str) -> list[TemplateVariable]:
         if name in seen:
             continue
         seen.add(name)
-        variables.append(TemplateVariable(
-            name=name,
-            default_value=default,
-            required=not bool(default),
-        ))
+        variables.append(
+            TemplateVariable(
+                name=name,
+                default_value=default,
+                required=not bool(default),
+            )
+        )
     return variables
 
 
@@ -109,7 +111,13 @@ _FOR_PATTERN = re.compile(r"\{%\s*for\s+(\w+)\s+in\s+(\w+)\s*%\}(.*?)\{%\s*endfo
 _I18N_PATTERN = re.compile(r"\{%\s*i18n\s+(\w+)\s*%\}")
 
 
-def render_conditional(template_text: str, variables: dict[str, Any] | None = None, *, locale: str = "zh", translations: dict[str, dict[str, str]] | None = None) -> str:
+def render_conditional(
+    template_text: str,
+    variables: dict[str, Any] | None = None,
+    *,
+    locale: str = "zh",
+    translations: dict[str, dict[str, str]] | None = None,
+) -> str:
     """条件模板渲染 — 支持{% if %}/{% else %}/{% endif %}, {% for %}, {% i18n %}
 
     参考: Jinja2条件语法(轻量自实现, 零依赖)
@@ -138,7 +146,17 @@ def render_conditional(template_text: str, variables: dict[str, Any] | None = No
             items = []
         rendered_items = []
         for i, item in enumerate(items[:1000]):
-            item_vars = {**variables, item_var: item, "loop": {"index": i + 1, "index0": i, "first": i == 0, "last": i == len(items) - 1, "length": len(items)}}
+            item_vars = {
+                **variables,
+                item_var: item,
+                "loop": {
+                    "index": i + 1,
+                    "index0": i,
+                    "first": i == 0,
+                    "last": i == len(items) - 1,
+                    "length": len(items),
+                },
+            }
             rendered = body
             for vm in _VAR_PATTERN.finditer(body):
                 vname = vm.group(1)
@@ -186,6 +204,7 @@ def validate_variables(
     if schema:
         try:
             import jsonschema as _js
+
             validator = _js.Draft202012Validator(schema)
             for err in validator.iter_errors(variables):
                 path = ".".join(str(p) for p in err.absolute_path) or "root"
@@ -195,7 +214,7 @@ def validate_variables(
         except Exception as e:
             errors.append({"path": "schema", "message": str(e)})
 
-    for key, value in variables.items():
+    for key, _value in variables.items():
         if _UNSAFE_PATTERN.search(key):
             errors.append({"path": key, "message": "Unsafe variable name"})
 

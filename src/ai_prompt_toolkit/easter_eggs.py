@@ -5,14 +5,13 @@
 - 彩蛋触发: 特殊命令/时间彩蛋/隐藏功能
 - 进度激励: 连续使用天数/总Lint次数/修复问题数
 """
+
 from __future__ import annotations
 
 import random
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
-
 
 _MILESTONE_MESSAGES = {
     "lint_perfect": [
@@ -140,7 +139,7 @@ def check_milestone(progress: UserProgress, event: str, score: float = 0.0) -> s
 def check_time_egg() -> str | None:
     now = time.localtime()
     month, day = now.tm_mon, now.tm_mday
-    for key, (m, d, msg) in _TIME_BASED_EGGS.items():
+    for _key, (m, d, msg) in _TIME_BASED_EGGS.items():
         if month == m and day == d:
             return msg
     return None
@@ -229,6 +228,7 @@ def is_first_run() -> bool:
 
 def show_welcome() -> None:
     from ai_prompt_toolkit.output import console
+
     console.print(_WELCOME_ASCII, style="bold blue")
     console.print("\n  欢迎使用 AI Prompt Toolkit!", style="bold")
     console.print("  你的AI提示词质量工具链，让Prompt更安全、更优质。\n", style="dim")

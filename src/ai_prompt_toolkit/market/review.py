@@ -1,9 +1,10 @@
 """评审流水线 — 安全扫描门禁+评分+超时机制"""
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Sequence
+from typing import Any
 
 from ai_prompt_toolkit.market.types import Review, Template, TemplateStatus
 
@@ -34,8 +35,9 @@ class ReviewPipeline:
             self._reviews[template_id] = []
         self._reviews[template_id].append(review)
         review.reviewed_at = datetime.now().isoformat()
-        logger.info("评审提交: %s by %s (approved=%s, score=%.1f)",
-                     template_id, review.reviewer, review.approved, review.score)
+        logger.info(
+            "评审提交: %s by %s (approved=%s, score=%.1f)", template_id, review.reviewer, review.approved, review.score
+        )
 
     def check_gate(self, template: Template) -> dict[str, Any]:
         reviews = self._reviews.get(template.id, [])
@@ -52,9 +54,7 @@ class ReviewPipeline:
             "passed": False,
         }
         gate_results["passed"] = (
-            template.security_scan_passed
-            and approved_count >= MIN_REVIEWERS
-            and avg_score >= MIN_APPROVAL_SCORE
+            template.security_scan_passed and approved_count >= MIN_REVIEWERS and avg_score >= MIN_APPROVAL_SCORE
         )
         return gate_results
 

@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import sys
@@ -18,8 +19,7 @@ from ai_prompt_toolkit.cli_core import main
 @click.option("--dataset", "-d", help="测试数据集路径")
 @click.option("--output", "-o", help="输出报告路径")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def ab_test(config: str, models: str | None, dataset: str | None,
-            output: str | None, fmt: str) -> None:
+def ab_test(config: str, models: str | None, dataset: str | None, output: str | None, fmt: str) -> None:
     """A/B测试：多模型并行对比提示词效果"""
     import asyncio
     import json as _json
@@ -91,6 +91,7 @@ def ab_test(config: str, models: str | None, dataset: str | None,
             click.echo(f"    平均Token: {stats['avg_token_count']:.0f}")
 
     from ai_prompt_toolkit.ab_test.provider import get_cost_tracker
+
     cost_tracker = get_cost_tracker()
     if cost_tracker.spent > 0:
         click.echo(f"\n总费用: ${cost_tracker.spent:.4f} (剩余: ${cost_tracker.remaining:.2f})")

@@ -1,10 +1,11 @@
 """测试异常检测模块"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.security.anomaly_detector import (
-    extract_features, compute_anomaly_score, check_anomaly, AnomalyFeatures,
+    check_anomaly,
+    compute_anomaly_score,
+    extract_features,
 )
 
 

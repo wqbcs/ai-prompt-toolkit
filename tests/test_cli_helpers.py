@@ -1,22 +1,21 @@
 """CLI辅助模块单元测试 — cli_helpers.py"""
+
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
 import yaml
 
 from ai_prompt_toolkit.cli_helpers import (
-    resolve_path,
-    load_context,
-    load_config,
-    discover_templates,
-    write_report,
     determine_exit_code,
+    discover_templates,
     format_findings_table,
+    load_config,
+    load_context,
+    resolve_path,
+    write_report,
 )
 from ai_prompt_toolkit.errors import ConfigError, ValidationError
 
@@ -120,9 +119,7 @@ class TestWriteReport:
 
     def test_html_report(self, tmp_path):
         out = tmp_path / "report.html"
-        data = {"scan_target": "test", "findings": [
-            {"severity": "high", "rule_id": "R1", "description": "test"}
-        ]}
+        data = {"scan_target": "test", "findings": [{"severity": "high", "rule_id": "R1", "description": "test"}]}
         write_report(data, str(out), fmt="html")
         html = out.read_text(encoding="utf-8")
         assert "<!DOCTYPE html>" in html

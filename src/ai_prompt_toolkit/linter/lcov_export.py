@@ -4,12 +4,15 @@
 - generate_lcov_report: 生成规则覆盖率lcov格式报告
 - TN: 总规则数, FN: 命中(覆盖)数, DA: 每条规则命中详情
 """
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules
-from ai_prompt_toolkit.types import Finding
+from ai_prompt_toolkit.linter.rules import get_all_rules
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 
 def generate_lcov_report(findings: list[Finding]) -> str:

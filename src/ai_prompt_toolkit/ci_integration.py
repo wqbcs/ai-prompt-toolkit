@@ -6,11 +6,10 @@
 - --tag CI上下文附加
 - GitHub Actions集成模板
 """
+
 from __future__ import annotations
 
-import hashlib
 import json
-import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -27,11 +26,14 @@ class CITestCase:
     stdout: str = ""
 
     def to_xml(self) -> ET.Element:
-        tc = ET.Element("testcase", {
-            "name": self.name,
-            "classname": self.classname,
-            "time": f"{self.time_ms / 1000:.3f}",
-        })
+        tc = ET.Element(
+            "testcase",
+            {
+                "name": self.name,
+                "classname": self.classname,
+                "time": f"{self.time_ms / 1000:.3f}",
+            },
+        )
         if self.status == "failed":
             fail = ET.SubElement(tc, "failure", {"message": self.message})
             fail.text = self.stdout
@@ -70,14 +72,17 @@ class CITestSuite:
         return sum(t.time_ms for t in self.tests)
 
     def to_xml(self) -> ET.Element:
-        suite = ET.Element("testsuite", {
-            "name": self.name,
-            "tests": str(self.total),
-            "failures": str(self.failures),
-            "errors": str(self.errors),
-            "skipped": str(self.skipped),
-            "time": f"{self.total_time_ms / 1000:.3f}",
-        })
+        suite = ET.Element(
+            "testsuite",
+            {
+                "name": self.name,
+                "tests": str(self.total),
+                "failures": str(self.failures),
+                "errors": str(self.errors),
+                "skipped": str(self.skipped),
+                "time": f"{self.total_time_ms / 1000:.3f}",
+            },
+        )
         if self.properties:
             props = ET.SubElement(suite, "properties")
             for k, v in self.properties.items():
@@ -117,7 +122,9 @@ class JUnitReporter:
         )
         self.suite.tests.append(tc)
 
-    def add_eval_result(self, file_path: str, score: float, passed: bool, details: str = "", elapsed_ms: float = 0.0) -> None:
+    def add_eval_result(
+        self, file_path: str, score: float, passed: bool, details: str = "", elapsed_ms: float = 0.0
+    ) -> None:
         tc = CITestCase(
             name=f"eval:{Path(file_path).name}",
             classname="promptkit.eval",
@@ -192,7 +199,7 @@ def generate_github_actions_workflow(
       - run: pip install ai-prompt-toolkit
       - run: promptkit lint --format junit-xml --output lint-results.xml .
       - run: promptkit scan --format junit-xml --output scan-results.xml .
-      - run: promptkit evaluate --quick --threshold {threshold}{' --fail-on-error' if fail_on_error else ''} --format junit-xml --output eval-results.xml ."""
+      - run: promptkit evaluate --quick --threshold {threshold}{" --fail-on-error" if fail_on_error else ""} --format junit-xml --output eval-results.xml ."""
 
     if redteam:
         steps += """
@@ -215,6 +222,7 @@ on:
 
 def extract_ci_tags() -> dict[str, str]:
     import os
+
     tags: dict[str, str] = {}
     env_map = {
         "GITHUB_SHA": "ci_sha",

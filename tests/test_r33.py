@@ -1,7 +1,6 @@
 """R33: 统一优化管线Pipeline 测试套件"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.opt_pipeline import (
     OptPipeline,
@@ -62,12 +61,14 @@ class TestOptPipeline:
 
     def test_sequential_pipeline_tgd(self):
         p = OptPipeline(PipelineConfig(mode="sequential"))
-        p.add_stage(PipelineStage(
-            name="tgd-optimize",
-            optimizer="tgd",
-            config={"max_iterations": 2},
-            condition="always",
-        ))
+        p.add_stage(
+            PipelineStage(
+                name="tgd-optimize",
+                optimizer="tgd",
+                config={"max_iterations": 2},
+                condition="always",
+            )
+        )
         result = p.run("Write about AI")
         assert isinstance(result, PipelineResult)
         assert result.stages_completed >= 1
@@ -75,12 +76,14 @@ class TestOptPipeline:
 
     def test_sequential_pipeline_opro(self):
         p = OptPipeline(PipelineConfig(mode="sequential"))
-        p.add_stage(PipelineStage(
-            name="opro-optimize",
-            optimizer="opro",
-            config={"max_generations": 2, "population_size": 2},
-            condition="always",
-        ))
+        p.add_stage(
+            PipelineStage(
+                name="opro-optimize",
+                optimizer="opro",
+                config={"max_generations": 2, "population_size": 2},
+                condition="always",
+            )
+        )
         result = p.run("Tell me about Python")
         assert result.stages_completed >= 1
 
@@ -94,12 +97,14 @@ class TestOptPipeline:
 
     def test_condition_score_below_threshold(self):
         p = OptPipeline(PipelineConfig(mode="sequential", score_threshold=95.0))
-        p.add_stage(PipelineStage(
-            name="tgd",
-            optimizer="tgd",
-            config={"max_iterations": 2},
-            condition="score_below_threshold",
-        ))
+        p.add_stage(
+            PipelineStage(
+                name="tgd",
+                optimizer="tgd",
+                config={"max_iterations": 2},
+                condition="score_below_threshold",
+            )
+        )
         result = p.run("test prompt")
         assert result.stages_completed >= 1
 
@@ -111,7 +116,9 @@ class TestOptPipeline:
 
     def test_condition_score_below_numeric(self):
         p = OptPipeline()
-        p.add_stage(PipelineStage(name="tgd", optimizer="tgd", config={"max_iterations": 1}, condition="score_below_95"))
+        p.add_stage(
+            PipelineStage(name="tgd", optimizer="tgd", config={"max_iterations": 1}, condition="score_below_95")
+        )
         result = p.run("test")
         assert result.stages_completed >= 1
 

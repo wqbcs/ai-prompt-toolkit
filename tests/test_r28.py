@@ -1,10 +1,9 @@
 """R28: 评估矩阵可视化 + Playground + 华为云赛事贴合 测试套件"""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from ai_prompt_toolkit.eval_matrix import (
     MatrixCell,
@@ -13,24 +12,23 @@ from ai_prompt_toolkit.eval_matrix import (
     generate_eval_matrix_html,
     generate_gepa_history_html,
 )
+from ai_prompt_toolkit.huawei_eval import (
+    DimensionScore,
+    evaluate_contest_readiness,
+    evaluate_harmonyos_agent,
+    evaluate_huawei_cloud,
+)
 from ai_prompt_toolkit.prompt_playground import (
     PlaygroundTemplate,
     extract_template_variables,
     generate_playground_html,
     render_template,
 )
-from ai_prompt_toolkit.huawei_eval import (
-    DimensionScore,
-    HuaweiEvalResult,
-    evaluate_contest_readiness,
-    evaluate_harmonyos_agent,
-    evaluate_huawei_cloud,
-)
-
 
 # ═══════════════════════════════════════
 # MatrixCell 测试
 # ═══════════════════════════════════════
+
 
 class TestMatrixCell:
     def test_status_class_excellent(self):
@@ -60,6 +58,7 @@ class TestMatrixCell:
 # MatrixReport 测试
 # ═══════════════════════════════════════
 
+
 class TestMatrixReport:
     def test_basic_creation(self):
         report = MatrixReport(title="Test Report")
@@ -76,6 +75,7 @@ class TestMatrixReport:
 # ═══════════════════════════════════════
 # generate_eval_matrix_html 测试
 # ═══════════════════════════════════════
+
 
 class TestEvalMatrixHtml:
     def test_generate_html(self):
@@ -122,9 +122,11 @@ class TestEvalMatrixHtml:
 # generate_gepa_history_html 测试
 # ═══════════════════════════════════════
 
+
 class TestGepaHistoryHtml:
     def test_generate_history_html(self):
         from ai_prompt_toolkit.gepa import GEPAResult
+
         result = GEPAResult(
             best_instructions={"main": "optimized"},
             best_score=0.9,
@@ -150,9 +152,12 @@ class TestGepaHistoryHtml:
 # build_matrix_from_evaluator_results 测试
 # ═══════════════════════════════════════
 
+
 class TestBuildMatrixFromEvaluatorResults:
     def test_build_from_evaluator(self):
-        report = build_matrix_from_evaluator_results("test", "You are a professional AI assistant.", evaluator_names=["lint"])
+        report = build_matrix_from_evaluator_results(
+            "test", "You are a professional AI assistant.", evaluator_names=["lint"]
+        )
         assert len(report.cells) > 0
         assert report.cells[0].prompt_name == "test"
 
@@ -160,6 +165,7 @@ class TestBuildMatrixFromEvaluatorResults:
 # ═══════════════════════════════════════
 # PlaygroundTemplate 测试
 # ═══════════════════════════════════════
+
 
 class TestPlaygroundTemplate:
     def test_extract_variables(self):
@@ -200,6 +206,7 @@ class TestPlaygroundTemplate:
 # extract_template_variables / render_template 测试
 # ═══════════════════════════════════════
 
+
 class TestTemplateFunctions:
     def test_extract_variables(self):
         vars = extract_template_variables("{{a}} and {{b}} and {{a}}")
@@ -217,6 +224,7 @@ class TestTemplateFunctions:
 # ═══════════════════════════════════════
 # generate_playground_html 测试
 # ═══════════════════════════════════════
+
 
 class TestPlaygroundHtml:
     def test_generate_html(self):
@@ -236,9 +244,12 @@ class TestPlaygroundHtml:
 # 华为云赛事贴合评估 测试
 # ═══════════════════════════════════════
 
+
 class TestHarmonyosAgentEval:
     def test_basic_eval(self):
-        result = evaluate_harmonyos_agent("You are an ArkTS developer. Use @Entry and @Component. Handle onCreate lifecycle.")
+        result = evaluate_harmonyos_agent(
+            "You are an ArkTS developer. Use @Entry and @Component. Handle onCreate lifecycle."
+        )
         assert result.category == "harmonyos_agent"
         assert result.overall_score > 0
         assert len(result.dimensions) == 5
@@ -293,7 +304,13 @@ class TestContestReadiness:
         assert result["harmonyos_integration"] is True
 
     def test_readiness_levels(self):
-        assert evaluate_contest_readiness("x")["readiness_level"] in ["excellent", "good", "moderate", "basic", "insufficient"]
+        assert evaluate_contest_readiness("x")["readiness_level"] in [
+            "excellent",
+            "good",
+            "moderate",
+            "basic",
+            "insufficient",
+        ]
 
     def test_recommendations_not_empty(self):
         result = evaluate_contest_readiness("Simple prompt")

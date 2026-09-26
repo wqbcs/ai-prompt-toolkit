@@ -11,9 +11,9 @@
 - [output] format/color
 - [lts] group_id/stream_id/endpoint/enabled
 """
+
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -132,8 +132,12 @@ def _dict_to_config(data: dict[str, Any]) -> PromptKitConfig:
     lts_data = data.get("lts", {})
 
     lint = LintConfig(
-        rules=lint_data.get("rules", []) if isinstance(lint_data.get("rules"), list) else str(lint_data.get("rules", "")).split(","),
-        exclude=lint_data.get("exclude", []) if isinstance(lint_data.get("exclude"), list) else str(lint_data.get("exclude", "")).split(","),
+        rules=lint_data.get("rules", [])
+        if isinstance(lint_data.get("rules"), list)
+        else str(lint_data.get("rules", "")).split(","),
+        exclude=lint_data.get("exclude", [])
+        if isinstance(lint_data.get("exclude"), list)
+        else str(lint_data.get("exclude", "")).split(","),
         threshold=float(lint_data.get("threshold", 0)),
         fix=bool(lint_data.get("fix", False)),
     )
@@ -177,6 +181,7 @@ def load_promptkit_config(path: str | Path | None = None) -> PromptKitConfig:
     if path.name == "pyproject.toml":
         try:
             import tomllib
+
             data = tomllib.loads(text)
             tool_data = data.get("tool", {}).get("promptkit", {})
             return _dict_to_config(tool_data)

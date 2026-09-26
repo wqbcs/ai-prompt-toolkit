@@ -1,10 +1,14 @@
 """R145: P231-P235联邦学习安全规则"""
-import pytest
-from ai_prompt_toolkit.linter.rules_p231_p235 import (
-    check_p231, check_p232, check_p233, check_p234, check_p235,
-)
-from ai_prompt_toolkit.linter.rules import get_all_rules
+
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.linter.rules_p231_p235 import (
+    check_p231,
+    check_p232,
+    check_p233,
+    check_p234,
+    check_p235,
+)
 
 
 def test_p231_gradient_leak():

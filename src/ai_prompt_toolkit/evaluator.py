@@ -1,4 +1,5 @@
 """80维度评估框架——D01-D80维度定义、evaluate_template()函数、EvaluationReport数据类。"""
+
 from __future__ import annotations
 
 import re
@@ -14,136 +15,826 @@ _VERY_LOW_SCORE_THRESHOLD = 2.0
 
 
 _DIMENSIONS: list[dict[str, Any]] = [
-    {"id": "D01", "name": "角色清晰度", "category": "structure", "weight": 1.0, "description": "Prompt是否定义了明确的角色"},
-    {"id": "D02", "name": "目标明确性", "category": "structure", "weight": 1.0, "description": "Prompt是否表达了清晰的目标"},
-    {"id": "D03", "name": "输出格式规范", "category": "structure", "weight": 0.8, "description": "Prompt是否指定了输出格式"},
-    {"id": "D04", "name": "约束完备性", "category": "structure", "weight": 0.9, "description": "Prompt是否包含充分的约束条件"},
-    {"id": "D05", "name": "上下文充分性", "category": "structure", "weight": 1.0, "description": "Prompt是否提供了足够的上下文"},
-    {"id": "D06", "name": "指令无歧义性", "category": "structure", "weight": 1.0, "description": "Prompt指令是否无歧义"},
-    {"id": "D07", "name": "逻辑一致性", "category": "structure", "weight": 1.0, "description": "Prompt内部逻辑是否自洽"},
-    {"id": "D08", "name": "结构层次性", "category": "structure", "weight": 0.7, "description": "Prompt是否有清晰的结构层次"},
-    {"id": "D09", "name": "版本兼容性", "category": "structure", "weight": 0.5, "description": "Prompt是否声明了版本和兼容性"},
-    {"id": "D10", "name": "可维护性", "category": "structure", "weight": 0.6, "description": "Prompt是否易于维护和更新"},
+    {
+        "id": "D01",
+        "name": "角色清晰度",
+        "category": "structure",
+        "weight": 1.0,
+        "description": "Prompt是否定义了明确的角色",
+    },
+    {
+        "id": "D02",
+        "name": "目标明确性",
+        "category": "structure",
+        "weight": 1.0,
+        "description": "Prompt是否表达了清晰的目标",
+    },
+    {
+        "id": "D03",
+        "name": "输出格式规范",
+        "category": "structure",
+        "weight": 0.8,
+        "description": "Prompt是否指定了输出格式",
+    },
+    {
+        "id": "D04",
+        "name": "约束完备性",
+        "category": "structure",
+        "weight": 0.9,
+        "description": "Prompt是否包含充分的约束条件",
+    },
+    {
+        "id": "D05",
+        "name": "上下文充分性",
+        "category": "structure",
+        "weight": 1.0,
+        "description": "Prompt是否提供了足够的上下文",
+    },
+    {
+        "id": "D06",
+        "name": "指令无歧义性",
+        "category": "structure",
+        "weight": 1.0,
+        "description": "Prompt指令是否无歧义",
+    },
+    {
+        "id": "D07",
+        "name": "逻辑一致性",
+        "category": "structure",
+        "weight": 1.0,
+        "description": "Prompt内部逻辑是否自洽",
+    },
+    {
+        "id": "D08",
+        "name": "结构层次性",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt是否有清晰的结构层次",
+    },
+    {
+        "id": "D09",
+        "name": "版本兼容性",
+        "category": "structure",
+        "weight": 0.5,
+        "description": "Prompt是否声明了版本和兼容性",
+    },
+    {
+        "id": "D10",
+        "name": "可维护性",
+        "category": "structure",
+        "weight": 0.6,
+        "description": "Prompt是否易于维护和更新",
+    },
     {"id": "D11", "name": "注入防御", "category": "security", "weight": 1.0, "description": "Prompt是否防御了注入攻击"},
-    {"id": "D12", "name": "敏感信息保护", "category": "security", "weight": 1.0, "description": "Prompt是否保护了敏感信息"},
-    {"id": "D13", "name": "权限最小化", "category": "security", "weight": 0.9, "description": "Prompt是否遵循最小权限原则"},
+    {
+        "id": "D12",
+        "name": "敏感信息保护",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt是否保护了敏感信息",
+    },
+    {
+        "id": "D13",
+        "name": "权限最小化",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否遵循最小权限原则",
+    },
     {"id": "D14", "name": "输入验证", "category": "security", "weight": 0.9, "description": "Prompt是否验证了用户输入"},
     {"id": "D15", "name": "输出过滤", "category": "security", "weight": 0.8, "description": "Prompt是否过滤了危险输出"},
     {"id": "D16", "name": "审计追踪", "category": "security", "weight": 0.6, "description": "Prompt是否支持审计追踪"},
     {"id": "D17", "name": "回退策略", "category": "security", "weight": 0.7, "description": "Prompt是否定义了回退策略"},
     {"id": "D18", "name": "隔离性", "category": "security", "weight": 0.8, "description": "Prompt是否实现了上下文隔离"},
     {"id": "D19", "name": "合规性", "category": "security", "weight": 0.7, "description": "Prompt是否符合合规要求"},
-    {"id": "D20", "name": "数据脱敏", "category": "security", "weight": 0.8, "description": "Prompt是否对数据进行了脱敏"},
-    {"id": "D21", "name": "Token效率", "category": "performance", "weight": 0.8, "description": "Prompt的Token使用效率"},
-    {"id": "D22", "name": "响应延迟优化", "category": "performance", "weight": 0.7, "description": "Prompt是否优化了响应延迟"},
-    {"id": "D23", "name": "缓存友好性", "category": "performance", "weight": 0.6, "description": "Prompt是否适合缓存复用"},
-    {"id": "D24", "name": "批处理兼容性", "category": "performance", "weight": 0.5, "description": "Prompt是否支持批处理"},
-    {"id": "D25", "name": "并行安全性", "category": "performance", "weight": 0.6, "description": "Prompt在并行调用下是否安全"},
-    {"id": "D26", "name": "流式输出适配", "category": "performance", "weight": 0.5, "description": "Prompt是否适配流式输出"},
-    {"id": "D27", "name": "成本效率", "category": "performance", "weight": 0.7, "description": "Prompt的API调用成本效率"},
-    {"id": "D28", "name": "模型兼容广度", "category": "performance", "weight": 0.6, "description": "Prompt在多种模型上的兼容性"},
-    {"id": "D29", "name": "降级适配性", "category": "performance", "weight": 0.5, "description": "Prompt在低配模型上的表现"},
-    {"id": "D30", "name": "重试幂等性", "category": "performance", "weight": 0.6, "description": "Prompt重试调用是否幂等"},
+    {
+        "id": "D20",
+        "name": "数据脱敏",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否对数据进行了脱敏",
+    },
+    {
+        "id": "D21",
+        "name": "Token效率",
+        "category": "performance",
+        "weight": 0.8,
+        "description": "Prompt的Token使用效率",
+    },
+    {
+        "id": "D22",
+        "name": "响应延迟优化",
+        "category": "performance",
+        "weight": 0.7,
+        "description": "Prompt是否优化了响应延迟",
+    },
+    {
+        "id": "D23",
+        "name": "缓存友好性",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt是否适合缓存复用",
+    },
+    {
+        "id": "D24",
+        "name": "批处理兼容性",
+        "category": "performance",
+        "weight": 0.5,
+        "description": "Prompt是否支持批处理",
+    },
+    {
+        "id": "D25",
+        "name": "并行安全性",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt在并行调用下是否安全",
+    },
+    {
+        "id": "D26",
+        "name": "流式输出适配",
+        "category": "performance",
+        "weight": 0.5,
+        "description": "Prompt是否适配流式输出",
+    },
+    {
+        "id": "D27",
+        "name": "成本效率",
+        "category": "performance",
+        "weight": 0.7,
+        "description": "Prompt的API调用成本效率",
+    },
+    {
+        "id": "D28",
+        "name": "模型兼容广度",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt在多种模型上的兼容性",
+    },
+    {
+        "id": "D29",
+        "name": "降级适配性",
+        "category": "performance",
+        "weight": 0.5,
+        "description": "Prompt在低配模型上的表现",
+    },
+    {
+        "id": "D30",
+        "name": "重试幂等性",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt重试调用是否幂等",
+    },
     {"id": "D31", "name": "示例质量", "category": "quality", "weight": 0.9, "description": "Prompt的Few-shot示例质量"},
     {"id": "D32", "name": "推理链引导", "category": "quality", "weight": 0.8, "description": "Prompt是否引导了推理链"},
-    {"id": "D33", "name": "错误处理完整性", "category": "quality", "weight": 0.7, "description": "Prompt的错误处理是否完整"},
-    {"id": "D34", "name": "边界条件覆盖", "category": "quality", "weight": 0.8, "description": "Prompt是否覆盖了边界条件"},
+    {
+        "id": "D33",
+        "name": "错误处理完整性",
+        "category": "quality",
+        "weight": 0.7,
+        "description": "Prompt的错误处理是否完整",
+    },
+    {
+        "id": "D34",
+        "name": "边界条件覆盖",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "Prompt是否覆盖了边界条件",
+    },
     {"id": "D35", "name": "多语言支持", "category": "quality", "weight": 0.5, "description": "Prompt是否支持多语言"},
-    {"id": "D36", "name": "文化适配性", "category": "quality", "weight": 0.4, "description": "Prompt是否适配不同文化背景"},
-    {"id": "D37", "name": "可解释性", "category": "quality", "weight": 0.7, "description": "Prompt的决策过程是否可解释"},
+    {
+        "id": "D36",
+        "name": "文化适配性",
+        "category": "quality",
+        "weight": 0.4,
+        "description": "Prompt是否适配不同文化背景",
+    },
+    {
+        "id": "D37",
+        "name": "可解释性",
+        "category": "quality",
+        "weight": 0.7,
+        "description": "Prompt的决策过程是否可解释",
+    },
     {"id": "D38", "name": "鲁棒性", "category": "quality", "weight": 0.8, "description": "Prompt在异常输入下的鲁棒性"},
     {"id": "D39", "name": "一致性", "category": "quality", "weight": 0.9, "description": "Prompt多次调用输出的一致性"},
-    {"id": "D40", "name": "用户意图匹配", "category": "quality", "weight": 1.0, "description": "Prompt输出是否匹配用户意图"},
-    {"id": "D41", "name": "工具链可运行性", "category": "toolchain", "weight": 1.0, "description": "Prompt引用的工具链是否可运行"},
-    {"id": "D42", "name": "API可达性", "category": "toolchain", "weight": 0.9, "description": "Prompt依赖的API是否可达"},
-    {"id": "D43", "name": "依赖完整性", "category": "toolchain", "weight": 0.8, "description": "Prompt的依赖是否完整声明"},
-    {"id": "D44", "name": "环境变量引用", "category": "toolchain", "weight": 0.7, "description": "Prompt是否正确引用环境变量"},
-    {"id": "D45", "name": "版本锁定", "category": "toolchain", "weight": 0.6, "description": "Prompt依赖是否有版本锁定"},
-    {"id": "D46", "name": "Lint合规", "category": "toolchain", "weight": 0.9, "description": "Prompt是否通过了Lint质量门禁"},
-    {"id": "D47", "name": "安全扫描通过", "category": "toolchain", "weight": 1.0, "description": "Prompt是否通过了安全扫描"},
-    {"id": "D48", "name": "编译无误", "category": "toolchain", "weight": 0.9, "description": "Prompt条件编译是否无错误"},
+    {
+        "id": "D40",
+        "name": "用户意图匹配",
+        "category": "quality",
+        "weight": 1.0,
+        "description": "Prompt输出是否匹配用户意图",
+    },
+    {
+        "id": "D41",
+        "name": "工具链可运行性",
+        "category": "toolchain",
+        "weight": 1.0,
+        "description": "Prompt引用的工具链是否可运行",
+    },
+    {
+        "id": "D42",
+        "name": "API可达性",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "Prompt依赖的API是否可达",
+    },
+    {
+        "id": "D43",
+        "name": "依赖完整性",
+        "category": "toolchain",
+        "weight": 0.8,
+        "description": "Prompt的依赖是否完整声明",
+    },
+    {
+        "id": "D44",
+        "name": "环境变量引用",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "Prompt是否正确引用环境变量",
+    },
+    {
+        "id": "D45",
+        "name": "版本锁定",
+        "category": "toolchain",
+        "weight": 0.6,
+        "description": "Prompt依赖是否有版本锁定",
+    },
+    {
+        "id": "D46",
+        "name": "Lint合规",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "Prompt是否通过了Lint质量门禁",
+    },
+    {
+        "id": "D47",
+        "name": "安全扫描通过",
+        "category": "toolchain",
+        "weight": 1.0,
+        "description": "Prompt是否通过了安全扫描",
+    },
+    {
+        "id": "D48",
+        "name": "编译无误",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "Prompt条件编译是否无错误",
+    },
     {"id": "D49", "name": "测试覆盖", "category": "toolchain", "weight": 0.7, "description": "Prompt是否有测试覆盖"},
     {"id": "D50", "name": "文档完备", "category": "toolchain", "weight": 0.5, "description": "Prompt是否有完备文档"},
-    {"id": "D51", "name": "CI/CD集成", "category": "toolchain", "weight": 0.6, "description": "Prompt是否集成CI/CD流程"},
+    {
+        "id": "D51",
+        "name": "CI/CD集成",
+        "category": "toolchain",
+        "weight": 0.6,
+        "description": "Prompt是否集成CI/CD流程",
+    },
     {"id": "D52", "name": "监控就绪", "category": "toolchain", "weight": 0.5, "description": "Prompt是否具备监控能力"},
-    {"id": "D53", "name": "Lint前置质量", "category": "toolchain", "weight": 0.9, "description": "Prompt是否经过Lint检查并达到质量门禁"},
-    {"id": "D54", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt是否具备多语言翻译和i18n支持"},
-    {"id": "D55", "name": "真实API调用能力", "category": "toolchain", "weight": 1.0, "description": "Provider是否能真实调用LLM API并获取响应"},
-    {"id": "D56", "name": "CLI完备度", "category": "toolchain", "weight": 0.9, "description": "CLI子命令是否端到端可用(非骨架echo)"},
-    {"id": "D57", "name": "Playground可用性", "category": "toolchain", "weight": 0.8, "description": "条件编译Playground Web UI是否可交互使用"},
-    {"id": "D58", "name": "CI/CD集成度", "category": "toolchain", "weight": 0.7, "description": "是否集成CI/CD流水线质量门禁"},
-    {"id": "D59", "name": "模板类型感知", "category": "toolchain", "weight": 0.8, "description": "Linter是否区分知识型/提示词型模板并调整规则"},
-    {"id": "D60", "name": "Front Matter v3合规", "category": "toolchain", "weight": 0.9, "description": "模板是否使用v3 Schema(i18n_status/market_status/lint_score)"},
-    {"id": "D61", "name": "VS Code扩展集成", "category": "toolchain", "weight": 0.7, "description": "是否提供VS Code Lint扩展实现编辑器内实时检查"},
-    {"id": "D62", "name": "新用户引导可用性", "category": "toolchain", "weight": 0.6, "description": "是否提供3步引导(init命令)帮助新用户快速上手"},
-    {"id": "D63", "name": "偏见公平性", "category": "fairness", "weight": 1.0, "description": "Prompt是否避免性别/种族/年龄等偏见表述"},
-    {"id": "D64", "name": "文化包容性", "category": "fairness", "weight": 0.9, "description": "Prompt是否尊重多元文化背景，避免文化冒犯"},
-    {"id": "D65", "name": "可访问性", "category": "fairness", "weight": 0.8, "description": "Prompt输出是否考虑残障用户可访问性需求"},
-    {"id": "D66", "name": "思维链质量", "category": "quality", "weight": 0.8, "description": "Prompt推理链/CoT指令的质量和清晰度"},
-    {"id": "D67", "name": "工具调用准确性", "category": "quality", "weight": 0.9, "description": "Prompt工具/函数调用声明的准确性和完整性"},
-    {"id": "D68", "name": "多轮对话连贯性", "category": "quality", "weight": 0.8, "description": "Prompt多轮对话场景的上下文连贯性设计"},
-    {"id": "D69", "name": "RAG检索相关性", "category": "quality", "weight": 0.8, "description": "RAG场景Prompt的检索增强声明和引用规范"},
-    {"id": "D70", "name": "知识时效性", "category": "quality", "weight": 0.7, "description": "Prompt是否声明知识截止日期和时效性约束"},
-    {"id": "D71", "name": "情感智能度", "category": "quality", "weight": 0.6, "description": "Prompt是否具备情感感知和共情能力设计"},
-    {"id": "D72", "name": "伦理对齐度", "category": "fairness", "weight": 1.0, "description": "Prompt是否符合AI伦理准则，避免有害输出"},
-    {"id": "D73", "name": "公平性偏见检测", "category": "fairness", "weight": 1.0, "description": "Prompt是否检测并缓解输出中的公平性偏见"},
-    {"id": "D74", "name": "隐私合规度", "category": "security", "weight": 1.0, "description": "Prompt是否满足数据隐私法规(GDPR/PIPL)要求"},
-    {"id": "D75", "name": "可审计性", "category": "security", "weight": 0.8, "description": "Prompt是否支持决策过程审计和结果追溯"},
-    {"id": "D76", "name": "鲁棒性评分", "category": "quality", "weight": 0.9, "description": "Prompt在对抗性输入下的鲁棒性和稳定性"},
-    {"id": "D77", "name": "可维护性评分", "category": "structure", "weight": 0.7, "description": "Prompt的模块化程度和版本管理能力"},
-    {"id": "D78", "name": "国际化完备度", "category": "toolchain", "weight": 0.7, "description": "Prompt的国际化/本地化支持完备度"},
-    {"id": "D79", "name": "盘古模型适配度", "category": "toolchain", "weight": 0.9, "description": "Prompt对华为云盘古大模型的适配和优化程度"},
-    {"id": "D80", "name": "鸿蒙场景贴合度", "category": "toolchain", "weight": 1.0, "description": "Prompt对鸿蒙HarmonyOS NEXT场景的专业贴合度"},
-    {"id": "D81", "name": "多模态一致性", "category": "quality", "weight": 0.9, "description": "多模态Prompt各模态输出(文本/图像/音频)的语义一致性"},
-    {"id": "D82", "name": "跨语言一致性", "category": "quality", "weight": 0.8, "description": "多语言Prompt各语言版本的功能和语义一致性"},
-    {"id": "D83", "name": "Agent对齐度", "category": "security", "weight": 1.0, "description": "Agent Prompt的目标对齐度，防止目标劫持和权限越界"},
-    {"id": "D84", "name": "合规度", "category": "security", "weight": 1.0, "description": "Prompt对等保2.0/GDPR/华为云安全基线的合规程度"},
-    {"id": "D85", "name": "可观测性", "category": "toolchain", "weight": 0.8, "description": "Prompt执行链路的可追踪/可监控/可告警能力"},
-    {"id": "D86", "name": "缓存复用率", "category": "performance", "weight": 0.7, "description": "Prompt是否声明缓存策略(前缀缓存/语义缓存)，支持重复调用成本降低"},
-    {"id": "D87", "name": "RAG检索精度声明", "category": "quality", "weight": 0.9, "description": "RAG场景Prompt是否声明检索精度要求(Top-K/相似度阈值/召回率)"},
-    {"id": "D88", "name": "流式输出适配度", "category": "performance", "weight": 0.6, "description": "Prompt是否声明流式输出适配(增量格式/SSE/分块策略)"},
-    {"id": "D89", "name": "多租户隔离度", "category": "security", "weight": 0.9, "description": "Prompt是否声明多租户数据隔离(租户ID注入/上下文隔离/资源配额)"},
-    {"id": "D90", "name": "国产芯片适配度", "category": "toolchain", "weight": 0.8, "description": "Prompt对昇腾NPU/寒武纪MLU/海光DCU的推理适配声明"},
-    {"id": "D91", "name": "Prompt版本可追溯性", "category": "toolchain", "weight": 0.7, "description": "Prompt是否声明版本号/变更日志/回滚策略"},
-    {"id": "D92", "name": "AB实验适配度", "category": "quality", "weight": 0.6, "description": "Prompt是否支持A/B实验(变体声明/流量分配/统计显著性)"},
-    {"id": "D93", "name": "Prompt复用度", "category": "quality", "weight": 0.7, "description": "Prompt模板化/参数化程度，支持跨场景复用"},
-    {"id": "D94", "name": "端到端加密声明", "category": "security", "weight": 0.9, "description": "Prompt是否声明E2EE加密传输(KMS/证书轮换/密钥分级)"},
-    {"id": "D95", "name": "成本可预测性", "category": "performance", "weight": 0.7, "description": "Prompt是否声明Token预算/调用频率/成本上限"},
-    {"id": "D96", "name": "鸿蒙分布式一致性", "category": "harmonyos", "weight": 0.8, "description": "Prompt对鸿蒙分布式数据一致性的声明(冲突解决/最终一致性/数据分级)"},
-    {"id": "D97", "name": "ModelArts可部署性", "category": "toolchain", "weight": 0.7, "description": "Prompt对华为云ModelArts训练/推理部署的适配声明"},
-    {"id": "D98", "name": "Prompt注入鲁棒性", "category": "security", "weight": 1.0, "description": "Prompt对注入攻击的防御深度(多层防御/指令隔离/输入净化)"},
-    {"id": "D99", "name": "可解释性声明", "category": "quality", "weight": 0.8, "description": "Prompt是否声明输出可解释性(推理过程透明/置信度/不确定性量化)"},
-    {"id": "D100", "name": "赛事评分契合度", "category": "compliance", "weight": 0.9, "description": "Prompt对华为云/鸿蒙生态赛事评分标准的适配度"},
-    {"id": "D101", "name": "版本管理完备性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明语义版本/变更日志/兼容性标注"},
-    {"id": "D102", "name": "灰度发布可控性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明灰度发布策略(流量百分比/AB测试/逐步放量)"},
-    {"id": "D103", "name": "数据脱敏合规性", "category": "security", "weight": 0.9, "description": "Prompt是否声明PII检测/字段掩码/日志脱敏策略"},
-    {"id": "D104", "name": "沙箱隔离强度", "category": "security", "weight": 0.9, "description": "Prompt是否声明执行环境隔离/资源限制/网络白名单"},
-    {"id": "D105", "name": "回滚机制可靠性", "category": "security", "weight": 0.8, "description": "Prompt是否声明版本回滚/快照恢复/自动回滚触发条件"},
-    {"id": "D106", "name": "多租户隔离性", "category": "security", "weight": 0.8, "description": "Prompt是否支持多租户数据隔离/权限隔离/资源隔离"},
-    {"id": "D107", "name": "可观测性", "category": "quality", "weight": 0.7, "description": "Prompt是否声明监控指标/告警规则/链路追踪"},
-    {"id": "D108", "name": "混沌工程韧性", "category": "quality", "weight": 0.6, "description": "Prompt是否声明故障注入容错/熔断/降级演练策略"},
-    {"id": "D109", "name": "API契约一致性", "category": "structure", "weight": 0.7, "description": "Prompt是否声明API接口契约(请求/响应schema/版本/向后兼容)"},
-    {"id": "D110", "name": "供应链安全", "category": "security", "weight": 0.8, "description": "Prompt是否声明依赖来源可信度/签名验证/漏洞扫描策略"},
-    {"id": "D111", "name": "模板注入防护", "category": "security", "weight": 1.0, "description": "Prompt是否声明模板变量转义/沙箱渲染/指令隔离"},
-    {"id": "D112", "name": "缓存投毒防护", "category": "security", "weight": 0.9, "description": "Prompt是否声明缓存键验证/内容签名/过期策略"},
-    {"id": "D113", "name": "越狱防护强度", "category": "security", "weight": 1.0, "description": "Prompt是否声明系统指令固化/角色锚定/拒绝策略"},
-    {"id": "D114", "name": "指令提取防护", "category": "security", "weight": 0.9, "description": "Prompt是否声明输出过滤/指令不可见/反提取措辞"},
-    {"id": "D115", "name": "侧信道防护", "category": "security", "weight": 0.8, "description": "Prompt是否声明时间恒定/错误统一/日志脱敏"},
-    {"id": "D116", "name": "Prompt加密传输", "category": "security", "weight": 0.8, "description": "Prompt是否声明传输加密(TLS1.3/证书固定/双向认证)"},
-    {"id": "D117", "name": "Prompt压缩效率", "category": "performance", "weight": 0.7, "description": "Prompt的压缩优化潜力(冗余词/重复模式/可参数化段)"},
-    {"id": "D118", "name": "Prompt分段质量", "category": "structure", "weight": 0.7, "description": "Prompt是否按角色/指令/约束/示例清晰分段"},
-    {"id": "D119", "name": "Prompt国际化就绪", "category": "quality", "weight": 0.5, "description": "Prompt是否支持i18n(变量化文本/语言声明/翻译友好)"},
-    {"id": "D120", "name": "Prompt元数据完备", "category": "structure", "weight": 0.6, "description": "Prompt是否包含元数据(作者/版本/标签/创建时间/用途)"},
-    {"id": "D121", "name": "输出安全完备", "category": "security", "weight": 0.9, "description": "Prompt是否声明输出过滤/幻觉防护/偏见检测/毒性过滤/引用验证"},
-    {"id": "D122", "name": "合规框架覆盖", "category": "compliance", "weight": 0.8, "description": "Prompt是否声明OWASP/NIST AI RMF/EU AI Act合规要求"},
-    {"id": "D123", "name": "条件逻辑安全", "category": "security", "weight": 0.7, "description": "Prompt条件分支是否完整(所有if有else/无死分支/无矛盾条件)"},
-    {"id": "D124", "name": "模板复用质量", "category": "quality", "weight": 0.6, "description": "Prompt模板是否参数化良好(变量抽取/默认值/类型约束)"},
-    {"id": "D125", "name": "多语言适配度", "category": "quality", "weight": 0.5, "description": "Prompt是否支持多语言(i18n声明/翻译占位/文化适配)"},
-    {"id": "D126", "name": "观测性就绪", "category": "performance", "weight": 0.6, "description": "Prompt是否包含追踪标记(TraceID/SpanID/版本戳)"},
-    {"id": "D127", "name": "降级容灾", "category": "security", "weight": 0.7, "description": "Prompt是否声明降级策略(备选模型/简化响应/超时回退)"},
-    {"id": "D128", "name": "成本效率", "category": "performance", "weight": 0.5, "description": "Prompt的Token效率(信息密度/冗余度/压缩潜力)"},
-    {"id": "D129", "name": "红队就绪", "category": "security", "weight": 0.8, "description": "Prompt是否经过红队测试(探测类型/通过率/修复状态)"},
-    {"id": "D130", "name": "鸿蒙NEXT适配", "category": "compliance", "weight": 0.7, "description": "Prompt是否适配HarmonyOS NEXT API 14(@Builder/LazyForEach/@Reusable/UIAbility)"},
+    {
+        "id": "D53",
+        "name": "Lint前置质量",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "Prompt是否经过Lint检查并达到质量门禁",
+    },
+    {
+        "id": "D54",
+        "name": "国际化完备度",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "Prompt是否具备多语言翻译和i18n支持",
+    },
+    {
+        "id": "D55",
+        "name": "真实API调用能力",
+        "category": "toolchain",
+        "weight": 1.0,
+        "description": "Provider是否能真实调用LLM API并获取响应",
+    },
+    {
+        "id": "D56",
+        "name": "CLI完备度",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "CLI子命令是否端到端可用(非骨架echo)",
+    },
+    {
+        "id": "D57",
+        "name": "Playground可用性",
+        "category": "toolchain",
+        "weight": 0.8,
+        "description": "条件编译Playground Web UI是否可交互使用",
+    },
+    {
+        "id": "D58",
+        "name": "CI/CD集成度",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "是否集成CI/CD流水线质量门禁",
+    },
+    {
+        "id": "D59",
+        "name": "模板类型感知",
+        "category": "toolchain",
+        "weight": 0.8,
+        "description": "Linter是否区分知识型/提示词型模板并调整规则",
+    },
+    {
+        "id": "D60",
+        "name": "Front Matter v3合规",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "模板是否使用v3 Schema(i18n_status/market_status/lint_score)",
+    },
+    {
+        "id": "D61",
+        "name": "VS Code扩展集成",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "是否提供VS Code Lint扩展实现编辑器内实时检查",
+    },
+    {
+        "id": "D62",
+        "name": "新用户引导可用性",
+        "category": "toolchain",
+        "weight": 0.6,
+        "description": "是否提供3步引导(init命令)帮助新用户快速上手",
+    },
+    {
+        "id": "D63",
+        "name": "偏见公平性",
+        "category": "fairness",
+        "weight": 1.0,
+        "description": "Prompt是否避免性别/种族/年龄等偏见表述",
+    },
+    {
+        "id": "D64",
+        "name": "文化包容性",
+        "category": "fairness",
+        "weight": 0.9,
+        "description": "Prompt是否尊重多元文化背景，避免文化冒犯",
+    },
+    {
+        "id": "D65",
+        "name": "可访问性",
+        "category": "fairness",
+        "weight": 0.8,
+        "description": "Prompt输出是否考虑残障用户可访问性需求",
+    },
+    {
+        "id": "D66",
+        "name": "思维链质量",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "Prompt推理链/CoT指令的质量和清晰度",
+    },
+    {
+        "id": "D67",
+        "name": "工具调用准确性",
+        "category": "quality",
+        "weight": 0.9,
+        "description": "Prompt工具/函数调用声明的准确性和完整性",
+    },
+    {
+        "id": "D68",
+        "name": "多轮对话连贯性",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "Prompt多轮对话场景的上下文连贯性设计",
+    },
+    {
+        "id": "D69",
+        "name": "RAG检索相关性",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "RAG场景Prompt的检索增强声明和引用规范",
+    },
+    {
+        "id": "D70",
+        "name": "知识时效性",
+        "category": "quality",
+        "weight": 0.7,
+        "description": "Prompt是否声明知识截止日期和时效性约束",
+    },
+    {
+        "id": "D71",
+        "name": "情感智能度",
+        "category": "quality",
+        "weight": 0.6,
+        "description": "Prompt是否具备情感感知和共情能力设计",
+    },
+    {
+        "id": "D72",
+        "name": "伦理对齐度",
+        "category": "fairness",
+        "weight": 1.0,
+        "description": "Prompt是否符合AI伦理准则，避免有害输出",
+    },
+    {
+        "id": "D73",
+        "name": "公平性偏见检测",
+        "category": "fairness",
+        "weight": 1.0,
+        "description": "Prompt是否检测并缓解输出中的公平性偏见",
+    },
+    {
+        "id": "D74",
+        "name": "隐私合规度",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt是否满足数据隐私法规(GDPR/PIPL)要求",
+    },
+    {
+        "id": "D75",
+        "name": "可审计性",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否支持决策过程审计和结果追溯",
+    },
+    {
+        "id": "D76",
+        "name": "鲁棒性评分",
+        "category": "quality",
+        "weight": 0.9,
+        "description": "Prompt在对抗性输入下的鲁棒性和稳定性",
+    },
+    {
+        "id": "D77",
+        "name": "可维护性评分",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt的模块化程度和版本管理能力",
+    },
+    {
+        "id": "D78",
+        "name": "国际化完备度",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "Prompt的国际化/本地化支持完备度",
+    },
+    {
+        "id": "D79",
+        "name": "盘古模型适配度",
+        "category": "toolchain",
+        "weight": 0.9,
+        "description": "Prompt对华为云盘古大模型的适配和优化程度",
+    },
+    {
+        "id": "D80",
+        "name": "鸿蒙场景贴合度",
+        "category": "toolchain",
+        "weight": 1.0,
+        "description": "Prompt对鸿蒙HarmonyOS NEXT场景的专业贴合度",
+    },
+    {
+        "id": "D81",
+        "name": "多模态一致性",
+        "category": "quality",
+        "weight": 0.9,
+        "description": "多模态Prompt各模态输出(文本/图像/音频)的语义一致性",
+    },
+    {
+        "id": "D82",
+        "name": "跨语言一致性",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "多语言Prompt各语言版本的功能和语义一致性",
+    },
+    {
+        "id": "D83",
+        "name": "Agent对齐度",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Agent Prompt的目标对齐度，防止目标劫持和权限越界",
+    },
+    {
+        "id": "D84",
+        "name": "合规度",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt对等保2.0/GDPR/华为云安全基线的合规程度",
+    },
+    {
+        "id": "D85",
+        "name": "可观测性",
+        "category": "toolchain",
+        "weight": 0.8,
+        "description": "Prompt执行链路的可追踪/可监控/可告警能力",
+    },
+    {
+        "id": "D86",
+        "name": "缓存复用率",
+        "category": "performance",
+        "weight": 0.7,
+        "description": "Prompt是否声明缓存策略(前缀缓存/语义缓存)，支持重复调用成本降低",
+    },
+    {
+        "id": "D87",
+        "name": "RAG检索精度声明",
+        "category": "quality",
+        "weight": 0.9,
+        "description": "RAG场景Prompt是否声明检索精度要求(Top-K/相似度阈值/召回率)",
+    },
+    {
+        "id": "D88",
+        "name": "流式输出适配度",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt是否声明流式输出适配(增量格式/SSE/分块策略)",
+    },
+    {
+        "id": "D89",
+        "name": "多租户隔离度",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明多租户数据隔离(租户ID注入/上下文隔离/资源配额)",
+    },
+    {
+        "id": "D90",
+        "name": "国产芯片适配度",
+        "category": "toolchain",
+        "weight": 0.8,
+        "description": "Prompt对昇腾NPU/寒武纪MLU/海光DCU的推理适配声明",
+    },
+    {
+        "id": "D91",
+        "name": "Prompt版本可追溯性",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "Prompt是否声明版本号/变更日志/回滚策略",
+    },
+    {
+        "id": "D92",
+        "name": "AB实验适配度",
+        "category": "quality",
+        "weight": 0.6,
+        "description": "Prompt是否支持A/B实验(变体声明/流量分配/统计显著性)",
+    },
+    {
+        "id": "D93",
+        "name": "Prompt复用度",
+        "category": "quality",
+        "weight": 0.7,
+        "description": "Prompt模板化/参数化程度，支持跨场景复用",
+    },
+    {
+        "id": "D94",
+        "name": "端到端加密声明",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明E2EE加密传输(KMS/证书轮换/密钥分级)",
+    },
+    {
+        "id": "D95",
+        "name": "成本可预测性",
+        "category": "performance",
+        "weight": 0.7,
+        "description": "Prompt是否声明Token预算/调用频率/成本上限",
+    },
+    {
+        "id": "D96",
+        "name": "鸿蒙分布式一致性",
+        "category": "harmonyos",
+        "weight": 0.8,
+        "description": "Prompt对鸿蒙分布式数据一致性的声明(冲突解决/最终一致性/数据分级)",
+    },
+    {
+        "id": "D97",
+        "name": "ModelArts可部署性",
+        "category": "toolchain",
+        "weight": 0.7,
+        "description": "Prompt对华为云ModelArts训练/推理部署的适配声明",
+    },
+    {
+        "id": "D98",
+        "name": "Prompt注入鲁棒性",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt对注入攻击的防御深度(多层防御/指令隔离/输入净化)",
+    },
+    {
+        "id": "D99",
+        "name": "可解释性声明",
+        "category": "quality",
+        "weight": 0.8,
+        "description": "Prompt是否声明输出可解释性(推理过程透明/置信度/不确定性量化)",
+    },
+    {
+        "id": "D100",
+        "name": "赛事评分契合度",
+        "category": "compliance",
+        "weight": 0.9,
+        "description": "Prompt对华为云/鸿蒙生态赛事评分标准的适配度",
+    },
+    {
+        "id": "D101",
+        "name": "版本管理完备性",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt是否声明语义版本/变更日志/兼容性标注",
+    },
+    {
+        "id": "D102",
+        "name": "灰度发布可控性",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt是否声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+    },
+    {
+        "id": "D103",
+        "name": "数据脱敏合规性",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明PII检测/字段掩码/日志脱敏策略",
+    },
+    {
+        "id": "D104",
+        "name": "沙箱隔离强度",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明执行环境隔离/资源限制/网络白名单",
+    },
+    {
+        "id": "D105",
+        "name": "回滚机制可靠性",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否声明版本回滚/快照恢复/自动回滚触发条件",
+    },
+    {
+        "id": "D106",
+        "name": "多租户隔离性",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否支持多租户数据隔离/权限隔离/资源隔离",
+    },
+    {
+        "id": "D107",
+        "name": "可观测性",
+        "category": "quality",
+        "weight": 0.7,
+        "description": "Prompt是否声明监控指标/告警规则/链路追踪",
+    },
+    {
+        "id": "D108",
+        "name": "混沌工程韧性",
+        "category": "quality",
+        "weight": 0.6,
+        "description": "Prompt是否声明故障注入容错/熔断/降级演练策略",
+    },
+    {
+        "id": "D109",
+        "name": "API契约一致性",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt是否声明API接口契约(请求/响应schema/版本/向后兼容)",
+    },
+    {
+        "id": "D110",
+        "name": "供应链安全",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否声明依赖来源可信度/签名验证/漏洞扫描策略",
+    },
+    {
+        "id": "D111",
+        "name": "模板注入防护",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt是否声明模板变量转义/沙箱渲染/指令隔离",
+    },
+    {
+        "id": "D112",
+        "name": "缓存投毒防护",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明缓存键验证/内容签名/过期策略",
+    },
+    {
+        "id": "D113",
+        "name": "越狱防护强度",
+        "category": "security",
+        "weight": 1.0,
+        "description": "Prompt是否声明系统指令固化/角色锚定/拒绝策略",
+    },
+    {
+        "id": "D114",
+        "name": "指令提取防护",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明输出过滤/指令不可见/反提取措辞",
+    },
+    {
+        "id": "D115",
+        "name": "侧信道防护",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否声明时间恒定/错误统一/日志脱敏",
+    },
+    {
+        "id": "D116",
+        "name": "Prompt加密传输",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否声明传输加密(TLS1.3/证书固定/双向认证)",
+    },
+    {
+        "id": "D117",
+        "name": "Prompt压缩效率",
+        "category": "performance",
+        "weight": 0.7,
+        "description": "Prompt的压缩优化潜力(冗余词/重复模式/可参数化段)",
+    },
+    {
+        "id": "D118",
+        "name": "Prompt分段质量",
+        "category": "structure",
+        "weight": 0.7,
+        "description": "Prompt是否按角色/指令/约束/示例清晰分段",
+    },
+    {
+        "id": "D119",
+        "name": "Prompt国际化就绪",
+        "category": "quality",
+        "weight": 0.5,
+        "description": "Prompt是否支持i18n(变量化文本/语言声明/翻译友好)",
+    },
+    {
+        "id": "D120",
+        "name": "Prompt元数据完备",
+        "category": "structure",
+        "weight": 0.6,
+        "description": "Prompt是否包含元数据(作者/版本/标签/创建时间/用途)",
+    },
+    {
+        "id": "D121",
+        "name": "输出安全完备",
+        "category": "security",
+        "weight": 0.9,
+        "description": "Prompt是否声明输出过滤/幻觉防护/偏见检测/毒性过滤/引用验证",
+    },
+    {
+        "id": "D122",
+        "name": "合规框架覆盖",
+        "category": "compliance",
+        "weight": 0.8,
+        "description": "Prompt是否声明OWASP/NIST AI RMF/EU AI Act合规要求",
+    },
+    {
+        "id": "D123",
+        "name": "条件逻辑安全",
+        "category": "security",
+        "weight": 0.7,
+        "description": "Prompt条件分支是否完整(所有if有else/无死分支/无矛盾条件)",
+    },
+    {
+        "id": "D124",
+        "name": "模板复用质量",
+        "category": "quality",
+        "weight": 0.6,
+        "description": "Prompt模板是否参数化良好(变量抽取/默认值/类型约束)",
+    },
+    {
+        "id": "D125",
+        "name": "多语言适配度",
+        "category": "quality",
+        "weight": 0.5,
+        "description": "Prompt是否支持多语言(i18n声明/翻译占位/文化适配)",
+    },
+    {
+        "id": "D126",
+        "name": "观测性就绪",
+        "category": "performance",
+        "weight": 0.6,
+        "description": "Prompt是否包含追踪标记(TraceID/SpanID/版本戳)",
+    },
+    {
+        "id": "D127",
+        "name": "降级容灾",
+        "category": "security",
+        "weight": 0.7,
+        "description": "Prompt是否声明降级策略(备选模型/简化响应/超时回退)",
+    },
+    {
+        "id": "D128",
+        "name": "成本效率",
+        "category": "performance",
+        "weight": 0.5,
+        "description": "Prompt的Token效率(信息密度/冗余度/压缩潜力)",
+    },
+    {
+        "id": "D129",
+        "name": "红队就绪",
+        "category": "security",
+        "weight": 0.8,
+        "description": "Prompt是否经过红队测试(探测类型/通过率/修复状态)",
+    },
+    {
+        "id": "D130",
+        "name": "鸿蒙NEXT适配",
+        "category": "compliance",
+        "weight": 0.7,
+        "description": "Prompt是否适配HarmonyOS NEXT API 14(@Builder/LazyForEach/@Reusable/UIAbility)",
+    },
 ]
 
 
@@ -211,10 +902,7 @@ class _DimensionEvaluator:
         self._stats_cache: dict[str, Any] | None = None
 
     def _has_pattern(self, *patterns: str) -> bool:
-        for p in patterns:
-            if re.search(p, self._text, re.IGNORECASE):
-                return True
-        return False
+        return any(re.search(p, self._text, re.IGNORECASE) for p in patterns)
 
     def _text_length(self) -> int:
         return len(self._text)
@@ -228,17 +916,17 @@ class _DimensionEvaluator:
     def _compute_stats(self) -> dict[str, Any]:
         if self._stats_cache is not None:
             return self._stats_cache
-        import unicodedata
         from collections import Counter
         from difflib import SequenceMatcher
+
         text = self._text
-        words_zh = [c for c in text if '\u4e00' <= c <= '\u9fff']
-        words_en = re.findall(r'[a-zA-Z]+', text)
+        words_zh = [c for c in text if "\u4e00" <= c <= "\u9fff"]
+        words_en = re.findall(r"[a-zA-Z]+", text)
         total_words = len(words_zh) + len(words_en)
         unique_zh = len(set(words_zh))
-        unique_en = len(set(w.lower() for w in words_en))
+        unique_en = len({w.lower() for w in words_en})
         ttr = (unique_zh + unique_en) / max(total_words, 1)
-        sentences = re.split(r'[。！？.!?]+', text)
+        sentences = re.split(r"[。！？.!?]+", text)
         sentences = [s.strip() for s in sentences if s.strip()]
         sent_lengths = [len(s) for s in sentences]
         avg_sent_len = sum(sent_lengths) / max(len(sent_lengths), 1)
@@ -246,13 +934,13 @@ class _DimensionEvaluator:
         if len(sent_lengths) > 1:
             mean = avg_sent_len
             sent_len_var = sum((l - mean) ** 2 for l in sent_lengths) / len(sent_lengths)
-        paragraphs = re.split(r'\n\s*\n', text)
+        paragraphs = re.split(r"\n\s*\n", text)
         paragraphs = [p.strip() for p in paragraphs if p.strip()]
         para_count = len(paragraphs)
-        has_structure = sum(1 for p in paragraphs if re.match(r'^#{1,6}\s', p) or re.match(r'^-{3,}', p))
+        has_structure = sum(1 for p in paragraphs if re.match(r"^#{1,6}\s", p) or re.match(r"^-{3,}", p))
         bigrams = []
         for sent in sentences:
-            chars = [c for c in sent if '\u4e00' <= c <= '\u9fff']
+            chars = [c for c in sent if "\u4e00" <= c <= "\u9fff"]
             for i in range(len(chars) - 1):
                 bigrams.append(chars[i] + chars[i + 1])
         bigram_counter = Counter(bigrams)
@@ -263,10 +951,12 @@ class _DimensionEvaluator:
                 ratio = SequenceMatcher(None, paragraphs[i], paragraphs[i + 1]).ratio()
                 similarities.append(ratio)
         avg_similarity = sum(similarities) / max(len(similarities), 1)
-        has_variables = bool(re.search(r'\{\{.*?\}\}', text))
-        has_conditions = bool(re.search(r'\{%\s*if', text))
-        has_few_shot = text.count('```') >= 2 or self._count_pattern(r'例[如子]', r'example', r'for\s+instance') >= 2
-        role_sections = len(re.findall(r'(?:^|\n)\s*(?:system|user|assistant|角色|任务|约束|输出)[：:]\s*', text, re.IGNORECASE))
+        has_variables = bool(re.search(r"\{\{.*?\}\}", text))
+        has_conditions = bool(re.search(r"\{%\s*if", text))
+        has_few_shot = text.count("```") >= 2 or self._count_pattern(r"例[如子]", r"example", r"for\s+instance") >= 2
+        role_sections = len(
+            re.findall(r"(?:^|\n)\s*(?:system|user|assistant|角色|任务|约束|输出)[：:]\s*", text, re.IGNORECASE)
+        )
         self._stats_cache = {
             "total_chars": len(text),
             "total_words": total_words,
@@ -301,7 +991,6 @@ class _DimensionEvaluator:
         )
 
     def _compute_score(self, dim_id: str, category: str) -> float:
-        text = self._text
         length = self._text_length()
 
         if dim_id == "D01":
@@ -312,7 +1001,9 @@ class _DimensionEvaluator:
                 score += 2.0
             if self._stat("role_sections") >= 4:
                 score += 1.0
-            if self._has_pattern(r"作为.{1,20}专家", r"你是.{1,20}助手", r"act\s+as", r"expert|specialist|professional"):
+            if self._has_pattern(
+                r"作为.{1,20}专家", r"你是.{1,20}助手", r"act\s+as", r"expert|specialist|professional"
+            ):
                 score += 1.0
             return min(score, 10.0)
         elif dim_id == "D02":
@@ -665,8 +1356,8 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D35":
             score = 3.0
-            zh_chars = sum(1 for c in self._text if '\u4e00' <= c <= '\u9fff')
-            en_chars = len(re.findall(r'[a-zA-Z]', self._text))
+            zh_chars = sum(1 for c in self._text if "\u4e00" <= c <= "\u9fff")
+            en_chars = len(re.findall(r"[a-zA-Z]", self._text))
             if zh_chars > 0 and en_chars > 0:
                 score += 4.0
             elif zh_chars > 0 or en_chars > 0:
@@ -1034,7 +1725,9 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D76":
             score = 3.0
-            has_defense = self._has_pattern(r"注入.*防御|injection.*defense|校验|validate|sanitize|异常.*处理|鲁棒|robust")
+            has_defense = self._has_pattern(
+                r"注入.*防御|injection.*defense|校验|validate|sanitize|异常.*处理|鲁棒|robust"
+            )
             has_adversarial = self._has_pattern(r"攻击|对抗|adversarial|red.?team|注入|inject")
             if has_defense:
                 score += 4.0
@@ -1146,7 +1839,9 @@ class _DimensionEvaluator:
         elif dim_id == "D79":
             score = 3.0
             has_pangu = self._has_pattern(r"盘古|Pangu|pangu|华为云.*模型|MaaS|ModelArts|昇腾|Ascend")
-            has_pangu_spec = self._has_pattern(r"盘古.*格式|Pangu.*format|MaaS.*API|system.*role|Function.?Calling|安全护栏")
+            has_pangu_spec = self._has_pattern(
+                r"盘古.*格式|Pangu.*format|MaaS.*API|system.*role|Function.?Calling|安全护栏"
+            )
             if has_pangu:
                 score += 3.0
             if has_pangu_spec:
@@ -1157,7 +1852,9 @@ class _DimensionEvaluator:
         elif dim_id == "D80":
             score = 3.0
             has_harmony = self._has_pattern(r"鸿蒙|HarmonyOS|harmonyos|ArkTS|arkts|Stage模型|Ability|OHOS|元服务")
-            has_harmony_spec = self._has_pattern(r"ArkTS.*严格|onCreate|onDestroy|ohos\.permission|断点|响应式|沙箱|DataShare|FormExtension|HTTPS|ohos\.net")
+            has_harmony_spec = self._has_pattern(
+                r"ArkTS.*严格|onCreate|onDestroy|ohos\.permission|断点|响应式|沙箱|DataShare|FormExtension|HTTPS|ohos\.net"
+            )
             if has_harmony:
                 score += 3.0
             if has_harmony_spec:
@@ -1170,8 +1867,12 @@ class _DimensionEvaluator:
     def _eval_r70_dimensions(self, dim_id: str) -> float:
         if dim_id == "D81":
             score = 3.0
-            has_multimodal = self._has_pattern(r"多模态|multimodal|图像|image|音频|audio|视觉|vision|跨模态|cross.?modal")
-            has_consistency = self._has_pattern(r"一致性|consistency|校验.*一致|verify.*consist|语义.*对齐|semantic.*align")
+            has_multimodal = self._has_pattern(
+                r"多模态|multimodal|图像|image|音频|audio|视觉|vision|跨模态|cross.?modal"
+            )
+            has_consistency = self._has_pattern(
+                r"一致性|consistency|校验.*一致|verify.*consist|语义.*对齐|semantic.*align"
+            )
             if has_multimodal:
                 score += 3.0
             if has_consistency:
@@ -1182,7 +1883,9 @@ class _DimensionEvaluator:
         elif dim_id == "D82":
             score = 3.0
             has_multilang = self._has_pattern(r"多语言|multi.?lang|翻译|translat|i18n|locale|双语|bilingual")
-            has_consistency = self._has_pattern(r"语言.*一致|language.*consist|翻译.*质量|translation.*quality|术语.*统一|terminology.*unif")
+            has_consistency = self._has_pattern(
+                r"语言.*一致|language.*consist|翻译.*质量|translation.*quality|术语.*统一|terminology.*unif"
+            )
             if has_multilang:
                 score += 3.0
             if has_consistency:
@@ -1214,7 +1917,9 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D85":
             score = 3.0
-            has_observability = self._has_pattern(r"可观测|observab|监控|monitor|追踪|trace|告警|alert|指标|metric|日志|log")
+            has_observability = self._has_pattern(
+                r"可观测|observab|监控|monitor|追踪|trace|告警|alert|指标|metric|日志|log"
+            )
             if has_observability:
                 score += 4.0
             if self._has_pattern(r"OpenTelemetry|OTEL|AOM|Prometheus|Grafana|链路.*追踪|distributed.*trace"):
@@ -1231,7 +1936,9 @@ class _DimensionEvaluator:
         elif dim_id == "D87":
             score = 3.0
             has_rag = self._has_pattern(r"RAG|检索|retriev|知识库|knowledge.*base|向量|vector|embedding|召回|recall")
-            has_precision = self._has_pattern(r"Top.?K|相似度|similarity|阈值|threshold|召回率|recall.*rate|精度|precision")
+            has_precision = self._has_pattern(
+                r"Top.?K|相似度|similarity|阈值|threshold|召回率|recall.*rate|精度|precision"
+            )
             if has_rag:
                 score += 3.0
             if has_precision:
@@ -1241,7 +1948,9 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D88":
             score = 3.0
-            has_streaming = self._has_pattern(r"流式|stream|SSE|增量|incremental|分块|chunk|实时.*输出|real.?time.*output")
+            has_streaming = self._has_pattern(
+                r"流式|stream|SSE|增量|incremental|分块|chunk|实时.*输出|real.?time.*output"
+            )
             if has_streaming:
                 score += 4.0
             if self._has_pattern(r"Server.?Sent.*Events|chunk.*transfer|流式.*解析|stream.*pars|背压|backpressure"):
@@ -1249,7 +1958,9 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D89":
             score = 3.0
-            has_multi_tenant = self._has_pattern(r"多租户|multi.?tenant|租户|tenant|隔离|isolat|配额|quota|资源.*限制|resource.*limit")
+            has_multi_tenant = self._has_pattern(
+                r"多租户|multi.?tenant|租户|tenant|隔离|isolat|配额|quota|资源.*限制|resource.*limit"
+            )
             if has_multi_tenant:
                 score += 4.0
             if self._has_pattern(r"租户.*ID|tenant.*ID|上下文.*隔离|context.*isolat|数据.*隔离|data.*isolat|RBAC|ABAC"):
@@ -1257,10 +1968,14 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D90":
             score = 3.0
-            has_domestic_chip = self._has_pattern(r"昇腾|Ascend|ascend|寒武纪|Cambricon|MLU|海光|Hygon|DCU|NPU|国产.*芯片|domestic.*chip")
+            has_domestic_chip = self._has_pattern(
+                r"昇腾|Ascend|ascend|寒武纪|Cambricon|MLU|海光|Hygon|DCU|NPU|国产.*芯片|domestic.*chip"
+            )
             if has_domestic_chip:
                 score += 4.0
-            if self._has_pattern(r"CANN|ATC|MindSpore|精度.*适配|precision.*adapt|量化|quantiz|INT8|FP16|推理.*优化|inference.*optim"):
+            if self._has_pattern(
+                r"CANN|ATC|MindSpore|精度.*适配|precision.*adapt|量化|quantiz|INT8|FP16|推理.*优化|inference.*optim"
+            ):
                 score += 3.0
             return min(score, 10.0)
         elif dim_id == "D91":
@@ -1300,7 +2015,9 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D96":
             score = 3.0
-            if self._has_pattern(r"分布式.*一致|distribut.*consist|冲突.*解决|conflict.*resolut|最终一致性|eventual.*consist"):
+            if self._has_pattern(
+                r"分布式.*一致|distribut.*consist|冲突.*解决|conflict.*resolut|最终一致性|eventual.*consist"
+            ):
                 score += 4.0
             if self._has_pattern(r"数据分级|data.*classific|软总线|SoftBus|跨设备|cross.*device"):
                 score += 3.0
@@ -1314,9 +2031,13 @@ class _DimensionEvaluator:
             return min(score, 10.0)
         elif dim_id == "D98":
             score = 3.0
-            if self._has_pattern(r"注入.*防御|injection.*defens|指令.*隔离|instruction.*isolat|输入.*净化|input.*sanitiz"):
+            if self._has_pattern(
+                r"注入.*防御|injection.*defens|指令.*隔离|instruction.*isolat|输入.*净化|input.*sanitiz"
+            ):
                 score += 4.0
-            if self._has_pattern(r"多层防御|defense.*in.*depth|边界校验|boundary.*check|沙箱|sandbox|越狱|jailbreak.*defens"):
+            if self._has_pattern(
+                r"多层防御|defense.*in.*depth|边界校验|boundary.*check|沙箱|sandbox|越狱|jailbreak.*defens"
+            ):
                 score += 3.0
             return min(score, 10.0)
         elif dim_id == "D99":
@@ -1573,8 +2294,8 @@ def get_dimensions_by_category(category: str) -> list[dict[str, Any]]:
 
 class WeightPreset:
     """评估维度权重预设(行业场景)"""
-    def __init__(self, name: str, display_name: str, description: str,
-                 weights: dict[str, float]) -> None:
+
+    def __init__(self, name: str, display_name: str, description: str, weights: dict[str, float]) -> None:
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -1592,34 +2313,50 @@ class WeightPreset:
         return result
 
     def summary(self) -> dict[str, Any]:
-        return {"name": self.name, "display_name": self.display_name,
-                "description": self.description, "override_count": len(self._overrides)}
+        return {
+            "name": self.name,
+            "display_name": self.display_name,
+            "description": self.description,
+            "override_count": len(self._overrides),
+        }
 
 
 WEIGHT_PRESETS: dict[str, WeightPreset] = {
     "default": WeightPreset("default", "默认均衡", "所有维度使用默认权重", {}),
     "security-heavy": WeightPreset(
-        "security-heavy", "安全优先", "安全类维度权重x2.0，合规x1.8，适合金融/医疗/政务场景",
+        "security-heavy",
+        "安全优先",
+        "安全类维度权重x2.0，合规x1.8，适合金融/医疗/政务场景",
         {"security": 2.0, "compliance": 1.8, "D11": 2.5, "D12": 2.5, "D14": 2.0, "D15": 2.0},
     ),
     "quality-balanced": WeightPreset(
-        "quality-balanced", "质量均衡", "结构与质量类权重x1.5，安全x1.2，适合通用生产环境",
+        "quality-balanced",
+        "质量均衡",
+        "结构与质量类权重x1.5，安全x1.2，适合通用生产环境",
         {"structure": 1.5, "quality": 1.5, "security": 1.2, "clarity": 1.3},
     ),
     "performance-first": WeightPreset(
-        "performance-first", "性能优先", "效率/延迟/成本维度权重x2.0，安全x1.0，适合高并发推理场景",
+        "performance-first",
+        "性能优先",
+        "效率/延迟/成本维度权重x2.0，安全x1.0，适合高并发推理场景",
         {"efficiency": 2.0, "D46": 2.5, "D47": 2.5, "D48": 2.0, "D49": 2.0, "D129": 2.0},
     ),
     "harmonyos-strict": WeightPreset(
-        "harmonyos-strict", "鸿蒙严苛", "鸿蒙/安全/合规权重x2.0，适合鸿蒙NEXT上架审核场景",
+        "harmonyos-strict",
+        "鸿蒙严苛",
+        "鸿蒙/安全/合规权重x2.0，适合鸿蒙NEXT上架审核场景",
         {"security": 2.0, "compliance": 2.0, "harmonyos": 2.5, "D121": 2.5, "D130": 2.5},
     ),
     "redteam-ready": WeightPreset(
-        "redteam-ready", "红队就绪", "安全/对抗/鲁棒性权重x2.5，适合红队评估场景",
+        "redteam-ready",
+        "红队就绪",
+        "安全/对抗/鲁棒性权重x2.5，适合红队评估场景",
         {"security": 2.5, "adversarial": 2.5, "D11": 3.0, "D14": 2.5, "D128": 2.5},
     ),
     "cost-efficient": WeightPreset(
-        "cost-efficient", "成本敏感", "成本/效率权重x2.0，安全x0.8，适合预算受限的MVP场景",
+        "cost-efficient",
+        "成本敏感",
+        "成本/效率权重x2.0，安全x0.8，适合预算受限的MVP场景",
         {"efficiency": 2.0, "D129": 2.5, "security": 0.8, "D46": 2.0, "D47": 2.0},
     ),
 }
@@ -1686,18 +2423,19 @@ def run_benchmark(
         current = report.overall_score
         prev = history.get(name)
         delta = round(current - prev, 2) if prev is not None else None
-        results.append(BenchmarkResult(
-            template_name=name,
-            current_score=round(current, 2),
-            previous_score=prev,
-            delta=delta,
-            grade=score_to_grade(current),
-            decision=score_to_decision(current),
-            timestamp=now,
-        ))
+        results.append(
+            BenchmarkResult(
+                template_name=name,
+                current_score=round(current, 2),
+                previous_score=prev,
+                delta=delta,
+                grade=score_to_grade(current),
+                decision=score_to_decision(current),
+                timestamp=now,
+            )
+        )
         history[name] = round(current, 2)
 
     hp.parent.mkdir(parents=True, exist_ok=True)
     hp.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
     return results
-

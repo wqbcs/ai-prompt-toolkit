@@ -6,6 +6,7 @@
 - Plugin notification Hook集成
 - 消息模板引擎(Jinja2风格变量替换)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -13,11 +14,10 @@ import hmac
 import json
 import logging
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -29,39 +29,19 @@ _DEFAULT_TEMPLATES: dict[str, str] = {
         "发现项: {{total_findings}}\n"
         "严重: {{critical_count}} critical, {{high_count}} high"
     ),
-    "lint_passed": (
-        "✅ Prompt Lint通过\n"
-        "文件: {{file_path}}\n"
-        "发现项: {{total_findings}}"
-    ),
+    "lint_passed": ("✅ Prompt Lint通过\n文件: {{file_path}}\n发现项: {{total_findings}}"),
     "scan_failed": (
-        "🚨 安全扫描发现风险\n"
-        "文件: {{file_path}}\n"
-        "风险: {{total_findings}}\n"
-        "严重: {{critical_count}} critical"
+        "🚨 安全扫描发现风险\n文件: {{file_path}}\n风险: {{total_findings}}\n严重: {{critical_count}} critical"
     ),
-    "eval_failed": (
-        "📉 Prompt评估未达标\n"
-        "文件: {{file_path}}\n"
-        "分数: {{score}}/{{max_score}}\n"
-        "阈值: {{threshold}}"
-    ),
-    "eval_passed": (
-        "📈 Prompt评估通过\n"
-        "文件: {{file_path}}\n"
-        "分数: {{score}}/{{max_score}}"
-    ),
+    "eval_failed": ("📉 Prompt评估未达标\n文件: {{file_path}}\n分数: {{score}}/{{max_score}}\n阈值: {{threshold}}"),
+    "eval_passed": ("📈 Prompt评估通过\n文件: {{file_path}}\n分数: {{score}}/{{max_score}}"),
     "gepa_improved": (
         "🚀 GEPA优化成功\n"
         "Prompt: {{prompt_name}}\n"
         "初始: {{initial_score}} → 最优: {{best_score}}\n"
         "提升: {{improvement}}"
     ),
-    "redteam_vulnerability": (
-        "🔴 红队扫描发现漏洞\n"
-        "目标: {{target}}\n"
-        "漏洞数: {{vulnerabilities}}"
-    ),
+    "redteam_vulnerability": ("🔴 红队扫描发现漏洞\n目标: {{target}}\n漏洞数: {{vulnerabilities}}"),
     "contest_ready": (
         "🏆 赛事就绪度评估\n"
         "分数: {{contest_score}}/10\n"
@@ -255,19 +235,23 @@ class NotificationManager:
             adapter = adapter_cls()
             try:
                 success = adapter.send(message, config)
-                results.append({
-                    "type": config.type,
-                    "event": event,
-                    "success": success,
-                })
+                results.append(
+                    {
+                        "type": config.type,
+                        "event": event,
+                        "success": success,
+                    }
+                )
             except Exception as e:
                 logger.exception("Notification %s failed", config.type)
-                results.append({
-                    "type": config.type,
-                    "event": event,
-                    "success": False,
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "type": config.type,
+                        "event": event,
+                        "success": False,
+                        "error": str(e),
+                    }
+                )
 
         return results
 
@@ -295,12 +279,14 @@ class NotificationManager:
                 elif trigger_type == "on_success" and not events:
                     events = ["lint_passed", "eval_passed", "gepa_improved", "contest_ready"]
 
-                manager.add_config(NotificationConfig(
-                    type=ch.get("type", "webhook"),
-                    webhook=ch.get("webhook", ""),
-                    secret=ch.get("secret", ""),
-                    message_template=ch.get("message_template", ""),
-                    enabled=ch.get("enabled", True),
-                    events=events,
-                ))
+                manager.add_config(
+                    NotificationConfig(
+                        type=ch.get("type", "webhook"),
+                        webhook=ch.get("webhook", ""),
+                        secret=ch.get("secret", ""),
+                        message_template=ch.get("message_template", ""),
+                        enabled=ch.get("enabled", True),
+                        events=events,
+                    )
+                )
         return manager

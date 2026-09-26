@@ -7,12 +7,14 @@
 
 参考: Snyk/Datadog安全报告的人话描述模式
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.types import Finding, Severity
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 
 @dataclass

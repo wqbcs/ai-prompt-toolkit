@@ -1,7 +1,7 @@
 """R96: lint --changed增量模式 + --cache-dir缓存目录"""
+
 from __future__ import annotations
 
-import os
 import tempfile
 from pathlib import Path
 
@@ -40,6 +40,7 @@ class TestR96LintChanged:
 
     def test_lint_changed_with_git(self):
         import subprocess
+
         with tempfile.TemporaryDirectory() as td:
             subprocess.run(["git", "init"], cwd=td, capture_output=True)
             subprocess.run(["git", "config", "user.email", "test@test.com"], cwd=td, capture_output=True)

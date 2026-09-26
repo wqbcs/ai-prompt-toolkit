@@ -7,13 +7,13 @@
 - Rich Panel: 评估摘要/GEPA结果面板
 - Rich Live: 实时分数刷新
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any
 
 from rich.console import Console
-from rich.live import Live
 from rich.panel import Panel
 from rich.progress import (
     BarColumn,
@@ -27,6 +27,9 @@ from rich.progress import (
 from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 console = Console()
 
@@ -90,7 +93,9 @@ def create_progress() -> Progress:
     )
 
 
-def print_table(title: str, columns: list[str], rows: list[list[str]], *, highlight: bool = True, border_style: str = "blue") -> None:
+def print_table(
+    title: str, columns: list[str], rows: list[list[str]], *, highlight: bool = True, border_style: str = "blue"
+) -> None:
     table = Table(title=title, show_lines=False, border_style=border_style, highlight=highlight)
     for col in columns:
         table.add_column(col)
@@ -99,8 +104,9 @@ def print_table(title: str, columns: list[str], rows: list[list[str]], *, highli
     console.print(table)
 
 
-def print_eval_matrix(title: str, prompt_names: list[str], evaluator_names: list[str],
-                      cells: list[dict[str, Any]]) -> None:
+def print_eval_matrix(
+    title: str, prompt_names: list[str], evaluator_names: list[str], cells: list[dict[str, Any]]
+) -> None:
     table = Table(title=title, show_header=True, header_style="bold magenta", border_style="cyan")
     table.add_column("模板", style="bold cyan", min_width=20)
     for ev in evaluator_names:
@@ -109,7 +115,9 @@ def print_eval_matrix(title: str, prompt_names: list[str], evaluator_names: list
     for prompt in prompt_names:
         row = [prompt]
         for ev in evaluator_names:
-            cell_data = next((c for c in cells if c.get("prompt_name") == prompt and c.get("evaluator_name") == ev), None)
+            cell_data = next(
+                (c for c in cells if c.get("prompt_name") == prompt and c.get("evaluator_name") == ev), None
+            )
             if cell_data:
                 score = cell_data.get("score", 0)
                 max_score = cell_data.get("max_score", 10)
@@ -124,7 +132,9 @@ def print_eval_matrix(title: str, prompt_names: list[str], evaluator_names: list
                 else:
                     style = "bold red"
                 badge = "PASS" if passed else "FAIL"
-                row.append(f"[{style}]{score:.1f}/{max_score}[/{style}] [{'green' if passed else 'red'}]{badge}[/{'green' if passed else 'red'}]")
+                row.append(
+                    f"[{style}]{score:.1f}/{max_score}[/{style}] [{'green' if passed else 'red'}]{badge}[/{'green' if passed else 'red'}]"
+                )
             else:
                 row.append("[dim]-[/dim]")
         table.add_row(*row)
@@ -194,13 +204,15 @@ def print_gepa_result(result_data: dict[str, Any]) -> None:
 
     score_style = "bold green" if improvement > 0 else "yellow" if improvement == 0 else "red"
 
-    console.print(Panel(
-        f"[{score_style}]初始分数: {initial:.4f} → 最优分数: {best:.4f}[/{score_style}]\n\n"
-        f"提升: [{'green' if improvement > 0 else 'yellow'}]{improvement:+.4f}[/{'green' if improvement > 0 else 'yellow'}] | "
-        f"候选: {candidates} | 代数: {generations} | Pareto前沿: {frontier}",
-        title="[bold]GEPA反射式进化结果[/bold]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[{score_style}]初始分数: {initial:.4f} → 最优分数: {best:.4f}[/{score_style}]\n\n"
+            f"提升: [{'green' if improvement > 0 else 'yellow'}]{improvement:+.4f}[/{'green' if improvement > 0 else 'yellow'}] | "
+            f"候选: {candidates} | 代数: {generations} | Pareto前沿: {frontier}",
+            title="[bold]GEPA反射式进化结果[/bold]",
+            border_style="cyan",
+        )
+    )
 
 
 def print_contest_result(result_data: dict[str, Any]) -> None:
@@ -209,16 +221,24 @@ def print_contest_result(result_data: dict[str, Any]) -> None:
     pangu = result_data.get("pangu_integration", False)
     harmony = result_data.get("harmonyos_integration", False)
 
-    level_styles = {"excellent": "bold green", "good": "green", "moderate": "yellow", "basic": "red", "insufficient": "bold red"}
+    level_styles = {
+        "excellent": "bold green",
+        "good": "green",
+        "moderate": "yellow",
+        "basic": "red",
+        "insufficient": "bold red",
+    }
     style = level_styles.get(level, "white")
 
-    console.print(Panel(
-        f"[{style}]赛事贴合度: {score:.1f}/10 ({level})[/{style}]\n\n"
-        f"盘古集成: {'[green]✓[/green]' if pangu else '[red]✗[/red]'} | "
-        f"鸿蒙集成: {'[green]✓[/green]' if harmony else '[red]✗[/red]'}",
-        title="[bold]华为云赛事贴合评估[/bold]",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[{style}]赛事贴合度: {score:.1f}/10 ({level})[/{style}]\n\n"
+            f"盘古集成: {'[green]✓[/green]' if pangu else '[red]✗[/red]'} | "
+            f"鸿蒙集成: {'[green]✓[/green]' if harmony else '[red]✗[/red]'}",
+            title="[bold]华为云赛事贴合评估[/bold]",
+            border_style="cyan",
+        )
+    )
 
 
 @dataclass
@@ -240,10 +260,12 @@ class ScanSummary:
 
     def render(self) -> None:
         if self.total_findings == 0:
-            console.print(Panel(
-                f"[bold green]✓ {self.command}完成 — 无问题发现[/bold green]",
-                subtitle=f"{self.total_files} 文件 | {self.elapsed_ms/1000:.1f}s",
-            ))
+            console.print(
+                Panel(
+                    f"[bold green]✓ {self.command}完成 — 无问题发现[/bold green]",
+                    subtitle=f"{self.total_files} 文件 | {self.elapsed_ms / 1000:.1f}s",
+                )
+            )
             return
 
         severity_parts = []
@@ -265,8 +287,10 @@ class ScanSummary:
         for k, v in self.extras.items():
             extra_lines += f"\n  {k}: {v}"
 
-        console.print(Panel(
-            f"{status}\n\n发现: [bold]{self.total_findings}[/bold] 问题 ({sev_text}){extra_lines}",
-            title=f"[bold]{self.command}[/bold] 摘要",
-            subtitle=f"{self.total_files} 文件 | {self.elapsed_ms/1000:.1f}s",
-        ))
+        console.print(
+            Panel(
+                f"{status}\n\n发现: [bold]{self.total_findings}[/bold] 问题 ({sev_text}){extra_lines}",
+                title=f"[bold]{self.command}[/bold] 摘要",
+                subtitle=f"{self.total_files} 文件 | {self.elapsed_ms / 1000:.1f}s",
+            )
+        )

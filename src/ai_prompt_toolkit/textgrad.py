@@ -11,14 +11,17 @@
 - 核心思想: LLM反馈=文本梯度, 沿梯度反方向编辑Prompt
 - Variable对象追踪梯度, TGD优化器执行梯度下降
 """
+
 from __future__ import annotations
 
-import hashlib
 import logging
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -53,12 +56,8 @@ class TextualVariable:
         if not self.gradients:
             return self.value
 
-        combined_criticism = "\n".join(
-            f"- {g.criticism}" for g in self.gradients if g.criticism
-        )
-        combined_suggestion = "\n".join(
-            f"- {g.suggestion}" for g in self.gradients if g.suggestion
-        )
+        combined_criticism = "\n".join(f"- {g.criticism}" for g in self.gradients if g.criticism)
+        combined_suggestion = "\n".join(f"- {g.suggestion}" for g in self.gradients if g.suggestion)
 
         new_value = _apply_textual_gradient(self.value, combined_criticism, combined_suggestion)
         self.value = new_value
@@ -209,17 +208,22 @@ class TGDOptimizer:
 
             improvement = new_score - prev_score
 
-            result.gradient_history.append({
-                "iteration": iteration + 1,
-                "gradient": gradient.to_dict(),
-                "score": round(new_score, 2),
-                "improvement": round(improvement, 2),
-            })
+            result.gradient_history.append(
+                {
+                    "iteration": iteration + 1,
+                    "gradient": gradient.to_dict(),
+                    "score": round(new_score, 2),
+                    "improvement": round(improvement, 2),
+                }
+            )
 
             if self.config.verbose:
                 logger.info(
                     "TGD iter %d: score %.2f → %.2f (%+.2f)",
-                    iteration + 1, prev_score, new_score, improvement,
+                    iteration + 1,
+                    prev_score,
+                    new_score,
+                    improvement,
                 )
 
             if abs(improvement) < self.config.convergence_threshold and iteration > 0:
@@ -245,7 +249,7 @@ class TGDOptimizer:
         return result
 
     def _apply_momentum(self, current: TextualGradient, previous: TextualGradient) -> TextualGradient:
-        m = self.config.momentum
+        _m = self.config.momentum  # 动量机制预留, 当前未接入
         return TextualGradient(
             criticism=current.criticism,
             suggestion=(
@@ -261,6 +265,7 @@ class TGDOptimizer:
 def _default_eval_fn(text: str) -> float:
     try:
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         linter = PromptLinter()
         result = linter.lint("tgd-optimize", text)
         return result.score

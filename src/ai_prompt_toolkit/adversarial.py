@@ -10,6 +10,7 @@
 - PromptBench (微软): 对抗性Prompt攻击/动态评估(DyVal)
 - garak: Probe分类体系
 """
+
 from __future__ import annotations
 
 import random
@@ -31,7 +32,9 @@ class AttackResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "original_text": self.original_text[:100] + "..." if len(self.original_text) > 100 else self.original_text,
-            "perturbed_text": self.perturbed_text[:100] + "..." if len(self.perturbed_text) > 100 else self.perturbed_text,
+            "perturbed_text": self.perturbed_text[:100] + "..."
+            if len(self.perturbed_text) > 100
+            else self.perturbed_text,
             "attack_type": self.attack_type,
             "attack_level": self.attack_level,
             "severity": self.severity,
@@ -122,14 +125,16 @@ class SynonymReplacementAttack:
                 for synonym in synonyms:
                     perturbed = text.replace(original, synonym, 1)
                     if perturbed != text:
-                        results.append(AttackResult(
-                            original_text=text,
-                            perturbed_text=perturbed,
-                            attack_type=self.attack_type,
-                            attack_level=self.attack_level,
-                            severity="high",
-                            details={"replaced": original, "replacement": synonym},
-                        ))
+                        results.append(
+                            AttackResult(
+                                original_text=text,
+                                perturbed_text=perturbed,
+                                attack_type=self.attack_type,
+                                attack_level=self.attack_level,
+                                severity="high",
+                                details={"replaced": original, "replacement": synonym},
+                            )
+                        )
         return results[:10]
 
 
@@ -151,14 +156,16 @@ class RandomInsertAttack:
             perturbed = phrase[:idx] + insert_char + phrase[idx:]
             perturbed_text = text.replace(phrase, perturbed, 1)
             if perturbed_text != text:
-                results.append(AttackResult(
-                    original_text=text,
-                    perturbed_text=perturbed_text,
-                    attack_type=self.attack_type,
-                    attack_level=self.attack_level,
-                    severity="medium",
-                    details={"phrase": phrase, "inserted_at": idx, "inserted_char": insert_char},
-                ))
+                results.append(
+                    AttackResult(
+                        original_text=text,
+                        perturbed_text=perturbed_text,
+                        attack_type=self.attack_type,
+                        attack_level=self.attack_level,
+                        severity="medium",
+                        details={"phrase": phrase, "inserted_at": idx, "inserted_char": insert_char},
+                    )
+                )
         return results[:5]
 
 
@@ -174,17 +181,19 @@ class RandomDeleteAttack:
 
         for phrase in sampled:
             idx = random.randint(0, len(phrase) - 1)
-            perturbed = phrase[:idx] + phrase[idx + 1:]
+            perturbed = phrase[:idx] + phrase[idx + 1 :]
             perturbed_text = text.replace(phrase, perturbed, 1)
             if perturbed_text != text:
-                results.append(AttackResult(
-                    original_text=text,
-                    perturbed_text=perturbed_text,
-                    attack_type=self.attack_type,
-                    attack_level=self.attack_level,
-                    severity="medium",
-                    details={"phrase": phrase, "deleted_at": idx, "deleted_char": phrase[idx]},
-                ))
+                results.append(
+                    AttackResult(
+                        original_text=text,
+                        perturbed_text=perturbed_text,
+                        attack_type=self.attack_type,
+                        attack_level=self.attack_level,
+                        severity="medium",
+                        details={"phrase": phrase, "deleted_at": idx, "deleted_char": phrase[idx]},
+                    )
+                )
         return results[:5]
 
 
@@ -200,17 +209,19 @@ class CharSwapAttack:
 
         for word in sampled:
             idx = random.randint(1, len(word) - 2)
-            swapped = word[:idx] + word[idx + 1] + word[idx] + word[idx + 2:]
+            swapped = word[:idx] + word[idx + 1] + word[idx] + word[idx + 2 :]
             perturbed_text = text.replace(word, swapped, 1)
             if perturbed_text != text:
-                results.append(AttackResult(
-                    original_text=text,
-                    perturbed_text=perturbed_text,
-                    attack_type=self.attack_type,
-                    attack_level=self.attack_level,
-                    severity="low",
-                    details={"word": word, "swapped_at": idx},
-                ))
+                results.append(
+                    AttackResult(
+                        original_text=text,
+                        perturbed_text=perturbed_text,
+                        attack_type=self.attack_type,
+                        attack_level=self.attack_level,
+                        severity="low",
+                        details={"word": word, "swapped_at": idx},
+                    )
+                )
         return results[:5]
 
 
@@ -237,14 +248,16 @@ class TranslationPerturbationAttack:
         for zh, en in self._ZH_TO_EN.items():
             if zh in text:
                 perturbed = text.replace(zh, en, 1)
-                results.append(AttackResult(
-                    original_text=text,
-                    perturbed_text=perturbed,
-                    attack_type=self.attack_type,
-                    attack_level=self.attack_level,
-                    severity="critical",
-                    details={"replaced": zh, "replacement": en, "weakening": True},
-                ))
+                results.append(
+                    AttackResult(
+                        original_text=text,
+                        perturbed_text=perturbed,
+                        attack_type=self.attack_type,
+                        attack_level=self.attack_level,
+                        severity="critical",
+                        details={"replaced": zh, "replacement": en, "weakening": True},
+                    )
+                )
         return results[:8]
 
 
@@ -266,14 +279,16 @@ class InstructionInjectionAttack:
         results = []
         for inj in self._INJECTION_SUFFIXES:
             perturbed = text + inj["text"]
-            results.append(AttackResult(
-                original_text=text,
-                perturbed_text=perturbed,
-                attack_type=self.attack_type,
-                attack_level=self.attack_level,
-                severity=inj["severity"],
-                details={"injection_text": inj["text"][:50], "appended": True},
-            ))
+            results.append(
+                AttackResult(
+                    original_text=text,
+                    perturbed_text=perturbed,
+                    attack_type=self.attack_type,
+                    attack_level=self.attack_level,
+                    severity=inj["severity"],
+                    details={"injection_text": inj["text"][:50], "appended": True},
+                )
+            )
         return results
 
 
@@ -294,14 +309,16 @@ class CovertExfiltrationAttack:
         ]
         for payload, subtype, severity in exfil_payloads:
             perturbed = text + "\n" + payload
-            results.append(AttackResult(
-                original_text=text,
-                perturbed_text=perturbed,
-                attack_type=self.attack_type,
-                attack_level=self.attack_level,
-                severity=severity,
-                details={"subtype": subtype, "payload": payload[:50]},
-            ))
+            results.append(
+                AttackResult(
+                    original_text=text,
+                    perturbed_text=perturbed,
+                    attack_type=self.attack_type,
+                    attack_level=self.attack_level,
+                    severity=severity,
+                    details={"subtype": subtype, "payload": payload[:50]},
+                )
+            )
         return results
 
 
@@ -331,14 +348,16 @@ class FewShotHijackAttack:
         ]
         for payload, subtype, severity in hijack_payloads:
             perturbed = text + "\n\n" + payload
-            results.append(AttackResult(
-                original_text=text,
-                perturbed_text=perturbed,
-                attack_type=self.attack_type,
-                attack_level=self.attack_level,
-                severity=severity,
-                details={"subtype": subtype},
-            ))
+            results.append(
+                AttackResult(
+                    original_text=text,
+                    perturbed_text=perturbed,
+                    attack_type=self.attack_type,
+                    attack_level=self.attack_level,
+                    severity=severity,
+                    details={"subtype": subtype},
+                )
+            )
         return results
 
 
@@ -363,14 +382,16 @@ class RecursiveDelegationAttack:
         ]
         for payload, subtype, severity in payloads:
             perturbed = text + "\n\n请按以下步骤执行:\n" + payload
-            results.append(AttackResult(
-                original_text=text,
-                perturbed_text=perturbed,
-                attack_type=self.attack_type,
-                attack_level=self.attack_level,
-                severity=severity,
-                details={"subtype": subtype},
-            ))
+            results.append(
+                AttackResult(
+                    original_text=text,
+                    perturbed_text=perturbed,
+                    attack_type=self.attack_type,
+                    attack_level=self.attack_level,
+                    severity=severity,
+                    details={"subtype": subtype},
+                )
+            )
         return results
 
 
@@ -388,14 +409,16 @@ class UnicodeSteganographyAttack:
         ]
         for payload, subtype, severity in stego_payloads:
             perturbed = text + "\n" + payload
-            results.append(AttackResult(
-                original_text=text,
-                perturbed_text=perturbed,
-                attack_type=self.attack_type,
-                attack_level=self.attack_level,
-                severity=severity,
-                details={"subtype": subtype},
-            ))
+            results.append(
+                AttackResult(
+                    original_text=text,
+                    perturbed_text=perturbed,
+                    attack_type=self.attack_type,
+                    attack_level=self.attack_level,
+                    severity=severity,
+                    details={"subtype": subtype},
+                )
+            )
         return results
 
 
@@ -426,7 +449,9 @@ class AdversarialSimulator:
                 pass
 
         if len(all_results) > max_attacks:
-            all_results = sorted(all_results, key=lambda r: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(r.severity, 4))
+            all_results = sorted(
+                all_results, key=lambda r: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(r.severity, 4)
+            )
             all_results = all_results[:max_attacks]
 
         if not all_results:
@@ -451,9 +476,13 @@ class AdversarialSimulator:
     def _evaluate_attack_success(self, text: str, results: list[AttackResult]) -> int:
         success = 0
         for r in results:
-            if r.attack_type in ("instruction_injection", "fewshot_hijack", "recursive_delegation", "covert_exfiltration", "unicode_steganography"):
-                success += 1
-            elif r.attack_type == "translation_perturbation" and r.details.get("weakening"):
+            if r.attack_type in (
+                "instruction_injection",
+                "fewshot_hijack",
+                "recursive_delegation",
+                "covert_exfiltration",
+                "unicode_steganography",
+            ) or (r.attack_type == "translation_perturbation" and r.details.get("weakening")):
                 success += 1
             elif r.attack_type == "synonym_replacement":
                 constraint_words = ["必须", "禁止", "不要", "严禁", "不得", "never", "must"]
@@ -471,11 +500,13 @@ class AdversarialSimulator:
         vulnerable = []
         for atype, count in sorted(sections.items(), key=lambda x: -x[1]):
             severity = "high" if count >= 3 else "medium"
-            vulnerable.append({
-                "attack_type": atype,
-                "count": count,
-                "severity": severity,
-            })
+            vulnerable.append(
+                {
+                    "attack_type": atype,
+                    "count": count,
+                    "severity": severity,
+                }
+            )
         return vulnerable
 
     def _generate_defense_suggestions(self, vulnerable: list[dict[str, Any]]) -> list[str]:

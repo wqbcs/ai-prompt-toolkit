@@ -1,11 +1,9 @@
 """R31: Plugin系统升级 + CI/CD集成 + 通知系统 测试套件"""
+
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from ai_prompt_toolkit.ci_integration import (
     CITestCase,
@@ -30,10 +28,10 @@ from ai_prompt_toolkit.plugin import (
     PluginMeta,
 )
 
-
 # ═══════════════════════════════════════
 # Plugin系统v2 测试
 # ═══════════════════════════════════════
+
 
 class DummyHook(PluginHook):
     def name(self) -> str:
@@ -193,6 +191,7 @@ class TestPluginManagerV2:
 # CI/CD集成 测试
 # ═══════════════════════════════════════
 
+
 class TestCITestCase:
     def test_passed(self):
         tc = CITestCase(name="test1", classname="suite", status="passed")
@@ -332,6 +331,7 @@ class TestGenerateGitHubActionsWorkflow:
 # 通知系统 测试
 # ═══════════════════════════════════════
 
+
 class TestRenderTemplate:
     def test_simple_substitution(self):
         result = render_template("Hello {{name}}!", {"name": "World"})
@@ -458,6 +458,7 @@ class TestAdapters:
 
     def test_default_templates_exist(self):
         from ai_prompt_toolkit.notification import _DEFAULT_TEMPLATES
+
         assert "lint_failed" in _DEFAULT_TEMPLATES
         assert "eval_passed" in _DEFAULT_TEMPLATES
         assert "gepa_improved" in _DEFAULT_TEMPLATES

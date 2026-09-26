@@ -1,13 +1,13 @@
 """R22 评估结果持久化测试 — EvalStore + 回归检测 + 趋势 + A/B对比"""
+
 from __future__ import annotations
 
 import tempfile
-from pathlib import Path
 
 import pytest
 
-from ai_prompt_toolkit.evaluator import evaluate_template, DimensionScore, EvaluationReport
-from ai_prompt_toolkit.eval_store import EvalStore, EvalSnapshot, RegressionAlert, TrendPoint
+from ai_prompt_toolkit.eval_store import EvalStore
+from ai_prompt_toolkit.evaluator import DimensionScore, EvaluationReport
 
 
 @pytest.fixture
@@ -127,6 +127,7 @@ class TestEvalStoreCompare:
 class TestEvalStoreCLI:
     def test_eval_history_command(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()
@@ -136,6 +137,7 @@ class TestEvalStoreCLI:
 
     def test_eval_compare_command(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()
@@ -145,6 +147,7 @@ class TestEvalStoreCLI:
 
     def test_evaluate_save_flag(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()

@@ -8,17 +8,16 @@ P2-01: 编辑Prompt时实时Lint+评分，debounce 300ms
 
 参考: vscode-markdownlint / ESLint Server
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
-import time
-from pathlib import Path
 from typing import Any
 
 try:
     from lsprotocol import types as lsp
     from pygls.server import LanguageServer
+
     _HAS_LSP = True
 except ImportError:
     _HAS_LSP = False
@@ -57,22 +56,25 @@ def _lint_to_diagnostics(text: str) -> list[dict[str, Any]]:
             except (ValueError, IndexError):
                 pass
 
-        diagnostics.append({
-            "range": {
-                "start": {"line": line, "character": char},
-                "end": {"line": line, "character": char + 20},
-            },
-            "severity": sev_map.get(finding.severity, 3),
-            "code": finding.rule_id,
-            "source": "prompt-linter",
-            "message": finding.description,
-        })
+        diagnostics.append(
+            {
+                "range": {
+                    "start": {"line": line, "character": char},
+                    "end": {"line": line, "character": char + 20},
+                },
+                "severity": sev_map.get(finding.severity, 3),
+                "code": finding.rule_id,
+                "source": "prompt-linter",
+                "message": finding.description,
+            }
+        )
 
     return diagnostics
 
 
 def _compute_score(text: str) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
     linter = PromptLinter()
     result = linter.lint("realtime", text)
     return {
@@ -85,6 +87,7 @@ def _compute_score(text: str) -> dict[str, Any]:
 
 
 if _HAS_LSP:
+
     class PromptLanguageServer(LanguageServer):
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, **kwargs)
@@ -96,34 +99,35 @@ if _HAS_LSP:
             if uri in self._debounce_timers:
                 self._debounce_timers[uri].cancel()
             self._debounce_timers[uri] = loop.call_later(
-                _DEBOUNCE_MS / 1000.0,
-                lambda: asyncio.ensure_future(self._do_lint(uri, text))
+                _DEBOUNCE_MS / 1000.0, lambda: asyncio.ensure_future(self._do_lint(uri, text))
             )
 
         async def _do_lint(self, uri: str, text: str) -> None:
             try:
                 diagnostics = _lint_to_diagnostics(text)
-                self.publish_diagnostics(uri, [
-                    lsp.Diagnostic(
-                        range=lsp.Range(
-                            start=lsp.Position(line=d["range"]["start"]["line"],
-                                                character=d["range"]["start"]["character"]),
-                            end=lsp.Position(line=d["range"]["end"]["line"],
-                                              character=d["range"]["end"]["character"]),
-                        ),
-                        message=d["message"],
-                        severity=lsp.DiagnosticSeverity(d["severity"]),
-                        code=d["code"],
-                        source=d["source"],
-                    )
-                    for d in diagnostics
-                ])
+                self.publish_diagnostics(
+                    uri,
+                    [
+                        lsp.Diagnostic(
+                            range=lsp.Range(
+                                start=lsp.Position(
+                                    line=d["range"]["start"]["line"], character=d["range"]["start"]["character"]
+                                ),
+                                end=lsp.Position(
+                                    line=d["range"]["end"]["line"], character=d["range"]["end"]["character"]
+                                ),
+                            ),
+                            message=d["message"],
+                            severity=lsp.DiagnosticSeverity(d["severity"]),
+                            code=d["code"],
+                            source=d["source"],
+                        )
+                        for d in diagnostics
+                    ],
+                )
 
                 score = _compute_score(text)
-                self.send_notification(
-                    lsp.NOTIFICATION_CUSTOM,
-                    {"method": "prompt/score", "params": score}
-                )
+                self.send_notification(lsp.NOTIFICATION_CUSTOM, {"method": "prompt/score", "params": score})
             except Exception:
                 pass
 
@@ -156,8 +160,9 @@ if _HAS_LSP:
 
     @server.feature(lsp.TEXT_DOCUMENT_HOVER)
     def hover(params: lsp.HoverParams) -> lsp.Hover | None:
-        from ai_prompt_toolkit.linter.rules import _RULE_MAP
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+        from ai_prompt_toolkit.linter.rules import _RULE_MAP
+
         uri = params.text_document.uri
         text = server._documents.get(uri, "")
         if not text:
@@ -179,23 +184,28 @@ if _HAS_LSP:
     def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction] | None:
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
+
         actions = []
         for diag in params.context.diagnostics:
             rule_id = diag.code if isinstance(diag.code, str) else str(diag.code)
             rule = _RULE_MAP.get(rule_id)
             if rule and rule_id in AUTO_FIXABLE_RULES:
-                actions.append(lsp.CodeAction(
-                    title=f"修复 {rule_id}: {rule.name}",
-                    kind=lsp.CodeActionKind.QuickFix,
-                    diagnostics=[diag],
-                    is_preferred=True,
-                ))
+                actions.append(
+                    lsp.CodeAction(
+                        title=f"修复 {rule_id}: {rule.name}",
+                        kind=lsp.CodeActionKind.QuickFix,
+                        diagnostics=[diag],
+                        is_preferred=True,
+                    )
+                )
             if rule:
-                actions.append(lsp.CodeAction(
-                    title=f"查看 {rule_id} 详情",
-                    kind=lsp.CodeActionKind.QuickFix,
-                    diagnostics=[diag],
-                ))
+                actions.append(
+                    lsp.CodeAction(
+                        title=f"查看 {rule_id} 详情",
+                        kind=lsp.CodeActionKind.QuickFix,
+                        diagnostics=[diag],
+                    )
+                )
         return actions if actions else None
 
 

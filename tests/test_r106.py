@@ -1,10 +1,11 @@
 """R106: PromptVersionManager + MCP自定义规则工具"""
+
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
 
-from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager, PromptVersion
+from ai_prompt_toolkit.linter.prompt_version import PromptVersionManager
 
 
 class TestR106VersionManager:
@@ -67,6 +68,7 @@ class TestR106VersionManager:
 
     def test_custom_rules_in_mcp_dispatch(self):
         from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
+
         dispatch = _get_tool_dispatch()
         assert "fg_template_list" in dispatch
         assert "fg_template_generate" in dispatch

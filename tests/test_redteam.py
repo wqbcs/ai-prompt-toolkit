@@ -1,34 +1,32 @@
 """红队探测引擎测试 — Probe/Detector/Exploration/Report"""
+
 from __future__ import annotations
 
 import pytest
 
-from ai_prompt_toolkit.redteam.probe import (
-    BaseProbe,
-    ProbeInput,
-    PromptInjectionProbe,
-    JailbreakProbe,
-    EncodingBypassProbe,
-    MultiTurnInductionProbe,
-    SensitiveLeakProbe,
-    create_probe,
-    get_available_probes,
-    get_probes_by_owasp,
-    _PROBE_REGISTRY,
-)
 from ai_prompt_toolkit.redteam.detector import (
-    BaseDetector,
-    DetectionResult,
-    LeakageDetector,
     ComplianceDetector,
+    DetectionResult,
+    HallucinationDetector,
+    LeakageDetector,
+    PrivilegeEscalationDetector,
     RefusalDetector,
     ToxicityDetector,
-    HallucinationDetector,
-    PrivilegeEscalationDetector,
     create_detector,
     get_available_detectors,
 )
 from ai_prompt_toolkit.redteam.exploration import ExplorationOrchestrator
+from ai_prompt_toolkit.redteam.probe import (
+    EncodingBypassProbe,
+    JailbreakProbe,
+    MultiTurnInductionProbe,
+    ProbeInput,
+    PromptInjectionProbe,
+    SensitiveLeakProbe,
+    create_probe,
+    get_available_probes,
+    get_probes_by_owasp,
+)
 from ai_prompt_toolkit.redteam.report import (
     ProbeResult,
     RedTeamReport,
@@ -112,14 +110,27 @@ class TestProbes:
             assert len(inputs) > 0, f"Probe {name} 生成0个输入"
             for inp in inputs:
                 assert inp.text, f"Probe {name} 有空输入"
-                assert inp.severity in ("critical", "high", "medium", "low"), f"Probe {name} 输入有无效severity: {inp.severity}"
+                assert inp.severity in ("critical", "high", "medium", "low"), (
+                    f"Probe {name} 输入有无效severity: {inp.severity}"
+                )
 
 
 class TestDanProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "dan_classic", "dan_v11", "dan_jailbreak", "dan_dev_mode", "dan_stan",
-        "dan_dude", "dan_kevin", "dan_evil_confidant", "dan_aim", "dan_chatgpt_developer",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "dan_classic",
+            "dan_v11",
+            "dan_jailbreak",
+            "dan_dev_mode",
+            "dan_stan",
+            "dan_dude",
+            "dan_kevin",
+            "dan_evil_confidant",
+            "dan_aim",
+            "dan_chatgpt_developer",
+        ],
+    )
     def test_dan_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -132,11 +143,19 @@ class TestDanProbes:
 
 
 class TestJailbreakProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "jailbreak_roleplay", "jailbreak_moral_bypass", "jailbreak_hypothetical",
-        "jailbreak_author_impersonation", "jailbreak_translator", "jailbreak_sandwich",
-        "jailbreak_cognitive_bias", "jailbreak_social_engineering",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "jailbreak_roleplay",
+            "jailbreak_moral_bypass",
+            "jailbreak_hypothetical",
+            "jailbreak_author_impersonation",
+            "jailbreak_translator",
+            "jailbreak_sandwich",
+            "jailbreak_cognitive_bias",
+            "jailbreak_social_engineering",
+        ],
+    )
     def test_jailbreak_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -148,9 +167,16 @@ class TestJailbreakProbes:
 
 
 class TestEncodingProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "encoding_base64", "encoding_unicode", "encoding_hex", "encoding_rot13", "encoding_binary",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "encoding_base64",
+            "encoding_unicode",
+            "encoding_hex",
+            "encoding_rot13",
+            "encoding_binary",
+        ],
+    )
     def test_encoding_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -158,10 +184,16 @@ class TestEncodingProbes:
 
 
 class TestMultiturnProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "multiturn_context_extraction", "multiturn_trust_building", "multiturn_incremental",
-        "multiturn_misdirection", "multiturn_code_output",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "multiturn_context_extraction",
+            "multiturn_trust_building",
+            "multiturn_incremental",
+            "multiturn_misdirection",
+            "multiturn_code_output",
+        ],
+    )
     def test_multiturn_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -170,9 +202,14 @@ class TestMultiturnProbes:
 
 
 class TestMultimodalProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "multimodal_image_injection", "multimodal_cross_modal", "multimodal_document_embed",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "multimodal_image_injection",
+            "multimodal_cross_modal",
+            "multimodal_document_embed",
+        ],
+    )
     def test_multimodal_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -181,10 +218,16 @@ class TestMultimodalProbes:
 
 
 class TestAgentProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "agent_tool_injection", "agent_plugin_abuse", "agent_prompt_override",
-        "agent_data_exfiltration", "agent_chain_of_trust",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "agent_tool_injection",
+            "agent_plugin_abuse",
+            "agent_prompt_override",
+            "agent_data_exfiltration",
+            "agent_chain_of_trust",
+        ],
+    )
     def test_agent_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -192,9 +235,14 @@ class TestAgentProbes:
 
 
 class TestSupplyChainProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "supplychain_dependency", "supplychain_model_poison", "supplychain_plugin_compromise",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "supplychain_dependency",
+            "supplychain_model_poison",
+            "supplychain_plugin_compromise",
+        ],
+    )
     def test_supplychain_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -203,9 +251,15 @@ class TestSupplyChainProbes:
 
 
 class TestPrivacyProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "privacy_pii_leakage", "privacy_training_data_leak", "privacy_inference", "privacy_consent_bypass",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "privacy_pii_leakage",
+            "privacy_training_data_leak",
+            "privacy_inference",
+            "privacy_consent_bypass",
+        ],
+    )
     def test_privacy_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -214,9 +268,15 @@ class TestPrivacyProbes:
 
 
 class TestHarmfulProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "harmful_cybersecurity", "harmful_physical_safety", "harmful_fraud", "harmful_self_harm",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "harmful_cybersecurity",
+            "harmful_physical_safety",
+            "harmful_fraud",
+            "harmful_self_harm",
+        ],
+    )
     def test_harmful_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -225,9 +285,15 @@ class TestHarmfulProbes:
 
 
 class TestHallucinationProbes:
-    @pytest.mark.parametrize("probe_name", [
-        "hallucination_fact", "hallucination_fabrication", "hallucination_overconfident", "hallucination_confabulation",
-    ])
+    @pytest.mark.parametrize(
+        "probe_name",
+        [
+            "hallucination_fact",
+            "hallucination_fabrication",
+            "hallucination_overconfident",
+            "hallucination_confabulation",
+        ],
+    )
     def test_hallucination_probe_registered(self, probe_name):
         probe = create_probe(probe_name)
         inputs = probe.generate_inputs()
@@ -317,7 +383,9 @@ class TestDetectors:
 
     def test_hallucination_detector_certain(self):
         d = HallucinationDetector()
-        result = d.detect("I can confirm the groundbreaking discovery of quantum consciousness published in journal 2035")
+        result = d.detect(
+            "I can confirm the groundbreaking discovery of quantum consciousness published in journal 2035"
+        )
         assert result.is_vulnerable
 
     def test_hallucination_detector_hedging(self):
@@ -497,7 +565,9 @@ class TestSecurityHealthScore:
             safe_probes=0,
             vulnerability_rate=1.0,
             probe_results=[
-                ProbeResult(probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9)
+                ProbeResult(
+                    probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9
+                )
                 for i in range(10)
             ],
         )
@@ -512,8 +582,12 @@ class TestSecurityHealthScore:
             safe_probes=8,
             vulnerability_rate=0.2,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5),
-                ProbeResult(probe_name="p2", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5
+                ),
+                ProbeResult(
+                    probe_name="p2", input_text="x", input_category="medium", is_vulnerable=True, confidence=0.5
+                ),
             ],
         )
         health = report.compute_health_score()
@@ -534,9 +608,23 @@ class TestVulnerabilityDetail:
             safe_probes=1,
             vulnerability_rate=0.667,
             probe_results=[
-                ProbeResult(probe_name="injection_p", input_text="hack", input_category="injection", is_vulnerable=True, confidence=0.8),
-                ProbeResult(probe_name="privacy_p", input_text="leak", input_category="privacy", is_vulnerable=True, confidence=0.6),
-                ProbeResult(probe_name="safe_p", input_text="ok", input_category="default", is_vulnerable=False, confidence=0.0),
+                ProbeResult(
+                    probe_name="injection_p",
+                    input_text="hack",
+                    input_category="injection",
+                    is_vulnerable=True,
+                    confidence=0.8,
+                ),
+                ProbeResult(
+                    probe_name="privacy_p",
+                    input_text="leak",
+                    input_category="privacy",
+                    is_vulnerable=True,
+                    confidence=0.6,
+                ),
+                ProbeResult(
+                    probe_name="safe_p", input_text="ok", input_category="default", is_vulnerable=False, confidence=0.0
+                ),
             ],
         )
         details = report.get_vulnerability_details()
@@ -554,7 +642,9 @@ class TestVulnerabilityDetail:
             safe_probes=0,
             vulnerability_rate=1.0,
             probe_results=[
-                ProbeResult(probe_name="p", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=1.0),
+                ProbeResult(
+                    probe_name="p", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=1.0
+                ),
             ],
         )
         details = report.get_vulnerability_details()
@@ -567,7 +657,15 @@ class TestVulnerabilityDetail:
         assert details == []
 
     def test_vulnerability_detail_to_dict(self):
-        vd = VulnerabilityDetail(probe_name="test", input_category="injection", cvss_score=8.5, severity="high", description="desc", fix_sop="sop", defense_prompt="dp")
+        vd = VulnerabilityDetail(
+            probe_name="test",
+            input_category="injection",
+            cvss_score=8.5,
+            severity="high",
+            description="desc",
+            fix_sop="sop",
+            defense_prompt="dp",
+        )
         d = vd.to_dict()
         assert d["cvss_score"] == 8.5
         assert d["severity"] == "high"
@@ -581,7 +679,9 @@ class TestComplianceReport:
             safe_probes=9,
             vulnerability_rate=0.1,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.5),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.5
+                ),
             ],
         )
         cr = report.generate_compliance_report(framework="eu_ai_act")
@@ -612,7 +712,9 @@ class TestComplianceReport:
             safe_probes=1,
             vulnerability_rate=0.5,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="privacy", is_vulnerable=True, confidence=0.7),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="privacy", is_vulnerable=True, confidence=0.7
+                ),
             ],
         )
         cr = report.generate_compliance_report(framework="china_algorithm")
@@ -625,8 +727,12 @@ class TestComplianceReport:
             safe_probes=1,
             vulnerability_rate=0.667,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9),
-                ProbeResult(probe_name="p2", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=0.8),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9
+                ),
+                ProbeResult(
+                    probe_name="p2", input_text="x", input_category="jailbreak", is_vulnerable=True, confidence=0.8
+                ),
             ],
         )
         cr = report.generate_compliance_report(framework="eu_ai_act")
@@ -647,7 +753,9 @@ class TestComplianceReport:
             safe_probes=2,
             vulnerability_rate=0.8,
             probe_results=[
-                ProbeResult(probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9)
+                ProbeResult(
+                    probe_name=f"p{i}", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.9
+                )
                 for i in range(8)
             ],
         )
@@ -662,7 +770,9 @@ class TestComplianceReport:
             safe_probes=4,
             vulnerability_rate=0.2,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.6),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.6
+                ),
             ],
         )
         d = report.to_dict()
@@ -676,7 +786,9 @@ class TestComplianceReport:
             safe_probes=1,
             vulnerability_rate=0.5,
             probe_results=[
-                ProbeResult(probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.8),
+                ProbeResult(
+                    probe_name="p1", input_text="x", input_category="injection", is_vulnerable=True, confidence=0.8
+                ),
             ],
         )
         summary = report.get_summary()

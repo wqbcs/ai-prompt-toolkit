@@ -1,9 +1,16 @@
 """Tests for P063-P070 lint rules."""
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.linter.rules_p063_p070 import (
-    check_p063, check_p064, check_p065, check_p066,
-    check_p067, check_p068, check_p069, check_p070,
+    check_p063,
+    check_p064,
+    check_p065,
+    check_p066,
+    check_p067,
+    check_p068,
+    check_p069,
+    check_p070,
     run_checks_p063_p070,
 )
 
@@ -25,7 +32,7 @@ def test_p064_version_migration() -> None:
     assert result is not None
     assert result.rule_id == "P064"
 
-    result = check_p064("---\ntemplate_id: test\nversion: \"2.0\"\n---\n内容")
+    result = check_p064('---\ntemplate_id: test\nversion: "2.0"\n---\n内容')
     assert result is None
 
     result = check_p064("没有frontmatter的普通prompt")
@@ -85,7 +92,7 @@ def test_p069_format_example_mismatch() -> None:
     assert result is not None
     assert result.rule_id == "P069"
 
-    result = check_p069("输出格式为JSON。\n\n```json\n{\"key\": \"value\"}\n```")
+    result = check_p069('输出格式为JSON。\n\n```json\n{"key": "value"}\n```')
     assert result is None
 
     result = check_p069("没有格式要求的普通prompt")

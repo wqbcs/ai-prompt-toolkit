@@ -1,5 +1,5 @@
 """R156: MCP热重载(mcp_reload)"""
-import pytest
+
 from ai_prompt_toolkit.mcp_server import _tool_mcp_reload
 
 

@@ -1,8 +1,14 @@
 """Tests for P056-P062 lint rules."""
-import pytest
+
 from ai_prompt_toolkit.linter.rules_p056_p062 import (
-    check_p056, check_p057, check_p058, check_p059,
-    check_p060, check_p061, check_p062, run_checks_p056_p062,
+    check_p056,
+    check_p057,
+    check_p058,
+    check_p059,
+    check_p060,
+    check_p061,
+    check_p062,
+    run_checks_p056_p062,
 )
 
 

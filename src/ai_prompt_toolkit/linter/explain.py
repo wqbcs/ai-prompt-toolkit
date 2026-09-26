@@ -5,14 +5,16 @@
 - explain_results: 批量解释lint结果
 - 包含: 规则描述+OWASP映射+修复步骤+代码示例+风险等级
 """
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.linter.rules import _RULE_MAP
 from ai_prompt_toolkit.linter.owasp_mapping import _OWASP_RULE_MAPPING
-from ai_prompt_toolkit.types import Finding
+from ai_prompt_toolkit.linter.rules import _RULE_MAP
 
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 _RISK_EMOJI = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}
 _RISK_LABEL = {"critical": "严重", "high": "高危", "medium": "中等", "low": "低危"}
@@ -32,10 +34,12 @@ def explain_finding(finding: Finding, lang: str = "zh") -> dict[str, Any]:
     owasp_details = []
     for ref in owasp_refs:
         mapped_rules = _OWASP_RULE_MAPPING.get(ref, [])
-        owasp_details.append({
-            "ref": ref,
-            "related_rules": [r for r in mapped_rules if r != finding.rule_id][:5],
-        })
+        owasp_details.append(
+            {
+                "ref": ref,
+                "related_rules": [r for r in mapped_rules if r != finding.rule_id][:5],
+            }
+        )
     sev = rule.severity.value if hasattr(rule.severity, "value") else str(rule.severity)
     explanation = {
         "rule_id": finding.rule_id,
@@ -61,7 +65,9 @@ def explain_results(findings: list[Finding], lang: str = "zh") -> list[dict[str,
 def format_explanation(expl: dict[str, Any]) -> str:
     lines = []
     emoji = expl.get("risk_emoji", "•")
-    lines.append(f"{emoji} [{expl['rule_id']}] {expl.get('rule_name', '')} — {expl.get('risk_level', '')}({expl.get('severity', '')})")
+    lines.append(
+        f"{emoji} [{expl['rule_id']}] {expl.get('rule_name', '')} — {expl.get('risk_level', '')}({expl.get('severity', '')})"
+    )
     lines.append(f"  类别: {expl.get('category', '')} | 家族: {expl.get('family', '')}")
     lines.append(f"  描述: {expl.get('description', '')}")
     lines.append(f"  修复: {expl.get('remediation', '')}")

@@ -3,13 +3,14 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, SIMULATED_MODE, _global_cost_tracker
+from ai_prompt_toolkit.ab_test.provider import SIMULATED_MODE, BaseProvider, _global_cost_tracker
 from ai_prompt_toolkit.ab_test.types import ModelResult, TestStatus
 
 
 class AnthropicProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "claude-3-opus": (0.015, 0.075), "claude-3-sonnet": (0.003, 0.015),
+        "claude-3-opus": (0.015, 0.075),
+        "claude-3-sonnet": (0.003, 0.015),
         "claude-3-haiku": (0.00025, 0.00125),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.003, 0.015)
@@ -37,7 +38,8 @@ class AnthropicProvider(BaseProvider):
         try:
             url = (self._config.api_base or "https://api.anthropic.com/v1") + "/messages"
             headers = {
-                "x-api-key": key, "anthropic-version": "2023-06-01",
+                "x-api-key": key,
+                "anthropic-version": "2023-06-01",
                 "Content-Type": "application/json",
             }
             payload = {
@@ -54,9 +56,13 @@ class AnthropicProvider(BaseProvider):
             _global_cost_tracker.record(cost)
             latency = (time.perf_counter() - start) * 1000
             return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
+                model_config=self._config,
+                prompt_template=prompt,
+                response=content,
+                latency_ms=round(latency, 2),
+                token_count=input_tokens + output_tokens,
+                cost=cost,
+                status=TestStatus.COMPLETED,
             )
         except Exception as e:
             return self._make_error_result(prompt, str(e))

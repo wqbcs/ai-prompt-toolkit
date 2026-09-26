@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.evaluator_registry import (
     AggregatedResult,
     AssertionEvaluator,
@@ -15,7 +13,6 @@ from ai_prompt_toolkit.evaluator_registry import (
     SecurityEvaluator,
     TokenEvaluator,
 )
-from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestEvaluatorResult:
@@ -54,6 +51,7 @@ class TestBaseEvaluator:
     def test_subclass_auto_name(self):
         class MyEval(BaseEvaluator):
             evaluator_type = "custom"
+
             def evaluate(self, template_id, text, **kwargs):
                 return EvaluatorResult(evaluator_name=self.name, evaluator_type=self.evaluator_type, score=5.0)
 
@@ -64,6 +62,7 @@ class TestBaseEvaluator:
         class CustomEval(BaseEvaluator):
             name = "my_custom"
             evaluator_type = "custom"
+
             def evaluate(self, template_id, text, **kwargs):
                 return EvaluatorResult(evaluator_name=self.name, evaluator_type=self.evaluator_type, score=5.0)
 
@@ -76,6 +75,7 @@ class TestBaseEvaluator:
             evaluator_type = "test"
             description = "test evaluator"
             tags = ["test"]
+
             def evaluate(self, template_id, text, **kwargs):
                 return EvaluatorResult(evaluator_name=self.name, evaluator_type=self.evaluator_type, score=5.0)
 
@@ -176,6 +176,7 @@ class TestEvaluatorRegistry:
             evaluator_type = "custom"
             description = "自定义评估器"
             tags = ["custom"]
+
             def evaluate(self, template_id, text, **kwargs):
                 return EvaluatorResult(evaluator_name=self.name, evaluator_type=self.evaluator_type, score=8.0)
 
@@ -186,6 +187,7 @@ class TestEvaluatorRegistry:
     def test_register_auto_named_evaluator(self):
         class AutoEval(BaseEvaluator):
             evaluator_type = "custom"
+
             def evaluate(self, template_id, text, **kwargs):
                 return EvaluatorResult(evaluator_name=self.name, evaluator_type=self.evaluator_type, score=5.0)
 

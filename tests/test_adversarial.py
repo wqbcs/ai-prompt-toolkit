@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.adversarial import (
     AdversarialSimulator,
     CharSwapAttack,
     InstructionInjectionAttack,
-    RandomDeleteAttack,
     RandomInsertAttack,
     RobustnessReport,
     SynonymReplacementAttack,

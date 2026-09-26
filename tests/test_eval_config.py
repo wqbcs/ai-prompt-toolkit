@@ -2,14 +2,20 @@
 
 from __future__ import annotations
 
-import pytest
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from ai_prompt_toolkit.eval_config import (
-    EvalConfig, EvalTarget, EvaluatorDef, AssertionDef,
-    ProviderDef, OutputDef,
-    run_assertion, run_eval_config,
+    AssertionDef,
+    EvalConfig,
+    EvalTarget,
+    EvaluatorDef,
+    OutputDef,
+    ProviderDef,
+    run_assertion,
+    run_eval_config,
 )
 
 
@@ -28,9 +34,12 @@ class TestEvalConfigParsing:
             ],
             "evaluators": [
                 {"type": "lint", "threshold": 90},
-                {"type": "assertion", "assertions": [
-                    {"name": "test", "contains": ["hello"], "regex": "world"},
-                ]},
+                {
+                    "type": "assertion",
+                    "assertions": [
+                        {"name": "test", "contains": ["hello"], "regex": "world"},
+                    ],
+                },
             ],
             "providers": {
                 "openai": {"api_key_env": "OPENAI_KEY", "base_url": "https://api.openai.com/v1"},
@@ -116,10 +125,7 @@ class TestAssertionExecution:
         assert result["passed"] is False
 
     def test_multiple_conditions(self):
-        result = run_assertion(
-            "hello world",
-            AssertionDef(name="multi", contains=["hello"], not_contains=["danger"])
-        )
+        result = run_assertion("hello world", AssertionDef(name="multi", contains=["hello"], not_contains=["danger"]))
         assert result["passed"] is True
 
 
@@ -155,14 +161,16 @@ class TestRunEvalConfig:
 
             config = EvalConfig(
                 targets=[EvalTarget(path=f.name)],
-                evaluators=[EvaluatorDef(
-                    type="assertion",
-                    assertions=[
-                        AssertionDef(name="角色定义", contains=["你是"]),
-                        AssertionDef(name="约束检查", contains_any=["约束", "限制", "不得"]),
-                        AssertionDef(name="格式检查", regex="输出格式|格式如下"),
-                    ],
-                )],
+                evaluators=[
+                    EvaluatorDef(
+                        type="assertion",
+                        assertions=[
+                            AssertionDef(name="角色定义", contains=["你是"]),
+                            AssertionDef(name="约束检查", contains_any=["约束", "限制", "不得"]),
+                            AssertionDef(name="格式检查", regex="输出格式|格式如下"),
+                        ],
+                    )
+                ],
             )
             results = run_eval_config(config)
             assert results["summary"]["total"] == 1

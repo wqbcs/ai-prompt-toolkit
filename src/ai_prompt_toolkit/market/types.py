@@ -1,4 +1,5 @@
 """模板市场类型定义和LifecycleManager状态机"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -120,12 +121,10 @@ class LifecycleManager:
         valid = _VALID_TRANSITIONS.get(template.status, set())
         if target not in valid:
             raise ValueError(
-                f"无效状态转换: {template.status.value} → {target.value}，"
-                f"允许: {[s.value for s in valid]}"
+                f"无效状态转换: {template.status.value} → {target.value}，允许: {[s.value for s in valid]}"
             )
-        if target in (TemplateStatus.CANARY, TemplateStatus.STABLE):
-            if not template.security_scan_passed:
-                raise ValueError("安全扫描未通过，禁止进入发布流程")
+        if target in (TemplateStatus.CANARY, TemplateStatus.STABLE) and not template.security_scan_passed:
+            raise ValueError("安全扫描未通过，禁止进入发布流程")
         if template.status == TemplateStatus.REVIEW and target != TemplateStatus.DRAFT:
             pass
         template.status = target

@@ -46,9 +46,7 @@ async def api_create_dataset(body: dict[str, Any]):
     name = body.get("name", "")
     if not name:
         raise HTTPException(status_code=400, detail="缺少数据集名称")
-    ds = store.create_dataset(
-        name, description=body.get("description", ""), tags=body.get("tags", [])
-    )
+    ds = store.create_dataset(name, description=body.get("description", ""), tags=body.get("tags", []))
     return {"status": "created", "dataset_id": ds.dataset_id}
 
 

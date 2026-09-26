@@ -2,11 +2,11 @@
 
 参考: AegisGate (PII脱敏)、llmtrace (PII扫描)、prompt-guard (安全审计)
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -32,23 +32,44 @@ class PIIMatch:
             return self.value[:4] + "**********" + self.value[-4:]
         if self.pii_type in ("bank_card",):
             return self.value[:4] + "****" + self.value[-4:]
-        mid = len(self.value) // 2
         return self.value[:2] + "*" * max(len(self.value) - 4, 2) + self.value[-2:]
 
 
 _PII_PATTERNS: list[tuple[str, re.Pattern, float]] = [
     ("email", re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"), 0.95),
     ("mobile", re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)"), 0.9),
-    ("id_card", re.compile(r"(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)"), 0.95),
+    (
+        "id_card",
+        re.compile(r"(?<!\d)[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx](?!\d)"),
+        0.95,
+    ),
     ("bank_card", re.compile(r"(?<!\d)6[0-9]{15,18}(?!\d)"), 0.8),
-    ("ip_address", re.compile(r"(?<!\d)(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?!\d)"), 0.7),
+    (
+        "ip_address",
+        re.compile(r"(?<!\d)(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)(?!\d)"),
+        0.7,
+    ),
     ("ipv6_address", re.compile(r"(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}"), 0.7),
     ("passport", re.compile(r"(?<![A-Z])[A-Z][A-Z0-9]\d{7}(?!\d)"), 0.7),
     ("cn_name", re.compile(r"(?:姓名|名字|称呼|name)\s*[:：]\s*[\u4e00-\u9fff]{2,4}"), 0.6),
-    ("address", re.compile(r"(?:地址|住址|addr)\s*[:：]\s*[\u4e00-\u9fff]{2,}(?:省|市|区|县|路|街|号|室|栋|单元)"), 0.6),
+    (
+        "address",
+        re.compile(r"(?:地址|住址|addr)\s*[:：]\s*[\u4e00-\u9fff]{2,}(?:省|市|区|县|路|街|号|室|栋|单元)"),
+        0.6,
+    ),
     ("social_media", re.compile(r"(?:微信号|WeChat|wechat|QQ号|qq)\s*[:：]\s*\S{5,}"), 0.7),
-    ("license_plate", re.compile(r"(?<![京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z])[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z][A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9挂学警港澳]"), 0.85),
-    ("api_key", re.compile(r"(?:sk|pk|ak|api_key|apikey|secret_key|access_key|private_key)\s*[:=]\s*[A-Za-z0-9_\-]{20,}"), 0.8),
+    (
+        "license_plate",
+        re.compile(
+            r"(?<![京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z])[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z][A-HJ-NP-Z0-9]{4}[A-HJ-NP-Z0-9挂学警港澳]"
+        ),
+        0.85,
+    ),
+    (
+        "api_key",
+        re.compile(r"(?:sk|pk|ak|api_key|apikey|secret_key|access_key|private_key)\s*[:=]\s*[A-Za-z0-9_\-]{20,}"),
+        0.8,
+    ),
 ]
 
 
@@ -63,13 +84,15 @@ class PIIDetector:
         matches: list[PIIMatch] = []
         for pii_type, pattern, confidence in self._patterns:
             for m in pattern.finditer(text):
-                matches.append(PIIMatch(
-                    pii_type=pii_type,
-                    value=m.group(0),
-                    start=m.start(),
-                    end=m.end(),
-                    confidence=confidence,
-                ))
+                matches.append(
+                    PIIMatch(
+                        pii_type=pii_type,
+                        value=m.group(0),
+                        start=m.start(),
+                        end=m.end(),
+                        confidence=confidence,
+                    )
+                )
         matches.sort(key=lambda x: x.start)
         return self._deduplicate(matches)
 
@@ -111,5 +134,5 @@ class PIIDetector:
             return text
         result = list(text)
         for m in reversed(matches):
-            result[m.start:m.end] = list(m.redacted())
+            result[m.start : m.end] = list(m.redacted())
         return "".join(result)

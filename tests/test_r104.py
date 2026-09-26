@@ -1,4 +1,5 @@
 """R104: CodeArts Pipeline + 版本更新v51.0.0"""
+
 from __future__ import annotations
 
 import re

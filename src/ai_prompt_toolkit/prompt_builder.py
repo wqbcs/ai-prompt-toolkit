@@ -6,6 +6,7 @@ P3-02: 程序化构建Prompt，支持条件/循环/选择/约束
 - 模板变量: {{variable}}占位符
 - 条件分支: if/else逻辑
 """
+
 from __future__ import annotations
 
 import re
@@ -76,10 +77,14 @@ class PromptBuilder:
         return self
 
     def add_condition(self, condition: str, if_content: str, else_content: str = "") -> PromptBuilder:
-        self._blocks.append(PromptBlock(
-            content=if_content, block_type="condition",
-            condition=condition, metadata={"else_content": else_content},
-        ))
+        self._blocks.append(
+            PromptBlock(
+                content=if_content,
+                block_type="condition",
+                condition=condition,
+                metadata={"else_content": else_content},
+            )
+        )
         return self
 
     def add_few_shot(self, examples: list[dict[str, str]]) -> PromptBuilder:

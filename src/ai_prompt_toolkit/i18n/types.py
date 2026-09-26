@@ -1,4 +1,5 @@
 """i18n 类型定义 — BCP 47 locale 标准"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

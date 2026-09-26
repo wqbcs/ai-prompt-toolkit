@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from enum import Enum
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, ClassVar
 
 
 class Severity(Enum):
     """严重程度枚举"""
+
     INFO = "info"
     LOW = "low"
     MEDIUM = "medium"
@@ -41,6 +42,7 @@ Severity._RANK = {
 
 class ReportStatus(Enum):
     """报告状态枚举"""
+
     SUCCESS = "success"
     PARTIAL = "partial"
     FAILED = "failed"
@@ -51,6 +53,7 @@ class ReportStatus(Enum):
 @dataclass
 class Finding:
     """通用发现项"""
+
     rule_id: str
     severity: Severity
     description: str
@@ -69,7 +72,7 @@ class Finding:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Finding":
+    def from_dict(cls, data: dict[str, Any]) -> Finding:
         return cls(
             rule_id=data["rule_id"],
             severity=Severity(data["severity"]),
@@ -83,6 +86,7 @@ class Finding:
 @dataclass
 class BaseReport:
     """通用报告基类"""
+
     timestamp: str
     template_id: str
     status: ReportStatus
@@ -101,7 +105,7 @@ class BaseReport:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "BaseReport":
+    def from_dict(cls, data: dict[str, Any]) -> BaseReport:
         return cls(
             timestamp=data["timestamp"],
             template_id=data["template_id"],

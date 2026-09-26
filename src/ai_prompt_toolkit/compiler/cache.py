@@ -1,14 +1,16 @@
 """条件编译 LRU 缓存，基于 SHA-256 键和 cachetools.LRUCache。"""
+
 from __future__ import annotations
 
 import hashlib
 import json
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from cachetools import LRUCache
 
-from ai_prompt_toolkit.compiler.types import CompileResult
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.compiler.types import CompileResult
 
 _DEFAULT_MAXSIZE = 1000
 _DEFAULT_TTL_SECONDS = 3600

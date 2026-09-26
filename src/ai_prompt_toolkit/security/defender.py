@@ -15,6 +15,7 @@
 - 低误报: 白名单机制, 允许正常编程/技术讨论
 - 可配置: 每层独立开关, 自定义黑名单
 """
+
 from __future__ import annotations
 
 import base64
@@ -133,8 +134,7 @@ def _is_whitelisted(text: str) -> bool:
     return False
 
 
-def _check_layer(text: str, patterns: list[str], layer: DefenseLayer,
-                 severity: Severity, prefix: str) -> list[Finding]:
+def _check_layer(text: str, patterns: list[str], layer: DefenseLayer, severity: Severity, prefix: str) -> list[Finding]:
     findings: list[Finding] = []
     for i, pattern in enumerate(patterns, 1):
         try:
@@ -142,11 +142,13 @@ def _check_layer(text: str, patterns: list[str], layer: DefenseLayer,
             if matches:
                 rule_id = f"DEF-{layer.value[:3].upper()}-{i:03d}"
                 sample = str(matches[0])[:80]
-                findings.append(Finding(
-                    rule_id=rule_id,
-                    severity=severity,
-                    description=f"{prefix}: 匹配'{sample}'",
-                ))
+                findings.append(
+                    Finding(
+                        rule_id=rule_id,
+                        severity=severity,
+                        description=f"{prefix}: 匹配'{sample}'",
+                    )
+                )
         except re.error:
             pass
     return findings
@@ -165,11 +167,31 @@ class PromptDefender:
         risk_threshold: float = 0.5,
     ) -> None:
         self._layers = {
-            DefenseLayer.PATTERN_BLACKLIST: (enable_pattern_blacklist, _INJECTION_BLACKLIST, Severity.HIGH, "注入黑名单"),
-            DefenseLayer.INSTRUCTION_EXTRACTION: (enable_instruction_extraction, _INSTRUCTION_EXTRACTION_PATTERNS, Severity.HIGH, "指令提取"),
+            DefenseLayer.PATTERN_BLACKLIST: (
+                enable_pattern_blacklist,
+                _INJECTION_BLACKLIST,
+                Severity.HIGH,
+                "注入黑名单",
+            ),
+            DefenseLayer.INSTRUCTION_EXTRACTION: (
+                enable_instruction_extraction,
+                _INSTRUCTION_EXTRACTION_PATTERNS,
+                Severity.HIGH,
+                "指令提取",
+            ),
             DefenseLayer.ROLE_SWITCH: (enable_role_switch, _ROLE_SWITCH_PATTERNS, Severity.HIGH, "角色切换"),
-            DefenseLayer.ENCODING_BYPASS: (enable_encoding_bypass, _ENCODING_BYPASS_PATTERNS, Severity.MEDIUM, "编码绕过"),
-            DefenseLayer.CONTEXT_BOUNDARY: (enable_context_boundary, _CONTEXT_BOUNDARY_PATTERNS, Severity.HIGH, "上下文边界"),
+            DefenseLayer.ENCODING_BYPASS: (
+                enable_encoding_bypass,
+                _ENCODING_BYPASS_PATTERNS,
+                Severity.MEDIUM,
+                "编码绕过",
+            ),
+            DefenseLayer.CONTEXT_BOUNDARY: (
+                enable_context_boundary,
+                _CONTEXT_BOUNDARY_PATTERNS,
+                Severity.HIGH,
+                "上下文边界",
+            ),
         }
         self._custom_blacklist = custom_blacklist or []
         self._risk_threshold = risk_threshold
@@ -193,8 +215,7 @@ class PromptDefender:
 
         if self._custom_blacklist:
             custom_findings = _check_layer(
-                text, self._custom_blacklist,
-                DefenseLayer.PATTERN_BLACKLIST, Severity.HIGH, "自定义黑名单"
+                text, self._custom_blacklist, DefenseLayer.PATTERN_BLACKLIST, Severity.HIGH, "自定义黑名单"
             )
             all_findings.extend(custom_findings)
             if custom_findings and DefenseLayer.PATTERN_BLACKLIST.value not in triggered:
@@ -228,7 +249,7 @@ class PromptDefender:
         decoded_texts: list[str] = []
 
         try:
-            b64_matches = re.findall(r'[A-Za-z0-9+/]{20,}={0,2}', text)
+            b64_matches = re.findall(r"[A-Za-z0-9+/]{20,}={0,2}", text)
             for match in b64_matches[:3]:
                 try:
                     decoded = base64.b64decode(match).decode("utf-8", errors="ignore")
@@ -250,11 +271,13 @@ class PromptDefender:
         for decoded in decoded_texts:
             for pattern in _INJECTION_BLACKLIST[:5]:
                 if re.search(pattern, decoded, re.IGNORECASE):
-                    findings.append(Finding(
-                        rule_id="DEF-ENC-DECODED",
-                        severity=Severity.HIGH,
-                        description=f"编码内容中检测到注入: 匹配'{pattern[:40]}'",
-                    ))
+                    findings.append(
+                        Finding(
+                            rule_id="DEF-ENC-DECODED",
+                            severity=Severity.HIGH,
+                            description=f"编码内容中检测到注入: 匹配'{pattern[:40]}'",
+                        )
+                    )
                     if DefenseLayer.ENCODING_BYPASS.value not in triggered:
                         triggered.append(DefenseLayer.ENCODING_BYPASS.value)
                     break

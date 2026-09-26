@@ -9,11 +9,16 @@ from ai_prompt_toolkit.ab_test.types import ModelResult, TestStatus
 
 class HuaweiProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "pangu-large": (0.012, 0.036), "pangu-medium": (0.004, 0.012),
-        "pangu-nlp": (0.003, 0.009), "pangu-vision": (0.008, 0.024),
-        "pangu-code": (0.006, 0.018), "pangu-search": (0.005, 0.015),
-        "pangu-nlp-65b": (0.004, 0.012), "pangu-nlp-7b": (0.001, 0.003),
-        "pangu-prediction": (0.005, 0.015), "pangu-multimodal": (0.008, 0.024),
+        "pangu-large": (0.012, 0.036),
+        "pangu-medium": (0.004, 0.012),
+        "pangu-nlp": (0.003, 0.009),
+        "pangu-vision": (0.008, 0.024),
+        "pangu-code": (0.006, 0.018),
+        "pangu-search": (0.005, 0.015),
+        "pangu-nlp-65b": (0.004, 0.012),
+        "pangu-nlp-7b": (0.001, 0.003),
+        "pangu-prediction": (0.005, 0.015),
+        "pangu-multimodal": (0.008, 0.024),
         "pangu-scientific": (0.010, 0.030),
         "qwen-72b": (0.006, 0.018),
         "deepseek-v3": (0.0014, 0.0028),
@@ -69,9 +74,13 @@ class HuaweiProvider(BaseProvider):
             _global_cost_tracker.record(cost)
             latency = (time.perf_counter() - start) * 1000
             return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
+                model_config=self._config,
+                prompt_template=prompt,
+                response=content,
+                latency_ms=round(latency, 2),
+                token_count=input_tokens + output_tokens,
+                cost=cost,
+                status=TestStatus.COMPLETED,
             )
         except Exception as e:
             return self._make_error_result(prompt, str(e))

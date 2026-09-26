@@ -1,20 +1,19 @@
 """安全评分徽章SVG生成测试"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.security.badge import (
-    generate_scorecard_badge,
-    generate_score_svg,
-    generate_scorecard_badge_file,
-    _text_width,
     _escape_xml,
+    _text_width,
+    generate_score_svg,
+    generate_scorecard_badge,
+    generate_scorecard_badge_file,
 )
 from ai_prompt_toolkit.security.prompt_scorecard import (
-    PromptScorecard,
-    DimensionScore,
     Decision,
+    DimensionScore,
     Grade,
+    PromptScorecard,
 )
 
 

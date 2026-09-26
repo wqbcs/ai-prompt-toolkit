@@ -1,11 +1,22 @@
 """A/B测试模块测试 — Provider/Engine/Statistics/Recommender覆盖。"""
+
 from __future__ import annotations
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
+from ai_prompt_toolkit.ab_test import (
+    AliyunProvider,
+    AnthropicProvider,
+    CostTracker,
+    DeepSeekProvider,
+    HuaweiProvider,
+    OpenAIProvider,
+    ProviderError,
+    create_provider,
+    get_cost_tracker,
+)
 from ai_prompt_toolkit.ab_test.types import (
     ABTestConfig,
     EvaluationDimension,
@@ -15,21 +26,8 @@ from ai_prompt_toolkit.ab_test.types import (
     ProviderType,
     StatisticalReport,
     TestDataset,
-    TestResult,
     TestStatus,
     WinRateCell,
-)
-from ai_prompt_toolkit.ab_test import (
-    AliyunProvider,
-    AnthropicProvider,
-    BaseProvider,
-    CostTracker,
-    DeepSeekProvider,
-    HuaweiProvider,
-    OpenAIProvider,
-    ProviderError,
-    create_provider,
-    get_cost_tracker,
 )
 
 
@@ -112,6 +110,7 @@ class TestProviderRegistry:
 
     def test_create_unsupported_provider_raises(self):
         from ai_prompt_toolkit.ab_test.providers import _PROVIDER_REGISTRY
+
         config = ModelConfig(provider=ProviderType.OPENAI, model_name="test")
         original = _PROVIDER_REGISTRY.pop(ProviderType.OPENAI)
         try:
@@ -258,8 +257,7 @@ class TestModelResult:
     def test_error_result(self):
         config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o")
         result = ModelResult(
-            model_config=config, prompt_template="test",
-            status=TestStatus.FAILED, error_message="timeout"
+            model_config=config, prompt_template="test", status=TestStatus.FAILED, error_message="timeout"
         )
         assert result.status == TestStatus.FAILED
         assert result.error_message == "timeout"

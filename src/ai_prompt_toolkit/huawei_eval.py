@@ -11,14 +11,12 @@
 - 鸿蒙ArkTS/Stage模型/分布式能力评估
 - 华为云部署最佳实践评估
 """
+
 from __future__ import annotations
 
 import logging
-import re
 from dataclasses import dataclass, field
 from typing import Any
-
-from ai_prompt_toolkit.types import Finding, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +160,7 @@ def evaluate_harmonyos_agent(text: str) -> HuaweiEvalResult:
     total_weighted = 0.0
     total_weight = 0.0
 
-    for key, dim_config in _HARMONY_AGENT_DIMENSIONS.items():
+    for _key, dim_config in _HARMONY_AGENT_DIMENSIONS.items():
         ds = _evaluate_dimension(text, dim_config)
         dimensions.append(ds)
         total_weighted += ds.weighted_score
@@ -183,7 +181,7 @@ def evaluate_huawei_cloud(text: str) -> HuaweiEvalResult:
     total_weighted = 0.0
     total_weight = 0.0
 
-    for key, dim_config in _HUAWEI_CLOUD_DIMENSIONS.items():
+    for _key, dim_config in _HUAWEI_CLOUD_DIMENSIONS.items():
         ds = _evaluate_dimension(text, dim_config)
         dimensions.append(ds)
         total_weighted += ds.weighted_score
@@ -210,10 +208,10 @@ def evaluate_contest_readiness(text: str) -> dict[str, Any]:
     has_harmony = any(kw.lower() in text.lower() for kw in harmonyos_keywords)
 
     contest_score = (
-        harmony_result.overall_score * 0.4 +
-        cloud_result.overall_score * 0.4 +
-        (10.0 if has_pangu else 0.0) * 0.1 +
-        (10.0 if has_harmony else 0.0) * 0.1
+        harmony_result.overall_score * 0.4
+        + cloud_result.overall_score * 0.4
+        + (10.0 if has_pangu else 0.0) * 0.1
+        + (10.0 if has_harmony else 0.0) * 0.1
     )
 
     return {

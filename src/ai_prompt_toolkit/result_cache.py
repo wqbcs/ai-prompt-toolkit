@@ -10,15 +10,15 @@
 - 支持 lint/eval/security 三类缓存
 - --no-cache 参数可强制跳过缓存
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-
 
 _CACHE_DIR_NAME = ".prompt-cli-cache"
 _DEFAULT_TTL_SECONDS = 86400  # 24 hours

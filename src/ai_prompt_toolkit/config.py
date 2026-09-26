@@ -8,6 +8,7 @@
 
 参考: pydantic-settings层级模式, dynaconf多源合并
 """
+
 from __future__ import annotations
 
 import os
@@ -15,7 +16,6 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
-
 
 _DEFAULTS: dict[str, Any] = {
     "lint_on_save": True,
@@ -72,6 +72,7 @@ class PromptCliConfig:
 
     def to_dict(self) -> dict[str, Any]:
         import dataclasses
+
         return dataclasses.asdict(self)
 
 
@@ -108,7 +109,8 @@ def _load_toml(path: Path) -> dict[str, Any]:
 def _load_yaml(path: Path) -> dict[str, Any]:
     try:
         import yaml
-        with open(path, "r", encoding="utf-8") as f:
+
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
         return data if isinstance(data, dict) else {}
     except Exception:
@@ -168,11 +170,13 @@ def load_config(project_dir: Path | None = None) -> PromptCliConfig:
     unknown_keys = set(merged.keys()) - valid_keys
     if unknown_keys and project_config:
         import sys as _sys
+
         print(f"警告: 配置文件 {project_config} 包含未知字段: {', '.join(sorted(unknown_keys))}", file=_sys.stderr)
 
     validation_errors = _validate_config_values(filtered)
     if validation_errors:
         import sys as _sys
+
         for err_msg in validation_errors:
             print(f"配置错误: {err_msg}", file=_sys.stderr)
 
@@ -259,6 +263,7 @@ def generate_config(output_path: str | Path | None = None, fmt: str = "toml") ->
         output_path.write_text(CONFIG_TEMPLATE_TOML, encoding="utf-8")
     elif fmt == "yaml":
         import yaml
+
         config_data = {
             "lint_on_save": True,
             "lint_on_type": False,

@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.6.0] - 2026-09-26
+
+### Changed (R171: Lint门禁修复 — ruff 3905→0, 声明门禁成真)
+
+#### 真实缺陷修复(F821 undefined-name, 22处)
+- statistics.py: f-string `{n=}`引用未定义变量(运行时NameError)×5 → `{sample_size}`
+- html_report.py/report/html_reporter.py: 嵌套同引号f-string是Python 3.12语法
+  (PEP 701), 声明支持的3.10/3.11上无法导入 → 提取变量(修复2个模块的版本兼容)
+- cli_core.py: `console=console`引用未定义变量×2(eval/scan的rich路径NameError)、
+  quiet分支avg_score先用后算
+- 补齐缺失导入: tempfile/hashlib/click/Any; discrete_eval aspect→name;
+  provider AbTestError注解TYPE_CHECKING化
+
+#### Lint治理(ruff check 3905→0)
+- 配置: 中文项目噪音规则关闭(RUF001/002/003全角标点1830条)+__init__.py
+  F401合法re-export豁免+性能/命名类规则带理由关闭
+- 自动修复1690+条: 导入排序/未用导入/引号风格/f-string等
+- 人工judgment修复: F841未用变量21处逐个审(区分死代码/副作用调用/
+  未完成功能三案处理); B904异常链; B007循环变量
+- ruff format: 406文件一次性对齐, format --check门禁成真(441全合规)
+
+#### 质量守护
+- 全量回归: 3591 passed / 0 failed
+- CI的ruff check + ruff format --check首次成为真实门禁
+
 ## [v67.5.0] - 2026-09-26
 
 ### Changed (R169: 自举审计驱动的规则校准)

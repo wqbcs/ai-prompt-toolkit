@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.test_generator import TestCase, TestCaseGenerator, TestDataset
 
 
@@ -17,10 +15,14 @@ class TestTestCase:
 
 class TestTestDataset:
     def test_size(self):
-        ds = TestDataset(dataset_id="ds1", name="test", cases=[
-            TestCase(test_id="1", input_text="a"),
-            TestCase(test_id="2", input_text="b"),
-        ])
+        ds = TestDataset(
+            dataset_id="ds1",
+            name="test",
+            cases=[
+                TestCase(test_id="1", input_text="a"),
+                TestCase(test_id="2", input_text="b"),
+            ],
+        )
         assert ds.size == 2
 
     def test_to_dict(self):
@@ -57,7 +59,14 @@ class TestTestCaseGenerator:
         assert len(cases) == 5
         for c in cases:
             assert c.difficulty == "hard"
-            assert c.category in ["injection", "jailbreak", "info_leak", "constraint_bypass", "social_engineering", "encoding_bypass"]
+            assert c.category in [
+                "injection",
+                "jailbreak",
+                "info_leak",
+                "constraint_bypass",
+                "social_engineering",
+                "encoding_bypass",
+            ]
 
     def test_generate_multi_turn_cases(self):
         gen = TestCaseGenerator(seed=42)

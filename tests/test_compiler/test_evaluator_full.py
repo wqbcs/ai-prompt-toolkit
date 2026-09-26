@@ -1,7 +1,6 @@
 """编译引擎端到端单元测试 — 多维度条件+嵌套+缓存+回退"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
@@ -42,13 +41,7 @@ class TestCompileMultiDimension:
 
 class TestCompileNested:
     def test_nested_else_if(self):
-        source = (
-            "{{#if model == gpt-4}}"
-            "GPT4"
-            "{{else}}"
-            "Other"
-            "{{/if}}"
-        )
+        source = "{{#if model == gpt-4}}GPT4{{else}}Other{{/if}}"
         ctx = CompileContext(model="gpt-4")
         result = compile_template(source, ctx, use_cache=False)
         assert "GPT4" in result.compiled_text

@@ -1,6 +1,8 @@
 """R135 测试: Finding行号/列号定位"""
+
 from __future__ import annotations
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -8,7 +10,6 @@ from click.testing import CliRunner
 
 from ai_prompt_toolkit.cli_core import main
 from ai_prompt_toolkit.linter.rules import find_line
-import re
 
 
 class TestR135Location:
@@ -40,6 +41,7 @@ class TestR135Location:
 
     def test_finding_location_field(self):
         from ai_prompt_toolkit.linter.rules import run_all_checks
+
         text = "第一行\npassword=MySecret123\n第三行"
         findings = run_all_checks(text)
         p006 = [f for f in findings if f.rule_id == "P006"]

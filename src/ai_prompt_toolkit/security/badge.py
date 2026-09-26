@@ -11,9 +11,10 @@
 - 支持紧凑/标准两种尺寸
 - 多主题: light/dark/huawei(华为品牌色)
 """
+
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from ai_prompt_toolkit.security.prompt_scorecard import Decision, Grade, PromptScorecard
 
@@ -23,20 +24,38 @@ _THEME_CONFIG: dict[str, dict[str, str]] = {
     "light": {
         "bg": "#555555",
         "text": "#ffffff",
-        "A": "#2ea44f", "B": "#57ab5a", "C": "#d29922", "D": "#db6d28", "F": "#cf222e",
-        "ALLOW": "#2ea44f", "WARN": "#d29922", "BLOCK": "#cf222e",
+        "A": "#2ea44f",
+        "B": "#57ab5a",
+        "C": "#d29922",
+        "D": "#db6d28",
+        "F": "#cf222e",
+        "ALLOW": "#2ea44f",
+        "WARN": "#d29922",
+        "BLOCK": "#cf222e",
     },
     "dark": {
         "bg": "#30363d",
         "text": "#e6edf3",
-        "A": "#3fb950", "B": "#56d364", "C": "#d29922", "D": "#db6d28", "F": "#f85149",
-        "ALLOW": "#3fb950", "WARN": "#d29922", "BLOCK": "#f85149",
+        "A": "#3fb950",
+        "B": "#56d364",
+        "C": "#d29922",
+        "D": "#db6d28",
+        "F": "#f85149",
+        "ALLOW": "#3fb950",
+        "WARN": "#d29922",
+        "BLOCK": "#f85149",
     },
     "huawei": {
         "bg": "#C7000B",
         "text": "#ffffff",
-        "A": "#C7000B", "B": "#E6382E", "C": "#F5A623", "D": "#E8792B", "F": "#333333",
-        "ALLOW": "#C7000B", "WARN": "#F5A623", "BLOCK": "#333333",
+        "A": "#C7000B",
+        "B": "#E6382E",
+        "C": "#F5A623",
+        "D": "#E8792B",
+        "F": "#333333",
+        "ALLOW": "#C7000B",
+        "WARN": "#F5A623",
+        "BLOCK": "#333333",
     },
 }
 
@@ -83,25 +102,31 @@ def generate_scorecard_badge(scorecard: PromptScorecard, *, compact: bool = Fals
     return _standard_badge(score_text, grade_text, decision_text, bg_color, text_color, grade_color, decision_color)
 
 
-def _compact_badge(score_text: str, grade_text: str, color: str, bg_color: str = "#555555", text_color: str = "#ffffff") -> str:
+def _compact_badge(
+    score_text: str, grade_text: str, color: str, bg_color: str = "#555555", text_color: str = "#ffffff"
+) -> str:
     left_w = _text_width("score")
     right_w = _text_width(f"{score_text} {grade_text}")
     total_w = left_w + right_w
     h = 20
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
   <rect width="{left_w}" height="{h}" fill="{bg_color}" rx="3"/>
   <rect x="{left_w}" width="{right_w}" height="{h}" fill="{color}" rx="3"/>
   <rect x="{left_w}" width="3" height="{h}" fill="{color}"/>
   <text x="{left_w / 2}" y="14" fill="{text_color}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml("score")}</text>
   <text x="{left_w + right_w / 2}" y="14" fill="{text_color}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml(f"{score_text} {grade_text}")}</text>
-</svg>'''
+</svg>"""
 
 
 def _standard_badge(
-    score_text: str, grade_text: str, decision_text: str,
-    bg_color: str, text_color: str,
-    grade_color: str, decision_color: str,
+    score_text: str,
+    grade_text: str,
+    decision_text: str,
+    bg_color: str,
+    text_color: str,
+    grade_color: str,
+    decision_color: str,
 ) -> str:
     seg1_w = _text_width("security")
     seg2_w = _text_width(f"{score_text} {grade_text}")
@@ -112,7 +137,7 @@ def _standard_badge(
     x2 = seg1_w
     x3 = seg1_w + seg2_w
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
   <rect width="{seg1_w}" height="{h}" fill="{bg_color}" rx="3"/>
   <rect x="{x2}" width="{seg2_w}" height="{h}" fill="{grade_color}"/>
   <rect x="{x3}" width="{seg3_w}" height="{h}" fill="{decision_color}" rx="3"/>
@@ -121,11 +146,14 @@ def _standard_badge(
   <text x="{seg1_w / 2}" y="14" fill="{text_color}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml("security")}</text>
   <text x="{x2 + seg2_w / 2}" y="14" fill="{text_color}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml(f"{score_text} {grade_text}")}</text>
   <text x="{x3 + seg3_w / 2}" y="14" fill="{text_color}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml(decision_text)}</text>
-</svg>'''
+</svg>"""
 
 
-def generate_scorecard_badge_file(scorecard: PromptScorecard, output_path: str, *, compact: bool = False, theme: Theme = "light") -> None:
+def generate_scorecard_badge_file(
+    scorecard: PromptScorecard, output_path: str, *, compact: bool = False, theme: Theme = "light"
+) -> None:
     from pathlib import Path
+
     svg = generate_scorecard_badge(scorecard, compact=compact, theme=theme)
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -143,10 +171,10 @@ def generate_score_svg(score: int, grade: Grade, *, theme: Theme = "light") -> s
     total_w = left_w + right_w
     h = 20
 
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
-  <rect width="{left_w}" height="{h}" fill="{tc['bg']}" rx="3"/>
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{total_w}" height="{h}">
+  <rect width="{left_w}" height="{h}" fill="{tc["bg"]}" rx="3"/>
   <rect x="{left_w}" width="{right_w}" height="{h}" fill="{color}" rx="3"/>
   <rect x="{left_w}" width="3" height="{h}" fill="{color}"/>
-  <text x="{left_w / 2}" y="14" fill="{tc['text']}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml("prompt")}</text>
-  <text x="{left_w + right_w / 2}" y="14" fill="{tc['text']}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml(f"{score_text} {grade_text}")}</text>
-</svg>'''
+  <text x="{left_w / 2}" y="14" fill="{tc["text"]}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml("prompt")}</text>
+  <text x="{left_w + right_w / 2}" y="14" fill="{tc["text"]}" font-family="Arial,sans-serif" font-size="11" text-anchor="middle" font-weight="bold">{_escape_xml(f"{score_text} {grade_text}")}</text>
+</svg>"""

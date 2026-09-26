@@ -18,6 +18,7 @@
 - metricValues: 统计指标
 - taxonomy: CWE/OWASP分类映射
 """
+
 from __future__ import annotations
 
 import json
@@ -26,7 +27,6 @@ from pathlib import Path
 from typing import Any
 
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _SEVERITY_TO_SARIF_LEVEL = {
     Severity.CRITICAL: "error",
@@ -117,13 +117,17 @@ def findings_to_sarif(
         if line_number:
             loc["region"] = {"startLine": line_number}
         if loc:
-            result_entry["locations"] = [{"physicalLocation": loc, "contextRegion": {"startLine": max(1, line_number - 2)}}]
+            result_entry["locations"] = [
+                {"physicalLocation": loc, "contextRegion": {"startLine": max(1, line_number - 2)}}
+            ]
 
         if finding.remediation:
-            result_entry["fixes"] = [{
-                "description": {"text": finding.remediation},
-                "artifactChanges": [],
-            }]
+            result_entry["fixes"] = [
+                {
+                    "description": {"text": finding.remediation},
+                    "artifactChanges": [],
+                }
+            ]
 
         if finding.details:
             result_entry["properties"] = {"details": finding.details}

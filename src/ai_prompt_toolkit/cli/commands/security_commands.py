@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import sys
@@ -138,9 +139,13 @@ def score_cmd(target: str, fmt: str) -> None:
     else:
         grade_colors = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "bold red"}
         gc = grade_colors.get(scorecard.grade.value, "white")
-        console.print(f"\n[bold]安全评分卡: [{gc}]{scorecard.overall_score}/100 ({scorecard.grade.value})[/{gc}][/bold]")
+        console.print(
+            f"\n[bold]安全评分卡: [{gc}]{scorecard.overall_score}/100 ({scorecard.grade.value})[/{gc}][/bold]"
+        )
         console.print(f"  决策: [bold]{scorecard.decision.value.upper()}[/bold] | {scorecard.summary}")
-        console.print(f"  发现: {scorecard.total_findings} (严重:{scorecard.critical_count} 高危:{scorecard.high_count} 中危:{scorecard.medium_count} 低危:{scorecard.low_count})")
+        console.print(
+            f"  发现: {scorecard.total_findings} (严重:{scorecard.critical_count} 高危:{scorecard.high_count} 中危:{scorecard.medium_count} 低危:{scorecard.low_count})"
+        )
         console.print("\n  [bold]维度评分:[/bold]")
         for dim in scorecard.dimensions:
             bar_len = 20
@@ -183,7 +188,9 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
         decision_colors = {"allow": "green", "warn": "yellow", "block": "bold red"}
         dc = decision_colors.get(result.decision.value, "white")
         console.print("\n[bold]融合引擎分析结果:[/bold]")
-        console.print(f"  风险分数: {result.risk_score:.4f} | 校准分数: {result.calibrated_score:.4f} | 置信度: {result.confidence:.4f}")
+        console.print(
+            f"  风险分数: {result.risk_score:.4f} | 校准分数: {result.calibrated_score:.4f} | 置信度: {result.confidence:.4f}"
+        )
         console.print(f"  决策: [{dc}]{result.decision.value.upper()}[/{dc}]")
         console.print(f"  耗时: {result.scan_time_ms:.2f}ms")
 
@@ -210,7 +217,9 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
 @click.option("--target", "-t", required=True, help="目标Prompt文件")
 @click.option("--output", "-o", required=True, help="输出SVG文件路径")
 @click.option("--compact", is_flag=True, help="紧凑模式(仅评分+等级)")
-@click.option("--theme", type=click.Choice(["light", "dark", "huawei"]), default="light", help="主题(light/dark/huawei)")
+@click.option(
+    "--theme", type=click.Choice(["light", "dark", "huawei"]), default="light", help="主题(light/dark/huawei)"
+)
 def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     """生成安全评分徽章SVG"""
     from ai_prompt_toolkit.cli_helpers import resolve_path

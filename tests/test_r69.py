@@ -1,10 +1,9 @@
 """R69测试: 多模态Token计数器, 华为云FunctionGraph Provider"""
+
 from __future__ import annotations
 
 import asyncio
 from unittest.mock import patch
-
-import pytest
 
 from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
 from ai_prompt_toolkit.multimodal_token_counter import (
@@ -172,16 +171,19 @@ class TestFunctionGraphProvider:
 
     def test_provider_in_registry(self):
         from ai_prompt_toolkit.ab_test.providers import get_registry
+
         registry = get_registry()
         assert ProviderType.FUNCTIONGRAPH in registry
 
     def test_provider_label(self):
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
+
         provider = FunctionGraphProvider.__new__(FunctionGraphProvider)
         assert provider._PROVIDER_LABEL == "FunctionGraph"
 
     def test_provider_pricing(self):
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
+
         assert "fg-pangu2-6b" in FunctionGraphProvider._PRICING
         assert "fg-pangu5-pro" in FunctionGraphProvider._PRICING
         assert "fg-pangu5-ultra" in FunctionGraphProvider._PRICING
@@ -190,20 +192,29 @@ class TestFunctionGraphProvider:
 
     def test_provider_validate_no_env(self):
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
-        config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK")
+
+        config = ModelConfig(
+            provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK"
+        )
         provider = FunctionGraphProvider(config)
         assert provider.validate() is False
 
     def test_provider_validate_with_env(self):
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
-        config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK")
+
+        config = ModelConfig(
+            provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK"
+        )
         provider = FunctionGraphProvider(config)
         with patch.dict("os.environ", {"HUAWEI_CLOUD_AK": "ak-long-enough-key-1234567890"}):
             assert provider.validate() is True
 
     def test_provider_invoke_simulated(self):
         from ai_prompt_toolkit.ab_test.providers.functiongraph import FunctionGraphProvider
-        config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK")
+
+        config = ModelConfig(
+            provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro", api_key_env="HUAWEI_CLOUD_AK"
+        )
         provider = FunctionGraphProvider(config)
         result = asyncio.run(provider.invoke("test prompt"))
         assert result.status.value in ("completed", "failed")
@@ -213,15 +224,18 @@ class TestFunctionGraphProvider:
 
     def test_provider_endpoint_configured(self):
         from ai_prompt_toolkit.ab_test.provider import _PROVIDER_DEFAULT_ENDPOINTS
+
         assert ProviderType.FUNCTIONGRAPH in _PROVIDER_DEFAULT_ENDPOINTS
         assert "functiongraph" in _PROVIDER_DEFAULT_ENDPOINTS[ProviderType.FUNCTIONGRAPH]
 
     def test_provider_env_var_configured(self):
         from ai_prompt_toolkit.ab_test.provider import _PROVIDER_ENV_VARS
+
         assert ProviderType.FUNCTIONGRAPH in _PROVIDER_ENV_VARS
 
     def test_create_functiongraph_provider(self):
         from ai_prompt_toolkit.ab_test.provider import create_provider
+
         config = ModelConfig(provider=ProviderType.FUNCTIONGRAPH, model_name="fg-pangu5-pro")
         p = create_provider(config)
         assert p.provider_type == ProviderType.FUNCTIONGRAPH
@@ -229,8 +243,9 @@ class TestFunctionGraphProvider:
 
 class TestBadgeMultiTheme:
     def test_light_theme_default(self):
-        from ai_prompt_toolkit.security.badge import generate_score_svg, Theme
+        from ai_prompt_toolkit.security.badge import generate_score_svg
         from ai_prompt_toolkit.security.prompt_scorecard import Grade
+
         svg = generate_score_svg(95, Grade.A)
         assert "#2ea44f" in svg
         assert "#555555" in svg
@@ -238,6 +253,7 @@ class TestBadgeMultiTheme:
     def test_dark_theme(self):
         from ai_prompt_toolkit.security.badge import generate_score_svg
         from ai_prompt_toolkit.security.prompt_scorecard import Grade
+
         svg = generate_score_svg(95, Grade.A, theme="dark")
         assert "#3fb950" in svg
         assert "#30363d" in svg
@@ -246,11 +262,13 @@ class TestBadgeMultiTheme:
     def test_huawei_theme(self):
         from ai_prompt_toolkit.security.badge import generate_score_svg
         from ai_prompt_toolkit.security.prompt_scorecard import Grade
+
         svg = generate_score_svg(95, Grade.A, theme="huawei")
         assert "#C7000B" in svg
 
     def test_theme_config_all_keys(self):
         from ai_prompt_toolkit.security.badge import _THEME_CONFIG
+
         for theme_name in ("light", "dark", "huawei"):
             tc = _THEME_CONFIG[theme_name]
             assert "bg" in tc
@@ -262,8 +280,19 @@ class TestBadgeMultiTheme:
 
     def test_scorecard_badge_theme(self):
         from ai_prompt_toolkit.security.badge import generate_scorecard_badge
-        from ai_prompt_toolkit.security.prompt_scorecard import PromptScorecard, Grade, Decision
-        sc = PromptScorecard(overall_score=80, grade=Grade.B, decision=Decision.ALLOW, dimensions=[], total_findings=0, critical_count=0, high_count=0, medium_count=0, low_count=0)
+        from ai_prompt_toolkit.security.prompt_scorecard import Decision, Grade, PromptScorecard
+
+        sc = PromptScorecard(
+            overall_score=80,
+            grade=Grade.B,
+            decision=Decision.ALLOW,
+            dimensions=[],
+            total_findings=0,
+            critical_count=0,
+            high_count=0,
+            medium_count=0,
+            low_count=0,
+        )
         svg_light = generate_scorecard_badge(sc, theme="light")
         svg_dark = generate_scorecard_badge(sc, theme="dark")
         svg_hw = generate_scorecard_badge(sc, theme="huawei")
@@ -273,8 +302,19 @@ class TestBadgeMultiTheme:
 
     def test_compact_badge_theme(self):
         from ai_prompt_toolkit.security.badge import generate_scorecard_badge
-        from ai_prompt_toolkit.security.prompt_scorecard import PromptScorecard, Grade, Decision
-        sc = PromptScorecard(overall_score=50, grade=Grade.C, decision=Decision.WARN, dimensions=[], total_findings=0, critical_count=0, high_count=0, medium_count=0, low_count=0)
+        from ai_prompt_toolkit.security.prompt_scorecard import Decision, Grade, PromptScorecard
+
+        sc = PromptScorecard(
+            overall_score=50,
+            grade=Grade.C,
+            decision=Decision.WARN,
+            dimensions=[],
+            total_findings=0,
+            critical_count=0,
+            high_count=0,
+            medium_count=0,
+            low_count=0,
+        )
         svg = generate_scorecard_badge(sc, compact=True, theme="huawei")
         assert "#F5A623" in svg
 
@@ -282,6 +322,7 @@ class TestBadgeMultiTheme:
 class TestConfigWatcher:
     def test_watcher_init(self):
         from ai_prompt_toolkit.config import ConfigWatcher
+
         w = ConfigWatcher(poll_interval=1.0, debounce_seconds=0.5)
         assert w._poll_interval == 1.0
         assert w._debounce_seconds == 0.5
@@ -289,6 +330,7 @@ class TestConfigWatcher:
 
     def test_watcher_start_and_stop(self):
         from ai_prompt_toolkit.config import ConfigWatcher
+
         w = ConfigWatcher()
         config = w.start()
         assert w._running is True
@@ -298,19 +340,23 @@ class TestConfigWatcher:
 
     def test_watcher_current_config(self):
         from ai_prompt_toolkit.config import ConfigWatcher
+
         w = ConfigWatcher()
         config = w.current_config
         assert config.lint_on_save is True
 
     def test_watcher_add_watch_nonexistent(self):
-        from ai_prompt_toolkit.config import ConfigWatcher
         from pathlib import Path
+
+        from ai_prompt_toolkit.config import ConfigWatcher
+
         w = ConfigWatcher()
         w.add_watch(Path("/nonexistent/config.toml"))
         assert len(w._watches) == 0
 
     def test_watcher_check_no_change(self):
         from ai_prompt_toolkit.config import ConfigWatcher
+
         w = ConfigWatcher()
         w.start()
         result = w.check_and_reload()
@@ -319,9 +365,12 @@ class TestConfigWatcher:
 
     def test_watcher_callback(self):
         from ai_prompt_toolkit.config import ConfigWatcher
+
         called = []
+
         def on_reload(cfg):
             called.append(cfg)
+
         w = ConfigWatcher(on_reload=on_reload)
         w.start()
         w._last_reload_time = 0
@@ -336,6 +385,7 @@ class TestConfigWatcher:
 
     def test_get_watcher_singleton(self):
         from ai_prompt_toolkit.config import get_watcher
+
         w1 = get_watcher()
         w2 = get_watcher()
         assert w1 is w2

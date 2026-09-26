@@ -6,6 +6,7 @@
 - wrapper钩子: before/after生命周期
 - 通知Hook: on_notify发送评估结果
 """
+
 from __future__ import annotations
 
 import importlib
@@ -14,23 +15,38 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_HOOK_NAMES = frozenset({
-    "lint", "scan", "evaluate", "compile",
-    "gepa_optimize", "flow_run", "notification",
-})
+_HOOK_NAMES = frozenset(
+    {
+        "lint",
+        "scan",
+        "evaluate",
+        "compile",
+        "gepa_optimize",
+        "flow_run",
+        "notification",
+    }
+)
 
-_WRAPPER_HOOK_NAMES = frozenset({
-    "before_lint", "after_lint",
-    "before_scan", "after_scan",
-    "before_evaluate", "after_evaluate",
-    "before_compile", "after_compile",
-    "before_gepa_optimize", "after_gepa_optimize",
-    "before_flow_run", "after_flow_run",
-})
+_WRAPPER_HOOK_NAMES = frozenset(
+    {
+        "before_lint",
+        "after_lint",
+        "before_scan",
+        "after_scan",
+        "before_evaluate",
+        "after_evaluate",
+        "before_compile",
+        "after_compile",
+        "before_gepa_optimize",
+        "after_gepa_optimize",
+        "before_flow_run",
+        "after_flow_run",
+    }
+)
 
 
 @dataclass
@@ -226,14 +242,13 @@ class PluginManager:
 
     def load_from_entry_points(self, group: str = "promptkit.plugins") -> list[Plugin]:
         try:
-            if sys.version_info >= (3, 12):
+            if sys.version_info >= (3, 12) or sys.version_info >= (3, 10):
                 from importlib.metadata import entry_points as _ep
-                eps = _ep(group=group)
-            elif sys.version_info >= (3, 10):
-                from importlib.metadata import entry_points as _ep
+
                 eps = _ep(group=group)
             else:
                 from importlib.metadata import entry_points as _ep
+
                 all_eps = _ep()
                 eps = [ep for ep in all_eps.get("promptkit.plugins", []) if ep.group == group]
         except Exception:
@@ -265,38 +280,20 @@ class PluginManager:
                     method = getattr(hook, f"on_{hook_name}", None)
                     if method is None:
                         continue
-                    if hook_name == "lint":
-                        result["findings"] = method(
-                            kwargs.get("template", ""), kwargs.get("findings", [])
-                        )
-                    elif hook_name == "scan":
-                        result["findings"] = method(
-                            kwargs.get("template", ""), kwargs.get("findings", [])
-                        )
+                    if hook_name == "lint" or hook_name == "scan":
+                        result["findings"] = method(kwargs.get("template", ""), kwargs.get("findings", []))
                     elif hook_name == "evaluate":
-                        result["report"] = method(
-                            kwargs.get("template", ""), kwargs.get("report")
-                        )
+                        result["report"] = method(kwargs.get("template", ""), kwargs.get("report"))
                     elif hook_name == "compile":
-                        result["compiled"] = method(
-                            kwargs.get("template", ""), kwargs.get("compiled", "")
-                        )
+                        result["compiled"] = method(kwargs.get("template", ""), kwargs.get("compiled", ""))
                     elif hook_name == "gepa_optimize":
-                        result["result"] = method(
-                            kwargs.get("prompt", ""), kwargs.get("result")
-                        )
+                        result["result"] = method(kwargs.get("prompt", ""), kwargs.get("result"))
                     elif hook_name == "flow_run":
-                        result["result"] = method(
-                            kwargs.get("flow_name", ""), kwargs.get("result")
-                        )
+                        result["result"] = method(kwargs.get("flow_name", ""), kwargs.get("result"))
                     elif hook_name == "notification":
-                        result["data"] = method(
-                            kwargs.get("event", ""), kwargs.get("data", {})
-                        )
+                        result["data"] = method(kwargs.get("event", ""), kwargs.get("data", {}))
                 except Exception:
-                    logger.exception(
-                        "Plugin %s hook %s failed", plugin.meta.name, hook_name
-                    )
+                    logger.exception("Plugin %s hook %s failed", plugin.meta.name, hook_name)
         return result
 
     def fire_before_hook(self, hook_name: str, **kwargs: Any) -> Any:
@@ -326,25 +323,15 @@ class PluginManager:
                     if method is None:
                         continue
                     if hook_name in ("lint", "scan"):
-                        result["findings"] = method(
-                            kwargs.get("template", ""), kwargs.get("findings", [])
-                        )
+                        result["findings"] = method(kwargs.get("template", ""), kwargs.get("findings", []))
                     elif hook_name == "evaluate":
-                        result["report"] = method(
-                            kwargs.get("template", ""), kwargs.get("report")
-                        )
+                        result["report"] = method(kwargs.get("template", ""), kwargs.get("report"))
                     elif hook_name == "compile":
-                        result["compiled"] = method(
-                            kwargs.get("template", ""), kwargs.get("compiled", "")
-                        )
+                        result["compiled"] = method(kwargs.get("template", ""), kwargs.get("compiled", ""))
                     elif hook_name == "gepa_optimize":
-                        result["result"] = method(
-                            kwargs.get("prompt", ""), kwargs.get("result")
-                        )
+                        result["result"] = method(kwargs.get("prompt", ""), kwargs.get("result"))
                     elif hook_name == "flow_run":
-                        result["result"] = method(
-                            kwargs.get("flow_name", ""), kwargs.get("result")
-                        )
+                        result["result"] = method(kwargs.get("flow_name", ""), kwargs.get("result"))
                 except Exception:
                     logger.exception("Plugin %s after_%s failed", plugin.meta.name, hook_name)
         return result

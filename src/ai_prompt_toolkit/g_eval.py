@@ -18,9 +18,9 @@ G-Eval是一个基于LLM-as-Judge的评估框架:
 - RAGAS: DiscreteMetric离散评估
 - Liu et al., 2023: "G-Eval: NLG Evaluation using GPT-4"
 """
+
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from typing import Any
@@ -226,12 +226,14 @@ def compute_g_eval(text: str, metric: str = "coherence") -> GEvalResult:
 
     for i, step_desc in enumerate(steps_config):
         score = metric_scorers[i](text) if i < len(metric_scorers) else 5.0
-        steps.append(EvalStep(
-            step_number=i + 1,
-            description=step_desc,
-            score=min(10.0, max(0.0, score)),
-            weight=1.0,
-        ))
+        steps.append(
+            EvalStep(
+                step_number=i + 1,
+                description=step_desc,
+                score=min(10.0, max(0.0, score)),
+                weight=1.0,
+            )
+        )
 
     total_weight = sum(s.weight for s in steps)
     weighted_score = sum(s.score * s.weight for s in steps)
@@ -264,6 +266,7 @@ class GEvalEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
 
         results: dict[str, GEvalResult] = {}
@@ -307,6 +310,7 @@ class FaithfulnessEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
         result = compute_g_eval(text, "faithfulness")
         elapsed = (time.perf_counter() - start) * 1000
@@ -338,6 +342,7 @@ class HallucinationEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
         result = compute_g_eval(text, "hallucination")
         elapsed = (time.perf_counter() - start) * 1000
@@ -369,6 +374,7 @@ class AnswerRelevancyEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
         result = compute_g_eval(text, "answer_relevancy")
         elapsed = (time.perf_counter() - start) * 1000
@@ -400,6 +406,7 @@ class AgentEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
 
         task_completion = self._score_task_completion(text)

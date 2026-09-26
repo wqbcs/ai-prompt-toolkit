@@ -9,11 +9,11 @@
 
 体验鬼才哲学: "最好的体验是用户感觉不到体验"
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -301,16 +301,19 @@ _ERROR_RECOVERY_MAP: dict[str, ErrorRecovery] = {
 
 
 def get_error_recovery(error_type: str) -> ErrorRecovery:
-    return _ERROR_RECOVERY_MAP.get(error_type, ErrorRecovery(
-        error_type=error_type,
-        error_message="未知错误",
-        icon="❓",
-        diagnosis="发生未预期的错误",
-        recovery_steps=[
-            "查看详细日志: 设置 PROMPT_CLI_DEBUG=1",
-            "提交问题: https://github.com/ai-prompt-toolkit/issues",
-        ],
-    ))
+    return _ERROR_RECOVERY_MAP.get(
+        error_type,
+        ErrorRecovery(
+            error_type=error_type,
+            error_message="未知错误",
+            icon="❓",
+            diagnosis="发生未预期的错误",
+            recovery_steps=[
+                "查看详细日志: 设置 PROMPT_CLI_DEBUG=1",
+                "提交问题: https://github.com/ai-prompt-toolkit/issues",
+            ],
+        ),
+    )
 
 
 _OPTIMIZATION_CELEBRATIONS: dict[str, list[str]] = {
@@ -343,6 +346,7 @@ _OPTIMIZATION_CELEBRATIONS: dict[str, list[str]] = {
 
 def get_optimization_celebration(optimizer: str, improvement: float) -> str | None:
     import random
+
     if improvement <= 0:
         return None
     key = f"{optimizer}_improved"
@@ -362,6 +366,7 @@ _EXIT_CARE_MESSAGES = [
 
 def get_exit_care_message() -> str:
     import random
+
     return random.choice(_EXIT_CARE_MESSAGES)
 
 
@@ -375,4 +380,5 @@ _PROGRESS_ENCOURAGEMENTS = [
 
 def get_progress_encouragement() -> str:
     import random
+
     return random.choice(_PROGRESS_ENCOURAGEMENTS)

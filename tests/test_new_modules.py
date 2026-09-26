@@ -1,4 +1,5 @@
 """新增模块测试 — schema验证 + output + npu_adapter + tracing + playground"""
+
 from __future__ import annotations
 
 import pytest
@@ -7,7 +8,6 @@ from ai_prompt_toolkit.schema import (
     validate_finding,
     validate_report,
     validate_scan_summary,
-    _HAS_PYDANTIC,
 )
 
 
@@ -58,27 +58,32 @@ class TestSchemaValidation:
 class TestOutputModule:
     def test_scan_summary_creation(self):
         from ai_prompt_toolkit.output import ScanSummary
+
         s = ScanSummary(command="lint", total_files=3, total_findings=5, high=2, medium=3)
         assert s.passed is False
         assert s.total_findings == 5
 
     def test_scan_summary_passed(self):
         from ai_prompt_toolkit.output import ScanSummary
+
         s = ScanSummary(command="scan", total_files=1, total_findings=2, low=1, info=1)
         assert s.passed is True
 
     def test_finding_output(self):
-        from ai_prompt_toolkit.output import finding, console
+        from ai_prompt_toolkit.output import finding
+
         finding("high", "P001", "测试问题", "修复建议")
 
     def test_findings_list_empty(self):
         from ai_prompt_toolkit.output import findings_list
+
         findings_list([])
 
 
 class TestNPUAdapter:
     def test_detect_npu_returns_info(self):
         from ai_prompt_toolkit.ab_test.npu_adapter import detect_npu
+
         info = detect_npu()
         assert hasattr(info, "available")
         assert hasattr(info, "npu_count")
@@ -86,13 +91,16 @@ class TestNPUAdapter:
 
     def test_get_npu_config(self):
         from ai_prompt_toolkit.ab_test.npu_adapter import get_npu_config
+
         config = get_npu_config("pangu-large")
         assert "quantization" in config
         assert "batch_size" in config
 
     def test_should_use_npu_without_env(self):
         import os
+
         from ai_prompt_toolkit.ab_test.npu_adapter import should_use_npu
+
         old = os.environ.pop("PROMPT_CLI_USE_NPU", None)
         try:
             result = should_use_npu("pangu")
@@ -105,6 +113,7 @@ class TestNPUAdapter:
 class TestMarkdownReporter:
     def test_lint_report(self):
         from ai_prompt_toolkit.report.markdown_reporter import generate_markdown_report
+
         data = {
             "_report_type": "lint",
             "lint_target": "test.md",
@@ -119,6 +128,7 @@ class TestMarkdownReporter:
 
     def test_scan_report(self):
         from ai_prompt_toolkit.report.markdown_reporter import generate_markdown_report
+
         data = {
             "_report_type": "scan",
             "scan_target": "test.md",
@@ -131,6 +141,7 @@ class TestMarkdownReporter:
 
     def test_eval_report(self):
         from ai_prompt_toolkit.report.markdown_reporter import generate_markdown_report
+
         data = {
             "_report_type": "evaluate",
             "reports": [
@@ -145,6 +156,7 @@ class TestMarkdownReporter:
 class TestTracing:
     def test_tracer_create_trace(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         trace = tracer.start_trace("test_op")
@@ -153,6 +165,7 @@ class TestTracing:
 
     def test_tracer_end_trace(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         tracer.start_trace("test_op")
@@ -162,6 +175,7 @@ class TestTracing:
 
     def test_tracer_span(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         tracer.start_trace("test_op")
@@ -173,17 +187,18 @@ class TestTracing:
 
     def test_tracer_span_error(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         tracer.start_trace("test_op")
-        with pytest.raises(ValueError):
-            with tracer.span("bad_op") as s:
-                raise ValueError("test")
+        with pytest.raises(ValueError), tracer.span("bad_op") as s:
+            raise ValueError("test")
         trace = tracer.end_trace()
         assert trace.spans[0].status == "error"
 
     def test_tracer_get_traces(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         for i in range(5):
@@ -194,6 +209,7 @@ class TestTracing:
 
     def test_tracer_export_json(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         tracer.start_trace("test")
@@ -204,6 +220,7 @@ class TestTracing:
 
     def test_tracer_summary(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         tracer = Tracer()
         summary = tracer.get_summary()
@@ -215,6 +232,7 @@ class TestTracing:
 
     def test_tracer_singleton(self):
         from ai_prompt_toolkit.tracing import Tracer
+
         Tracer.reset()
         t1 = Tracer.get_instance()
         t2 = Tracer.get_instance()
@@ -241,10 +259,12 @@ def _collect_route_paths(app):
 class TestPlaygroundServerAPIs:
     def test_server_import(self):
         from ai_prompt_toolkit.playground.server import app
+
         assert app.title == "AI Prompt Toolkit Playground"
 
     def test_traces_api_exists(self):
         from ai_prompt_toolkit.playground.server import app
+
         routes = _collect_route_paths(app)
         assert "/api/traces" in routes
         assert "/api/traces/summary" in routes
@@ -252,14 +272,17 @@ class TestPlaygroundServerAPIs:
 
     def test_market_router_included(self):
         from ai_prompt_toolkit.playground.server import app
+
         routes = _collect_route_paths(app)
         assert "/api/market/templates" in routes
 
 
 class TestDatasetModule:
     def _make_store(self, td):
-        from ai_prompt_toolkit.dataset import DatasetStore
         import os
+
+        from ai_prompt_toolkit.dataset import DatasetStore
+
         return DatasetStore(db_path=os.path.join(td, "test.db"))
 
     def test_create_dataset(self, tmp_path):
@@ -284,7 +307,7 @@ class TestDatasetModule:
         store = self._make_store(tmp_path)
         store.create_dataset("ds1")
         store.create_dataset("ds2")
-        datasets, total = store.list_datasets()
+        _datasets, total = store.list_datasets()
         assert total == 2
         store.close()
 
@@ -333,6 +356,7 @@ class TestDatasetModule:
 class TestEvalMatrixAPI:
     def test_eval_matrix_api_exists(self):
         from ai_prompt_toolkit.playground.server import app
+
         routes = _collect_route_paths(app)
         assert "/api/eval-matrix" in routes
         assert "/api/eval-history" in routes
@@ -340,62 +364,73 @@ class TestEvalMatrixAPI:
 
     def test_dataset_router_included(self):
         from ai_prompt_toolkit.playground.server import app
+
         routes = _collect_route_paths(app)
         assert "/api/datasets" in routes
 
 
 class TestI18nModule:
     def test_translate_zh(self):
-        from ai_prompt_toolkit.i18n.messages import t, set_locale, _MESSAGES
+        from ai_prompt_toolkit.i18n.messages import set_locale, t
+
         set_locale("zh-CN")
         assert "Lint" in t("cli.lint.start")
 
     def test_translate_en(self):
-        from ai_prompt_toolkit.i18n.messages import t, set_locale
+        from ai_prompt_toolkit.i18n.messages import set_locale, t
+
         set_locale("en-US")
         assert "lint" in t("cli.lint.start").lower()
 
     def test_translate_with_kwargs(self):
-        from ai_prompt_toolkit.i18n.messages import t, set_locale
+        from ai_prompt_toolkit.i18n.messages import set_locale, t
+
         set_locale("zh-CN")
         result = t("cli.lint.findings_count", count=5)
         assert "5" in result
 
     def test_fallback_to_key(self):
         from ai_prompt_toolkit.i18n.messages import t
+
         assert t("nonexistent.key") == "nonexistent.key"
 
     def test_supported_locales(self):
         from ai_prompt_toolkit.i18n.messages import get_supported_locales
+
         locales = get_supported_locales()
         assert "zh-CN" in locales
         assert "en-US" in locales
 
     def test_set_unsupported_locale(self):
-        from ai_prompt_toolkit.i18n.messages import set_locale, get_current_locale
+        from ai_prompt_toolkit.i18n.messages import get_current_locale, set_locale
+
         set_locale("fr-FR")
         assert get_current_locale() == "zh-CN"
 
     def test_add_custom_messages(self):
-        from ai_prompt_toolkit.i18n.messages import t, add_messages, set_locale
+        from ai_prompt_toolkit.i18n.messages import add_messages, set_locale, t
+
         set_locale("zh-CN")
         add_messages("zh-CN", {"custom.key": "自定义值"})
         assert t("custom.key") == "自定义值"
 
     def test_t_from_package(self):
         from ai_prompt_toolkit.i18n import t
+
         result = t("cli.lint.start")
         assert result
 
     def test_get_current_locale(self):
         from ai_prompt_toolkit.i18n.messages import get_current_locale
+
         loc = get_current_locale()
         assert loc in ("zh-CN", "en-US")
 
 
 class TestPluginSystem:
     def test_register_plugin(self):
-        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        from ai_prompt_toolkit.plugin import Plugin, PluginManager, PluginMeta
+
         PluginManager.reset()
         mgr = PluginManager()
         meta = PluginMeta(name="test-plugin", version="1.0")
@@ -404,7 +439,8 @@ class TestPluginSystem:
         assert mgr.get_plugin("test-plugin") is not None
 
     def test_unregister_plugin(self):
-        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        from ai_prompt_toolkit.plugin import Plugin, PluginManager, PluginMeta
+
         PluginManager.reset()
         mgr = PluginManager()
         meta = PluginMeta(name="rm-plugin")
@@ -413,7 +449,8 @@ class TestPluginSystem:
         assert mgr.get_plugin("rm-plugin") is None
 
     def test_enable_disable(self):
-        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        from ai_prompt_toolkit.plugin import Plugin, PluginManager, PluginMeta
+
         PluginManager.reset()
         mgr = PluginManager()
         meta = PluginMeta(name="toggle-plugin")
@@ -427,7 +464,8 @@ class TestPluginSystem:
         assert len(mgr.get_enabled_plugins()) == 1
 
     def test_list_plugins(self):
-        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        from ai_prompt_toolkit.plugin import Plugin, PluginManager, PluginMeta
+
         PluginManager.reset()
         mgr = PluginManager()
         mgr.register(Plugin(PluginMeta(name="p1")))
@@ -435,7 +473,8 @@ class TestPluginSystem:
         assert len(mgr.list_plugins()) == 2
 
     def test_plugin_summary(self):
-        from ai_prompt_toolkit.plugin import PluginManager, Plugin, PluginMeta
+        from ai_prompt_toolkit.plugin import Plugin, PluginManager, PluginMeta
+
         PluginManager.reset()
         mgr = PluginManager()
         mgr.register(Plugin(PluginMeta(name="s1", version="2.0")))
@@ -445,6 +484,7 @@ class TestPluginSystem:
 
     def test_singleton(self):
         from ai_prompt_toolkit.plugin import PluginManager
+
         PluginManager.reset()
         a = PluginManager.get_instance()
         b = PluginManager.get_instance()
@@ -452,6 +492,7 @@ class TestPluginSystem:
 
     def test_plugin_to_dict(self):
         from ai_prompt_toolkit.plugin import Plugin, PluginMeta
+
         meta = PluginMeta(name="dict-test", version="3.0", description="测试")
         p = Plugin(meta)
         d = p.to_dict()

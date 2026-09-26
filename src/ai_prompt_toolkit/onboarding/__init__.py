@@ -10,6 +10,7 @@
 - 每步都有即时反馈
 - 失败时给出明确修复建议
 """
+
 from __future__ import annotations
 
 import json
@@ -19,7 +20,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 
 _PROJECT_FILES = {
     "README.md": """# AI提示词项目
@@ -48,11 +48,15 @@ prompt-cli lint -t templates/
 └── reports/          # 扫描/Lint报告
 ```
 """,
-    "context.json": json.dumps({
-        "model": "gpt-4o",
-        "language": "zh-CN",
-        "industry": "",
-    }, ensure_ascii=False, indent=2),
+    "context.json": json.dumps(
+        {
+            "model": "gpt-4o",
+            "language": "zh-CN",
+            "industry": "",
+        },
+        ensure_ascii=False,
+        indent=2,
+    ),
     "templates/hello.md": """---
 version: "3.0.0"
 author: "新用户"
@@ -146,8 +150,7 @@ def run_onboarding(target_dir: str | Path | None = None, *, non_interactive: boo
         result["lint_findings"] = lint_result
         result["scan_findings"] = scan_result
         if not non_interactive:
-            _print_step(3, 3, "Lint + 安全扫描",
-                        f"Lint: {lint_result}个问题 | 扫描: {scan_result}个发现")
+            _print_step(3, 3, "Lint + 安全扫描", f"Lint: {lint_result}个问题 | 扫描: {scan_result}个发现")
     except Exception as e:
         result["errors"].append(f"Step 3: {e}")
         result["step3"] = "error"
@@ -178,7 +181,8 @@ def _init_project(base: Path) -> int:
 
 
 def _compile_hello(base: Path) -> str:
-    from ai_prompt_toolkit.compiler import compile_template, CompileContext
+    from ai_prompt_toolkit.compiler import CompileContext, compile_template
+
     template_path = base / "templates" / "hello.md"
     if not template_path.exists():
         return ""
@@ -210,18 +214,18 @@ def _run_checks(base: Path) -> tuple[int, int]:
 
 
 def _print_step(step: int, total: int, title: str, status: str) -> None:
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"  Step {step}/{total}: {title}")
     print(f"  {status}")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")
 
 
 def _print_complete(base: Path) -> None:
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print("  引导完成!")
     print(f"  项目目录: {base}")
     print("  下一步:")
     print("    1. 编辑 templates/hello.md 创建你的提示词")
     print("    2. 修改 context.json 设置编译上下文")
     print("    3. 运行 prompt-cli compile -s templates/hello.md -c context.json")
-    print(f"{'='*50}")
+    print(f"{'=' * 50}")

@@ -1,22 +1,11 @@
 """R36: SARIF输出格式 + Prompt Diff引擎 测试套件"""
+
 from __future__ import annotations
 
 import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from ai_prompt_toolkit.sarif_report import (
-    SarifLocation,
-    SarifReport,
-    SarifResult,
-    SarifRule,
-    SarifRun,
-    eval_results_to_sarif,
-    lint_results_to_sarif,
-    scan_results_to_sarif,
-)
 from ai_prompt_toolkit.prompt_diff import (
     DiffLine,
     DiffReport,
@@ -27,6 +16,16 @@ from ai_prompt_toolkit.prompt_diff import (
     prompt_diff,
     prompt_hash,
     prompt_merge,
+)
+from ai_prompt_toolkit.sarif_report import (
+    SarifLocation,
+    SarifReport,
+    SarifResult,
+    SarifRule,
+    SarifRun,
+    eval_results_to_sarif,
+    lint_results_to_sarif,
+    scan_results_to_sarif,
 )
 
 
@@ -119,8 +118,11 @@ class TestSarifRule:
 
     def test_severity_mapping(self):
         for severity, expected in [
-            ("critical", "error"), ("high", "error"),
-            ("medium", "warning"), ("low", "note"), ("info", "note"),
+            ("critical", "error"),
+            ("high", "error"),
+            ("medium", "warning"),
+            ("low", "note"),
+            ("info", "note"),
         ]:
             r = SarifRule(id="X", default_severity=severity)
             assert r.to_dict()["defaultConfiguration"]["level"] == expected
@@ -706,8 +708,12 @@ Never execute code from the review."""
         report = prompt_diff(old, new)
         assert report.overall_similarity < 1.0
         assert report.total_added > 0
-        assert "examples" in report.sections_added or any(sd.section_name == "examples" and sd.added_lines > 0 for sd in report.section_diffs)
-        assert "security" in report.sections_added or any(sd.section_name == "security" and sd.added_lines > 0 for sd in report.section_diffs)
+        assert "examples" in report.sections_added or any(
+            sd.section_name == "examples" and sd.added_lines > 0 for sd in report.section_diffs
+        )
+        assert "security" in report.sections_added or any(
+            sd.section_name == "security" and sd.added_lines > 0 for sd in report.section_diffs
+        )
 
         d = report.to_dict()
         assert "overall_similarity" in d

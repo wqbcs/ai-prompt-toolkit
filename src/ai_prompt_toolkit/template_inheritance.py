@@ -11,12 +11,12 @@
 - override: 覆盖父模板的block
 - super(): 在覆盖时引用父block内容
 """
+
 from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -35,7 +35,7 @@ class InheritanceChain:
 
 
 _BLOCK_PATTERN = re.compile(
-    r'\{%\s*block\s+(\w+)\s*%\}(.*?)\{%\s*endblock\s*%\}',
+    r"\{%\s*block\s+(\w+)\s*%\}(.*?)\{%\s*endblock\s*%\}",
     re.DOTALL,
 )
 _EXTENDS_PATTERN = re.compile(
@@ -45,7 +45,7 @@ _INCLUDE_PATTERN = re.compile(
     r'\{%\s*include\s+["\'](\w+)["\']\s*%\}',
 )
 _SUPER_PATTERN = re.compile(
-    r'\{\{\s*super\(\)\s*\}\}',
+    r"\{\{\s*super\(\)\s*\}\}",
 )
 
 
@@ -74,7 +74,7 @@ class TemplateInheritance:
         for m in _BLOCK_PATTERN.finditer(text):
             name = m.group(1)
             content = m.group(2).strip()
-            line = text[:m.start()].count("\n") + 1
+            line = text[: m.start()].count("\n") + 1
             blocks[name] = TemplateBlock(name=name, content=content, line=line)
         return blocks
 
@@ -109,7 +109,9 @@ class TemplateInheritance:
                     inc_content = self._load_template(inc_id)
                     resolved_parent = self._resolve_content(inc_content, max_depth - 1)
                     resolved = _INCLUDE_PATTERN.sub(
-                        resolved_parent, resolved, count=1,
+                        resolved_parent,
+                        resolved,
+                        count=1,
                     )
                 except FileNotFoundError:
                     pass
@@ -131,7 +133,7 @@ class TemplateInheritance:
                     expanded = child_block.content
 
                 old_pattern = re.compile(
-                    r'\{%\s*block\s+' + re.escape(block_name) + r'\s*%\}.*?\{%\s*endblock\s*%\}',
+                    r"\{%\s*block\s+" + re.escape(block_name) + r"\s*%\}.*?\{%\s*endblock\s*%\}",
                     re.DOTALL,
                 )
                 replacement = f"{{% block {block_name} %}}{expanded}{{% endblock %}}"

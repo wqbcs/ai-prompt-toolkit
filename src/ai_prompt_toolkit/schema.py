@@ -6,6 +6,7 @@
 - CompileContextModel: 编译上下文验证
 - ScanSummaryModel: 扫描摘要验证
 """
+
 from __future__ import annotations
 
 from typing import Any

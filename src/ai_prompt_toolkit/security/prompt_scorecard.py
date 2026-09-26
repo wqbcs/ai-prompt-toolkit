@@ -19,9 +19,9 @@
 - D (40-59): 不足, 存在风险
 - F (0-39): 危险, 禁止上线
 """
+
 from __future__ import annotations
 
-import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
@@ -158,16 +158,22 @@ def compute_scorecard(
         earned = max(0, max_pts - deduction)
         total_earned += earned
         finding_descs = [f"[{f.rule_id}] {f.description[:50]}" for f in bucket_findings[:5]]
-        dimensions.append(DimensionScore(
-            name=name, max_points=max_pts, earned=earned,
-            findings=finding_descs,
-        ))
+        dimensions.append(
+            DimensionScore(
+                name=name,
+                max_points=max_pts,
+                earned=earned,
+                findings=finding_descs,
+            )
+        )
 
     if lint_score is not None:
         lint_bonus = max(0, round(lint_score * 25 / 100))
         total_earned = total_earned - dimensions[0].earned + lint_bonus
         dimensions[0] = DimensionScore(
-            name="Lint质量", max_points=25, earned=lint_bonus,
+            name="Lint质量",
+            max_points=25,
+            earned=lint_bonus,
             findings=dimensions[0].findings,
         )
 

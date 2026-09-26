@@ -12,6 +12,7 @@
 匹配语义: 精确匹配 → 最长前缀匹配 → "default" 条目。
 （修复历史缺陷: token_analyzer 曾用 dict 首个前缀命中, "gpt-4o" 被 "gpt-4" 挡住误用其价格）
 """
+
 from __future__ import annotations
 
 import json
@@ -38,13 +39,10 @@ class ModelPricing:
 class PricingCatalog:
     def __init__(self, entries: dict[str, dict[str, Any]]):
         # 剔除元数据键(_开头), 保留 default
-        self._entries: dict[str, dict[str, Any]] = {
-            k: v for k, v in entries.items() if not k.startswith("_")
-        }
+        self._entries: dict[str, dict[str, Any]] = {k: v for k, v in entries.items() if not k.startswith("_")}
 
     @classmethod
-    def load(cls, extra_paths: list[Path | str] | None = None,
-             include_user_override: bool = True) -> PricingCatalog:
+    def load(cls, extra_paths: list[Path | str] | None = None, include_user_override: bool = True) -> PricingCatalog:
         merged: dict[str, dict[str, Any]] = {}
         paths: list[Path] = [BUILTIN_PRICING_PATH]
         if include_user_override:

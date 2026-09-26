@@ -1,4 +1,5 @@
 """R29: Flow DAG编排引擎 + GEPA版本管理集成 测试套件"""
+
 from __future__ import annotations
 
 import tempfile
@@ -8,21 +9,18 @@ import pytest
 
 from ai_prompt_toolkit.flow_dag import (
     FlowDAG,
-    FlowEdge,
-    FlowExecution,
     FlowExecutor,
     FlowNode,
-    FlowResult,
     NodeType,
     create_gepa_optimize_flow,
     create_lint_scan_flow,
 )
 from ai_prompt_toolkit.gepa import ScoreWithFeedback, gepa_optimize
 
-
 # ═══════════════════════════════════════
 # FlowNode 测试
 # ═══════════════════════════════════════
+
 
 class TestFlowNode:
     def test_basic_creation(self):
@@ -40,6 +38,7 @@ class TestFlowNode:
 # ═══════════════════════════════════════
 # FlowDAG 测试
 # ═══════════════════════════════════════
+
 
 class TestFlowDAG:
     def test_add_node(self):
@@ -127,6 +126,7 @@ class TestFlowDAG:
 
     def test_from_yaml(self):
         import yaml
+
         data = {
             "name": "yaml-flow",
             "nodes": [
@@ -145,15 +145,18 @@ class TestFlowDAG:
 # FlowExecutor 测试
 # ═══════════════════════════════════════
 
+
 class TestFlowExecutor:
     def test_simple_prompt_flow(self):
         dag = FlowDAG(name="simple")
-        dag.add_node(FlowNode(
-            name="input",
-            node_type=NodeType.PROMPT,
-            config={"template": "Hello {{name}}!"},
-            inputs={"name": "${$inputs.name}"},
-        ))
+        dag.add_node(
+            FlowNode(
+                name="input",
+                node_type=NodeType.PROMPT,
+                config={"template": "Hello {{name}}!"},
+                inputs={"name": "${$inputs.name}"},
+            )
+        )
         executor = FlowExecutor(dag)
         result = executor.execute(initial_inputs={"name": "World"})
         assert result.status == "success"
@@ -172,7 +175,9 @@ class TestFlowExecutor:
     def test_condition_node(self):
         dag = FlowDAG(name="condition-test")
         dag.add_node(FlowNode(name="input", node_type=NodeType.PROMPT, config={"template": "test"}, inputs={}))
-        dag.add_node(FlowNode(name="check", node_type=NodeType.CONDITION, inputs={"value": "85"}, config={"threshold": 80}))
+        dag.add_node(
+            FlowNode(name="check", node_type=NodeType.CONDITION, inputs={"value": "85"}, config={"threshold": 80})
+        )
         dag.add_edge("input", "check")
         executor = FlowExecutor(dag)
         result = executor.execute(initial_inputs={})
@@ -193,7 +198,14 @@ class TestFlowExecutor:
     def test_variable_resolution(self):
         dag = FlowDAG(name="var-test")
         dag.add_node(FlowNode(name="gen", node_type=NodeType.PROMPT, config={"template": "test"}, inputs={}))
-        dag.add_node(FlowNode(name="use", node_type=NodeType.PROMPT, config={"template": "Result: {{data}}"}, inputs={"data": "${gen.rendered}"}))
+        dag.add_node(
+            FlowNode(
+                name="use",
+                node_type=NodeType.PROMPT,
+                config={"template": "Result: {{data}}"},
+                inputs={"data": "${gen.rendered}"},
+            )
+        )
         dag.add_edge("gen", "use")
         executor = FlowExecutor(dag)
         result = executor.execute(initial_inputs={})
@@ -203,6 +215,7 @@ class TestFlowExecutor:
 # ═══════════════════════════════════════
 # 预设Flow测试
 # ═══════════════════════════════════════
+
 
 class TestPresetFlows:
     def test_lint_scan_flow_structure(self):
@@ -223,6 +236,7 @@ class TestPresetFlows:
 # GEPA版本管理集成测试
 # ═══════════════════════════════════════
 
+
 class TestGepaVersionIntegration:
     def test_save_version_on_optimize(self):
         def fast_metric(gold, pred, **kwargs):
@@ -231,6 +245,7 @@ class TestGepaVersionIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test_versions.db"
             import ai_prompt_toolkit.prompt_version as pv
+
             original_default = pv._DEFAULT_DB_PATH
             pv._DEFAULT_DB_PATH = db_path
 

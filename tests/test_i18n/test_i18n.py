@@ -1,18 +1,17 @@
 """i18n框架单元测试"""
+
 from __future__ import annotations
 
 import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from ai_prompt_toolkit.i18n.fallback import FallbackChain
 from ai_prompt_toolkit.i18n.glossary import Glossary
-from ai_prompt_toolkit.i18n.manager import I18nManager, SUPPORTED_LOCALES, EXTENSIBLE_LOCALES
+from ai_prompt_toolkit.i18n.manager import EXTENSIBLE_LOCALES, SUPPORTED_LOCALES, I18nManager
 from ai_prompt_toolkit.i18n.resource import ResourceManager
 from ai_prompt_toolkit.i18n.translation import TranslationEngine
-from ai_prompt_toolkit.i18n.types import CoverageReport, Locale, TranslationEntry, TranslationStatus
+from ai_prompt_toolkit.i18n.types import Locale, TranslationEntry, TranslationStatus
 
 
 class TestLocale:

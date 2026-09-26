@@ -1,9 +1,9 @@
 """灰度发布管理 — 阶梯式灰度+自动回滚+紧急状态"""
+
 from __future__ import annotations
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any
 
 from ai_prompt_toolkit.market.types import (
     DEPLOY_LADDER,
@@ -46,12 +46,9 @@ class DeployManager:
             raise ValueError(f"模板 {template.id} 不在灰度发布中")
         config.canary_score = canary_score
         if config.performance_delta <= ROLLBACK_THRESHOLD:
-            logger.warning("性能下降 %.1f%% 超过阈值，触发自动回滚: %s",
-                           config.performance_delta * 100, template.id)
+            logger.warning("性能下降 %.1f%% 超过阈值，触发自动回滚: %s", config.performance_delta * 100, template.id)
             return self.rollback(template, reason="performance_degradation")
-        current_idx = next(
-            (i for i, p in enumerate(DEPLOY_LADDER) if p == config.phase), -1
-        )
+        current_idx = next((i for i, p in enumerate(DEPLOY_LADDER) if p == config.phase), -1)
         if current_idx < 0 or current_idx >= len(DEPLOY_LADDER) - 1:
             template = self._lifecycle.transition(template, TemplateStatus.STABLE)
             config.phase = DeployPhase.P100

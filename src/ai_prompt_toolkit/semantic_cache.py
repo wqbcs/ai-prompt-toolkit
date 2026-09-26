@@ -8,6 +8,7 @@
 
 参考: gptcache(https://github.com/zilliztech/gptcache)语义缓存设计
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -42,7 +43,7 @@ class SimHash:
             return 0
         v = [0] * self._bits
         for token in tokens:
-            token_hash = int(hashlib.md5(token.encode('utf-8')).hexdigest(), 16)
+            token_hash = int(hashlib.md5(token.encode("utf-8")).hexdigest(), 16)
             for i in range(self._bits):
                 bitmask = 1 << i
                 if token_hash & bitmask:
@@ -52,24 +53,24 @@ class SimHash:
         fingerprint = 0
         for i in range(self._bits):
             if v[i] >= 0:
-                fingerprint |= (1 << i)
+                fingerprint |= 1 << i
         return fingerprint
 
     @staticmethod
     def similarity(hash1: int, hash2: int, bits: int = _SIMHASH_BITS) -> float:
         xor = hash1 ^ hash2
-        diff_bits = bin(xor).count('1')
+        diff_bits = bin(xor).count("1")
         return 1.0 - (diff_bits / bits)
 
     @staticmethod
     def _tokenize(text: str) -> list[str]:
-        text = re.sub(r'\s+', ' ', text.lower().strip())
+        text = re.sub(r"\s+", " ", text.lower().strip())
         tokens: list[str] = []
         words = text.split()
         for i in range(len(words)):
             tokens.append(words[i])
             if i < len(words) - 1:
-                tokens.append(f"{words[i]}_{words[i+1]}")
+                tokens.append(f"{words[i]}_{words[i + 1]}")
         return tokens
 
 
@@ -103,7 +104,7 @@ class SemanticCache:
 
     def lookup(self, text: str) -> dict[str, Any] | None:
         query_hash = self._simhash.compute(text)
-        query_md5 = hashlib.md5(text.encode('utf-8')).hexdigest()
+        query_md5 = hashlib.md5(text.encode("utf-8")).hexdigest()
 
         if query_md5 in self._entries:
             entry = self._entries[query_md5]
@@ -129,7 +130,7 @@ class SemanticCache:
         return None
 
     def store(self, text: str, result_summary: dict[str, Any]) -> None:
-        text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
+        text_hash = hashlib.md5(text.encode("utf-8")).hexdigest()
         simhash = self._simhash.compute(text)
         preview = text[:100] + "..." if len(text) > 100 else text
 

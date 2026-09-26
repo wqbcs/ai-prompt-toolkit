@@ -1,5 +1,5 @@
 """R140: lint --statistics 规则命中率统计"""
-import pytest
+
 from ai_prompt_toolkit.linter.rules import compute_rule_statistics
 from ai_prompt_toolkit.types import Finding, Severity
 

@@ -1,10 +1,10 @@
 """R142: lint --baseline基线管理"""
-import json
-import pytest
-from pathlib import Path
+
 from ai_prompt_toolkit.linter.baseline import (
-    BaselineSnapshot, BaselineDiff,
-    save_baseline, load_baseline, compare_baseline,
+    BaselineSnapshot,
+    compare_baseline,
+    load_baseline,
+    save_baseline,
 )
 
 

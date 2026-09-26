@@ -1,12 +1,15 @@
 """统一配置管理模块测试"""
+
 import os
-import pytest
-from pathlib import Path
 from unittest.mock import patch
 
 from ai_prompt_toolkit.config import (
-    PromptCliConfig, load_config, _DEFAULTS, _ENV_PREFIX,
-    _find_project_config, _load_env_overrides,
+    _DEFAULTS,
+    _ENV_PREFIX,
+    PromptCliConfig,
+    _find_project_config,
+    _load_env_overrides,
+    load_config,
 )
 
 
@@ -99,14 +102,14 @@ class TestFindProjectConfig:
 
     def test_find_toml(self, tmp_path):
         config_file = tmp_path / ".prompt-cli.toml"
-        config_file.write_text('[tool.prompt-cli]\nlint_on_save = false\n', encoding="utf-8")
+        config_file.write_text("[tool.prompt-cli]\nlint_on_save = false\n", encoding="utf-8")
         result = _find_project_config(tmp_path)
         assert result is not None
         assert result.name == ".prompt-cli.toml"
 
     def test_find_yaml(self, tmp_path):
         config_file = tmp_path / ".prompt-cli.yaml"
-        config_file.write_text('lint_on_save: false\n', encoding="utf-8")
+        config_file.write_text("lint_on_save: false\n", encoding="utf-8")
         result = _find_project_config(tmp_path)
         assert result is not None
         assert result.name == ".prompt-cli.yaml"

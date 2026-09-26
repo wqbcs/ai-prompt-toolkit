@@ -81,9 +81,13 @@ class PanguProvider(BaseProvider):
             _global_cost_tracker.record(cost)
             latency = (time.perf_counter() - start) * 1000
             return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
+                model_config=self._config,
+                prompt_template=prompt,
+                response=content,
+                latency_ms=round(latency, 2),
+                token_count=input_tokens + output_tokens,
+                cost=cost,
+                status=TestStatus.COMPLETED,
             )
         except Exception as e:
             return self._make_error_result(prompt, str(e))

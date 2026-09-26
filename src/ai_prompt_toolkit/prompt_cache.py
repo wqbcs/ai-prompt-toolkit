@@ -12,6 +12,7 @@
 - 华为云LTS日志上报: 缓存miss时自动上报trace
 - 零依赖: 不引入cachetools, 纯Python标准库实现
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -20,7 +21,10 @@ import logging
 import threading
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -155,8 +159,10 @@ class PromptCache:
                 result = func(*args, **kwargs)
                 self.put(cache_key, result)
                 return result
+
             wrapper._cache = self  # type: ignore
             return wrapper
+
         if fn is not None:
             return decorator(fn)
         return decorator
@@ -195,8 +201,7 @@ class LTSLogEntry:
 
 
 class LTSLogger:
-    def __init__(self, group_id: str = "", stream_id: str = "",
-                 endpoint: str = "", enabled: bool = False) -> None:
+    def __init__(self, group_id: str = "", stream_id: str = "", endpoint: str = "", enabled: bool = False) -> None:
         self._group_id = group_id
         self._stream_id = stream_id
         self._endpoint = endpoint
@@ -235,9 +240,12 @@ class LTSLogger:
         if self._endpoint:
             try:
                 import urllib.request
-                payload = json.dumps({
-                    "logs": [e.to_dict() for e in entries],
-                }).encode()
+
+                payload = json.dumps(
+                    {
+                        "logs": [e.to_dict() for e in entries],
+                    }
+                ).encode()
                 req = urllib.request.Request(
                     self._endpoint,
                     data=payload,
@@ -264,9 +272,7 @@ def get_lts_logger() -> LTSLogger:
     return _lts_logger
 
 
-def configure_lts(group_id: str, stream_id: str, endpoint: str = "",
-                  enabled: bool = True) -> LTSLogger:
+def configure_lts(group_id: str, stream_id: str, endpoint: str = "", enabled: bool = True) -> LTSLogger:
     global _lts_logger
-    _lts_logger = LTSLogger(group_id=group_id, stream_id=stream_id,
-                            endpoint=endpoint, enabled=enabled)
+    _lts_logger = LTSLogger(group_id=group_id, stream_id=stream_id, endpoint=endpoint, enabled=enabled)
     return _lts_logger

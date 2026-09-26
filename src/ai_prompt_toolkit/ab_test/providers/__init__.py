@@ -4,6 +4,7 @@
 - importlib扫描子模块，自动发现BaseProvider子类
 - _PROVIDER_REGISTRY动态构建，新增Provider仅需创建1个文件
 """
+
 from __future__ import annotations
 
 import importlib
@@ -57,10 +58,12 @@ def _discover_providers() -> None:
             mod = importlib.import_module(f"ai_prompt_toolkit.ab_test.providers.{module_info.name}")
             for attr_name in dir(mod):
                 obj = getattr(mod, attr_name)
-                if (isinstance(obj, type)
-                        and issubclass(obj, BaseProvider)
-                        and obj is not BaseProvider
-                        and attr_name in _PROVIDER_TYPE_MAP):
+                if (
+                    isinstance(obj, type)
+                    and issubclass(obj, BaseProvider)
+                    and obj is not BaseProvider
+                    and attr_name in _PROVIDER_TYPE_MAP
+                ):
                     pt = _PROVIDER_TYPE_MAP[attr_name]
                     _PROVIDER_REGISTRY[pt] = obj
         except Exception:

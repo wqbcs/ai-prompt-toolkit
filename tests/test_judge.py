@@ -1,12 +1,17 @@
 """LLM-as-Judge评估模块测试"""
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
+from unittest.mock import patch
 
 from ai_prompt_toolkit.ab_test.judge import (
-    LLMJudge, MultiJudgeEnsemble, JudgeMode, AggregationMethod,
-    JudgeDimension, AbsoluteJudgeResult, PairwiseJudgeResult,
-    BUILTIN_DIMENSIONS, create_judge, create_multi_judge,
-    _SCORE_PATTERN, _PAIR_PATTERN,
+    _PAIR_PATTERN,
+    _SCORE_PATTERN,
+    BUILTIN_DIMENSIONS,
+    AbsoluteJudgeResult,
+    JudgeDimension,
+    LLMJudge,
+    PairwiseJudgeResult,
+    create_judge,
+    create_multi_judge,
 )
 
 
@@ -96,6 +101,7 @@ class TestLLMJudgeParsing:
     def test_parse_absolute_with_score(self):
         with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
             from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
             judge = LLMJudge(config)
 
@@ -106,6 +112,7 @@ class TestLLMJudgeParsing:
     def test_parse_absolute_clamp_score(self):
         with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
             from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
             judge = LLMJudge(config)
 
@@ -118,6 +125,7 @@ class TestLLMJudgeParsing:
     def test_parse_absolute_no_score(self):
         with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
             from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
             judge = LLMJudge(config)
 
@@ -127,6 +135,7 @@ class TestLLMJudgeParsing:
     def test_parse_pairwise(self):
         with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
             from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
             judge = LLMJudge(config)
 
@@ -136,6 +145,7 @@ class TestLLMJudgeParsing:
     def test_parse_pairwise_no_match(self):
         with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
             from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
+
             config = ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
             judge = LLMJudge(config)
 

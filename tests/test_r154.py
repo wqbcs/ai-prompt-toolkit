@@ -1,9 +1,13 @@
 """R154: P246-P250 Prompt治理与运营安全规则"""
-import pytest
-from ai_prompt_toolkit.linter.rules_p246_p250 import (
-    check_p246, check_p247, check_p248, check_p249, check_p250,
-)
+
 from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.linter.rules_p246_p250 import (
+    check_p246,
+    check_p247,
+    check_p248,
+    check_p249,
+    check_p250,
+)
 
 
 def test_p246_no_audit():

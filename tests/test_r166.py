@@ -1,8 +1,9 @@
 """R166测试: F3定价外部化(PricingCatalog, LiteLLM schema)"""
+
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -13,6 +14,9 @@ from ai_prompt_toolkit.pricing import (
     PricingCatalog,
     get_catalog,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class TestPricingCatalogLoad:
@@ -43,34 +47,42 @@ class TestPricingCatalogLoad:
 
 class TestPricingResolution:
     def test_exact_match_wins(self):
-        catalog = PricingCatalog({
-            "gpt-4": {"input_cost_per_token": 1.0, "output_cost_per_token": 1.0},
-            "gpt-4o": {"input_cost_per_token": 2.0, "output_cost_per_token": 2.0},
-        })
+        catalog = PricingCatalog(
+            {
+                "gpt-4": {"input_cost_per_token": 1.0, "output_cost_per_token": 1.0},
+                "gpt-4o": {"input_cost_per_token": 2.0, "output_cost_per_token": 2.0},
+            }
+        )
         assert catalog.get("gpt-4o").input_cost_per_token == 2.0
 
     def test_longest_prefix_match(self):
         """回归守护: 'pangu-nlp-7b' 必须命中长前缀而非被 'pangu' 挡住"""
-        catalog = PricingCatalog({
-            "pangu": {"input_cost_per_token": 1.0, "output_cost_per_token": 1.0},
-            "pangu-nlp-7b": {"input_cost_per_token": 7.0, "output_cost_per_token": 7.0},
-        })
+        catalog = PricingCatalog(
+            {
+                "pangu": {"input_cost_per_token": 1.0, "output_cost_per_token": 1.0},
+                "pangu-nlp-7b": {"input_cost_per_token": 7.0, "output_cost_per_token": 7.0},
+            }
+        )
         assert catalog.get("pangu-nlp-7b").input_cost_per_token == 7.0
         assert catalog.get("pangu-nlp-65b").input_cost_per_token == 1.0
 
     def test_prefix_match_gpt4o_regression(self):
         """回归守护: 'gpt-4o' 不得被 'gpt-4' 首个前缀命中(历史计价错误)"""
-        catalog = PricingCatalog({
-            "gpt-4": {"input_cost_per_token": 3e-05, "output_cost_per_token": 6e-05},
-            "gpt-4o": {"input_cost_per_token": 2.5e-06, "output_cost_per_token": 1e-05},
-        })
+        catalog = PricingCatalog(
+            {
+                "gpt-4": {"input_cost_per_token": 3e-05, "output_cost_per_token": 6e-05},
+                "gpt-4o": {"input_cost_per_token": 2.5e-06, "output_cost_per_token": 1e-05},
+            }
+        )
         assert catalog.get("gpt-4o").input_cost_per_token == 2.5e-06
 
     def test_unknown_falls_to_default(self):
-        catalog = PricingCatalog({
-            "gpt-4o": {"input_cost_per_token": 2.5e-06, "output_cost_per_token": 1e-05},
-            "default": {"input_cost_per_token": 3e-06, "output_cost_per_token": 1.5e-05},
-        })
+        catalog = PricingCatalog(
+            {
+                "gpt-4o": {"input_cost_per_token": 2.5e-06, "output_cost_per_token": 1e-05},
+                "default": {"input_cost_per_token": 3e-06, "output_cost_per_token": 1.5e-05},
+            }
+        )
         p = catalog.get_or_default("totally-unknown-model")
         assert p.input_cost_per_token == 3e-06
 
@@ -88,17 +100,27 @@ class TestPricingResolution:
 class TestPricingOverrideChain:
     def test_extra_path_overrides_builtin(self, tmp_path: Path):
         override = tmp_path / "custom.json"
-        override.write_text(json.dumps({
-            "gpt-4o": {"input_cost_per_token": 9.9, "output_cost_per_token": 9.9},
-        }), encoding="utf-8")
+        override.write_text(
+            json.dumps(
+                {
+                    "gpt-4o": {"input_cost_per_token": 9.9, "output_cost_per_token": 9.9},
+                }
+            ),
+            encoding="utf-8",
+        )
         catalog = PricingCatalog.load(extra_paths=[override], include_user_override=False)
         assert catalog.get("gpt-4o").input_cost_per_token == 9.9
 
     def test_user_override_file(self, tmp_path: Path, monkeypatch):
         user_file = tmp_path / "pricing.json"
-        user_file.write_text(json.dumps({
-            "my-private-model": {"input_cost_per_token": 1e-05, "output_cost_per_token": 2e-05},
-        }), encoding="utf-8")
+        user_file.write_text(
+            json.dumps(
+                {
+                    "my-private-model": {"input_cost_per_token": 1e-05, "output_cost_per_token": 2e-05},
+                }
+            ),
+            encoding="utf-8",
+        )
         monkeypatch.setenv("PROMPT_TOOLKIT_PRICING", str(user_file))
         monkeypatch.chdir(tmp_path)  # CWD下无.prompt-toolkit/pricing.json, 不产生额外覆盖
         catalog = PricingCatalog.load(include_user_override=True)
@@ -112,8 +134,7 @@ class TestPricingOverrideChain:
             PricingCatalog.load(extra_paths=[bad], include_user_override=False)
 
     def test_missing_file_skipped(self, tmp_path: Path):
-        catalog = PricingCatalog.load(
-            extra_paths=[tmp_path / "nonexistent.json"], include_user_override=False)
+        catalog = PricingCatalog.load(extra_paths=[tmp_path / "nonexistent.json"], include_user_override=False)
         assert catalog.get("gpt-4o") is not None
 
 

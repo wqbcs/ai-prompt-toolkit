@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Callable
+from collections.abc import Callable
 
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _P021_PATTERNS = [
     re.compile(r"[A-Za-z0-9+/]{40,}={0,2}"),
@@ -24,10 +23,12 @@ _P022_PATTERNS = [
 ]
 
 _P023_POSITIVE = re.compile(
-    r"(?<!不)(?:要|必须|需要|请|should|must|need\s+to|please)\s*?(.{3,40}?)(?=[。.!！\n]|$)", re.IGNORECASE,
+    r"(?<!不)(?:要|必须|需要|请|should|must|need\s+to|please)\s*?(.{3,40}?)(?=[。.!！\n]|$)",
+    re.IGNORECASE,
 )
 _P023_NEGATIVE = re.compile(
-    r"(?:不要|不可|禁止|不能|must\s+not|do\s+not|never|avoid)\s*?(.{3,40}?)(?=[。.!！\n]|$)", re.IGNORECASE,
+    r"(?:不要|不可|禁止|不能|must\s+not|do\s+not|never|avoid)\s*?(.{3,40}?)(?=[。.!！\n]|$)",
+    re.IGNORECASE,
 )
 
 _P025_LENGTH_PATTERNS = [
@@ -46,7 +47,9 @@ _P025_LENGTH_PATTERNS = [
 ]
 
 _P026_FALLBACK_PATTERNS = [
-    re.compile(r"如果.*(?:失败|出错|错误|异常|无法|不确定|不清楚)|if.*(?:fail|error|exception|unable|uncertain)", re.IGNORECASE),
+    re.compile(
+        r"如果.*(?:失败|出错|错误|异常|无法|不确定|不清楚)|if.*(?:fail|error|exception|unable|uncertain)", re.IGNORECASE
+    ),
     re.compile(r"(?:回退|fallback|否则|otherwise|备选|替代|降级)", re.IGNORECASE),
 ]
 
@@ -56,10 +59,12 @@ _P027_SENSITIVE_CULTURAL = [
 ]
 
 _P028_MULTI_STEP = re.compile(
-    r"(?:首先|然后|接着|最后|第一步|第二步|step\s+1|step\s+2|首先.*然后|first.*then)", re.IGNORECASE,
+    r"(?:首先|然后|接着|最后|第一步|第二步|step\s+1|step\s+2|首先.*然后|first.*then)",
+    re.IGNORECASE,
 )
 _P028_TASK_COMPLEXITY = re.compile(
-    r"(?:分析|推理|比较|评估|判断|规划|设计|analyze|reason|compare|evaluate|judge|plan|design)", re.IGNORECASE,
+    r"(?:分析|推理|比较|评估|判断|规划|设计|analyze|reason|compare|evaluate|judge|plan|design)",
+    re.IGNORECASE,
 )
 
 _P029_USER_INPUT = [
@@ -68,14 +73,17 @@ _P029_USER_INPUT = [
     re.compile(r"\$\{.*?input.*?\}", re.IGNORECASE),
 ]
 _P029_ESCAPE_PATTERNS = re.compile(
-    r"(?:转义|escape|sanitize|校验|验证|validate|过滤|filter|清洗|clean)", re.IGNORECASE,
+    r"(?:转义|escape|sanitize|校验|验证|validate|过滤|filter|清洗|clean)",
+    re.IGNORECASE,
 )
 
 _P030_MODEL_DEPENDENCY = re.compile(
-    r"(?:GPT-4|Claude|文心|通义|Gemini|PaLM|only\s+works?\s+with|requires?\s+(?:GPT|Claude))", re.IGNORECASE,
+    r"(?:GPT-4|Claude|文心|通义|Gemini|PaLM|only\s+works?\s+with|requires?\s+(?:GPT|Claude))",
+    re.IGNORECASE,
 )
 _P030_COMPATIBILITY = re.compile(
-    r"(?:兼容|compatible|适配|fallback|备选模型|alternative\s+model)", re.IGNORECASE,
+    r"(?:兼容|compatible|适配|fallback|备选模型|alternative\s+model)",
+    re.IGNORECASE,
 )
 
 
@@ -138,26 +146,29 @@ def _extract_ngrams(text: str, n: int = 2) -> set[str]:
     cleaned = re.sub(r"[^\u4e00-\u9fffa-zA-Z0-9]", "", text)
     if len(cleaned) < n:
         return {cleaned} if cleaned else set()
-    return {cleaned[i:i + n] for i in range(len(cleaned) - n + 1)}
+    return {cleaned[i : i + n] for i in range(len(cleaned) - n + 1)}
 
 
 def check_p024(text: str) -> Finding | None:
     example_blocks = re.findall(
         r"(?:示例|例子|example|e\.g\.)[:：\s]*(.*?)(?=\n\n|\n[^#\s]|\Z)",
-        text, re.IGNORECASE | re.DOTALL,
+        text,
+        re.IGNORECASE | re.DOTALL,
     )
     if not example_blocks:
         return None
     negative_actions = re.findall(
         r"(?:不要|不可|禁止|不能|must\s+not|do\s+not|never|avoid)\s*?(.{3,40}?)(?=[。.!！\n]|$)",
-        text, re.IGNORECASE,
+        text,
+        re.IGNORECASE,
     )
     if not negative_actions:
         return None
     for block in example_blocks:
         positive_actions = re.findall(
             r"(?:可以|能|may|can|allowed)\s*?(.{3,40}?)(?=[。.!！\n]|$)",
-            block, re.IGNORECASE,
+            block,
+            re.IGNORECASE,
         )
         for pos in positive_actions:
             for neg in negative_actions:
@@ -169,7 +180,10 @@ def check_p024(text: str) -> Finding | None:
                         severity=Severity.MEDIUM,
                         description="Prompt 示例行为与指令约束可能不一致",
                         remediation="确保Few-shot示例与文本指令的约束条件一致",
-                        details={"example_count": len(example_blocks), "conflict": {"positive": pos.strip(), "negative": neg.strip()}},
+                        details={
+                            "example_count": len(example_blocks),
+                            "conflict": {"positive": pos.strip(), "negative": neg.strip()},
+                        },
                     )
                 pos_ngrams = _extract_ngrams(pos_norm)
                 neg_ngrams = _extract_ngrams(neg_norm)
@@ -180,7 +194,10 @@ def check_p024(text: str) -> Finding | None:
                         severity=Severity.MEDIUM,
                         description="Prompt 示例行为与指令约束可能不一致",
                         remediation="确保Few-shot示例与文本指令的约束条件一致",
-                        details={"example_count": len(example_blocks), "conflict": {"positive": pos.strip(), "negative": neg.strip()}},
+                        details={
+                            "example_count": len(example_blocks),
+                            "conflict": {"positive": pos.strip(), "negative": neg.strip()},
+                        },
                     )
     return None
 
@@ -277,8 +294,16 @@ def check_p030(text: str) -> Finding | None:
 _CheckerFn = Callable[[str], Finding | None]
 
 _CHECKERS_P021_P030: list[_CheckerFn] = [
-    check_p021, check_p022, check_p023, check_p024, check_p025,
-    check_p026, check_p027, check_p028, check_p029, check_p030,
+    check_p021,
+    check_p022,
+    check_p023,
+    check_p024,
+    check_p025,
+    check_p026,
+    check_p027,
+    check_p028,
+    check_p029,
+    check_p030,
 ]
 
 

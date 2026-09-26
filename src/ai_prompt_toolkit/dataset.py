@@ -146,9 +146,7 @@ class DatasetStore:
         """)
         conn.commit()
 
-    def create_dataset(
-        self, name: str, description: str = "", tags: list[str] | None = None
-    ) -> Dataset:
+    def create_dataset(self, name: str, description: str = "", tags: list[str] | None = None) -> Dataset:
         import uuid
 
         conn = self._connect()
@@ -175,9 +173,7 @@ class DatasetStore:
             updated_at=now,
         )
 
-    def list_datasets(
-        self, page: int = 1, page_size: int = 20
-    ) -> tuple[list[Dataset], int]:
+    def list_datasets(self, page: int = 1, page_size: int = 20) -> tuple[list[Dataset], int]:
         conn = self._connect()
         total = conn.execute("SELECT COUNT(*) as cnt FROM datasets").fetchone()["cnt"]
         offset = (page - 1) * page_size
@@ -190,17 +186,13 @@ class DatasetStore:
 
     def get_dataset(self, dataset_id: str) -> Dataset | None:
         conn = self._connect()
-        row = conn.execute(
-            "SELECT * FROM datasets WHERE dataset_id = ?", (dataset_id,)
-        ).fetchone()
+        row = conn.execute("SELECT * FROM datasets WHERE dataset_id = ?", (dataset_id,)).fetchone()
         return self._row_to_dataset(row) if row else None
 
     def delete_dataset(self, dataset_id: str) -> bool:
         conn = self._connect()
         conn.execute("DELETE FROM dataset_cases WHERE dataset_id = ?", (dataset_id,))
-        cursor = conn.execute(
-            "DELETE FROM datasets WHERE dataset_id = ?", (dataset_id,)
-        )
+        cursor = conn.execute("DELETE FROM datasets WHERE dataset_id = ?", (dataset_id,))
         conn.commit()
         return cursor.rowcount > 0
 
@@ -254,9 +246,7 @@ class DatasetStore:
 
     def delete_case(self, case_id: str) -> bool:
         conn = self._connect()
-        case = conn.execute(
-            "SELECT dataset_id FROM dataset_cases WHERE case_id = ?", (case_id,)
-        ).fetchone()
+        case = conn.execute("SELECT dataset_id FROM dataset_cases WHERE case_id = ?", (case_id,)).fetchone()
         if not case:
             return False
         conn.execute("DELETE FROM dataset_cases WHERE case_id = ?", (case_id,))
@@ -321,9 +311,7 @@ class DatasetStore:
             )
         return output.getvalue()
 
-    def run_dataset(
-        self, dataset_id: str, run_type: str = "all"
-    ) -> list[DatasetRunResult]:
+    def run_dataset(self, dataset_id: str, run_type: str = "all") -> list[DatasetRunResult]:
         cases = self.get_cases(dataset_id)
         results: list[DatasetRunResult] = []
         for case in cases:
@@ -341,9 +329,7 @@ class DatasetStore:
                     )
 
                     detector = InjectionDetector()
-                    findings = detector.detect(
-                        case.input_text, template_id=case.case_id
-                    )
+                    findings = detector.detect(case.input_text, template_id=case.case_id)
                     r.scan_findings = len(findings)
                 if run_type in ("evaluate", "all"):
                     from ai_prompt_toolkit.evaluator import evaluate_template
@@ -357,9 +343,7 @@ class DatasetStore:
             results.append(r)
         return results
 
-    async def run_dataset_async(
-        self, dataset_id: str, run_type: str = "all"
-    ) -> list[DatasetRunResult]:
+    async def run_dataset_async(self, dataset_id: str, run_type: str = "all") -> list[DatasetRunResult]:
         import asyncio
 
         cases = self.get_cases(dataset_id)
@@ -374,9 +358,7 @@ class DatasetStore:
                         from ai_prompt_toolkit.linter.linter import PromptLinter
 
                         linter = PromptLinter()
-                        lint_result = await asyncio.to_thread(
-                            linter.lint, case.case_id, case.input_text
-                        )
+                        lint_result = await asyncio.to_thread(linter.lint, case.case_id, case.input_text)
                         r.lint_score = lint_result.score
                     if run_type in ("scan", "all"):
                         from ai_prompt_toolkit.security.injection_detector import (
@@ -384,16 +366,12 @@ class DatasetStore:
                         )
 
                         detector = InjectionDetector()
-                        findings = await asyncio.to_thread(
-                            detector.detect, case.input_text, case.case_id
-                        )
+                        findings = await asyncio.to_thread(detector.detect, case.input_text, case.case_id)
                         r.scan_findings = len(findings)
                     if run_type in ("evaluate", "all"):
                         from ai_prompt_toolkit.evaluator import evaluate_template
 
-                        eval_result = await asyncio.to_thread(
-                            evaluate_template, case.case_id, case.input_text
-                        )
+                        eval_result = await asyncio.to_thread(evaluate_template, case.case_id, case.input_text)
                         r.eval_score = eval_result.overall_score
                     r.status = "completed"
                 except Exception as e:
@@ -432,9 +410,7 @@ class DatasetStore:
             self._conn.close()
             self._conn = None
 
-    def create_version(
-        self, dataset_id: str, author: str = "", message: str = ""
-    ) -> dict[str, Any]:
+    def create_version(self, dataset_id: str, author: str = "", message: str = "") -> dict[str, Any]:
         import hashlib
         import uuid
 
@@ -522,9 +498,7 @@ class DatasetStore:
         conn.commit()
         return count
 
-    def diff_versions(
-        self, dataset_id: str, version_a: int, version_b: int
-    ) -> dict[str, Any]:
+    def diff_versions(self, dataset_id: str, version_a: int, version_b: int) -> dict[str, Any]:
         va = self.get_version(dataset_id, version_a)
         vb = self.get_version(dataset_id, version_b)
         if not va or not vb:

@@ -4,6 +4,7 @@
 - OWASP LLM Top 10 2025: LLM08 (Vector and Embedding Weaknesses) / LLM10 (Unbounded Consumption)
 - garak probes: probing for embedding/RAG attacks and resource exhaustion
 """
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.redteam.probe import BaseProbe, ProbeInput

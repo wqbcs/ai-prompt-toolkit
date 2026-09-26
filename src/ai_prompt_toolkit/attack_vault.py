@@ -12,6 +12,7 @@
 - 支持持久化(JSON)和导出
 - 与InjectionDetector集成, 作为多层防御的补充层
 """
+
 from __future__ import annotations
 
 import json
@@ -48,7 +49,7 @@ def _simple_hash_embedding(text: str, dim: int = 64) -> list[float]:
         idx = (ord(ch) + i * 31) % dim
         result[idx] += 1.0
     words = text.lower().split()
-    for i, word in enumerate(words):
+    for _i, word in enumerate(words):
         idx = hash(word) % dim
         result[idx] += 0.5
     norm = math.sqrt(sum(x * x for x in result))
@@ -69,8 +70,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
 
 class AttackVault:
-    def __init__(self, dim: int = 64, threshold: float = 0.75,
-                 maxsize: int = 10000) -> None:
+    def __init__(self, dim: int = 64, threshold: float = 0.75, maxsize: int = 10000) -> None:
         self._dim = dim
         self._threshold = threshold
         self._maxsize = maxsize
@@ -89,12 +89,15 @@ class AttackVault:
     def threshold(self, value: float) -> None:
         self._threshold = max(0.0, min(1.0, value))
 
-    def learn(self, text: str, attack_type: str = "",
-              source: str = "", metadata: dict[str, Any] | None = None) -> AttackSignature:
+    def learn(
+        self, text: str, attack_type: str = "", source: str = "", metadata: dict[str, Any] | None = None
+    ) -> AttackSignature:
         embedding = _simple_hash_embedding(text, self._dim)
         sig = AttackSignature(
-            text=text, attack_type=attack_type,
-            embedding=embedding, source=source,
+            text=text,
+            attack_type=attack_type,
+            embedding=embedding,
+            source=source,
             metadata=metadata or {},
         )
         with self._lock:
@@ -191,8 +194,7 @@ def get_attack_vault() -> AttackVault:
     return _vault
 
 
-def configure_attack_vault(dim: int = 64, threshold: float = 0.75,
-                           maxsize: int = 10000) -> AttackVault:
+def configure_attack_vault(dim: int = 64, threshold: float = 0.75, maxsize: int = 10000) -> AttackVault:
     global _vault
     _vault = AttackVault(dim=dim, threshold=threshold, maxsize=maxsize)
     return _vault

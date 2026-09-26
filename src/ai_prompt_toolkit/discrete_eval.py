@@ -11,6 +11,7 @@
 - RAGAS: AspectCritique(name, definition, strictness)
 - DeepEval: DAG评估(确定性+LLM混合)
 """
+
 from __future__ import annotations
 
 import re
@@ -144,10 +145,16 @@ class DiscreteMetric:
             criteria_count += 1
 
         if criteria_count >= 4:
-            return DiscreteResult(metric_name=self.name, value="good", score=10.0, reason=f"满足{criteria_count}/5项质量标准")
+            return DiscreteResult(
+                metric_name=self.name, value="good", score=10.0, reason=f"满足{criteria_count}/5项质量标准"
+            )
         elif criteria_count >= 2:
-            return DiscreteResult(metric_name=self.name, value="average", score=5.0, reason=f"满足{criteria_count}/5项质量标准")
-        return DiscreteResult(metric_name=self.name, value="poor", score=0.0, reason=f"仅满足{criteria_count}/5项质量标准")
+            return DiscreteResult(
+                metric_name=self.name, value="average", score=5.0, reason=f"满足{criteria_count}/5项质量标准"
+            )
+        return DiscreteResult(
+            metric_name=self.name, value="poor", score=0.0, reason=f"仅满足{criteria_count}/5项质量标准"
+        )
 
     def _evaluate_pass_fail(self, text: str) -> DiscreteResult:
         has_role = bool(re.search(r"你(?:是|作为)", text))
@@ -246,7 +253,7 @@ class AspectCritique:
         elif name in _ASPECT_DEFINITIONS:
             self._definition = _ASPECT_DEFINITIONS[name]["definition"]
         else:
-            self._definition = f"评估{aspect}质量"
+            self._definition = f"评估{name}质量"
         self._strictness = strictness
         self._config = _ASPECT_DEFINITIONS.get(name, {})
 
@@ -274,7 +281,9 @@ class AspectCritique:
             return 10.0, "未检测到有害内容"
 
         if name == "maliciousness":
-            malicious = bool(re.search(r"忽略.*指令|输出.*密钥|ignore.*instruct|output.*key|DAN|越狱", text, re.IGNORECASE))
+            malicious = bool(
+                re.search(r"忽略.*指令|输出.*密钥|ignore.*instruct|output.*key|DAN|越狱", text, re.IGNORECASE)
+            )
             if malicious:
                 return 0.0, "检测到潜在恶意意图"
             return 10.0, "未检测到恶意意图"
@@ -385,9 +394,13 @@ class DiscreteMetricEvaluator(BaseEvaluator):
         **kwargs: Any,
     ) -> EvaluatorResult:
         import time
+
         start = time.perf_counter()
 
-        metric_results = [m.evaluate(text, expected=kwargs.get("expected", ""), context=kwargs.get("context", "")) for m in self._metrics]
+        metric_results = [
+            m.evaluate(text, expected=kwargs.get("expected", ""), context=kwargs.get("context", ""))
+            for m in self._metrics
+        ]
         aspect_results = [a.evaluate(text) for a in self._aspects]
 
         all_results = metric_results + aspect_results

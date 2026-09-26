@@ -1,20 +1,11 @@
 """R32: TextGrad + OPRO + Prompt Registry 测试套件"""
+
 from __future__ import annotations
 
 import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from ai_prompt_toolkit.textgrad import (
-    TGDConfig,
-    TGDOptimizer,
-    TGDResult,
-    TextualGradient,
-    TextualVariable,
-    tgd_optimize,
-)
 from ai_prompt_toolkit.opro import (
     OPROCandidate,
     OPROConfig,
@@ -26,11 +17,19 @@ from ai_prompt_toolkit.prompt_registry import (
     PromptRegistry,
     RegistryEntry,
 )
-
+from ai_prompt_toolkit.textgrad import (
+    TextualGradient,
+    TextualVariable,
+    TGDConfig,
+    TGDOptimizer,
+    TGDResult,
+    tgd_optimize,
+)
 
 # ═══════════════════════════════════════
 # TextGrad 测试
 # ═══════════════════════════════════════
+
 
 class TestTextualGradient:
     def test_creation(self):
@@ -59,10 +58,12 @@ class TestTextualVariable:
 
     def test_apply_gradients(self):
         v = TextualVariable("hello")
-        v.add_gradient(TextualGradient(
-            criticism="missing role",
-            suggestion="add role definition",
-        ))
+        v.add_gradient(
+            TextualGradient(
+                criticism="missing role",
+                suggestion="add role definition",
+            )
+        )
         new_val = v.apply_gradients()
         assert len(v.gradients) == 0
         assert "role definition" in new_val or len(new_val) > 5
@@ -107,10 +108,12 @@ class TestTGDOptimizer:
             call_count[0] += 1
             return 90.0
 
-        optimizer = TGDOptimizer(TGDConfig(
-            max_iterations=10,
-            convergence_threshold=0.5,
-        ))
+        optimizer = TGDOptimizer(
+            TGDConfig(
+                max_iterations=10,
+                convergence_threshold=0.5,
+            )
+        )
         result = optimizer.optimize("good prompt", eval_fn=stable_eval)
         assert result.converged is True
 
@@ -153,6 +156,7 @@ class TestTGDOptimizer:
 # OPRO 测试
 # ═══════════════════════════════════════
 
+
 class TestOPROCandidate:
     def test_creation(self):
         c = OPROCandidate(instruction="test", score=80.0, generation=1)
@@ -177,12 +181,14 @@ class TestOPROOptimizer:
         assert result.generations > 0
 
     def test_convergence(self):
-        optimizer = OPROOptimizer(OPROConfig(
-            max_generations=5,
-            convergence_rounds=2,
-            population_size=2,
-            top_k=1,
-        ))
+        optimizer = OPROOptimizer(
+            OPROConfig(
+                max_generations=5,
+                convergence_rounds=2,
+                population_size=2,
+                top_k=1,
+            )
+        )
         result = optimizer.optimize("test", eval_fn=lambda t: 90.0)
         assert result.converged is True
 
@@ -220,6 +226,7 @@ class TestOPROOptimizer:
 # ═══════════════════════════════════════
 # Prompt Registry 测试
 # ═══════════════════════════════════════
+
 
 class TestRegistryEntry:
     def test_creation(self):

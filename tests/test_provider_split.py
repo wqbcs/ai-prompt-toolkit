@@ -1,19 +1,17 @@
 """R22 Provider拆分 + HealthCheck + doctor命令 测试"""
+
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
 from ai_prompt_toolkit.ab_test.provider import (
     BaseProvider,
     HealthCheckResult,
-    ProviderError,
     create_provider,
     run_health_check,
 )
 from ai_prompt_toolkit.ab_test.providers import get_registry
+from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType
 
 
 class TestProviderModuleSplit:
@@ -90,9 +88,12 @@ class TestHealthCheck:
 
     def test_health_check_result_dataclass(self):
         r = HealthCheckResult(
-            provider=ProviderType.OPENAI, label="openai",
-            status="healthy", latency_ms=42.5,
-            api_key_configured=True, endpoint="https://api.openai.com/v1",
+            provider=ProviderType.OPENAI,
+            label="openai",
+            status="healthy",
+            latency_ms=42.5,
+            api_key_configured=True,
+            endpoint="https://api.openai.com/v1",
         )
         assert r.provider == ProviderType.OPENAI
         assert r.latency_ms == 42.5
@@ -109,6 +110,7 @@ class TestHealthCheck:
 class TestDoctorCLI:
     def test_doctor_command_exists(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()
@@ -118,12 +120,14 @@ class TestDoctorCLI:
 
     def test_doctor_json_output(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()
         result = runner.invoke(main, ["doctor", "--json", "-p", "ollama"])
         assert result.exit_code in (0, 1)
         import json
+
         json_str = result.output.split("正在检查Provider健康状态...", 1)[-1].strip()
         if json_str:
             data = json.loads(json_str)

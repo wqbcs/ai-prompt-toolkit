@@ -10,6 +10,7 @@
 
 参考: garak统一registry模式
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -18,14 +19,16 @@ from typing import Any
 def get_global_probe_registry() -> dict[str, dict[str, Any]]:
     merged: dict[str, dict[str, Any]] = {}
     try:
-        from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY as pf_probes
-        for name, cls in pf_probes.items():
+        from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY as PF_PROBES
+
+        for name, cls in PF_PROBES.items():
             merged[name] = {"cls": cls, "source": "probe_framework"}
     except ImportError:
         pass
     try:
-        from ai_prompt_toolkit.redteam.probe import _PROBE_REGISTRY as rt_probes
-        for name, cls in rt_probes.items():
+        from ai_prompt_toolkit.redteam.probe import _PROBE_REGISTRY as RT_PROBES
+
+        for name, cls in RT_PROBES.items():
             if name not in merged:
                 merged[name] = {"cls": cls, "source": "redteam"}
     except ImportError:
@@ -36,14 +39,16 @@ def get_global_probe_registry() -> dict[str, dict[str, Any]]:
 def get_global_detector_registry() -> dict[str, dict[str, Any]]:
     merged: dict[str, dict[str, Any]] = {}
     try:
-        from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY as pf_detectors
-        for name, cls in pf_detectors.items():
+        from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY as PF_DETECTORS
+
+        for name, cls in PF_DETECTORS.items():
             merged[name] = {"cls": cls, "source": "probe_framework"}
     except ImportError:
         pass
     try:
-        from ai_prompt_toolkit.redteam.detector import _DETECTOR_REGISTRY as rt_detectors
-        for name, cls in rt_detectors.items():
+        from ai_prompt_toolkit.redteam.detector import _DETECTOR_REGISTRY as RT_DETECTORS
+
+        for name, cls in RT_DETECTORS.items():
             if name not in merged:
                 merged[name] = {"cls": cls, "source": "redteam"}
     except ImportError:

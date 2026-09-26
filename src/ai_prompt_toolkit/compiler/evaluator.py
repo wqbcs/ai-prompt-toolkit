@@ -1,16 +1,32 @@
 """条件编译求值器，对 Condition AST 进行安全求值。"""
+
 from __future__ import annotations
 
 import operator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.compiler.types import CompileContext, Condition
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.compiler.types import CompileContext, Condition
 
-_DANGEROUS_NAMES = frozenset({
-    "eval", "exec", "compile", "open", "input", "globals",
-    "locals", "vars", "dir", "getattr", "setattr", "delattr",
-    "__import__", "breakpoint", "memoryview",
-})
+_DANGEROUS_NAMES = frozenset(
+    {
+        "eval",
+        "exec",
+        "compile",
+        "open",
+        "input",
+        "globals",
+        "locals",
+        "vars",
+        "dir",
+        "getattr",
+        "setattr",
+        "delattr",
+        "__import__",
+        "breakpoint",
+        "memoryview",
+    }
+)
 
 _COMPARISON_OPS: dict[str, Any] = {
     "==": operator.eq,
@@ -51,9 +67,7 @@ class Evaluator:
             "language": context.language,
             "industry": context.industry,
         }
-        self._resolved.update(
-            {k: str(v).lower() for k, v in context.flags.items()}
-        )
+        self._resolved.update({k: str(v).lower() for k, v in context.flags.items()})
 
     @property
     def warnings(self) -> list[str]:
@@ -73,21 +87,15 @@ class Evaluator:
         """检查标识符是否为危险名称。"""
         stripped = name.strip().lower()
         if stripped in _DANGEROUS_NAMES:
-            raise EvaluationError(
-                f"检测到副作用关键词: {name!r}", dimension=name
-            )
+            raise EvaluationError(f"检测到副作用关键词: {name!r}", dimension=name)
         if "(" in stripped or ")" in stripped:
-            raise EvaluationError(
-                f"检测到函数调用: {name!r}", dimension=name
-            )
+            raise EvaluationError(f"检测到函数调用: {name!r}", dimension=name)
 
     def _resolve_dimension(self, dimension: str) -> str:
         """解析维度值，缺失则返回空字符串并记录警告。"""
         value = self._resolved.get(dimension, "")
         if not value and dimension not in self._resolved:
-            self._warnings.append(
-                f"上下文缺少维度 {dimension!r}，条件视为 false"
-            )
+            self._warnings.append(f"上下文缺少维度 {dimension!r}，条件视为 false")
         return value
 
     def _evaluate_single(self, condition: Condition) -> bool:
@@ -110,18 +118,14 @@ class Evaluator:
 
         op_func = _COMPARISON_OPS.get(condition.operator)
         if op_func is None:
-            self._warnings.append(
-                f"未知的比较运算符: {condition.operator!r}，条件视为 false"
-            )
+            self._warnings.append(f"未知的比较运算符: {condition.operator!r}，条件视为 false")
             return False
 
         target = condition.value if isinstance(condition.value, str) else str(condition.value)
         try:
             return op_func(dim_lower, target.lower())
         except (TypeError, ValueError):
-            self._warnings.append(
-                f"比较失败: {dim_lower!r} {condition.operator} {target!r}"
-            )
+            self._warnings.append(f"比较失败: {dim_lower!r} {condition.operator} {target!r}")
             return False
 
     def evaluate(self, condition: Condition) -> bool:
@@ -143,9 +147,7 @@ class Evaluator:
             right_val = self.evaluate(condition.right)
             logical_func = _LOGICAL_OPS.get(condition.logical)
             if logical_func is None:
-                self._warnings.append(
-                    f"未知的逻辑运算符: {condition.logical!r}"
-                )
+                self._warnings.append(f"未知的逻辑运算符: {condition.logical!r}")
                 return False
             return logical_func(left, right_val)
 

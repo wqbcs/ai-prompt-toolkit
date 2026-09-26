@@ -8,6 +8,7 @@
 
 参考: https://www.nist.gov/artificial-intelligence/executive-order-safe-secure-and-trustworthy-artificial-intelligence
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -79,7 +80,7 @@ def get_eu_ai_act_mapping() -> dict[str, list[str]]:
 
 
 def get_rules_for_nist_subcategory(subcategory: str) -> list[str]:
-    for function, subcats in _NIST_RMF_MAPPING.items():
+    for _function, subcats in _NIST_RMF_MAPPING.items():
         if subcategory in subcats:
             return subcats[subcategory]
     return []
@@ -109,7 +110,11 @@ def generate_nist_compliance_report(findings_rule_ids: list[str]) -> dict[str, A
     for function in _NIST_RMF_MAPPING:
         total = len(_NIST_RMF_MAPPING[function])
         covered = len([s for s in covered_subcats if s.startswith(f"{function}/")])
-        function_coverage[function] = {"total": total, "covered": covered, "pct": round(covered / max(total, 1) * 100, 1)}
+        function_coverage[function] = {
+            "total": total,
+            "covered": covered,
+            "pct": round(covered / max(total, 1) * 100, 1),
+        }
     return {
         "framework": "NIST AI RMF 1.0",
         "triggered_subcategories": covered_subcats,

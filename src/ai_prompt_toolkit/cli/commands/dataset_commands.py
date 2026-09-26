@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -24,6 +25,7 @@ def dataset_create(name: str, description: str, tags: str) -> None:
     """创建新数据集"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
     ds = store.create_dataset(name, description=description, tags=tag_list)
@@ -40,6 +42,7 @@ def dataset_list(page: int, page_size: int) -> None:
 
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import console
+
     store = DatasetStore()
     datasets, total = store.list_datasets(page, page_size)
     table = Table(title=f"数据集 (共{total}个)")
@@ -50,7 +53,9 @@ def dataset_list(page: int, page_size: int) -> None:
     table.add_column("标签")
     table.add_column("更新时间")
     for ds in datasets:
-        table.add_row(ds.dataset_id, ds.name, ds.description[:30], str(ds.case_count), ",".join(ds.tags[:3]), ds.updated_at[:16])
+        table.add_row(
+            ds.dataset_id, ds.name, ds.description[:30], str(ds.case_count), ",".join(ds.tags[:3]), ds.updated_at[:16]
+        )
     console.print(table)
     store.close()
 
@@ -64,6 +69,7 @@ def dataset_add_case(dataset: str, input: str, expected: str, tags: str) -> None
     """添加测试用例"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
     c = store.add_case(dataset, input, expected_output=expected, tags=tag_list)
@@ -80,6 +86,7 @@ def dataset_import(dataset: str, file: str) -> None:
 
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     p = Path(file)
     if not p.exists():
@@ -88,6 +95,7 @@ def dataset_import(dataset: str, file: str) -> None:
     content = p.read_text(encoding="utf-8")
     if p.suffix == ".json":
         import json
+
         items = json.loads(content)
         count = store.import_json(dataset, items)
     elif p.suffix == ".csv":
@@ -107,6 +115,7 @@ def dataset_export(dataset: str, format: str, output: str | None) -> None:
     """导出数据集"""
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     if format == "csv":
         data = store.export_csv(dataset)
@@ -129,6 +138,7 @@ def dataset_run(dataset: str, type: str) -> None:
 
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import console
+
     store = DatasetStore()
     results = store.run_dataset(dataset, run_type=type)
     table = Table(title=f"数据集运行结果 ({type})")
@@ -139,7 +149,13 @@ def dataset_run(dataset: str, type: str) -> None:
     table.add_column("评估分数")
     for r in results:
         status_style = "green" if r.status == "completed" else "red"
-        table.add_row(r.case_id[:8], f"[{status_style}]{r.status}[/]", f"{r.lint_score:.1f}", str(r.scan_findings), f"{r.eval_score:.1f}")
+        table.add_row(
+            r.case_id[:8],
+            f"[{status_style}]{r.status}[/]",
+            f"{r.lint_score:.1f}",
+            str(r.scan_findings),
+            f"{r.eval_score:.1f}",
+        )
     console.print(table)
     store.close()
 
@@ -152,6 +168,7 @@ def dataset_delete(dataset: str) -> None:
 
     from ai_prompt_toolkit.dataset import DatasetStore
     from ai_prompt_toolkit.output import success
+
     store = DatasetStore()
     if store.delete_dataset(dataset):
         success(f"数据集已删除: {dataset}")

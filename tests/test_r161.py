@@ -1,10 +1,13 @@
 """R161: 声明式Lint+Eval测试套件"""
+
 import json
-import pytest
-from pathlib import Path
+
 from ai_prompt_toolkit.linter.test_suite import (
-    TestSuite, TestGroup, Assertion,
-    load_test_suite, run_test_suite,
+    Assertion,
+    TestGroup,
+    TestSuite,
+    load_test_suite,
+    run_test_suite,
 )
 
 
@@ -39,11 +42,15 @@ groups:
 
 def test_load_test_suite_json(tmp_path):
     suite = tmp_path / "suite.json"
-    suite.write_text(json.dumps({
-        "name": "test",
-        "version": "2.0",
-        "groups": [{"name": "g1", "target": ".", "assertions": [{"type": "score", "threshold": 90}]}],
-    }))
+    suite.write_text(
+        json.dumps(
+            {
+                "name": "test",
+                "version": "2.0",
+                "groups": [{"name": "g1", "target": ".", "assertions": [{"type": "score", "threshold": 90}]}],
+            }
+        )
+    )
     ts = load_test_suite(suite)
     assert ts.name == "test"
     assert ts.version == "2.0"

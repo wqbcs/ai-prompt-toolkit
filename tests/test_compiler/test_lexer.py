@@ -1,10 +1,9 @@
 """Lexer单元测试——5种Token类型、嵌套条件、错误定位。"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.compiler.lexer import Lexer, LexerError
-from ai_prompt_toolkit.compiler.types import Token, TokenKind
+from ai_prompt_toolkit.compiler.types import TokenKind
 
 
 class TestTokenKind:

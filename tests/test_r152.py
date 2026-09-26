@@ -1,8 +1,8 @@
 """R152: lint --export-lcov覆盖率导出"""
-import pytest
-from ai_prompt_toolkit.linter.lcov_export import generate_lcov_report, generate_coverage_summary
-from ai_prompt_toolkit.types import Finding, Severity
+
+from ai_prompt_toolkit.linter.lcov_export import generate_coverage_summary, generate_lcov_report
 from ai_prompt_toolkit.linter.rules import get_all_rules
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 def test_generate_lcov_empty():

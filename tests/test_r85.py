@@ -1,4 +1,5 @@
 """R85: doctor --init + 首次引导提示"""
+
 from __future__ import annotations
 
 import os

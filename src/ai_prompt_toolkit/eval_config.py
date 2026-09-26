@@ -44,6 +44,7 @@ output:
   save_history: true
 ```
 """
+
 from __future__ import annotations
 
 import re
@@ -108,7 +109,8 @@ class EvalConfig:
         if not path.exists():
             raise FileNotFoundError(f"评估配置文件不存在: {path}")
         import yaml
-        with open(path, "r", encoding="utf-8") as f:
+
+        with open(path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
         return cls._from_dict(data)
 
@@ -123,12 +125,14 @@ class EvalConfig:
             if isinstance(t, str):
                 targets.append(EvalTarget(path=t))
             elif isinstance(t, dict):
-                targets.append(EvalTarget(
-                    path=t.get("path", ""),
-                    provider=t.get("provider", "openai"),
-                    model=t.get("model", "gpt-4o-mini"),
-                    vars=t.get("vars", {}),
-                ))
+                targets.append(
+                    EvalTarget(
+                        path=t.get("path", ""),
+                        provider=t.get("provider", "openai"),
+                        model=t.get("model", "gpt-4o-mini"),
+                        vars=t.get("vars", {}),
+                    )
+                )
 
         evaluators = []
         for e in data.get("evaluators", []):
@@ -137,22 +141,26 @@ class EvalConfig:
             assertions = []
             for a in e.get("assertions", []):
                 if isinstance(a, dict):
-                    assertions.append(AssertionDef(
-                        name=a.get("name", ""),
-                        contains=a.get("contains", []),
-                        contains_any=a.get("contains_any", []),
-                        regex=a.get("regex", ""),
-                        not_contains=a.get("not_contains", []),
-                        icontains=a.get("icontains", []),
-                    ))
-            evaluators.append(EvaluatorDef(
-                type=e.get("type", "lint"),
-                threshold=e.get("threshold", 0.0),
-                dimensions=e.get("dimensions", []),
-                categories=e.get("categories", []),
-                assertions=assertions,
-                rules=e.get("rules", []),
-            ))
+                    assertions.append(
+                        AssertionDef(
+                            name=a.get("name", ""),
+                            contains=a.get("contains", []),
+                            contains_any=a.get("contains_any", []),
+                            regex=a.get("regex", ""),
+                            not_contains=a.get("not_contains", []),
+                            icontains=a.get("icontains", []),
+                        )
+                    )
+            evaluators.append(
+                EvaluatorDef(
+                    type=e.get("type", "lint"),
+                    threshold=e.get("threshold", 0.0),
+                    dimensions=e.get("dimensions", []),
+                    categories=e.get("categories", []),
+                    assertions=assertions,
+                    rules=e.get("rules", []),
+                )
+            )
 
         providers = {}
         for name, p in data.get("providers", {}).items():
@@ -199,10 +207,9 @@ def run_assertion(text: str, assertion: AssertionDef) -> dict[str, Any]:
             passed = False
             details.append(f"缺少关键词(不区分大小写): {word}")
 
-    if assertion.regex:
-        if not re.search(assertion.regex, text, re.IGNORECASE):
-            passed = False
-            details.append(f"正则不匹配: {assertion.regex}")
+    if assertion.regex and not re.search(assertion.regex, text, re.IGNORECASE):
+        passed = False
+        details.append(f"正则不匹配: {assertion.regex}")
 
     return {
         "name": assertion.name,
@@ -221,11 +228,13 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
     for target in config.targets:
         target_path = base / target.path
         if not target_path.exists():
-            results["targets"].append({
-                "path": target.path,
-                "error": f"文件不存在: {target_path}",
-                "evaluators": [],
-            })
+            results["targets"].append(
+                {
+                    "path": target.path,
+                    "error": f"文件不存在: {target_path}",
+                    "evaluators": [],
+                }
+            )
             results["summary"]["total"] += 1
             results["summary"]["failed"] += 1
             continue
@@ -248,6 +257,7 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
 
             if evaluator.type == "lint":
                 from ai_prompt_toolkit.linter.linter import PromptLinter
+
                 linter = PromptLinter()
                 lint_result = linter.lint(target.path, text)
                 eval_result["score"] = lint_result.score
@@ -256,6 +266,7 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
 
             elif evaluator.type == "security":
                 from ai_prompt_toolkit.security.scanner import SecurityScanner
+
                 scanner = SecurityScanner()
                 scan_result = scanner.scan(text)
                 eval_result["score"] = scan_result.score if hasattr(scan_result, "score") else 0
@@ -263,8 +274,10 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
 
             elif evaluator.type == "dimension":
                 from ai_prompt_toolkit.evaluator import evaluate_template
+
                 dim_report = evaluate_template(
-                    target.path, text,
+                    target.path,
+                    text,
                     dimensions=evaluator.dimensions or None,
                     categories=evaluator.categories or None,
                 )
@@ -283,9 +296,7 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
 
             target_result["evaluators"].append(eval_result)
 
-        all_evals_passed = all(
-            e["passed"] for e in target_result["evaluators"]
-        )
+        all_evals_passed = all(e["passed"] for e in target_result["evaluators"])
         target_result["passed"] = all_evals_passed
 
         results["targets"].append(target_result)

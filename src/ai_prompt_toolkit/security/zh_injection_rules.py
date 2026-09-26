@@ -3,11 +3,11 @@
 参考: prompt-guard (多语言注入检测)、whitney (15种源类型)
 覆盖: 角色扮演绕过、语义漂移、中式越狱、文化敏感注入等中文特有模式
 """
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.types import Severity
 from ai_prompt_toolkit.security.types import InjectionRule
-
+from ai_prompt_toolkit.types import Severity
 
 ZH_INJECTION_RULES: list[InjectionRule] = [
     InjectionRule(

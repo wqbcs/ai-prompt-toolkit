@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import click
@@ -21,6 +22,7 @@ def plugin_list() -> None:
 
     from ai_prompt_toolkit.output import console
     from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     plugins = mgr.list_plugins()
     if not plugins:
@@ -44,6 +46,7 @@ def plugin_load(module: str | None, file: str | None) -> None:
     """加载插件"""
     from ai_prompt_toolkit.output import success
     from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     if module:
         p = mgr.load_from_module(module)
@@ -67,6 +70,7 @@ def plugin_enable(name: str) -> None:
     """启用插件"""
     from ai_prompt_toolkit.output import success
     from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     p = mgr.get_plugin(name)
     if not p:
@@ -82,6 +86,7 @@ def plugin_disable(name: str) -> None:
     """禁用插件"""
     from ai_prompt_toolkit.output import success
     from ai_prompt_toolkit.plugin import PluginManager
+
     mgr = PluginManager.get_instance()
     p = mgr.get_plugin(name)
     if not p:

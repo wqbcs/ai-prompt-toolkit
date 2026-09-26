@@ -10,21 +10,20 @@
 - GET /api/version: 版本信息
 - WebSocket /ws/compile: 实时编译
 """
+
 from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pathlib import Path
 
-from ai_prompt_toolkit.compiler import compile_template, CompileContext
-from ai_prompt_toolkit.compiler.types import CompileReport
 from ai_prompt_toolkit import __version__
+from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
 logger = logging.getLogger(__name__)
 
@@ -41,12 +40,14 @@ app = FastAPI(title="AI Prompt Toolkit Playground", version=__version__)
 
 try:
     from ai_prompt_toolkit.market.api import router as market_router
+
     app.include_router(market_router)
 except Exception:
     logger.warning("Market API router failed to load")
 
 try:
     from ai_prompt_toolkit.dataset_api import router as dataset_router
+
     app.include_router(dataset_router)
 except Exception:
     logger.warning("Dataset API router failed to load")
@@ -63,7 +64,9 @@ app.add_middleware(
 @app.middleware("http")
 async def rate_limit_middleware(request: Any, call_next: Any) -> Any:
     import time
+
     from starlette.responses import JSONResponse
+
     if request.url.path.startswith("/api/"):
         if not hasattr(rate_limit_middleware, "_clients"):
             rate_limit_middleware._clients = {}
@@ -117,9 +120,17 @@ async def api_context_schema() -> dict[str, Any]:
     return {
         "type": "object",
         "properties": {
-            "model": {"type": "string", "description": "模型名称", "examples": ["gpt-4o", "claude-3-sonnet", "qwen-max"]},
+            "model": {
+                "type": "string",
+                "description": "模型名称",
+                "examples": ["gpt-4o", "claude-3-sonnet", "qwen-max"],
+            },
             "language": {"type": "string", "description": "目标语言", "examples": ["zh-CN", "en-US", "ja-JP"]},
-            "industry": {"type": "string", "description": "行业领域", "examples": ["finance", "healthcare", "education"]},
+            "industry": {
+                "type": "string",
+                "description": "行业领域",
+                "examples": ["finance", "healthcare", "education"],
+            },
         },
         "additionalProperties": {"type": "boolean"},
     }
@@ -133,14 +144,21 @@ async def api_version() -> dict[str, str]:
 @app.get("/api/i18n/{locale}")
 async def api_i18n(locale: str) -> dict[str, Any]:
     from ai_prompt_toolkit.i18n.messages import _MESSAGES, get_supported_locales
+
     if locale not in _MESSAGES:
         return {"status": "error", "error": f"不支持的语言: {locale}"}
-    return {"status": "success", "locale": locale, "messages": _MESSAGES[locale], "supported_locales": get_supported_locales()}
+    return {
+        "status": "success",
+        "locale": locale,
+        "messages": _MESSAGES[locale],
+        "supported_locales": get_supported_locales(),
+    }
 
 
 @app.get("/api/templates")
 async def api_templates() -> list[dict[str, Any]]:
     from ai_prompt_toolkit.frontmatter import parse_front_matter
+
     base = Path.cwd() / "_scenarios"
     if not base.exists():
         return []
@@ -149,19 +167,22 @@ async def api_templates() -> list[dict[str, Any]]:
         text = p.read_text(encoding="utf-8")
         fm, _ = parse_front_matter(text)
         if fm:
-            templates.append({
-                "id": p.stem,
-                "name": fm.get("author", p.stem),
-                "tags": fm.get("tags", []),
-                "template_type": fm.get("template_type", "prompt"),
-                "lint_score": fm.get("lint_score", 0),
-            })
+            templates.append(
+                {
+                    "id": p.stem,
+                    "name": fm.get("author", p.stem),
+                    "tags": fm.get("tags", []),
+                    "template_type": fm.get("template_type", "prompt"),
+                    "lint_score": fm.get("lint_score", 0),
+                }
+            )
     return templates
 
 
 @app.post("/api/lint")
 async def api_lint(body: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
+
     template = body.get("template", "")
     template_type = body.get("template_type", "prompt")
     linter = PromptLinter()
@@ -176,6 +197,7 @@ async def api_lint(body: dict[str, Any]) -> dict[str, Any]:
 @app.post("/api/scan")
 async def api_scan(body: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
     template = body.get("template", "")
     detector = InjectionDetector()
     findings = detector.detect(template, template_id="playground")
@@ -189,8 +211,9 @@ async def api_scan(body: dict[str, Any]) -> dict[str, Any]:
 @app.post("/api/evaluate")
 async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.evaluator import evaluate_template
+
     template = body.get("template", "")
-    template_type = body.get("template_type", "prompt")
+    _template_type = body.get("template_type", "prompt")  # 预留: 模板类型路由
     dimensions = body.get("dimensions", [])
     try:
         result = evaluate_template("playground", template, dimensions=dimensions or None)
@@ -211,6 +234,7 @@ async def api_evaluate(body: dict[str, Any]) -> dict[str, Any]:
 @app.get("/api/traces")
 async def api_traces(limit: int = 50) -> dict[str, Any]:
     from ai_prompt_toolkit.tracing import Tracer
+
     try:
         tracer = Tracer.get_instance()
         traces = tracer.get_traces(limit=limit)
@@ -222,6 +246,7 @@ async def api_traces(limit: int = 50) -> dict[str, Any]:
 @app.get("/api/traces/summary")
 async def api_traces_summary() -> dict[str, Any]:
     from ai_prompt_toolkit.tracing import Tracer
+
     try:
         tracer = Tracer.get_instance()
         return {"status": "success", "summary": tracer.get_summary()}
@@ -232,6 +257,7 @@ async def api_traces_summary() -> dict[str, Any]:
 @app.post("/api/traces/export")
 async def api_traces_export() -> dict[str, Any]:
     from ai_prompt_toolkit.tracing import Tracer
+
     try:
         tracer = Tracer.get_instance()
         count = tracer.save_traces()
@@ -246,6 +272,7 @@ async def api_eval_matrix(body: dict[str, Any]) -> dict[str, Any]:
     if not templates:
         return {"status": "error", "error": "请提供templates数组"}
     from ai_prompt_toolkit.evaluator import evaluate_template
+
     matrix: list[dict[str, Any]] = []
     for tpl in templates:
         text = tpl.get("text", "")
@@ -255,21 +282,26 @@ async def api_eval_matrix(body: dict[str, Any]) -> dict[str, Any]:
             dim_map = {}
             for s in result.scores:
                 dim_map[s.dimension_id] = round(s.score, 2)
-            matrix.append({
-                "id": tid,
-                "overall_score": round(result.overall_score, 2),
-                "category_scores": {k: round(v, 4) for k, v in result.category_scores.items()},
-                "dimension_scores": dim_map,
-                "status": "success",
-            })
+            matrix.append(
+                {
+                    "id": tid,
+                    "overall_score": round(result.overall_score, 2),
+                    "category_scores": {k: round(v, 4) for k, v in result.category_scores.items()},
+                    "dimension_scores": dim_map,
+                    "status": "success",
+                }
+            )
         except Exception:
-            matrix.append({"id": tid, "status": "error", "overall_score": 0, "category_scores": {}, "dimension_scores": {}})
+            matrix.append(
+                {"id": tid, "status": "error", "overall_score": 0, "category_scores": {}, "dimension_scores": {}}
+            )
     return {"status": "success", "matrix": matrix}
 
 
 @app.get("/api/eval-history")
 async def api_eval_history(template_id: str = "", limit: int = 10) -> dict[str, Any]:
     from ai_prompt_toolkit.eval_store import EvalStore
+
     try:
         store = EvalStore()
         if template_id:
@@ -290,6 +322,7 @@ async def api_eval_history(template_id: str = "", limit: int = 10) -> dict[str, 
 @app.get("/api/eval-compare")
 async def api_eval_compare(a: int = 0, b: int = 0) -> dict[str, Any]:
     from ai_prompt_toolkit.eval_store import EvalStore
+
     if not a or not b:
         return {"status": "error", "error": "请提供snapshot_id参数a和b"}
     try:
@@ -312,11 +345,13 @@ async def ws_compile(websocket: WebSocket) -> None:
                 ctx_data = body.get("context", {})
                 ctx = _build_context(ctx_data)
                 result = compile_template(template, ctx)
-                await websocket.send_json({
-                    "status": "success",
-                    "compiled_text": result.compiled_text,
-                    "report": result.report.to_dict(),
-                })
+                await websocket.send_json(
+                    {
+                        "status": "success",
+                        "compiled_text": result.compiled_text,
+                        "report": result.report.to_dict(),
+                    }
+                )
             except json.JSONDecodeError:
                 await websocket.send_json({"status": "error", "error": "Invalid JSON"})
             except Exception:
@@ -334,17 +369,21 @@ async def index() -> FileResponse:
     index_file = _STATIC_DIR / "index.html"
     if index_file.exists():
         return FileResponse(str(index_file))
-    return FileResponse(str(_STATIC_DIR.parent / "index.html")) if (_STATIC_DIR.parent / "index.html").exists() else {"message": "Playground UI not built yet. Run: npm run build"}
+    return (
+        FileResponse(str(_STATIC_DIR.parent / "index.html"))
+        if (_STATIC_DIR.parent / "index.html").exists()
+        else {"message": "Playground UI not built yet. Run: npm run build"}
+    )
 
 
 @app.post("/api/scorecard")
 async def api_scorecard(request: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.structural_analyzer import check_structural
     from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     template = request.get("template", "")
     if not template.strip():
@@ -353,7 +392,7 @@ async def api_scorecard(request: dict[str, Any]) -> dict[str, Any]:
     try:
         linter = PromptLinter()
         lint_result = linter.lint("playground", template)
-        lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+        lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
         detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
         sec_findings = detector.detect(template)
@@ -368,7 +407,9 @@ async def api_scorecard(request: dict[str, Any]) -> dict[str, Any]:
             sec_findings.append(struct_finding)
 
         all_findings = list(lint_findings) + sec_findings
-        scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+        scorecard = compute_scorecard(
+            all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None
+        )
         return {"status": "success", "scorecard": scorecard.to_dict()}
     except Exception as e:
         return {"status": "error", "error": str(e)}
@@ -394,12 +435,12 @@ async def api_engine(request: dict[str, Any]) -> dict[str, Any]:
 @app.post("/api/badge")
 async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
-    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
-    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
-    from ai_prompt_toolkit.security.pii_detector import PIIDetector
-    from ai_prompt_toolkit.security.structural_analyzer import check_structural
-    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
     from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+    from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+    from ai_prompt_toolkit.security.pii_detector import PIIDetector
+    from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+    from ai_prompt_toolkit.security.structural_analyzer import check_structural
+    from ai_prompt_toolkit.security.zh_injection_rules import ZH_INJECTION_RULES
 
     template = request.get("template", "")
     compact = request.get("compact", False)
@@ -410,7 +451,7 @@ async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
     try:
         linter = PromptLinter()
         lint_result = linter.lint("playground", template)
-        lint_findings = lint_result.findings if hasattr(lint_result, 'findings') else []
+        lint_findings = lint_result.findings if hasattr(lint_result, "findings") else []
 
         detector = InjectionDetector(extra_rules=ZH_INJECTION_RULES)
         sec_findings = detector.detect(template)
@@ -425,7 +466,9 @@ async def api_badge(request: dict[str, Any]) -> dict[str, Any]:
             sec_findings.append(struct_finding)
 
         all_findings = list(lint_findings) + sec_findings
-        scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, 'score') else None)
+        scorecard = compute_scorecard(
+            all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None
+        )
         svg = generate_scorecard_badge(scorecard, compact=compact, theme=theme)
 
         return {

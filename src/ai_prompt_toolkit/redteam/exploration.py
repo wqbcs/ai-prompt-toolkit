@@ -7,13 +7,16 @@
 - 异常隔离（单个Probe失败不影响整体）
 - 生成RedTeamReport
 """
+
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.redteam.probe import BaseProbe, ProbeInput
 from ai_prompt_toolkit.redteam.detector import BaseDetector, DetectionResult, create_detector
 from ai_prompt_toolkit.redteam.report import ProbeResult, RedTeamReport
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.redteam.probe import BaseProbe
 
 
 class ExplorationOrchestrator:
@@ -44,12 +47,14 @@ class ExplorationOrchestrator:
         if probe.primary_detector:
             try:
                 primary = create_detector(probe.primary_detector)
-                return [primary] + self._detectors
+                return [primary, *self._detectors]
             except ValueError:
                 pass
         return self._detectors
 
-    def evaluate_response(self, response: str, probe_input: str = "", detectors: list[BaseDetector] | None = None) -> list[DetectionResult]:
+    def evaluate_response(
+        self, response: str, probe_input: str = "", detectors: list[BaseDetector] | None = None
+    ) -> list[DetectionResult]:
         active_detectors = detectors or self._detectors
         results = []
         for detector in active_detectors:
@@ -78,14 +83,16 @@ class ExplorationOrchestrator:
                 if is_vuln:
                     vulnerable_probes += 1
 
-                probe_results.append(ProbeResult(
-                    probe_name=probe.name,
-                    input_text=probe_input.text,
-                    input_category=probe_input.category,
-                    is_vulnerable=is_vuln,
-                    confidence=max((d.confidence for d in detections), default=0.0),
-                    detection_details=[d.to_dict() for d in detections],
-                ))
+                probe_results.append(
+                    ProbeResult(
+                        probe_name=probe.name,
+                        input_text=probe_input.text,
+                        input_category=probe_input.category,
+                        is_vulnerable=is_vuln,
+                        confidence=max((d.confidence for d in detections), default=0.0),
+                        detection_details=[d.to_dict() for d in detections],
+                    )
+                )
 
             all_results.extend(probe_results)
 
@@ -124,15 +131,17 @@ class ExplorationOrchestrator:
                     if is_vuln:
                         vulnerable_probes += 1
 
-                    all_results.append(ProbeResult(
-                        probe_name=probe.name,
-                        input_text=probe_input.text,
-                        input_category=probe_input.category,
-                        is_vulnerable=is_vuln,
-                        confidence=max((d.confidence for d in detections), default=0.0),
-                        detection_details=[d.to_dict() for d in detections],
-                        llm_response=response[:200],
-                    ))
+                    all_results.append(
+                        ProbeResult(
+                            probe_name=probe.name,
+                            input_text=probe_input.text,
+                            input_category=probe_input.category,
+                            is_vulnerable=is_vuln,
+                            confidence=max((d.confidence for d in detections), default=0.0),
+                            detection_details=[d.to_dict() for d in detections],
+                            llm_response=response[:200],
+                        )
+                    )
 
         asyncio.run(_run())
 

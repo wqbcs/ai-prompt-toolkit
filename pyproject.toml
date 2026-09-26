@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.5.0"
+version = "67.6.0"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -78,10 +78,26 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = [
-    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "TCH",
+    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "TC",
     "RUF", "PERF", "PIE", "PYI", "Q",
 ]
-ignore = ["E501", "SIM108", "RUF012"]
+# E501: 行长由ruff format管; SIM108/RUF012: 与既有代码风格冲突
+# RUF001/002/003: 全角标点为中文项目正常写作, 非缺陷
+# PERF401/PERF203/PERF102: 性能微优化让位于可读性; 循环内try/except是逐项错误隔离的既定模式
+# RUF015: 自动修复改变异常语义(IndexError→StopIteration), 需逐点决策
+# SIM105/SIM102: 风格等价改写; B905: zip(strict=)需逐点语义决策
+# N806/E741/A001/A002: 命名与领域惯例(CLI参数名/大写别名)冲突
+ignore = [
+    "E501", "SIM108", "RUF012", "RUF001", "RUF002", "RUF003",
+    "PERF401", "PERF203", "PERF102", "RUF015", "SIM105", "SIM102",
+    "B905", "N806", "E741", "A001", "A002",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# __init__.py 的 F401 是合法re-export模式(受__all__约束)
+"**/__init__.py" = ["F401"]
+# 测试中的未用变量多为fixture占位/断言构造
+"tests/**" = ["F841"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["ai_prompt_toolkit"]

@@ -5,8 +5,6 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-import pytest
-
 from ai_prompt_toolkit.linter.rule_loader import RULESETS, RuleLoader
 from ai_prompt_toolkit.linter.rules import LintRule, get_all_rules
 from ai_prompt_toolkit.types import Severity

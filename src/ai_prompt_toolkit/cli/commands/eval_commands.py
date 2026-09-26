@@ -2,10 +2,13 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
+from typing import Any
 
 import click
 
@@ -18,6 +21,7 @@ from ai_prompt_toolkit.cli_core import main
 def eval_multi(targets: str, quick: bool) -> None:
     """评估对比: 并排比较多个Prompt模板的评估结果"""
     from ai_prompt_toolkit.evaluator import evaluate_template
+
     target_files = [t.strip() for t in targets.split(",") if t.strip()]
     if len(target_files) < 2:
         click.echo("需要至少2个目标文件进行对比")
@@ -65,14 +69,43 @@ def eval_multi(targets: str, quick: bool) -> None:
 @click.option("--dimensions", "-d", help="指定维度(逗号分隔，如D1,D5,D10)")
 @click.option("--categories", help="指定类别(逗号分隔，如structure,security)")
 @click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10，低于此值退出码1)")
-@click.option("--format", "fmt", type=click.Choice(["json", "cli", "table", "yaml", "markdown", "csv"]), default="cli", help="输出格式")
+@click.option(
+    "--format",
+    "fmt",
+    type=click.Choice(["json", "cli", "table", "yaml", "markdown", "csv"]),
+    default="cli",
+    help="输出格式",
+)
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
-@click.option("--preset", type=click.Choice(["default", "security-heavy", "quality-balanced", "performance-first", "harmonyos-strict", "redteam-ready", "cost-efficient"]), default="default", help="权重预设(行业场景)")
-def evaluate(target: str, dimensions: str | None, categories: str | None,
-             threshold: float, fmt: str, output: str | None, quick: bool,
-             save_history: bool, preset: str) -> None:
+@click.option(
+    "--preset",
+    type=click.Choice(
+        [
+            "default",
+            "security-heavy",
+            "quality-balanced",
+            "performance-first",
+            "harmonyos-strict",
+            "redteam-ready",
+            "cost-efficient",
+        ]
+    ),
+    default="default",
+    help="权重预设(行业场景)",
+)
+def evaluate(
+    target: str,
+    dimensions: str | None,
+    categories: str | None,
+    threshold: float,
+    fmt: str,
+    output: str | None,
+    quick: bool,
+    save_history: bool,
+    preset: str,
+) -> None:
     """130维度质量评估：全面评估Prompt质量(支持行业权重预设)"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip, resolve_path, write_report
     from ai_prompt_toolkit.evaluator import evaluate_template, get_weight_preset, list_weight_presets
@@ -106,6 +139,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
 
         from ai_prompt_toolkit.output import console
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -117,22 +151,19 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
             reports = []
             for f in files:
                 text = f.read_text(encoding="utf-8")
-                report = evaluate_template(
-                    str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
-                )
+                report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
                 reports.append(report)
                 progress.advance(task)
     else:
         reports = []
         for f in files:
             text = f.read_text(encoding="utf-8")
-            report = evaluate_template(
-                str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo
-            )
+            report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
             reports.append(report)
 
     if fmt == "json":
         import json as _json
+
         data = {"reports": [r.to_dict() for r in reports]}
         if output:
             write_report(data, output, fmt="json")
@@ -144,6 +175,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         try:
             from rich.console import Console as _TConsole
             from rich.table import Table as _Table
+
             _tc = _TConsole()
             for report in reports:
                 t = _Table(title=f"评估: {report.template_id}")
@@ -161,10 +193,12 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
     elif fmt == "yaml":
         try:
             import yaml as _yaml
+
             data = [r.to_dict() for r in reports]
             click.echo(_yaml.dump(data, allow_unicode=True, default_flow_style=False))
         except ImportError:
             import json as _json
+
             data = [r.to_dict() for r in reports]
             click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
 
@@ -183,7 +217,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         for report in reports:
             for s in report.scores:
                 name_escaped = s.name.replace('"', '""')
-                click.echo(f'{report.template_id},{s.dimension_id},"{name_escaped}",{s.category},{s.score:.1f},{s.weight:.1f}')
+                click.echo(
+                    f'{report.template_id},{s.dimension_id},"{name_escaped}",{s.category},{s.score:.1f},{s.weight:.1f}'
+                )
 
     else:
         total_score = 0.0
@@ -220,6 +256,7 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
 
     if save_history:
         from ai_prompt_toolkit.eval_store import EvalStore
+
         store = EvalStore()
         for report in reports:
             snapshot = store.save(report)
@@ -227,7 +264,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
             alerts = store.get_alerts(template_id=report.template_id, limit=5)
             if alerts:
                 for a in alerts:
-                    click.echo(f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+                    click.echo(
+                        f"  ⚠ 回归告警: {a.dimension_name} {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)"
+                    )
         store.close()
 
     sys.exit(exit_code)
@@ -251,12 +290,14 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
     configs = []
     for item in assertions_cfg:
         atype = AssertType(item.get("type", "contains"))
-        configs.append(AssertionConfig(
-            assert_type=atype,
-            value=item.get("value", ""),
-            threshold=item.get("threshold", 0.8),
-            weight=item.get("weight", 1.0),
-        ))
+        configs.append(
+            AssertionConfig(
+                assert_type=atype,
+                value=item.get("value", ""),
+                threshold=item.get("threshold", 0.8),
+                weight=item.get("weight", 1.0),
+            )
+        )
 
     if not configs:
         click.echo("错误: 未配置任何断言", err=True)
@@ -270,6 +311,7 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
+
         data = {"passed": passed, "total": total, "results": [r.to_dict() for r in results]}
         click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
     else:
@@ -287,16 +329,38 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
 @click.option("--response-b", help="第二回答(成对比较模式)")
 @click.option("--reference", help="参考答案(可选)")
 @click.option("--judge-model", "-j", default="gpt-4o-mini", help="裁判模型(provider:model_name)")
-@click.option("--dimensions", "-d", help="评估维度(逗号分隔: relevance,accuracy,fluency,completeness,safety,helpfulness)")
+@click.option(
+    "--dimensions", "-d", help="评估维度(逗号分隔: relevance,accuracy,fluency,completeness,safety,helpfulness)"
+)
 @click.option("--mode", type=click.Choice(["absolute", "pairwise"]), default="absolute", help="评估模式")
-@click.option("--aggregation", type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
-              default="majority_vote", help="多裁判集成方式")
+@click.option(
+    "--aggregation",
+    type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
+    default="majority_vote",
+    help="多裁判集成方式",
+)
 @click.option("--multi-judge", is_flag=True, help="启用多裁判模式(3个裁判)")
-@click.option("--flaky-retries", "flaky_retries", default=0, type=int, help="F4 flaky稳定: 判定方差大时自动重试N次取多数决(0=关闭)")
+@click.option(
+    "--flaky-retries",
+    "flaky_retries",
+    default=0,
+    type=int,
+    help="F4 flaky稳定: 判定方差大时自动重试N次取多数决(0=关闭)",
+)
 @click.option("--output", "-o", help="输出报告路径")
-def judge_cmd(question: str, response: str, response_b: str | None, reference: str | None,
-              judge_model: str, dimensions: str | None, mode: str, aggregation: str,
-              multi_judge: bool, flaky_retries: int, output: str | None) -> None:
+def judge_cmd(
+    question: str,
+    response: str,
+    response_b: str | None,
+    reference: str | None,
+    judge_model: str,
+    dimensions: str | None,
+    mode: str,
+    aggregation: str,
+    multi_judge: bool,
+    flaky_retries: int,
+    output: str | None,
+) -> None:
     """LLM-as-Judge评估：用LLM作为裁判评估Prompt回答质量"""
     import asyncio
 
@@ -335,10 +399,12 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(result.to_dict(), output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
             import json as _json
+
             click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         judge = create_judge(judge_model, dimensions=dim_list, mode=mode, flaky_retries=flaky_retries)
@@ -364,6 +430,7 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
             if output:
                 from ai_prompt_toolkit.cli_helpers import write_report
+
                 report_data = {
                     "mode": mode,
                     "question": question[:200],
@@ -375,8 +442,9 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 
 
 @main.command(name="version")
-@click.option("--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]),
-              required=True, help="版本操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["create", "list", "diff", "rollback", "show"]), required=True, help="版本操作"
+)
 @click.option("--template", "-t", help="模板ID")
 @click.option("--source", "-s", help="源文件路径(create时读取)")
 @click.option("--version", "ver", type=int, help="版本号(show/diff/rollback)")
@@ -385,9 +453,17 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
 @click.option("--author", help="作者")
 @click.option("--message", "-m", help="变更说明")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def version_cmd(action: str, template: str | None, source: str | None, ver: int | None,
-                version_a: int | None, version_b: int | None, author: str | None,
-                message: str | None, fmt: str) -> None:
+def version_cmd(
+    action: str,
+    template: str | None,
+    source: str | None,
+    ver: int | None,
+    version_a: int | None,
+    version_b: int | None,
+    author: str | None,
+    message: str | None,
+    fmt: str,
+) -> None:
     """Prompt版本管理：版本创建/列表/diff/回滚"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip
     from ai_prompt_toolkit.version_store import VersionStore
@@ -402,6 +478,7 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
             content = ""
             if source:
                 from ai_prompt_toolkit.cli_helpers import resolve_path
+
                 content = resolve_path(source).read_text(encoding="utf-8")
             elif not click.get_text_stream("stdin").isatty():
                 content = click.get_text_stream("stdin").read()
@@ -422,10 +499,13 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
                 sys.exit(0)
             if fmt == "json":
                 import json as _json
+
                 click.echo(_json.dumps([v.to_dict() for v in versions], ensure_ascii=False, indent=2))
             else:
                 for v in versions:
-                    click.echo(f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}")
+                    click.echo(
+                        f"  v{v.version_number} | {v.created_at} | {v.author or '-'} | {v.message or '-'} | {v.content_hash}"
+                    )
 
         elif action == "show":
             if not template or not ver:
@@ -444,11 +524,15 @@ def version_cmd(action: str, template: str | None, source: str | None, ver: int 
             result = store.diff(template, version_a, version_b)
             if fmt == "json":
                 import json as _json
+
                 click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
             else:
                 from ai_prompt_toolkit.output import console
+
                 console.print(f"[bold]Diff: {template} v{version_a} → v{version_b}[/bold]")
-                console.print(f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}")
+                console.print(
+                    f"  [green]+{result.added_lines}[/green] [red]-{result.removed_lines}[/red] | {result.change_summary}"
+                )
                 for line in result.unified_diff:
                     if line.startswith("+") and not line.startswith("+++"):
                         console.print(f"  [green]{line}[/green]")
@@ -491,11 +575,18 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
-        click.echo(_json.dumps({
-            "snapshots": [s.to_dict() for s in snapshots],
-            "trend": [t.to_dict() for t in trend],
-            "alerts": [a.to_dict() for a in alerts],
-        }, ensure_ascii=False, indent=2))
+
+        click.echo(
+            _json.dumps(
+                {
+                    "snapshots": [s.to_dict() for s in snapshots],
+                    "trend": [t.to_dict() for t in trend],
+                    "alerts": [a.to_dict() for a in alerts],
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         from rich.console import Console
         from rich.table import Table
@@ -511,8 +602,10 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
             table.add_column("维度数", width=6)
             for s in snapshots:
                 table.add_row(
-                    str(s.snapshot_id), s.created_at,
-                    f"{s.overall_score:.2f}", f"{s.percentage:.1f}%",
+                    str(s.snapshot_id),
+                    s.created_at,
+                    f"{s.overall_score:.2f}",
+                    f"{s.percentage:.1f}%",
                     str(s.dimension_count),
                 )
             console.print(table)
@@ -528,7 +621,9 @@ def eval_history_cmd(template: str | None, limit: int, fmt: str) -> None:
             console.print(f"\n[bold red]回归告警 ({len(alerts)}条)[/bold red]")
             for a in alerts:
                 icon = "🔴" if a.severity == "critical" else "🟡"
-                console.print(f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)")
+                console.print(
+                    f"  {icon} {a.dimension_name}: {a.previous_score:.1f}→{a.current_score:.1f} ({a.change_percent:.0f}%)"
+                )
 
     store.close()
 
@@ -551,6 +646,7 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
 
     if fmt == "json":
         import json as _json
+
         click.echo(_json.dumps(result, ensure_ascii=False, indent=2))
     else:
         from rich.console import Console
@@ -572,8 +668,7 @@ def eval_compare_cmd(snapshot_a: int, snapshot_b: int, fmt: str) -> None:
                 trend_icon = f"[red]↓ {diff:.1f}[/red]"
             else:
                 trend_icon = "[dim]= 0[/dim]"
-            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]),
-                         f"{diff:+.1f}", trend_icon)
+            table.add_row(d["dimension_id"], str(d["score_a"]), str(d["score_b"]), f"{diff:+.1f}", trend_icon)
 
         console.print(table)
         overall = result["overall_diff"]
@@ -608,6 +703,7 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
 
     if output:
         from ai_prompt_toolkit.cli_helpers import resolve_path as rp
+
         out_path = rp(output)
         out_path.write_text(result.optimized_text, encoding="utf-8")
         click.echo(f"\n已保存: {output}")
@@ -668,7 +764,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     dataset_count = 0
     try:
         ds = DatasetStore()
-        datasets, total = ds.list_datasets()
+        _datasets, total = ds.list_datasets()
         dataset_count = total
         ds.close()
     except Exception:
@@ -707,11 +803,11 @@ def stats_cmd(target: str | None, fmt: str) -> None:
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--init", "init_config", is_flag=True, help="生成示例配置文件prompt-eval.yaml")
-def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | None,
-                    init_config: bool) -> None:
+def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | None, init_config: bool) -> None:
     """YAML声明式评估：通过配置文件批量执行lint/安全/断言评估(参考promptfoo)"""
     if init_config:
         from ai_prompt_toolkit.eval_config import DEFAULT_EVAL_CONFIG_YAML
+
         out_path = Path("prompt-eval.yaml")
         out_path.write_text(DEFAULT_EVAL_CONFIG_YAML, encoding="utf-8")
         click.echo(f"示例配置已生成: {out_path}")
@@ -735,9 +831,11 @@ def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | N
 
     if fmt == "json":
         import json as _json
+
         output_data = results
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
+
             write_report(output_data, output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
@@ -787,9 +885,15 @@ def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | N
 @click.option("--threshold", type=float, default=0.0, help="分数阈值(0-10)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
-def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
-                      tag: str | None, threshold: float, fmt: str,
-                      output: str | None) -> None:
+def eval_registry_cmd(
+    target: str,
+    evaluators: str | None,
+    etype: str | None,
+    tag: str | None,
+    threshold: float,
+    fmt: str,
+    output: str | None,
+) -> None:
     """评估器注册表: 使用注册表中的评估器组合评估Prompt"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.discrete_eval import DiscreteMetricEvaluator
@@ -820,7 +924,8 @@ def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
     for f in files:
         text = f.read_text(encoding="utf-8")
         result = registry.evaluate(
-            str(f), text,
+            str(f),
+            text,
             evaluator_names=eval_names,
             evaluator_type=etype,
             tag=tag,
@@ -830,6 +935,7 @@ def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
 
     if fmt == "json":
         import json as _json
+
         data = {"results": [r.to_dict() for r in all_results]}
         if output:
             write_report(data, output, fmt="json")
@@ -858,9 +964,9 @@ def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
 @click.option("--multi-turn", is_flag=True, help="包含多轮对话测试用例")
 @click.option("--output", "-o", help="输出数据集路径(JSON)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def data_generate_cmd(template: str | None, count: int, adversarial: bool,
-                      harmonyos: bool, multi_turn: bool, output: str | None,
-                      fmt: str) -> None:
+def data_generate_cmd(
+    template: str | None, count: int, adversarial: bool, harmonyos: bool, multi_turn: bool, output: str | None, fmt: str
+) -> None:
     """自动生成测试数据集: 基于模板变异/对抗/鸿蒙/多轮对话"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.test_generator import TestCaseGenerator
@@ -882,6 +988,7 @@ def data_generate_cmd(template: str | None, count: int, adversarial: bool,
 
     if fmt == "json":
         import json as _json
+
         data = ds.to_dict()
         if output:
             write_report(data, output, fmt="json")
@@ -902,8 +1009,9 @@ def data_generate_cmd(template: str | None, count: int, adversarial: bool,
 @click.option("--apply", "apply_changes", is_flag=True, help="直接应用优化结果(覆盖原文件)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出优化结果路径(JSON)")
-def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float,
-                        apply_changes: bool, fmt: str, output: str | None) -> None:
+def prompt_optimize_cmd(
+    target: str, max_iterations: int, min_improvement: float, apply_changes: bool, fmt: str, output: str | None
+) -> None:
     """Prompt自动优化: 评估→反馈→修改→再评估的迭代优化"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
     from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
@@ -915,6 +1023,7 @@ def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float
 
     if fmt == "json":
         import json as _json
+
         data = result.to_dict()
         if output:
             write_report(data, output, fmt="json")
@@ -928,7 +1037,9 @@ def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float
         if result.converged:
             click.echo("状态: 已收敛")
         for step in result.steps:
-            click.echo(f"  步骤{step.strategy}: {step.score_before:.1f}→{step.score_after:.1f} (+{step.improvement:.1f})")
+            click.echo(
+                f"  步骤{step.strategy}: {step.score_before:.1f}→{step.score_after:.1f} (+{step.improvement:.1f})"
+            )
 
     if apply_changes and result.optimized_text != text:
         target_path.write_text(result.optimized_text, encoding="utf-8")
@@ -939,19 +1050,36 @@ def prompt_optimize_cmd(target: str, max_iterations: int, min_improvement: float
 
 @main.command(name="gepa-optimize")
 @click.option("--target", "-t", required=True, help="Prompt文件路径")
-@click.option("--metric", "-m", type=click.Choice(["exact_match", "contains_match", "regex_match", "lint_score", "llm_judge", "pangu_judge"]),
-              default="lint_score", help="Feedback metric(默认lint_score)")
-@click.option("--auto", type=click.Choice(["light", "medium", "heavy"]), default="light",
-              help="优化预算(light=6候选/medium=12/heavy=18)")
+@click.option(
+    "--metric",
+    "-m",
+    type=click.Choice(["exact_match", "contains_match", "regex_match", "lint_score", "llm_judge", "pangu_judge"]),
+    default="lint_score",
+    help="Feedback metric(默认lint_score)",
+)
+@click.option(
+    "--auto",
+    type=click.Choice(["light", "medium", "heavy"]),
+    default="light",
+    help="优化预算(light=6候选/medium=12/heavy=18)",
+)
 @click.option("--predictors", "-p", help="预测器名称(逗号分隔, 默认main)")
 @click.option("--trainset", help="训练集JSON文件路径")
 @click.option("--reflection-model", help="反射模型(如gpt-4o, pangu-nlp)")
 @click.option("--dry-run", is_flag=True, help="模拟运行(不实际调用LLM)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 @click.option("--output", "-o", help="输出报告路径(JSON)")
-def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | None,
-                      trainset: str | None, reflection_model: str | None,
-                      dry_run: bool, fmt: str, output: str | None) -> None:
+def gepa_optimize_cmd(
+    target: str,
+    metric: str,
+    auto: str,
+    predictors: str | None,
+    trainset: str | None,
+    reflection_model: str | None,
+    dry_run: bool,
+    fmt: str,
+    output: str | None,
+) -> None:
     """GEPA反射式Prompt进化优化: 基于DSPy GEPA算法的迭代进化优化"""
     import json as _json
 
@@ -972,9 +1100,12 @@ def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | Non
     if reflection_model and not dry_run:
         try:
             from ai_prompt_toolkit.ab_test.providers import get_provider
+
             provider = get_provider(reflection_model)
             if provider:
-                reflection_lm = lambda prompt: provider.call(prompt, model=reflection_model).get("text", "")
+
+                def reflection_lm(prompt):
+                    return provider.call(prompt, model=reflection_model).get("text", "")
         except Exception:
             click.echo(f"警告: 无法加载反射模型 '{reflection_model}', 将使用启发式提议", err=True)
 
@@ -989,6 +1120,7 @@ def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | Non
         click.echo(f"Prompt长度: {len(text)} 字符")
 
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         linter = PromptLinter()
         lint_result = linter.lint("gepa-dry-run", text)
         click.echo(f"当前Lint分数: {lint_result.score:.1f}/100")
@@ -1029,8 +1161,13 @@ def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | Non
 
 
 @main.command(name="prompt-version")
-@click.option("--action", "-a", type=click.Choice(["save", "load", "list", "diff", "rollback", "ab-compare", "delete"]),
-              required=True, help="版本操作")
+@click.option(
+    "--action",
+    "-a",
+    type=click.Choice(["save", "load", "list", "diff", "rollback", "ab-compare", "delete"]),
+    required=True,
+    help="版本操作",
+)
 @click.option("--name", "-n", help="Prompt名称")
 @click.option("--source", "-s", help="源文件路径(save时读取)")
 @click.option("--version-id", "-v", help="版本ID(load/diff/rollback/delete)")
@@ -1041,10 +1178,19 @@ def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | Non
 @click.option("--tags", help="标签(逗号分隔)")
 @click.option("--limit", "-l", type=int, default=20, help="列表条数")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def prompt_version_cmd(action: str, name: str | None, source: str | None,
-                      version_id: str | None, version_a: str | None, version_b: str | None,
-                      score: float, source_type: str, tags: str | None,
-                      limit: int, fmt: str) -> None:
+def prompt_version_cmd(
+    action: str,
+    name: str | None,
+    source: str | None,
+    version_id: str | None,
+    version_a: str | None,
+    version_b: str | None,
+    score: float,
+    source_type: str,
+    tags: str | None,
+    limit: int,
+    fmt: str,
+) -> None:
     """Prompt版本管理: 版本树/diff/回滚/A-B对比"""
     import json as _json
 
@@ -1070,6 +1216,7 @@ def prompt_version_cmd(action: str, name: str | None, source: str | None,
             if score == 0.0:
                 try:
                     from ai_prompt_toolkit.linter.linter import PromptLinter
+
                     linter = PromptLinter()
                     result = linter.lint(name, content)
                     score = result.score
@@ -1110,7 +1257,9 @@ def prompt_version_cmd(action: str, name: str | None, source: str | None,
                 click.echo(_json.dumps(diff_result.to_dict(), ensure_ascii=False, indent=2))
             else:
                 click.echo(f"Diff: #{version_a} → #{version_b}")
-                click.echo(f"  +{diff_result.added_lines} -{diff_result.removed_lines} | 相似度: {diff_result.similarity:.2%}")
+                click.echo(
+                    f"  +{diff_result.added_lines} -{diff_result.removed_lines} | 相似度: {diff_result.similarity:.2%}"
+                )
                 if diff_result.diff_text:
                     for line in diff_result.diff_text.splitlines()[:30]:
                         if line.startswith("+") and not line.startswith("+++"):
@@ -1171,7 +1320,7 @@ def eval_matrix_cmd(target: str, evaluators: str | None, output: str) -> None:
     ev_list = [e.strip() for e in evaluators.split(",")] if evaluators else None
 
     report = build_matrix_from_evaluator_results(str(target_path), text, evaluator_names=ev_list)
-    html_content = generate_eval_matrix_html(report, output_path=output)
+    generate_eval_matrix_html(report, output_path=output)
     click.echo(f"评估矩阵报告已生成: {output} ({len(report.cells)}个评估单元格)")
 
 
@@ -1263,7 +1412,9 @@ def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt:
 
 @main.command(name="data-load")
 @click.option("--source", "-s", required=True, help="数据源路径(目录或数据库连接)")
-@click.option("--type", "reader_type", type=click.Choice(["filesystem", "database"]), default="filesystem", help="连接器类型")
+@click.option(
+    "--type", "reader_type", type=click.Choice(["filesystem", "database"]), default="filesystem", help="连接器类型"
+)
 @click.option("--query", "-q", help="数据库查询SQL(database类型)")
 @click.option("--recursive/--no-recursive", default=True, help="递归扫描(默认开启)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
@@ -1283,7 +1434,9 @@ def data_load_cmd(source: str, reader_type: str, query: str | None, recursive: b
     docs = reader.load_data()
 
     if fmt == "json":
-        click.echo(_json.dumps({"count": len(docs), "documents": [d.to_dict() for d in docs]}, ensure_ascii=False, indent=2))
+        click.echo(
+            _json.dumps({"count": len(docs), "documents": [d.to_dict() for d in docs]}, ensure_ascii=False, indent=2)
+        )
     else:
         click.echo(f"加载完成: {len(docs)}个文档")
         for doc in docs[:20]:
@@ -1341,7 +1494,13 @@ def junit_report_cmd(input_path: str, output_path: str, suite_name: str) -> None
 @main.command(name="notify")
 @click.option("--event", "-e", required=True, help="事件类型(lint_failed/eval_passed/gepa_improved等)")
 @click.option("--webhook-url", required=True, help="Webhook URL")
-@click.option("--type", "webhook_type", type=click.Choice(["dingtalk", "feishu", "slack", "webhook"]), default="webhook", help="通知类型")
+@click.option(
+    "--type",
+    "webhook_type",
+    type=click.Choice(["dingtalk", "feishu", "slack", "webhook"]),
+    default="webhook",
+    help="通知类型",
+)
 @click.option("--secret", default="", help="签名密钥")
 @click.option("--variables", "-v", multiple=True, help="模板变量(key=value格式, 可多次指定)")
 def notify_cmd(event: str, webhook_url: str, webhook_type: str, secret: str, variables: tuple[str, ...]) -> None:
@@ -1395,7 +1554,9 @@ def tgd_optimize_cmd(prompt: str, iterations: int, momentum: float, fmt: str) ->
         click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
         click.echo(f"初始分数: {result.initial_score:.1f} → 最优分数: {result.final_score:.1f}")
-        click.echo(f"提升: {result.improvement:+.1f} | 迭代: {result.iterations} | 收敛: {'是' if result.converged else '否'}")
+        click.echo(
+            f"提升: {result.improvement:+.1f} | 迭代: {result.iterations} | 收敛: {'是' if result.converged else '否'}"
+        )
 
 
 @main.command(name="opro-optimize")
@@ -1534,23 +1695,34 @@ def prompt_diff_cmd(old_path: str, new_path: str, fmt: str) -> None:
         click.echo(report.to_unified_diff())
     else:
         from ai_prompt_toolkit.output import console
+
         console.print(f"[bold]Prompt Diff: {old_path} → {new_path}[/bold]")
         console.print(f"  相似度: [cyan]{report.overall_similarity:.1%}[/cyan]")
-        console.print(f"  [green]+{report.total_added}[/green] [red]-{report.total_removed}[/red] [yellow]~{report.total_changed}[/yellow]")
+        console.print(
+            f"  [green]+{report.total_added}[/green] [red]-{report.total_removed}[/red] [yellow]~{report.total_changed}[/yellow]"
+        )
         if report.sections_added:
             console.print(f"  新增段: [green]{', '.join(report.sections_added)}[/green]")
         if report.sections_removed:
             console.print(f"  删除段: [red]{', '.join(report.sections_removed)}[/red]")
         for sd in report.section_diffs:
             color = "green" if sd.similarity >= 0.9 else "yellow" if sd.similarity >= 0.5 else "red"
-            console.print(f"  [{color}]{sd.section_name}[/{color}]: 相似度 {sd.similarity:.1%} +{sd.added_lines} -{sd.removed_lines} ~{sd.changed_lines}")
+            console.print(
+                f"  [{color}]{sd.section_name}[/{color}]: 相似度 {sd.similarity:.1%} +{sd.added_lines} -{sd.removed_lines} ~{sd.changed_lines}"
+            )
         click.echo(f"\nHash: {prompt_hash(old_text)[:8]} → {prompt_hash(new_text)[:8]}")
 
 
 @main.command(name="prompt-merge")
 @click.option("--ours", "-a", required=True, help="我方Prompt文件路径")
 @click.option("--theirs", "-b", required=True, help="他方Prompt文件路径")
-@click.option("--strategy", "-s", type=click.Choice(["prefer_newer", "prefer_longer", "union"]), default="prefer_newer", help="合并策略")
+@click.option(
+    "--strategy",
+    "-s",
+    type=click.Choice(["prefer_newer", "prefer_longer", "union"]),
+    default="prefer_newer",
+    help="合并策略",
+)
 @click.option("--output", "-o", help="输出合并结果路径")
 def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) -> None:
     """Prompt结构感知合并: 基于7段解析的智能合并"""
@@ -1578,6 +1750,7 @@ def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) 
 def trace_cmd(output: str, fmt: str) -> None:
     """查看和导出Tracing数据(OTLP格式)"""
     from ai_prompt_toolkit.tracing import Tracer, print_trace_tree
+
     tracer = Tracer.get_instance()
     if not tracer.get_traces():
         click.echo("暂无Tracing数据。先执行lint/scan/eval等操作以收集trace。")
@@ -1589,18 +1762,22 @@ def trace_cmd(output: str, fmt: str) -> None:
         click.echo(print_trace_tree(tracer))
     else:
         import json as _json
+
         click.echo(_json.dumps([t.to_dict() for t in tracer.get_traces()], ensure_ascii=False, indent=2))
 
 
 @main.command(name="prompt-template")
-@click.option("--action", "-a", type=click.Choice(["list", "render", "extract", "info"]), required=True, help="模板操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["list", "render", "extract", "info"]), required=True, help="模板操作"
+)
 @click.option("--name", "-n", help="模板名称")
 @click.option("--template", "-t", help="模板文件路径(render/extract时)")
 @click.option("--var", "-v", multiple=True, help="变量(key=value格式, 可多次指定)")
 @click.option("--strict", is_flag=True, help="严格模式(缺少变量报错)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
-def prompt_template_cmd(action: str, name: str | None, template: str | None,
-                        var: tuple[str, ...], strict: bool, fmt: str) -> None:
+def prompt_template_cmd(
+    action: str, name: str | None, template: str | None, var: tuple[str, ...], strict: bool, fmt: str
+) -> None:
     """Prompt模板变量系统: 渲染/提取变量/查看信息"""
     import json as _json
 
@@ -1613,7 +1790,16 @@ def prompt_template_cmd(action: str, name: str | None, template: str | None,
     if action == "list":
         templates = get_builtin_templates()
         if fmt == "json":
-            click.echo(_json.dumps([{"name": t.name, "description": t.description, "variables": t.get_variable_names()} for t in templates], ensure_ascii=False, indent=2))
+            click.echo(
+                _json.dumps(
+                    [
+                        {"name": t.name, "description": t.description, "variables": t.get_variable_names()}
+                        for t in templates
+                    ],
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
         else:
             click.echo(f"内置模板 ({len(templates)}个):")
             for t in templates:
@@ -1628,6 +1814,7 @@ def prompt_template_cmd(action: str, name: str | None, template: str | None,
             sys.exit(2)
     elif template:
         from ai_prompt_toolkit.cli_helpers import resolve_path
+
         text = resolve_path(template).read_text(encoding="utf-8")
         pt = PromptTemplate(name=Path(template).stem, template=text)
     else:
@@ -1660,7 +1847,9 @@ def prompt_template_cmd(action: str, name: str | None, template: str | None,
         else:
             click.echo(f"模板: {pt.name}")
             click.echo(f"描述: {pt.description}")
-            click.echo(f"变量: {len(pt.variables)}个 (必填: {len(pt.get_required_variables())}, 可选: {len(pt.get_optional_variables())})")
+            click.echo(
+                f"变量: {len(pt.variables)}个 (必填: {len(pt.get_required_variables())}, 可选: {len(pt.get_optional_variables())})"
+            )
             click.echo(f"分类: {pt.category}")
 
 
@@ -1681,10 +1870,13 @@ def prompt_doctor_cmd(target: str, fmt: str) -> None:
         click.echo(_json.dumps(report.to_dict(), ensure_ascii=False, indent=2))
     else:
         from ai_prompt_toolkit.output import console
+
         grade_color = "green" if report.grade in ("A", "B") else "yellow" if report.grade == "C" else "red"
         console.print(f"\n[bold]Prompt Doctor: {report.prompt_name}[/bold]")
         console.print(f"健康分: [{grade_color}]{report.health_score:.1f}/100 ({report.grade})[/{grade_color}]")
-        console.print(f"检查: {report.total_checks}项 | 通过: [green]{report.passed}[/green] | 失败: [red]{report.failed}[/red] | 警告: [yellow]{report.warnings}[/yellow]")
+        console.print(
+            f"检查: {report.total_checks}项 | 通过: [green]{report.passed}[/green] | 失败: [red]{report.failed}[/red] | 警告: [yellow]{report.warnings}[/yellow]"
+        )
 
         for r in report.results:
             if r.status == "pass":
@@ -1702,7 +1894,9 @@ def prompt_doctor_cmd(target: str, fmt: str) -> None:
 
 
 @main.command(name="cache")
-@click.option("--action", "-a", type=click.Choice(["stats", "clear", "expire", "get"]), default="stats", help="缓存操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["stats", "clear", "expire", "get"]), default="stats", help="缓存操作"
+)
 @click.option("--key", "-k", help="缓存键(用于get操作)")
 @click.option("--format", "fmt", type=click.Choice(["json", "cli"]), default="cli", help="输出格式")
 def cache_cmd(action: str, key: str | None, fmt: str) -> None:
@@ -1719,6 +1913,7 @@ def cache_cmd(action: str, key: str | None, fmt: str) -> None:
             click.echo(_json.dumps(stats, ensure_ascii=False, indent=2))
         else:
             from ai_prompt_toolkit.output import console
+
             console.print("[bold]Prompt Cache Stats[/bold]")
             console.print(f"  容量: {stats['size']}/{stats['maxsize']}")
             console.print(f"  TTL: {stats['ttl_seconds']}s")

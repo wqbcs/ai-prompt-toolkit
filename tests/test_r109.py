@@ -1,4 +1,5 @@
 """R109 测试: lint --tui交互式终端界面"""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -42,10 +43,10 @@ class TestR109TUIRender:
         try:
             render_interactive_results([result], 85.0, 1, 1)
         except Exception as e:
-            raise AssertionError(f"render_interactive_results crashed: {e}")
+            raise AssertionError(f"render_interactive_results crashed: {e}") from e
 
     def test_render_empty(self):
         try:
             render_interactive_results([], 100.0, 0, 0)
         except Exception as e:
-            raise AssertionError(f"render_interactive_results crashed with empty: {e}")
+            raise AssertionError(f"render_interactive_results crashed with empty: {e}") from e

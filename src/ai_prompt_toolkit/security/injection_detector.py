@@ -4,10 +4,9 @@ from __future__ import annotations
 
 import re
 import time
-from typing import Any
 
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.security.types import InjectionRule
+from ai_prompt_toolkit.types import Finding, Severity
 
 _SCAN_TIME_WARN_MS = 10
 
@@ -169,7 +168,9 @@ _BUILTIN_RULES: list[InjectionRule] = [
 
 
 class InjectionDetector:
-    def __init__(self, rules: list[InjectionRule] | None = None, *, extra_rules: list[InjectionRule] | None = None) -> None:
+    def __init__(
+        self, rules: list[InjectionRule] | None = None, *, extra_rules: list[InjectionRule] | None = None
+    ) -> None:
         self._rules = list(rules or _BUILTIN_RULES)
         if extra_rules:
             self._rules.extend(extra_rules)
@@ -177,10 +178,7 @@ class InjectionDetector:
         self._compile_rules()
 
     def _compile_rules(self) -> None:
-        self._compiled = [
-            (rule, re.compile(rule.pattern, re.IGNORECASE | re.DOTALL))
-            for rule in self._rules
-        ]
+        self._compiled = [(rule, re.compile(rule.pattern, re.IGNORECASE | re.DOTALL)) for rule in self._rules]
 
     @property
     def rules(self) -> list[InjectionRule]:

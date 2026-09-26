@@ -7,11 +7,12 @@
 - 指令注入关键词检测与中和
 - 零LLM依赖，纯规则引擎
 """
+
 from __future__ import annotations
 
 import base64
-import re
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -44,78 +45,96 @@ class SanitizeResult:
         }
 
 
-_BASE64_PATTERN = re.compile(
-    r'[A-Za-z0-9+/]{20,}={0,2}'
-)
+_BASE64_PATTERN = re.compile(r"[A-Za-z0-9+/]{20,}={0,2}")
 
-_HEX_PATTERN = re.compile(
-    r'(?:\\x[0-9a-fA-F]{2}){4,}'
-)
+_HEX_PATTERN = re.compile(r"(?:\\x[0-9a-fA-F]{2}){4,}")
 
-_UNICODE_ESCAPE = re.compile(
-    r'(?:\\u[0-9a-fA-F]{4}){3,}'
-)
+_UNICODE_ESCAPE = re.compile(r"(?:\\u[0-9a-fA-F]{4}){3,}")
 
 _TEMPLATE_INJECTION = re.compile(
-    r'\{\{.*?(?:__class__|__import__|__subclasses__|__globals__|__builtins__|eval|exec|compile|open|os\.|sys\.|subprocess).*?\}\}',
-    re.DOTALL | re.IGNORECASE
+    r"\{\{.*?(?:__class__|__import__|__subclasses__|__globals__|__builtins__|eval|exec|compile|open|os\.|sys\.|subprocess).*?\}\}",
+    re.DOTALL | re.IGNORECASE,
 )
 
-_DOLLAR_INJECTION = re.compile(
-    r'\$\{.*?(?:Runtime|Process|exec|eval|import|require).*?\}',
-    re.DOTALL | re.IGNORECASE
-)
+_DOLLAR_INJECTION = re.compile(r"\$\{.*?(?:Runtime|Process|exec|eval|import|require).*?\}", re.DOTALL | re.IGNORECASE)
 
 _SENSITIVE_PATTERNS = [
-    re.compile(r'(?:api[_-]?key|apikey)\s*[:=]\s*\S+', re.IGNORECASE),
-    re.compile(r'(?:password|passwd|pwd)\s*[:=]\s*\S+', re.IGNORECASE),
-    re.compile(r'(?:secret|token)\s*[:=]\s*\S+', re.IGNORECASE),
-    re.compile(r'(?:AK|SK)\s*[:=]\s*[A-Za-z0-9]{16,}', re.IGNORECASE),
+    re.compile(r"(?:api[_-]?key|apikey)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:password|passwd|pwd)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:secret|token)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:AK|SK)\s*[:=]\s*[A-Za-z0-9]{16,}", re.IGNORECASE),
 ]
 
 _INJECTION_KEYWORDS = re.compile(
-    r'(?:ignore\s+(?:previous|above|all)\s+instructions?|'
-    r'disregard\s+(?:previous|above|all)\s+instructions?|'
-    r'forget\s+(?:previous|above|all)\s+instructions?|'
-    r'you\s+are\s+now\s+(?:DAN|jailbreak|unlocked|unfiltered)|'
-    r'system\s*:\s*override|'
-    r'new\s+instructions?\s*:|'
-    r'stop\s+being\s+(?:an?\s+)?AI)',
-    re.IGNORECASE
+    r"(?:ignore\s+(?:previous|above|all)\s+instructions?|"
+    r"disregard\s+(?:previous|above|all)\s+instructions?|"
+    r"forget\s+(?:previous|above|all)\s+instructions?|"
+    r"you\s+are\s+now\s+(?:DAN|jailbreak|unlocked|unfiltered)|"
+    r"system\s*:\s*override|"
+    r"new\s+instructions?\s*:|"
+    r"stop\s+being\s+(?:an?\s+)?AI)",
+    re.IGNORECASE,
 )
 
-_ENCODING_BOM = re.compile(r'^\ufeff|^\ufffe')
+_ENCODING_BOM = re.compile(r"^\ufeff|^\ufffe")
 
 _MARKDOWN_LINK_INJECTION = re.compile(
-    r'\[.*?\]\(\s*(?:javascript|data|vbscript)\s*:\s*.*?\)',
-    re.IGNORECASE | re.DOTALL
+    r"\[.*?\]\(\s*(?:javascript|data|vbscript)\s*:\s*.*?\)", re.IGNORECASE | re.DOTALL
 )
 
 _HOMOGLYPH_MAP = {
-    '\u0430': 'a', '\u0435': 'e', '\u043e': 'o', '\u0440': 'p',
-    '\u0441': 'c', '\u0443': 'y', '\u0445': 'x', '\u0456': 'i',
-    '\u0458': 'j', '\u0463': 'y', '\u0570': 'h', '\u0578': 'n',
-    '\uff41': 'a', '\uff42': 'b', '\uff43': 'c', '\uff44': 'd',
-    '\uff45': 'e', '\uff46': 'f', '\uff47': 'g', '\uff48': 'h',
-    '\uff49': 'i', '\uff4a': 'j', '\uff4b': 'k', '\uff4c': 'l',
-    '\uff4d': 'm', '\uff4e': 'n', '\uff4f': 'o', '\uff50': 'p',
-    '\uff51': 'q', '\uff52': 'r', '\uff53': 's', '\uff54': 't',
-    '\uff55': 'u', '\uff56': 'v', '\uff57': 'w', '\uff58': 'x',
-    '\uff59': 'y', '\uff5a': 'z',
+    "\u0430": "a",
+    "\u0435": "e",
+    "\u043e": "o",
+    "\u0440": "p",
+    "\u0441": "c",
+    "\u0443": "y",
+    "\u0445": "x",
+    "\u0456": "i",
+    "\u0458": "j",
+    "\u0463": "y",
+    "\u0570": "h",
+    "\u0578": "n",
+    "\uff41": "a",
+    "\uff42": "b",
+    "\uff43": "c",
+    "\uff44": "d",
+    "\uff45": "e",
+    "\uff46": "f",
+    "\uff47": "g",
+    "\uff48": "h",
+    "\uff49": "i",
+    "\uff4a": "j",
+    "\uff4b": "k",
+    "\uff4c": "l",
+    "\uff4d": "m",
+    "\uff4e": "n",
+    "\uff4f": "o",
+    "\uff50": "p",
+    "\uff51": "q",
+    "\uff52": "r",
+    "\uff53": "s",
+    "\uff54": "t",
+    "\uff55": "u",
+    "\uff56": "v",
+    "\uff57": "w",
+    "\uff58": "x",
+    "\uff59": "y",
+    "\uff5a": "z",
 }
 
 _HOMOGLYPH_PATTERN = re.compile(
-    r'[\u0430\u0435\u043e\u0440\u0441\u0443\u0445\u0456\u0458\u0463\u0570\u0578\uff41-\uff5a]'
+    r"[\u0430\u0435\u043e\u0440\u0441\u0443\u0445\u0456\u0458\u0463\u0570\u0578\uff41-\uff5a]"
 )
 
 _REVERSE_INJECTION = re.compile(
-    r'(?:system\s*prompt|系统\s*提示|original\s*instructions?|初始\s*指令|'
-    r'reveal\s+(?:your|the)\s+(?:system|initial|original)\s*(?:prompt|instructions?)|'
-    r'show\s+(?:me\s+)?(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|'
-    r'what\s+(?:are|is)\s+(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|'
-    r'repeat\s+(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|'
-    r'输出.*系统.*提示|显示.*初始.*指令|重复.*系统.*提示|泄露.*系统.*指令)',
-    re.IGNORECASE
+    r"(?:system\s*prompt|系统\s*提示|original\s*instructions?|初始\s*指令|"
+    r"reveal\s+(?:your|the)\s+(?:system|initial|original)\s*(?:prompt|instructions?)|"
+    r"show\s+(?:me\s+)?(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|"
+    r"what\s+(?:are|is)\s+(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|"
+    r"repeat\s+(?:your|the)\s+(?:system|initial)\s*(?:prompt|instructions?)|"
+    r"输出.*系统.*提示|显示.*初始.*指令|重复.*系统.*提示|泄露.*系统.*指令)",
+    re.IGNORECASE,
 )
 
 
@@ -155,7 +174,7 @@ class PromptSanitizer:
         match = _ENCODING_BOM.match(text)
         if match:
             result.actions.append({"action": "remove_bom", "detail": "移除BOM标记"})
-            return text[match.end():]
+            return text[match.end() :]
         return text
 
     def _decode_base64(self, text: str, result: SanitizeResult) -> str:
@@ -164,11 +183,13 @@ class PromptSanitizer:
             try:
                 decoded = base64.b64decode(match).decode("utf-8", errors="ignore")
                 if decoded and any(c.isalpha() for c in decoded):
-                    result.actions.append({
-                        "action": "decode_base64",
-                        "detail": f"检测到Base64编码: {match[:20]}... → {decoded[:30]}",
-                        "risk": "high",
-                    })
+                    result.actions.append(
+                        {
+                            "action": "decode_base64",
+                            "detail": f"检测到Base64编码: {match[:20]}... → {decoded[:30]}",
+                            "risk": "high",
+                        }
+                    )
                     text = text.replace(match, f"[BASE64_DECODED:{decoded[:50]}]")
             except Exception:
                 pass
@@ -180,11 +201,13 @@ class PromptSanitizer:
             try:
                 decoded = bytes.fromhex(match.replace("\\x", "")).decode("utf-8", errors="ignore")
                 if decoded:
-                    result.actions.append({
-                        "action": "decode_hex",
-                        "detail": f"检测到Hex编码 → {decoded[:30]}",
-                        "risk": "medium",
-                    })
+                    result.actions.append(
+                        {
+                            "action": "decode_hex",
+                            "detail": f"检测到Hex编码 → {decoded[:30]}",
+                            "risk": "medium",
+                        }
+                    )
                     text = text.replace(match, f"[HEX_DECODED:{decoded[:50]}]")
             except Exception:
                 pass
@@ -195,11 +218,13 @@ class PromptSanitizer:
         for match in matches:
             try:
                 decoded = match.encode("utf-8").decode("unicode_escape")
-                result.actions.append({
-                    "action": "decode_unicode_escape",
-                    "detail": f"检测到Unicode转义 → {decoded[:30]}",
-                    "risk": "medium",
-                })
+                result.actions.append(
+                    {
+                        "action": "decode_unicode_escape",
+                        "detail": f"检测到Unicode转义 → {decoded[:30]}",
+                        "risk": "medium",
+                    }
+                )
                 text = text.replace(match, f"[UNICODE_DECODED:{decoded[:50]}]")
             except Exception:
                 pass
@@ -208,22 +233,26 @@ class PromptSanitizer:
     def _clean_template_injection(self, text: str, result: SanitizeResult) -> str:
         matches = _TEMPLATE_INJECTION.findall(text)
         if matches:
-            result.actions.append({
-                "action": "clean_template_injection",
-                "detail": f"检测到模板注入({len(matches)}处): 危险标识已中和",
-                "risk": "critical",
-            })
+            result.actions.append(
+                {
+                    "action": "clean_template_injection",
+                    "detail": f"检测到模板注入({len(matches)}处): 危险标识已中和",
+                    "risk": "critical",
+                }
+            )
             text = _TEMPLATE_INJECTION.sub("[INJECTION_REMOVED]", text)
         return text
 
     def _clean_dollar_injection(self, text: str, result: SanitizeResult) -> str:
         matches = _DOLLAR_INJECTION.findall(text)
         if matches:
-            result.actions.append({
-                "action": "clean_dollar_injection",
-                "detail": f"检测到${{}}注入({len(matches)}处): 危险标识已中和",
-                "risk": "critical",
-            })
+            result.actions.append(
+                {
+                    "action": "clean_dollar_injection",
+                    "detail": f"检测到${{}}注入({len(matches)}处): 危险标识已中和",
+                    "risk": "critical",
+                }
+            )
             text = _DOLLAR_INJECTION.sub("[INJECTION_REMOVED]", text)
         return text
 
@@ -231,11 +260,13 @@ class PromptSanitizer:
         for pattern in _SENSITIVE_PATTERNS:
             matches = pattern.findall(text)
             for match in matches:
-                result.actions.append({
-                    "action": "redact_sensitive",
-                    "detail": f"敏感信息已脱敏: {match[:15]}***",
-                    "risk": "high",
-                })
+                result.actions.append(
+                    {
+                        "action": "redact_sensitive",
+                        "detail": f"敏感信息已脱敏: {match[:15]}***",
+                        "risk": "high",
+                    }
+                )
                 if "=" in match:
                     key = match.split("=")[0] + "="
                     text = text.replace(match, key + "***REDACTED***", 1)
@@ -247,45 +278,54 @@ class PromptSanitizer:
     def _neutralize_injection_keywords(self, text: str, result: SanitizeResult) -> str:
         matches = _INJECTION_KEYWORDS.findall(text)
         if matches:
-            result.actions.append({
-                "action": "neutralize_injection",
-                "detail": f"检测到注入关键词({len(matches)}处): 已中和",
-                "risk": "high",
-            })
+            result.actions.append(
+                {
+                    "action": "neutralize_injection",
+                    "detail": f"检测到注入关键词({len(matches)}处): 已中和",
+                    "risk": "high",
+                }
+            )
             text = _INJECTION_KEYWORDS.sub("[INJECTION_NEUTRALIZED]", text)
         return text
 
     def _normalize_unicode(self, text: str, result: SanitizeResult) -> str:
         import unicodedata
+
         normalized = unicodedata.normalize("NFKC", text)
         if normalized != text:
-            result.actions.append({
-                "action": "normalize_unicode",
-                "detail": "Unicode已归一化(NFKC)",
-                "risk": "low",
-            })
+            result.actions.append(
+                {
+                    "action": "normalize_unicode",
+                    "detail": "Unicode已归一化(NFKC)",
+                    "risk": "low",
+                }
+            )
         return normalized
 
     def _remove_invisible_chars(self, text: str, result: SanitizeResult) -> str:
-        invisible = re.compile(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufffe]')
+        invisible = re.compile(r"[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufffe]")
         matches = invisible.findall(text)
         if matches:
-            result.actions.append({
-                "action": "remove_invisible",
-                "detail": f"移除不可见字符({len(matches)}处)",
-                "risk": "medium",
-            })
+            result.actions.append(
+                {
+                    "action": "remove_invisible",
+                    "detail": f"移除不可见字符({len(matches)}处)",
+                    "risk": "medium",
+                }
+            )
             text = invisible.sub("", text)
         return text
 
     def _clean_markdown_link_injection(self, text: str, result: SanitizeResult) -> str:
         matches = _MARKDOWN_LINK_INJECTION.findall(text)
         if matches:
-            result.actions.append({
-                "action": "clean_markdown_link_injection",
-                "detail": f"检测到Markdown链接注入({len(matches)}处): javascript/data/vbscript协议已中和",
-                "risk": "critical",
-            })
+            result.actions.append(
+                {
+                    "action": "clean_markdown_link_injection",
+                    "detail": f"检测到Markdown链接注入({len(matches)}处): javascript/data/vbscript协议已中和",
+                    "risk": "critical",
+                }
+            )
             text = _MARKDOWN_LINK_INJECTION.sub("[MARKDOWN_LINK_REMOVED]", text)
         return text
 
@@ -300,22 +340,26 @@ class PromptSanitizer:
                     replaced += 1
                 else:
                     new_text.append(char)
-            result.actions.append({
-                "action": "detect_homoglyph",
-                "detail": f"检测到同形字攻击({replaced}处): 西里尔/全角字符已替换为ASCII等效",
-                "risk": "high",
-            })
+            result.actions.append(
+                {
+                    "action": "detect_homoglyph",
+                    "detail": f"检测到同形字攻击({replaced}处): 西里尔/全角字符已替换为ASCII等效",
+                    "risk": "high",
+                }
+            )
             return "".join(new_text)
         return text
 
     def _detect_reverse_injection(self, text: str, result: SanitizeResult) -> str:
         matches = _REVERSE_INJECTION.findall(text)
         if matches:
-            result.actions.append({
-                "action": "detect_reverse_injection",
-                "detail": f"检测到反向Prompt注入({len(matches)}处): 系统提示泄露尝试已标记",
-                "risk": "high",
-            })
+            result.actions.append(
+                {
+                    "action": "detect_reverse_injection",
+                    "detail": f"检测到反向Prompt注入({len(matches)}处): 系统提示泄露尝试已标记",
+                    "risk": "high",
+                }
+            )
             text = _REVERSE_INJECTION.sub("[REVERSE_INJECTION_FLAGGED]", text)
         return text
 

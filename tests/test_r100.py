@@ -1,4 +1,5 @@
 """R100: CHANGELOG R95-R98 + lint --changed优化 + MCP同步校验"""
+
 from __future__ import annotations
 
 from pathlib import Path

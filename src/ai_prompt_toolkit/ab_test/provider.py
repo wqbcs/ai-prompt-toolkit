@@ -6,7 +6,13 @@
 - Provider子模块自动发现注册(providers/目录)
 - 健康检查(prompt-cli doctor)
 """
+
 from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.errors import AbTestError
 
 import asyncio
 import logging
@@ -69,12 +75,15 @@ def _get_shared_http_client() -> Any:
             if _shared_http_client is None:
                 try:
                     import httpx
+
                     _shared_http_client = httpx.AsyncClient(
                         timeout=_HTTP_TIMEOUT,
-                        limits=httpx.Limits(max_connections=_HTTP_MAX_CONNECTIONS, max_keepalive_connections=_HTTP_MAX_KEEPALIVE),
+                        limits=httpx.Limits(
+                            max_connections=_HTTP_MAX_CONNECTIONS, max_keepalive_connections=_HTTP_MAX_KEEPALIVE
+                        ),
                     )
-                except ImportError:
-                    raise ProviderError("system", "httpx未安装，请运行: pip install httpx")
+                except ImportError as e:
+                    raise ProviderError("system", "httpx未安装，请运行: pip install httpx") from e
     return _shared_http_client
 
 
@@ -83,8 +92,9 @@ class ProviderError(Exception):
         self.provider = provider
         super().__init__(f"[{provider}] {message}")
 
-    def to_ab_test_error(self) -> "AbTestError":
+    def to_ab_test_error(self) -> AbTestError:
         from ai_prompt_toolkit.errors import AbTestError
+
         return AbTestError(self.args[0], provider=self.provider)
 
 
@@ -120,7 +130,7 @@ class BaseProvider(ABC):
             return self._api_key
         env_var = self._config.api_key_env
         if not env_var:
-            raise ProviderError(self._config.provider.value, f"未配置环境变量名")
+            raise ProviderError(self._config.provider.value, "未配置环境变量名")
         key = os.environ.get(env_var, "")
         if not key:
             raise ProviderError(self._config.provider.value, f"环境变量 {env_var!r} 未设置")
@@ -129,24 +139,29 @@ class BaseProvider(ABC):
 
     def _make_error_result(self, prompt: str, error: str) -> ModelResult:
         return ModelResult(
-            model_config=self._config, prompt_template=prompt,
-            status=TestStatus.FAILED, error_message=error,
+            model_config=self._config,
+            prompt_template=prompt,
+            status=TestStatus.FAILED,
+            error_message=error,
         )
 
     def _make_simulated_result(self, prompt: str, start: float, provider: str) -> ModelResult:
         latency = (time.perf_counter() - start) * 1000
         return ModelResult(
-            model_config=self._config, prompt_template=prompt,
+            model_config=self._config,
+            prompt_template=prompt,
             response=f"[{provider} {self._config.model_name} simulated]",
-            latency_ms=round(latency, 2), token_count=len(prompt.split()) + 50,
-            cost=0.0, status=TestStatus.COMPLETED,
+            latency_ms=round(latency, 2),
+            token_count=len(prompt.split()) + 50,
+            cost=0.0,
+            status=TestStatus.COMPLETED,
         )
 
     async def _http_post(self, url: str, headers: dict[str, str], payload: dict[str, Any]) -> dict[str, Any]:
         try:
-            import httpx
-        except ImportError:
-            raise ProviderError(self._config.provider.value, "httpx未安装，请运行: pip install httpx")
+            import httpx  # noqa: F401 — 可用性探测
+        except ImportError as e:
+            raise ProviderError(self._config.provider.value, "httpx未安装，请运行: pip install httpx") from e
 
         client = _get_shared_http_client()
         delay = _RETRY_BASE_DELAY
@@ -211,9 +226,13 @@ class BaseProvider(ABC):
             _global_cost_tracker.record(cost)
             latency = (time.perf_counter() - start) * 1000
             return ModelResult(
-                model_config=self._config, prompt_template=prompt, response=content,
-                latency_ms=round(latency, 2), token_count=input_tokens + output_tokens,
-                cost=cost, status=TestStatus.COMPLETED,
+                model_config=self._config,
+                prompt_template=prompt,
+                response=content,
+                latency_ms=round(latency, 2),
+                token_count=input_tokens + output_tokens,
+                cost=cost,
+                status=TestStatus.COMPLETED,
             )
         except Exception as e:
             return self._make_error_result(prompt, str(e))
@@ -293,7 +312,7 @@ def _check_tcp_reachable(host: str, port: int, timeout: float = 3.0) -> tuple[bo
         sock = socket.create_connection((host, port), timeout=timeout)
         sock.close()
         return True, (time.perf_counter() - start) * 1000
-    except (socket.timeout, ConnectionRefusedError, OSError):
+    except (TimeoutError, ConnectionRefusedError, OSError):
         return False, (time.perf_counter() - start) * 1000
 
 
@@ -301,6 +320,7 @@ def _check_https_reachable(url: str, timeout: float = 5.0) -> tuple[bool, float]
     start = time.perf_counter()
     try:
         import httpx
+
         with httpx.Client(timeout=timeout) as client:
             resp = client.get(url)
             return resp.status_code < 500, (time.perf_counter() - start) * 1000
@@ -311,7 +331,7 @@ def _check_https_reachable(url: str, timeout: float = 5.0) -> tuple[bool, float]
 def run_health_check(providers: list[ProviderType] | None = None) -> list[HealthCheckResult]:
     from ai_prompt_toolkit.ab_test.providers import get_registry
 
-    registry = get_registry()
+    get_registry()
     results: list[HealthCheckResult] = []
     targets = providers or list(ProviderType)
 
@@ -323,50 +343,65 @@ def run_health_check(providers: list[ProviderType] | None = None) -> list[Health
 
         if pt in (ProviderType.OLLAMA, ProviderType.LMSTUDIO):
             reachable, latency = _check_tcp_reachable("localhost", 11434 if pt == ProviderType.OLLAMA else 1234)
-            results.append(HealthCheckResult(
-                provider=pt, label=label,
-                status="healthy" if reachable else "unreachable",
-                latency_ms=round(latency, 1),
-                api_key_configured=True,
-                endpoint=endpoint,
-            ))
+            results.append(
+                HealthCheckResult(
+                    provider=pt,
+                    label=label,
+                    status="healthy" if reachable else "unreachable",
+                    latency_ms=round(latency, 1),
+                    api_key_configured=True,
+                    endpoint=endpoint,
+                )
+            )
             continue
 
         if not api_key_set:
-            results.append(HealthCheckResult(
-                provider=pt, label=label,
-                status="no_api_key",
-                api_key_configured=False,
-                endpoint=endpoint,
-            ))
+            results.append(
+                HealthCheckResult(
+                    provider=pt,
+                    label=label,
+                    status="no_api_key",
+                    api_key_configured=False,
+                    endpoint=endpoint,
+                )
+            )
             continue
 
         if endpoint:
             reachable, latency = _check_https_reachable(endpoint)
             if reachable:
-                results.append(HealthCheckResult(
-                    provider=pt, label=label,
-                    status="healthy",
-                    latency_ms=round(latency, 1),
-                    api_key_configured=True,
-                    endpoint=endpoint,
-                ))
+                results.append(
+                    HealthCheckResult(
+                        provider=pt,
+                        label=label,
+                        status="healthy",
+                        latency_ms=round(latency, 1),
+                        api_key_configured=True,
+                        endpoint=endpoint,
+                    )
+                )
             else:
-                results.append(HealthCheckResult(
-                    provider=pt, label=label,
-                    status="unreachable",
-                    latency_ms=round(latency, 1),
-                    api_key_configured=True,
-                    endpoint=endpoint,
-                    error="连接失败",
-                ))
+                results.append(
+                    HealthCheckResult(
+                        provider=pt,
+                        label=label,
+                        status="unreachable",
+                        latency_ms=round(latency, 1),
+                        api_key_configured=True,
+                        endpoint=endpoint,
+                        error="连接失败",
+                    )
+                )
         else:
-            results.append(HealthCheckResult(
-                provider=pt, label=label,
-                status="unknown",
-                api_key_configured=api_key_set,
-                endpoint=endpoint,
-            ))
+            results.append(
+                HealthCheckResult(
+                    provider=pt,
+                    label=label,
+                    status="unknown",
+                    api_key_configured=api_key_set,
+                    endpoint=endpoint,
+                )
+            )
 
     return results
 

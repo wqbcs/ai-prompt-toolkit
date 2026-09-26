@@ -15,6 +15,7 @@ vs 现有prompt_optimizer.py:
 - DSPy MIPROv2: 贝叶斯指令+demo联合优化
 - 论文: arXiv:2507.19457 (ICLR 2026 Oral)
 """
+
 from __future__ import annotations
 
 import copy
@@ -22,9 +23,12 @@ import json
 import logging
 import random
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Severity
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -203,8 +207,7 @@ class ParetoFrontier:
             else:
                 current_best_ids = self.per_example_best[ex_id]
                 current_best_score = max(
-                    self.candidates[cid].per_example_scores.get(ex_id, 0.0)
-                    for cid in current_best_ids
+                    self.candidates[cid].per_example_scores.get(ex_id, 0.0) for cid in current_best_ids
                 )
                 if score > current_best_score:
                     self.per_example_best[ex_id] = {candidate.id}
@@ -333,20 +336,13 @@ class GEPAOptimizer:
 
             target_predictor = self.component_selector.select()
 
-            traces = self._execute_and_trace(
-                parent.instructions, trainset, target_predictor
-            )
+            traces = self._execute_and_trace(parent.instructions, trainset, target_predictor)
 
-            failing = [
-                t for t in traces
-                if not self.skip_perfect_score or t.score < self.perfect_score - 1e-9
-            ]
+            failing = [t for t in traces if not self.skip_perfect_score or t.score < self.perfect_score - 1e-9]
             if not failing:
                 continue
 
-            minibatch = self.rng.sample(
-                failing, min(self.reflection_minibatch_size, len(failing))
-            )
+            minibatch = self.rng.sample(failing, min(self.reflection_minibatch_size, len(failing)))
 
             new_instruction = self.proposer.propose(
                 current_instruction=parent.instructions.get(target_predictor, ""),
@@ -366,13 +362,15 @@ class GEPAOptimizer:
 
             self._evaluate_candidate(child, valset)
             self.frontier.update(child)
-            history.append({
-                "event": "mutate",
-                "candidate_id": candidate_counter,
-                "parent_id": parent.id,
-                "predictor": target_predictor,
-                "score": child.aggregate_score,
-            })
+            history.append(
+                {
+                    "event": "mutate",
+                    "candidate_id": candidate_counter,
+                    "parent_id": parent.id,
+                    "predictor": target_predictor,
+                    "score": child.aggregate_score,
+                }
+            )
             candidate_counter += 1
 
             if self.use_merge and merge_count < self.max_merge_invocations:
@@ -386,11 +384,13 @@ class GEPAOptimizer:
                     )
                     self._evaluate_candidate(merged, valset)
                     self.frontier.update(merged)
-                    history.append({
-                        "event": "merge",
-                        "candidate_id": candidate_counter,
-                        "score": merged.aggregate_score,
-                    })
+                    history.append(
+                        {
+                            "event": "merge",
+                            "candidate_id": candidate_counter,
+                            "score": merged.aggregate_score,
+                        }
+                    )
                     candidate_counter += 1
                     merge_count += 1
 
@@ -429,23 +429,27 @@ class GEPAOptimizer:
                     score, feedback = result.score, result.feedback
                 else:
                     score, feedback = float(result), None
-                traces.append(Trace(
-                    predictor_name=target_predictor,
-                    instruction=instructions.get(target_predictor, ""),
-                    inputs=example.get("inputs", {}),
-                    outputs=outputs,
-                    score=score,
-                    feedback=feedback,
-                ))
+                traces.append(
+                    Trace(
+                        predictor_name=target_predictor,
+                        instruction=instructions.get(target_predictor, ""),
+                        inputs=example.get("inputs", {}),
+                        outputs=outputs,
+                        score=score,
+                        feedback=feedback,
+                    )
+                )
             except Exception as e:
-                traces.append(Trace(
-                    predictor_name=target_predictor,
-                    instruction=instructions.get(target_predictor, ""),
-                    inputs=example.get("inputs", {}),
-                    outputs={},
-                    score=self.failure_score,
-                    feedback=f"Execution failed: {e}",
-                ))
+                traces.append(
+                    Trace(
+                        predictor_name=target_predictor,
+                        instruction=instructions.get(target_predictor, ""),
+                        inputs=example.get("inputs", {}),
+                        outputs={},
+                        score=self.failure_score,
+                        feedback=f"Execution failed: {e}",
+                    )
+                )
         return traces
 
     def _evaluate_candidate(self, candidate: Candidate, valset: list[dict[str, Any]]) -> None:
@@ -477,11 +481,13 @@ class GEPAOptimizer:
         other = self.frontier.candidates[other_id]
 
         a_wins = sum(
-            1 for ex_id in candidate.per_example_scores
+            1
+            for ex_id in candidate.per_example_scores
             if candidate.per_example_scores.get(ex_id, 0.0) > other.per_example_scores.get(ex_id, 0.0)
         )
         b_wins = sum(
-            1 for ex_id in other.per_example_scores
+            1
+            for ex_id in other.per_example_scores
             if other.per_example_scores.get(ex_id, 0.0) > candidate.per_example_scores.get(ex_id, 0.0)
         )
 
@@ -519,6 +525,7 @@ class FeedbackMetric:
     @staticmethod
     def regex_match(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
         import re
+
         pattern = gold.get("regex_pattern", "")
         answer = str(pred.get("answer", pred.get("output", "")))
         if not pattern:
@@ -534,13 +541,16 @@ class FeedbackMetric:
     @staticmethod
     def lint_score(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
         from ai_prompt_toolkit.linter.linter import PromptLinter
+
         text = pred.get("answer", pred.get("output", pred.get("prompt", "")))
         linter = PromptLinter()
         result = linter.lint("gepa-eval", str(text))
         score = result.score / 100.0
         high_findings = [f for f in result.findings if f.severity == Severity.HIGH]
         if high_findings:
-            feedback = f"Lint score: {result.score:.1f}/100. High severity issues: {[f.rule_id for f in high_findings[:5]]}"
+            feedback = (
+                f"Lint score: {result.score:.1f}/100. High severity issues: {[f.rule_id for f in high_findings[:5]]}"
+            )
         elif result.score < 90.0:
             feedback = f"Lint score: {result.score:.1f}/100. Room for improvement."
         else:
@@ -548,7 +558,9 @@ class FeedbackMetric:
         return ScoreWithFeedback(score=score, feedback=feedback)
 
     @staticmethod
-    def llm_judge(gold: dict, pred: dict, *, judge_lm: Callable[[str], str] | None = None, **kwargs: Any) -> ScoreWithFeedback:
+    def llm_judge(
+        gold: dict, pred: dict, *, judge_lm: Callable[[str], str] | None = None, **kwargs: Any
+    ) -> ScoreWithFeedback:
         if judge_lm is None:
             return FeedbackMetric.lint_score(gold, pred, **kwargs)
 
@@ -573,6 +585,7 @@ Feedback: <brief explanation of the score>"""
             score = 0.0
             feedback = response
             import re
+
             score_match = re.search(r"Score:\s*(\d+(?:\.\d+)?)", response)
             if score_match:
                 score = float(score_match.group(1)) / 10.0
@@ -587,6 +600,7 @@ Feedback: <brief explanation of the score>"""
     def pangu_judge(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
         try:
             from ai_prompt_toolkit.ab_test.providers.pangu import PanguProvider
+
             provider = PanguProvider()
             prompt_text = str(pred.get("answer", pred.get("output", "")))
             criteria = gold.get("criteria", "quality, clarity, accuracy, completeness")
@@ -605,6 +619,7 @@ Feedback: <brief explanation of the score>"""
             result = provider.call(judge_prompt, model="pangu-nlp")
             if result and result.get("text"):
                 import re
+
                 text = result["text"]
                 score_match = re.search(r"分数[：:]\s*(\d+(?:\.\d+)?)", text)
                 score = float(score_match.group(1)) / 10.0 if score_match else 0.5
@@ -685,10 +700,12 @@ def gepa_optimize(
 ) -> GEPAResult:
     feedback_fn = custom_metric or FEEDBACK_METRICS.get(metric, FeedbackMetric.lint_score)
 
-    default_execute = lambda instructions, inputs: {
-        "answer": instructions.get("main", ""),
-        "output": instructions.get("main", ""),
-    }
+    def default_execute(instructions, inputs):
+        return {
+            "answer": instructions.get("main", ""),
+            "output": instructions.get("main", ""),
+        }
+
     actual_execute = execute_fn or default_execute
 
     if predictor_names is None:
@@ -705,7 +722,7 @@ def gepa_optimize(
         auto=auto,
     )
 
-    initial_instructions = {name: text for name in predictor_names}
+    initial_instructions = dict.fromkeys(predictor_names, text)
 
     result = optimizer.optimize(
         initial_instructions=initial_instructions,
@@ -715,11 +732,13 @@ def gepa_optimize(
     if save_version:
         try:
             from ai_prompt_toolkit.prompt_version import PromptVersionStore
+
             store = PromptVersionStore()
             name = version_name or "gepa-optimized"
             best_text = result.best_instructions.get("main", text)
             store.save(
-                name, best_text,
+                name,
+                best_text,
                 score=result.best_score * 100,
                 source="gepa",
                 tags=["gepa", auto, metric],

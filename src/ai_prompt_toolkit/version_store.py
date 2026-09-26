@@ -6,6 +6,7 @@
 - 版本回滚
 - 版本元数据: 作者/时间/评分/变更说明
 """
+
 from __future__ import annotations
 
 import difflib
@@ -211,17 +212,22 @@ class VersionStore:
         va = self.get_version(template_id, version_a)
         vb = self.get_version(template_id, version_b)
         if not va or not vb:
-            return VersionDiff(template_id=template_id, version_a=version_a, version_b=version_b,
-                             change_summary="版本不存在")
+            return VersionDiff(
+                template_id=template_id, version_a=version_a, version_b=version_b, change_summary="版本不存在"
+            )
 
         lines_a = va.content.splitlines(keepends=True)
         lines_b = vb.content.splitlines(keepends=True)
 
-        unified = list(difflib.unified_diff(
-            lines_a, lines_b,
-            fromfile=f"v{version_a}", tofile=f"v{version_b}",
-            lineterm="",
-        ))
+        unified = list(
+            difflib.unified_diff(
+                lines_a,
+                lines_b,
+                fromfile=f"v{version_a}",
+                tofile=f"v{version_b}",
+                lineterm="",
+            )
+        )
 
         added = sum(1 for l in unified if l.startswith("+") and not l.startswith("+++"))
         removed = sum(1 for l in unified if l.startswith("-") and not l.startswith("---"))

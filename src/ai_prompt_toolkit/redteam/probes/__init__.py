@@ -2,13 +2,14 @@
 
 参考garak probes/__init__.py模块化probe加载模式
 """
+
 from __future__ import annotations
 
 import importlib
 import logging
 from pathlib import Path
 
-from ai_prompt_toolkit.redteam.probe import BaseProbe, _PROBE_REGISTRY
+from ai_prompt_toolkit.redteam.probe import _PROBE_REGISTRY, BaseProbe
 
 logger = logging.getLogger(__name__)
 

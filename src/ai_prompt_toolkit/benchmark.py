@@ -6,6 +6,7 @@ P2-04: CI中自动检测性能回归
 - 回归检测: 超过阈值(20%)自动告警
 - CLI: prompt-cli benchmark命令
 """
+
 from __future__ import annotations
 
 import sqlite3
@@ -14,7 +15,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
 
 _DEFAULT_DB = Path.home() / ".prompt-toolkit" / "benchmarks.db"
 
@@ -46,7 +46,7 @@ _BENCHMARK_CASES = {
     },
     "compile_conditional": {
         "name": "Compile(条件编译)",
-        "text": "---\ntemplate_type: prompt\n---\n{{#if model == \"gpt-4\"}}你是一个高级助手。{{#else}}你是一个基础助手。{{/if}}\n请回答问题：{{question}}",
+        "text": '---\ntemplate_type: prompt\n---\n{{#if model == "gpt-4"}}你是一个高级助手。{{#else}}你是一个基础助手。{{/if}}\n请回答问题：{{question}}',
         "operation": "compile",
     },
 }
@@ -121,9 +121,17 @@ class BenchmarkDB:
 
     def save(self, result: BenchmarkResult) -> None:
         import json
+
         self._conn.execute(
             "INSERT INTO benchmarks (case_id, name, operation, duration_ms, timestamp, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-            (result.case_id, result.name, result.operation, result.duration_ms, result.timestamp, json.dumps(result.metadata)),
+            (
+                result.case_id,
+                result.name,
+                result.operation,
+                result.duration_ms,
+                result.timestamp,
+                json.dumps(result.metadata),
+            ),
         )
         self._conn.commit()
 
@@ -150,7 +158,9 @@ class BenchmarkDB:
             "SELECT case_id, name, operation, duration_ms, timestamp FROM benchmarks WHERE case_id = ? ORDER BY timestamp DESC LIMIT ?",
             (case_id, limit),
         ).fetchall()
-        return [BenchmarkResult(case_id=r[0], name=r[1], operation=r[2], duration_ms=r[3], timestamp=r[4]) for r in rows]
+        return [
+            BenchmarkResult(case_id=r[0], name=r[1], operation=r[2], duration_ms=r[3], timestamp=r[4]) for r in rows
+        ]
 
     def check_regression(self, case_id: str, threshold_pct: float = 20.0) -> RegressionAlert | None:
         baseline = self.get_baseline(case_id)
@@ -183,23 +193,27 @@ def run_benchmark(case_id: str | None = None) -> list[BenchmarkResult]:
 
         if operation == "lint":
             from ai_prompt_toolkit.linter.linter import PromptLinter
+
             linter = PromptLinter()
             start = time.perf_counter()
             linter.lint(cid, text)
             elapsed = (time.perf_counter() - start) * 1000
         elif operation == "scan":
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
+
             detector = InjectionDetector()
             start = time.perf_counter()
             detector.detect(text)
             elapsed = (time.perf_counter() - start) * 1000
         elif operation == "evaluate":
             from ai_prompt_toolkit.evaluator import evaluate_template
+
             start = time.perf_counter()
             evaluate_template(cid, text)
             elapsed = (time.perf_counter() - start) * 1000
         elif operation == "compile":
             from ai_prompt_toolkit.compiler import CompileContext, compile_template
+
             ctx = CompileContext(model="gpt-4", language="en", industry="tech")
             start = time.perf_counter()
             try:
@@ -210,12 +224,14 @@ def run_benchmark(case_id: str | None = None) -> list[BenchmarkResult]:
         else:
             continue
 
-        results.append(BenchmarkResult(
-            case_id=cid,
-            name=name,
-            operation=operation,
-            duration_ms=elapsed,
-        ))
+        results.append(
+            BenchmarkResult(
+                case_id=cid,
+                name=name,
+                operation=operation,
+                duration_ms=elapsed,
+            )
+        )
 
     return results
 

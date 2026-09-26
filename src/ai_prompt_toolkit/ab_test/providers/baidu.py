@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.ab_test.provider import BaseProvider
-from ai_prompt_toolkit.ab_test.types import ModelResult
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.ab_test.types import ModelResult
 
 
 class BaiduProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "ernie-4.0-8k": (0.012, 0.012), "ernie-3.5-8k": (0.0012, 0.0012),
+        "ernie-4.0-8k": (0.012, 0.012),
+        "ernie-3.5-8k": (0.0012, 0.0012),
         "ernie-speed-8k": (0.0, 0.0),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.0012, 0.0012)

@@ -1,7 +1,6 @@
 """R22 模板市场REST API测试 — 10+端点"""
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import pytest
 
@@ -38,7 +37,7 @@ class TestMarketDBSearch:
 
     def test_search_by_query(self, db):
         _seed_templates(db, 5)
-        results, total = db.search(query="第3")
+        _results, total = db.search(query="第3")
         assert total == 1
 
     def test_search_by_category(self, db):
@@ -49,7 +48,7 @@ class TestMarketDBSearch:
 
     def test_search_by_tag(self, db):
         _seed_templates(db, 5)
-        results, total = db.search(tag="demo")
+        _results, total = db.search(tag="demo")
         assert total > 0
 
     def test_search_pagination(self, db):
@@ -135,6 +134,7 @@ class TestMarketDBCategories:
 class TestMarketAPIEndpoints:
     def test_api_list_templates(self):
         from fastapi.testclient import TestClient
+
         from ai_prompt_toolkit.playground.server import app
 
         client = TestClient(app)
@@ -146,12 +146,13 @@ class TestMarketAPIEndpoints:
 
     def test_api_create_and_get(self):
         from fastapi.testclient import TestClient
+
         from ai_prompt_toolkit.playground.server import app
 
         client = TestClient(app)
-        resp = client.post("/api/market/templates", json={
-            "id": "api-test-1", "name": "API测试", "description": "API创建"
-        })
+        resp = client.post(
+            "/api/market/templates", json={"id": "api-test-1", "name": "API测试", "description": "API创建"}
+        )
         assert resp.status_code == 200
 
         resp = client.get("/api/market/templates/api-test-1")
@@ -160,6 +161,7 @@ class TestMarketAPIEndpoints:
 
     def test_api_rate(self):
         from fastapi.testclient import TestClient
+
         from ai_prompt_toolkit.playground.server import app
 
         client = TestClient(app)
@@ -169,6 +171,7 @@ class TestMarketAPIEndpoints:
 
     def test_api_categories_and_tags(self):
         from fastapi.testclient import TestClient
+
         from ai_prompt_toolkit.playground.server import app
 
         client = TestClient(app)
@@ -179,6 +182,7 @@ class TestMarketAPIEndpoints:
 
     def test_api_404(self):
         from fastapi.testclient import TestClient
+
         from ai_prompt_toolkit.playground.server import app
 
         client = TestClient(app)

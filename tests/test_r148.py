@@ -1,10 +1,13 @@
 """R148: P236-P240 LLM推理引擎安全规则"""
-import pytest
-from ai_prompt_toolkit.linter.rules_p236_p240 import (
-    check_p236, check_p237, check_p238, check_p239, check_p240,
-)
+
 from ai_prompt_toolkit.linter.rules import get_all_rules
-from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules_p236_p240 import (
+    check_p236,
+    check_p237,
+    check_p238,
+    check_p239,
+    check_p240,
+)
 
 
 def test_p236_quant_no_robust():

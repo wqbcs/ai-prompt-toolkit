@@ -1,12 +1,15 @@
 """测试评估指标标准化模块"""
+
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.eval_metrics import (
-    MetricCategory, MetricUnit, MetricDefinition, MetricResult,
-    STANDARD_METRICS, get_metric, list_metrics,
-    compute_metric_result, compute_weighted_score,
+    STANDARD_METRICS,
+    MetricCategory,
+    MetricUnit,
+    compute_metric_result,
+    compute_weighted_score,
+    get_metric,
+    list_metrics,
 )
 
 

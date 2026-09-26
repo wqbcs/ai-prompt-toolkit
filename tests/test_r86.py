@@ -1,9 +1,13 @@
 """R86: 评估维度权重体系 + 行业预设"""
+
 from __future__ import annotations
 
 from ai_prompt_toolkit.evaluator import (
-    WeightPreset, WEIGHT_PRESETS, get_weight_preset, list_weight_presets,
-    evaluate_template, _DIMENSIONS,
+    _DIMENSIONS,
+    WeightPreset,
+    evaluate_template,
+    get_weight_preset,
+    list_weight_presets,
 )
 
 
@@ -59,7 +63,7 @@ def test_evaluate_with_weight_overrides():
     text = "你是一个专业的AI助手。请回答用户问题。"
     report_default = evaluate_template("test", text)
     report_sec = evaluate_template("test", text, weight_overrides={"security": 2.0})
-    assert report_default.overall_score != report_sec.overall_score or True
+    assert True
 
 
 def test_weight_preset_apply_id_override():

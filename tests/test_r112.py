@@ -1,4 +1,5 @@
 """R112 测试: lint --watch实时监听 + 首次运行引导"""
+
 from __future__ import annotations
 
 import re
@@ -19,11 +20,13 @@ class TestR112WatchOption:
 class TestR112FirstRunGuide:
     def test_init_template_exists(self):
         from pathlib import Path
+
         init_path = Path("src/ai_prompt_toolkit") / "__init__.py"
         assert init_path.exists()
 
     def test_changelog_exists(self):
         from pathlib import Path
+
         assert Path("CHANGELOG.md").exists()
 
     def test_version_is_52(self):

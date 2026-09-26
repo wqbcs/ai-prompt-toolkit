@@ -7,41 +7,70 @@ R38新增:
 - P084: 输出格式校验 — 检测JSON/Markdown等输出格式规范
 - P085: 模型兼容性 — 检测模型特定语法兼容性
 """
+
 from __future__ import annotations
 
 import re
-from typing import Any
 
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
-from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
-
 
 _RULES_P081_P085: list[LintRule] = [
-    LintRule("P081", "模板变量完整性缺失", "quality", Severity.MEDIUM,
-             "使用{{var}}模板变量的Prompt缺少变量默认值声明",
-             "为每个变量添加默认值: {{var|default('fallback')}}",
-             description_en="Prompt using {{var}} template variables missing default value declarations",
-             remediation_en="Add default values for each variable: {{var|default('fallback')}}", family="template_var"),
-    LintRule("P082", "Trace可观测性缺失", "quality", Severity.LOW,
-             "复杂Prompt(>500字符)缺少Trace可观测性声明",
-             "添加'## Trace: enabled'或使用trace()上下文管理器",
-             description_en="Complex Prompt (>500 chars) missing Trace observability declaration",
-             remediation_en="Add '## Trace: enabled' or use trace() context manager", family="observability"),
-    LintRule("P083", "Doctor健康检查建议", "quality", Severity.LOW,
-             "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
-             "运行 'promptkit prompt-doctor -t <file>' 获取健康报告",
-             description_en="Prompt missing Doctor diagnostic check, recommend running prompt-doctor",
-             remediation_en="Run 'promptkit prompt-doctor -t <file>' to get health report", family="health_check"),
-    LintRule("P084", "输出格式规范缺失", "quality", Severity.MEDIUM,
-             "Prompt声明了JSON/Markdown输出但缺少格式约束",
-             "添加输出格式示例和Schema约束, 如'返回JSON: {\"key\": \"value\"}'",
-             description_en="Prompt declares JSON/Markdown output but lacks format constraints",
-             remediation_en="Add output format examples and Schema constraints, e.g., 'Return JSON: {\"key\": \"value\"}'", family="output_schema"),
-    LintRule("P085", "模型兼容性风险", "quality", Severity.MEDIUM,
-             "Prompt使用了特定模型语法但未声明目标模型",
-             "声明目标模型: '适用于GPT-4/Claude-3/盘古'或使用条件编译",
-             description_en="Prompt uses model-specific syntax but does not declare target model",
-             remediation_en="Declare target model: 'Compatible with GPT-4/Claude-3/Pangu' or use conditional compilation", family="model_compat"),
+    LintRule(
+        "P081",
+        "模板变量完整性缺失",
+        "quality",
+        Severity.MEDIUM,
+        "使用{{var}}模板变量的Prompt缺少变量默认值声明",
+        "为每个变量添加默认值: {{var|default('fallback')}}",
+        description_en="Prompt using {{var}} template variables missing default value declarations",
+        remediation_en="Add default values for each variable: {{var|default('fallback')}}",
+        family="template_var",
+    ),
+    LintRule(
+        "P082",
+        "Trace可观测性缺失",
+        "quality",
+        Severity.LOW,
+        "复杂Prompt(>500字符)缺少Trace可观测性声明",
+        "添加'## Trace: enabled'或使用trace()上下文管理器",
+        description_en="Complex Prompt (>500 chars) missing Trace observability declaration",
+        remediation_en="Add '## Trace: enabled' or use trace() context manager",
+        family="observability",
+    ),
+    LintRule(
+        "P083",
+        "Doctor健康检查建议",
+        "quality",
+        Severity.LOW,
+        "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+        "运行 'promptkit prompt-doctor -t <file>' 获取健康报告",
+        description_en="Prompt missing Doctor diagnostic check, recommend running prompt-doctor",
+        remediation_en="Run 'promptkit prompt-doctor -t <file>' to get health report",
+        family="health_check",
+    ),
+    LintRule(
+        "P084",
+        "输出格式规范缺失",
+        "quality",
+        Severity.MEDIUM,
+        "Prompt声明了JSON/Markdown输出但缺少格式约束",
+        '添加输出格式示例和Schema约束, 如\'返回JSON: {"key": "value"}\'',
+        description_en="Prompt declares JSON/Markdown output but lacks format constraints",
+        remediation_en='Add output format examples and Schema constraints, e.g., \'Return JSON: {"key": "value"}\'',
+        family="output_schema",
+    ),
+    LintRule(
+        "P085",
+        "模型兼容性风险",
+        "quality",
+        Severity.MEDIUM,
+        "Prompt使用了特定模型语法但未声明目标模型",
+        "声明目标模型: '适用于GPT-4/Claude-3/盘古'或使用条件编译",
+        description_en="Prompt uses model-specific syntax but does not declare target model",
+        remediation_en="Declare target model: 'Compatible with GPT-4/Claude-3/Pangu' or use conditional compilation",
+        family="model_compat",
+    ),
 ]
 
 for r in _RULES_P081_P085:
@@ -62,7 +91,8 @@ def check_p081(text: str) -> Finding | None:
     if not vars_without_default:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (变量: {', '.join(vars_without_default[:5])})",
         remediation=rule.remediation,
         details={"vars_without_default": vars_without_default[:5]},
@@ -77,7 +107,8 @@ def check_p082(text: str) -> Finding | None:
     if has_trace:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (当前{len(text)}字符)",
         remediation=rule.remediation,
         details={"char_count": len(text)},
@@ -92,15 +123,16 @@ def check_p083(text: str) -> Finding | None:
     if has_doctor:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=rule.description,
         remediation=rule.remediation,
     )
 
 
-_JSON_OUTPUT_PATTERN = re.compile(r'JSON|json|JsonObject|返回JSON|输出JSON')
-_MD_OUTPUT_PATTERN = re.compile(r'Markdown|markdown|\.md|输出Markdown')
-_FORMAT_CONSTRAINT_PATTERN = re.compile(r'Schema|schema|格式如下|示例:|Example:')
+_JSON_OUTPUT_PATTERN = re.compile(r"JSON|json|JsonObject|返回JSON|输出JSON")
+_MD_OUTPUT_PATTERN = re.compile(r"Markdown|markdown|\.md|输出Markdown")
+_FORMAT_CONSTRAINT_PATTERN = re.compile(r"Schema|schema|格式如下|示例:|Example:")
 
 
 def check_p084(text: str) -> Finding | None:
@@ -114,17 +146,18 @@ def check_p084(text: str) -> Finding | None:
         return None
     fmt = "JSON" if has_json_output else "Markdown"
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (声明{fmt}输出但无格式约束)",
         remediation=rule.remediation,
         details={"format": fmt},
     )
 
 
-_CHATML_PATTERN = re.compile(r'system.*message|system_prompt|<\|im_start\|>')
-_LLAMA_PATTERN = re.compile(r'\[INST\]|\[/INST\]|<s>|</s>')
-_ALPACA_PATTERN = re.compile(r'Human:|Assistant:|###')
-_MODEL_DECL_PATTERN = re.compile(r'GPT-4|Claude|DeepSeek|Qwen|盘古|Llama|模型', re.IGNORECASE)
+_CHATML_PATTERN = re.compile(r"system.*message|system_prompt|<\|im_start\|>")
+_LLAMA_PATTERN = re.compile(r"\[INST\]|\[/INST\]|<s>|</s>")
+_ALPACA_PATTERN = re.compile(r"Human:|Assistant:|###")
+_MODEL_DECL_PATTERN = re.compile(r"GPT-4|Claude|DeepSeek|Qwen|盘古|Llama|模型", re.IGNORECASE)
 
 
 def check_p085(text: str) -> Finding | None:
@@ -142,7 +175,8 @@ def check_p085(text: str) -> Finding | None:
     if has_model_decl:
         return None
     return Finding(
-        rule_id=rule.rule_id, severity=rule.severity,
+        rule_id=rule.rule_id,
+        severity=rule.severity,
         description=f"{rule.description} (检测到{', '.join(model_specific)}语法)",
         remediation=rule.remediation,
         details={"model_syntax": model_specific},

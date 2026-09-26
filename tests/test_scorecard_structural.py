@@ -1,15 +1,17 @@
 """测试安全评分卡和结构分析检测器"""
+
 from __future__ import annotations
 
-import pytest
-
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.security.prompt_scorecard import (
-    compute_scorecard, Grade, Decision, DimensionScore,
+    Decision,
+    Grade,
+    compute_scorecard,
 )
 from ai_prompt_toolkit.security.structural_analyzer import (
-    analyze_structure, check_structural, StructuralAnalysis,
+    analyze_structure,
+    check_structural,
 )
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestPromptScorecard:
@@ -37,10 +39,7 @@ class TestPromptScorecard:
         assert card.critical_count == 1
 
     def test_multiple_medium_gets_warn(self):
-        findings = [
-            Finding(rule_id=f"P{i:03d}", severity=Severity.MEDIUM, description=f"问题{i}")
-            for i in range(1, 8)
-        ]
+        findings = [Finding(rule_id=f"P{i:03d}", severity=Severity.MEDIUM, description=f"问题{i}") for i in range(1, 8)]
         card = compute_scorecard(findings)
         assert card.decision in (Decision.WARN, Decision.BLOCK)
 

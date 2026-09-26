@@ -7,6 +7,7 @@
 - 搜索过滤
 - 统计图表(纯CSS实现, 无外部依赖)
 """
+
 from __future__ import annotations
 
 import html
@@ -38,19 +39,25 @@ def generate_html_report(
         items_html = ""
         for item in items:
             sev_class = _sev_class(item.get("severity", "MEDIUM"))
+            # R171: 嵌套同引号f-string是Python 3.12语法(PEP 701), 3.10/3.11需提取变量
+            remediation_html = (
+                f"<p><strong>修复建议:</strong> {html.escape(str(item.get('remediation', '')))}</p>"
+                if item.get("remediation")
+                else ""
+            )
             items_html += f"""
             <div class="finding {sev_class}">
                 <div class="finding-header" onclick="toggleDetail(this)">
-                    <span class="rule-id">{html.escape(str(item.get('rule_id', '')))}</span>
-                    <span class="severity-badge {sev_class}">{html.escape(str(item.get('severity', '')))}</span>
-                    <span class="finding-name">{html.escape(str(item.get('message', item.get('name', ''))))}</span>
+                    <span class="rule-id">{html.escape(str(item.get("rule_id", "")))}</span>
+                    <span class="severity-badge {sev_class}">{html.escape(str(item.get("severity", "")))}</span>
+                    <span class="finding-name">{html.escape(str(item.get("message", item.get("name", ""))))}</span>
                 </div>
                 <div class="finding-detail" style="display:none">
-                    <p><strong>规则:</strong> {html.escape(str(item.get('rule_id', '')))} — {html.escape(str(item.get('name', '')))}</p>
-                    <p><strong>严重度:</strong> {html.escape(str(item.get('severity', '')))}</p>
-                    <p><strong>类别:</strong> {html.escape(str(item.get('category', '')))}</p>
-                    <p><strong>消息:</strong> {html.escape(str(item.get('message', '')))}</p>
-                    {f'<p><strong>修复建议:</strong> {html.escape(str(item.get("remediation", "")))}</p>' if item.get('remediation') else ''}
+                    <p><strong>规则:</strong> {html.escape(str(item.get("rule_id", "")))} — {html.escape(str(item.get("name", "")))}</p>
+                    <p><strong>严重度:</strong> {html.escape(str(item.get("severity", "")))}</p>
+                    <p><strong>类别:</strong> {html.escape(str(item.get("category", "")))}</p>
+                    <p><strong>消息:</strong> {html.escape(str(item.get("message", "")))}</p>
+                    {remediation_html}
                 </div>
             </div>"""
         cat_sections += f"""
@@ -116,12 +123,12 @@ body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans
     <div class="header">
         <h1>Prompt Lint Report</h1>
         <div class="meta">
-            Target: <strong>{html.escape(target)}</strong> | 
-            Rules: 180 | 
-            Generated: {time.strftime('%Y-%m-%d %H:%M:%S')} | 
+            Target: <strong>{html.escape(target)}</strong> |
+            Rules: 180 |
+            Generated: {time.strftime("%Y-%m-%d %H:%M:%S")} |
             v{__version__}
         </div>
-        <div class="score-bar"><div class="score-fill" style="width:{max(0, min(100, score*10))}%"></div></div>
+        <div class="score-bar"><div class="score-fill" style="width:{max(0, min(100, score * 10))}%"></div></div>
     </div>
     <div class="stats">
         <div class="stat-card critical"><div class="value">{critical}</div><div class="label">Critical</div></div>

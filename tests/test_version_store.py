@@ -1,11 +1,10 @@
 """R22 Prompt版本管理测试 — VersionStore + diff + rollback"""
-from __future__ import annotations
 
-from pathlib import Path
+from __future__ import annotations
 
 import pytest
 
-from ai_prompt_toolkit.version_store import VersionStore, PromptVersion, VersionDiff
+from ai_prompt_toolkit.version_store import VersionStore
 
 
 @pytest.fixture
@@ -43,13 +42,13 @@ class TestVersionStoreCreate:
 class TestVersionStoreList:
     def test_list_versions_ordered(self, store):
         for i in range(5):
-            store.create_version("test", f"v{i+1}")
+            store.create_version("test", f"v{i + 1}")
         versions = store.list_versions("test")
         assert [v.version_number for v in versions] == [5, 4, 3, 2, 1]
 
     def test_list_limit(self, store):
         for i in range(10):
-            store.create_version("test", f"v{i+1}")
+            store.create_version("test", f"v{i + 1}")
         versions = store.list_versions("test", limit=3)
         assert len(versions) == 3
 
@@ -132,6 +131,7 @@ class TestVersionStoreRollback:
 class TestVersionCLI:
     def test_version_command_help(self):
         from click.testing import CliRunner
+
         from ai_prompt_toolkit.cli import main
 
         runner = CliRunner()
@@ -140,8 +140,6 @@ class TestVersionCLI:
         assert "版本管理" in result.output
 
     def test_version_create_and_list(self, tmp_path):
-        from click.testing import CliRunner
-        from ai_prompt_toolkit.cli import main
         from ai_prompt_toolkit.version_store import VersionStore
 
         db_path = tmp_path / "cli_test_versions.db"

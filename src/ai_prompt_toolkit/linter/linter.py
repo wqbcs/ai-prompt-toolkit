@@ -2,21 +2,18 @@
 
 from __future__ import annotations
 
-import re
 import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.linter.rules import (
-    LintRule,
-    get_all_rules,
-    get_rule,
-    run_all_checks,
-    _RULE_MAP,
     _AMBIGUOUS_WORDS,
     _SENSITIVE_PATTERNS,
+    LintRule,
+    get_all_rules,
+    run_all_checks,
 )
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 @dataclass
@@ -85,10 +82,13 @@ class PromptLinter:
     def active_rules(self) -> list[LintRule]:
         return list(self._active_rules)
 
-    _KNOWLEDGE_EXCLUDED_RULES = frozenset({"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020", "P025", "P028", "P030"})
+    _KNOWLEDGE_EXCLUDED_RULES = frozenset(
+        {"P001", "P002", "P004", "P006", "P015", "P016", "P018", "P019", "P020", "P025", "P028", "P030"}
+    )
 
-    def lint(self, template_id: str, text: str, *, fix: bool = False,
-            template_type: str = "prompt", lint_config: Any = None) -> LintResult:
+    def lint(
+        self, template_id: str, text: str, *, fix: bool = False, template_type: str = "prompt", lint_config: Any = None
+    ) -> LintResult:
         start = time.perf_counter()
 
         rule_ids = self._rule_ids
@@ -157,24 +157,28 @@ class PromptLinter:
     def _get_fix_action(self, finding: Finding, text: str) -> FixAction | None:
         rule_id = finding.rule_id
 
-        if rule_id == "P005":
-            if len(text) < 50:
-                return FixAction(
-                    rule_id=rule_id,
-                    original=text[:30],
-                    replacement=text + "\n\n请按照以上要求进行回答。",
-                    description="补充最低内容要求",
-                )
+        if rule_id == "P005" and len(text) < 50:
+            return FixAction(
+                rule_id=rule_id,
+                original=text[:30],
+                replacement=text + "\n\n请按照以上要求进行回答。",
+                description="补充最低内容要求",
+            )
 
         if rule_id == "P016":
             ambiguous = _AMBIGUOUS_WORDS.findall(text)
             if ambiguous:
                 first = ambiguous[0]
                 replacements = {
-                    "可能": "需要", "大概": "具体", "也许": "务必",
-                    "maybe": "must", "perhaps": "specifically",
-                    "possibly": "definitely", "some": "specific",
-                    "差不多": "精确", "左右": "具体",
+                    "可能": "需要",
+                    "大概": "具体",
+                    "也许": "务必",
+                    "maybe": "must",
+                    "perhaps": "specifically",
+                    "possibly": "definitely",
+                    "some": "specific",
+                    "差不多": "精确",
+                    "左右": "具体",
                 }
                 replacement = replacements.get(first.lower(), "具体")
                 return FixAction(

@@ -1,21 +1,19 @@
 """R62: 华为云安全合规报告测试"""
+
 from __future__ import annotations
 
 import json
 
-import pytest
-
-from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.security.huaweicloud_compliance import (
-    HuaweiCloudComplianceReport,
-    compute_huaweicloud_compliance,
-    ComplianceGrade,
+    _DOMAIN_NAMES,
+    _HUAWEICLOUD_DOMAIN_WEIGHTS,
     ComplianceDecision,
+    ComplianceGrade,
     DomainResult,
     _classify_to_domain,
-    _HUAWEICLOUD_DOMAIN_WEIGHTS,
-    _DOMAIN_NAMES,
+    compute_huaweicloud_compliance,
 )
+from ai_prompt_toolkit.types import Finding, Severity
 
 
 class TestClassifyToDomain:
@@ -170,8 +168,15 @@ class TestComputeHuaweiCloudCompliance:
 
     def test_domain_result_ratio(self):
         dr = DomainResult(
-            domain="data_privacy", domain_name="数据隐私", score=80, max_score=100,
-            findings_count=1, critical_count=0, high_count=1, checks_passed=9, checks_total=10,
+            domain="data_privacy",
+            domain_name="数据隐私",
+            score=80,
+            max_score=100,
+            findings_count=1,
+            critical_count=0,
+            high_count=1,
+            checks_passed=9,
+            checks_total=10,
         )
         assert dr.ratio == 0.8
         assert dr.pass_rate == 0.9

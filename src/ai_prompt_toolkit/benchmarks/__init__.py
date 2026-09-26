@@ -13,23 +13,27 @@
     python -m ai_prompt_toolkit.benchmarks.compile_benchmark
     pytest tests/test_benchmarks.py -v
 """
+
 from __future__ import annotations
 
 import statistics
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.compiler import (
-    Lexer,
-    Parser,
-    Evaluator,
-    Renderer,
     CompileCache,
     CompileContext,
     CompileResult,
+    Evaluator,
+    Lexer,
+    Parser,
+    Renderer,
     compile_template,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 @dataclass
@@ -67,8 +71,7 @@ class BenchResult:
         )
 
 
-def _run_bench(name: str, fn: Callable[[], Any], iterations: int = 1000,
-               warmup: int = 50) -> BenchResult:
+def _run_bench(name: str, fn: Callable[[], Any], iterations: int = 1000, warmup: int = 50) -> BenchResult:
     for _ in range(warmup):
         fn()
 
@@ -88,9 +91,15 @@ def _run_bench(name: str, fn: Callable[[], Any], iterations: int = 1000,
     ops = iterations / (total / 1000) if total > 0 else 0
 
     return BenchResult(
-        name=name, iterations=iterations, total_ms=total,
-        mean_ms=mean, median_ms=median, min_ms=mn, max_ms=mx,
-        stddev_ms=sd, ops_per_sec=ops,
+        name=name,
+        iterations=iterations,
+        total_ms=total,
+        mean_ms=mean,
+        median_ms=median,
+        min_ms=mn,
+        max_ms=mx,
+        stddev_ms=sd,
+        ops_per_sec=ops,
     )
 
 
@@ -108,10 +117,7 @@ NESTED_CONDITION = (
     "  {{#if language == zh-CN}}其他中文{{else}}Other English{{/if}}"
     "{{/if}}"
 )
-LARGE_TEMPLATE = "\n".join(
-    f"段落{i}: {{#if model == gpt-4}}GPT-4内容{{else}}通用内容{{/if}}"
-    for i in range(100)
-)
+LARGE_TEMPLATE = "\n".join(f"段落{i}: {{#if model == gpt-4}}GPT-4内容{{else}}通用内容{{/if}}" for i in range(100))
 
 
 def bench_lexer_simple() -> BenchResult:
@@ -130,6 +136,7 @@ def bench_parser_single() -> BenchResult:
     def _fn():
         tokens = Lexer(SINGLE_CONDITION).tokenize()
         Parser(tokens).parse()
+
     return _run_bench("parser_single", _fn)
 
 
@@ -137,6 +144,7 @@ def bench_parser_nested() -> BenchResult:
     def _fn():
         tokens = Lexer(NESTED_CONDITION).tokenize()
         Parser(tokens).parse()
+
     return _run_bench("parser_nested", _fn)
 
 
@@ -146,10 +154,15 @@ def bench_evaluator_simple() -> BenchResult:
     ast = Parser(tokens).parse()
     cond = ast.children[0].condition if ast.children else None
     if cond is None:
-        def _fn(): pass
+
+        def _fn():
+            pass
     else:
         ev = Evaluator(ctx)
-        def _fn(): ev.evaluate(cond)
+
+        def _fn():
+            ev.evaluate(cond)
+
     return _run_bench("evaluator_simple", _fn)
 
 
@@ -213,28 +226,30 @@ class BenchSuite:
         }
 
     def report(self) -> str:
-        lines = [f"{'='*60}", f"基准测试: {self.name}", f"{'='*60}"]
+        lines = [f"{'=' * 60}", f"基准测试: {self.name}", f"{'=' * 60}"]
         for r in self.results:
             lines.append(str(r))
-        lines.append(f"{'='*60}")
+        lines.append(f"{'=' * 60}")
         return "\n".join(lines)
 
 
 def run_all_benchmarks() -> BenchSuite:
     suite = BenchSuite(name="条件编译性能基准测试")
-    suite.run([
-        bench_lexer_simple,
-        bench_lexer_single_condition,
-        bench_lexer_large,
-        bench_parser_single,
-        bench_parser_nested,
-        bench_evaluator_simple,
-        bench_compile_simple,
-        bench_compile_single_condition,
-        bench_compile_nested_no_cache,
-        bench_compile_with_cache_hit,
-        bench_compile_large,
-    ])
+    suite.run(
+        [
+            bench_lexer_simple,
+            bench_lexer_single_condition,
+            bench_lexer_large,
+            bench_parser_single,
+            bench_parser_nested,
+            bench_evaluator_simple,
+            bench_compile_simple,
+            bench_compile_single_condition,
+            bench_compile_nested_no_cache,
+            bench_compile_with_cache_hit,
+            bench_compile_large,
+        ]
+    )
     return suite
 
 

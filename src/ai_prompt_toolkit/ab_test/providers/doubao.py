@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.ab_test.provider import BaseProvider
-from ai_prompt_toolkit.ab_test.types import ModelResult
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.ab_test.types import ModelResult
 
 
 class DoubaoProvider(BaseProvider):

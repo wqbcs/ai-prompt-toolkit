@@ -6,6 +6,7 @@
 - LTS日志服务: Prompt操作审计日志
 - ModelArts: 模型推理服务管理
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -16,7 +17,6 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
-from urllib.parse import quote
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class IAMCredential:
     @classmethod
     def from_env(cls) -> IAMCredential:
         import os
+
         return cls(
             access_key_id=os.environ.get("HW_ACCESS_KEY_ID", ""),
             secret_access_key=os.environ.get("HW_SECRET_ACCESS_KEY", ""),
@@ -71,22 +72,26 @@ def sign_request(
     if "?" in path:
         path, query = path.split("?", 1)
 
-    canonical_request = "\n".join([
-        method.upper(),
-        path,
-        query,
-        canonical_headers,
-        ";".join(signed_header_keys),
-        hashlib.sha256(body.encode("utf-8")).hexdigest(),
-    ])
+    canonical_request = "\n".join(
+        [
+            method.upper(),
+            path,
+            query,
+            canonical_headers,
+            ";".join(signed_header_keys),
+            hashlib.sha256(body.encode("utf-8")).hexdigest(),
+        ]
+    )
 
     scope = f"{date_stamp}/{credential.region}/sdk_request"
-    string_to_sign = "\n".join([
-        "SDK-HMAC-SHA256",
-        timestamp,
-        scope,
-        hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
-    ])
+    string_to_sign = "\n".join(
+        [
+            "SDK-HMAC-SHA256",
+            timestamp,
+            scope,
+            hashlib.sha256(canonical_request.encode("utf-8")).hexdigest(),
+        ]
+    )
 
     k_date = hmac.new(
         credential.secret_access_key.encode("utf-8"),
@@ -127,6 +132,7 @@ class OBSConfig:
     @classmethod
     def from_env(cls) -> OBSConfig:
         import os
+
         return cls(
             bucket_name=os.environ.get("HW_OBS_BUCKET", ""),
             endpoint=os.environ.get("HW_OBS_ENDPOINT", "obs.cn-north-4.myhuaweicloud.com"),
@@ -147,6 +153,7 @@ class LTSConfig:
     @classmethod
     def from_env(cls) -> LTSConfig:
         import os
+
         return cls(
             log_group_id=os.environ.get("HW_LTS_LOG_GROUP_ID", ""),
             log_stream_id=os.environ.get("HW_LTS_LOG_STREAM_ID", ""),

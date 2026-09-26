@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.ab_test.provider import BaseProvider
-from ai_prompt_toolkit.ab_test.types import ModelResult
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.ab_test.types import ModelResult
 
 
 class ZhipuProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "glm-4": (0.001, 0.001), "glm-4-flash": (0.0001, 0.0001),
+        "glm-4": (0.001, 0.001),
+        "glm-4-flash": (0.0001, 0.0001),
         "glm-4-plus": (0.005, 0.005),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.001, 0.001)

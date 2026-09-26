@@ -1,4 +1,5 @@
 """R129 测试: 规则搜索引擎"""
+
 from __future__ import annotations
 
 import tempfile

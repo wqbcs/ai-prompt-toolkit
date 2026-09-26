@@ -2,6 +2,7 @@
 
 从cli_core.main group导入并注册命令。
 """
+
 from __future__ import annotations
 
 import sys
@@ -20,8 +21,9 @@ from ai_prompt_toolkit.cli_core import main
 @click.option("--base-dir", help="i18n资源基础目录")
 @click.option("--llm", is_flag=True, help="启用LLM辅助翻译(需配置Provider)")
 @click.option("--provider", help="LLM Provider(provider:model_name)")
-def i18n(source_locale: str, target_locale: str, output: str | None,
-         base_dir: str | None, llm: bool, provider: str | None) -> None:
+def i18n(
+    source_locale: str, target_locale: str, output: str | None, base_dir: str | None, llm: bool, provider: str | None
+) -> None:
     """国际化：批量翻译Prompt模板"""
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.i18n.translator import translate_template
@@ -47,8 +49,9 @@ def i18n(source_locale: str, target_locale: str, output: str | None,
 
 
 @main.command()
-@click.option("--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]),
-              required=True, help="市场操作")
+@click.option(
+    "--action", "-a", type=click.Choice(["submit", "review", "deploy", "status"]), required=True, help="市场操作"
+)
 @click.option("--template", "-t", help="模板ID或文件路径")
 @click.option("--config", help="市场配置YAML文件路径")
 def market(action: str, template: str | None, config: str | None) -> None:
@@ -77,7 +80,9 @@ def market(action: str, template: str | None, config: str | None) -> None:
         click.echo(f"部署成功: {template} → {result.get('url', 'N/A')}")
     elif action == "status":
         result = client.status(template)
-        click.echo(f"模板: {result.get('template_id', '?')} | 状态: {result.get('status', '?')} | 评分: {result.get('rating', '-')}")
+        click.echo(
+            f"模板: {result.get('template_id', '?')} | 状态: {result.get('status', '?')} | 评分: {result.get('rating', '-')}"
+        )
 
 
 @main.command(name="upgrade-fm")
@@ -118,7 +123,12 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 @click.option("--target", "-t", default=".", help="项目目录(默认当前目录)")
 @click.option("--non-interactive", is_flag=True, help="非交互模式")
 @click.option("--ci", is_flag=True, help="生成CI/CD配置(GitHub Action+Docker+pre-commit)")
-@click.option("--template", type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]), default=None, help="项目模板")
+@click.option(
+    "--template",
+    type=click.Choice(["general", "harmonyos", "security", "rag", "code-review"]),
+    default=None,
+    help="项目模板",
+)
 def init_project(target: str, non_interactive: bool, ci: bool, template: str | None) -> None:
     """初始化项目：创建项目结构和配置文件"""
     from ai_prompt_toolkit.config import generate_config
@@ -149,6 +159,7 @@ def init_project(target: str, non_interactive: bool, ci: bool, template: str | N
 
 def _apply_template(target: str, template_name: str) -> None:
     from ai_prompt_toolkit.output import success
+
     target_path = Path(target).resolve()
     prompts_dir = target_path / "prompts"
     prompts_dir.mkdir(exist_ok=True)
@@ -174,6 +185,7 @@ def _apply_template(target: str, template_name: str) -> None:
 
 def _generate_ci_config(target: str) -> None:
     from ai_prompt_toolkit.output import success
+
     target_path = Path(target).resolve()
 
     github_dir = target_path / ".github" / "workflows"
@@ -212,6 +224,7 @@ def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
     """查看/设置界面语言"""
     from ai_prompt_toolkit.i18n.messages import get_current_locale, get_supported_locales
     from ai_prompt_toolkit.i18n.messages import set_locale as msg_set_locale
+
     if list_locales:
         current = get_current_locale()
         for loc in get_supported_locales():
@@ -229,15 +242,19 @@ def locale_cmd(set_locale: str | None, list_locales: bool) -> None:
 
 @main.command(name="feedback")
 @click.option("--message", "-m", required=True, help="反馈内容")
-@click.option("--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型")
+@click.option(
+    "--type", "-t", type=click.Choice(["bug", "feature", "improvement", "other"]), default="other", help="反馈类型"
+)
 def feedback_cmd(message: str, type: str) -> None:
     """提交用户反馈"""
     import json
 
     from ai_prompt_toolkit.output import success
+
     feedback_dir = Path.home() / ".ai-prompt-toolkit" / "feedback"
     feedback_dir.mkdir(parents=True, exist_ok=True)
     import time
+
     entry = {
         "message": message,
         "type": type,
@@ -287,11 +304,16 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
                 return
             console.print(f"[bold]已加载 {len(rules)} 条自定义规则:[/bold]")
             for r in rules:
-                sev_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green"}.get(r["severity"].value, "white")
-                console.print(f"  [{sev_color}]{r['rule_id']}[/{sev_color}] {r['name']} ({r['severity'].value}) — {r['description'][:50]}")
+                sev_color = {"CRITICAL": "red", "HIGH": "yellow", "MEDIUM": "cyan", "LOW": "green"}.get(
+                    r["severity"].value, "white"
+                )
+                console.print(
+                    f"  [{sev_color}]{r['rule_id']}[/{sev_color}] {r['name']} ({r['severity'].value}) — {r['description'][:50]}"
+                )
 
             if target:
                 from ai_prompt_toolkit.cli_helpers import resolve_path
+
                 target_path = resolve_path(target)
                 if not target_path.exists():
                     error(f"目标文件不存在: {target}")

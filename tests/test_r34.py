@@ -1,7 +1,6 @@
 """R34: UX体验增强 测试套件"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.ux_enhanced import (
     EmptyStateGuide,

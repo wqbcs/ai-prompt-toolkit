@@ -1,13 +1,11 @@
 """术语表 — YAML格式术语管理，支持华为云领域术语"""
+
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
 
 import yaml
-
-from ai_prompt_toolkit.i18n.types import TranslationStatus
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +103,7 @@ class Glossary:
         if not p.exists():
             logger.warning("术语表文件不存在: %s", p)
             return
-        with open(p, "r", encoding="utf-8") as f:
+        with open(p, encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if not isinstance(data, dict):
             return
@@ -114,8 +112,12 @@ class Glossary:
                 existing = self._entries.get(term, {})
                 for locale, value in translations.items():
                     if term in existing and existing[locale] != value:
-                        logger.warning("术语冲突: '%s' 在 %s 中有多个翻译，使用首选: %s",
-                                       term, locale, self._preferred.get(term, value))
+                        logger.warning(
+                            "术语冲突: '%s' 在 %s 中有多个翻译，使用首选: %s",
+                            term,
+                            locale,
+                            self._preferred.get(term, value),
+                        )
                     else:
                         existing[locale] = value
                 self._entries[term] = existing

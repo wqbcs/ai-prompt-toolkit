@@ -1,15 +1,19 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.ab_test.provider import BaseProvider
-from ai_prompt_toolkit.ab_test.types import ModelResult
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.ab_test.types import ModelResult
 
 
 class AliyunProvider(BaseProvider):
     _PRICING: dict[str, tuple[float, float]] = {
-        "qwen-max": (0.004, 0.012), "qwen-plus": (0.0008, 0.002),
-        "qwen-turbo": (0.0003, 0.0006), "qwen-long": (0.0005, 0.002),
+        "qwen-max": (0.004, 0.012),
+        "qwen-plus": (0.0008, 0.002),
+        "qwen-turbo": (0.0003, 0.0006),
+        "qwen-long": (0.0005, 0.002),
     }
     _DEFAULT_RATES: tuple[float, float] = (0.004, 0.012)
     _PROVIDER_LABEL: str = "Aliyun"

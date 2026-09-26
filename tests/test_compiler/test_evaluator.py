@@ -1,9 +1,10 @@
 """Evaluator单元测试——==,!=,in,not_in,&&,||, 副作用检测。"""
+
 from __future__ import annotations
 
 import pytest
 
-from ai_prompt_toolkit.compiler.evaluator import EvaluationError, Evaluator, evaluate
+from ai_prompt_toolkit.compiler.evaluator import EvaluationError, evaluate
 from ai_prompt_toolkit.compiler.types import CompileContext, Condition
 
 
@@ -73,7 +74,9 @@ class TestNotInOperator:
 class TestLogicalAnd:
     def test_and_both_true(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="&&",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -82,7 +85,9 @@ class TestLogicalAnd:
 
     def test_and_one_false(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="&&",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -91,7 +96,9 @@ class TestLogicalAnd:
 
     def test_and_both_false(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="&&",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -102,7 +109,9 @@ class TestLogicalAnd:
 class TestLogicalOr:
     def test_or_both_true(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="||",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -111,7 +120,9 @@ class TestLogicalOr:
 
     def test_or_one_true(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="||",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -120,7 +131,9 @@ class TestLogicalOr:
 
     def test_or_both_false(self):
         cond = Condition(
-            dimension="model", operator="==", value="gpt-4",
+            dimension="model",
+            operator="==",
+            value="gpt-4",
             logical="||",
             right=Condition(dimension="language", operator="==", value="zh"),
         )
@@ -159,7 +172,7 @@ class TestMissingDimension:
 
     def test_missing_dimension_in_returns_false(self):
         cond = Condition(dimension="unknown_dim", operator="in", value=["a", "b"])
-        result, warnings = evaluate(cond, CompileContext())
+        result, _warnings = evaluate(cond, CompileContext())
         assert result is False
 
 

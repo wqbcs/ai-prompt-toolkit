@@ -1,8 +1,9 @@
 """R111 测试: P201-P205 Prompt合规Lint规则"""
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules, run_all_checks
 from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+from ai_prompt_toolkit.linter.rules import _RULE_MAP, get_all_rules, run_all_checks
 from ai_prompt_toolkit.types import Severity
 
 

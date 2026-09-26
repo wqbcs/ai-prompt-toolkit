@@ -1,26 +1,32 @@
 """条件编译性能基准测试 — 单元测试验证"""
-from __future__ import annotations
 
-import pytest
+from __future__ import annotations
 
 from ai_prompt_toolkit.benchmarks import (
     BenchResult,
     BenchSuite,
     _run_bench,
-    run_all_benchmarks,
-    bench_lexer_simple,
-    bench_lexer_single_condition,
     bench_compile_simple,
     bench_compile_single_condition,
     bench_compile_with_cache_hit,
+    bench_lexer_simple,
+    bench_lexer_single_condition,
+    run_all_benchmarks,
 )
 
 
 class TestBenchResult:
     def test_to_dict(self):
         r = BenchResult(
-            name="test", iterations=10, total_ms=100, mean_ms=10,
-            median_ms=10, min_ms=8, max_ms=12, stddev_ms=1.5, ops_per_sec=100,
+            name="test",
+            iterations=10,
+            total_ms=100,
+            mean_ms=10,
+            median_ms=10,
+            min_ms=8,
+            max_ms=12,
+            stddev_ms=1.5,
+            ops_per_sec=100,
         )
         d = r.to_dict()
         assert d["name"] == "test"
@@ -29,8 +35,15 @@ class TestBenchResult:
 
     def test_str_format(self):
         r = BenchResult(
-            name="mybench", iterations=100, total_ms=50, mean_ms=0.5,
-            median_ms=0.5, min_ms=0.3, max_ms=0.8, stddev_ms=0.1, ops_per_sec=2000,
+            name="mybench",
+            iterations=100,
+            total_ms=50,
+            mean_ms=0.5,
+            median_ms=0.5,
+            min_ms=0.3,
+            max_ms=0.8,
+            stddev_ms=0.1,
+            ops_per_sec=2000,
         )
         s = str(r)
         assert "mybench" in s
@@ -40,8 +53,10 @@ class TestBenchResult:
 class TestRunBench:
     def test_basic_execution(self):
         counter = {"n": 0}
+
         def fn():
             counter["n"] += 1
+
         result = _run_bench("test_fn", fn, iterations=10, warmup=2)
         assert result.iterations == 10
         assert result.name == "test_fn"
@@ -50,8 +65,10 @@ class TestRunBench:
 
     def test_warmup_runs_first(self):
         calls = {"warmup": 0, "main": 0}
+
         def fn():
             calls["main"] += 1
+
         _run_bench("test", fn, iterations=5, warmup=3)
         assert calls["main"] == 8
 

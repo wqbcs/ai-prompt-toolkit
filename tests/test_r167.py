@@ -1,4 +1,5 @@
 """R167测试: F2 swap一致性过滤 + F4 flaky稳定judge + Q1误报基线扩容"""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
@@ -20,16 +21,16 @@ from ai_prompt_toolkit.linter.linter import PromptLinter
 
 def _make_ensemble(judge_count: int = 1) -> MultiJudgeEnsemble:
     with patch("ai_prompt_toolkit.ab_test.judge.create_provider"):
-        configs = [ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
-                   for _ in range(judge_count)]
-        ensemble = MultiJudgeEnsemble(configs, mode=JudgeMode.PAIRWISE,
-                                      aggregation=AggregationMethod.SWAP_DEBIAS)
+        configs = [
+            ModelConfig(provider=ProviderType.OPENAI, model_name="gpt-4o-mini", temperature=0.0)
+            for _ in range(judge_count)
+        ]
+        ensemble = MultiJudgeEnsemble(configs, mode=JudgeMode.PAIRWISE, aggregation=AggregationMethod.SWAP_DEBIAS)
     return ensemble
 
 
 def _fake_model_result(config: ModelConfig, text: str) -> ModelResult:
-    return ModelResult(model_config=config, prompt_template="q", response=text,
-                       status=TestStatus.COMPLETED)
+    return ModelResult(model_config=config, prompt_template="q", response=text, status=TestStatus.COMPLETED)
 
 
 def _script_invoke(ensemble: MultiJudgeEnsemble, responses: list[str]) -> None:
@@ -37,10 +38,12 @@ def _script_invoke(ensemble: MultiJudgeEnsemble, responses: list[str]) -> None:
     for i, judge in enumerate(ensemble._judges):
         ab_text, ba_text = responses[i * 2], responses[i * 2 + 1]
         cfg = judge._judge_config
-        judge._provider.invoke = AsyncMock(side_effect=[
-            _fake_model_result(cfg, ab_text),
-            _fake_model_result(cfg, ba_text),
-        ])
+        judge._provider.invoke = AsyncMock(
+            side_effect=[
+                _fake_model_result(cfg, ab_text),
+                _fake_model_result(cfg, ba_text),
+            ]
+        )
 
 
 class TestF2SwapConsistency:
@@ -164,8 +167,7 @@ class TestQ1CleanPromptBaselines:
         linter = PromptLinter()
         result = linter.lint("baseline", text)
         return [
-            f.rule_id for f in result.findings
-            if getattr(f.severity, "value", str(f.severity)) in ("high", "critical")
+            f.rule_id for f in result.findings if getattr(f.severity, "value", str(f.severity)) in ("high", "critical")
         ]
 
     @pytest.mark.parametrize("name", BASELINES.keys())

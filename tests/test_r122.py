@@ -1,7 +1,8 @@
 """R122 测试: P216-P220 多模态安全规则"""
+
 from __future__ import annotations
 
-from ai_prompt_toolkit.linter.rules import run_all_checks, get_rule, get_all_rules
+from ai_prompt_toolkit.linter.rules import get_all_rules, get_rule, run_all_checks
 from ai_prompt_toolkit.types import Severity
 
 
@@ -73,4 +74,5 @@ class TestR122MultimodalSecurity:
 
     def test_auto_fixable_count(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+
         assert len(AUTO_FIXABLE_RULES) == 196  # R164扩容后实际值

@@ -1,4 +1,5 @@
 """TranslationEngine — 翻译API调用和本地缓存，人工审校标记保护"""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,9 +7,12 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING
 
 from ai_prompt_toolkit.i18n.types import TranslationEntry, TranslationStatus
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +32,7 @@ class TranslationEngine:
         cache_file = self._cache_dir / "translations.json"
         if cache_file.exists():
             try:
-                with open(cache_file, "r", encoding="utf-8") as f:
+                with open(cache_file, encoding="utf-8") as f:
                     self._cache = json.load(f)
             except (json.JSONDecodeError, OSError):
                 self._cache = {}

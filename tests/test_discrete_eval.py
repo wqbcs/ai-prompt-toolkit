@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ai_prompt_toolkit.discrete_eval import (
     AspectCritique,
     DiscreteMetric,
     DiscreteMetricEvaluator,
-    DiscreteResult,
     DiscreteValue,
 )
 from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry

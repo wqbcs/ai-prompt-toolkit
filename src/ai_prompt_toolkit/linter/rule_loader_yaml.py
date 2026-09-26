@@ -11,6 +11,7 @@
 - 规则开关(enable/disable)
 - 自定义严重级别和描述
 """
+
 from __future__ import annotations
 
 import re
@@ -20,7 +21,6 @@ from typing import Any
 import yaml
 
 from ai_prompt_toolkit.types import Finding, Severity
-
 
 _SEVERITY_MAP = {
     "critical": Severity.CRITICAL,
@@ -75,18 +75,20 @@ def load_rules_from_yaml(yaml_path: str | Path) -> list[dict[str, Any]]:
 
         try:
             compiled = _compile_pattern(pattern_str, flags)
-        except re.error as e:
+        except re.error:
             continue
 
-        loaded.append({
-            "rule_id": rule_id,
-            "name": name,
-            "category": category,
-            "severity": severity,
-            "description": description,
-            "remediation": remediation,
-            "pattern": compiled,
-        })
+        loaded.append(
+            {
+                "rule_id": rule_id,
+                "name": name,
+                "category": category,
+                "severity": severity,
+                "description": description,
+                "remediation": remediation,
+                "pattern": compiled,
+            }
+        )
 
     return loaded
 
@@ -96,13 +98,15 @@ def check_custom_rules(text: str, rules: list[dict[str, Any]]) -> list[Finding]:
     for rule in rules:
         matches = rule["pattern"].findall(text)
         if matches:
-            findings.append(Finding(
-                rule_id=rule["rule_id"],
-                severity=rule["severity"],
-                description=f"{rule['description']} (匹配 {len(matches)} 处)",
-                remediation=rule["remediation"],
-                details={"matches": len(matches), "category": rule["category"]},
-            ))
+            findings.append(
+                Finding(
+                    rule_id=rule["rule_id"],
+                    severity=rule["severity"],
+                    description=f"{rule['description']} (匹配 {len(matches)} 处)",
+                    remediation=rule["remediation"],
+                    details={"matches": len(matches), "category": rule["category"]},
+                )
+            )
     return findings
 
 

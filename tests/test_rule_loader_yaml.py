@@ -1,12 +1,19 @@
 """测试Lint规则YAML热加载"""
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
-from pathlib import Path
 
 from ai_prompt_toolkit.linter.rule_loader_yaml import (
-    load_rules_from_yaml, check_custom_rules, generate_sample_yaml,
+    check_custom_rules,
+    generate_sample_yaml,
+    load_rules_from_yaml,
 )
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture
