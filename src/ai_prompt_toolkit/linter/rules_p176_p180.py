@@ -67,7 +67,8 @@ _CHAIN_REF = re.compile(r'(?:previous|prior|last|above)\s+(?:step|output|result|
 def check_p176(text: str) -> list[Finding]:
     findings = []
     has_role = bool(re.search(r'(?:你是|You are|作为|Act as|ROLE)', text, re.IGNORECASE))
-    has_multi_turn = bool(re.search(r'(?:对话|conversation|上下文|context|历史|history|轮次|turn)', text, re.IGNORECASE))
+    # R169校准: 需真实多轮会话语义 — 裸"对话/上下文/历史"对单轮Prompt误触发CRITICAL
+    has_multi_turn = bool(re.search(r'(?:多轮|multi.turn|每轮|对话历史|历史消息|轮次|conversation.{0,8}history|chat.{0,6}history|multi.turn.{0,8}(?:chat|dialog|conversation))', text, re.IGNORECASE))
     if has_multi_turn and not has_role:
         findings.append(Finding("P176", Severity.CRITICAL, "多轮对话缺少角色锁定, 存在上下文污染风险", 1, 1))
     has_isolation = bool(re.search(r'(?:隔离|isolate|沙箱|sandbox|窗口|window)', text, re.IGNORECASE))

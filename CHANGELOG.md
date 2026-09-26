@@ -2,6 +2,17 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.5.0] - 2026-09-26
+
+### Changed (R169: 自举审计驱动的规则校准)
+
+- 方法升级: 对仓库自身35个提示词语料做dogfooding审计, 按"HIGH/CRITICAL且命中率>=80%"定位过热规则
+- P068 HIGH→MEDIUM(与P167幻觉声明对齐); P184 HIGH→MEDIUM(与P155降级声明对齐, 定义+内联同步)
+- P176门控收紧: 需真实多轮会话语义(多轮/历史消息/chat history) — 裸"对话/上下文/历史"
+  曾让单轮Prompt触发CRITICAL上下文污染; 补单轮反例守护
+- 复扫结果: 高危层仅剩P177(语料含编码示例所致, 真实提示词上为正当信号)
+- 全量回归: 3590 passed / 0 failed
+
 ## [v67.4.0] - 2026-09-26
 
 ### Changed (R168: 声明类规则误报治理 — Q1家族清零)

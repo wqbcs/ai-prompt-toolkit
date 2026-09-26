@@ -9,10 +9,18 @@ from ai_prompt_toolkit.types import Severity
 
 class TestP176P180Rules:
     def test_p176_context_pollution(self):
-        text = "这是一个对话系统，请根据上下文历史回答问题"
+        # R169校准后触发需真实多轮会话语义(裸"对话/上下文"不再触发)
+        text = "这是一个多轮对话系统，每轮接收历史消息并生成回复"
         result = lint_template("test_p176", text)
         p176 = [f for f in result.findings if f.rule_id == "P176"]
         assert len(p176) > 0
+
+    def test_p176_single_turn_no_false_positive(self):
+        """R169: 单轮Prompt提到"上下文"不应触发多轮污染CRITICAL"""
+        text = "这是一个对话系统，请根据上下文历史回答问题"
+        result = lint_template("test_p176_single", text)
+        p176 = [f for f in result.findings if f.rule_id == "P176"]
+        assert len(p176) == 0
 
     def test_p176_pass_with_role(self):
         text = "你是AI助手。这是一个对话系统，请根据上下文历史回答问题。实现隔离窗口。"

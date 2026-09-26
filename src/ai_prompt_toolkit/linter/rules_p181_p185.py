@@ -36,7 +36,7 @@ _RULES_P181_P185 = [
              description_en="Prompt lacks environment isolation, prod/test/dev may mix causing unexpected behavior",
              remediation_en="Configure different parameters per environment (model/temperature/constraints), use env vars or config files",
              family="prompt_isolation", owasp_refs=["LLM06"]),
-    LintRule("P184", "降级策略缺失", "operations", Severity.HIGH,
+    LintRule("P184", "降级策略缺失", "operations", Severity.MEDIUM,
              "Prompt缺少降级策略, 当主模型不可用时无备用方案, 服务可能中断",
              "声明降级策略: 主模型→备用模型→规则回复, 如 fallback: [gpt-3.5, template-response]",
              description_en="Prompt lacks degradation strategy, no fallback when primary model unavailable, service may break",
@@ -93,7 +93,7 @@ def check_p184(text: str) -> list[Finding]:
     if not _FALLBACK_PATTERN.search(text):
         has_model = bool(re.search(r'(?:GPT|Claude|模型|model|LLM|大模型)', text, re.IGNORECASE))
         if has_model:
-            findings.append(Finding("P184", Severity.HIGH, "Prompt依赖模型但缺少降级策略", 1, 1))
+            findings.append(Finding("P184", Severity.MEDIUM, "Prompt依赖模型但缺少降级策略", 1, 1))
     return findings
 
 

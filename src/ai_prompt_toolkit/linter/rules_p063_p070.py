@@ -37,7 +37,7 @@ _RULES_P063_P070: list[LintRule] = [
              "在Prompt中添加'知识截止: YYYY-MM'或'基于截至XX的信息'",
              description_en="Factual knowledge Prompt does not declare knowledge cutoff date",
              remediation_en="Add 'Knowledge cutoff: YYYY-MM' or 'Based on information as of XX' in Prompt", family="knowledge_cutoff"),
-    LintRule("P068", "幻觉预防指令缺失", "quality", Severity.HIGH,
+    LintRule("P068", "幻觉预防指令缺失", "quality", Severity.MEDIUM,
              "事实性Prompt中缺少防止模型编造信息的约束",
              "添加'如果不确定请明确说明, 不要编造信息'约束",
              description_en="Factual Prompt lacks constraints preventing model from fabricating information",
