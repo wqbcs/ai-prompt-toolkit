@@ -138,6 +138,7 @@ for r in _RULES_P101_P110:
 
 
 _SIMILAR_SENTENCE_THRESHOLD = 0.5
+_MAX_REDUNDANT_PAIRS = 50  # R175: 报告上限(超过后早退, description显示'N+')
 
 
 def _extract_sentences(text: str) -> list[str]:
@@ -158,18 +159,40 @@ def check_p101(text: str) -> Finding | None:
     sentences = _extract_sentences(text)
     if len(sentences) < 3:
         return None
-    redundant_pairs = []
-    for i in range(len(sentences)):
-        for j in range(i + 1, len(sentences)):
-            sim = _jaccard_similarity(sentences[i], sentences[j])
-            if sim > _SIMILAR_SENTENCE_THRESHOLD:
+    token_sets = [frozenset(s) for s in sentences]
+    sizes = [len(ts) for ts in token_sets]
+    threshold = _SIMILAR_SENTENCE_THRESHOLD
+    redundant_pairs: list[tuple[int, int]] = []
+    truncated = False
+    n = len(sentences)
+    for i in range(n):
+        sa = token_sets[i]
+        if not sa:
+            continue
+        for j in range(i + 1, n):
+            sb = token_sets[j]
+            if not sb:
+                continue
+            # R175性能: 数学等价剪枝 — Jaccard <= min/max, min/max <= t时不可能超阈值
+            hi, lo = (sizes[i], sizes[j]) if sizes[i] >= sizes[j] else (sizes[j], sizes[i])
+            if lo / hi <= threshold:
+                continue
+            inter = len(sa & sb)
+            union = sizes[i] + sizes[j] - inter
+            if union and inter / union > threshold:
                 redundant_pairs.append((i + 1, j + 1))
+                if len(redundant_pairs) >= _MAX_REDUNDANT_PAIRS:
+                    truncated = True
+                    break
+        if truncated:
+            break
     if not redundant_pairs:
         return None
+    count_text = f"{len(redundant_pairs)}+" if truncated else f"{len(redundant_pairs)}"
     return Finding(
         rule_id=rule.rule_id,
         severity=rule.severity,
-        description=f"{rule.description} (检测到{len(redundant_pairs)}组相似表述)",
+        description=f"{rule.description} (检测到{count_text}组相似表述)",
         remediation=rule.remediation,
         details={"redundant_pairs": redundant_pairs[:5]},
     )
