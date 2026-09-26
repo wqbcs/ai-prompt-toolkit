@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.17.0] - 2026-09-26
+
+### Fixed (R183: RFC评分设计 + upgrade-fm模块实现 + 命令层补测)
+
+- **docs/rfc-score-v2.md**: lint评分语义演进RFC(通过率模型短文本虚高实测倒挂92.9>89.8;
+  三方案对比: 覆盖因子/加权扣分/双层并存; 推荐C起步→B; 影响面清单+陷阱警示) — 待评审
+- **新发现入口级缺陷**: upgrade-fm命令import的template_upgrader模块从未存在
+  (调用即ModuleNotFoundError) → 最小实现UpgradeResult+upgrade_template
+  (无frontmatter补v2.0骨架, 已有则跳过) + upgrade_batch
+- en/README.md: i18n示例参数对齐真实签名(-s是源语言非文件路径)
+- 命令层补测: i18n/upgrade-fm/locale/feedback/rules-yaml CliRunner冒烟
+- dataset冒烟改API验证数据落库(绕开rich Console单例与CliRunner捕获顺序耦合)
+
 ## [v67.16.0] - 2026-09-26
 
 ### Test (R182: 命令层冒烟测试 — 端可达性验证+coverage 73→74%)

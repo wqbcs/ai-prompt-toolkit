@@ -39,13 +39,24 @@ class TestDatasetCommands:
         (tmp_path / "cases.json").write_text(
             '[{"input": "问题1", "expected": "答案1"}, {"input": "问题2"}]', encoding="utf-8"
         )
-        r1 = runner.invoke(main, ["dataset", "create", "-n", "roundtrip"])
-        assert r1.exit_code == 0
-        m = _re.search(r"(ds_[A-Za-z0-9_-]+|数据集已创建:\s*\S+)", r1.output)
-        ds_id = m.group(1) if m else "roundtrip"
+        import uuid as _uuid
+
+        ds_name = f"roundtrip-{_uuid.uuid4().hex[:8]}"
+        # API层创建拿稳定ID(绕开rich Console与CliRunner捕获的顺序耦合)
+        from ai_prompt_toolkit.dataset import DatasetStore
+
+        store = DatasetStore()
+        ds = store.create_dataset(ds_name)
+        ds_id = ds.dataset_id
+        store.close()
+        r1 = runner.invoke(main, ["dataset", "create", "-n", ds_name + "-cli"])
+        assert r1.exit_code == 0, r1.output
         r2 = runner.invoke(main, ["dataset", "import", "-d", ds_id, "-f", str(tmp_path / "cases.json")])
         assert r2.exit_code == 0, r2.output
-        assert "已导入2条" in r2.output
+        store2 = DatasetStore()
+        stored = store2.get_dataset(ds_id)
+        store2.close()
+        assert stored is not None and stored.case_count == 2, "导入的用例未落库"
         r3 = runner.invoke(main, ["dataset", "list"])  # 冒烟: 列表可查询(分页断言免顺序依赖)
         assert r3.exit_code == 0
 
@@ -81,3 +92,36 @@ class TestTemplateCommands:
         result = runner.invoke(main, ["init"])
         assert result.exit_code == 0
         assert (tmp_path / ".prompt-toolkit.yml").exists() or "已存在" in result.output or True
+
+
+class TestTemplateCommandExtras:
+    """R183: template_commands补充冒烟(升级/语言/反馈/规则YAML)"""
+
+    def test_upgrade_fm_dry_run(self, runner, tmp_path):
+        target = tmp_path / "old.md"
+        target.write_text("旧格式模板内容，无frontmatter。", encoding="utf-8")
+        result = runner.invoke(main, ["upgrade-fm", "-t", str(target), "--dry-run"])
+        assert result.exit_code == 0
+
+    def test_locale_list_and_set(self, runner):
+        result = runner.invoke(main, ["locale", "-l"])
+        assert result.exit_code == 0
+        assert "zh-CN" in result.output
+        result = runner.invoke(main, ["locale", "-s", "en-US"])
+        assert result.exit_code == 0
+        result = runner.invoke(main, ["locale", "-s", "zh-CN"])
+        assert result.exit_code == 0
+
+    def test_feedback_submission(self, runner):
+        result = runner.invoke(main, ["feedback", "-m", "冒烟反馈", "-t", "other"])
+        assert result.exit_code == 0
+
+    def test_rules_yaml_init_and_load(self, runner, tmp_path):
+        rule_file = tmp_path / "rules.yaml"
+        result = runner.invoke(main, ["rules-yaml", "--init", str(rule_file)])
+        assert result.exit_code == 0
+        assert rule_file.exists()
+        target = tmp_path / "p.md"
+        target.write_text("你是一名测试助手。", encoding="utf-8")
+        result = runner.invoke(main, ["rules-yaml", "--load", str(rule_file), "-t", str(target)])
+        assert result.exit_code == 0

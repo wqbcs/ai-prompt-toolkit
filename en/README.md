@@ -14,11 +14,11 @@ This directory contains English translations of project documentation.
 The toolkit supports internationalization via the `prompt-cli i18n` command:
 
 ```bash
-# Translate a prompt to English
-prompt-cli i18n -s prompt_zh.md --target-lang en
+# Batch-translate builtin templates (source locale -> target locale)
+prompt-cli i18n -s zh-CN -t en-US
 
-# Translate with glossary
-prompt-cli i18n -s prompt_zh.md --target-lang en --glossary _i18n/glossary.json
+# Specify output directory
+prompt-cli i18n -s zh-CN -t en-US -o ./templates_en
 ```
 
 ## Contributing Translations
