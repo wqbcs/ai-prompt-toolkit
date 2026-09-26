@@ -1,4 +1,5 @@
 """R12改进: 为场景模板自动添加角色定义(P001修复)"""
+
 from __future__ import annotations
 
 import re
@@ -47,10 +48,10 @@ def fix_p001(target_dir: str = "_scenarios") -> int:
 
         role = _infer_role(p)
 
-        pattern = r'(#{2,3}\s*提示词模板\s*\n+(?:.*?\n)*?)((?:{{#if|###|你是一位|You are))'
+        pattern = r"(#{2,3}\s*提示词模板\s*\n+(?:.*?\n)*?)((?:{{#if|###|你是一位|You are))"
         m = re.search(pattern, text)
         if not m:
-            pattern2 = r'(#{2,3}\s*提示词模板\s*\n+)'
+            pattern2 = r"(#{2,3}\s*提示词模板\s*\n+)"
             m2 = re.search(pattern2, text)
             if m2:
                 insert_pos = m2.end()

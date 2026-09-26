@@ -1,11 +1,12 @@
 """R12改进: 运行Lint并将评分回写到Front Matter lint_score字段"""
+
 from __future__ import annotations
 
 from pathlib import Path
 
 import yaml
 
-from ai_prompt_toolkit.frontmatter import parse_front_matter, serialize_front_matter
+from ai_prompt_toolkit.frontmatter import parse_front_matter
 from ai_prompt_toolkit.linter.linter import PromptLinter
 
 
@@ -38,6 +39,7 @@ def update_lint_scores(target_dir: str = "_scenarios") -> dict[str, float]:
 
 def _now_iso() -> str:
     from datetime import datetime, timezone
+
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 

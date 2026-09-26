@@ -12,6 +12,7 @@
     - 红队探针: probe_framework._PROBE_REGISTRY
     - 测试数: pytest --collect-only
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,7 +43,11 @@ def collect_counts(with_tests: bool) -> dict[str, int | str]:
     if with_tests:
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider"],
-            cwd=ROOT, capture_output=True, text=True, encoding="utf-8", errors="replace",
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         match = re.search(r"(\d+) tests? collected", result.stdout)
         if not match:
@@ -73,32 +78,38 @@ def main() -> None:
     text = replace_or_fail(
         text,
         r"(\[!\[Version\]\(https://img\.shields\.io/badge/Version-)[\w.]+(-orange\.svg\)\]\(CHANGELOG\.md\))",
-        rf"\g<1>{version}\g<2>", "Version徽章",
+        rf"\g<1>{version}\g<2>",
+        "Version徽章",
     )
     text = replace_or_fail(
         text,
         r"(\[!\[Tests\]\(https://img\.shields\.io/badge/Tests-)\d+(%20passed)",
-        rf"\g<1>{counts['tests']}\g<2>", "Tests徽章",
+        rf"\g<1>{counts['tests']}\g<2>",
+        "Tests徽章",
     )
     text = replace_or_fail(
         text,
         r"(\[!\[Lint Rules\]\(https://img\.shields\.io/badge/Lint_Rules-)\d+",
-        rf"\g<1>{counts['rules']}", "Lint Rules徽章",
+        rf"\g<1>{counts['rules']}",
+        "Lint Rules徽章",
     )
     text = replace_or_fail(
         text,
         r"(\[!\[Eval Dims\]\(https://img\.shields\.io/badge/Eval_Dimensions-)\d+",
-        rf"\g<1>{counts['eval_dims']}", "Eval Dims徽章",
+        rf"\g<1>{counts['eval_dims']}",
+        "Eval Dims徽章",
     )
     text = replace_or_fail(
         text,
         r"(\[!\[MCP Tools\]\(https://img\.shields\.io/badge/MCP_Tools-)\d+",
-        rf"\g<1>{counts['mcp_tools']}", "MCP Tools徽章",
+        rf"\g<1>{counts['mcp_tools']}",
+        "MCP Tools徽章",
     )
     text = replace_or_fail(
         text,
         r"(\[!\[Probes\]\(https://img\.shields\.io/badge/Probes-)\d+",
-        rf"\g<1>{counts['probes']}", "Probes徽章",
+        rf"\g<1>{counts['probes']}",
+        "Probes徽章",
     )
     # 核心数据表
     text = replace_or_fail(
@@ -116,13 +127,16 @@ def main() -> None:
     text = replace_or_fail(
         text,
         r"\| \*\*MCP工具\*\* \| \d+ \|",
-        rf"| **MCP工具** | {counts['mcp_tools']} |", "核心数据-MCP工具",
+        rf"| **MCP工具** | {counts['mcp_tools']} |",
+        "核心数据-MCP工具",
     )
 
     README.write_text(text, encoding="utf-8")
-    print(f"已同步: rules={counts['rules']}(fixable={counts['auto_fixable']}) "
-          f"dims={counts['eval_dims']} mcp_tools={counts['mcp_tools']} "
-          f"probes={counts['probes']} tests={counts['tests']} version={counts['version']}")
+    print(
+        f"已同步: rules={counts['rules']}(fixable={counts['auto_fixable']}) "
+        f"dims={counts['eval_dims']} mcp_tools={counts['mcp_tools']} "
+        f"probes={counts['probes']} tests={counts['tests']} version={counts['version']}"
+    )
 
 
 if __name__ == "__main__":

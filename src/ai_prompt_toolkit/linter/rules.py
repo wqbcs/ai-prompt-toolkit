@@ -1423,6 +1423,30 @@ def get_rule(rule_id: str) -> LintRule | None:
     return _RULE_MAP.get(rule_id)
 
 
+# R173: 同义规则组 — 同一概念被不同批次重复登记的合并记账(数据驱动, 单一事实来源)
+# 键=保留的主规则, 值=同触时被抑制的从规则。从规则保留(公开API稳定), 仅同触时去重。
+# 依据: 语料重叠率审计(R173) — P094~P130重叠加50%且checker逻辑相同, 为真冗余对;
+# P089~P228/P002~P052等重叠<10%属"相关规则", 不纳入。
+SYNONYM_RULE_GROUPS: dict[str, list[str]] = {
+    "P094": ["P130"],
+}
+
+
+def suppress_synonym_findings(findings: list[Finding]) -> list[Finding]:
+    """同义去重: 同组内主从规则同时命中时, 抑制从规则finding(主规则保留)。
+
+    从规则独立触发(主规则未命中)时不抑制 — 保留各自的独立触发面。
+    """
+    present = {f.rule_id for f in findings}
+    suppressed: set[str] = set()
+    for main_rule, sub_rules in SYNONYM_RULE_GROUPS.items():
+        if main_rule in present:
+            suppressed.update(sub_rules)
+    if not suppressed:
+        return findings
+    return [f for f in findings if f.rule_id not in suppressed]
+
+
 def find_line(text: str, pattern: re.Pattern[str]) -> int:
     match = pattern.search(text)
     if match:
@@ -1445,7 +1469,7 @@ def run_all_checks(text: str) -> list[Finding]:
         for f in findings:
             if f.rule_id == "P017":
                 f.severity = Severity.LOW
-    return findings
+    return suppress_synonym_findings(findings)
 
 
 def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, object]]]:

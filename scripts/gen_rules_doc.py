@@ -7,6 +7,7 @@
     python scripts/gen_rules_doc.py            # 重新生成 docs/rules.md
     python scripts/gen_rules_doc.py --check    # 校验是否漂移(不一致则exit 1, 供CI)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,11 +24,12 @@ SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 def build_doc() -> str:
     from ai_prompt_toolkit import __version__
     from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
-    from ai_prompt_toolkit.linter.rules import get_all_rules
+    from ai_prompt_toolkit.linter.rules import SYNONYM_RULE_GROUPS, get_all_rules
 
     rules = sorted(get_all_rules(), key=lambda r: r.rule_id)
     auto_fixable_count = sum(1 for r in rules if r.rule_id in AUTO_FIXABLE_RULES)
     category_counts = Counter(r.category for r in rules)
+    synonym_note = " · ".join(f"{main}←{'/'.join(subs)}" for main, subs in sorted(SYNONYM_RULE_GROUPS.items()))
 
     lines: list[str] = []
     lines.append("# ai-prompt-toolkit 规则文档")
@@ -41,6 +43,8 @@ def build_doc() -> str:
     lines.append("- **严重级**: critical > high > medium > low > info")
     lines.append("- **可自动修复**: 标记 ✂ 的规则支持 `prompt-cli lint --fix` 自动修复")
     lines.append("- **OWASP**: 对应 OWASP LLM Top 10 2025 映射(如 LLM01=提示注入)")
+    if synonym_note:
+        lines.append(f"- **同义去重组**(同触只报主规则, 箭头左侧为抑制的从规则): {synonym_note}")
     lines.append("")
     lines.append("## 规则类别统计")
     lines.append("")

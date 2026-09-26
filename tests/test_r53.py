@@ -185,7 +185,13 @@ class TestP121P130HarmonyOSRules:
         text = "鸿蒙应用需要发起HTTP网络请求获取数据。"
         result = lint_template("test_p130", text)
         p130 = [f for f in result.findings if f.rule_id == "P130"]
-        assert len(p130) > 0
+        p094 = [f for f in result.findings if f.rule_id == "P094"]
+        # R173同义去重: P094~P130同触时由主规则P094报告, 问题仍被捕获且不重复
+        assert len(p130) + len(p094) == 1
+        if p130:
+            assert len(p130) == 1
+        else:
+            assert len(p094) == 1
 
     def test_harmonyos_no_ctx_no_finding(self):
         text = "请编写一个Python数据分析脚本。"
