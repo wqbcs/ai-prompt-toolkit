@@ -24,7 +24,7 @@ _RULES_P241_P245 = [
              description_en="Prompt collects personal data beyond necessary scope (name/address/ID/health), violating GDPR data minimization",
              remediation_en="Data minimization: collect only task-essential data+anonymization+pseudonymization+regular review",
              family="compliance_gdpr_minimization", owasp_refs=["LLM02"]),
-    LintRule("P242", "AI Act透明度缺失", "compliance_audit", Severity.HIGH,
+    LintRule("P242", "AI Act透明度缺失", "compliance_audit", Severity.MEDIUM,
              "未声明输出为AI生成内容或决策逻辑不透明, 违反EU AI Act透明度要求",
              "AI透明度: 显式声明AI生成+可解释性(XAI)+决策日志+人类监督, 如 add_disclaimer('AI生成内容') + explain_decision(model, input)",
              description_en="Output not declared as AI-generated or decision logic opaque, violating EU AI Act transparency requirements",
@@ -75,7 +75,7 @@ def check_p242(text: str) -> list[Finding]:
     findings = []
     has_model = re.search(r'(?:model|模型|AI|LLM|GPT|generate|生成)', text, re.IGNORECASE)
     if has_model and not _AI_GEN_PATTERN.search(text) and not _TRANSPARENCY_PATTERN.search(text):
-        findings.append(Finding("P242", Severity.HIGH, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)", 1, 1))
+        findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)", 1, 1))
     return findings
 
 

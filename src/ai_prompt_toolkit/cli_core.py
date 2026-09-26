@@ -2257,7 +2257,16 @@ weight_preset: default
 
     _config_path = _P(".prompt-toolkit.yml") if (_P := __import__("pathlib").Path)(".prompt-toolkit.yml").exists() else None
     if not _config_path and not as_json:
-        click.echo("提示: 未找到配置文件, 使用 --init 生成 .prompt-toolkit.yml 模板\n")
+        # U3: 首次运行引导 — 快速入门+配置模板生成提示
+        click.echo(
+            "提示: 未找到配置文件, 运行 prompt-cli doctor --init 生成 .prompt-toolkit.yml 模板\n"
+            "\n快速入门:\n"
+            "  prompt-cli lint -t ./prompt.md            静态质量检查(255条规则, 零Token)\n"
+            "  prompt-cli lint -t ./prompts --gate       CI门禁模式(verdict退出码)\n"
+            "  prompt-cli scan -t ./prompt.md            安全纵深扫描(注入/PII/供应链)\n"
+            "  prompt-cli eval -t ./prompt.md            130维质量评估\n"
+            "  prompt-cli redteam -t ./prompt.md         红队对抗探测(OWASP映射)\n"
+        )
     from ai_prompt_toolkit.ab_test.provider import run_health_check
     from ai_prompt_toolkit.ab_test.types import ProviderType
 

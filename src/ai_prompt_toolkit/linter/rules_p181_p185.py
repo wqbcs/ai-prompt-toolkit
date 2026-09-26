@@ -24,7 +24,7 @@ _RULES_P181_P185 = [
              description_en="Prompt lacks version declaration, production cannot track changes or rollback",
              remediation_en="Add version declaration in Prompt header, e.g. version: 1.2.3",
              family="prompt_versioning", owasp_refs=["LLM09"]),
-    LintRule("P182", "依赖声明缺失", "operations", Severity.HIGH,
+    LintRule("P182", "依赖声明缺失", "operations", Severity.MEDIUM,
              "Prompt缺少外部依赖声明(模型/API/工具), 变更时无法评估影响范围",
              "声明Prompt依赖的模型版本、API端点、工具列表, 如 dependencies: [gpt-4, weather-api]",
              description_en="Prompt lacks dependency declaration (model/API/tool), cannot assess impact on change",
@@ -74,7 +74,7 @@ def check_p182(text: str) -> list[Finding]:
     if not _DEP_PATTERN.search(text):
         has_api_call = bool(re.search(r'(?:API|接口|调用|endpoint|fetch|request|http)', text, re.IGNORECASE))
         if has_api_call:
-            findings.append(Finding("P182", Severity.HIGH, "Prompt调用外部API但缺少依赖声明", 1, 1))
+            findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", 1, 1))
     return findings
 
 

@@ -195,6 +195,15 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
 
     click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
 
+    # D3: 无高危发现时的下一步引导(CI模式已有PASS输出, 不重复; medium/info仍列出)
+    has_blocking = any(
+        getattr(f.severity, "value", str(f.severity)) in ("high", "critical")
+        for r in all_results for f in r.findings
+    )
+    if not has_blocking and not ci_mode:
+        from ai_prompt_toolkit.cli_helpers import clean_result_next_steps
+        click.echo(clean_result_next_steps(avg_score, len(templates)))
+
     if profile_mode:
         from ai_prompt_toolkit.linter.rules import run_all_checks_profiled
         click.echo("\n── 性能分析 (Profile) ──")

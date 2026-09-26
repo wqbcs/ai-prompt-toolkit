@@ -30,7 +30,7 @@ _RULES_P156_P160: list[LintRule] = [
              description_en="Prompt missing canary/grayscale deployment strategy declaration",
              remediation_en="Declare canary strategy: Start at 5% traffic, scale to 100% if error rate<0.1%, support instant rollback",
              family="canary_deployment"),
-    LintRule("P158", "Prompt数据脱敏声明缺失", "security", Severity.HIGH,
+    LintRule("P158", "Prompt数据脱敏声明缺失", "security", Severity.MEDIUM,
              "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
              "声明脱敏策略: 对PII(姓名/身份证/手机号/邮箱)进行掩码, 日志中禁止输出原始敏感字段",
              description_en="Prompt missing data masking/desensitization declaration",
@@ -78,8 +78,9 @@ _MASKING_DECL = re.compile(
     re.IGNORECASE
 )
 
+# R168校准: 需"执行不可信代码/脚本"语义 — 裸"运行/调用/工具"过宽(写文档提到"代码块"也误触发)
 _SANDBOX_CTX = re.compile(
-    r"(?:执行|exec|运行|run|代码|code|脚本|script|命令|command|插件|plugin|工具|tool|Agent|代理|智能体|函数|function|调用|call|外部|external)",
+    r"(?:(?:执行|运行|run|exec).{0,10}(?:代码|脚本|命令|code|script|command)|代码执行|脚本执行|动态执行|shell|命令行|用户提交.{0,10}(?:代码|脚本|内容)|插件执行|工具执行|untrusted|eval\()",
     re.IGNORECASE
 )
 

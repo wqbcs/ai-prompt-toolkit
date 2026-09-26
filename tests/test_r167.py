@@ -126,20 +126,16 @@ class TestF4StableJudge:
 
 
 class TestQ1CleanPromptBaselines:
-    """Q1: 误报治理基线 — 三类干净Prompt的HIGH误报必须被显式记账
+    """Q1: 误报治理基线 — 三类干净Prompt零high/critical发现(R168治理后)
 
-    机制: HIGH发现必须落在 ADVISORY_FAMILY(冻结的"声明类/advisory"规则集合)内。
-    任何新规则若在干净基线上触发HIGH → 本测试失败 → 强制开发者二选一:
+    机制: HIGH/CRITICAL发现必须落在 ADVISORY_FAMILY(冻结集合, 当前为空)内。
+    任何规则若在干净基线上触发HIGH → 本测试失败 → 强制开发者二选一:
       (a) 给规则加上下文门控/降级; (b) 有意识地把规则加入家族并说明理由。
-    家族只允许收缩(R168治理目标), 不允许无意识膨胀。
+    历史: R167时点家族曾达14条(声明类规则HIGH误报债), R168治理
+    (10条声明类规则HIGH→MEDIUM)后清零。
     """
 
-    # 冻结的advisory家族(R167时点) — R168治理目标是让大部分成员获得上下文门控或降级
-    ADVISORY_FAMILY = {
-        "P113", "P152", "P159", "P161", "P163",       # R53期已承认的advisory规则
-        "P151", "P158", "P164", "P165", "P166",       # "未声明X"家族(P151输入边界/P158脱敏/P164提取防护/P165侧信道/P166输出过滤)
-        "P167", "P169", "P182", "P242",               # P167幻觉声明/P169毒性声明/P182依赖声明/P242透明度声明
-    }
+    ADVISORY_FAMILY: set[str] = set()
 
     BASELINES = {
         "结构完备型": (
@@ -182,5 +178,63 @@ class TestQ1CleanPromptBaselines:
         )
 
     def test_advisory_family_size_tracked(self):
-        """家族规模只允许收缩: 若治理后应更新此上限(R168目标: ≤10)"""
-        assert len(self.ADVISORY_FAMILY) <= 14
+        """家族规模只允许收缩: R167=14 → R168=0; 禁止无意识回填"""
+        assert len(self.ADVISORY_FAMILY) == 0
+
+
+class TestD3CleanResultNextSteps:
+    """D3: lint全部通过时的空状态引导"""
+
+    def test_contains_grade_and_next_steps(self):
+        from ai_prompt_toolkit.cli_helpers import clean_result_next_steps
+
+        tip = clean_result_next_steps(93.0, 2)
+        assert "等级 A" in tip
+        assert "93.0/100" in tip
+        assert "badge" in tip and "eval" in tip and "baseline-save" in tip
+
+    def test_grade_thresholds_match_scorecard(self):
+        from ai_prompt_toolkit.cli_helpers import lint_grade
+
+        assert lint_grade(95) == "A"
+        assert lint_grade(90) == "A"
+        assert lint_grade(89.9) == "B"
+        assert lint_grade(75) == "B"
+        assert lint_grade(74.9) == "C"
+        assert lint_grade(60) == "C"
+        assert lint_grade(59.9) == "D"
+
+    def test_clean_lint_output_has_guidance(self, tmp_path):
+        from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
+        target = tmp_path / "p.md"
+        target.write_text(
+            "version: 1.0.0\n# 角色\n你是测试工程师。\n# 任务\n编写用例。\n"
+            "# 输出格式\nMarkdown。\n# 约束\n不编造。\n# 示例\n输入: 登录\n输出: 表格。\n",
+            encoding="utf-8",
+        )
+        result = CliRunner().invoke(main, ["lint", "-t", str(target)])
+        assert "全部通过" in result.output
+        assert "下一步建议" in result.output
+
+
+class TestR168AdvisoryDowngrade:
+    """R168: 声明类规则HIGH→MEDIUM校准"""
+
+    def test_family_rules_now_medium(self):
+        from ai_prompt_toolkit.linter.rules import get_rule
+
+        for rid in ("P151", "P152", "P158", "P164", "P165", "P166", "P167", "P169", "P182", "P242"):
+            rule = get_rule(rid)
+            assert rule is not None, f"{rid} 不存在"
+            assert rule.severity.value == "medium", f"{rid} 应为MEDIUM(声明类advisory校准)"
+
+    def test_security_rules_unchanged(self):
+        """真正的高危规则不得被误降级"""
+        from ai_prompt_toolkit.linter.rules import get_rule
+
+        assert get_rule("P161").severity.value == "critical"
+        assert get_rule("P163").severity.value == "critical"
+        assert get_rule("P113").severity.value == "high"

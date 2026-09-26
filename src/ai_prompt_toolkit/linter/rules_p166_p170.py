@@ -18,13 +18,13 @@ from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
 
 _RULES_P166_P170: list[LintRule] = [
-    LintRule("P166", "Prompt输出内容过滤声明缺失", "security", Severity.HIGH,
+    LintRule("P166", "Prompt输出内容过滤声明缺失", "security", Severity.MEDIUM,
              "Prompt未声明输出内容过滤(禁止类型/格式验证/长度限制)",
              "声明输出过滤: 禁止输出代码/SQL/HTML, 格式验证JSON/Markdown, 长度限制<2000字符",
              description_en="Prompt missing output content filtering declaration",
              remediation_en="Declare output filtering: No code/SQL/HTML output, JSON/Markdown validation, length<2000",
              family="output_filtering"),
-    LintRule("P167", "Prompt幻觉防护声明缺失", "security", Severity.HIGH,
+    LintRule("P167", "Prompt幻觉防护声明缺失", "security", Severity.MEDIUM,
              "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
              "声明幻觉防护: 要求标注不确定信息, 引用来源URL, 禁止编造数据/日期/人名",
              description_en="Prompt missing hallucination protection declaration",
@@ -36,7 +36,7 @@ _RULES_P166_P170: list[LintRule] = [
              description_en="Prompt missing bias detection declaration",
              remediation_en="Declare bias detection: Fair non-discriminatory, diverse representation, neutral stance",
              family="bias_detection"),
-    LintRule("P169", "Prompt毒性内容过滤声明缺失", "security", Severity.HIGH,
+    LintRule("P169", "Prompt毒性内容过滤声明缺失", "security", Severity.MEDIUM,
              "Prompt未声明毒性内容过滤(仇恨言论/骚扰/自残/暴力)",
              "声明毒性过滤: 禁止仇恨言论/骚扰/自残/暴力内容, 检测并拒绝毒性输出",
              description_en="Prompt missing toxicity content filtering declaration",

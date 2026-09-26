@@ -18,13 +18,13 @@ from ai_prompt_toolkit.types import Finding, Severity
 from ai_prompt_toolkit.linter.rules import LintRule, _RULE_MAP
 
 _RULES_P151_P155: list[LintRule] = [
-    LintRule("P151", "Prompt输入边界校验缺失", "security", Severity.HIGH,
+    LintRule("P151", "Prompt输入边界校验缺失", "security", Severity.MEDIUM,
              "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
              "声明输入校验: 输入长度<=2000字符, 仅允许中英文和数字, 禁止SQL/HTML特殊字符",
              description_en="Prompt missing input boundary validation declaration",
              remediation_en="Declare input validation: Input length<=2000 chars, only CJK/alphanum allowed",
              family="input_validation"),
-    LintRule("P152", "Prompt输出编码转义缺失", "security", Severity.HIGH,
+    LintRule("P152", "Prompt输出编码转义缺失", "security", Severity.MEDIUM,
              "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
              "声明输出转义: 输出内容经过HTML实体编码, 禁止直接渲染原始HTML/JS",
              description_en="Prompt missing output encoding/escaping declaration",

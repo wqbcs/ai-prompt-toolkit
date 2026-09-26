@@ -238,6 +238,30 @@ _EMPTY_STATE_TIPS: dict[str, str] = {
 }
 
 
+def lint_grade(score: float) -> str:
+    """Lint百分制→等级(与security/prompt_scorecard的等级阈值一致: A≥90/B≥75/C≥60)"""
+    if score >= 90:
+        return "A"
+    if score >= 75:
+        return "B"
+    if score >= 60:
+        return "C"
+    return "D"
+
+
+def clean_result_next_steps(avg_score: float, file_count: int) -> str:
+    """D3: lint全部通过时的空状态引导 — 分数/等级/下一步命令建议"""
+    grade = lint_grade(avg_score)
+    return (
+        f"\n✨ 全部通过 — 等级 {grade} ({avg_score:.1f}/100), 共{file_count}个文件\n"
+        "下一步建议:\n"
+        "  prompt-cli badge -t <目标>                  生成质量徽章(SVG)\n"
+        "  prompt-cli eval -t <目标>                   130维深度质量评估\n"
+        "  prompt-cli lint -t <目标> --baseline-save   保存基线, 后续--changed增量检查\n"
+        "  prompt-cli scan -t <目标>                   安全纵深扫描(注入/PII/供应链)"
+    )
+
+
 def empty_state_tip(command: str) -> str:
     return _EMPTY_STATE_TIPS.get(command, _EMPTY_STATE_TIPS["default"])
 

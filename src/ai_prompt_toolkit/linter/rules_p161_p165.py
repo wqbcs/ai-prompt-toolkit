@@ -36,13 +36,13 @@ _RULES_P161_P165: list[LintRule] = [
              description_en="Prompt missing model jailbreak protection declaration",
              remediation_en="Declare jailbreak protection: System instructions cannot be overridden, role anchoring prevents identity switch, explicit deny list",
              family="jailbreak_protection"),
-    LintRule("P164", "Prompt指令提取防护缺失", "security", Severity.HIGH,
+    LintRule("P164", "Prompt指令提取防护缺失", "security", Severity.MEDIUM,
              "Prompt未声明指令提取防护(输出过滤/指令不可见/反提取措辞C)",
              "声明指令提取防护: 输出过滤禁止包含系统指令内容, 指令段对用户不可见, 反提取措辞防止指令泄露",
              description_en="Prompt missing instruction extraction protection declaration",
              remediation_en="Declare extraction protection: Output filter blocks system instructions, instructions invisible to user, anti-extraction phrasing",
              family="instruction_extraction"),
-    LintRule("P165", "Prompt侧信道泄露防护缺失", "security", Severity.HIGH,
+    LintRule("P165", "Prompt侧信道泄露防护缺失", "security", Severity.MEDIUM,
              "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
              "声明侧信道防护: 响应时间恒定(±50ms内), 错误消息统一格式, 日志禁止记录内部推理过程",
              description_en="Prompt missing side-channel leakage protection declaration",
@@ -73,8 +73,9 @@ _CACHE_POISON_DECL = re.compile(
     re.IGNORECASE
 )
 
+# R168校准: 需对抗性/劫持语义 — 裸"系统/角色/指令/禁止"过宽(任何带角色的Prompt都误触发CRITICAL)
 _JAILBREAK_CTX = re.compile(
-    r"(?:系统|system|指令|instruct|角色|role|身份|identity|行为|behav|权限|permiss|禁止|deny|拒绝|reject|忽略|ignore|覆盖|override|绕过|bypass|越狱|jailbreak|DAN|假装|pretend|扮演|impersonat)",
+    r"(?:越狱|jailbreak|DAN|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|假装|pretend|扮演|impersonat|角色扮演|身份切换|不设限|无限制|unrestricted)",
     re.IGNORECASE
 )
 
