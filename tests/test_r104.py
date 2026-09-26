@@ -8,7 +8,7 @@ from ai_prompt_toolkit import __version__
 
 class TestR104PipelineAndVersion:
     def test_version_51(self):
-        assert __version__ == "51.0.0"
+        assert __version__ == "67.0.0"  # R164扩容后实际值(原R104快照51.0.0已过期)
 
     def test_codearts_pipeline_exists(self):
         pipeline = Path(".codearts/pipeline.yml")

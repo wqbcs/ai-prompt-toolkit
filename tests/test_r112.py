@@ -8,7 +8,7 @@ from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 class TestR112WatchOption:
     def test_rules_count_unchanged(self):
         rules = get_all_rules()
-        assert len(rules) == 215
+        assert len(rules) == 255  # R164扩容后实际值
 
     def test_auto_fixable_stable(self):
         assert len(AUTO_FIXABLE_RULES) >= 156
@@ -26,4 +26,4 @@ class TestR112FirstRunGuide:
 
     def test_version_is_52(self):
         from ai_prompt_toolkit import __version__
-        assert __version__ == "52.0.0"
+        assert __version__ == "67.0.0"  # R164扩容后实际值

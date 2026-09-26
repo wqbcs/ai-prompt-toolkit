@@ -24,7 +24,7 @@ class TestR124Profile:
     def test_profile_data_count(self):
         text = "简单的prompt"
         findings, profile_data = run_all_checks_profiled(text)
-        assert len(profile_data) == 220
+        assert len(profile_data) == 255  # R164扩容后实际值
 
     def test_lint_profile_cli(self):
         with tempfile.TemporaryDirectory() as tmpdir:

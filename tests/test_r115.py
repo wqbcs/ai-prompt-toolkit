@@ -7,7 +7,7 @@ from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 
 class TestR115CIAndDiff:
     def test_rules_count_stable(self):
-        assert len(get_all_rules()) == 215
+        assert len(get_all_rules()) == 255  # R164扩容后实际值
 
     def test_auto_fixable_stable(self):
         assert len(AUTO_FIXABLE_RULES) >= 156

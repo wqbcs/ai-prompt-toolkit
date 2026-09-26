@@ -240,7 +240,10 @@ def lint(target: str, config_path: str | None, fmt: str, fix: bool, dry_run: boo
                 if diff.fixed_findings:
                     click.echo(f"  修复({len(diff.fixed_findings)}): {', '.join(f['rule_id'] for f in diff.fixed_findings[:10])}")
                 if diff.regressions:
-                    click.echo(f"  回归({len(diff.regressions)}): {', '.join(f'{r[\"rule_id\"]}(+{r[\"delta\"]})' for r in diff.regressions)}")
+                    reg_parts = []
+                    for r in diff.regressions:
+                        reg_parts.append(f"{r['rule_id']}(+{r['delta']})")
+                    click.echo(f"  回归({len(diff.regressions)}): {', '.join(reg_parts)}")
                 status = "⚠️ 回归" if diff.is_regression else "✅ 改善" if diff.delta < 0 else "➡️ 不变"
                 click.echo(f"  状态: {status}")
             else:

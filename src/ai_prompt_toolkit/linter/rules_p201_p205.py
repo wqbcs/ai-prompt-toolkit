@@ -59,11 +59,20 @@ _AI_LABEL_PATTERN = re.compile(r'(?:ai.generated|AI生成|人工智能生成|gen
 _FAIRNESS_PATTERN = re.compile(r'(?:fairness|公平|偏见|bias|discrimination|歧视|protected.groups)', re.IGNORECASE)
 _RETENTION_PATTERN = re.compile(r'(?:retention|留存|保留|删除策略|auto.delete|anonymize|匿名化|max_days)', re.IGNORECASE)
 _DATA_PROCESSING_PATTERN = re.compile(r'(?:数据处理|data.processing|收集|collect|存储|store|用户数据|user.data)', re.IGNORECASE)
+# 否定式声明("不收集个人数据")不是数据处理事实 — 触发匹配前先剥离, 避免否定语盲区误报
+_NEGATED_DATA_PATTERN = re.compile(
+    r'(?:不|无需|不会|禁止|避免|不得|切勿)(?:收集|存储|采集|保存|保留|处理)[^，。;；,;]{0,12}'
+    r'|(?:do(?:es)?\s+not|no|never)\s+(?:collect|store|retain|process)[^,.;]{0,20}',
+    re.IGNORECASE)
+
+
+def _strip_negated_data(text: str) -> str:
+    return _NEGATED_DATA_PATTERN.sub('', text)
 
 
 def check_p201(text: str) -> list[Finding]:
     findings = []
-    has_data = _DATA_PROCESSING_PATTERN.search(text)
+    has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _COMPLIANCE_PATTERN.search(text):
         findings.append(Finding("P201", Severity.HIGH, "数据处理缺少合规声明", 1, 1))
     return findings
@@ -71,7 +80,7 @@ def check_p201(text: str) -> list[Finding]:
 
 def check_p202(text: str) -> list[Finding]:
     findings = []
-    has_data = _DATA_PROCESSING_PATTERN.search(text)
+    has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _CONSENT_PATTERN.search(text):
         findings.append(Finding("P202", Severity.HIGH, "用户数据使用缺少同意机制", 1, 1))
     return findings
@@ -95,7 +104,7 @@ def check_p204(text: str) -> list[Finding]:
 
 def check_p205(text: str) -> list[Finding]:
     findings = []
-    has_data = _DATA_PROCESSING_PATTERN.search(text)
+    has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _RETENTION_PATTERN.search(text):
         findings.append(Finding("P205", Severity.HIGH, "缺少数据留存策略", 1, 1))
     return findings

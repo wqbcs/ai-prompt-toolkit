@@ -8,7 +8,7 @@ from ai_prompt_toolkit.html_report import generate_html_report
 
 
 def test_version_50():
-    assert __version__ == "50.0.0"
+    assert __version__ == "67.0.0"  # R164扩容后实际值(原R92快照50.0.0已过期)
 
 
 def test_weight_preset_list_callable():

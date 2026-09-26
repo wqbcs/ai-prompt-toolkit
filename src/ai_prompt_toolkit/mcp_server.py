@@ -72,7 +72,7 @@ def _handle_tools_list(id_val: Any) -> str:
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回190条规则(P001-P190)的检测结果和评分",
+            "description": "对Prompt文件执行Lint质量检查，返回255条规则(P001-P255)的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -903,7 +903,7 @@ def _handle_tools_list(id_val: Any) -> str:
             },
         },
         {
-            "name": "prompt_version_list",
+            "name": "prompt_version_history",
             "description": "列出Prompt版本历史(版本链追踪)",
             "inputSchema": {
                 "type": "object",
@@ -1091,7 +1091,7 @@ def _get_tool_dispatch() -> dict[str, Callable[[dict[str, Any]], dict[str, Any]]
             "fg_template_list": _tool_fg_template_list,
             "fg_template_generate": _tool_fg_template_generate,
             "prompt_version_create": _tool_prompt_version_create,
-            "prompt_version_list": _tool_prompt_version_list,
+            "prompt_version_history": _tool_prompt_version_list,
             "prompt_version_diff": _tool_prompt_version_diff,
             "mcp_reload": _tool_mcp_reload,
             "test_suite_run": _tool_test_suite_run,
@@ -2694,17 +2694,39 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
     global _TOOL_DISPATCH
     import importlib
     import sys
+    # 类身份保护: linter.rules 定义 LintRule/Finding 等核心类, in-process reload 会重建
+    # 类对象, 导致 rule_loader/引擎等持有旧类引用的模块 isinstance 跨重载边界失效
+    # (自定义规则被静默丢弃、RuleLoader 返回类型校验失败)。核心类模块不做 reload,
+    # 仅热重载数据型扩展模块(rules_p*/owasp_mapping)——它们以 rule_id 为键把规则
+    # 重新注册进现有 _RULE_MAP, 幂等且规则数稳定 255。核心类本身的变更需重启进程。
+    _CORE_IDENTITY_MODULES = frozenset({
+        "ai_prompt_toolkit.linter.rules",
+        "ai_prompt_toolkit.types",
+    })
     module_name = args.get("module", "ai_prompt_toolkit.linter.rules")
     try:
-        if module_name in sys.modules:
-            mod = sys.modules[module_name]
-            importlib.reload(mod)
-        else:
-            importlib.import_module(module_name)
+        is_core = module_name in _CORE_IDENTITY_MODULES
+        if not is_core:
+            if module_name in sys.modules:
+                importlib.reload(sys.modules[module_name])
+            else:
+                importlib.import_module(module_name)
+        if module_name == "ai_prompt_toolkit.linter.rules":
+            for mname in sorted(sys.modules):
+                base = mname.rsplit(".", 1)[-1]
+                if base.startswith("rules_p") and mname.rsplit(".", 1)[0] == "ai_prompt_toolkit.linter":
+                    importlib.reload(sys.modules[mname])
+            # owasp 映射引用 _RULE_MAP, 一并 reload 以同步(幂等)
+            owasp_mod = sys.modules.get("ai_prompt_toolkit.linter.owasp_mapping")
+            if owasp_mod is not None:
+                importlib.reload(owasp_mod)
         _TOOL_DISPATCH = None
         from ai_prompt_toolkit.linter.rules import get_all_rules
         rule_count = len(get_all_rules())
-        return {"status": "reloaded", "module": module_name, "rule_count": rule_count}
+        result: dict[str, Any] = {"status": "reloaded", "module": module_name, "rule_count": rule_count}
+        if is_core:
+            result["note"] = "核心类模块保持类身份稳定(未重建类), 已热重载规则数据模块; 核心类变更需重启进程"
+        return result
     except Exception as e:
         return {"status": "error", "module": module_name, "error": str(e)}
 

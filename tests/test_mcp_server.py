@@ -73,7 +73,8 @@ class TestMCPProtocol:
         assert "probe_detector_run" in tool_names
         assert "probe_owasp_summary" in tool_names
         assert "probe_ethics_scan" in tool_names
-        assert len(tools) == 59
+        # R164扩容后实际值（含R107+后续轮次新增工具，去重prompt_version_list重复注册后为73）
+        assert len(tools) == 73
 
     def test_tools_have_input_schema(self):
         response = json.loads(_handle_tools_list(3))

@@ -4,11 +4,11 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-42.0.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-2674%20passed-brightgreen.svg)](tests/)
-[![Lint Rules](https://img.shields.io/badge/Lint_Rules-140-blue.svg)](src/ai_prompt_toolkit/linter/)
-[![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-85-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
-[![MCP Tools](https://img.shields.io/badge/MCP_Tools-53-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
+[![Version](https://img.shields.io/badge/Version-67.1.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-3539%20passed-brightgreen.svg)](tests/)
+[![Lint Rules](https://img.shields.io/badge/Lint_Rules-255-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
+[![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-23-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 
 ## 项目简介
@@ -19,13 +19,13 @@
 
 | 能力 | 数量 | 详情 |
 |------|------|------|
-| **Lint规则** | 140 | P001-P140，71条可自动修复，含10条多模态专项规则(P131-P140) |
-| **评估维度** | 80 | D01-D80，6大类(structure/quality/security/performance/fairness/toolchain) |
+| **Lint规则** | 255 | P001-P255，196条可自动修复，含多模态/安全/供应链/Agent等24大类专项规则 |
+| **评估维度** | 130 | D01-D130，6大类(structure/quality/security/performance/fairness/toolchain) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
 | **红队探针** | 23 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗/图像注入/音频注入/跨模态泄露 |
 | **红队检测器** | 11 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常/多模态输出检测/链式攻击检测 |
-| **MCP工具** | 53 | 完整MCP Server，字典O(1)路由 |
+| **MCP工具** | 73 | 完整MCP Server，字典O(1)路由 |
 | **LLM Provider** | 24 | OpenAI/Claude/DeepSeek/通义千问/智谱/Moonshot/百度/MiniMax/华为/盘古/ModelArts/豆包/星火/百川/商汤等 |
 | **内置模板** | 18 | 华为云/鸿蒙/盘古5/通用QA等 |
 | **Prompt消毒** | 8层 | 注入/PII/Unicode/供应链/结构/编码/格式/语言 |
@@ -34,7 +34,7 @@
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
-| **Prompt Linter** | `prompt-cli lint` | 130条Lint规则(P001-P130)，71条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文9大类 |
+| **Prompt Linter** | `prompt-cli lint` | 255条Lint规则(P001-P255)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
 | **红队对抗** | `prompt-cli redteam` | 15个Probe+8个Detector，OWASP LLM Top 10 2025映射，自动风险评分 |
@@ -61,7 +61,7 @@
 ### 差异化优势
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Scan→Probe→RedTeam→Evaluate→Compliance→Version 全链路的Prompt工具
-- **零LLM调用Lint**：130条静态分析规则(71条可自动修复)，无需消耗Token即可检测Prompt质量
+- **零LLM调用Lint**：255条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
 - **OWASP LLM Top 10 2025**：15个Probe→LLM01-LLM10完整映射，自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
@@ -88,7 +88,7 @@ pip install "ai-prompt-toolkit[ab_test]"
 ### 基本使用
 
 ```bash
-# Lint检查(130条规则)
+# Lint检查(255条规则)
 prompt-cli lint -s my_prompt.md
 
 # 安全扫描(5层深度)
@@ -226,8 +226,8 @@ graph LR
     G --> H[版本管理]
     H --> I[部署上线]
 
-    B -->|130条规则| B1[71条可自动修复]
-    B -->|9大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文]
+    B -->|255条规则| B1[196条可自动修复]
+    B -->|24大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等]
     C -->|5层深度| C1[quick/standard/deep]
     C -->|8层消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言]
     D -->|15探针| D1[OWASP LLM Top 10 2025映射]
@@ -378,7 +378,7 @@ prompt-cli compliance -t my_prompt.md --format markdown
 
 项目包含VSCode扩展 `vscode-prompt-lint/` v0.4.0，提供：
 
-- 实时Lint诊断(130条规则) + 防抖300ms
+- 实时Lint诊断(255条规则) + 防抖300ms
 - Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
 - 状态栏评分指示器
 - 保存时自动检查 + 打开文件自动Lint
@@ -429,7 +429,7 @@ prompt-cli compliance -t my_prompt.md --format markdown
 # 开发环境
 pip install -e ".[dev]"
 
-# 运行测试(2674个)
+# 运行测试(3539个)
 pytest tests/ -v
 
 # 代码格式化

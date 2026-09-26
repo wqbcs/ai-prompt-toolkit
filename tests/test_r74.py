@@ -90,11 +90,11 @@ class TestR74RuleCount:
     def test_total_rules_160(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
         rules = get_all_rules()
-        assert len(rules) == 160
+        assert len(rules) == 255
 
     def test_auto_fixable_count_96(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
-        assert len(AUTO_FIXABLE_RULES) == 101
+        assert len(AUTO_FIXABLE_RULES) == 196
 
     def test_p156_in_auto_fixable(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
@@ -143,7 +143,7 @@ class TestR74OwaspMapping:
 class TestR74EvaluatorDimensions:
     def test_dimension_count_110(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS
-        assert len(_DIMENSIONS) == 110
+        assert len(_DIMENSIONS) == 130
 
     def test_d101_d110_exist(self):
         from ai_prompt_toolkit.evaluator import _DIMENSIONS

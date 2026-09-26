@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.1.0] - 2026-09-26
+
+### Added (R165: Batch 0 基线修复+可观测性+徽章同步)
+
+#### R165: 基线修复与工程卫生
+- 修复 mcp_reload 类身份分裂: 核心类模块(rules/types)不再 in-process reload,
+  仅热重载数据型扩展模块(rules_p*/owasp_mapping), 消除跨重载 isinstance 失效
+- 修复6条规则误报缺陷: P194裸"消息"误触发多Agent、P196/P197/P239"逐步推理"
+  (思维链)误判为推理服务、P201/P202/P205否定式声明("不收集")误报、
+  P221裸"模型"词误报供应链风险、P237漏识别"响应时间恒定"防护、P246裸版本号
+  即报HIGH治理告警
+- huawei_cloud 单文件→包(iam.py迁移+__init__统一re-export), 消除模块/包同名冲突
+- otel_tracer.py: OTel GenAI语义约定对齐的可观测性Tracer(无SDK硬依赖)
+- scripts/sync_badges.py: README徽章/核心数据从注册表真实生成(评估维度130、
+  MCP工具73等漂移数字已纠正), 不再手写
+- tests/conftest.py: 规则注册表隔离fixture, 防跨测试污染
+- 清理97个会话调试产物+.gitignore防再污染
+- 全量回归: 3539 passed / 0 failed
+
 ## [v67.0.0] - 2026-07-30
 
 ### Added (R161-R163: 测试套件+配置发现+成本追踪)

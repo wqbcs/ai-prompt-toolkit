@@ -53,7 +53,9 @@ _RULES_P221_P225 = [
 for r in _RULES_P221_P225:
     _RULE_MAP[r.rule_id] = r
 
-_MODEL_PATTERN = re.compile(r'(?:model|模型|gpt|claude|llama|gemini|qwen|chatglm|微调|fine.tun|权重|weights)', re.IGNORECASE)
+# 注: 不含裸"model/模型" — 讨论模型行为("本模型在医疗领域表现有限")不构成供应链面,
+# 仅具体模型标识/权重/微调等采购信号才触发来源验证要求
+_MODEL_PATTERN = re.compile(r'(?:gpt|claude|llama|gemini|qwen|chatglm|deepseek|mistral|ernie|文心|通义千问|kimi|doubao|微调|fine.tun|权重|weights|from_pretrained|load_model|加载模型|载入权重|model.file|model.repo|model.weights)', re.IGNORECASE)
 _MODEL_VERIFY_PATTERN = re.compile(r'(?:model.card|模型卡|发布者|publisher|verify_model|社区评分|community.rating|来源验证|source.verify)', re.IGNORECASE)
 _DEP_PATTERN = re.compile(r'(?:plugin|插件|api_key|第三方|third.party|依赖|dependency|tool_call|工具调用|扩展|extension)', re.IGNORECASE)
 _DEP_AUDIT_PATTERN = re.compile(r'(?:audit|审计|安全评估|security.assess|权限|permission|data.flow|数据流审查)', re.IGNORECASE)

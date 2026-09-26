@@ -87,7 +87,7 @@ class TestP145MultiAgentConflict:
 class TestRuleCount150:
     def test_rule_map_has_150(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
-        assert len(_RULE_MAP) == 185
+        assert len(_RULE_MAP) == 255
 
     def test_p141_p145_in_rule_map(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP

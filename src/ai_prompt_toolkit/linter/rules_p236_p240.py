@@ -56,7 +56,9 @@ for r in _RULES_P236_P240:
 _QUANT_PATTERN = re.compile(r'(?:quantiz|量化|INT8|INT4|FP8|FP4|GPTQ|AWQ|bitsandbytes|bnb|load_in_4bit|load_in_8bit)', re.IGNORECASE)
 _ROBUST_PATTERN = re.compile(r'(?:robust|鲁棒|adversarial|对抗|PGD|FGSM|eval_robustness|混合精度|mixed.precision)', re.IGNORECASE)
 _SIDECHANNEL_PATTERN = re.compile(r'(?:timing|时序|侧信道|side.channel|power|功耗|cache.attack|缓存攻击|spectre|meltdown)', re.IGNORECASE)
-_CONST_TIME_PATTERN = re.compile(r'(?:constant.time|常量时间|cache.flush|缓存隔离|cache.isolat|TEE|trusted.execution|功耗随机)', re.IGNORECASE)
+_CONST_TIME_PATTERN = re.compile(r'(?:constant.time|常量时间|恒定时间|响应时间恒定|时间恒定|cache.flush|缓存隔离|cache.isolat|TEE|trusted.execution|功耗随机)', re.IGNORECASE)
+# 思维链/逐步推理是Prompt行为描述, 不是推理服务部署 — 排除"逐步推理"类误报
+_REASONING_BEHAVIOR_PATTERN = re.compile(r'(?:逐步推理|思维链|chain.of.thought|思考过程|推理过程|step.by.step|scratchpad)', re.IGNORECASE)
 _KV_CACHE_PATTERN = re.compile(r'(?:kv.cache|KV缓存|key.value.cache|past_key_values|cached_key|context.cache|长上下文)', re.IGNORECASE)
 _KV_SECURE_PATTERN = re.compile(r'(?:边界检查|boundary|isolat|隔离|bounded|限制缓存|max_tokens|flush|清除缓存)', re.IGNORECASE)
 _RATE_LIMIT_PATTERN = re.compile(r'(?:rate.limit|速率限制|限流|throttle|quota|concurrency|并发|max_concurrent|token.per.sec)', re.IGNORECASE)
@@ -88,6 +90,8 @@ def check_p238(text: str) -> list[Finding]:
 
 def check_p239(text: str) -> list[Finding]:
     findings = []
+    if _REASONING_BEHAVIOR_PATTERN.search(text):
+        return findings
     if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text):
         has_infer = re.search(r'(?:infer|推理|predict|generate|completion|serve|api|endpoint)', text, re.IGNORECASE)
         if has_infer:

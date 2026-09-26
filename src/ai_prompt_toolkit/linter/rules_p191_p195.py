@@ -59,7 +59,8 @@ _TOOL_PATTERN = re.compile(r'(?:工具|tool|function_call|调用|invoke|API_call
 _TOOL_CONSTRAINT_PATTERN = re.compile(r'(?:约束|constraint|频率|rate.limit|超时|timeout|max_calls|限制)', re.IGNORECASE)
 _COT_PATTERN = re.compile(r'(?:思维链|CoT|chain.of.thought|推理过程|reasoning|think.step|scratchpad)', re.IGNORECASE)
 _COT_ISOLATED_PATTERN = re.compile(r'(?:内部|internal|不可见|hidden|隔离|isolate|不暴露|不显示)', re.IGNORECASE)
-_MULTI_AGENT_PATTERN = re.compile(r'(?:多Agent|multi.agent|协调|coordination|通信|communicate|消息|message|分布式|distributed)', re.IGNORECASE)
+# 注: 不含裸"消息/message" — 该词常出现在"错误消息"等单Agent语境, 会造成误报
+_MULTI_AGENT_PATTERN = re.compile(r'(?:多Agent|multi.agent|协调|coordination|通信|communicate|分布式|distributed)', re.IGNORECASE)
 _COORD_SECURE_PATTERN = re.compile(r'(?:加密|encrypt|TLS|认证|auth|token|签名|sign|hmac|安全通道)', re.IGNORECASE)
 _MEMORY_PATTERN = re.compile(r'(?:记忆|memory|长期记忆|long.term|历史|history|上下文存储|context.store)', re.IGNORECASE)
 _MEMORY_ISOLATED_PATTERN = re.compile(r'(?:隔离|sandbox|脱敏|mask|PII|TTL|过期|expire|per_user|沙箱)', re.IGNORECASE)

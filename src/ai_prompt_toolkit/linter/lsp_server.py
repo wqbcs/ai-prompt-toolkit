@@ -46,8 +46,9 @@ def _lint_to_diagnostics(text: str) -> list[dict[str, Any]]:
     for finding in result.findings:
         line = 0
         char = 0
-        if finding.location:
-            parts = finding.location.split(":")
+        loc = str(finding.location) if finding.location is not None else ""
+        if loc:
+            parts = loc.split(":")
             try:
                 if len(parts) >= 1:
                     line = max(0, int(parts[0]) - 1)

@@ -242,6 +242,7 @@ class TestHuaweiCloudMCPTools:
         from ai_prompt_toolkit.mcp_server import _handle_tools_list
         response = json.loads(_handle_tools_list(1))
         tools = response["result"]["tools"]
-        assert len(tools) == 59
+        # R164扩容后实际值（工具数随后续轮次扩展，当前为73）
+        assert len(tools) == 73
         huawei_tools = [t for t in tools if t["name"].startswith("huaweicloud_")]
         assert len(huawei_tools) == 6

@@ -221,6 +221,23 @@ class TestTracing:
         assert t1 is t2
 
 
+def _collect_route_paths(app):
+    """递归收集应用路由路径（兼容新版FastAPI的_IncludedRouter包装对象）"""
+    paths = []
+
+    def _walk(routes):
+        for r in routes:
+            if type(r).__name__ == "_IncludedRouter":
+                inner = getattr(r, "original_router", None)
+                if inner is not None:
+                    _walk(getattr(inner, "routes", []))
+            elif hasattr(r, "path"):
+                paths.append(r.path)
+
+    _walk(app.routes)
+    return paths
+
+
 class TestPlaygroundServerAPIs:
     def test_server_import(self):
         from ai_prompt_toolkit.playground.server import app
@@ -228,14 +245,14 @@ class TestPlaygroundServerAPIs:
 
     def test_traces_api_exists(self):
         from ai_prompt_toolkit.playground.server import app
-        routes = [r.path for r in app.routes]
+        routes = _collect_route_paths(app)
         assert "/api/traces" in routes
         assert "/api/traces/summary" in routes
         assert "/api/traces/export" in routes
 
     def test_market_router_included(self):
         from ai_prompt_toolkit.playground.server import app
-        routes = [r.path for r in app.routes]
+        routes = _collect_route_paths(app)
         assert "/api/market/templates" in routes
 
 
@@ -316,14 +333,14 @@ class TestDatasetModule:
 class TestEvalMatrixAPI:
     def test_eval_matrix_api_exists(self):
         from ai_prompt_toolkit.playground.server import app
-        routes = [r.path for r in app.routes]
+        routes = _collect_route_paths(app)
         assert "/api/eval-matrix" in routes
         assert "/api/eval-history" in routes
         assert "/api/eval-compare" in routes
 
     def test_dataset_router_included(self):
         from ai_prompt_toolkit.playground.server import app
-        routes = [r.path for r in app.routes]
+        routes = _collect_route_paths(app)
         assert "/api/datasets" in routes
 
 

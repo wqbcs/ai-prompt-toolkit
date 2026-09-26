@@ -65,8 +65,8 @@ class TestMCPDescriptionUpdated:
         data = json.loads(response)
         tools = data["result"]["tools"]
         lint_tool = next(t for t in tools if t["name"] == "prompt_lint")
-        assert "170" in lint_tool["description"]
-        assert "P001-P170" in lint_tool["description"]
+        assert "255" in lint_tool["description"]  # R164扩容后实际值
+        assert "P001-P255" in lint_tool["description"]  # R164扩容后实际值
 
     def test_output_scan_tool_exists(self):
         from ai_prompt_toolkit.mcp_server import _handle_tools_list

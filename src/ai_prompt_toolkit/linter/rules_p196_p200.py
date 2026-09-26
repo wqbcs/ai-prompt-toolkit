@@ -56,6 +56,8 @@ for r in _RULES_P196_P200:
 _TIMEOUT_PATTERN = re.compile(r'(?:timeout|超时|time.limit|max_retries)', re.IGNORECASE)
 _INVOKE_PATTERN = re.compile(r'(?:推理|inference|invoke|generate|chat.completions|completion|predict|调用模型)', re.IGNORECASE)
 _MAX_TOKENS_PATTERN = re.compile(r'(?:max_tokens|max.tokens|最大长度|max_length|token.limit)', re.IGNORECASE)
+# 思维链/逐步推理是Prompt行为描述, 不是推理服务配置 — 用于排除"逐步推理"类误报
+_REASONING_BEHAVIOR_PATTERN = re.compile(r'(?:逐步推理|思维链|chain.of.thought|思考过程|推理过程|step.by.step|scratchpad)', re.IGNORECASE)
 _TEMP_PATTERN = re.compile(r'(?:temperature|温度|temp)\s*[:=]\s*([\d.]+)', re.IGNORECASE)
 _TOP_P_PATTERN = re.compile(r'(?:top_p|top.p|核采样)\s*[:=]', re.IGNORECASE)
 _STREAM_PATTERN = re.compile(r'(?:stream|流式|streaming)', re.IGNORECASE)
@@ -64,6 +66,8 @@ _STREAM_AUDIT_PATTERN = re.compile(r'(?:audit|审核|content.check|moderation|�
 
 def check_p196(text: str) -> list[Finding]:
     findings = []
+    if _REASONING_BEHAVIOR_PATTERN.search(text):
+        return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _TIMEOUT_PATTERN.search(text):
         findings.append(Finding("P196", Severity.HIGH, "LLM推理未设置timeout", 1, 1))
@@ -72,6 +76,8 @@ def check_p196(text: str) -> list[Finding]:
 
 def check_p197(text: str) -> list[Finding]:
     findings = []
+    if _REASONING_BEHAVIOR_PATTERN.search(text):
+        return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _MAX_TOKENS_PATTERN.search(text):
         findings.append(Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens", 1, 1))

@@ -53,7 +53,8 @@ _RULES_P246_P250 = [
 for r in _RULES_P246_P250:
     _RULE_MAP[r.rule_id] = r
 
-_VERSION_PATTERN = re.compile(r'(?:version|版本|v\d|changelog|变更|release)', re.IGNORECASE)
+# 注: 裸版本号(frontmatter "version: 1.0.0")不触发 — 有版本化流程证据(changelog/release/变更记录)才要求配套治理
+_VERSION_PATTERN = re.compile(r'(?:changelog|变更日志|变更记录|release|发布记录|版本发布|版本.{0,6}更新|更新.{0,6}版本)', re.IGNORECASE)
 _AUDIT_PATTERN = re.compile(r'(?:audit|审计|审批|approve|review|CR|code.review|变更审批|rollback|回滚)', re.IGNORECASE)
 _AB_TEST_PATTERN = re.compile(r'(?:A/B|ab.test|experiment|实验|分流|variant|control.group|treatment)', re.IGNORECASE)
 _AB_SECURE_PATTERN = re.compile(r'(?:匿名|anonym|fairness|公平|隔离|isolat|exclude_pii|最小暴露|minimal)', re.IGNORECASE)
