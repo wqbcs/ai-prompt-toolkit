@@ -115,7 +115,7 @@ def check_p112(text: str) -> Finding | None:
 
 # R168校准: 触发需"受保护系统指令"语义 — 裸"你是/角色"是正常角色定义, 不构成注入风险面
 _SYSTEM_PROMPT_PATTERN = re.compile(r'(?:系统提示|system prompt|系统指令|system instruction|内部指令|指令不可见|不要泄露|防泄露|protected.*instruction)', re.IGNORECASE)
-_INJECTION_DEFENSE = re.compile(r'(?:忽略.*注入|injection.*ignore|注入.*防御|defense.*injection|仅执行.*系统|only.*execute.*system|不要遵循.*用户|do not follow.*user|安全.*指令|safety.*instruction|指令.*不可见|输出过滤|禁止包含|防提取|不可泄露)', re.IGNORECASE)
+_INJECTION_DEFENSE = re.compile(r'(?:忽略.*注入|injection.*ignore|注入.*防御|defense.*injection|仅执行.*系统|only.*execute.*system|不要遵循.*用户|do not follow.*user|安全.*指令|safety.*instruction|指令.*不可见|输出过滤|禁止包含|防提取|不可泄露|受保护|protected)', re.IGNORECASE)
 
 
 def check_p113(text: str) -> Finding | None:

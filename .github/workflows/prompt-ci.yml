@@ -44,6 +44,10 @@ jobs:
       - name: Run tests
         run: pytest tests/ -x -q --tb=short -k "not slow" --cov=ai_prompt_toolkit --cov-report=xml --cov-fail-under=80
 
+      - name: Docs drift check (rules doc sync with registry)
+        if: matrix.python-version == '3.12'
+        run: python scripts/gen_rules_doc.py --check
+
       - name: MyPy type check
         run: mypy src/ai_prompt_toolkit --ignore-missing-imports --no-error-summary || true
 
