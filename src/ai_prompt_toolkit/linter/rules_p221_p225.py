@@ -90,7 +90,8 @@ _MODEL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _MODEL_VERIFY_PATTERN = re.compile(
-    r"(?:model.card|模型卡|发布者|publisher|verify_model|社区评分|community.rating|来源验证|source.verify)",
+    # R177: model_compatibility兼容性声明即"已做选型验证" — 模板/资产元数据不应触发来源验证
+    r"(?:model.card|模型卡|发布者|publisher|verify_model|社区评分|community.rating|来源验证|source.verify|model_compatibility|模型兼容)",
     re.IGNORECASE,
 )
 _DEP_PATTERN = re.compile(

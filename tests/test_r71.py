@@ -195,34 +195,27 @@ class TestP133Fix:
 
 class TestCLIResumeOption:
     def test_lint_has_resume_option(self):
-        import importlib
-
+        # R177: 移除importlib.reload(制造与真实运行失真的注册环境, commands/模块会绑定旧group)
         import ai_prompt_toolkit.cli_core as m
 
-        importlib.reload(m)
         lint_cmd = m.main.commands["lint"]
         param_names = [p.name for p in lint_cmd.params]
         assert "resume" in param_names
 
     def test_scan_has_resume_option(self):
-        import importlib
-
         import ai_prompt_toolkit.cli_core as m
 
-        importlib.reload(m)
         scan_cmd = m.main.commands["scan"]
         param_names = [p.name for p in scan_cmd.params]
         assert "resume" in param_names
 
     def test_lint_resume_no_saved_progress(self, tmp_path):
-        import importlib
 
         from click.testing import CliRunner
 
         import ai_prompt_toolkit.cli_core as m
         import ai_prompt_toolkit.resume_state as rs
 
-        importlib.reload(m)
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache"
         try:
@@ -235,14 +228,12 @@ class TestCLIResumeOption:
             rs._CACHE_DIR = old_cache
 
     def test_lint_resume_with_saved_progress(self, tmp_path):
-        import importlib
 
         from click.testing import CliRunner
 
         import ai_prompt_toolkit.cli_core as m
         import ai_prompt_toolkit.resume_state as rs
 
-        importlib.reload(m)
         old_cache = rs._CACHE_DIR
         rs._CACHE_DIR = tmp_path / "cache"
         try:

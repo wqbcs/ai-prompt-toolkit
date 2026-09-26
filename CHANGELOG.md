@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.11.0] - 2026-09-26
+
+### Fixed (R177: 死代码手术3248行 + 功能回归修复 + coverage达标73%)
+
+#### 死代码手术(cli_core 3943→695行, -3248行)
+- AST精确定位43个被cli/commands/模块同名注册覆盖的死命令函数 — 模块化重构
+  遗留的单体残骸(总缺失覆盖2063行的主体), 全量回归全绿即等价性证明
+- 覆盖率 68.49% → **73%**(超70目标), cli_core缺失行2063→246
+
+#### 功能回归修复(死代码审计的意外收获)
+- **lint/scan --resume 功能曾随inline死代码静默丢失**(R71的进度保存/恢复,
+  SIGINT中断后可续跑) — 恢复到lint_commands版本(恢复进度/全完成清理/逐文件save)
+- test_r71移除importlib.reload脆弱技巧(reload后commands/模块绑定旧group,
+  制造与真实运行失真的注册环境 — 这正是死代码"复活"的原因)
+
+#### 自洽性审计(工具自己的资产必须通过自己的lint)
+- 内置模板26个全部有HIGH/CRITICAL — P221将model_compatibility兼容性元数据
+  误判为"调用模型需来源验证" → 声明兼容性即视作已验证选型; 剩余热点
+  (P241/P224/P100/P180/P161/P162)记入R178待办
+
+#### coverage债务清单(更新)
+- cli命令层(lint_commands 37%/eval_commands等)与ab_test/statistics为下一批补测目标
+
 ## [v67.10.0] - 2026-09-26
 
 ### Fixed (R175/R176: 性能基线+覆盖率门禁诚实化)

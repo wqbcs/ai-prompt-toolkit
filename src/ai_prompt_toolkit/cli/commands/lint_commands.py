@@ -52,6 +52,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
+@click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
 @click.option(
     "--trace-json",
     "trace_json_path",
@@ -87,6 +88,7 @@ def lint(
     explain_mode: bool,
     export_lcov_path: str | None,
     trace_json_path: str | None = None,
+    resume: bool = False,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import (
@@ -124,6 +126,27 @@ def lint(
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
+
+    # R177: 恢复R71的--resume功能(模块化重构时曾随inline死代码丢失)
+    _completed_before: list[str] = []
+    if resume:
+        from ai_prompt_toolkit.resume_state import load_progress
+
+        saved = load_progress("lint")
+        if saved:
+            _completed_before = saved.get("completed_files", [])
+            templates = [t for t in templates if str(t) not in set(_completed_before)]
+            click.echo(f"恢复进度: 已完成 {len(_completed_before)} 个文件, 剩余 {len(templates)} 个")
+        else:
+            click.echo("无已保存的进度, 从头开始")
+    if resume and not templates:
+        from ai_prompt_toolkit.resume_state import clear_progress
+
+        try:
+            clear_progress("lint")
+        except Exception:
+            pass
+        click.echo("全部文件已完成, 无待处理项")
 
     if changed_only:
         import subprocess as _sp
@@ -229,6 +252,15 @@ def lint(
             all_results.append(result)
             total_findings += result.failed_count
             total_score += result.score
+
+    if resume:
+        from ai_prompt_toolkit.resume_state import clear_progress, save_progress
+
+        save_progress("lint", [], _completed_before + [str(t) for t in templates], [])
+        try:
+            clear_progress("lint")
+        except Exception:
+            pass
 
     if trace_json_path:
         _write_trace_json(tracer, Path(trace_json_path))
@@ -569,7 +601,16 @@ def lint(
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
 @click.option("--explain", is_flag=True, help="交互式解释: 每个安全发现的详细说明+修复建议")
-def scan(target: str, provider: str | None, fmt: str, output: str | None, incremental: bool, explain: bool) -> None:
+@click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
+def scan(
+    target: str,
+    provider: str | None,
+    fmt: str,
+    output: str | None,
+    incremental: bool,
+    explain: bool,
+    resume: bool = False,
+) -> None:
     """安全扫描：检测Prompt注入、敏感信息泄露等安全风险"""
     from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
     from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
@@ -577,6 +618,28 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None, increm
     templates = discover_templates(target)
     if not templates:
         click.echo(empty_state_tip("scan"))
+        sys.exit(0)
+
+    # R177: 恢复R71的--resume功能
+    _scan_done: list[str] = []
+    if resume:
+        from ai_prompt_toolkit.resume_state import load_progress
+
+        saved = load_progress("scan")
+        if saved:
+            _scan_done = saved.get("completed_files", [])
+            templates = [t for t in templates if str(t) not in set(_scan_done)]
+            click.echo(f"恢复进度: 已完成 {len(_scan_done)} 个文件, 剩余 {len(templates)} 个")
+        else:
+            click.echo("无已保存的进度, 从头开始")
+    if resume and not templates:
+        from ai_prompt_toolkit.resume_state import clear_progress
+
+        try:
+            clear_progress("scan")
+        except Exception:
+            pass
+        click.echo("全部文件已扫描, 无待处理项")
         sys.exit(0)
 
     prov = DictTemplateProvider({})
@@ -596,6 +659,11 @@ def scan(target: str, provider: str | None, fmt: str, output: str | None, increm
         result = scan_template(tpl_path.name, text, prov, incremental=incremental)
         all_results.append(result)
         total_findings += len(result.findings)
+        if resume:
+            from ai_prompt_toolkit.resume_state import save_progress
+
+            _scan_done.append(str(tpl_path))
+            save_progress("scan", [], _scan_done, [str(t) for t in templates[templates.index(tpl_path) + 1 :]])
 
         if fmt == "cli" and result.findings:
             for f in result.findings:
