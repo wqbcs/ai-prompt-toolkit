@@ -87,8 +87,7 @@ def _collect_highs() -> dict[str, list[str]]:
         highs = sorted(
             f"{f.rule_id}:{getattr(f.severity, 'value', '')}"
             for f in r.findings
-            if getattr(f.severity, "value", "") in ("high", "critical")
-            and f.rule_id not in TEMPLATE_EXEMPT_RULES
+            if getattr(f.severity, "value", "") in ("high", "critical") and f.rule_id not in TEMPLATE_EXEMPT_RULES
         )
         result[str(p.relative_to(TEMPLATES_DIR))] = highs
     return result
