@@ -5,7 +5,8 @@
 set -e
 
 echo "=========================================="
-echo "  ai-prompt-toolkit v42.0.0 功能演示"
+APP_VERSION=$(python -c "import ai_prompt_toolkit; print(ai_prompt_toolkit.__version__)" 2>/dev/null || echo "?")
+echo "  ai-prompt-toolkit v${APP_VERSION} 功能演示"
 echo "=========================================="
 echo ""
 
@@ -67,7 +68,7 @@ echo ""
 
 echo "📊 4. 评估引擎 - 快速模式"
 echo "-------------------------------------------"
-prompt-cli evaluate -s "$DEMO_DIR/good_prompt.md" --mode quick || true
+prompt-cli evaluate -t "$DEMO_DIR/good_prompt.md" --quick || true
 echo ""
 
 echo "🏥 5. 健康检查"

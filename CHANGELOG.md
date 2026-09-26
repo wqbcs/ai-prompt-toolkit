@@ -2,6 +2,18 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.15.0] - 2026-09-26
+
+### Fixed (R181: 端完整性治理 — demo/LSP/VSCode扩展)
+
+- demo.sh: banner版本硬编码42.0.0→动态读取; evaluate调用参数修正
+  (-s→-t, --mode quick→--quick, 对齐真实签名); 全流程冒烟通过
+- LSP: pyproject新增lsp可选extra(pygls/lsprotocol), 补全"每端可选依赖"声明
+- VSCode扩展: version list/diff调用对齐真实签名(原子命令风格+--from/--to
+  均不存在, 集成必坏) — 端参数与注册表逐一审计
+- 评分模型演进(记档): score=规则通过率对极短prompt虚高(4字得92.9),
+  设计项为"覆盖因子"加权, 涉及gate/badge/等级全链路ripple, 单独立项
+
 ## [v67.14.0] - 2026-09-26
 
 ### Fixed (R180: 矛盾/歧义检测精度治理 — 模板自洽债务清零)

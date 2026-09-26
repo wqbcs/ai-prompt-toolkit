@@ -520,7 +520,8 @@ async function runVersionDiffOnActiveFile() {
   }
   const filePath = editor.document.uri.fsPath;
   try {
-    const output = await executeCli(['version', 'list', '--target', filePath, '--format', 'json']);
+    const templateId = path.basename(filePath, path.extname(filePath));
+    const output = await executeCli(['version', '--action', 'list', '--template', templateId, '--format', 'json']);
     const versions = JSON.parse(output);
     if (!versions.versions || versions.versions.length < 2) {
       vscode.window.showInformationMessage('Prompt Lint: 需要至少2个版本才能对比');
@@ -536,7 +537,7 @@ async function runVersionDiffOnActiveFile() {
     if (!to) { return; }
     const fromIdx = items.indexOf(from);
     const toIdx = items.indexOf(to);
-    const diffOutput = await executeCli(['version', 'diff', '--target', filePath, '--from', String(fromIdx), '--to', String(toIdx)]);
+    const diffOutput = await executeCli(['version', '--action', 'diff', '--template', templateId, '--version-a', String(fromIdx + 1), '--version-b', String(toIdx + 1), '--format', 'json']);
     const panel = vscode.window.createWebviewPanel(
       'promptVersionDiff',
       `版本Diff — ${path.basename(filePath)}`,
