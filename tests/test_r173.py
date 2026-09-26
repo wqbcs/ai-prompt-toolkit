@@ -1,4 +1,5 @@
 """R173测试: 同义规则去重机制 + P181语境门控守护"""
+
 from __future__ import annotations
 
 import pytest
