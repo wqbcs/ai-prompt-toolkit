@@ -2,6 +2,16 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.16.0] - 2026-09-26
+
+### Test (R182: 命令层冒烟测试 — 端可达性验证+coverage 73→74%)
+
+- CliRunner冒烟: dataset(create/import/list全链路)/score/badge/redteam(离线probe)/
+  plugin list/init配置生成 — 8个命令真实跑通
+- 修复测试假设错误2处(dataset import需数据集ID非名称; probe名为prompt_injection非dan)
+- 覆盖率: dataset_commands 56%/redteam 48%/plugin 32%/security 41%
+- 全量回归: 3641 passed / 0 failed
+
 ## [v67.15.0] - 2026-09-26
 
 ### Fixed (R181: 端完整性治理 — demo/LSP/VSCode扩展)
