@@ -84,7 +84,9 @@ for r in _RULES_P176_P180:
     _RULE_MAP[r.rule_id] = r
 
 
-_B64_PATTERN = re.compile(r"(?:[A-Za-z0-9+/]{4,}={0,2})", re.ASCII)
+# R179: base64启发式收紧 — 须含数字(真编码)且排除纯字母短语("Critical/Major/Minor"曾误匹配),
+# 长度>=20且4的倍数(base64编码特性)
+_B64_PATTERN = re.compile(r"(?<![A-Za-z0-9+/])(?=[A-Za-z0-9+/]*[0-9])(?=[A-Za-z0-9+/]*[A-Za-z])[A-Za-z0-9+/]{20,}={0,2}(?![A-Za-z0-9+/=])", re.ASCII)
 _HEX_PATTERN = re.compile(r"(?:0x[0-9a-fA-F]{2,})+")
 _UNICODE_ESCAPE = re.compile(r"\\u[0-9a-fA-F]{4}", re.IGNORECASE)
 _HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)

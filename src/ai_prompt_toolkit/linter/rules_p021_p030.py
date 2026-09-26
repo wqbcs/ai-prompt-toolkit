@@ -104,6 +104,8 @@ def check_p021(text: str) -> Finding | None:
 
 
 def check_p022(text: str) -> Finding | None:
+    # R179: 剥离markdown代码块 — 教学代码示例(import {...}等)不是prompt注入标记
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     matches = []
     for pattern in _P022_PATTERNS:
         for m in pattern.finditer(text):

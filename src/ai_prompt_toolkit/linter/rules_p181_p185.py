@@ -83,7 +83,11 @@ _RULES_P181_P185 = [
 for r in _RULES_P181_P185:
     _RULE_MAP[r.rule_id] = r
 
-_VERSION_PATTERN = re.compile(r"(?:version|v|ver)\s*[:=]?\s*[\d.]+", re.IGNORECASE)
+_VERSION_PATTERN = re.compile(
+    # R179: 支持引号包裹的版本值(frontmatter里常见 version: "2.0")
+    r"(?:version|v|ver)[\"']?\s*[:=]\s*[\"']?v?[\d.]+",
+    re.IGNORECASE,
+)
 _DEP_PATTERN = re.compile(r"(?:依赖|depend|requires?|model|api|tool)\s*[:=]", re.IGNORECASE)
 _ENV_PATTERN = re.compile(r"(?:env|environment|stage|profile|NODE_ENV|APP_ENV)\s*[:=]", re.IGNORECASE)
 _FALLBACK_PATTERN = re.compile(r"(?:降级|fallback|degradation|备用|backup|secondary|retry)", re.IGNORECASE)
