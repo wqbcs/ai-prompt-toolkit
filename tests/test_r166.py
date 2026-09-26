@@ -224,3 +224,60 @@ class TestU1TraceExportCLI:
         runner = CliRunner()
         runner.invoke(main, ["lint", "-t", str(target)])
         assert not (tmp_path / "trace.json").exists()
+
+
+class TestU1SpanTreeAndTraceView:
+    """U1完整版: span树构建 + prompt-cli trace --file 渲染"""
+
+    def test_build_span_tree_nesting(self):
+        from ai_prompt_toolkit.linter.otel_tracer import build_span_tree
+
+        spans = [
+            {"span_id": "root", "parent_span_id": "", "name": "root", "start_time": 1, "duration_ms": 10},
+            {"span_id": "c1", "parent_span_id": "root", "name": "child1", "start_time": 2, "duration_ms": 5},
+            {"span_id": "c2", "parent_span_id": "root", "name": "child2", "start_time": 3, "duration_ms": 3},
+            {"span_id": "gc", "parent_span_id": "c1", "name": "grandchild", "start_time": 4, "duration_ms": 1},
+        ]
+        tree = build_span_tree(spans)
+        assert len(tree) == 1
+        root = tree[0]
+        assert root["span"]["name"] == "root"
+        assert [c["span"]["name"] for c in root["children"]] == ["child1", "child2"]
+        assert root["children"][0]["children"][0]["span"]["name"] == "grandchild"
+
+    def test_build_span_tree_orphan_to_root(self):
+        from ai_prompt_toolkit.linter.otel_tracer import build_span_tree
+
+        spans = [
+            {"span_id": "a", "parent_span_id": "missing", "name": "orphan", "start_time": 2},
+            {"span_id": "b", "parent_span_id": "", "name": "root", "start_time": 1},
+        ]
+        tree = build_span_tree(spans)
+        assert [n["span"]["name"] for n in tree] == ["root", "orphan"]
+
+    def test_trace_view_renders_file(self, tmp_path, monkeypatch):
+        from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
+        monkeypatch.setenv("PROMPT_TOOLKIT_TRACING", "memory")
+        target = tmp_path / "p.md"
+        target.write_text("You are a helpful assistant.", encoding="utf-8")
+        trace_path = tmp_path / "t.json"
+
+        runner = CliRunner()
+        runner.invoke(main, ["lint", "-t", str(target), "--trace-json", str(trace_path)])
+        assert trace_path.exists()
+
+        result = runner.invoke(main, ["trace", "-f", str(trace_path)])
+        assert "prompt.lint" in result.output
+        assert "Metrics" in result.output
+
+    def test_trace_view_missing_file_exit3(self, tmp_path):
+        from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
+        result = CliRunner().invoke(main, ["trace", "-f", str(tmp_path / "nope.json")])
+        assert result.exit_code == 3
+        assert "不存在" in result.output

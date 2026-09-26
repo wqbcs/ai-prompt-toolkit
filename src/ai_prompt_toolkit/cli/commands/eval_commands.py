@@ -1747,8 +1747,18 @@ def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) 
 @main.command(name="trace")
 @click.option("--output", "-o", default="traces.json", help="输出OTLP JSON路径")
 @click.option("--format", "fmt", type=click.Choice(["otlp", "tree", "json"]), default="tree", help="输出格式")
-def trace_cmd(output: str, fmt: str) -> None:
+@click.option(
+    "--file",
+    "-f",
+    "trace_file",
+    default=None,
+    help="渲染lint --trace-json落盘的trace文件(而非进程内tracing后端)",
+)
+def trace_cmd(output: str, fmt: str, trace_file: str | None) -> None:
     """查看和导出Tracing数据(OTLP格式)"""
+    if trace_file:
+        _render_trace_file(trace_file, fmt)
+        return
     from ai_prompt_toolkit.tracing import Tracer, print_trace_tree
 
     tracer = Tracer.get_instance()
@@ -1937,3 +1947,76 @@ def cache_cmd(action: str, key: str | None, fmt: str) -> None:
             click.echo(f"Key not found: {key}")
         else:
             click.echo(_json.dumps(value, ensure_ascii=False, indent=2, default=str))
+
+
+def _render_trace_file(path: str, fmt: str) -> None:
+    """U1: 渲染lint --trace-json落盘的trace(span树+耗时+关键属性+metrics)"""
+    import json as _json
+    from pathlib import Path as _Path
+
+    from ai_prompt_toolkit.linter.otel_tracer import build_span_tree
+
+    trace_path = _Path(path)
+    if not trace_path.exists():
+        click.echo(f"错误: trace文件不存在 — {trace_path}", err=True)
+        sys.exit(3)
+    try:
+        data = _json.loads(trace_path.read_text(encoding="utf-8"))
+    except _json.JSONDecodeError as e:
+        click.echo(f"错误: trace文件不是有效JSON — {e}", err=True)
+        sys.exit(3)
+
+    if fmt == "json":
+        click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+        return
+
+    spans = data.get("spans") or []
+    if not spans:
+        click.echo("trace为空 — 使用 PROMPT_TOOLKIT_TRACING=memory prompt-cli lint -t <目标> --trace-json <文件> 生成")
+        return
+
+    try:
+        from rich.console import Console
+        from rich.tree import Tree
+    except ImportError:
+        click.echo("Tree渲染需要rich: pip install rich", err=True)
+        sys.exit(3)
+
+    console = Console()
+    total_duration = max((s.get("end_time", 0) for s in spans), default=0) - min(
+        (s.get("start_time", 0) for s in spans), default=0
+    )
+    tree = Tree(f"[bold]Trace[/bold] {len(spans)}个span · 总耗时 {total_duration * 1000:.1f}ms")
+
+    def _attr_summary(span: dict) -> str:
+        keys = [
+            "prompt.template.id",
+            "gen_ai.operation.name",
+            "prompt.lint.score",
+            "prompt.lint.findings.count",
+            "prompt.eval.grade",
+        ]
+        parts = [f"{k.split('.')[-1]}={span['attributes'][k]}" for k in keys if k in span.get("attributes", {})]
+        return f" [dim]{' · '.join(parts)}[/dim]" if parts else ""
+
+    def _add_node(parent_tree: object, node: dict) -> None:
+        span = node["span"]
+        status_color = "green" if span.get("status") == "ok" else "red"
+        label = (
+            f"[cyan]{span['name']}[/cyan] [{status_color}]{span.get('duration_ms', 0):.1f}ms[/]{_attr_summary(span)}"
+        )
+        branch = parent_tree.add(label)
+        for child in node["children"]:
+            _add_node(branch, child)
+
+    for root_node in build_span_tree(spans):
+        _add_node(tree, root_node)
+
+    console.print(tree)
+    metrics = data.get("metrics") or {}
+    if metrics:
+        console.print("[bold]Metrics[/bold]")
+        for name, agg in sorted(metrics.items()):
+            console.print(
+                f"  {name}: count={agg['count']:.0f} avg={agg['avg']:.2f} min={agg['min']:.2f} max={agg['max']:.2f}"
+            )

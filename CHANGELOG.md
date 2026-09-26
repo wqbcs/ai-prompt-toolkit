@@ -2,6 +2,15 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.7.0] - 2026-09-26
+
+### Added (R172: U1 trace可视化完整版)
+
+- 内核: otel_tracer.build_span_tree — 扁平span列表→父子树(纯函数, 孤儿span挂根, 按时间排序)
+- CLI: prompt-cli trace -f <file> — Rich Tree渲染lint --trace-json落盘文件
+  (span树+耗时着色+关键属性摘要+metrics统计), 与既有进程内tracing命令合并(不造重复命令)
+- 测试: 树嵌套/孤儿挂根/CLI渲染/缺失文件exit码守护; 全量3595 passed
+
 ## [v67.6.0] - 2026-09-26
 
 ### Changed (R171: Lint门禁修复 — ruff 3905→0, 声明门禁成真)

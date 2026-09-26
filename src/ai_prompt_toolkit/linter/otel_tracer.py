@@ -369,3 +369,24 @@ def get_tracer() -> Tracer:
     if backend in ("memory", "otel", "otlp"):
         return OTelTracer()
     return NoopTracer()
+
+
+def build_span_tree(spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """将扁平span列表组装为父子树(U1: 渲染端复用, 保持内核纯函数)
+
+    节点结构: {"span": span_dict, "children": [node, ...]}
+    孤儿span(父不存在)挂到根层级; 同一父下按start_time排序。
+    """
+    by_id = {s["span_id"]: {"span": s, "children": []} for s in spans}
+    roots: list[dict[str, Any]] = []
+    for s in spans:
+        node = by_id[s["span_id"]]
+        parent = by_id.get(s.get("parent_span_id", ""))
+        if parent and parent is not node:
+            parent["children"].append(node)
+        else:
+            roots.append(node)
+    for node in by_id.values():
+        node["children"].sort(key=lambda c: c["span"].get("start_time", 0))
+    roots.sort(key=lambda c: c["span"].get("start_time", 0))
+    return roots
