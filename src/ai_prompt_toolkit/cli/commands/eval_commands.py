@@ -103,8 +103,9 @@ def evaluate(target: str, dimensions: str | None, categories: str | None,
         sys.exit(2)
 
     if len(files) > 1 and fmt == "cli":
+        from rich.progress import BarColumn, Progress, SpinnerColumn, TaskProgressColumn, TextColumn
+
         from ai_prompt_toolkit.output import console
-        from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -291,10 +292,11 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
 @click.option("--aggregation", type=click.Choice(["majority_vote", "weighted_average", "swap_debias"]),
               default="majority_vote", help="多裁判集成方式")
 @click.option("--multi-judge", is_flag=True, help="启用多裁判模式(3个裁判)")
+@click.option("--flaky-retries", "flaky_retries", default=0, type=int, help="F4 flaky稳定: 判定方差大时自动重试N次取多数决(0=关闭)")
 @click.option("--output", "-o", help="输出报告路径")
 def judge_cmd(question: str, response: str, response_b: str | None, reference: str | None,
               judge_model: str, dimensions: str | None, mode: str, aggregation: str,
-              multi_judge: bool, output: str | None) -> None:
+              multi_judge: bool, flaky_retries: int, output: str | None) -> None:
     """LLM-as-Judge评估：用LLM作为裁判评估Prompt回答质量"""
     import asyncio
 
@@ -324,7 +326,7 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
             {"provider": provider, "model": model},
             {"provider": provider, "model": model},
         ]
-        ensemble = create_multi_judge(judge_configs, dim_list, mode, aggregation)
+        ensemble = create_multi_judge(judge_configs, dim_list, mode, aggregation, flaky_retries=flaky_retries)
 
         if mode == "pairwise" and resp_b_text:
             result = asyncio.run(ensemble.evaluate_pairwise(question, resp_text, resp_b_text))
@@ -339,7 +341,7 @@ def judge_cmd(question: str, response: str, response_b: str | None, reference: s
             import json as _json
             click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
-        judge = create_judge(judge_model, dimensions=dim_list, mode=mode)
+        judge = create_judge(judge_model, dimensions=dim_list, mode=mode, flaky_retries=flaky_retries)
 
         if mode == "pairwise" and resp_b_text:
             result = asyncio.run(judge.evaluate_pairwise(question, resp_text, resp_b_text))
@@ -742,7 +744,6 @@ def eval_config_cmd(config: str, base_dir: str | None, fmt: str, output: str | N
             click.echo(_json.dumps(output_data, ensure_ascii=False, indent=2))
     else:
         from rich.console import Console
-        from rich.table import Table
 
         console = Console()
         console.print("[bold cyan]YAML声明式评估结果[/bold cyan]\n")
@@ -791,9 +792,9 @@ def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
                       output: str | None) -> None:
     """评估器注册表: 使用注册表中的评估器组合评估Prompt"""
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
-    from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry
-    from ai_prompt_toolkit.g_eval import GEvalEvaluator, FaithfulnessEvaluator, HallucinationEvaluator, AgentEvaluator
     from ai_prompt_toolkit.discrete_eval import DiscreteMetricEvaluator
+    from ai_prompt_toolkit.evaluator_registry import EvaluatorRegistry
+    from ai_prompt_toolkit.g_eval import AgentEvaluator, FaithfulnessEvaluator, GEvalEvaluator, HallucinationEvaluator
 
     registry = EvaluatorRegistry()
     registry.register(GEvalEvaluator())
@@ -813,7 +814,7 @@ def eval_registry_cmd(target: str, evaluators: str | None, etype: str | None,
         sys.exit(2)
 
     eval_names = [e.strip() for e in evaluators.split(",")] if evaluators else None
-    thresholds = {name: threshold for name in (eval_names or [])}
+    thresholds = dict.fromkeys(eval_names or [], threshold)
 
     all_results = []
     for f in files:
@@ -953,8 +954,9 @@ def gepa_optimize_cmd(target: str, metric: str, auto: str, predictors: str | Non
                       dry_run: bool, fmt: str, output: str | None) -> None:
     """GEPA反射式Prompt进化优化: 基于DSPy GEPA算法的迭代进化优化"""
     import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path, write_report
-    from ai_prompt_toolkit.gepa import gepa_optimize, FEEDBACK_METRICS
+    from ai_prompt_toolkit.gepa import gepa_optimize
 
     target_path = resolve_path(target)
     text = target_path.read_text(encoding="utf-8")
@@ -1045,7 +1047,8 @@ def prompt_version_cmd(action: str, name: str | None, source: str | None,
                       limit: int, fmt: str) -> None:
     """Prompt版本管理: 版本树/diff/回滚/A-B对比"""
     import json as _json
-    from ai_prompt_toolkit.cli_helpers import resolve_path, empty_state_tip
+
+    from ai_prompt_toolkit.cli_helpers import empty_state_tip, resolve_path
     from ai_prompt_toolkit.prompt_version import PromptVersionStore
 
     store = PromptVersionStore()
@@ -1188,6 +1191,7 @@ def playground_cmd(output: str) -> None:
 def contest_eval_cmd(target: str, fmt: str) -> None:
     """赛事贴合度评估: 华为云+鸿蒙生态赛事关键指标"""
     import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.huawei_eval import evaluate_contest_readiness
 
@@ -1221,8 +1225,9 @@ def contest_eval_cmd(target: str, fmt: str) -> None:
 def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt: str) -> None:
     """Flow DAG编排: 运行声明式工作流(lint-scan-gepa等)"""
     import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path
-    from ai_prompt_toolkit.flow_dag import FlowDAG, FlowExecutor, create_lint_scan_flow, create_gepa_optimize_flow
+    from ai_prompt_toolkit.flow_dag import FlowDAG, FlowExecutor, create_gepa_optimize_flow, create_lint_scan_flow
 
     presets = {
         "lint-scan-flow": create_lint_scan_flow,
@@ -1265,6 +1270,7 @@ def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt:
 def data_load_cmd(source: str, reader_type: str, query: str | None, recursive: bool, fmt: str) -> None:
     """数据连接器: 从文件系统或数据库加载Prompt数据"""
     import json as _json
+
     from ai_prompt_toolkit.data_reader import DataReaderFactory
 
     kwargs: dict[str, Any] = {}
@@ -1292,6 +1298,7 @@ def data_load_cmd(source: str, reader_type: str, query: str | None, recursive: b
 def junit_report_cmd(input_path: str, output_path: str, suite_name: str) -> None:
     """生成JUnit XML格式报告(兼容CI/CD平台)"""
     import json as _json
+
     from ai_prompt_toolkit.ci_integration import JUnitReporter, extract_ci_tags
 
     with open(input_path, encoding="utf-8") as f:
@@ -1339,7 +1346,6 @@ def junit_report_cmd(input_path: str, output_path: str, suite_name: str) -> None
 @click.option("--variables", "-v", multiple=True, help="模板变量(key=value格式, 可多次指定)")
 def notify_cmd(event: str, webhook_url: str, webhook_type: str, secret: str, variables: tuple[str, ...]) -> None:
     """发送通知到DingTalk/Feishu/Slack/Webhook"""
-    import json as _json
     from ai_prompt_toolkit.notification import NotificationConfig, NotificationManager
 
     var_dict: dict[str, str] = {}
@@ -1364,6 +1370,7 @@ def notify_cmd(event: str, webhook_url: str, webhook_type: str, secret: str, var
 def plugin_list_cmd() -> None:
     """列出已注册的Plugin和Hook信息"""
     import json as _json
+
     from ai_prompt_toolkit.plugin import PluginManager
 
     pm = PluginManager.get_instance()
@@ -1379,6 +1386,7 @@ def plugin_list_cmd() -> None:
 def tgd_optimize_cmd(prompt: str, iterations: int, momentum: float, fmt: str) -> None:
     """TextGrad文本梯度优化: 用文本梯度下降优化Prompt"""
     import json as _json
+
     from ai_prompt_toolkit.textgrad import tgd_optimize
 
     result = tgd_optimize(prompt, max_iterations=iterations, momentum=momentum)
@@ -1386,7 +1394,6 @@ def tgd_optimize_cmd(prompt: str, iterations: int, momentum: float, fmt: str) ->
     if fmt == "json":
         click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
     else:
-        from ai_prompt_toolkit.output import success, print_gepa_result
         click.echo(f"初始分数: {result.initial_score:.1f} → 最优分数: {result.final_score:.1f}")
         click.echo(f"提升: {result.improvement:+.1f} | 迭代: {result.iterations} | 收敛: {'是' if result.converged else '否'}")
 
@@ -1399,6 +1406,7 @@ def tgd_optimize_cmd(prompt: str, iterations: int, momentum: float, fmt: str) ->
 def opro_optimize_cmd(instruction: str, generations: int, population: int, fmt: str) -> None:
     """OPRO元Prompt优化: LLM-as-Optimizer进化优化"""
     import json as _json
+
     from ai_prompt_toolkit.opro import opro_optimize
 
     result = opro_optimize(instruction, max_generations=generations, population_size=population)
@@ -1450,6 +1458,7 @@ def registry_push_cmd(name: str, template: str, description: str, category: str,
 def registry_pull_cmd(name: str, version: int | None) -> None:
     """从Prompt Registry拉取模板"""
     import json as _json
+
     from ai_prompt_toolkit.prompt_registry import PromptRegistry
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1467,7 +1476,6 @@ def registry_pull_cmd(name: str, version: int | None) -> None:
 @click.option("--limit", type=int, default=20, help="返回条数")
 def registry_search_cmd(query: str, limit: int) -> None:
     """搜索Prompt Registry模板"""
-    import json as _json
     from ai_prompt_toolkit.prompt_registry import PromptRegistry
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -1486,7 +1494,8 @@ def registry_search_cmd(query: str, limit: int) -> None:
 def sarif_report_cmd(input_path: str, result_type: str, output: str) -> None:
     """生成SARIF v2.1.0格式报告(GitHub Code Scanning兼容)"""
     import json as _json
-    from ai_prompt_toolkit.sarif_report import lint_results_to_sarif, scan_results_to_sarif, eval_results_to_sarif
+
+    from ai_prompt_toolkit.sarif_report import eval_results_to_sarif, lint_results_to_sarif, scan_results_to_sarif
 
     with open(input_path, encoding="utf-8") as f:
         findings = _json.load(f)
@@ -1510,6 +1519,7 @@ def sarif_report_cmd(input_path: str, result_type: str, output: str) -> None:
 def prompt_diff_cmd(old_path: str, new_path: str, fmt: str) -> None:
     """Prompt结构化Diff对比: 段级差异分析+语义相似度"""
     import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.prompt_diff import prompt_diff, prompt_hash
 
@@ -1545,7 +1555,7 @@ def prompt_diff_cmd(old_path: str, new_path: str, fmt: str) -> None:
 def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) -> None:
     """Prompt结构感知合并: 基于7段解析的智能合并"""
     from ai_prompt_toolkit.cli_helpers import resolve_path
-    from ai_prompt_toolkit.prompt_diff import prompt_merge, prompt_hash
+    from ai_prompt_toolkit.prompt_diff import prompt_hash, prompt_merge
 
     ours_text = resolve_path(ours).read_text(encoding="utf-8")
     theirs_text = resolve_path(theirs).read_text(encoding="utf-8")
@@ -1593,9 +1603,11 @@ def prompt_template_cmd(action: str, name: str | None, template: str | None,
                         var: tuple[str, ...], strict: bool, fmt: str) -> None:
     """Prompt模板变量系统: 渲染/提取变量/查看信息"""
     import json as _json
+
     from ai_prompt_toolkit.prompt_template import (
-        PromptTemplate, extract_variables, render_template,
-        get_builtin_templates, get_template_by_name, list_template_names,
+        PromptTemplate,
+        get_builtin_templates,
+        get_template_by_name,
     )
 
     if action == "list":
@@ -1658,6 +1670,7 @@ def prompt_template_cmd(action: str, name: str | None, template: str | None,
 def prompt_doctor_cmd(target: str, fmt: str) -> None:
     """Prompt一键诊断: 15项健康检查+修复建议"""
     import json as _json
+
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.prompt_doctor import run_doctor
 
@@ -1695,6 +1708,7 @@ def prompt_doctor_cmd(target: str, fmt: str) -> None:
 def cache_cmd(action: str, key: str | None, fmt: str) -> None:
     """Prompt缓存管理: LRU/TTL缓存层"""
     import json as _json
+
     from ai_prompt_toolkit.prompt_cache import get_cache
 
     cache = get_cache()

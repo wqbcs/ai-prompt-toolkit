@@ -18,14 +18,13 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-import time
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from ai_prompt_toolkit.ab_test.provider import BaseProvider, ProviderError, create_provider
-from ai_prompt_toolkit.ab_test.types import ModelConfig, ModelResult, ProviderType, TestStatus
+from ai_prompt_toolkit.ab_test.provider import create_provider
+from ai_prompt_toolkit.ab_test.types import ModelConfig, ProviderType, TestStatus
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +100,8 @@ _PAIRWISE_RUBRIC = """请比较两个AI助手对同一问题的回答，判断�
 注意：不要因为回答长度而偏好某一方，应关注回答的质量。
 先给出分析理由，再输出判断结果。"""
 
-_SCORE_PATTERN = re.compile(r'\[\[(\d+)\]\]')
-_PAIR_PATTERN = re.compile(r'\[\[([ABC])\]\]', re.IGNORECASE)
+_SCORE_PATTERN = re.compile(r"\[\[(\d+)\]\]")
+_PAIR_PATTERN = re.compile(r"\[\[([ABC])\]\]", re.IGNORECASE)
 
 
 @dataclass
@@ -150,6 +149,8 @@ class MultiJudgeResult:
     pairwise_result: PairwiseJudgeResult | None = None
     aggregated_score: float = 0.0
     agreement_ratio: float = 0.0
+    # F2: swap一致性 — 两个排列顺序下指向同一真实结论的裁判比例(1.0=完全一致)
+    swap_consistency: float = 1.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -160,6 +161,7 @@ class MultiJudgeResult:
             "pairwise_result": self.pairwise_result.to_dict() if self.pairwise_result else None,
             "aggregated_score": self.aggregated_score,
             "agreement_ratio": self.agreement_ratio,
+            "swap_consistency": self.swap_consistency,
         }
 
 
@@ -388,13 +390,19 @@ class MultiJudgeEnsemble:
 
         score_map = {"A": 1.0, "B": -1.0, "C": 0.0}
         debiased_scores: list[float] = []
+        inconsistent_count = 0
 
         for ab, ba in zip(ab_results, ba_results):
             ab_score = score_map.get(ab.winner, 0.0)
             ba_score = score_map.get(ba.winner, 0.0)
             debiased = (ab_score - ba_score) / 2.0
             debiased_scores.append(debiased)
+            # F2 swap一致性过滤(Shi et al./Xu et al.): 两序同标签=裁判只偏好呈现位置
+            # (如AB序选A且BA序也选A), 该判定是位置偏置伪影而非质量结论
+            if ab_score != 0.0 and ab_score == ba_score:
+                inconsistent_count += 1
 
+        swap_consistency = 1.0 - inconsistent_count / max(len(debiased_scores), 1)
         avg_debiased = sum(debiased_scores) / max(len(debiased_scores), 1)
         if avg_debiased > 0.1:
             winner = "A"
@@ -403,7 +411,7 @@ class MultiJudgeEnsemble:
         else:
             winner = "C"
 
-        confidence = min(abs(avg_debiased) / 0.5, 1.0)
+        confidence = min(abs(avg_debiased) / 0.5, 1.0) * swap_consistency
 
         return MultiJudgeResult(
             mode=self._mode,
@@ -412,11 +420,77 @@ class MultiJudgeEnsemble:
             pairwise_result=PairwiseJudgeResult(
                 winner=winner,
                 confidence=round(confidence, 2),
-                reasoning=f"Swap-Debias平均偏移: {avg_debiased:.3f}",
+                reasoning=(f"Swap-Debias平均偏移: {avg_debiased:.3f} | "
+                           f"swap一致性: {swap_consistency:.0%}"
+                           + (f" (位置偏置伪影: {inconsistent_count}个判定)" if inconsistent_count else "")),
                 judge_model=f"ensemble-swap({len(self._judges)})",
             ),
             agreement_ratio=round(confidence, 2),
+            swap_consistency=round(swap_consistency, 2),
         )
+
+
+class StableJudge:
+    """F4: Flaky判定稳定性包装器 — 对方差大的LLM裁判判定自动重试取多数决
+
+    借鉴DeepEval v4.1与promptfoo的flaky retry实践: LLM裁判对同一输入的判定存在
+    随机方差, 单次判定不可靠; 对同一输入执行(1+retries)次, 多数决取结论,
+    置信度=多数票占比。判定分歧严重(无多数)时降为C/中性并标注flaky。
+
+    与LLMJudge/MultiJudgeEnsemble同接口(duck-typing), 可透明替换。
+    """
+
+    def __init__(self, judge: Any, retries: int = 2) -> None:
+        self._judge = judge
+        self._retries = max(retries, 0)
+
+    @property
+    def wrapped_judge(self) -> Any:
+        return self._judge
+
+    async def evaluate_pairwise(self, question: str, response_a: str, response_b: str) -> PairwiseJudgeResult:
+        results = [await self._judge.evaluate_pairwise(question, response_a, response_b)
+                   for _ in range(1 + self._retries)]
+        winners = [r.winner for r in results]
+        counts = Counter(winners)
+        winner, votes = counts.most_common(1)[0]
+        agreement = votes / len(winners)
+        has_majority = votes > len(winners) / 2
+        final = winner if has_majority else "C"
+        best = next(r for r in results if r.winner == final) if has_majority else results[0]
+        note = f"[stable {votes}/{len(winners)}]" if has_majority else f"[flaky 无多数: {winners}]"
+        return PairwiseJudgeResult(
+            winner=final,
+            confidence=round(agreement, 2),
+            reasoning=f"{note} {best.reasoning}".strip(),
+            judge_model=getattr(best, "judge_model", "") or f"stable({1 + self._retries}x)",
+        )
+
+    async def evaluate_absolute(
+        self,
+        question: str,
+        response: str,
+        reference_answer: str = "",
+    ) -> list[AbsoluteJudgeResult]:
+        runs = [await self._judge.evaluate_absolute(question, response, reference_answer)
+                for _ in range(1 + self._retries)]
+        if not runs:
+            return []
+        aggregated: list[AbsoluteJudgeResult] = []
+        for d, dim_result in enumerate(runs[0]):
+            scores = [r[d].score for r in runs if d < len(r)]
+            rounded = [round(s) for s in scores]
+            counts = Counter(rounded)
+            majority_score, votes = counts.most_common(1)[0]
+            agreement = votes / len(scores)
+            note = f"[stable {votes}/{len(scores)}]" if votes > len(scores) / 2 else f"[flaky 分歧: {rounded}]"
+            aggregated.append(AbsoluteJudgeResult(
+                dimension=dim_result.dimension,
+                score=round(sum(scores) / len(scores), 2) if votes <= len(scores) / 2 else float(majority_score),
+                reasoning=f"{note} {dim_result.reasoning[:80]}".strip(),
+                judge_model=f"stable({1 + self._retries}x)",
+            ))
+        return aggregated
 
 
 def create_judge(
@@ -424,14 +498,16 @@ def create_judge(
     provider: str = "openai",
     dimensions: list[str] | None = None,
     mode: str = "absolute",
-) -> LLMJudge:
+    flaky_retries: int = 0,
+) -> LLMJudge | StableJudge:
     try:
         pt = ProviderType(provider)
     except ValueError:
         pt = ProviderType.OPENAI
     config = ModelConfig(provider=pt, model_name=judge_model, temperature=0.0)
     dims = [BUILTIN_DIMENSIONS[d] for d in dimensions if d in BUILTIN_DIMENSIONS] if dimensions else None
-    return LLMJudge(config, dims, JudgeMode(mode))
+    judge = LLMJudge(config, dims, JudgeMode(mode))
+    return StableJudge(judge, flaky_retries) if flaky_retries > 0 else judge
 
 
 def create_multi_judge(
@@ -440,7 +516,8 @@ def create_multi_judge(
     mode: str = "absolute",
     aggregation: str = "majority_vote",
     weights: list[float] | None = None,
-) -> MultiJudgeEnsemble:
+    flaky_retries: int = 0,
+) -> MultiJudgeEnsemble | StableJudge:
     configs: list[ModelConfig] = []
     for m in judge_models:
         try:
@@ -450,6 +527,7 @@ def create_multi_judge(
         configs.append(ModelConfig(provider=pt, model_name=m.get("model", "gpt-4o-mini"), temperature=0.0))
 
     dims = [BUILTIN_DIMENSIONS[d] for d in dimensions if d in BUILTIN_DIMENSIONS] if dimensions else None
-    return MultiJudgeEnsemble(
+    ensemble = MultiJudgeEnsemble(
         configs, dims, JudgeMode(mode), AggregationMethod(aggregation), weights
     )
+    return StableJudge(ensemble, flaky_retries) if flaky_retries > 0 else ensemble

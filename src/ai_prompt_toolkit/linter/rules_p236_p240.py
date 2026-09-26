@@ -93,7 +93,8 @@ def check_p239(text: str) -> list[Finding]:
     if _REASONING_BEHAVIOR_PATTERN.search(text):
         return findings
     if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text):
-        has_infer = re.search(r'(?:infer|推理|predict|generate|completion|serve|api|endpoint)', text, re.IGNORECASE)
+        # 注: 不含裸"api" — "API文档"等非服务语境不应触发DoS告警
+        has_infer = re.search(r'(?:infer|推理|predict|generate|completion|serve|endpoint|api端点|api接口|api服务|api网关)', text, re.IGNORECASE)
         if has_infer:
             findings.append(Finding("P239", Severity.HIGH, "推理服务缺速率限制/请求大小限制(DoS风险)", 1, 1))
     return findings
