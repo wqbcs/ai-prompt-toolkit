@@ -2,18 +2,15 @@
 
 from __future__ import annotations
 
-import pytest
-
 
 class TestLintParallelOption:
-    @pytest.mark.xfail(reason="R177死代码手术移除inline并行lint; 恢复记档R187", strict=True)
     def test_parallel_code_exists(self):
-        import inspect
+        # R187: 断言升级为行为级 — lint命令params含parallel(源码grep断言曾因命令搬家失效)
+        from ai_prompt_toolkit.cli_core import main
 
-        from ai_prompt_toolkit import cli_core
-
-        source = inspect.getsource(cli_core)
-        assert "--parallel" in source or "parallel" in source
+        lint_cmd = main.commands["lint"]
+        param_names = [p.name for p in lint_cmd.params]
+        assert "parallel" in param_names
 
 
 class TestLintCategoryStats:

@@ -2,6 +2,17 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.21.0] - 2026-09-26
+
+### Added (R187: lint --parallel并行恢复 — 真并行非伪并行)
+
+- 实测驱动决策: asyncio(旧inline实现)对CPU-bound正则是伪并行无加速;
+  ThreadPoolExecutor实测4线程对50文件1.87x(正则部分释放GIL) → 采用线程池
+- lint --parallel N: 多文件目录并行预计算(非交互/非修复/非干跑时启用,
+  交互式进度条仍串行渲染), 30文件目录实测3.82x
+- test_r79断言升级为行为级(params含parallel; 原源码grep断言曾因命令搬家失效)
+- 全量回归: 3659 passed / 0 failed
+
 ## [v67.20.0] - 2026-09-26
 
 ### Fixed (R186: 配置闭环断裂修复 — init生成的配置首次真正可消费)

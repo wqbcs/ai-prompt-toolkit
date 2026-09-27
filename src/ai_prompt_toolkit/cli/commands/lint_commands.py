@@ -53,6 +53,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
 @click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
+@click.option("--parallel", "parallel", default=0, type=int, help="并行lint线程数(0=串行; 多文件目录建议4)")
 @click.option(
     "--trace-json",
     "trace_json_path",
@@ -89,6 +90,7 @@ def lint(
     export_lcov_path: str | None,
     trace_json_path: str | None = None,
     resume: bool = False,
+    parallel: int = 0,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import (
@@ -203,6 +205,18 @@ def lint(
     except ImportError:
         _has_rich = False
 
+    # R187: --parallel并行预计算(实测线程池4对50文件1.87x); 交互/修复/干跑强制串行
+    parallel_results: dict[str, object] | None = None
+    if parallel > 0 and not interactive and not dry_run and not fix and not watch and len(templates) > 1:
+        from concurrent.futures import ThreadPoolExecutor
+
+        def _lint_one(tpl: Path):
+            _t = tpl.read_text(encoding="utf-8")
+            return linter.lint(tpl.name, _t, template_type=_detect_template_type(_t), lint_config=lint_cfg)
+
+        with ThreadPoolExecutor(max_workers=parallel) as _ex:
+            parallel_results = dict(zip([str(t) for t in templates], _ex.map(_lint_one, templates)))
+
     if _has_rich:
         from ai_prompt_toolkit.cli_helpers import friendly_progress_label
 
@@ -243,8 +257,13 @@ def lint(
         for tpl_path in templates:
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
-            result = linter.lint(
-                tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg
+            _pre = parallel_results.get(str(tpl_path)) if parallel_results else None
+            result = (
+                _pre
+                if _pre is not None
+                else linter.lint(
+                    tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg
+                )
             )
             if dry_run and result.auto_fixed:
                 click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
