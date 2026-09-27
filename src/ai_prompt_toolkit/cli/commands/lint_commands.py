@@ -280,6 +280,8 @@ def lint(
 
     # avg_score须在ci_mode/tui_mode引用前计算(修复: 原先在引用之后赋值, --ci模式必NameError)
     avg_score = total_score / max(len(all_results), 1)
+    # R184: 并行采样扣分制质量分(score v2 RFC方案C)
+    avg_quality = sum(r.quality_score for r in all_results) / max(len(all_results), 1)
 
     if ci_mode:
         click.echo(f"files={len(templates)} findings={total_findings} score={avg_score:.1f}")
@@ -301,7 +303,9 @@ def lint(
                     loc = f" L{f.location}" if f.location and str(f.location) != "1" and str(f.location) != "0" else ""
                     click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
 
-    click.echo(f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings}")
+    click.echo(
+        f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings} | 质量分: {avg_quality:.1f}"
+    )
 
     # D3: 无高危发现时的下一步引导(CI模式已有PASS输出, 不重复; medium/info仍列出)
     has_blocking = any(

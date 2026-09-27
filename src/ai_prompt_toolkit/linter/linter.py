@@ -41,6 +41,25 @@ class LintResult:
             return 100.0
         return round((self.passed_count / self.rule_count) * 100, 1)
 
+    @property
+    def quality_score(self) -> float:
+        """R184: 扣分制质量分(score v2 RFC方案C并行采样) — 修复通过率模型对
+        极短prompt的虚高(未激活规则被计为通过)。
+
+        语义限定(对抗性审查结论): findings数量随文本长度增长, 任何按finding
+        计罚的模型都惩罚长文本 — 因此(1)同规则多次触发只计一次(2)每条规则
+        扣一次固定分(3)该分数是绝对质量的粗粒度指示, 跨长度不可直接比较。
+        权重: critical=12/high=6/medium=1/low=0.1/info=0。"""
+        deductions = {"critical": 12.0, "high": 6.0, "medium": 1.0, "low": 0.1, "info": 0.0}
+        seen: set[str] = set()
+        penalty = 0.0
+        for f in self.findings:
+            if f.rule_id in seen:
+                continue
+            seen.add(f.rule_id)
+            penalty += deductions.get(getattr(f.severity, "value", "low"), 0.1)
+        return round(max(0.0, 100.0 - penalty), 1)
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "template_id": self.template_id,
@@ -52,6 +71,7 @@ class LintResult:
             "auto_fixed": self.auto_fixed,
             "fixed_findings": [f.to_dict() for f in self.fixed_findings],
             "score": self.score,
+            "quality_score": self.quality_score,
         }
 
 

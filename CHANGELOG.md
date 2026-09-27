@@ -2,6 +2,18 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.18.0] - 2026-09-26
+
+### Added (R184: score v2方案C第一步 — quality_score并行采样)
+
+- LintResult新增quality_score扣分制质量分: 100 - Σ(每规则critical=12/high=6/
+  medium=1/low=0.1), 同规则多次触发只计一次
+- 对抗性审查修正: findings数量随文本长度增长, 按finding计罚会惩罚长文本 →
+  规则级去重计分 + 语义定位为"绝对质量粗粒度指示"(跨长度不可直接比较)
+- CLI lint完成行并行展示双分数(平均分=通过率 + 质量分=扣分制), gate/badge不动
+- to_dict含quality_score; RFC(docs/rfc-score-v2.md)校准数据积累中
+- 全量回归: 3651 passed / 0 failed
+
 ## [v67.17.0] - 2026-09-26
 
 ### Fixed (R183: RFC评分设计 + upgrade-fm模块实现 + 命令层补测)
