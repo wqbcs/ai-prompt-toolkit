@@ -1,13 +1,16 @@
 """R185测试: 命令层冒烟第二批 — ab-test/canary/engine/eval-matrix/registry"""
+
 from __future__ import annotations
 
-import json
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from click.testing import CliRunner
 
 from ai_prompt_toolkit.cli_core import main
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(scope="module")
@@ -30,7 +33,7 @@ class TestAbTestCommand:
     def test_abtest_with_config(self, runner, tmp_path):
         config = tmp_path / "ab.yaml"
         config.write_text(
-            "models:\n  - openai:gpt-x\nprompt_templates:\n  - \"回答: {input}\"\n",
+            'models:\n  - openai:gpt-x\nprompt_templates:\n  - "回答: {input}"\n',
             encoding="utf-8",
         )
         result = runner.invoke(main, ["ab-test", "-c", str(config), "-m", "openai:gpt-x"])
