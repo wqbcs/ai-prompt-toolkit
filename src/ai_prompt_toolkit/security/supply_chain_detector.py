@@ -114,11 +114,12 @@ class SupplyChainDetector:
 
         for line_num, line in enumerate(lines, 1):
             for pattern in _SUSPICIOUS_URL_PATTERNS:
-                if pattern.search(line):
+                m = pattern.search(line)
+                if m:
                     matches.append(
                         SupplyChainMatch(
                             match_type="suspicious_url",
-                            value=pattern.search(line).group(0)[:80],
+                            value=m.group(0)[:80],
                             line_number=line_num,
                             risk_level="high",
                             description="可疑URL（短链接/粘贴站/可疑域名）",
@@ -140,11 +141,12 @@ class SupplyChainDetector:
                     break
 
             for pattern, desc in _KNOWN_TYPO_SQUAT_PATTERNS:
-                if pattern.search(line):
+                m = pattern.search(line)
+                if m:
                     matches.append(
                         SupplyChainMatch(
                             match_type="typosquat",
-                            value=pattern.search(line).group(0),
+                            value=m.group(0),
                             line_number=line_num,
                             risk_level="medium",
                             description=desc,

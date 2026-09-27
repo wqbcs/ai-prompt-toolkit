@@ -186,7 +186,8 @@ def _post_json(url: str, payload: dict[str, Any], headers: dict[str, str] | None
     req = urllib.request.Request(url, data=data, headers=req_headers, method="POST")
     try:
         with urllib.request.urlopen(req, timeout=10) as resp:
-            return 200 <= resp.status < 300
+            status: int = int(resp.status)
+            return 200 <= status < 300
     except Exception:
         logger.exception("Failed to send notification to %s", url[:30])
         return False

@@ -22,7 +22,8 @@ def _detect_template_type(text: str) -> str:
     try:
         data = _yaml.safe_load(text[3:end].strip())
         if isinstance(data, dict) and data.get("template_type"):
-            return data["template_type"]
+            template_type: str = str(data["template_type"])
+            return template_type
     except _yaml.YAMLError:
         pass
     return "prompt"

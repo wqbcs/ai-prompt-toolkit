@@ -61,7 +61,8 @@ def _load_yaml(path: Path) -> dict[str, Any]:
         import json
 
         if path.suffix == ".json":
-            return json.loads(path.read_text(encoding="utf-8"))
+            rules: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            return rules
         raise ImportError("自定义规则需要PyYAML: pip install pyyaml") from None
 
 

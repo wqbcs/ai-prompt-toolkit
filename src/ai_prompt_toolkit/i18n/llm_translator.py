@@ -164,7 +164,7 @@ class LLMTranslator:
         try:
             result = self._provider.invoke(prompt)
             if hasattr(result, "text"):
-                return result.text.strip()
+                return str(result.text).strip()
             return str(result).strip()
         except Exception as e:
             logger.error("LLM翻译调用失败: %s", e)

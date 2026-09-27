@@ -47,7 +47,8 @@ class AssertionEngine:
                 reason=f"未知断言类型: {config.assert_type}",
             )
         try:
-            return evaluator(config, response, latency_ms, cost, context or {})
+            result: AssertionResult = evaluator(config, response, latency_ms, cost, context or {})
+            return result
         except Exception as e:
             return AssertionResult(
                 assert_type=config.assert_type,

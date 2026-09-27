@@ -151,7 +151,7 @@ def upgrade_front_matter_v2_to_v3(data: dict[str, Any]) -> FrontMatterV3:
 
 def _infer_i18n_status(data: dict[str, Any]) -> str:
     if data.get("i18n_status"):
-        return data["i18n_status"]
+        return str(data["i18n_status"])
     locale = data.get("locale", "")
     if locale and locale != "zh-CN":
         return "human_translated"
@@ -160,7 +160,7 @@ def _infer_i18n_status(data: dict[str, Any]) -> str:
 
 def _infer_market_status(data: dict[str, Any]) -> str:
     if data.get("market_status"):
-        return data["market_status"]
+        return str(data["market_status"])
     if data.get("published_at"):
         return "live"
     if data.get("reviewed_at"):

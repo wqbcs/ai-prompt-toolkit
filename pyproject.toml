@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.23.0"
+version = "67.24.0"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 requires-python = ">=3.10"
 license = {text = "MIT"}

@@ -58,7 +58,7 @@ def load_progress(command: str) -> dict[str, Any] | None:
     if not state_file.exists():
         return None
     try:
-        data = json.loads(state_file.read_text(encoding="utf-8"))
+        data: dict[str, Any] = json.loads(state_file.read_text(encoding="utf-8"))
         if time.time() - data.get("timestamp", 0) > 86400:
             return None
         return data
@@ -71,7 +71,8 @@ def load_results(command: str) -> list[dict[str, Any]]:
     if not results_file.exists():
         return []
     try:
-        return json.loads(results_file.read_text(encoding="utf-8"))
+        results: list[dict[str, Any]] = json.loads(results_file.read_text(encoding="utf-8"))
+        return results
     except (json.JSONDecodeError, OSError):
         return []
 

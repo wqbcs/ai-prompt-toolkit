@@ -100,8 +100,10 @@ def _load_toml(path: Path) -> dict[str, Any]:
             except ImportError:
                 return {}
         with open(path, "rb") as f:
-            data = tomllib.load(f)
-        return data.get("tool", {}).get("prompt-cli", data)
+            data: dict[str, Any] = tomllib.load(f)
+        tool_section = data.get("tool", {})
+        result: dict[str, Any] = tool_section.get("prompt-cli", data)
+        return result
     except Exception:
         return {}
 

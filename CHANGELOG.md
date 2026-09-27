@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.24.0] - 2026-09-27
+
+### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)
+
+- no-any-return 20处清零: resume_state/compiler evaluator/assertion engine/
+  inheritance_auditor/plugin×2/notification/config/frontmatter×2/custom_rules/
+  llm_translator/ab_test provider×2/wizard×3/cli_core — 显式类型标注替代Any透传
+- supply_chain_detector union-attr 2处: 双重pattern.search(lint+value)改单次
+  match捕获, 消除None链式调用隐患 + 减半正则执行
+- 棘轮基线: 234 → 216
+- docs/R190-改进方案与开源调研-v1.md: 定位反思(反低价值打磨陷阱) + 外部调研
+  (promptfoo/garak/deepeval/prompt-review实践) + P0-P2改进清单; 明确拒绝项
+  (UI打磨/规则数竞赛/AI攻击生成/新增provider)
+- 验证: 全量3665 passed / ruff全绿 / 棘轮持平
+
 ## [v67.23.0] - 2026-09-26
 
 ### Fixed (R189: mypy审计治理第一轮 — 静默吞错改棘轮门禁 + 真bug修复)

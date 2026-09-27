@@ -19,7 +19,8 @@ def _discover_md_files(base: str = ".") -> list[str]:
 def _pick_from_list(prompt_text: str, items: list[str], allow_custom: bool = True) -> str:
     if not items:
         if allow_custom:
-            return click.prompt(prompt_text, type=str)
+            answer: str = click.prompt(prompt_text, type=str)
+            return answer
         click.echo("无可选项")
         return ""
     click.echo(f"\n{prompt_text}:")
@@ -31,9 +32,11 @@ def _pick_from_list(prompt_text: str, items: list[str], allow_custom: bool = Tru
     while True:
         choice = click.prompt("请选择", type=int, default=1)
         if 1 <= choice <= len(items):
-            return items[choice - 1]
+            picked: str = str(items[choice - 1])
+            return picked
         if choice == 0 and allow_custom:
-            return click.prompt("请输入", type=str)
+            custom: str = click.prompt("请输入", type=str)
+            return custom
         click.echo(f"无效选择，请输入0-{len(items)}")
 
 

@@ -191,7 +191,8 @@ class HuaweiModelArtsProvider(BaseProvider):
                     delay *= 2
                     continue
                 resp.raise_for_status()
-                return resp.json()
+                payload: dict[str, Any] = resp.json()
+                return payload
             except Exception as e:
                 last_error = e
                 if attempt < _MAX_RETRIES - 1:

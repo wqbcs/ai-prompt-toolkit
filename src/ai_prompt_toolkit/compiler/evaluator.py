@@ -123,7 +123,8 @@ class Evaluator:
 
         target = condition.value if isinstance(condition.value, str) else str(condition.value)
         try:
-            return op_func(dim_lower, target.lower())
+            result: bool = bool(op_func(dim_lower, target.lower()))
+            return result
         except (TypeError, ValueError):
             self._warnings.append(f"比较失败: {dim_lower!r} {condition.operator} {target!r}")
             return False
@@ -149,7 +150,7 @@ class Evaluator:
             if logical_func is None:
                 self._warnings.append(f"未知的逻辑运算符: {condition.logical!r}")
                 return False
-            return logical_func(left, right_val)
+            return bool(logical_func(left, right_val))
 
         return left
 

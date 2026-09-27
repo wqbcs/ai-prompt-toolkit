@@ -34,7 +34,8 @@ class DictTemplateProvider:
         tpl = self._templates.get(template_id)
         if tpl is None:
             return []
-        return tpl.get("risk_tags", [])
+        tags: list[str] = tpl.get("risk_tags", [])
+        return tags
 
 
 class InheritanceAuditor:
