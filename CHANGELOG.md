@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.25.0] - 2026-09-27
+
+### Added (R191: PyPI发布工程 — tag触发发布流水线, 补齐用户第一触点)
+
+- .github/workflows/release.yml: v* tag推送触发 — build(twine check) →
+  publish(trusted publishing OIDC, 无需API token, pypi environment门禁)
+- pyproject补 readme=README.md: 修复PyPI页面空白(twine check警告清零)
+- 验证: 本地build whl+tar.gz → twine check全PASSED → 临时venv安装whl冒烟
+  (prompt-cli --version/doctor正常) → 全量3665 passed
+- R190方案文档P0(F1)落地; 首次真实发布需在PyPI配置trusted publisher指向
+  本workflow后推送tag
+- 记账: doctor统计显示150条Lint规则与README宣称255不一致, R192核查
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)
