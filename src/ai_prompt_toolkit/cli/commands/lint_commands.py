@@ -364,6 +364,8 @@ def lint(
         for rs in stats["rules"]:
             click.echo(f"  {rs['rule_id']:<8} {rs['hit_count']:>5} {rs['hit_rate']:>7.1f}% {rs['name']}")
 
+    if baseline_save and not baseline_path:
+        baseline_path = ".baseline.json"  # R186: 单独--baseline-save用默认路径(修复静默无效)
     if baseline_path:
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline, save_baseline
 

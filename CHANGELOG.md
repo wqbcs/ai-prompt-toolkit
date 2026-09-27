@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.20.0] - 2026-09-26
+
+### Fixed (R186: 配置闭环断裂修复 — init生成的配置首次真正可消费)
+
+#### 核心断点: 配置生成与消费两套体系断裂
+- doctor --init生成的.prompt-toolkit.yml(TOML键名体系)无任何消费者 —
+  lint自动发现链只认.lint-rc.yml/.prompt-toolkit.yml(YAML lint_config schema)
+- 修复: init改生成lint_config schema的YAML(severity_threshold/exclude_categories/
+  include_rules等), 配置闭环首次打通; test_r85/test_r94断言更新为真实schema
+
+#### UX修复
+- lint --baseline-save单独使用时静默无效(需--baseline路径配合) →
+  默认路径.baseline.json并提示
+
+#### 显式记账
+- lint --parallel并行恢复(R177死代码手术移除inline版) → test_r79 xfail记账R187
+
 ## [v67.19.0] - 2026-09-26
 
 ### Test (R185: 性能审计全工具链 + 命令层冒烟第二批)

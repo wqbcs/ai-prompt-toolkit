@@ -22,12 +22,10 @@ def test_doctor_init_creates_config():
             config_path = Path(tmpdir) / ".prompt-toolkit.yml"
             assert config_path.exists()
             content = config_path.read_text(encoding="utf-8")
-            assert "lint:" in content
-            assert "scan:" in content
-            assert "evaluate:" in content
-            assert "security:" in content
-            assert "output_scan:" in content
-            assert "harmonyos:" in content
+            # R186: 配置生成对齐lint_config.LintConfig schema(可被lint自动发现链真实消费)
+            assert "severity_threshold" in content
+            assert "exclude_categories" in content
+            assert "include_rules" in content
         finally:
             os.chdir(original_cwd)
 
@@ -58,9 +56,9 @@ def test_config_has_harmonyos_section():
             result = runner.invoke(main, ["doctor", "--init"])
             config_path = Path(tmpdir) / ".prompt-toolkit.yml"
             content = config_path.read_text(encoding="utf-8")
-            assert "stage_model: true" in content
-            assert "min_api: 12" in content
-            assert "target_api: 14" in content
+            # R186: schema对齐lint_config, 断言真实可消费的键
+            assert "exclude_rules" in content
+            assert "include_categories" in content
         finally:
             os.chdir(original_cwd)
 
@@ -74,10 +72,10 @@ def test_config_has_output_scan_section():
             result = runner.invoke(main, ["doctor", "--init"])
             config_path = Path(tmpdir) / ".prompt-toolkit.yml"
             content = config_path.read_text(encoding="utf-8")
-            assert "enabled: true" in content
-            assert "no_refusal" in content
-            assert "bias" in content
-            assert "toxicity" in content
+            assert "severity_threshold" in content  # R186: schema对齐
+            assert "exclude_rules" in content  # R186: schema对齐
+            assert "include_categories" in content  # R186: schema对齐
+            assert "include_rules" in content  # R186: schema对齐
         finally:
             os.chdir(original_cwd)
 
@@ -91,8 +89,8 @@ def test_config_has_security_thresholds():
             result = runner.invoke(main, ["doctor", "--init"])
             config_path = Path(tmpdir) / ".prompt-toolkit.yml"
             content = config_path.read_text(encoding="utf-8")
-            assert "block_threshold: 0.7" in content
-            assert "warn_threshold: 0.35" in content
+            assert "severity_threshold" in content  # R186
+            assert "exclude_categories" in content  # R186: schema对齐
         finally:
             os.chdir(original_cwd)
 

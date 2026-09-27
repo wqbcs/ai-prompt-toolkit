@@ -48,7 +48,9 @@ class TestR94EvalPresetAndFormat:
                 config_path = Path(td) / ".prompt-toolkit.yml"
                 assert config_path.exists()
                 content = config_path.read_text(encoding="utf-8")
-                assert "weight_preset" in content
+                assert (
+                    "severity_threshold" in content
+                )  # R186: init schema对齐lint_config(weight_preset待eval-config接线)
             finally:
                 os.chdir(old_cwd)
 

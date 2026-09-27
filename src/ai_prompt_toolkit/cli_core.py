@@ -300,35 +300,13 @@ def doctor_cmd(provider: str | None, as_json: bool, init_config: bool) -> None:
         if config_path.exists():
             click.echo(f"配置文件已存在: {config_path}")
         else:
-            config_content = """# ai-prompt-toolkit 配置
-lint:
-  fail_on: high
-  format: cli
-  semantic_cache: true
-  parallel: 0
-
-scan:
-  depth: full
-  format: json
-
-evaluate:
-  threshold: 5.0
-  format: cli
-
-security:
-  block_threshold: 0.7
-  warn_threshold: 0.35
-
-output_scan:
-  enabled: true
-  scanners: [no_refusal, bias, toxicity, relevance, factual_consistency, citation]
-
-harmonyos:
-  stage_model: true
-  min_api: 12
-  target_api: 14
-
-weight_preset: default
+            # R186: 生成lint自动发现链可消费的YAML schema(键对齐lint_config.LintConfig)
+            config_content = """# ai-prompt-toolkit Lint配置(自动发现: .lint-rc.yml/.prompt-toolkit.yml)
+severity_threshold: low
+exclude_categories: []
+include_categories: []
+exclude_rules: []
+include_rules: []
 """
             config_path.write_text(config_content, encoding="utf-8")
             click.echo(f"配置模板已生成: {config_path}")

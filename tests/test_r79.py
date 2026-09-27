@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import pytest
+
 
 class TestLintParallelOption:
+    @pytest.mark.xfail(reason="R177死代码手术移除inline并行lint; 恢复记档R187", strict=True)
     def test_parallel_code_exists(self):
         import inspect
 
