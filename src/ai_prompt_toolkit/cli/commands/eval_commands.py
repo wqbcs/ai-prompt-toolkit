@@ -397,15 +397,22 @@ def judge_cmd(
         else:
             result = asyncio.run(ensemble.evaluate_absolute(question, resp_text, reference or ""))
 
+        # R189: flaky_retries>0时ensemble为StableJudge, absolute路径返回list(无to_dict),
+        # 原代码在此崩溃 — 统一归一为dict; 联合返回被mypy窄化为object, 需ignore
+        if isinstance(result, list):
+            result_data = {"mode": mode, "results": [r.to_dict() for r in result]}
+        else:
+            result_data = result.to_dict()  # type: ignore[attr-defined]
+
         if output:
             from ai_prompt_toolkit.cli_helpers import write_report
 
-            write_report(result.to_dict(), output, fmt="json")
+            write_report(result_data, output, fmt="json")
             click.echo(f"报告已保存: {output}")
         else:
             import json as _json
 
-            click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+            click.echo(_json.dumps(result_data, ensure_ascii=False, indent=2))
     else:
         judge = create_judge(judge_model, dimensions=dim_list, mode=mode, flaky_retries=flaky_retries)
 

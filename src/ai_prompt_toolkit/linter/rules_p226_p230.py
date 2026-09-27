@@ -112,9 +112,9 @@ def check_p226(text: str) -> list[Finding]:
     has_any = _ANY_TYPE_PATTERN.search(text)
     has_strict = _STRICT_NULL_PATTERN.search(text)
     if has_ts_ignore:
-        findings.append(Finding("P226", Severity.HIGH, "使用@ts-ignore/eslint-disable绕过类型检查(安全风险)", 1, 1))
+        findings.append(Finding("P226", Severity.HIGH, "使用@ts-ignore/eslint-disable绕过类型检查(安全风险)", "1", "1"))
     if has_any and not has_strict:
-        findings.append(Finding("P226", Severity.HIGH, "使用any类型且未启用strictNullChecks/noImplicitAny", 1, 1))
+        findings.append(Finding("P226", Severity.HIGH, "使用any类型且未启用strictNullChecks/noImplicitAny", "1", "1"))
     return findings
 
 
@@ -122,14 +122,14 @@ def check_p227(text: str) -> list[Finding]:
     findings = []
     state_matches = _STATE_PATTERN.findall(text)
     if state_matches and _SENSITIVE_STATE_PATTERN.search(text) and not _ENCRYPT_PATTERN.search(text):
-        findings.append(Finding("P227", Severity.HIGH, "敏感数据使用@State/@Link等装饰器但未加密(数据泄露风险)", 1, 1))
+        findings.append(Finding("P227", Severity.HIGH, "敏感数据使用@State/@Link等装饰器但未加密(数据泄露风险)", "1", "1"))
     return findings
 
 
 def check_p228(text: str) -> list[Finding]:
     findings = []
     if _ABILITY_PATTERN.search(text) and not _PERMISSION_PATTERN.search(text):
-        findings.append(Finding("P228", Severity.HIGH, "Ability声明缺少ohos.permission权限声明(运行时崩溃风险)", 1, 1))
+        findings.append(Finding("P228", Severity.HIGH, "Ability声明缺少ohos.permission权限声明(运行时崩溃风险)", "1", "1"))
     return findings
 
 
@@ -140,18 +140,18 @@ def check_p229(text: str) -> list[Finding]:
     has_distributed = _DISTRIBUTED_PATTERN.search(text)
     has_comm_secure = _COMM_SECURE_PATTERN.search(text)
     if has_router and not has_comm_secure:
-        findings.append(Finding("P229", Severity.MEDIUM, "router参数传输未做安全校验(签名/加密/验证)", 1, 1))
+        findings.append(Finding("P229", Severity.MEDIUM, "router参数传输未做安全校验(签名/加密/验证)", "1", "1"))
     if has_emitter and not has_comm_secure:
-        findings.append(Finding("P229", Severity.MEDIUM, "Emitter事件通信未做安全校验(来源验证/事件过滤)", 1, 1))
+        findings.append(Finding("P229", Severity.MEDIUM, "Emitter事件通信未做安全校验(来源验证/事件过滤)", "1", "1"))
     if has_distributed and not has_comm_secure:
-        findings.append(Finding("P229", Severity.MEDIUM, "分布式数据传输未做安全校验(加密/端对端认证)", 1, 1))
+        findings.append(Finding("P229", Severity.MEDIUM, "分布式数据传输未做安全校验(加密/端对端认证)", "1", "1"))
     return findings
 
 
 def check_p230(text: str) -> list[Finding]:
     findings = []
     if _SANDBOX_VIOLATION_PATTERN.search(text):
-        findings.append(Finding("P230", Severity.HIGH, "访问超出应用沙箱范围的路径(违反鸿蒙安全模型)", 1, 1))
+        findings.append(Finding("P230", Severity.HIGH, "访问超出应用沙箱范围的路径(违反鸿蒙安全模型)", "1", "1"))
     if _NETWORK_NO_DOMAIN_PATTERN.search(text) and not _DOMAIN_DECLARED_PATTERN.search(text):
-        findings.append(Finding("P230", Severity.HIGH, "网络请求未限制声明域名(沙箱隔离违规)", 1, 1))
+        findings.append(Finding("P230", Severity.HIGH, "网络请求未限制声明域名(沙箱隔离违规)", "1", "1"))
     return findings

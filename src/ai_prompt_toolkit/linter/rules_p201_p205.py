@@ -109,7 +109,7 @@ def check_p201(text: str) -> list[Finding]:
     findings = []
     has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _COMPLIANCE_PATTERN.search(text):
-        findings.append(Finding("P201", Severity.HIGH, "数据处理缺少合规声明", 1, 1))
+        findings.append(Finding("P201", Severity.HIGH, "数据处理缺少合规声明", "1", "1"))
     return findings
 
 
@@ -117,7 +117,7 @@ def check_p202(text: str) -> list[Finding]:
     findings = []
     has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _CONSENT_PATTERN.search(text):
-        findings.append(Finding("P202", Severity.HIGH, "用户数据使用缺少同意机制", 1, 1))
+        findings.append(Finding("P202", Severity.HIGH, "用户数据使用缺少同意机制", "1", "1"))
     return findings
 
 
@@ -125,7 +125,7 @@ def check_p203(text: str) -> list[Finding]:
     findings = []
     has_generate = re.search(r"(?:生成|generate|输出|output|produce)", text, re.IGNORECASE)
     if has_generate and not _AI_LABEL_PATTERN.search(text):
-        findings.append(Finding("P203", Severity.MEDIUM, "AI生成内容缺少标识", 1, 1))
+        findings.append(Finding("P203", Severity.MEDIUM, "AI生成内容缺少标识", "1", "1"))
     return findings
 
 
@@ -133,7 +133,7 @@ def check_p204(text: str) -> list[Finding]:
     findings = []
     has_model = re.search(r"(?:模型|model|推理|inference|预测|predict)", text, re.IGNORECASE)
     if has_model and not _FAIRNESS_PATTERN.search(text):
-        findings.append(Finding("P204", Severity.MEDIUM, "缺少偏见公平声明", 1, 1))
+        findings.append(Finding("P204", Severity.MEDIUM, "缺少偏见公平声明", "1", "1"))
     return findings
 
 
@@ -141,5 +141,5 @@ def check_p205(text: str) -> list[Finding]:
     findings = []
     has_data = _DATA_PROCESSING_PATTERN.search(_strip_negated_data(text))
     if has_data and not _RETENTION_PATTERN.search(text):
-        findings.append(Finding("P205", Severity.HIGH, "缺少数据留存策略", 1, 1))
+        findings.append(Finding("P205", Severity.HIGH, "缺少数据留存策略", "1", "1"))
     return findings

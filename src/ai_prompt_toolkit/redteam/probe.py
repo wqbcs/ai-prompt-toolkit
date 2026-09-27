@@ -204,7 +204,8 @@ def get_available_probes() -> list[str]:
 def get_probes_by_owasp(owasp_ref: str) -> list[str]:
     result = []
     for name, cls in _PROBE_REGISTRY.items():
-        instance = cls()
+        # 具体Probe子类均定义无参__init__(已扫描验证), 基类签名仅为抽象声明
+        instance = cls()  # type: ignore[call-arg]
         if owasp_ref in instance.owasp_refs:
             result.append(name)
     return result
@@ -214,4 +215,4 @@ def create_probe(name: str) -> BaseProbe:
     cls = _PROBE_REGISTRY.get(name)
     if cls is None:
         raise ValueError(f"未知Probe: {name}，可用: {', '.join(_PROBE_REGISTRY.keys())}")
-    return cls()
+    return cls()  # type: ignore[call-arg]

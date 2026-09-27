@@ -136,6 +136,22 @@ class CompileReport:
         self.errors.append(msg)
         self.status = "failed"
 
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "template_id": self.template_id,
+            "timestamp": self.timestamp,
+            "status": self.status,
+            "activated_branches": [b.to_dict() if hasattr(b, "to_dict") else str(b) for b in self.activated_branches],
+            "ignored_branches": [b.to_dict() if hasattr(b, "to_dict") else str(b) for b in self.ignored_branches],
+            "uncovered_conditions": self.uncovered_conditions,
+            "has_fallback": self.has_fallback,
+            "result_is_empty": self.result_is_empty,
+            "cache_hit": self.cache_hit,
+            "compilation_time_ms": self.compilation_time_ms,
+            "warnings": self.warnings,
+            "errors": self.errors,
+        }
+
 
 @dataclass
 class CompileResult:

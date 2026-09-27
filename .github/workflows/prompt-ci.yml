@@ -48,8 +48,9 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/gen_rules_doc.py --check
 
-      - name: MyPy type check
-        run: mypy src/ai_prompt_toolkit --ignore-missing-imports --no-error-summary || true
+      - name: MyPy type check (ratchet gate)
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_mypy_ratchet.py
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'

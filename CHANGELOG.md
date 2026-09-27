@@ -2,6 +2,37 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.23.0] - 2026-09-26
+
+### Fixed (R189: mypy审计治理第一轮 — 静默吞错改棘轮门禁 + 真bug修复)
+
+#### 196个int实参错误清零(Finding位置字段)
+- 98处 `Finding(..., 1, 1)` 调用把int传给 `location/remediation: str` 字段 —
+  运行时静默存储int, 依赖pydantic隐式强转; 消费方(lint输出/HTML报告/explain/LSP)
+  均有 `str(f.location)` 防御 → int→"1" 输出逐字节一致, 纯类型修复
+- 17个linter规则文件统一替换; 消费方逐一验证过(line 0 vs line 1等边界)
+
+#### call-arg/attr-defined真bug修复
+- **CompileReport.to_dict缺失(真bug)**: `compile --report`/playground
+  `report.to_dict()` 运行时AttributeError崩溃 → 补to_dict实现
+- **eval multi-judge flaky路径崩溃(真bug)**: flaky_retries>0时StableJudge
+  absolute路径返回list无to_dict, `result.to_dict()` 崩溃 → 统一归一为dict
+- gepa PanguProvider死代码记账: 构造缺config+provider.call不存在, 异常被except
+  吞掉静默回退lint_score — R190+清理
+- 红队4处 `cls()` type ignore: 40+具体Probe/Detector子类均自带无参__init__
+  (运行时扫描验证), 基类签名仅为抽象声明
+
+#### mypy棘轮门禁(替代 `|| true` 静默吞错)
+- scripts/check_mypy_ratchet.py: 错误数只减不增, 超基线CI失败+输出新增样例;
+  `--update` 刷新基线(需随修复提交)
+- mypy_baseline.txt: 基线234(R188审计443 → 本轮-209)
+- CI: mypy步骤挂到3.12单跑+棘轮检查(原3矩阵版本重复跑mypy)
+
+#### 验证
+- 全量回归: 3665 passed / 0 failed
+- ruff check/format: 全绿
+- 棘轮负路径实测: 基线200时正确失败exit=1并列出新增样例
+
 ## [v67.22.0] - 2026-09-26
 
 ### Test (R188: 用户核心旅程e2e固化 + git tag发布工程起点)

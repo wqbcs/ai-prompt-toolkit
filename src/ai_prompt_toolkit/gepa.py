@@ -601,7 +601,9 @@ Feedback: <brief explanation of the score>"""
         try:
             from ai_prompt_toolkit.ab_test.providers.pangu import PanguProvider
 
-            provider = PanguProvider()
+            # R189记账: 此路径构造与调用形态均不成立(缺config/provider.call不存在),
+            # 异常被下方except吞掉后静默回退lint_score — 死代码, R190+清理
+            provider = PanguProvider()  # type: ignore[call-arg]
             prompt_text = str(pred.get("answer", pred.get("output", "")))
             criteria = gold.get("criteria", "quality, clarity, accuracy, completeness")
 
@@ -616,7 +618,7 @@ Feedback: <brief explanation of the score>"""
 分数: <0-10>
 反馈: <简要说明>"""
 
-            result = provider.call(judge_prompt, model="pangu-nlp")
+            result = provider.call(judge_prompt, model="pangu-nlp")  # type: ignore[attr-defined]
             if result and result.get("text"):
                 import re
 

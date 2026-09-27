@@ -99,7 +99,7 @@ def check_p181(text: str) -> list[Finding]:
     if not _VERSION_PATTERN.search(text):
         has_production = bool(re.search(r"(?:生产|production|prod|deploy|发布)", text, re.IGNORECASE))
         severity = Severity.HIGH if has_production else Severity.MEDIUM
-        findings.append(Finding("P181", severity, "Prompt缺少版本声明, 建议添加version字段", 1, 1))
+        findings.append(Finding("P181", severity, "Prompt缺少版本声明, 建议添加version字段", "1", "1"))
     return findings
 
 
@@ -108,7 +108,7 @@ def check_p182(text: str) -> list[Finding]:
     if not _DEP_PATTERN.search(text):
         has_api_call = bool(re.search(r"(?:API|接口|调用|endpoint|fetch|request|http)", text, re.IGNORECASE))
         if has_api_call:
-            findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", 1, 1))
+            findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", "1", "1"))
     return findings
 
 
@@ -118,7 +118,7 @@ def check_p183(text: str) -> list[Finding]:
     if not has_env:
         has_multi_config = bool(re.search(r"(?:开发|测试|生产|dev|test|prod|staging|uat|预发)", text, re.IGNORECASE))
         if has_multi_config:
-            findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置", 1, 1))
+            findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置", "1", "1"))
     return findings
 
 
@@ -127,7 +127,7 @@ def check_p184(text: str) -> list[Finding]:
     if not _FALLBACK_PATTERN.search(text):
         has_model = bool(re.search(r"(?:GPT|Claude|模型|model|LLM|大模型)", text, re.IGNORECASE))
         if has_model:
-            findings.append(Finding("P184", Severity.MEDIUM, "Prompt依赖模型但缺少降级策略", 1, 1))
+            findings.append(Finding("P184", Severity.MEDIUM, "Prompt依赖模型但缺少降级策略", "1", "1"))
     return findings
 
 
@@ -136,5 +136,5 @@ def check_p185(text: str) -> list[Finding]:
     if not _CANARY_PATTERN.search(text):
         has_deploy = bool(re.search(r"(?:部署|上线|发布|deploy|release|rollout)", text, re.IGNORECASE))
         if has_deploy:
-            findings.append(Finding("P185", Severity.MEDIUM, "提及部署发布但缺少灰度配置", 1, 1))
+            findings.append(Finding("P185", Severity.MEDIUM, "提及部署发布但缺少灰度配置", "1", "1"))
     return findings

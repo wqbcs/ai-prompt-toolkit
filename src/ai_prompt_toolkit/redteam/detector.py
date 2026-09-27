@@ -309,4 +309,5 @@ def create_detector(name: str) -> BaseDetector:
     cls = _DETECTOR_REGISTRY.get(name)
     if cls is None:
         raise ValueError(f"未知Detector: {name}，可用: {', '.join(_DETECTOR_REGISTRY.keys())}")
-    return cls()
+    # 具体Detector子类均定义无参__init__, 基类签名仅为抽象声明
+    return cls()  # type: ignore[call-arg]

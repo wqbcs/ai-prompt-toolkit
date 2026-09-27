@@ -123,7 +123,7 @@ _COMPLIANCE_PATTERN = re.compile(
 def check_p241(text: str) -> list[Finding]:
     findings = []
     if _PERSONAL_DATA_PATTERN.search(text) and not _MINIMIZE_PATTERN.search(text):
-        findings.append(Finding("P241", Severity.HIGH, "收集个人数据超出必要范围(缺匿名化/数据最小化)", 1, 1))
+        findings.append(Finding("P241", Severity.HIGH, "收集个人数据超出必要范围(缺匿名化/数据最小化)", "1", "1"))
     return findings
 
 
@@ -131,26 +131,26 @@ def check_p242(text: str) -> list[Finding]:
     findings = []
     has_model = re.search(r"(?:model|模型|AI|LLM|GPT|generate|生成)", text, re.IGNORECASE)
     if has_model and not _AI_GEN_PATTERN.search(text) and not _TRANSPARENCY_PATTERN.search(text):
-        findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)", 1, 1))
+        findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)", "1", "1"))
     return findings
 
 
 def check_p243(text: str) -> list[Finding]:
     findings = []
     if _PERSONAL_DATA_PATTERN.search(text) and not _RETENTION_PATTERN.search(text):
-        findings.append(Finding("P243", Severity.MEDIUM, "个人数据无保留策略(缺retention_period/自动删除)", 1, 1))
+        findings.append(Finding("P243", Severity.MEDIUM, "个人数据无保留策略(缺retention_period/自动删除)", "1", "1"))
     return findings
 
 
 def check_p244(text: str) -> list[Finding]:
     findings = []
     if _CRITICAL_OP_PATTERN.search(text) and not _AUDIT_PATTERN.search(text):
-        findings.append(Finding("P244", Severity.HIGH, "关键操作未记录审计日志(缺who/what/when/why)", 1, 1))
+        findings.append(Finding("P244", Severity.HIGH, "关键操作未记录审计日志(缺who/what/when/why)", "1", "1"))
     return findings
 
 
 def check_p245(text: str) -> list[Finding]:
     findings = []
     if _CROSS_BORDER_PATTERN.search(text) and not _COMPLIANCE_PATTERN.search(text):
-        findings.append(Finding("P245", Severity.HIGH, "跨境数据传输未做合规评估(缺SCC/安全评估/本地化)", 1, 1))
+        findings.append(Finding("P245", Severity.HIGH, "跨境数据传输未做合规评估(缺SCC/安全评估/本地化)", "1", "1"))
     return findings

@@ -31,7 +31,7 @@ def _discover_probes() -> dict[str, type[BaseProbe]]:
                     and hasattr(attr, "__init__")
                 ):
                     try:
-                        instance = attr()
+                        instance = attr()  # type: ignore[call-arg]  # 具体Probe子类均无参__init__
                         if instance.name not in _PROBE_REGISTRY:
                             _PROBE_REGISTRY[instance.name] = attr
                             logger.debug("注册Probe: %s → %s", instance.name, attr.__name__)

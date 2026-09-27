@@ -125,21 +125,21 @@ def check_p221(text: str) -> list[Finding]:
 
     text = strip_frontmatter(text)  # R178
     if _MODEL_PATTERN.search(text) and not _MODEL_VERIFY_PATTERN.search(text):
-        findings.append(Finding("P221", Severity.HIGH, "LLM模型来源未验证(缺model card/发布者签名/社区评分)", 1, 1))
+        findings.append(Finding("P221", Severity.HIGH, "LLM模型来源未验证(缺model card/发布者签名/社区评分)", "1", "1"))
     return findings
 
 
 def check_p222(text: str) -> list[Finding]:
     findings = []
     if _DEP_PATTERN.search(text) and not _DEP_AUDIT_PATTERN.search(text):
-        findings.append(Finding("P222", Severity.HIGH, "第三方依赖未做安全审计(缺权限/数据流审查)", 1, 1))
+        findings.append(Finding("P222", Severity.HIGH, "第三方依赖未做安全审计(缺权限/数据流审查)", "1", "1"))
     return findings
 
 
 def check_p223(text: str) -> list[Finding]:
     findings = []
     if _DATA_PATTERN.search(text) and not _PROVENANCE_PATTERN.search(text):
-        findings.append(Finding("P223", Severity.MEDIUM, "数据来源不可追溯(缺溯源链/许可/采集记录)", 1, 1))
+        findings.append(Finding("P223", Severity.MEDIUM, "数据来源不可追溯(缺溯源链/许可/采集记录)", "1", "1"))
     return findings
 
 
@@ -149,9 +149,9 @@ def check_p224(text: str) -> list[Finding]:
 
     text = strip_frontmatter(text)  # R178
     if _MODEL_NO_PIN_PATTERN.search(text) and not _VERSION_PIN_PATTERN.search(text):
-        findings.append(Finding("P224", Severity.HIGH, "模型版本未锁定(使用latest或未固定具体版本)", 1, 1))
+        findings.append(Finding("P224", Severity.HIGH, "模型版本未锁定(使用latest或未固定具体版本)", "1", "1"))
     elif _VERSION_PATTERN.search(text) and not _VERSION_PIN_PATTERN.search(text):
-        findings.append(Finding("P224", Severity.HIGH, "模型版本未锁定(缺版本固定/变更检测)", 1, 1))
+        findings.append(Finding("P224", Severity.HIGH, "模型版本未锁定(缺版本固定/变更检测)", "1", "1"))
     return findings
 
 
@@ -161,5 +161,5 @@ def check_p225(text: str) -> list[Finding]:
 
     text = strip_frontmatter(text)  # R178
     if _MODEL_PATTERN.search(text) and not _SIGN_PATTERN.search(text):
-        findings.append(Finding("P225", Severity.MEDIUM, "模型/配置缺少签名和校验和验证", 1, 1))
+        findings.append(Finding("P225", Severity.MEDIUM, "模型/配置缺少签名和校验和验证", "1", "1"))
     return findings
