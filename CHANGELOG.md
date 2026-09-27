@@ -2,6 +2,17 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.19.0] - 2026-09-26
+
+### Test (R185: 性能审计全工具链 + 命令层冒烟第二批)
+
+- 性能基线补全: evaluate/scan在20KB文本下均<100ms — 全工具链"快"的声称
+  (lint/evaluate/scan)经实测成立, 无类似P101的超线性热点
+- 命令层冒烟第二批: ab-test(空模型/无key路径)/canary/engine(cli+json)/
+  eval-matrix/eval-registry/eval-config/init配置生成
+- pyproject: lsp可选extra(pygls/lsprotocol)
+- 全量回归: 3651+ passed / 0 failed
+
 ## [v67.18.0] - 2026-09-26
 
 ### Added (R184: score v2方案C第一步 — quality_score并行采样)
