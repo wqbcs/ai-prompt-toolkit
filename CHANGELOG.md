@@ -2,6 +2,16 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.22.0] - 2026-09-26
+
+### Test (R188: 用户核心旅程e2e固化 + git tag发布工程起点)
+
+- tests/test_e2e_workflow.py: 6步全旅程测试(init→lint→baseline→gate→badge→
+  evaluate/scan) — 组合断点守护(R186曾在此发现配置闭环断裂)
+- mypy审计: 443错误/66文件被CI `|| true` 静默吞掉 — 分类记账(arg-type 210/
+  list-item 80/attr-defined 64...), call-arg 6处需运行时验证; 治理记档R189+
+- git tag发布工程起点: 从本版本起每版本打tag(语义化版本+CHANGELOG对齐)
+
 ## [v67.21.0] - 2026-09-26
 
 ### Added (R187: lint --parallel并行恢复 — 真并行非伪并行)
