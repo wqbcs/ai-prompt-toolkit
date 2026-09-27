@@ -88,7 +88,7 @@ def _generate_sarif(results: list, target: str) -> dict:
 @click.version_option(
     version=__version__,
     prog_name="prompt-cli",
-    message="%(prog)s %(version)s\n\n组件统计: 150条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers",
+    message="%(prog)s %(version)s\n\n组件统计: 255条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers",
 )
 def main() -> None:
     """AI提示词体系工具链"""
