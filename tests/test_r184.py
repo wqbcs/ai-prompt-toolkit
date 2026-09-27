@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from ai_prompt_toolkit.linter.linter import PromptLinter
 from ai_prompt_toolkit.types import Finding, Severity
 
