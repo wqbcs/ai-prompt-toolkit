@@ -74,6 +74,25 @@
 
 ## [v67.25.0] - 2026-09-27
 
+### Added (R205: 失败用例沉淀 + 预设矩阵 — Failure Mining闭环)
+
+- `src/ai_prompt_toolkit/failure_cases.py`: 失败用例模块 — 评估失败编码
+  为yaml回归用例(输入hash+阈值+基线维度分+快照findings), 复评断言
+  avg≥threshold 且基线维度不降(容差内)
+- `prompt-cli capture-failure -t <file> [--threshold N] [-d dims]
+  [--preset P] [--out-dir DIR]`: 沉淀失败用例到 tests/fixtures/failures/
+- `prompt-cli verify-failure -c <file|dir> [--tolerance N]`: 回归验证 —
+  单文件/目录批量, 失败退出码1, 路径不存在退出码2
+- `prompt-cli eval-multi --presets default,security-heavy,...`: 目标×
+  权重预设笛卡尔积矩阵(avg/10表格+行最佳+列最优) — 静态评估器不依赖
+  模型, 矩阵维度为行业权重预设(7选), 暴露场景适配短板
+- 测试: tests/test_r205_failure_matrix.py 13用例(模块roundtrip/回归检出/
+  阈值失败/非法文件/capture CLI/verify单+批量+缺失/矩阵2预设/未知预设/
+  缺文件/单目标)
+- 验证: 全量5535 passed(+13) / ruff全绿 / mypy棘轮0
+
+## [v67.25.0] - 2026-09-27
+
 ### Added (R204: 评估基线 drift检测 — Drift Sentinel)
 
 - `src/ai_prompt_toolkit/eval_baseline.py`: 评估基线模块 — 整体/类别/

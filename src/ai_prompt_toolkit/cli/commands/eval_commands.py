@@ -18,11 +18,18 @@ from ai_prompt_toolkit.cli_core import main
 @main.command("eval-multi")
 @click.option("--targets", "-t", required=True, help="对比目标(逗号分隔多个文件,如 a.md,b.md,c.md)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度")
-def eval_multi(targets: str, quick: bool) -> None:
-    """评估对比: 并排比较多个Prompt模板的评估结果"""
+@click.option(
+    "--presets",
+    help="预设矩阵(逗号分隔,如default,security-heavy): 目标×预设笛卡尔积展开, 输出avg矩阵表",
+)
+def eval_multi(targets: str, quick: bool, presets: str | None) -> None:
+    """评估对比: 并排比较多个Prompt模板的评估结果(支持--presets矩阵)"""
     from ai_prompt_toolkit.evaluator import evaluate_template
 
     target_files = [t.strip() for t in targets.split(",") if t.strip()]
+    if presets:
+        _run_preset_matrix(target_files, presets)
+        return
     if len(target_files) < 2:
         click.echo("需要至少2个目标文件进行对比")
         sys.exit(1)
@@ -63,6 +70,137 @@ def eval_multi(targets: str, quick: bool) -> None:
     click.echo(avg_row)
     best = max(results, key=lambda x: x["avg"])
     click.echo(f"\n最优: {best['name']} (均分 {best['avg']:.1f}/10)")
+
+
+def _run_preset_matrix(target_files: list[str], presets: str) -> None:
+    """R205: 目标×预设 笛卡尔积矩阵 — avg分表格(行=预设, 列=目标)
+
+    静态评估器不依赖模型, 矩阵维度为「行业权重预设」(7选):
+    同一组prompt在不同行业权重下的得分分布, 暴露场景适配短板。
+    """
+    from ai_prompt_toolkit.evaluator import WEIGHT_PRESETS, evaluate_template
+
+    preset_names = [p.strip() for p in presets.split(",") if p.strip()]
+    unknown = [p for p in preset_names if p not in WEIGHT_PRESETS]
+    if unknown:
+        click.echo(f"未知预设: {', '.join(unknown)} (可选: {', '.join(WEIGHT_PRESETS)})", err=True)
+        sys.exit(2)
+
+    # 矩阵数据: (preset, target) -> avg
+    grid: dict[str, dict[str, float]] = {p: {} for p in preset_names}
+    for tf in target_files:
+        p = Path(tf)
+        if not p.exists():
+            click.echo(f"文件不存在: {tf}", err=True)
+            sys.exit(2)
+        text = p.read_text(encoding="utf-8")
+        for pn in preset_names:
+            wp = WEIGHT_PRESETS[pn]
+            wo = wp._overrides if pn != "default" else None
+            report = evaluate_template(p.name, text, weight_overrides=wo)
+            avg = sum(s.score for s in report.scores) / len(report.scores) if report.scores else 0.0
+            grid[pn][p.name] = avg
+
+    # 输出: 行=目标, 列=预设
+    header = "| 目标 |" + "".join(f" {pn} |" for pn in preset_names) + " 最佳 |"
+    click.echo("\n── 预设矩阵 (目标 × 权重预设, avg/10) ──\n")
+    click.echo(header)
+    click.echo("|" + "------|" * (len(preset_names) + 2))
+    for tf in target_files:
+        name = Path(tf).name
+        row = f"| {name} |"
+        vals = {pn: grid[pn].get(name, float("nan")) for pn in preset_names}
+        for pn in preset_names:
+            row += f" {vals[pn]:.1f} |"
+        best = max(pn for pn in preset_names if vals[pn] == max(vals.values()))
+        row += f" {best} |"
+        click.echo(row)
+    # 列最优
+    best_row = "| 列最优 |"
+    for pn in preset_names:
+        col = {tf: grid[pn].get(Path(tf).name, -1.0) for tf in target_files}
+        top = max(col, key=lambda k: col[k]) if col else "-"
+        best_row += f" {Path(top).name if top != '-' else '-'} |"
+    best_row += "  - |"
+    click.echo(best_row)
+    click.echo("\n解读: 某列显著偏低 = 该prompt在该行业场景权重下短板明显, 建议按对应预设补强维度。")
+
+
+@main.command("capture-failure")
+@click.option("--target", "-t", required=True, help="评估失败的prompt文件")
+@click.option("--threshold", type=float, default=0.0, help="质量阈值(0-10, 用例断言目标)")
+@click.option("--dimensions", "-d", help="锁定维度(逗号分隔, 默认全部)")
+@click.option("--preset", default="default", help="评估权重预设")
+@click.option("--out-dir", default="tests/fixtures/failures", help="用例输出目录")
+def capture_failure(
+    target: str,
+    threshold: float,
+    dimensions: str | None,
+    preset: str,
+    out_dir: str,
+) -> None:
+    """失败用例沉淀: 把评估失败的prompt编码为yaml回归用例(Failure Mining)"""
+    from ai_prompt_toolkit.evaluator import evaluate_template, get_weight_preset
+    from ai_prompt_toolkit.failure_cases import capture_failure_case
+
+    p = Path(target)
+    if not p.exists():
+        click.echo(f"文件不存在: {target}", err=True)
+        sys.exit(2)
+    text = p.read_text(encoding="utf-8")
+    dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
+    wp = get_weight_preset(preset)
+    wo = wp._overrides if (wp is not None and preset != "default") else None
+    report = evaluate_template(p.name, text, dimensions=dim_list, weight_overrides=wo)
+    path, case = capture_failure_case(
+        str(p),
+        report,
+        threshold=threshold,
+        out_dir=out_dir,
+        dimensions=dim_list or [],
+        preset=preset,
+    )
+    avg = sum(s.score for s in report.scores) / len(report.scores) if report.scores else 0.0
+    click.echo(f"失败用例已沉淀: {path}")
+    click.echo(f"  case_id: {case['case_id']} | 当前avg: {avg:.2f}/10 | threshold: {threshold}")
+    click.echo(f"  锁定维度: {len(case['baseline_scores'])} | 快照findings: {len(case['findings_at_capture'])}")
+    click.echo("修复后验证: prompt-cli verify-failure -c " + str(path))
+
+
+@main.command("verify-failure")
+@click.option("--case", "-c", "case_path", required=True, help="失败用例yaml路径(或目录批量)")
+@click.option("--tolerance", type=float, default=0.0, help="基线维度允许的最大下降(分)")
+def verify_failure(case_path: str, tolerance: float) -> None:
+    """回归验证: 复评失败用例, avg≥threshold 且基线维度不降(容差内)"""
+    from ai_prompt_toolkit.failure_cases import load_failure_case, verify_failure_case
+
+    cpath = Path(case_path)
+    if not cpath.exists():
+        click.echo(f"用例路径不存在: {case_path}", err=True)
+        sys.exit(2)
+    files = sorted(list(cpath.glob("*.yaml")) + list(cpath.glob("*.yml"))) if cpath.is_dir() else [cpath]
+    if not files:
+        click.echo(f"无用例文件: {case_path}", err=True)
+        sys.exit(2)
+    failed = 0
+    for f in files:
+        try:
+            case = load_failure_case(f)
+        except ValueError as e:
+            click.echo(f"  ✗ {f.name}: {e}")
+            failed += 1
+            continue
+        res = verify_failure_case(case, tolerance=tolerance)
+        if res.passed:
+            click.echo(f"  ✓ {case.get('case_id', f.name)}: avg {res.avg:.2f} ≥ threshold, 基线维度未降")
+        else:
+            failed += 1
+            click.echo(f"  ✗ {case.get('case_id', f.name)}: avg {res.avg:.2f}")
+            for prob in res.problems[:5]:
+                click.echo(f"      {prob}")
+    total = len(files)
+    click.echo(f"\n验证: {total - failed}/{total} 通过")
+    sys.exit(1 if failed else 0)
 
 
 @main.command()
