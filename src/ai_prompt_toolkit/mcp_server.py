@@ -2877,18 +2877,19 @@ def _tool_output_scan(args: dict[str, Any]) -> dict[str, Any]:
     scanners = args.get("scanners", "")
     if not text:
         return {"error": "text is required"}
-    scanner_kwargs = {}
+    # R199: 显式kwargs构造 — **dict[str,bool]与OutputScanEngine异构签名不兼容
     if scanners:
         scanner_list = [s.strip() for s in scanners.split(",")]
-        scanner_kwargs = {
-            "enable_no_refusal": "no_refusal" in scanner_list,
-            "enable_bias": "bias" in scanner_list,
-            "enable_toxicity": "toxicity" in scanner_list,
-            "enable_relevance": "relevance" in scanner_list,
-            "enable_factual": "factual_consistency" in scanner_list,
-            "enable_citation": "citation" in scanner_list,
-        }
-    engine = OutputScanEngine(**scanner_kwargs) if scanner_kwargs else OutputScanEngine()
+        engine = OutputScanEngine(
+            enable_no_refusal="no_refusal" in scanner_list,
+            enable_bias="bias" in scanner_list,
+            enable_toxicity="toxicity" in scanner_list,
+            enable_relevance="relevance" in scanner_list,
+            enable_factual="factual_consistency" in scanner_list,
+            enable_citation="citation" in scanner_list,
+        )
+    else:
+        engine = OutputScanEngine()
     report = engine.scan(text, context=context)
     return report.to_dict()
 

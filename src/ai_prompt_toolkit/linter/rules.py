@@ -1485,11 +1485,12 @@ def run_all_checks(text: str) -> list[Finding]:
     return suppress_synonym_findings(findings)
 
 
-def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, object]]]:
+def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, Any]]]:
     import time
 
     findings: list[Finding] = []
-    profile_data: list[dict[str, object]] = []
+    # R199: 值为str/float/int异构, object过严致消费方float()/join报错, Any更贴切
+    profile_data: list[dict[str, Any]] = []
     for checker in _CHECKERS_EXTENDED:
         name = getattr(checker, "__name__", str(checker))
         t0 = time.perf_counter()
@@ -1518,7 +1519,7 @@ def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, ob
 
 def search_rules(
     query: str, category: str | None = None, owasp: str | None = None, limit: int = 20
-) -> list[dict[str, object]]:
+) -> list[dict[str, Any]]:
     import re
 
     results = []

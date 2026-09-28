@@ -181,8 +181,9 @@ class BaseProvider(ABC):
                     delay *= 2
                     continue
                 resp.raise_for_status()
-                payload: dict[str, Any] = resp.json()
-                return payload
+                # R199: 改名防与参数payload重定义
+                data: dict[str, Any] = resp.json()
+                return data
             except Exception as e:
                 last_error = e
                 if attempt < _MAX_RETRIES - 1:

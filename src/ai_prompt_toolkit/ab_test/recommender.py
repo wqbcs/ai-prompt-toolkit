@@ -81,7 +81,8 @@ class Recommender:
 
         for model_key, stats in model_stats.items():
             for rule in self.EXCLUSION_RULES:
-                threshold = self._get_threshold(rule["threshold_key"], rule["default_threshold"])
+                # R199: EXCLUSION_RULES推断为dict[str,object], key需显式转str
+                threshold = self._get_threshold(str(rule["threshold_key"]), rule["default_threshold"])
                 value = stats.get(rule["field"])
 
                 if value is None:

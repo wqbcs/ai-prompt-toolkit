@@ -71,6 +71,9 @@ def market(action: str, template: str | None, config: str | None) -> None:
         result = client.submit(tpl)
         click.echo(f"提交成功: {result.id} → {result.status.value}")
     elif action == "review":
+        if not template:
+            click.echo("错误: 请指定--template", err=True)
+            sys.exit(2)
         result = client.start_review(template)
         click.echo(f"审核已启动: {result}")
     elif action == "deploy":
@@ -80,6 +83,9 @@ def market(action: str, template: str | None, config: str | None) -> None:
         result = client.start_deploy(template)
         click.echo(f"部署已启动: {template} → {result.phase.value}")
     elif action == "status":
+        if not template:
+            click.echo("错误: 请指定--template", err=True)
+            sys.exit(2)
         result = client.get_status(template)
         click.echo(
             f"模板: {result.get('template', {}).get('id', '?')} | 状态: {result.get('template', {}).get('status', '?')} | 评分: {result.get('lint', {}).get('lint_score', '-')}"

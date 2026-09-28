@@ -236,26 +236,27 @@ def lint(
             for i, tpl_path in enumerate(templates, 1):
                 text = tpl_path.read_text(encoding="utf-8")
                 template_type = _detect_template_type(text)
-                result = linter.lint(
+                # R199: 改名防与else分支result重定义
+                lint_res = linter.lint(
                     tpl_path.name,
                     text,
                     fix=fix or interactive or dry_run,
                     template_type=template_type,
                     lint_config=lint_cfg,
                 )
-                if dry_run and result.auto_fixed:
-                    click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
-                    for ff in result.fixed_findings:
+                if dry_run and lint_res.auto_fixed:
+                    click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(lint_res.fixed_findings)}处可修复(未实际修改)")
+                    for ff in lint_res.fixed_findings:
                         click.echo(f"    预览: {ff.rule_id}: {ff.description}")
-                elif interactive and result.auto_fixed:
-                    for fix_info in result.fixes_applied:
+                elif interactive and lint_res.auto_fixed:
+                    for fix_info in lint_res.fixes_applied:
                         click.echo(f"  修复: {fix_info}")
                         if not click.confirm("  应用此修复?", default=True):
                             pass
-                tracer.trace_lint(tpl_path.name, len(result.findings), float(result.score), result.lint_time_ms)
-                all_results.append(result)
-                total_findings += result.failed_count
-                total_score += result.score
+                tracer.trace_lint(tpl_path.name, len(lint_res.findings), float(lint_res.score), lint_res.lint_time_ms)
+                all_results.append(lint_res)
+                total_findings += lint_res.failed_count
+                total_score += lint_res.score
                 progress.update(task, description=friendly_progress_label("lint", i, len(templates)))
                 progress.advance(task)
     else:

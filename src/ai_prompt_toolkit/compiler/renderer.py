@@ -74,12 +74,16 @@ class Renderer:
             self._render_multi_conditional(node, nesting)
 
     def _render_single_conditional(self, node: ASTNode, nesting: int) -> None:
-        result, warnings = evaluate(node.condition, self._ctx)
+        # R199: 局部变量收窄 — 调用方已保证condition非None, 显式守卫收窄类型
+        cond = node.condition
+        if cond is None:
+            return
+        result, warnings = evaluate(cond, self._ctx)
         for w in warnings:
             self._report.add_warning(w)
 
         bi = self._branch_info(
-            node.condition,
+            cond,
             node.line_start,
             node.line_end,
             nesting,

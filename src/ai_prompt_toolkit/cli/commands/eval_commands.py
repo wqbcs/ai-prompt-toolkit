@@ -26,7 +26,8 @@ def eval_multi(targets: str, quick: bool) -> None:
     if len(target_files) < 2:
         click.echo("需要至少2个目标文件进行对比")
         sys.exit(1)
-    results = []
+    # R199: 显式标注 — dict值含list[DimensionScore]/Path等异构类型, Any统一防len推断歧义
+    results: list[dict[str, Any]] = []
     for tf in target_files:
         p = Path(tf)
         if not p.exists():
@@ -194,8 +195,9 @@ def evaluate(
         try:
             import yaml as _yaml
 
-            data: list[dict[str, Any]] = [r.to_dict() for r in reports]
-            click.echo(_yaml.dump(data, allow_unicode=True, default_flow_style=False))
+            # R199: 改名防与json分支data重定义
+            yaml_data: list[dict[str, Any]] = [r.to_dict() for r in reports]
+            click.echo(_yaml.dump(yaml_data, allow_unicode=True, default_flow_style=False))
         except ImportError:
             import json as _json
 

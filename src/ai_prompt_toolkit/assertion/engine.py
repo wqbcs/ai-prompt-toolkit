@@ -18,6 +18,20 @@ _REGEX_MAX_RESPONSE_LEN = 50000
 _REGEX_TIMEOUT_MS = 200
 
 
+def _coerce_numeric(value: Any, default: float) -> float:
+    """断言值转float, 精确保持原 `float(config.value) if config.value else default` 语义:
+    假值(空串/0/None)用默认; 数字直转; 数字字符串直转;
+    非法非空字符串抛ValueError(由engine统一捕获为失败);
+    dict/list等非数值类型用默认值(原代码此处TypeError, 现安全回退)。"""
+    if not value:
+        return default
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        return float(value)
+    return default
+
+
 class AssertionEngine:
     def __init__(self) -> None:
         self._evaluators: dict[AssertType, Any] = {
@@ -260,7 +274,7 @@ class AssertionEngine:
         cost: float,
         context: dict[str, Any],
     ) -> AssertionResult:
-        max_latency = float(config.value) if config.value else 5000.0
+        max_latency = _coerce_numeric(config.value, 5000.0)
         passed = latency_ms <= max_latency
         score = min(1.0, max_latency / max(latency_ms, 1))
         return AssertionResult(
@@ -278,7 +292,7 @@ class AssertionEngine:
         cost: float,
         context: dict[str, Any],
     ) -> AssertionResult:
-        max_cost = float(config.value) if config.value else 1.0
+        max_cost = _coerce_numeric(config.value, 1.0)
         passed = cost <= max_cost
         score = min(1.0, max_cost / max(cost, 0.001))
         return AssertionResult(

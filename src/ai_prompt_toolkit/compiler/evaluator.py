@@ -113,8 +113,8 @@ class Evaluator:
             if not dim_value:
                 return False
 
-            result = dim_lower in values_lower
-            return result if condition.operator == "in" else not result
+            in_result = dim_lower in values_lower  # R199: 改名防与下方result重定义
+            return in_result if condition.operator == "in" else not in_result
 
         op_func = _COMPARISON_OPS.get(condition.operator)
         if op_func is None:

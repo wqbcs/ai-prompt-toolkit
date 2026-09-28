@@ -72,6 +72,25 @@
   evaluator_registry assertion_defs显式list[AssertionDef]
 - 验证: 全量5507 passed / ruff全绿 / 棘轮56持平(R189累计443→56, -87%)
 
+## [v67.25.0] - 2026-09-27
+
+### Fixed (R199: arg-type/no-redef批次治理, mypy 56→33)
+
+- 真bug修复: redteam --scorecard 把布尔标志当PromptScorecard传入(运行时必崩) —
+  改为从探测结果构造findings后compute_scorecard; market/api review端点
+  next()返回str传Template(要求TemplateStatus) — 改TemplateStatus(t.status)
+  非法值回退DRAFT; plugin create_plugin返回None时直接register崩溃 — 加守卫
+- 同名变量重定义(no-redef): compiler/evaluator result→in_result /
+  ab_test/provider payload→data / lint_commands rich分支result→lint_res /
+  eval_commands yaml分支data→yaml_data
+- 类型收窄: renderer condition None守卫收窄 / plugin Plugin|None收窄 /
+  security theme cast(Theme) / template review/status空值守卫exit(2)
+- 源头签名: rules.run_all_checks_profiled/search_rules 返回
+  dict[str,object]→dict[str,Any](值异构, object过严)
+- assertion _coerce_numeric helper: 精确复刻原float(value) if value else default
+  三态语义(假值默认/数字直转/非法串抛错由engine捕获), 修float(str|dict|list)
+- 验证: 全量5507 passed / ruff全绿 / 棘轮33(R189累计443→33, -93%)
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)

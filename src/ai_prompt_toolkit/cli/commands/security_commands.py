@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import cast
 
 import click
 
@@ -225,7 +226,7 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.linter.linter import PromptLinter
     from ai_prompt_toolkit.output import success
-    from ai_prompt_toolkit.security.badge import generate_scorecard_badge_file
+    from ai_prompt_toolkit.security.badge import Theme, generate_scorecard_badge_file
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
     from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
@@ -258,5 +259,6 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     all_findings = list(lint_findings) + sec_findings
     scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
-    generate_scorecard_badge_file(scorecard, output, compact=compact, theme=theme)
+    # R199: click.Choice返回str, 收窄为Theme字面量
+    generate_scorecard_badge_file(scorecard, output, compact=compact, theme=cast("Theme", theme))
     success(f"评分徽章已生成到 {output} (评分: {scorecard.overall_score}/100 {scorecard.grade.value})")

@@ -200,7 +200,9 @@ class PluginManager:
         try:
             module = importlib.import_module(module_path)
             if hasattr(module, "create_plugin"):
-                plugin: Plugin | None = module.create_plugin()
+                plugin = module.create_plugin()
+                if plugin is None:
+                    return None  # R199: create_plugin契约允许返回None
                 self.register(plugin)
                 return plugin
             logger.warning("Module %s has no create_plugin()", module_path)
@@ -222,7 +224,9 @@ class PluginManager:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         if hasattr(module, "create_plugin"):
-            plugin: Plugin | None = module.create_plugin()
+            plugin = module.create_plugin()
+            if plugin is None:
+                return None  # R199: create_plugin契约允许返回None
             self.register(plugin)
             return plugin
         return None

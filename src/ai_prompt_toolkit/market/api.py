@@ -432,15 +432,19 @@ async def api_review_template(template_id: str, body: dict[str, Any]):
         raise HTTPException(status_code=404, detail="模板不存在")
     approved = body.get("approved", False)
     new_status = "canary" if approved else "draft"
-    from ai_prompt_toolkit.market.types import Template
+    from ai_prompt_toolkit.market.types import LifecycleManager, Template, TemplateStatus
 
-    tpl = Template(
-        id=t.id,
-        name=t.name,
-        version=t.version,
-        status=next((s for s in ["draft", "review", "canary", "stable", "deprecated"] if s == t.status), "draft"),
-    )
-    from ai_prompt_toolkit.market.types import LifecycleManager, TemplateStatus
+    try:
+        tpl = Template(
+            id=t.id,
+            name=t.name,
+            version=t.version,
+            status=TemplateStatus(t.status),
+        )
+    except ValueError:
+        # R199: 原next()表达式返回str, Template要求TemplateStatus;
+        # 非法状态回退DRAFT
+        tpl = Template(id=t.id, name=t.name, version=t.version, status=TemplateStatus.DRAFT)
 
     LifecycleManager()
     try:

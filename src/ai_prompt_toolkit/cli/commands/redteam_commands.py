@@ -138,8 +138,22 @@ def redteam_cmd(
         from pathlib import Path
 
         from ai_prompt_toolkit.security.badge import generate_scorecard_badge
+        from ai_prompt_toolkit.security.prompt_scorecard import compute_scorecard
+        from ai_prompt_toolkit.types import Finding, Severity
 
-        svg = generate_scorecard_badge(scorecard)
+        # R199: 原bug — 把--scorecard布尔标志当PromptScorecard传入;
+        # 正确做法: 从探测结果构造findings后计算评分卡
+        rt_findings = [
+            Finding(
+                rule_id=f"RT-{r.probe_name}",
+                severity=Severity.CRITICAL if r.confidence >= 0.8 else Severity.HIGH,
+                description=f"红队探测 {r.probe_name} ({r.input_category}): {r.detection_details}",
+            )
+            for r in report.probe_results
+            if r.is_vulnerable
+        ]
+        sc = compute_scorecard(rt_findings)
+        svg = generate_scorecard_badge(sc)
         badge_path = "redteam-scorecard.svg"
         Path(badge_path).write_text(svg, encoding="utf-8")
-        click.echo(f"安全评分卡: {badge_path}")
+        click.echo(f"安全评分卡: {badge_path} (评分: {sc.overall_score}/100 {sc.grade.value})")
