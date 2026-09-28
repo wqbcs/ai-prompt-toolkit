@@ -25,7 +25,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
@@ -292,7 +292,7 @@ class Tracer:
     def save_otlp(self, output_path: str | Path) -> Path:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = {"resourceSpans": []}
+        data: dict[str, Any] = {"resourceSpans": []}
         for t in self._traces:
             otlp = t.to_otlp_json()
             data["resourceSpans"].extend(otlp.get("resourceSpans", []))
@@ -305,7 +305,7 @@ class Tracer:
             "gen_ai.request.model": model,
             **extra_attrs,
         }
-        return self.span(f"{system}.chat", attributes=attrs)
+        return cast("Generator[Span, None, None]", self.span(f"{system}.chat", attributes=attrs))
 
     def get_trace_tree(self, trace_id: str = "") -> dict[str, Any]:
         traces = self._traces

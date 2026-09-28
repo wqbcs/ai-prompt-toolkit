@@ -123,8 +123,9 @@ def evaluate(
     cat_list = [c.strip() for c in categories.split(",")] if categories else None
 
     weight_preset = get_weight_preset(preset)
-    _wo = weight_preset._overrides if (weight_preset and preset != "default") else None
-    if _wo:
+    # R200: 显式None收窄 — mypy无法经_wo反推weight_preset非None
+    _wo = weight_preset._overrides if weight_preset is not None and preset != "default" else None
+    if _wo and weight_preset is not None:
         click.echo(f"权重预设: {weight_preset.display_name} ({weight_preset.description})")
 
     if target_path.is_dir():

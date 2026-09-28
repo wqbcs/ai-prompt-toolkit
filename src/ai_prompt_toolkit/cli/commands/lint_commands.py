@@ -211,7 +211,8 @@ def lint(
         _has_rich = False
 
     # R187: --parallel并行预计算(实测线程池4对50文件1.87x); 交互/修复/干跑强制串行
-    parallel_results: dict[str, object] | None = None
+    # R200: 值类型LintResult — 原object过严致else分支标注报错
+    parallel_results: dict[str, LintResult] | None = None
     if parallel > 0 and not interactive and not dry_run and not fix and not watch and len(templates) > 1:
         from concurrent.futures import ThreadPoolExecutor
 
@@ -249,8 +250,9 @@ def lint(
                     for ff in lint_res.fixed_findings:
                         click.echo(f"    预览: {ff.rule_id}: {ff.description}")
                 elif interactive and lint_res.auto_fixed:
-                    for fix_info in lint_res.fixes_applied:
-                        click.echo(f"  修复: {fix_info}")
+                    # R200: LintResult真实字段为fixed_findings(无fixes_applied)
+                    for fix_f in lint_res.fixed_findings:
+                        click.echo(f"  修复: {fix_f.rule_id}: {fix_f.description}")
                         if not click.confirm("  应用此修复?", default=True):
                             pass
                 tracer.trace_lint(tpl_path.name, len(lint_res.findings), float(lint_res.score), lint_res.lint_time_ms)

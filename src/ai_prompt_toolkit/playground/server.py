@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +62,11 @@ app.add_middleware(
 )
 
 
+# R200: 模块级限流状态 — 原函数属性模式致attr-defined且并发丢计数
+_rl_lock = threading.Lock()
+_rl_clients: dict[str, list[float]] = {}
+
+
 @app.middleware("http")
 async def rate_limit_middleware(request: Any, call_next: Any) -> Any:
     import time
@@ -68,17 +74,15 @@ async def rate_limit_middleware(request: Any, call_next: Any) -> Any:
     from starlette.responses import JSONResponse
 
     if request.url.path.startswith("/api/"):
-        if not hasattr(rate_limit_middleware, "_clients"):
-            rate_limit_middleware._clients = {}
         client_id = request.client.host if request.client else "unknown"
         now = time.time()
-        clients = rate_limit_middleware._clients
-        if client_id not in clients:
-            clients[client_id] = []
-        clients[client_id] = [t for t in clients[client_id] if now - t < 60]
-        if len(clients[client_id]) > 100:
-            return JSONResponse(status_code=429, content={"error": "请求过于频繁，请稍后再试"})
-        clients[client_id].append(now)
+        with _rl_lock:
+            if client_id not in _rl_clients:
+                _rl_clients[client_id] = []
+            _rl_clients[client_id] = [t for t in _rl_clients[client_id] if now - t < 60]
+            if len(_rl_clients[client_id]) > 100:
+                return JSONResponse(status_code=429, content={"error": "请求过于频繁，请稍后再试"})
+            _rl_clients[client_id].append(now)
     response = await call_next(request)
     return response
 
@@ -367,13 +371,15 @@ _STATIC_DIR = Path(__file__).parent / "static"
 @app.get("/")
 async def index() -> FileResponse:
     index_file = _STATIC_DIR / "index.html"
+    fallback = _STATIC_DIR.parent / "index.html"
     if index_file.exists():
         return FileResponse(str(index_file))
-    return (
-        FileResponse(str(_STATIC_DIR.parent / "index.html"))
-        if (_STATIC_DIR.parent / "index.html").exists()
-        else {"message": "Playground UI not built yet. Run: npm run build"}
-    )
+    if fallback.exists():
+        return FileResponse(str(fallback))
+    # R200: 原代码无index时返回dict与声明FileResponse不匹配 — 改抛HTTPException
+    from fastapi import HTTPException
+
+    raise HTTPException(status_code=404, detail="Playground UI not built yet. Run: npm run build")
 
 
 @app.post("/api/scorecard")

@@ -83,7 +83,7 @@ class Recommender:
             for rule in self.EXCLUSION_RULES:
                 # R199: EXCLUSION_RULES推断为dict[str,object], key需显式转str
                 threshold = self._get_threshold(str(rule["threshold_key"]), rule["default_threshold"])
-                value = stats.get(rule["field"])
+                value = stats.get(str(rule["field"]))  # R200: rule值为object, 显式str
 
                 if value is None:
                     continue

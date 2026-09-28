@@ -74,6 +74,25 @@
 
 ## [v67.25.0] - 2026-09-27
 
+### Fixed (R200: CLI命令簇/playground/tracing批次治理, mypy 33→14)
+
+- 真bug修复: lint交互分支读LintResult.fixes_applied(不存在, 运行时崩溃) —
+  改用真实字段fixed_findings展示rule_id+description; playground限流
+  函数属性模式并发丢计数 — 改模块级dict+threading.Lock; playground无index
+  时返回dict与声明FileResponse不匹配 — 改抛HTTPException(404)
+- template market: submit/review/deploy/status同名result污染 —
+  分别改submit_res/review_res/deploy_res/status_res
+- eval: weight_preset None收窄(经_wo反推不可行, 显式is not None)
+- recommender: EXCLUSION_RULES dict[str,object]的field key显式str()
+- rules_p196_p200: 5个check函数findings显式list[Finding]标注
+- otel_tracer: Tracer Protocol补齐trace_lint/trace_eval/record_metric
+  (OTelTracer/NoopTracer共有但Protocol缺失致调用方报错)
+- lint parallel_results dict[str,object]→dict[str,LintResult](源头标注)
+- tracing: save_otlp data标注dict[str,Any] / trace_llm cast(Generator)
+- 验证: 全量5507 passed / ruff全绿 / 棘轮14(R189累计443→14, -97%)
+
+## [v67.25.0] - 2026-09-27
+
 ### Fixed (R199: arg-type/no-redef批次治理, mypy 56→33)
 
 - 真bug修复: redteam --scorecard 把布尔标志当PromptScorecard传入(运行时必崩) —

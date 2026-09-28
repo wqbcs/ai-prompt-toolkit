@@ -68,27 +68,27 @@ def market(action: str, template: str | None, config: str | None) -> None:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
         tpl = Template(id=template, name=template, version="1.0.0")
-        result = client.submit(tpl)
-        click.echo(f"提交成功: {result.id} → {result.status.value}")
+        submit_res = client.submit(tpl)
+        click.echo(f"提交成功: {submit_res.id} → {submit_res.status.value}")
     elif action == "review":
         if not template:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
-        result = client.start_review(template)
-        click.echo(f"审核已启动: {result}")
+        review_res = client.start_review(template)
+        click.echo(f"审核已启动: {review_res}")
     elif action == "deploy":
         if not template:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
-        result = client.start_deploy(template)
-        click.echo(f"部署已启动: {template} → {result.phase.value}")
+        deploy_res = client.start_deploy(template)
+        click.echo(f"部署已启动: {template} → {deploy_res.phase.value}")
     elif action == "status":
         if not template:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
-        result = client.get_status(template)
+        status_res = client.get_status(template)
         click.echo(
-            f"模板: {result.get('template', {}).get('id', '?')} | 状态: {result.get('template', {}).get('status', '?')} | 评分: {result.get('lint', {}).get('lint_score', '-')}"
+            f"模板: {status_res.get('template', {}).get('id', '?')} | 状态: {status_res.get('template', {}).get('status', '?')} | 评分: {status_res.get('lint', {}).get('lint_score', '-')}"
         )
 
 

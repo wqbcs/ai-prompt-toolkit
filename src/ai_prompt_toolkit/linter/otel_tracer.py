@@ -304,6 +304,29 @@ class Tracer(Protocol):
 
     def end_span(self, span: Any = None, status: str = "ok", attributes: dict[str, Any] | None = None) -> Any: ...
 
+    def record_metric(self, name: str, value: float) -> None: ...
+
+    # R200: 补齐OTelTracer/NoopTracer共有的追踪方法 — 原Protocol缺失致调用方报错
+    def trace_lint(
+        self,
+        template_id: str,
+        findings_count: int,
+        score: float,
+        duration_ms: float,
+        model: str | None = None,
+        token_usage: tuple[int, int] | None = None,
+    ) -> Any: ...
+
+    def trace_eval(
+        self,
+        template_id: str,
+        overall_score: float,
+        grade: str,
+        duration_ms: float,
+        model: str | None = None,
+        token_usage: tuple[int, int] | None = None,
+    ) -> Any: ...
+
     def to_dict(self) -> dict[str, Any]: ...
 
 
