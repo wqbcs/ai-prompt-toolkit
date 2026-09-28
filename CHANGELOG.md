@@ -74,6 +74,24 @@
 
 ## [v67.25.0] - 2026-09-27
 
+### Added (R204: 评估基线 drift检测 — Drift Sentinel)
+
+- `src/ai_prompt_toolkit/eval_baseline.py`: 评估基线模块 — 整体/类别/
+  维度三级快照 + 维度级drift检测(涨跌超阈值即信号, 默认1.5分降噪)
+- `prompt-cli evaluate --baseline-save`: 保存评估基线(默认.eval-baseline.json,
+  多文件取均值, 记录preset)
+- `prompt-cli evaluate --baseline <file> [--drift-threshold N]`: 基线对比 —
+  Drift维度涨/跌分列(▼/▲) + 新增/移除维度 + 整体回归判定(下跌超2%
+  退出码1, 基线缺失退出码3)
+- 定位: 与lint基线(findings级)互补 — eval侧补上「行为漂移」防线,
+  回应社区痛点"静默回归: 代码全绿但质量退化"
+- 测试: tests/test_r204_eval_baseline.py 9用例(模块roundtrip/无drift/
+  涨跌drift/回归信号/多文件均值/CLI保存/同prompt无drift/改高基线回归/
+  缺失文件exit3)
+- 验证: 全量5522 passed(+9) / ruff全绿 / mypy棘轮0
+
+## [v67.25.0] - 2026-09-27
+
 ### Added (R203: CI闭环体验 — fail-on门禁 + 误报基线度量)
 
 - `prompt-cli lint --fail-on {critical,high,medium}`: 显式级别门禁 —

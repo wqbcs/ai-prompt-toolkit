@@ -80,6 +80,9 @@ def eval_multi(targets: str, quick: bool) -> None:
 @click.option("--output", "-o", help="输出报告路径(JSON)")
 @click.option("--quick", is_flag=True, help="快速模式: 仅评估TOP10核心维度(D01-D10)")
 @click.option("--save", "save_history", is_flag=True, help="保存评估结果到历史(SQLite)")
+@click.option("--baseline-save", is_flag=True, help="保存评估基线(默认路径.eval-baseline.json)")
+@click.option("--baseline", help="对比指定评估基线文件(维度级drift检测)")
+@click.option("--drift-threshold", type=float, default=1.5, help="维度drift阈值(0-10分, 默认1.5)")
 @click.option(
     "--preset",
     type=click.Choice(
@@ -106,6 +109,9 @@ def evaluate(
     quick: bool,
     save_history: bool,
     preset: str,
+    baseline_save: bool,
+    baseline: str | None,
+    drift_threshold: float,
 ) -> None:
     """130维度质量评估：全面评估Prompt质量(支持行业权重预设)"""
     from ai_prompt_toolkit.cli_helpers import empty_state_tip, resolve_path, write_report
@@ -248,6 +254,15 @@ def evaluate(
             for tid, score in low_items[:5]:
                 click.echo(f"  {tid}: {score:.1f}/10")
 
+    if baseline_save:
+        baseline_path = ".eval-baseline.json"
+        from ai_prompt_toolkit.eval_baseline import save_eval_baseline
+
+        snap = save_eval_baseline(reports, baseline_path, template_id=target, preset=preset)
+        click.echo(
+            f"\n评估基线已保存: {baseline_path} (整体={snap.overall_score}, 维度={len(snap.dimension_scores)}, preset={preset})"
+        )
+
     exit_code = 0
     if threshold > 0:
         for report in reports:
@@ -256,6 +271,42 @@ def evaluate(
             if avg < threshold:
                 exit_code = 1
                 break
+
+    if baseline:
+        from ai_prompt_toolkit.eval_baseline import compare_eval_baseline, load_eval_baseline
+
+        bp = Path(baseline)
+        if not bp.exists():
+            click.echo(f"基线文件不存在: {baseline}", err=True)
+            sys.exit(3)
+        base = load_eval_baseline(bp)
+        drift = compare_eval_baseline(reports, base, drift_threshold=drift_threshold)
+        click.echo(f"\n── 评估基线对比 (阈值: {drift_threshold}) ──")
+        click.echo(
+            f"  整体: 基线 {drift.baseline_overall} → 当前 {drift.current_overall} (Δ={drift.overall_delta:+.2f})"
+        )
+        if drift.drifted_dimensions:
+            downs = {k: v for k, v in drift.drifted_dimensions.items() if v["direction"] == "down"}
+            ups = {k: v for k, v in drift.drifted_dimensions.items() if v["direction"] == "up"}
+            click.echo(
+                f"  Drift维度: {len(drift.drifted_dimensions)} (跌{len(downs)}/涨{len(ups)}) | 稳定: {drift.stable_dimensions}"
+            )
+            for dim_id in sorted(downs)[:10]:
+                d = drift.drifted_dimensions[dim_id]
+                click.echo(f"    ▼ {dim_id}: {d['baseline']} → {d['current']} ({d['delta']:+.2f})")
+            for dim_id in sorted(ups)[:5]:
+                d = drift.drifted_dimensions[dim_id]
+                click.echo(f"    ▲ {dim_id}: {d['baseline']} → {d['current']} ({d['delta']:+.2f})")
+        else:
+            click.echo(f"  无drift维度 (稳定: {drift.stable_dimensions})")
+        if drift.new_dimensions:
+            click.echo(f"  新增维度: {', '.join(sorted(drift.new_dimensions)[:10])}")
+        if drift.removed_dimensions:
+            click.echo(f"  移除维度: {', '.join(sorted(drift.removed_dimensions)[:10])}")
+        if drift.is_regression:
+            click.echo(f"  ⚠️ 整体回归: 分数下跌 {abs(drift.overall_delta):.2f} 超阈值")
+            if exit_code == 0:
+                exit_code = 1
 
     if save_history:
         from ai_prompt_toolkit.eval_store import EvalStore
