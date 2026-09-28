@@ -15,6 +15,16 @@
   本workflow后推送tag
 - 记账: doctor统计显示150条Lint规则与README宣称255不一致, R192核查
 
+## [v67.25.0] - 2026-09-27
+
+### Fixed (R195: mypy治理第三轮 — _CheckerFn契约放宽, list-item 80处清零)
+
+- 根因: P1xx+扩展规则批量返回list[Finding], 但_CheckerFn契约仅声明
+  Finding | None — 80个list-item错误全在_CHECKERS_EXTENDED注册处
+- 修复: 契约放宽为 Finding | None | list[Finding](与真实调用方linter.py的
+  处理逻辑一致), 消费端已按类型分支处理, 无运行时行为变更
+- 棘轮基线: 216 → 136 (累计R189→R195: 443 → 136, -69%)
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)

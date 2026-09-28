@@ -732,7 +732,8 @@ def check_p020(text: str) -> Finding | None:
     )
 
 
-_CheckerFn = Callable[[str], Finding | None]
+# R195: checker契约放宽为 Finding | None | list[Finding] — P1xx+扩展规则批量返回多条发现
+_CheckerFn = Callable[[str], "Finding | None | list[Finding]"]
 
 _CHECKERS: list[_CheckerFn] = [
     check_p001,
