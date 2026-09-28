@@ -194,13 +194,13 @@ def evaluate(
         try:
             import yaml as _yaml
 
-            data = [r.to_dict() for r in reports]
+            data: list[dict[str, Any]] = [r.to_dict() for r in reports]
             click.echo(_yaml.dump(data, allow_unicode=True, default_flow_style=False))
         except ImportError:
             import json as _json
 
-            data = [r.to_dict() for r in reports]
-            click.echo(_json.dumps(data, ensure_ascii=False, indent=2))
+            data2: list[dict[str, Any]] = [r.to_dict() for r in reports]
+            click.echo(_json.dumps(data2, ensure_ascii=False, indent=2))
 
     elif fmt == "markdown":
         for report in reports:
@@ -518,11 +518,12 @@ def version_cmd(
             if not template or not ver:
                 click.echo("错误: 请指定--template和--version", err=True)
                 sys.exit(2)
-            v = store.get_version(template, ver)
-            if not v:
+            # R197: 改名避免与其他action分支的同名变量v复用(mypy沿用首次推断)
+            shown = store.get_version(template, ver)
+            if not shown:
                 click.echo(f"版本不存在: {template} v{ver}", err=True)
                 sys.exit(2)
-            click.echo(v.content)
+            click.echo(shown.content)
 
         elif action == "diff":
             if not template or not version_a or not version_b:
@@ -1241,11 +1242,12 @@ def prompt_version_cmd(
             if not version_id:
                 click.echo("错误: 请指定--version-id", err=True)
                 sys.exit(2)
-            v = store.load(version_id)
-            if not v:
+            # R197: 改名避免与其他action分支的同名变量v复用(mypy沿用首次推断)
+            loaded = store.load(version_id)
+            if not loaded:
                 click.echo(f"版本不存在: {version_id}", err=True)
                 sys.exit(2)
-            click.echo(v.content)
+            click.echo(loaded.content)
 
         elif action == "list":
             versions = store.list_versions(name, limit=limit)
@@ -1283,11 +1285,11 @@ def prompt_version_cmd(
             if not version_id:
                 click.echo("错误: 请指定--version-id", err=True)
                 sys.exit(2)
-            v = store.rollback(version_id)
-            if not v:
+            rolled = store.rollback(version_id)
+            if not rolled:
                 click.echo(f"回滚失败: 版本 {version_id} 不存在", err=True)
                 sys.exit(2)
-            click.echo(f"已回滚到: #{version_id} → 新版本 #{v.version_id} (分数: {v.score:.1f})")
+            click.echo(f"已回滚到: #{version_id} → 新版本 #{rolled.version_id} (分数: {rolled.score:.1f})")
 
         elif action == "ab-compare":
             if not version_a or not version_b:

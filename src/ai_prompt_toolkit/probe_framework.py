@@ -1035,7 +1035,7 @@ for _cls in [
 ]:
     _PROBE_REGISTRY[_cls.name] = _cls
 
-for _cls in [
+for _det_cls in [
     JailbreakKeywordDetector,
     SystemPromptLeakDetector,
     InjectionPatternDetector,
@@ -1048,7 +1048,7 @@ for _cls in [
     MultimodalOutputDetector,
     ChainAttackDetector,
 ]:
-    _DETECTOR_REGISTRY[_cls.name] = _cls
+    _DETECTOR_REGISTRY[_det_cls.name] = _det_cls  # R197: 改名防_cls跨Probe/Detector循环复用污染
 
 
 OWASP_LLM_TOP_10_2025: dict[str, dict[str, str]] = {
@@ -1156,7 +1156,8 @@ class ProbeRunReport:
         return "\n".join(lines)
 
     def to_owasp_report(self) -> dict[str, Any]:
-        owasp_findings: dict[str, list] = {}
+        # R197: 标注为dict[str, Any] — 值是{"name":..., "findings": list}混合结构, 非纯list
+        owasp_findings: dict[str, Any] = {}
         for llm_ref, info in OWASP_LLM_TOP_10_2025.items():
             probe_names = [p.strip() for p in info["probes"].split(",")]
             findings_for_ref = []

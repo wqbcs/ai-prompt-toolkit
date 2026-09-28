@@ -8,7 +8,7 @@ ArkTS/ArkUI代码片段模板，帮助开发者快速修复Lint发现的问题�
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 
@@ -19,7 +19,7 @@ class ArkTSSnippet:
     description: str
     code: str
     language: str = "arkts"
-    tags: list[str] = None
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.tags is None:

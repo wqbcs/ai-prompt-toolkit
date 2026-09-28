@@ -22,15 +22,19 @@ def get_global_probe_registry() -> dict[str, dict[str, Any]]:
         from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY as PF_PROBES
 
         for name, cls in PF_PROBES.items():
-            merged[name] = {"cls": cls, "source": "probe_framework"}
+            # R197: 显式标注 — 两套BaseProbe体系(probe_framework/redteam)是不同类,
+            # 不标注会被首个循环定形为type[PF.BaseProbe]
+            entry: dict[str, Any] = {"cls": cls, "source": "probe_framework"}
+            merged[name] = entry
     except ImportError:
         pass
     try:
         from ai_prompt_toolkit.redteam.probe import _PROBE_REGISTRY as RT_PROBES
 
-        for name, cls in RT_PROBES.items():
-            if name not in merged:
-                merged[name] = {"cls": cls, "source": "redteam"}
+        for rt_name, rt_cls in RT_PROBES.items():  # R197: 改名防cls跨体系循环复用
+            if rt_name not in merged:
+                rt_entry: dict[str, Any] = {"cls": rt_cls, "source": "redteam"}
+                merged[rt_name] = rt_entry
     except ImportError:
         pass
     return merged
@@ -42,15 +46,18 @@ def get_global_detector_registry() -> dict[str, dict[str, Any]]:
         from ai_prompt_toolkit.probe_framework import _DETECTOR_REGISTRY as PF_DETECTORS
 
         for name, cls in PF_DETECTORS.items():
-            merged[name] = {"cls": cls, "source": "probe_framework"}
+            # R197: 显式标注 — 两套BaseDetector体系是不同类, 防首个循环定形
+            entry: dict[str, Any] = {"cls": cls, "source": "probe_framework"}
+            merged[name] = entry
     except ImportError:
         pass
     try:
         from ai_prompt_toolkit.redteam.detector import _DETECTOR_REGISTRY as RT_DETECTORS
 
-        for name, cls in RT_DETECTORS.items():
-            if name not in merged:
-                merged[name] = {"cls": cls, "source": "redteam"}
+        for rt_name, rt_det in RT_DETECTORS.items():  # R197: 改名防cls跨体系循环复用
+            if rt_name not in merged:
+                rt_det_entry: dict[str, Any] = {"cls": rt_det, "source": "redteam"}
+                merged[rt_name] = rt_det_entry
     except ImportError:
         pass
     return merged

@@ -19,7 +19,7 @@ rules:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +42,7 @@ class CustomRuleDef:
     category: str
     severity: Severity
     pattern: str = ""
-    keywords: list[str] = None
+    keywords: list[str] = field(default_factory=list)
     message: str = ""
     remediation: str = ""
     check_type: str = "regex"

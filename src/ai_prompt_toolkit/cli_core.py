@@ -483,8 +483,9 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
     if quick:
         if probes:
             click.echo("[INFO] --quick 已指定, 忽略 --probes 参数, 使用TOP5高危Probe")
-        probe_names = _QUICK_PROBES
+        probe_names: list[str] | None = _QUICK_PROBES
     else:
+        # R197: 显式标注 — 与quick分支的list[str]联合None, 防两分支类型不一致
         probe_names = [p.strip() for p in probes.split(",") if p.strip()] if probes else None
     detector_names = [d.strip() for d in detectors.split(",") if d.strip()] if detectors else None
 

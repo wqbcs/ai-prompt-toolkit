@@ -186,12 +186,13 @@ class OptPipeline:
             elif stage.optimizer == "opro":
                 from ai_prompt_toolkit.opro import OPROConfig, OPROOptimizer
 
-                config = OPROConfig(
+                # R197: 改名防config/optimizer与TGD分支同名复用(mypy沿用首次推断)
+                opro_config = OPROConfig(
                     max_generations=stage.config.get("max_generations", 3),
                     population_size=stage.config.get("population_size", 3),
                 )
-                optimizer = OPROOptimizer(config)
-                opro_result = optimizer.optimize(text, eval_fn=eval_fn)
+                opro_optimizer = OPROOptimizer(opro_config)
+                opro_result = opro_optimizer.optimize(text, eval_fn=eval_fn)
                 stage_result["text"] = opro_result.best_instruction
                 stage_result["score"] = opro_result.best_score
                 stage_result["candidates_explored"] = opro_result.candidates_explored

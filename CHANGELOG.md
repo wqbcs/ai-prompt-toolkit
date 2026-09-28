@@ -39,6 +39,24 @@
   tree节点Any标注
 - 验证: 全量5507 passed / ruff全绿 / 棘轮99持平(R189累计443→99, -78%)
 
+## [v67.25.0] - 2026-09-27
+
+### Fixed (R197: assignment批次治理 — mypy 99→65, 全部清零)
+
+- 变量跨分支同名复用(主根因): eval_commands的v/result(3处)/opt_pipeline的
+  config/optimizer/flow_dag的result/probe_framework的_cls — 分支间类型不同,
+  mypy沿用首次推断致冲突; 全部改名隔离
+- mcp_server response字典: 首个int值使dict被定形为dict[str,int], 后续str赋值
+  报错 — 显式dict[str, Any]标注(2处)
+- dataclass默认值反模式: `tags/keywords: list[str] = None` 改
+  field(default_factory=list)(2处, 消除可变默认共享隐患)
+- registry双BaseProbe体系: 循环变量cls跨probe_framework/redteam体系复用,
+  显式标注entry dict防定形
+- inheritance_auditor: current显式str|None标注(get_parent_id可返回None)
+- cli_core/eval_commands: probe_names联合None标注/yaml分支data标注
+- 棘轮基线: 99 → 65 (R189累计443→65, -85%)
+- 验证: 全量5507 passed / ruff全绿 / 棘轮持平通过
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)

@@ -263,7 +263,8 @@ def lint(
             text = tpl_path.read_text(encoding="utf-8")
             template_type = _detect_template_type(text)
             _pre = parallel_results.get(str(tpl_path)) if parallel_results else None
-            result = (
+            # R197: 并行分支_pre类型与lint()返回一致(LintResult), 三元后统一
+            result: LintResult = (
                 _pre
                 if _pre is not None
                 else linter.lint(
@@ -397,8 +398,8 @@ def lint(
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline, save_baseline
 
         all_findings_for_baseline = []
-        for r in all_results:
-            for f in r.findings:
+        for lint_res in all_results:
+            for f in lint_res.findings:
                 all_findings_for_baseline.append(
                     {
                         "rule_id": f.rule_id,
@@ -508,10 +509,10 @@ def lint(
     if show_diff and any(r.auto_fixed for r in all_results):
         import difflib
 
-        for r in all_results:
-            if r.auto_fixed and hasattr(r, "original_text") and hasattr(r, "fixed_text"):
-                orig_lines = (r.original_text or "").splitlines(keepends=True)
-                fixed_lines = (r.fixed_text or "").splitlines(keepends=True)
+        for lint_res in all_results:
+            if lint_res.auto_fixed and hasattr(lint_res, "original_text") and hasattr(lint_res, "fixed_text"):
+                orig_lines = (lint_res.original_text or "").splitlines(keepends=True)
+                fixed_lines = (lint_res.fixed_text or "").splitlines(keepends=True)
                 diff_lines = difflib.unified_diff(
                     orig_lines, fixed_lines, fromfile="original", tofile="fixed", lineterm=""
                 )
@@ -560,8 +561,8 @@ def lint(
         from ai_prompt_toolkit.html_report import generate_html_report
 
         findings_list = []
-        for r in all_results:
-            for f in r.findings:
+        for lint_res in all_results:
+            for f in lint_res.findings:
                 findings_list.append(
                     {
                         "rule_id": f.rule_id,

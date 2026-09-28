@@ -1831,7 +1831,8 @@ def _tool_junit_report(args: dict[str, Any]) -> dict[str, Any]:
                 elapsed_ms=item.get("elapsed_ms", 0),
             )
 
-    response = {
+    # R197: 显式标注 — 字典初始int值使mypy推断dict[str, int], 后续str赋值报assignment
+    response: dict[str, Any] = {
         "total": reporter.suite.total,
         "failures": reporter.suite.failures,
         "errors": reporter.suite.errors,
@@ -1901,7 +1902,8 @@ def _tool_sarif_report(args: dict[str, Any]) -> dict[str, Any]:
     else:
         report = lint_results_to_sarif(findings)
 
-    response = {
+    # R197: 显式标注 — 首个int值会使dict被推断为dict[str, int], 后续str/dict赋值报错
+    response: dict[str, Any] = {
         "total_results": report.total_results,
         "error_count": report.error_count,
         "warning_count": report.warning_count,

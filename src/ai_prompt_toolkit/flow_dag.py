@@ -410,11 +410,12 @@ class FlowExecutor:
             text = inputs.get("text", inputs.get("rendered", ""))
             auto = node.config.get("auto", "light")
             metric = node.config.get("metric", "lint_score")
-            result = gepa_optimize(str(text), metric=metric, auto=auto)
+            # R197: 改名防result与其他node_type分支同名复用(mypy沿用首次推断)
+            gepa_res = gepa_optimize(str(text), metric=metric, auto=auto)
             return {
-                "best_instructions": result.best_instructions,
-                "best_score": result.best_score,
-                "improvement": result.improvement,
+                "best_instructions": gepa_res.best_instructions,
+                "best_score": gepa_res.best_score,
+                "improvement": gepa_res.improvement,
             }
 
         elif node.node_type == NodeType.CONDITION:

@@ -124,7 +124,8 @@ class InheritanceAuditor:
 
     def _check_risk_propagation(self, template_id: str, findings: list[InheritanceFinding]) -> None:
         chain: list[str] = []
-        current = template_id
+        # R197: get_parent_id返回str|None — 显式标注, while条件即判None
+        current: str | None = template_id
         seen: set[str] = set()
         while current is not None:
             if current in seen:
