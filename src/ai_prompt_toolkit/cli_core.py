@@ -84,11 +84,32 @@ def _generate_sarif(results: list, target: str) -> dict:
     return sarif
 
 
+def _component_stats() -> str:
+    """R194: 动态计算组件统计, 替代硬编码(防规则/工具数漂移后口径不一致)"""
+    try:
+        from ai_prompt_toolkit.evaluator import get_all_dimensions
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+        from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
+        from ai_prompt_toolkit.redteam.detector import BaseDetector
+        from ai_prompt_toolkit.redteam.probe import BaseProbe
+
+        lint = len(get_all_rules())
+        dims = len(get_all_dimensions())
+        tools = len(_get_tool_dispatch())
+        probes = len(BaseProbe.__subclasses__())
+        detectors = len(BaseDetector.__subclasses__())
+        return (
+            f"组件统计: {lint}条Lint规则 | {dims}评估维度 | {tools} MCP工具 | {probes} Probes | {detectors} Detectors"
+        )
+    except Exception:
+        return "组件统计: (加载中不可用)"
+
+
 @click.group()
 @click.version_option(
     version=__version__,
     prog_name="prompt-cli",
-    message="%(prog)s %(version)s\n\n组件统计: 255条Lint规则 | 90评估维度 | 59 MCP工具 | 23+ Probes | 11+ Detectors | 25 Providers",
+    message="%(prog)s %(version)s\n\n" + _component_stats(),
 )
 def main() -> None:
     """AI提示词体系工具链"""
