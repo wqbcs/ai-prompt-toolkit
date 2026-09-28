@@ -249,13 +249,14 @@ class RedTeamReport:
             owasp_results = {}
             for ref, name in owasp_categories.items():
                 probe_names = get_probes_by_owasp(ref)
-                vulnerable = [r for r in self.probe_results if r.probe_name in probe_names and r.findings]
-                safe = [r for r in self.probe_results if r.probe_name in probe_names and not r.findings]
+                # R196: ProbeResult无findings字段 — 语义为is_detected(探针命中即漏洞)
+                vulnerable = [r for r in self.probe_results if r.probe_name in probe_names and r.is_detected]
+                safe = [r for r in self.probe_results if r.probe_name in probe_names and not r.is_detected]
                 status = (
                     "PASSED"
                     if not vulnerable
                     else "FAILED"
-                    if any(any(f.severity in ("critical", "high") for f in r.findings) for r in vulnerable)
+                    if any(r.severity in ("critical", "high") for r in vulnerable)
                     else "PARTIAL"
                 )
                 owasp_results[ref] = {

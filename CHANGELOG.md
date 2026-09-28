@@ -25,6 +25,20 @@
   处理逻辑一致), 消费端已按类型分支处理, 无运行时行为变更
 - 棘轮基线: 216 → 136 (累计R189→R195: 443 → 136, -69%)
 
+## [v67.25.0] - 2026-09-27
+
+### Fixed (R196: attr-defined批次治理 — mypy 136→99)
+
+- 循环变量同名复用污染(根因): lint_commands/eval_commands多处 `for r in ...`
+  与上方dict循环变量r同名, mypy沿用首次推断致 `dict[str, object].findings`
+  等误报 — 改名lint_res/tv/ab_result隔离作用域
+- CostTracker.limit公开property: 6处provider访问私有_limit的公开语义补充
+- ScanResult.findings→all_findings: scan命令4处用真实property(含注入+继承)
+- ProbeResult.findings→is_detected: report.py OWASP聚合改用真实语义字段
+- eval命令杂项: converged改iterations判定/get_provider死路径type ignore记账/
+  tree节点Any标注
+- 验证: 全量5507 passed / ruff全绿 / 棘轮99持平(R189累计443→99, -78%)
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)

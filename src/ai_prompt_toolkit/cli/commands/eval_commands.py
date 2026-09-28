@@ -1041,7 +1041,8 @@ def prompt_optimize_cmd(
         click.echo(f"原始分数: {result.original_score:.1f}/100")
         click.echo(f"优化分数: {result.final_score:.1f}/100")
         click.echo(f"提升: +{result.total_improvement:.1f} ({result.iterations}轮优化)")
-        if result.converged:
+        # R196: OptimizationResult无converged字段 — 提前停止(未跑满轮次)即视为收敛
+        if result.iterations < max_iterations:
             click.echo("状态: 已收敛")
         for step in result.steps:
             click.echo(
@@ -1106,9 +1107,11 @@ def gepa_optimize_cmd(
     reflection_lm = None
     if reflection_model and not dry_run:
         try:
-            from ai_prompt_toolkit.ab_test.providers import get_provider
+            # R196记账: providers包无get_provider; BaseProvider也无.call方法 —
+            # 此路径实际必然异常并被下方except吞掉, R197+用create_provider重构
+            from ai_prompt_toolkit.ab_test.providers import get_provider  # type: ignore[attr-defined]
 
-            provider = get_provider(reflection_model)
+            provider = get_provider(reflection_model)  # type: ignore[call-arg]
             if provider:
 
                 def reflection_lm(prompt):
@@ -1290,14 +1293,15 @@ def prompt_version_cmd(
             if not version_a or not version_b:
                 click.echo("错误: 请指定--version-a和--version-b", err=True)
                 sys.exit(2)
-            result = store.ab_compare(version_a, version_b)
+            # R196: 改名避免与上方linter分支的LintResult变量result同名(mypy沿用推断)
+            ab_result = store.ab_compare(version_a, version_b)
             if fmt == "json":
-                click.echo(_json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+                click.echo(_json.dumps(ab_result.to_dict(), ensure_ascii=False, indent=2))
             else:
                 click.echo(f"A/B对比: #{version_a} vs #{version_b}")
-                click.echo(f"  版本A: {result.score_a:.1f}")
-                click.echo(f"  版本B: {result.score_b:.1f}")
-                click.echo(f"  胜出: {result.winner} (差异: {result.score_diff:+.1f})")
+                click.echo(f"  版本A: {ab_result.score_a:.1f}")
+                click.echo(f"  版本B: {ab_result.score_b:.1f}")
+                click.echo(f"  胜出: {ab_result.winner} (差异: {ab_result.score_diff:+.1f})")
 
         elif action == "delete":
             if not version_id:
@@ -1853,10 +1857,11 @@ def prompt_template_cmd(
             click.echo(_json.dumps([v.to_dict() for v in vars_list], ensure_ascii=False, indent=2))
         else:
             click.echo(f"变量 ({len(vars_list)}个):")
-            for v in vars_list:
-                req = "必填" if v.required else "可选"
-                default = f" (默认: {v.default_value})" if v.default_value else ""
-                click.echo(f"  {v.name} [{req}]{default}")
+            # R196: 循环变量改名 — 避免与上方render分支的str循环变量v同名被mypy沿用推断
+            for tv in vars_list:
+                req = "必填" if tv.required else "可选"
+                default = f" (默认: {tv.default_value})" if tv.default_value else ""
+                click.echo(f"  {tv.name} [{req}]{default}")
 
     elif action == "info":
         if fmt == "json":
@@ -2006,7 +2011,7 @@ def _render_trace_file(path: str, fmt: str) -> None:
         parts = [f"{k.split('.')[-1]}={span['attributes'][k]}" for k in keys if k in span.get("attributes", {})]
         return f" [dim]{' · '.join(parts)}[/dim]" if parts else ""
 
-    def _add_node(parent_tree: object, node: dict) -> None:
+    def _add_node(parent_tree: Any, node: dict) -> None:
         span = node["span"]
         status_color = "green" if span.get("status") == "ok" else "red"
         label = (

@@ -8,10 +8,14 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import click
 
 from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, main
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.linter.linter import LintResult
 
 
 @main.command()
@@ -192,7 +196,8 @@ def lint(
         import os
 
         os.environ["PROMPT_TOOLKIT_THEME"] = color_theme
-    all_results = []
+    # R196: 显式标注消除dict[str, object].findings误报(all_results实为LintResult列表)
+    all_results: list[LintResult] = []
     total_findings = 0
     total_score = 0.0
 
@@ -366,12 +371,15 @@ def lint(
             click.echo(f"    {r['description']}")
 
     if statistics_mode:
+        from typing import Any as _Any
+
         from ai_prompt_toolkit.linter.rules import compute_rule_statistics
 
         all_findings_flat = []
-        for r in all_results:
-            all_findings_flat.extend(r.findings)
-        stats = compute_rule_statistics(all_findings_flat)
+        # R196: 循环变量改名避免与上方search_rules的dict循环变量r同名(mypy沿用首次推断)
+        for lint_res in all_results:
+            all_findings_flat.extend(lint_res.findings)
+        stats: dict[str, _Any] = compute_rule_statistics(all_findings_flat)
         click.echo("\n── 规则命中率统计 ──")
         click.echo(f"  总命中: {stats['total_findings']} | 涉及规则: {stats['unique_rules']}")
         if stats["by_category"]:
@@ -438,8 +446,9 @@ def lint(
         if bp.exists():
             baseline_obj = load_baseline(baseline_path)
             all_f_for_diff = []
-            for r in all_results:
-                for f in r.findings:
+            # R196: 循环变量改名 — 避免与上方dict循环变量r同名被mypy沿用推断
+            for lint_res in all_results:
+                for f in lint_res.findings:
                     all_f_for_diff.append(
                         {
                             "rule_id": f.rule_id,
@@ -456,8 +465,8 @@ def lint(
         from ai_prompt_toolkit.linter.suggest import generate_suggestions
 
         all_findings_for_suggest = []
-        for r in all_results:
-            all_findings_for_suggest.extend(r.findings)
+        for lint_res in all_results:
+            all_findings_for_suggest.extend(lint_res.findings)
         suggestions = generate_suggestions(all_findings_for_suggest)
         click.echo(f"\n── 修复建议 ({len(suggestions)}条, 按优先级排序) ──")
         for i, s in enumerate(suggestions, 1):
@@ -471,8 +480,8 @@ def lint(
         from ai_prompt_toolkit.linter.explain import explain_results, format_explanation
 
         all_findings_for_explain = []
-        for r in all_results:
-            all_findings_for_explain.extend(r.findings)
+        for lint_res in all_results:
+            all_findings_for_explain.extend(lint_res.findings)
         explanations = explain_results(all_findings_for_explain)
         click.echo(f"\n── 详细解释 ({len(explanations)}条) ──")
         for expl in explanations:
@@ -483,8 +492,8 @@ def lint(
         from ai_prompt_toolkit.linter.lcov_export import generate_coverage_summary, generate_lcov_report
 
         all_findings_for_lcov = []
-        for r in all_results:
-            all_findings_for_lcov.extend(r.findings)
+        for lint_res in all_results:
+            all_findings_for_lcov.extend(lint_res.findings)
         lcov_data = generate_lcov_report(all_findings_for_lcov)
         Path(export_lcov_path).write_text(lcov_data, encoding="utf-8")
         summary = generate_coverage_summary(all_findings_for_lcov)
@@ -528,8 +537,8 @@ def lint(
 
         qg = QualityGate()
         all_findings_flat = []
-        for r in all_results:
-            all_findings_flat.extend(r.findings)
+        for lint_res in all_results:
+            all_findings_flat.extend(lint_res.findings)
         gate_result = qg.evaluate(all_findings_flat, score=avg_score)
         verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
         click.echo(
@@ -683,15 +692,15 @@ def scan(
         text = tpl_path.read_text(encoding="utf-8")
         result = scan_template(tpl_path.name, text, prov, incremental=incremental)
         all_results.append(result)
-        total_findings += len(result.findings)
+        total_findings += len(result.all_findings)
         if resume:
             from ai_prompt_toolkit.resume_state import save_progress
 
             _scan_done.append(str(tpl_path))
             save_progress("scan", [], _scan_done, [str(t) for t in templates[templates.index(tpl_path) + 1 :]])
 
-        if fmt == "cli" and result.findings:
-            for f in result.findings:
+        if fmt == "cli" and result.all_findings:
+            for f in result.all_findings:
                 sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 marker = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                 click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
@@ -714,7 +723,7 @@ def scan(
         write_report(report_data, output, fmt=fmt)
         click.echo(f"报告: {output}")
 
-    has_critical = any(any(f.severity.value in ("critical", "high") for f in r.findings) for r in all_results)
+    has_critical = any(any(f.severity.value in ("critical", "high") for f in r.all_findings) for r in all_results)
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_critical else None))
 
 

@@ -44,6 +44,11 @@ class CostTracker:
         self._spent: float = 0.0
 
     @property
+    def limit(self) -> float:
+        """费用上限(R196: 公开只读访问, 调用方报告/错误信息需要)"""
+        return self._limit
+
+    @property
     def spent(self) -> float:
         return self._spent
 
