@@ -15,6 +15,7 @@ import json
 import logging
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -139,7 +140,7 @@ class FeishuAdapter(NotificationAdapter):
                 config.secret.encode("utf-8"),
                 string_to_sign.encode("utf-8"),
                 hashlib.sha256,
-            ).digest()
+            )  # R198: 保留HMAC对象 — hexdigest()在对象上调用, digest()后的bytes无此方法
             sign = hmac_code.hexdigest()
             separator = "&" if "?" in url else "?"
             url = f"{url}{separator}timestamp={timestamp}&sign={sign}"

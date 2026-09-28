@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util  # R198: spec_from_file_location需显式导入util子模块
 import logging
 import sys
 from pathlib import Path

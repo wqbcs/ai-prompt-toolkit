@@ -386,14 +386,15 @@ class FlowExecutor:
             return {"score": result.score, "findings_count": len(result.findings)}
 
         elif node.node_type == NodeType.EVALUATE:
-            from ai_prompt_toolkit.evaluator import PromptEvaluator
+            from ai_prompt_toolkit.evaluator import evaluate_template
 
             text = inputs.get("text", inputs.get("rendered", ""))
-            evaluator = PromptEvaluator()
-            eval_result = evaluator.evaluate(node.name, str(text))
+            # R198: _DimensionEvaluator只评单个维度dict; 节点语义是整模板评估,
+            # 用真实入口evaluate_template(template_id, text) -> EvaluationReport
+            eval_result = evaluate_template(node.name, str(text))
             return {
-                "overall_score": eval_result.overall_score if hasattr(eval_result, "overall_score") else 0.0,
-                "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, "dimensions") else 0,
+                "overall_score": eval_result.overall_score,
+                "dimensions_count": len(eval_result.scores),
             }
 
         elif node.node_type == NodeType.SCAN:
@@ -618,14 +619,15 @@ class InteractiveFlowExecutor:
             result = linter.lint(node.name, str(text))
             return {"score": result.score, "findings_count": len(result.findings)}
         elif node.node_type == NodeType.EVALUATE:
-            from ai_prompt_toolkit.evaluator import PromptEvaluator
+            from ai_prompt_toolkit.evaluator import evaluate_template
 
             text = inputs.get("text", inputs.get("rendered", ""))
-            evaluator = PromptEvaluator()
-            eval_result = evaluator.evaluate(node.name, str(text))
+            # R198: _DimensionEvaluator只评单个维度dict; 节点语义是整模板评估,
+            # 用真实入口evaluate_template(template_id, text) -> EvaluationReport
+            eval_result = evaluate_template(node.name, str(text))
             return {
-                "overall_score": eval_result.overall_score if hasattr(eval_result, "overall_score") else 0.0,
-                "dimensions_count": len(eval_result.dimensions) if hasattr(eval_result, "dimensions") else 0,
+                "overall_score": eval_result.overall_score,
+                "dimensions_count": len(eval_result.scores),
             }
         elif node.node_type == NodeType.SCAN:
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector

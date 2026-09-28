@@ -299,7 +299,8 @@ class AssertionEvaluator(BaseEvaluator):
         from ai_prompt_toolkit.eval_config import AssertionDef, run_assertion
 
         start = time.perf_counter()
-        assertion_defs = []
+        # R198: 显式标注 — 列表只装AssertionDef(dict分支已转换), 防mypy推断歧义
+        assertion_defs: list[AssertionDef] = []
         for a in self._assertions:
             if isinstance(a, AssertionDef):
                 assertion_defs.append(a)

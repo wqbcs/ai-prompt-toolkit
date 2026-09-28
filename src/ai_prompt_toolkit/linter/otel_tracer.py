@@ -377,7 +377,7 @@ def build_span_tree(spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
     节点结构: {"span": span_dict, "children": [node, ...]}
     孤儿span(父不存在)挂到根层级; 同一父下按start_time排序。
     """
-    by_id = {s["span_id"]: {"span": s, "children": []} for s in spans}
+    by_id: dict[str, dict[str, Any]] = {s["span_id"]: {"span": s, "children": []} for s in spans}
     roots: list[dict[str, Any]] = []
     for s in spans:
         node = by_id[s["span_id"]]

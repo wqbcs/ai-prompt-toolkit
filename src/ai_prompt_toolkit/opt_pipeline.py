@@ -206,21 +206,24 @@ class OptPipeline:
                     auto="light",
                     custom_metric=custom_metric,
                 )
-                stage_result["text"] = gepa_result.best_prompt
+                # R198: GEPAResult无best_prompt — 真实字段best_instructions为dict,
+                # 取main键(gepa模块约定: best_instructions.get("main", text))
+                stage_result["text"] = gepa_result.best_instructions.get("main", text)
                 stage_result["score"] = gepa_result.best_score * 100
                 stage_result["candidates"] = gepa_result.candidates_explored
 
             elif stage.optimizer == "lint-fix":
-                from ai_prompt_toolkit.linter.fixer import PromptFixer
+                from ai_prompt_toolkit.linter.fixer import Fixer  # R198: 真实类名 Fixer
                 from ai_prompt_toolkit.linter.linter import PromptLinter
 
                 linter = PromptLinter()
                 lint_result = linter.lint("pipeline", text)
-                fixer = PromptFixer()
-                fixed_text = fixer.fix(text, lint_result.findings)
+                fixer = Fixer()
+                # R198: Fixer.fix真实返回tuple[str, list[FixResult]], 无fix_count属性
+                fixed_text, fix_results = fixer.fix(text, lint_result.findings)
                 stage_result["text"] = fixed_text
                 stage_result["score"] = eval_fn(fixed_text)
-                stage_result["fixes_applied"] = fixer.fix_count if hasattr(fixer, "fix_count") else 0
+                stage_result["fixes_applied"] = len(fix_results)
 
             elif stage.optimizer == "strategy":
                 from ai_prompt_toolkit.prompt_optimizer import optimize_prompt

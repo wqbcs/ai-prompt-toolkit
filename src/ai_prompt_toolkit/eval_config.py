@@ -265,12 +265,16 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
                 eval_result["findings_count"] = len(lint_result.findings)
 
             elif evaluator.type == "security":
-                from ai_prompt_toolkit.security.scanner import SecurityScanner
+                from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider
+                from ai_prompt_toolkit.security.scanner import Scanner
 
-                scanner = SecurityScanner()
-                scan_result = scanner.scan(text)
-                eval_result["score"] = scan_result.score if hasattr(scan_result, "score") else 0
+                # R198: 真实API — Scanner需provider, scan需(template_id, text);
+                # 无继承上下文时用空provider, 发现数反推得分(0发现=100)
+                scanner = Scanner(DictTemplateProvider({}))
+                scan_result = scanner.scan(target.path, text)
+                eval_result["score"] = max(0, 100 - len(scan_result.injection_findings) * 10)
                 eval_result["passed"] = eval_result["score"] >= evaluator.threshold
+                eval_result["risk_level"] = scan_result.risk_level.value
 
             elif evaluator.type == "dimension":
                 from ai_prompt_toolkit.evaluator import evaluate_template

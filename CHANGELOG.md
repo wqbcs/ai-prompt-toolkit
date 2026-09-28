@@ -57,6 +57,21 @@
 - 棘轮基线: 99 → 65 (R189累计443→65, -85%)
 - 验证: 全量5507 passed / ruff全绿 / 棘轮持平通过
 
+## [v67.25.0] - 2026-09-27
+
+### Fixed (R198: attr-defined批次治理 — 错误类名修复, mypy 65→56)
+
+- 死类名修复(真实bug): report.py用PF.ProbeResult.is_detected/severity但本文件
+  ProbeResult真实字段为is_vulnerable+confidence; opt_pipeline PromptFixer→
+  Fixer(返回tuple, 无fix_count); flow_dag PromptEvaluator→evaluate_template;
+  eval_config SecurityScanner→Scanner(真实需provider+scan(id,text));
+  template_commands MarketClient→MarketService(data_dir, submit需Template)
+- otel_tracer hmac bug: `.digest()`后对bytes调.hexdigest()运行时报错 —
+  保留HMAC对象; urllib.parse显式导入; importlib.util显式导入
+- 类型标注: by_id dict显式标注(原推断为Collection)/stage_result已标注确认/
+  evaluator_registry assertion_defs显式list[AssertionDef]
+- 验证: 全量5507 passed / ruff全绿 / 棘轮56持平(R189累计443→56, -87%)
+
 ## [v67.24.0] - 2026-09-27
 
 ### Fixed (R190: mypy治理第二轮 no-any-return批次 + 方案文档落地)

@@ -56,32 +56,33 @@ def i18n(
 @click.option("--config", help="市场配置YAML文件路径")
 def market(action: str, template: str | None, config: str | None) -> None:
     """模板市场：提交/审核/部署/查看状态"""
-    from ai_prompt_toolkit.cli_helpers import load_config
-    from ai_prompt_toolkit.market import MarketClient
+    from ai_prompt_toolkit.market.service import MarketService
+    from ai_prompt_toolkit.market.types import Template
 
-    cfg = load_config(config) if config else {}
-    client = MarketClient(cfg)
+    # R198: 真实API — MarketService(data_dir)而非config字典; submit需Template对象;
+    # start_deploy返回DeployConfig(无url字段), 展示canary阶段
+    client = MarketService(config)
 
     if action == "submit":
         if not template:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
-        result = client.submit(template)
-        click.echo(f"提交成功: {result.get('template_id', template)} → {result.get('status', 'pending')}")
+        tpl = Template(id=template, name=template, version="1.0.0")
+        result = client.submit(tpl)
+        click.echo(f"提交成功: {result.id} → {result.status.value}")
     elif action == "review":
-        result = client.review(template)
-        for item in result:
-            click.echo(f"  {item.get('template_id', '?')}: {item.get('status', '?')} | {item.get('score', '-')}")
+        result = client.start_review(template)
+        click.echo(f"审核已启动: {result}")
     elif action == "deploy":
         if not template:
             click.echo("错误: 请指定--template", err=True)
             sys.exit(2)
-        result = client.deploy(template)
-        click.echo(f"部署成功: {template} → {result.get('url', 'N/A')}")
+        result = client.start_deploy(template)
+        click.echo(f"部署已启动: {template} → {result.phase.value}")
     elif action == "status":
-        result = client.status(template)
+        result = client.get_status(template)
         click.echo(
-            f"模板: {result.get('template_id', '?')} | 状态: {result.get('status', '?')} | 评分: {result.get('rating', '-')}"
+            f"模板: {result.get('template', {}).get('id', '?')} | 状态: {result.get('template', {}).get('status', '?')} | 评分: {result.get('lint', {}).get('lint_score', '-')}"
         )
 
 
