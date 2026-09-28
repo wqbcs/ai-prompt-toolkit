@@ -53,7 +53,7 @@ class TestP156P160Rules:
     def test_p158_masking_missing(self):
         from ai_prompt_toolkit.linter.rules_p156_p160 import check_p158
 
-        text = "处理用户数据，存储客户信息到数据库，API接口返回响应数据"
+        text = "批量导出用户身份证号与手机号，写入数据库"
         finding = check_p158(text)
         assert finding is not None
         assert finding.rule_id == "P158"

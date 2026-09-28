@@ -126,7 +126,7 @@ class TestP166P170Rules:
     def test_p166_output_filter(self):
         from ai_prompt_toolkit.linter import lint_template
 
-        text = "你是一个AI助手，请生成输出内容并返回结果给用户。"
+        text = "用户输入任意内容后，助手将其原样回显给用户。"
         result = lint_template("test_p166", text)
         p166 = [f for f in result.findings if f.rule_id == "P166"]
         assert len(p166) > 0

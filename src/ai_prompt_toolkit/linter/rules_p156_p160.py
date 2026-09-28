@@ -93,8 +93,10 @@ _CANARY_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R206校准: 移除单字泛词(数据/信息/用户/输出/接口/存储/API/日志/字段/响应/记录/data/info/user/output/log/API/field) —
+# 干净prompt的"输出格式/用户问题"等表述即误触发(100%误报率), 保留PII/批量/管道强语义词
 _MASKING_CTX = re.compile(
-    r"(?:数据|data|用户|user|客户|customer|信息|info|字段|field|日志|log|存储|stor|数据库|database|API|接口|输出|output|响应|response|记录|record)",
+    r"(?:PII|个人信息|个人数据|身份证|手机号|电话号码|银行卡|账户|凭据|凭证|密码|credential|password|批量.*数据|数据管道|data.?pipeline|etl|导出.*数据|数据.*导出|数据库.*写入|写入.*数据库)",
     re.IGNORECASE,
 )
 

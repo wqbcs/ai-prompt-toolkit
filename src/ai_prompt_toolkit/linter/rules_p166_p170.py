@@ -78,8 +78,11 @@ _RULES_P166_P170: list[LintRule] = [
 for r in _RULES_P166_P170:
     _RULE_MAP[r.rule_id] = r
 
+# R206校准: 移除泛词(输出/响应/回答/结果/生成/返回/回复/格式/文本/output/response/answer/result/
+# generat/return/reply/format/text) — 干净prompt的"输出格式/生成代码"即误触发(100%误报率),
+# 保留"自由输出/用户输入直出/外部内容回显"等注入语义词
 _OUTPUT_FILTER_CTX = re.compile(
-    r"(?:输出|output|响应|response|回答|answer|结果|result|生成|generat|返回|return|回复|reply|格式|format|JSON|Markdown|文本|text)",
+    r"(?:直接输出.*用户|用户.*内容.*输出|回显|echo|自由.*回复|原样.*输出|原封不动|verbatim|raw.*output|输出.*外部内容|外部.*内容.*输出|用户输入.*返回)",
     re.IGNORECASE,
 )
 

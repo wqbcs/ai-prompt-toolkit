@@ -294,7 +294,7 @@ class TestP019CoTMissing:
 
 class TestP020EvalCriteriaMissing:
     def test_triggers_when_no_criteria(self):
-        f = check_p020("输出一份产品需求文档")
+        f = check_p020("从5个候选框架中选型一个")
         _assert_find(f, "P020")
 
     def test_pass_with_criteria(self):

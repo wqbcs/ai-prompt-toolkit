@@ -69,13 +69,20 @@ class TestR111P202Consent:
 
 class TestR111P203AILabel:
     def test_missing_ai_label_trigger(self):
-        text = "生成回复内容 generate: true"
+        text = "生成回复内容供终端用户浏览"
         findings = run_all_checks(text)
         p203 = [f for f in findings if f.rule_id == "P203"]
         assert len(p203) == 1
 
     def test_has_ai_label_pass(self):
         text = "生成回复 ai_generated: true, 本内容由AI生成"
+        findings = run_all_checks(text)
+        p203 = [f for f in findings if f.rule_id == "P203"]
+        assert len(p203) == 0
+
+    def test_r206_non_user_facing_no_trigger(self):
+        """R206: agent/CLI场景(非面向终端用户)不要求AI标识 — 原100%误报场景"""
+        text = "调用外部API获取实时汇率数据，输出结果"
         findings = run_all_checks(text)
         p203 = [f for f in findings if f.rule_id == "P203"]
         assert len(p203) == 0

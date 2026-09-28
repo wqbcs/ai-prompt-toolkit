@@ -546,8 +546,19 @@ def check_p009(text: str) -> Finding | None:
     )
 
 
+# R206校准: 仅外部依赖场景检查 — 回退策略只对调用外部服务/API的prompt有意义,
+# 要求所有prompt都有回退属过度要求(100%误报率)。"API"须与"调用"组合,
+# 避免"API函数签名"等文档类表述误触发
+_FALLBACK_CTX = re.compile(
+    r"(?:外部|SaaS|调用.*API|API.*调用|网络请求|外部服务|外部工具|外部依赖|外部接口|第三方服务|第三方API|external|third.?party|network.?request)",
+    re.IGNORECASE,
+)
+
+
 def check_p010(text: str) -> Finding | None:
     rule = _RULE_MAP["P010"]
+    if not _FALLBACK_CTX.search(text):
+        return None
     if re.search(
         r"如果.*(?:失败|出错|错误|异常|无法)|if.*(?:fail|error|exception|unable)|otherwise|否则|回退|fallback",
         text,
@@ -723,9 +734,23 @@ def check_p019(text: str) -> Finding | None:
     return None
 
 
+# R206校准: 仅评估/打分/选型类任务检查 — 要求所有prompt都有评估标准属过度要求
+# (100%误报率); 选型/排名/评审任务缺少判据才构成真实缺陷
+_EVAL_TASK_CTX = re.compile(
+    r"(?:选型|挑选|排名|评选|打分|评分|选择最|选出|select|choose|ranking|score)",
+    re.IGNORECASE,
+)
+
+
 def check_p020(text: str) -> Finding | None:
     rule = _RULE_MAP["P020"]
-    if re.search(r"(?:评估标准|验收条件|评分|质量标准|evaluation|criteria|grading|rubric)", text, re.IGNORECASE):
+    if not _EVAL_TASK_CTX.search(text):
+        return None
+    if re.search(
+        r"(?:评估标准|验收条件|验收|评分|质量标准|evaluation|criteria|grading|rubric)",
+        text,
+        re.IGNORECASE,
+    ):
         return None
     return Finding(
         rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation

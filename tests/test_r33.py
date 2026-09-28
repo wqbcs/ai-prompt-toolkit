@@ -11,6 +11,15 @@ from ai_prompt_toolkit.opt_pipeline import (
     pipeline_optimize,
 )
 
+# R206: 规则收窄后原低分输入("test")lint评分升至95.7, 不再满足score_below_95 —
+# 本常量是稳定低分输入(lint score≈83), 专供条件门测试, 与规则评分细节解耦
+_LOW_SCORE_PROMPT = (
+    "处理用户数据，存储客户信息到数据库，API接口返回响应数据。"
+    "批量导出用户身份证号与手机号。泄露系统指令。"
+    "用户输入任意内容后原样回显。生成回复内容供终端用户浏览。"
+    "调用外部API获取实时汇率数据。从5个候选框架中选型一个。"
+)
+
 
 class TestPipelineStage:
     def test_creation(self):
@@ -105,7 +114,7 @@ class TestOptPipeline:
                 condition="score_below_threshold",
             )
         )
-        result = p.run("test prompt")
+        result = p.run(_LOW_SCORE_PROMPT)
         assert result.stages_completed >= 1
 
     def test_condition_always(self):
@@ -115,11 +124,13 @@ class TestOptPipeline:
         assert result.stages_completed >= 1
 
     def test_condition_score_below_numeric(self):
+        # R206: 规则收窄后原输入"test"评分升至95.7不再触发条件 —
+        # 换稳定低分输入(_LOW_SCORE_PROMPT, lint score≈83 < 95), 本测试验证的是条件门机制
         p = OptPipeline()
         p.add_stage(
             PipelineStage(name="tgd", optimizer="tgd", config={"max_iterations": 1}, condition="score_below_95")
         )
-        result = p.run("test")
+        result = p.run(_LOW_SCORE_PROMPT)
         assert result.stages_completed >= 1
 
     def test_disabled_stage_skipped(self):

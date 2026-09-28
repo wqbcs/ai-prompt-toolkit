@@ -116,7 +116,7 @@ class TestSecurityRules:
         assert result is None
 
     def test_p010_no_fallback(self):
-        result = check_p010("请帮我完成任务")
+        result = check_p010("调用外部API获取实时汇率数据")
         assert result is not None
         assert result.rule_id == "P010"
 
@@ -181,7 +181,7 @@ class TestQualityRules:
         assert result is None
 
     def test_p020_no_eval_criteria(self):
-        result = check_p020("请帮我写一篇文章")
+        result = check_p020("从5个候选框架中选型一个")
         assert result is not None
         assert result.rule_id == "P020"
 

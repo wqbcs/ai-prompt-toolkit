@@ -86,6 +86,14 @@ for r in _RULES_P201_P205:
 _COMPLIANCE_PATTERN = re.compile(r"(?:compliance|合规|gdpr|pipa|个人信息保护|数据安全法|data.security)", re.IGNORECASE)
 _CONSENT_PATTERN = re.compile(r"(?:consent|同意|授权|许可|opt.in|用户授权)", re.IGNORECASE)
 _AI_LABEL_PATTERN = re.compile(r"(?:ai.generated|AI生成|人工智能生成|generated.by.ai|本内容由AI)", re.IGNORECASE)
+
+# R206校准: P203(EU AI Act第52条透明度)仅适用于面向终端用户展示的内容 —
+# agent/CLI场景输出由开发者消费, 对所有"生成/输出"类prompt要求AI标识属过度
+# (100%误报率); 仅当prompt声明面向终端用户/对外发布时检查
+_AI_USER_FACING_CTX = re.compile(
+    r"(?:终端用户|最终用户|普通用户|end.?user|user.?facing|user-facing|展示给用户|展示给.*用户|public|published|对外发布|对外展示|external release)",
+    re.IGNORECASE,
+)
 _FAIRNESS_PATTERN = re.compile(r"(?:fairness|公平|偏见|bias|discrimination|歧视|protected.groups)", re.IGNORECASE)
 _RETENTION_PATTERN = re.compile(
     r"(?:retention|留存|保留|删除策略|auto.delete|anonymize|匿名化|max_days)", re.IGNORECASE
@@ -124,7 +132,8 @@ def check_p202(text: str) -> list[Finding]:
 def check_p203(text: str) -> list[Finding]:
     findings = []
     has_generate = re.search(r"(?:生成|generate|输出|output|produce)", text, re.IGNORECASE)
-    if has_generate and not _AI_LABEL_PATTERN.search(text):
+    user_facing = _AI_USER_FACING_CTX.search(text)
+    if has_generate and user_facing and not _AI_LABEL_PATTERN.search(text):
         findings.append(Finding("P203", Severity.MEDIUM, "AI生成内容缺少标识", "1", "1"))
     return findings
 

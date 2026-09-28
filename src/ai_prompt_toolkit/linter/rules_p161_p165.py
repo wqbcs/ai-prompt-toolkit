@@ -109,8 +109,11 @@ _JAILBREAK_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R206校准: 移除泛词(系统/输出/响应/显示/打印/重复/系统指令/提取/指令/instruct/output/response/
+# show/print/repeat/restate) — 干净prompt的"输出格式/系统提示"即误触发(100%误报率),
+# 保留"泄露/越狱/复述指令/忽略指令"等攻击语义词
 _EXTRACT_CTX = re.compile(
-    r"(?:系统|system|指令|instruct|:规则|:rule|Prompt|提示词|提取|extract|泄露|leak|输出|output|响应|response|显示|show|打印|print|重复|repeat|复述|restate)",
+    r"(?:泄露|leak|泄露.*指令|复述.*指令|忽略.*指令|忽略.*系统提示|绕过.*指令|越狱|jailbreak|prompt.?injection|提示词注入|exfiltrat|dump.*instruction|extract.*instruction|extract.*prompt)",
     re.IGNORECASE,
 )
 
