@@ -32,7 +32,8 @@ def _detect_template_type(text: str) -> str:
 def _generate_sarif(results: list, target: str) -> dict:
     from ai_prompt_toolkit.linter.rules import get_rule
 
-    sarif = {
+    # R201: 显式dict标注 — 嵌套字典字面量推断为dict[str,Collection[str]], 下标报错
+    sarif: dict[str, Any] = {
         "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
         "version": "2.1.0",
         "runs": [

@@ -365,8 +365,10 @@ class DatasetStore:
                             InjectionDetector,
                         )
 
+                        # R201: 真bug — detect的template_id是keyword-only,
+                        # 原位置传case.case_id会TypeError; 改keyword传参
                         detector = InjectionDetector()
-                        findings = await asyncio.to_thread(detector.detect, case.input_text, case.case_id)
+                        findings = await asyncio.to_thread(detector.detect, case.input_text, template_id=case.case_id)
                         r.scan_findings = len(findings)
                     if run_type in ("evaluate", "all"):
                         from ai_prompt_toolkit.evaluator import evaluate_template

@@ -127,7 +127,9 @@ def check_p177(text: str) -> list[Finding]:
     b64_matches = [m for m in _B64_PATTERN.finditer(text) if len(m.group()) >= 16]
     if b64_matches:
         findings.append(
-            Finding("P177", Severity.CRITICAL, f"检测到{len(b64_matches)}处Base64编码内容, 可能混淆绕过安全检测", "1", "1")
+            Finding(
+                "P177", Severity.CRITICAL, f"检测到{len(b64_matches)}处Base64编码内容, 可能混淆绕过安全检测", "1", "1"
+            )
         )
     if _HEX_PATTERN.search(text):
         findings.append(Finding("P177", Severity.HIGH, "检测到十六进制编码内容", "1", "1"))

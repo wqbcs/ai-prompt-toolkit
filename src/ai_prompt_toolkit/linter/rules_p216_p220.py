@@ -115,7 +115,9 @@ _OUTPUT_CHECK_PATTERN = re.compile(
 def check_p216(text: str) -> list[Finding]:
     findings = []
     if _IMAGE_PATTERN.search(text) and not _IMAGE_CHECK_PATTERN.search(text):
-        findings.append(Finding("P216", Severity.HIGH, "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)", "1", "1"))
+        findings.append(
+            Finding("P216", Severity.HIGH, "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)", "1", "1")
+        )
     return findings
 
 

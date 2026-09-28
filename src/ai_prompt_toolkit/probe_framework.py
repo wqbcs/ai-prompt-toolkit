@@ -1008,7 +1008,9 @@ def register_detector(detector_cls: type[BaseDetector]) -> type[BaseDetector]:
     return detector_cls
 
 
-for _cls in [
+# R201: 显式list[type[BaseProbe]]标注 — mypy对list字面量join ABC子类的
+# type-abstract误报(最小复现已确认), 注解后消除
+_PROBE_CLASSES: list[type[BaseProbe]] = [
     DANProbe,
     EncodingBypassProbe,
     PromptInjectProbe,
@@ -1032,10 +1034,11 @@ for _cls in [
     ImageInjectProbe,
     AudioInjectProbe,
     CrossModalLeakProbe,
-]:
+]
+for _cls in _PROBE_CLASSES:
     _PROBE_REGISTRY[_cls.name] = _cls
 
-for _det_cls in [
+_DETECTOR_CLASSES: list[type[BaseDetector]] = [
     JailbreakKeywordDetector,
     SystemPromptLeakDetector,
     InjectionPatternDetector,
@@ -1047,7 +1050,8 @@ for _det_cls in [
     AgentBehaviorDetector,
     MultimodalOutputDetector,
     ChainAttackDetector,
-]:
+]
+for _det_cls in _DETECTOR_CLASSES:
     _DETECTOR_REGISTRY[_det_cls.name] = _det_cls  # R197: 改名防_cls跨Probe/Detector循环复用污染
 
 

@@ -397,7 +397,8 @@ class EvalStore:
             (snapshot_id, operation, dimension_id, input_hash, output_hash, latency_ms, token_count, cost, status, now),
         )
         conn.commit()
-        return cur.lastrowid
+        # R201: lastrowid为int|None, 声明返回int — 兜底0
+        return int(cur.lastrowid or 0)
 
     def get_traces(
         self, snapshot_id: int | None = None, operation: str | None = None, limit: int = 100

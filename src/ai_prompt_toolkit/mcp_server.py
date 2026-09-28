@@ -2815,7 +2815,8 @@ def _tool_prompt_lint_json_schema(args: dict[str, Any]) -> dict[str, Any]:
     rules = get_all_rules()
     if category:
         rules = [r for r in rules if r.category == category]
-    schema = {
+    # R201: 显式dict[str,Any]标注 — 原嵌套字典推断致schema下标Collection[str]报错
+    schema: dict[str, Any] = {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "title": "ai-prompt-toolkit Lint Rule Set",
         "type": "object",

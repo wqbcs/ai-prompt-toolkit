@@ -174,7 +174,9 @@ def check_p251(text: str) -> list[Finding]:
     matches = _PACKAGE_PATTERN.findall(text)
     for pkg in matches:
         if pkg.lower() in _HALLUCINATED_PACKAGES:
-            findings.append(Finding("P251", Severity.HIGH, f"疑似包幻觉: '{pkg}' 可能是不存在的包(恶意包风险)", "1", "1"))
+            findings.append(
+                Finding("P251", Severity.HIGH, f"疑似包幻觉: '{pkg}' 可能是不存在的包(恶意包风险)", "1", "1")
+            )
     if len(findings) == 0 and matches:
         suspicious = [
             p
@@ -189,7 +191,11 @@ def check_p251(text: str) -> list[Finding]:
         if len(suspicious) > 3:
             findings.append(
                 Finding(
-                    "P251", Severity.MEDIUM, f"引用{suspicious[0]}等{len(suspicious)}个非标准库, 建议验证存在性", "1", "1"
+                    "P251",
+                    Severity.MEDIUM,
+                    f"引用{suspicious[0]}等{len(suspicious)}个非标准库, 建议验证存在性",
+                    "1",
+                    "1",
                 )
             )
     return findings
@@ -221,5 +227,7 @@ def check_p254(text: str) -> list[Finding]:
 def check_p255(text: str) -> list[Finding]:
     findings = []
     if _MINOR_PATTERN.search(text) and not _MINOR_SECURE_PATTERN.search(text):
-        findings.append(Finding("P255", Severity.CRITICAL, "未成年人信息未保护(缺年龄门控/监护人同意/快速删除)", "1", "1"))
+        findings.append(
+            Finding("P255", Severity.CRITICAL, "未成年人信息未保护(缺年龄门控/监护人同意/快速删除)", "1", "1")
+        )
     return findings

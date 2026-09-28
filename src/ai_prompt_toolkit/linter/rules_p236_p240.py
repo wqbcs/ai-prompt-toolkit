@@ -121,28 +121,28 @@ _WEIGHT_VERIFY_PATTERN = re.compile(
 
 
 def check_p236(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if _QUANT_PATTERN.search(text) and not _ROBUST_PATTERN.search(text):
         findings.append(Finding("P236", Severity.MEDIUM, "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)", "1", "1"))
     return findings
 
 
 def check_p237(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if _SIDECHANNEL_PATTERN.search(text) and not _CONST_TIME_PATTERN.search(text):
         findings.append(Finding("P237", Severity.HIGH, "推理存在侧信道风险(未做常量时间/缓存隔离防护)", "1", "1"))
     return findings
 
 
 def check_p238(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if _KV_CACHE_PATTERN.search(text) and not _KV_SECURE_PATTERN.search(text):
         findings.append(Finding("P238", Severity.HIGH, "KV缓存未做边界检查/隔离/大小限制(缓存污染风险)", "1", "1"))
     return findings
 
 
 def check_p239(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if _REASONING_BEHAVIOR_PATTERN.search(text):
         return findings
     if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text):
@@ -158,7 +158,7 @@ def check_p239(text: str) -> list[Finding]:
 
 
 def check_p240(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if _WEIGHT_LOAD_PATTERN.search(text) and not _WEIGHT_VERIFY_PATTERN.search(text):
         findings.append(Finding("P240", Severity.HIGH, "加载模型权重未校验完整性(替换攻击风险)", "1", "1"))
     return findings

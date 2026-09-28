@@ -188,7 +188,8 @@ def wizard_ab_test() -> int:
         click.echo(f"  {i}. {p}")
     click.echo("  (更多Provider请直接输入，如 openai:gpt-4o)")
 
-    model_inputs = []
+    # R201: 显式list[str]标注 — 消除var-annotated
+    model_inputs: list[str] = []
     while True:
         m = click.prompt(f"模型#{len(model_inputs) + 1}(留空结束)", default="", show_default=False)
         if not m:

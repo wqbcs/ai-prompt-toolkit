@@ -26,7 +26,10 @@ import unicodedata
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from ai_prompt_toolkit.security.anomaly_detector import compute_anomaly_score, extract_features
 from ai_prompt_toolkit.security.injection_detector import InjectionDetector
@@ -195,7 +198,8 @@ class L1RegexLayer:
 class L2ClassifierLayer:
     def __init__(self, model_path: str | None = None) -> None:
         self._model_path = model_path
-        self._model = None
+        # R201: Callable标注 — 原None致_predict中self._model(text)"None not callable"
+        self._model: Callable[[str], float] | None = None
         self._keyword_patterns = [
             (re.compile(r"ignore\s+.*(?:previous|above|all)\s+.*(?:instruction|prompt|rule)", re.I), 0.8),
             (
@@ -230,8 +234,12 @@ class L2ClassifierLayer:
         return LayerResult(layer=self.name, score=score, evidence=evidence, latency_ms=elapsed)
 
     def _predict(self, text: str) -> tuple[float, list[str]]:
+        # R201: 方法间narrowing不传递, 局部变量收窄后调用
+        model = self._model
+        if model is None:
+            return self._keyword_fallback(text)
         try:
-            result = self._model(text)
+            result = model(text)
             return float(result), ["ML classifier prediction"]
         except Exception:
             return self._keyword_fallback(text)

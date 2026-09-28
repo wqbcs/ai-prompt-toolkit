@@ -74,6 +74,24 @@
 
 ## [v67.25.0] - 2026-09-27
 
+### Fixed (R201: 最后14处清零 — mypy 14→0, 类型治理收官)
+
+- 真bug: dataset scan分支 InjectionDetector.detect 的 template_id 是
+  keyword-only, 原位置传参运行时必TypeError — 改keyword传参(并补回误删
+  的detector实例化); ascend_npu validate 返回cann_version(str)与声明
+  bool不符 — 改bool(cann_version)非空校验
+- probe/detector注册: mypy对list字面量join ABC子类type-abstract误报
+  (最小复现确认) — 提取_PROBE_CLASSES/_DETECTOR_CLASSES显式
+  list[type[Base*]]标注消除
+- 标注收窄: plugin create_plugin显式Plugin|None / eval_store与
+  prompt_registry lastrowid int()兜底 / security L2ClassifierLayer
+  _model Callable标注+_predict局部收窄 / rules_p236_p240与wizard
+  list标注 / cli_core sarif与mcp_server schema dict[str,Any]标注
+- 验证: mypy 0 errors(257文件) / ruff全绿 / 全量5507 passed /
+  棘轮0(R189累计443→0, 100%清零)
+
+## [v67.25.0] - 2026-09-27
+
 ### Fixed (R200: CLI命令簇/playground/tracing批次治理, mypy 33→14)
 
 - 真bug修复: lint交互分支读LintResult.fixes_applied(不存在, 运行时崩溃) —

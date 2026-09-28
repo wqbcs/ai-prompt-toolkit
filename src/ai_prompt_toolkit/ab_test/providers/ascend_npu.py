@@ -47,7 +47,9 @@ class NPUProvider(BaseProvider):
     def validate(self) -> bool:
         if not self._npu_info.available:
             return False
-        return self._npu_info.cann_version
+        # R201: 真bug — 原return cann_version(str)与声明bool不符;
+        # 校验语义应为cann版本非空
+        return bool(self._npu_info.cann_version)
 
     async def invoke(self, prompt: str, **kwargs: Any) -> ModelResult:
         start = time.perf_counter()

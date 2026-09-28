@@ -122,14 +122,18 @@ def check_p227(text: str) -> list[Finding]:
     findings = []
     state_matches = _STATE_PATTERN.findall(text)
     if state_matches and _SENSITIVE_STATE_PATTERN.search(text) and not _ENCRYPT_PATTERN.search(text):
-        findings.append(Finding("P227", Severity.HIGH, "敏感数据使用@State/@Link等装饰器但未加密(数据泄露风险)", "1", "1"))
+        findings.append(
+            Finding("P227", Severity.HIGH, "敏感数据使用@State/@Link等装饰器但未加密(数据泄露风险)", "1", "1")
+        )
     return findings
 
 
 def check_p228(text: str) -> list[Finding]:
     findings = []
     if _ABILITY_PATTERN.search(text) and not _PERMISSION_PATTERN.search(text):
-        findings.append(Finding("P228", Severity.HIGH, "Ability声明缺少ohos.permission权限声明(运行时崩溃风险)", "1", "1"))
+        findings.append(
+            Finding("P228", Severity.HIGH, "Ability声明缺少ohos.permission权限声明(运行时崩溃风险)", "1", "1")
+        )
     return findings
 
 

@@ -152,7 +152,8 @@ class PromptRegistry:
             ),
         )
         conn.commit()
-        return cursor.lastrowid
+        # R201: lastrowid为int|None(隔离级别下可能None), 声明返回int — 兜底0
+        return int(cursor.lastrowid or 0)
 
     def pull(self, name: str, version: int | None = None) -> RegistryEntry | None:
         conn = self._get_conn()
