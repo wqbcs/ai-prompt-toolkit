@@ -31,6 +31,13 @@ if TYPE_CHECKING:
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--gate", is_flag=True, help="启用Quality Gate(CI模式，按verdict决定退出码)")
+@click.option(
+    "--fail-on",
+    "fail_on",
+    type=click.Choice(["critical", "high", "medium"]),
+    default=None,
+    help="显式CI门禁: 指定级别及以上findings>0时退出码2(比--gate更直接的级别门禁)",
+)
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
 @click.option(
     "--color-theme",
@@ -72,6 +79,7 @@ def lint(
     interactive: bool,
     output: str | None,
     gate: bool,
+    fail_on: str | None,
     multimodal: bool,
     color_theme: str,
     html_report: bool,
@@ -535,6 +543,21 @@ def lint(
         click.echo(f"报告: {output}")
 
     has_errors = any(r.has_errors for r in all_results)
+
+    if fail_on:
+        # R203: 显式级别门禁 — fail-on critical/high/medium, 该级别及以上有finding即FAIL(退出码2)
+        _level_rank = {"critical": 0, "high": 1, "medium": 2}
+        _threshold = _level_rank[fail_on]
+        _failing = 0
+        for lint_res in all_results:
+            for f in lint_res.findings:
+                sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
+                if _level_rank.get(sev, 99) <= _threshold:
+                    _failing += 1
+        if _failing:
+            click.echo(f"Fail-on门禁: ❌ FAIL | {fail_on}及以上 {_failing} 处 (阈值: >0)")
+            sys.exit(2)
+        click.echo(f"Fail-on门禁: ✅ PASS | {fail_on}及以上 0 处")
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate

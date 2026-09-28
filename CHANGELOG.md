@@ -74,6 +74,25 @@
 
 ## [v67.25.0] - 2026-09-27
 
+### Added (R203: CI闭环体验 — fail-on门禁 + 误报基线度量)
+
+- `prompt-cli lint --fail-on {critical,high,medium}`: 显式级别门禁 —
+  该级别及以上finding>0时退出码2, 比--gate更直接的CI开关(借鉴
+  llm-security-scanner)
+- `scripts/check_false_positives.py`: 规则误报率基线脚本 — 32个干净
+  prompt样本×255规则, 输出单规则误报率+全局误报率+`--fail-above`棘轮
+- `tests/fixtures/clean_prompts/`: 32个干净中文/英文prompt样本集
+  (新增干净prompt入库约定已写入基线文档)
+- `docs/规则误报率基线.md`: 首版基线 — 全局误报率8.38%, 41/255规则
+  超10%阈值, 6条100%误报(P010/P020/P158/P164/P166/P203)列为R206首批处置
+- `docs/CI门禁示例.md`: fail-on+SARIF Code Scanning上传+基线回归最小
+  工作流 + 退出码语义表(0/1/2/3)
+- 测试: tests/test_r203_fail_on_fp.py 6用例(干净PASS/脏样本FAIL退出码2/
+  级别过滤/样本集规模/脚本JSON结构/棘轮FAIL路径)
+- 验证: 全量5513 passed(+6) / ruff全绿 / mypy棘轮0 / 误报门禁exit=0
+
+## [v67.25.0] - 2026-09-27
+
 ### Fixed (R201: 最后14处清零 — mypy 14→0, 类型治理收官)
 
 - 真bug: dataset scan分支 InjectionDetector.detect 的 template_id 是
