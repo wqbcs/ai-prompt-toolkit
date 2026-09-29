@@ -107,12 +107,18 @@ class TestSecurityRules:
         assert result.rule_id == "P008"
 
     def test_p009_no_audit(self):
-        result = check_p009("请帮我处理数据")
+        # R207校准: P009加敏感操作门 — 仅敏感操作场景(删除/支付等)才要求审计声明
+        result = check_p009("执行删除数据库中过期用户的操作")
         assert result is not None
         assert result.rule_id == "P009"
 
     def test_p009_has_audit(self):
-        result = check_p009("请帮我处理数据，并记录审计日志")
+        result = check_p009("执行删除操作，并记录审计日志")
+        assert result is None
+
+    def test_p009_non_sensitive_no_requirement(self):
+        # R207: 非敏感操作(普通数据处理)不要求审计声明
+        result = check_p009("请帮我处理数据")
         assert result is None
 
     def test_p010_no_fallback(self):
@@ -163,12 +169,18 @@ class TestQualityRules:
         assert result is None
 
     def test_p018_no_fewshot(self):
-        result = check_p018("请帮我翻译这段文字")
+        # R207校准: P018加生成类任务门 — 仅写作/摘要/压缩类任务要求Few-shot示例
+        result = check_p018("把下面这段长文压缩成三句话摘要")
         assert result is not None
         assert result.rule_id == "P018"
 
     def test_p018_has_fewshot(self):
         result = check_p018("示例：输入hello，输出你好。请帮我翻译。")
+        assert result is None
+
+    def test_p018_non_generation_task_not_required(self):
+        # R207: 通用翻译/指令执行类任务不要求Few-shot示例
+        result = check_p018("请帮我翻译这段文字")
         assert result is None
 
     def test_p019_no_cot(self):

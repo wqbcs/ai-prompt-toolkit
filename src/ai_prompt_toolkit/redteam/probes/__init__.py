@@ -44,6 +44,12 @@ def _discover_probes() -> dict[str, type[BaseProbe]]:
 
 _discover_probes()
 
+# R207: 自动发现完成后刷新统一注册表视图, 确保新发现Probe在
+# get_global_probe_registry()中可见(缓存构建发生在导入期, 须晚于发现)
+from ai_prompt_toolkit.redteam.registry import invalidate_registry_cache as _invalidate  # noqa: E402
+
+_invalidate()
+
 
 def get_available_probes() -> list[str]:
     return list(_PROBE_REGISTRY.keys())

@@ -56,34 +56,41 @@ class TestUnifiedRegistry:
 
 
 class TestShellCompletion:
-    def test_bash_completion_generation(self):
-        from click.shell_completion import get_completion_class
+    """R207-1: completion命令走真实CLI入口, 防止prog_name/帮助文本回归为apt残留"""
+
+    def _run(self, shell: str):
+        from click.testing import CliRunner
 
         from ai_prompt_toolkit.cli_core import main
 
-        comp = get_completion_class("bash")(main, {}, "apt", "_APT_COMPLETE=bash_source")
-        script = comp.source()
-        assert "_apt_completion" in script
-        assert "COMP_WORDS" in script
-        assert len(script) > 100
+        return CliRunner().invoke(main, ["completion", shell])
+
+    def test_bash_completion_generation(self):
+        result = self._run("bash")
+        assert result.exit_code == 0
+        assert "_PROMPT_CLI_COMPLETE=bash_source" in result.output
+        assert "_apt_completion" not in result.output
+        assert "COMP_WORDS" in result.output
 
     def test_zsh_completion_generation(self):
-        from click.shell_completion import get_completion_class
-
-        from ai_prompt_toolkit.cli_core import main
-
-        comp = get_completion_class("zsh")(main, {}, "apt", "_APT_COMPLETE=zsh_source")
-        script = comp.source()
-        assert len(script) > 50
+        result = self._run("zsh")
+        assert result.exit_code == 0
+        assert "_PROMPT_CLI_COMPLETE=zsh_source" in result.output
 
     def test_fish_completion_generation(self):
-        from click.shell_completion import get_completion_class
+        result = self._run("fish")
+        assert result.exit_code == 0
+        assert "_PROMPT_CLI_COMPLETE=fish_source" in result.output
+
+    def test_help_text_no_apt_residue(self):
+        from click.testing import CliRunner
 
         from ai_prompt_toolkit.cli_core import main
 
-        comp = get_completion_class("fish")(main, {}, "apt", "_APT_COMPLETE=fish_source")
-        script = comp.source()
-        assert len(script) > 50
+        result = CliRunner().invoke(main, ["completion", "--help"])
+        assert result.exit_code == 0
+        assert "apt completion" not in result.output
+        assert "prompt-cli completion" in result.output
 
 
 class TestProgressBar:

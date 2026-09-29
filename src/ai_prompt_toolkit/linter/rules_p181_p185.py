@@ -94,12 +94,31 @@ _FALLBACK_PATTERN = re.compile(r"(?:降级|fallback|degradation|备用|backup|se
 _CANARY_PATTERN = re.compile(r"(?:灰度|canary|gradual|rollout|ab.test|ab-test|bucket|分桶)", re.IGNORECASE)
 
 
+# R207校准: 版本声明仅对生产环境prompt强制(生产无法追踪变更=HIGH语义成立) —
+# 本地草稿/测试prompt要求版本属过度要求(R206前97%误报)。
+# 与P055共用生产场景语义: 部署失败=排障场景, 发布说明=文档类,
+# "不直接修改生产集群"=安全约束声明(非生产部署声明)。
+_P181_PROD_CTX = re.compile(
+    r"(?:生产|production|部署(?!失败)|deploy(?!\s+fail)|上线|正式环境|prod\b|发布(?!说明|notes))",
+    re.IGNORECASE,
+)
+_P181_PROD_NEGATION = re.compile(r"(?:不|禁止|避免|勿|无需|no|without|avoid)\s*\S{0,4}$", re.IGNORECASE)
+
+
+def _has_prod_ctx(text: str) -> bool:
+    for m in _P181_PROD_CTX.finditer(text):
+        if _P181_PROD_NEGATION.search(text[max(0, m.start() - 8) : m.start()]):
+            continue
+        return True
+    return False
+
+
 def check_p181(text: str) -> list[Finding]:
     findings = []
     if not _VERSION_PATTERN.search(text):
-        has_production = bool(re.search(r"(?:生产|production|prod|deploy|发布)", text, re.IGNORECASE))
-        severity = Severity.HIGH if has_production else Severity.MEDIUM
-        findings.append(Finding("P181", severity, "Prompt缺少版本声明, 建议添加version字段", "1", "1"))
+        if not _has_prod_ctx(text):
+            return findings
+        findings.append(Finding("P181", Severity.HIGH, "Prompt缺少版本声明, 建议添加version字段", "1", "1"))
     return findings
 
 

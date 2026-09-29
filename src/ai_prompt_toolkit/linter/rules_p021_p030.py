@@ -33,6 +33,13 @@ _P023_NEGATIVE = re.compile(
     re.IGNORECASE,
 )
 
+# R207校准: P025长文生成上下文门 — 仅报告/白皮书/说明书/文章类任务需要长度约束
+_P025_LONGFORM_CTX = re.compile(
+    r"(?:报告|白皮书|说明书|方案书|写[一做].{0,8}(?:文章|报告|文案|周报)"
+    r"|draft|whitepaper|write\s+(?:an?\s+)?(?:article|essay|blog|report))",
+    re.IGNORECASE,
+)
+
 _P025_LENGTH_PATTERNS = [
     re.compile(
         r"(?:字数|字符|[Tt]oken|段落|篇幅|长度|words?|characters?|tokens?|paragraphs?|length).*?(?:\d+|限制|范围|以内|不超过|至少)",
@@ -53,6 +60,12 @@ _P026_FALLBACK_PATTERNS = [
         r"如果.*(?:失败|出错|错误|异常|无法|不确定|不清楚)|if.*(?:fail|error|exception|unable|uncertain)", re.IGNORECASE
     ),
     re.compile(r"(?:回退|fallback|否则|otherwise|备选|替代|降级)", re.IGNORECASE),
+    # R207: RAG/检索类回退表达 — "上下文未覆盖时明确说资料中没有相关信息"
+    # 属于标准回退行为声明, 原pattern仅覆盖"如果失败/否则"式, 漏检此类
+    re.compile(
+        r"(?:未|没有|无法).{0,10}(?:覆盖|找到|提及|检索到|相关信息|匹配).{0,15}(?:说明|表示|说|回复|回答|声明)",
+        re.IGNORECASE,
+    ),
 ]
 
 _P027_SENSITIVE_CULTURAL = [
@@ -211,6 +224,10 @@ def check_p024(text: str) -> Finding | None:
 
 
 def check_p025(text: str) -> Finding | None:
+    # R207校准: 输出长度约束仅对长文生成类任务有意义(报告/白皮书/说明书/文章),
+    # 短指令型prompt(翻译/压缩/查询)的长度约束需求极低(R206前94%误报)。
+    if not _P025_LONGFORM_CTX.search(text):
+        return None
     for pattern in _P025_LENGTH_PATTERNS:
         if pattern.search(text):
             return None
@@ -222,7 +239,16 @@ def check_p025(text: str) -> Finding | None:
     )
 
 
+# R207校准: P026回退行为仅对问答/客服场景有意义 — 一次性任务prompt无需
+# 声明"不确定时"行为(R206前97%误报, 与P010回退策略语义不同: P010查外部依赖失败)。
+_P026_QA_CTX = re.compile(
+    r"(?:问答|客服|咨询|答疑|FAQ|Q&A|回答.{0,6}(?:用户|客户|问题)|解答)", re.IGNORECASE
+)
+
+
 def check_p026(text: str) -> Finding | None:
+    if not _P026_QA_CTX.search(text):
+        return None
     for pattern in _P026_FALLBACK_PATTERNS:
         if pattern.search(text):
             return None

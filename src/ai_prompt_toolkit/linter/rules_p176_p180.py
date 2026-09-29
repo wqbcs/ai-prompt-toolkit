@@ -154,6 +154,17 @@ def check_p178(text: str) -> list[Finding]:
     return findings
 
 
+# R207校准: 格式劫持风险仅当prompt处理不可信输入时才成立 — 纯指令prompt无注入面
+# (R206前94%误报, 原第二分支has_output恒真)。
+# R207二次收窄: 注入面来自"外部内容"(网页/外部文档/抓取数据), 用户交互输入
+# 本身是受控渠道(用户自持数据/第三方库名/引用编号要求均非内容注入面)。
+_UNTRUSTED_INPUT_CTX = re.compile(
+    r"(?:外部内容|外部文档|外部数据|网页|抓取|爬取|第三方内容"
+    r"|untrusted|external\s+(?:content|document|data|text|source))",
+    re.IGNORECASE,
+)
+
+
 def check_p179(text: str) -> list[Finding]:
     findings = []
     if _FORMAT_HIJACK.search(text):
@@ -162,10 +173,13 @@ def check_p179(text: str) -> list[Finding]:
         )
         if not has_constraint:
             findings.append(Finding("P179", Severity.HIGH, "检测到输出格式强制但缺少格式约束声明", "1", "1"))
-    has_output = bool(re.search(r"(?:输出|output|返回|return|响应|response)", text, re.IGNORECASE))
-    has_filter = bool(re.search(r"(?:过滤|filter|校验|validate|检查|check)", text, re.IGNORECASE))
-    if has_output and not has_filter:
-        findings.append(Finding("P179", Severity.MEDIUM, "输出未配置格式过滤, 存在格式劫持风险", "1", "1"))
+    # R207: 第二分支(输出未配置格式过滤)仅在处理不可信输入时构成劫持风险,
+    # 否则任何含"输出"的prompt恒触发(R206前94%误报)
+    if _UNTRUSTED_INPUT_CTX.search(text):
+        has_output = bool(re.search(r"(?:输出|output|返回|return|响应|response)", text, re.IGNORECASE))
+        has_filter = bool(re.search(r"(?:过滤|filter|校验|validate|检查|check)", text, re.IGNORECASE))
+        if has_output and not has_filter:
+            findings.append(Finding("P179", Severity.MEDIUM, "处理外部输入但输出未配置格式过滤, 存在格式劫持风险", "1", "1"))
     return findings
 
 

@@ -537,8 +537,29 @@ def check_p008(text: str) -> Finding | None:
     )
 
 
+# R207校准: 审计/追踪声明仅对敏感操作场景有意义 — 无状态问答/文档类prompt
+# 无条件要求审计指令属过度要求(R206前88%误报)。
+_AUDIT_SENSITIVE_CTX = re.compile(
+    r"(?:删除|delete|drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)"
+    r"|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)",
+    re.IGNORECASE,
+)
+# R207: 否定/描述语境 — "不生成DELETE语句"是安全约束声明,"被删除内容的去向"
+# 是描述性说明, 均非真实敏感操作, 须排除(否则SQL专家/压缩类prompt恒触发)
+_AUDIT_NEGATION_CTX = re.compile(r"(?:不生成|禁止|不要|不得|不允许|被删除|don'?t|do\s+not|no\s+(?:delete|drop))", re.IGNORECASE)
+
+
 def check_p009(text: str) -> Finding | None:
     rule = _RULE_MAP["P009"]
+    has_sensitive = False
+    for m in _AUDIT_SENSITIVE_CTX.finditer(text):
+        # 左窗口20字符: "不生成 DELETE/DROP"中DROP距否定词约10字符, 窗口须覆盖
+        if _AUDIT_NEGATION_CTX.search(text[max(0, m.start() - 20) : m.end()]):
+            continue
+        has_sensitive = True
+        break
+    if not has_sensitive:
+        return None
     if re.search(r"审计|audit|日志|log|记录|trace|追踪", text, re.IGNORECASE):
         return None
     return Finding(
@@ -705,8 +726,20 @@ def check_p017(text: str) -> Finding | None:
     return None
 
 
+# R207校准: Few-shot示例引导仅对生成类任务(写作/摘要/压缩等)有意义 —
+# 指令执行类(删除/部署/查询)与通用翻译类prompt无示例需求(R206前88%误报,
+# 通用翻译"翻译成X语言"类样本占误报大头, 翻译质量由术语约束决定而非示例)。
+_FEW_SHOT_GEN_CTX = re.compile(
+    r"(?:摘要|压缩|写[一做篇段份]?[篇个段份]?[文章报文]|撰写|起草"
+    r"|summariz|write\s+(?:an?\s+)?(?:article|essay|blog|report|summary))",
+    re.IGNORECASE,
+)
+
+
 def check_p018(text: str) -> Finding | None:
     rule = _RULE_MAP["P018"]
+    if not _FEW_SHOT_GEN_CTX.search(text):
+        return None
     if re.search(r"(?:示例|example|如：|如下|for\s+example|e\.g\.)", text, re.IGNORECASE):
         return None
     return Finding(

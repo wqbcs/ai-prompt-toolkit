@@ -123,17 +123,24 @@ class TestP055VersionTag:
         assert check_p055(text) is None
 
     def test_fail_long_no_version(self):
-        text = "你是一个专业的数据分析助手，请按照以下步骤处理数据。" * 20
+        # R207校准: P055加生产场景门 — 仅生产/部署类prompt要求版本标记
+        text = "这是生产环境部署的AI助手" + "你是一个专业的数据分析助手，请按照以下步骤处理数据。" * 20
         result = check_p055(text)
         assert result is not None
         assert result.rule_id == "P055"
         assert result.severity == Severity.LOW
 
     def test_fail_front_matter_no_version(self):
-        text = "---\nname: test\nauthor: dev\n---\n你是一个助手。"
+        # R207校准: 含生产场景词 + Front Matter缺version → 仍触发
+        text = "---\nname: test\nauthor: dev\n---\n这是生产环境部署的助手。"
         result = check_p055(text)
         assert result is not None
         assert result.rule_id == "P055"
+
+    def test_pass_draft_no_version(self):
+        # R207: 非生产场景(草稿/测试)无版本标记不触发
+        text = "你是一个专业的数据分析助手，请按照以下步骤处理数据。" * 20
+        assert check_p055(text) is None
 
 
 class TestRunChecksP051P055:

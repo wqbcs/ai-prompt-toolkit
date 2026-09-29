@@ -2,6 +2,45 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.25.0] - 2026-09-28
+
+### Fixed (R207: 误报率Top8二批处置 — 全局6.03%→3.17%, 高误报规则35→27)
+
+- P009审计: 加敏感操作门+否定语境排除("不生成DELETE"是约束声明非操作)
+- P018 Few-shot: 加生成类任务门(写作/摘要/压缩; 通用翻译/指令执行不要求)
+- P025长度: 加长文生成门(报告/白皮书/说明书/文章)
+- P026回退: 加问答场景门+补RAG回退表达pattern("上下文未覆盖时明确说…")
+- P055版本标记/P181版本声明: 加生产场景门(部署失败=排障/发布说明=文档/
+  安全约束声明排除), P181移除非生产MEDIUM分支
+- P105格式规范: 加结构化输出门(独立schema词误匹配数据库语境)
+- P179格式劫持: 恒真has_output分支加不可信输入门(网页/外部文档/抓取)
+- 测试: 新增tests/test_r207_false_positive_fix.py(8规则×32干净样本0命中
+  +18正负样本断言), 6个既有测试文件正样本升级为强语义词
+- docs/规则误报率基线.md: 更新R207处置记录, Top15刷新(P003 75%/P167 72%下轮)
+- 验证: 全量5583 passed / ruff全绿
+
+### Fixed (R207-1: completion命令apt残留真bug)
+
+- cli_core.py completion命令docstring/prog_name/complete_var从apt复制粘贴
+  未改(用户照抄会执行Debian apt) — 全部改为prompt-cli
+- test_r71.py completion测试改走真实CLI入口, 防回归
+
+### Added (R207-3: redteam/probe_framework注册表真统一)
+
+- redteam/registry.py升级为统一注册入口: register_probe()/register_detector()
+  装饰器(单点注册, 支持@decorator与@decorator()两种写法) + 统一查询视图
+  (缓存, id稳定) + 命名冲突warning可见(encoding_bypass/refusal冲突暴露)
+- redteam/probes/__init__.py: 自动发现完成后刷新统一视图缓存
+- 向后兼容: 两套原_PROBE_REGISTRY导入路径不变, 仅新增统一层
+- 测试: 4条(视图id稳定/双源覆盖/装饰器单点注册/直接装饰写法)
+
+### Added (R207: 改进方案与开源调研文档)
+
+- docs/R207-改进方案与开源调研-v1.md: 定位反问(误报率是lint工具生命线,
+  广度膨胀=低价值陷阱) + promptfoo 2025/OWASP Agentic 2026调研 +
+  第一批(可信度修复)/第二批(风险评分量化+PR门禁)/第三批(维护根治) +
+  明确不做清单(9语言i18n/AOM/新规则P256+/DAG快照)
+
 ## [v67.25.0] - 2026-09-27
 
 ### Added (R191: PyPI发布工程 — tag触发发布流水线, 补齐用户第一触点)

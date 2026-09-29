@@ -284,11 +284,22 @@ def check_p104(text: str) -> Finding | None:
 
 _FORMAT_PATTERN = re.compile(r"(?:输出格式|输出为|返回格式|格式要求|output.*format|format.*output)", re.IGNORECASE)
 _FORMAT_COMPLETE = re.compile(r"(?:字段|示例|边界|默认值|field|example|boundary|default)", re.IGNORECASE)
+# R207校准: 格式规范完整度仅对结构化输出(JSON/YAML/CSV/表格/schema)有意义 —
+# 普通自然语言输出无需字段/边界值说明(R206前81%误报)。
+# R207二次收窄: 独立"schema"词误匹配数据库schema语境(迁移/变更类prompt),
+# 仅保留输出格式显式声明式匹配。
+_FORMAT_STRUCTURED_CTX = re.compile(
+    r"(?:输出.{0,6}(?:JSON|YAML|CSV|XML|表格|schema)|JSON格式|YAML格式|CSV格式"
+    r"|返回.{0,4}(?:JSON|YAML|CSV)|fields?\s*[:：]|结构化输出)",
+    re.IGNORECASE,
+)
 
 
 def check_p105(text: str) -> Finding | None:
     rule = _RULE_MAP["P105"]
     if not _FORMAT_PATTERN.search(text):
+        return None
+    if not _FORMAT_STRUCTURED_CTX.search(text):
         return None
     if _FORMAT_COMPLETE.search(text):
         return None

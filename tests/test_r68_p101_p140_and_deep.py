@@ -67,7 +67,8 @@ class TestP101P110:
     def test_p105_format_missing_spec(self):
         from ai_prompt_toolkit.linter.rules_p101_p110 import check_p105
 
-        result = check_p105("输出格式要求：返回结构化数据")
+        # R207校准: P105加结构化输出门 — "JSON"显式声明触发门, 缺字段/示例/边界仍报
+        result = check_p105("输出格式要求：返回JSON格式数据")
         assert result is not None
         assert result.rule_id == "P105"
 

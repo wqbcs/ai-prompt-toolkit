@@ -146,10 +146,16 @@ class TestP025OutputLength:
 
 class TestP026ErrorRecovery:
     def test_missing_fallback(self):
-        result = check_p026("请帮我分析这组数据的趋势和规律")
+        # R207校准: P026加问答/客服场景门 — 仅QA场景要求不确定时回退行为
+        result = check_p026("你是客服, 回答用户的问题")
         assert result is not None
         assert result.rule_id == "P026"
         assert result.severity == Severity.MEDIUM
+
+    def test_missing_fallback_non_qa_not_required(self):
+        # R207: 非问答场景(一次性分析任务)不要求回退行为
+        result = check_p026("请帮我分析这组数据的趋势和规律")
+        assert result is None
 
     def test_has_chinese_fallback(self):
         result = check_p026("如果遇到错误，请回退到默认设置")
@@ -310,7 +316,8 @@ class TestAutoFixP021ToP030:
 
     def test_fix_p026(self):
         linter = PromptLinter()
-        text = "请帮我分析这组数据的趋势和规律"
+        # R207校准: P026加问答场景门 — autofix验证需QA场景文本触发P026
+        text = "你是客服助手, 回答用户的问题"
         result = linter.lint("test", text, fix=True)
         p026_fixed = any(f.rule_id == "P026" for f in result.fixed_findings)
         assert p026_fixed

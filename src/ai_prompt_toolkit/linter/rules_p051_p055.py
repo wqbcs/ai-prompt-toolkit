@@ -171,6 +171,25 @@ def check_p054(text: str) -> Finding | None:
     )
 
 
+# R207校准: 版本标记仅对生产环境prompt有意义(与P181共用生产场景语义) —
+# 本地草稿/测试prompt无版本追踪需求(R206前91%误报)。
+# 部署失败=排障场景(非生产部署声明); 发布说明=文档类(非发布部署);
+# "不直接修改生产集群"=安全约束声明(非生产场景)。
+_P055_PROD_CTX = re.compile(
+    r"(?:生产|production|部署(?!失败)|deploy(?!\s+fail)|上线|正式环境|prod\b|发布(?!说明|notes))",
+    re.IGNORECASE,
+)
+_P055_PROD_NEGATION = re.compile(r"(?:不|禁止|避免|勿|无需|no|without|avoid)\s*\S{0,4}$", re.IGNORECASE)
+
+
+def _has_prod_ctx(text: str) -> bool:
+    for m in _P055_PROD_CTX.finditer(text):
+        if _P055_PROD_NEGATION.search(text[max(0, m.start() - 8) : m.start()]):
+            continue
+        return True
+    return False
+
+
 def check_p055(text: str) -> Finding | None:
     rule = _RULE_MAP["P055"]
     if text.startswith("---"):
@@ -181,15 +200,16 @@ def check_p055(text: str) -> Finding | None:
             if end != -1:
                 fm = yaml.safe_load(text[3:end].strip())
                 if isinstance(fm, dict) and "version" not in fm and "v" not in fm:
-                    return Finding(
-                        rule_id=rule.rule_id,
-                        severity=rule.severity,
-                        description="Front Matter缺少version字段 — 建议添加版本号便于追踪变更",
-                        remediation=rule.remediation,
-                    )
+                    if _has_prod_ctx(text):
+                        return Finding(
+                            rule_id=rule.rule_id,
+                            severity=rule.severity,
+                            description="Front Matter缺少version字段 — 建议添加版本号便于追踪变更",
+                            remediation=rule.remediation,
+                        )
         except Exception:
             pass
-    elif len(text) > 100:
+    elif len(text) > 100 and _has_prod_ctx(text):
         return Finding(
             rule_id=rule.rule_id,
             severity=rule.severity,
