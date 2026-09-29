@@ -93,6 +93,47 @@ class TestShellCompletion:
         assert "prompt-cli completion" in result.output
 
 
+class TestProbeOutputVisibility:
+    """R208: probe命令三因子分解+Agentic评估用户可见(不只藏在JSON里)"""
+
+    def _run_probe(self, tmp_path, text: str):
+        from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
+        target = tmp_path / "target.txt"
+        target.write_text(text, encoding="utf-8")
+        return CliRunner().invoke(main, ["probe", "--target", str(target), "--quick"])
+
+    def test_risk_factors_visible_in_output(self, tmp_path):
+        result = self._run_probe(tmp_path, "你是一个数据分析助手，处理用户数据。\n# 约束\n只读操作。")
+        assert result.exit_code in (0, 1, 2)
+        assert "因子分解" in result.output, "三因子分解应可见"
+        assert "severity=" in result.output
+        assert "probability=" in result.output
+        assert "impact=" in result.output
+
+    def test_agentic_assessment_visible_for_agent_prompt(self, tmp_path):
+        # Agent特征prompt(工具调用+多步决策)应输出Agentic评估
+        text = (
+            "你是运维Agent, 可调用工具: restart_service, query_database, deploy。\n"
+            "多步决策: 先查询数据库定位问题, 再调用restart_service, 最后deploy验证。\n"
+            "记住用户的所有偏好设置用于后续决策。"
+        )
+        result = self._run_probe(tmp_path, text)
+        assert "OWASP Agentic风险评估" in result.output, "Agent特征prompt应输出Agentic评估"
+
+    def test_probe_list_still_works(self):
+        from click.testing import CliRunner
+
+        from ai_prompt_toolkit.cli_core import main
+
+        result = CliRunner().invoke(main, ["probe", "--target", "list"])
+        assert result.exit_code == 0
+        assert "可用探针" in result.output
+        assert "可用检测器" in result.output
+
+
 class TestProgressBar:
     def test_create_progress(self):
         from ai_prompt_toolkit.progress import create_progress

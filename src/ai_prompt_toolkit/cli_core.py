@@ -501,6 +501,26 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
     click.echo(f"探针数: {report.total_probes} | Payload数: {report.total_payloads} | 检出: {report.total_detections}")
     click.echo(f"风险评分: {report.risk_score:.1f}/10.0")
 
+    # R207-4: 三因子分解可见性 — 评分从"命中率x10"升级为severity x probability
+    # x impact后, 分解对用户定位风险来源是决策依据, 不能只藏在JSON里
+    if report.risk_factors:
+        f = report.risk_factors
+        click.echo(
+            f"  因子分解: severity={f.get('severity', 0):.2f} x "
+            f"probability={f.get('probability', 0):.2f} x impact={f.get('impact', 0):.2f} "
+            f"(命中率={f.get('hit_rate', 0):.0%})"
+        )
+
+    # R207-4: OWASP Agentic Top 10 2026评估 — Agent特征prompt才输出
+    agentic = report.agentic_assessment
+    if agentic and agentic.get("asi_count", 0) > 0:
+        click.echo(f"\nOWASP Agentic风险评估(命中{agentic['asi_count']}项):")
+        for asi_ref, info in agentic["asi_findings"].items():
+            click.echo(f"  {asi_ref} {info['name_zh']}: {info['total_findings']}处检出")
+            click.echo(f"    缓解: {info['mitigation']}")
+    elif agentic and agentic.get("asi_count", 0) == 0:
+        click.echo("\nOWASP Agentic风险评估: 无命中(已评估)")
+
     if report.probe_summary:
         click.echo("\n探针检出统计:")
         for name, count in sorted(report.probe_summary.items(), key=lambda x: -x[1]):

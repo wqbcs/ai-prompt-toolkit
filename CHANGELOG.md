@@ -99,6 +99,17 @@
 - docs/规则误报率基线.md: 累计8.38%→2.16%(↓6.22pp), 高误报41→21
 - 验证: 全量5619 passed / ruff全绿
 
+### Added (R208: probe命令能力可见性接线 — 评分因子/Agentic评估不再只藏JSON)
+
+- cli probe命令: 风险评分下新增"因子分解"行(severity x probability x
+  impact x 命中率), R207-4三因子评分对用户可见可决策
+- cli probe命令: Agent特征prompt输出"OWASP Agentic风险评估"段
+  (命中的ASI条目+检出数+缓解建议), 与R207-4映射模块对齐
+- redteam命令核查: RedTeamReport为独立CVSS/健康分框架, 无三因子字段,
+  不强塞(避免两套评分体系混淆)
+- 测试: 3条(因子分解可见/Agent prompt Agentic段可见/probe list回归)
+- 验证: 全量5622 passed / ruff全绿
+
 ## [v67.25.0] - 2026-09-27
 
 ### Added (R191: PyPI发布工程 — tag触发发布流水线, 补齐用户第一触点)
