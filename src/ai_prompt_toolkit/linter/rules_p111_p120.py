@@ -137,11 +137,17 @@ for r in _RULES_P111_P120:
     _RULE_MAP[r.rule_id] = r
 
 
+# R208校准: CoT要求仅对强推理任务(因果归因/证明/诊断/决策)有意义 —
+# 原pattern含"分析/逻辑/判断"泛词, 数据分析/API设计类prompt恒触发
+# (7/32干净样本误报)。数据描述/评估判断不构成推理链需求。
 _REASONING_PATTERN = re.compile(
-    r"(?:推理|分析|判断|推理过程|思考|reasoning|analyze|think|逻辑|证明|推断)", re.IGNORECASE
+    r"(?:原因|因果|推理|推断|证明|诊断|决策|归因|排查(?!字段)"
+    r"|\broot\s?cause\b|\binferenc\w*|\bdiagnos\w*|\btroubleshoot\w*|\bdecision\s?mak\w*)",
+    re.IGNORECASE,
 )
 _COT_DECL = re.compile(
-    r"(?:逐步|step.?by.?step|推理链|chain.?of.?thought|思考过程|思维链|CoT|cot|逐步推理|展示.*推理)", re.IGNORECASE
+    r"(?:逐步|step.?by.?step|推理链|chain.?of.?thought|思考过程|思维链|CoT|cot|逐步推理|展示.*推理|编号|步骤)",
+    re.IGNORECASE,
 )
 
 
@@ -272,8 +278,12 @@ def check_p116(text: str) -> Finding | None:
     )
 
 
+# R208校准: 知识密集型判定收紧 — 原pattern含"数据/信息/报告"泛词
+# (任何数据处理prompt恒触发, 7/32干净样本误报)且"fact"子串误配refactor。
+# 保留真正的知识回答语义: 科学研究/医学/法律/历史/知识体系/统计事实。
 _KNOWLEDGE_PATTERN = re.compile(
-    r"(?:知识|事实|信息|数据|统计|研究|报告|knowledge|fact|information|data|statistics|research|report|历史|科学|医学|法律)",
+    r"(?:知识|事实|统计|研究|历史|科学|医学|法律"
+    r"|\bfact\w*|\bknowledge\w*|\bstatistic\w*|\bresearch\w*|\bmedical\b|\blegal\b|\bhistor\w+)",
     re.IGNORECASE,
 )
 _FACTUAL_DECL = re.compile(

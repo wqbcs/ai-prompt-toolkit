@@ -91,13 +91,20 @@ _OUTPUT_FILTER_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R208校准: 幻觉防护仅当prompt真实存在幻觉风险面 — 要求引用/来源/事实性/
+# 知识回答语义。原pattern含"数据/生成/描述/解释"泛词(任何数据处理prompt
+# 恒触发, R207前23/32干净样本误报), 且英文单词内嵌子串误配
+# ("refactor"含"fact", "describe"含"describ")。
 _HALLUCINATION_CTX = re.compile(
-    r"(?:知识|knowledge|事实|fact|数据|data|信息|info|回答|answer|生成|generat|解释|explain|描述|describ|引用|cite|来源|source|参考|reference)",
+    r"(?:知识|knowledge|事实|引用|cite|来源|source|参考|reference"
+    r"|\bfact\w*|\bdata\b|\bstatistic\w*|\binformation\b|\bknowledge\b)",
     re.IGNORECASE,
 )
 
 _HALLUCINATION_DECL = re.compile(
-    r"(?:幻觉|hallucin|事实.*核查|fact.*check|不确定|uncertain|来源.*引用|source.*cite|禁止.*编造|no.*fabricat|标注.*不确定|mark.*uncertain|幻觉.*防护|hallucinat.*protect)",
+    r"(?:幻觉|hallucin|事实.*核查|fact.*check|不确定|uncertain|来源.*引用|source.*cite|禁止.*编造|no.*fabricat|标注.*不确定|mark.*uncertain|幻觉.*防护|hallucinat.*protect"
+    r"|do\s+not\s+invent|don'?t\s+invent|不虚构|不臆造|不杜撰"
+    r"|仅依据|仅基于|only\s+based\s+on|不补充.*之外)",
     re.IGNORECASE,
 )
 

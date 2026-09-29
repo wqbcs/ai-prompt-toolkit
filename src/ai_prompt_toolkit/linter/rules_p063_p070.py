@@ -121,12 +121,21 @@ _MULTI_TURN_PATTERN = re.compile(
 )
 _CONTEXT_LIMIT = re.compile(r"(?:最近.*轮|仅参考|截断|摘要|summar|truncat|last\s+\d+\s+turn)", re.IGNORECASE)
 
-_FACTUAL_PATTERN = re.compile(r"(?:事实|数据|统计|年份|日期|fact|data|statistic|date|year|历史|知识)", re.IGNORECASE)
+# R208校准: 事实性判定收紧 — 原pattern含"数据"泛词, 任何数据处理prompt
+# 恒触发(8/32干净样本误报); "fact"子串误配"refactor"(无词边界)。
+_FACTUAL_PATTERN = re.compile(
+    r"(?:事实|统计|年份|历史|知识|\bfact\w*|\bstatistic\w*|\bdate\b|\byear\b)", re.IGNORECASE
+)
 _CUTOFF_PATTERN = re.compile(r"(?:截止|截至|cutoff|knowledge\s+cut|截至.*月|更新至|as\s+of)", re.IGNORECASE)
 
-_HALLUCINATION_RISK = re.compile(r"(?:事实|数据|引用|来源|fact|data|cite|source|reference|参考|引用)", re.IGNORECASE)
+# R208校准: 防编造约束仅对真实幻觉风险面(引用/来源/事实性)有意义 —
+# 原pattern含"数据"泛词恒触发(9/32干净样本误报), "fact"子串误配refactor。
+_HALLUCINATION_RISK = re.compile(r"(?:事实|引用|来源|\bfact\w*|\bcite\w*|\bsource\b|\breferenc\w*)", re.IGNORECASE)
 _ANTI_HALLUCINATION = re.compile(
-    r"(?:不确定|不要编造|如实回答|如不确定|do not fabricate|do not make up|不确定.*说明|honest|如实)", re.IGNORECASE
+    r"(?:不确定|不要编造|如实回答|如不确定|do not fabricate|do not make up|不确定.*说明|honest|如实"
+    r"|do\s+not\s+invent|don'?t\s+invent|不虚构|不臆造|不杜撰"
+    r"|仅依据|仅基于|only\s+based\s+on|不补充.*之外|不得.*超出.*范围)",
+    re.IGNORECASE,
 )
 
 _OUTPUT_FORMAT = re.compile(

@@ -414,6 +414,10 @@ _CONSTRAINT_PATTERNS = [
         r"(?:不要|不可|禁止|不能|不允许|不得|切勿|must\s+not|do\s+not|never|avoid|forbidden|禁止|限制)", re.IGNORECASE
     ),
     re.compile(r"(?:不超过|最多|至少|最少|限制|字数|长度|max\s+\d+|min\s+\d+)", re.IGNORECASE),
+    # R208: 裸"约束"章节标题 — 结构化prompt用"# 约束"组织约束声明,
+    # 原pattern只认约束词本身, 章节形式不识别(R207前24/32干净样本误报)
+    re.compile(r"^\s*#{1,6}\s*约束\s*$", re.MULTILINE),
+    re.compile(r"^\s*#{1,6}\s*(?:constraints?|boundary|boundaries)\s*$", re.IGNORECASE | re.MULTILINE),
 ]
 
 _USER_INPUT_PATTERNS = [
