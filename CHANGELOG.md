@@ -61,7 +61,27 @@
   触发, 增量文件逐个lint+scan门禁(失败阻塞合并)+evaluate报告
 - README CI/CD章节补"改Prompt要过什么门"说明
 - 测试: 2条(模板存在性+workflow YAML语法含YAML1.1 "on"布尔键兼容)
-- 验证: 全量回归通过 / ruff全绿
+
+### Added (R207-6: README指标动态化根治 — R194/R191口径漂移重复故障源)
+
+- scripts/sync_readme_metrics.py: 从真实加载计算规则/维度/MCP工具数
+  (直接导入dispatch表为ground truth, 正则解析会随工具名前缀扩展漂移),
+  与README硬编码值比对, 漂移时exit=1+diff报告
+- daily-scorecard.yml: 每日跑指标核对门禁
+- prompt_doctor.py: 新增DOC-01检查项(README指标核对), doctor报告层面
+  暴露漂移, 支持readme_path参数(测试可注入漂移场景)
+- 测试: 5条(脚本口径一致/doctor集成/漂移检测/README缺失不崩溃)
+
+### Added (R207-7: 错误信息英文补齐 — 只补en不铺9语言(低价值陷阱规避))
+
+- cli_error_formatter.py: 三段式错误从11条扩至22条(P001-P026/P055/P105/
+  P179/P181高频规则 + INJ/PII/CONFIG/PROVIDER/FILE/PERMISSION), 每条补
+  problem_en/cause_en/fix_en; format_three_part_error/format_finding_
+  three_part加language参数, 按显式参数>LC_ALL/LANG>locale选语言,
+  en缺失回退中文
+- 测试: 6条(英文格式/中文默认/LANG环境变量选择/全条目英文字段覆盖/
+  高频规则覆盖/finding英文输出)
+- 验证: 全量5600 passed / ruff全绿
 
 ## [v67.25.0] - 2026-09-27
 

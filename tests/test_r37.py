@@ -550,7 +550,8 @@ class TestPromptDoctor:
         from ai_prompt_toolkit.prompt_doctor import run_doctor
 
         report = run_doctor("test")
-        assert report.total_checks == 15
+        # R207-6: 新增DOC-01(README指标核对)后检查项15→16
+        assert report.total_checks == 16
 
     def test_doctor_recommendations_generated(self):
         from ai_prompt_toolkit.prompt_doctor import run_doctor

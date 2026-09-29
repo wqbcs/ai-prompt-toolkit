@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import pathlib
 
+import pytest
+
 from ai_prompt_toolkit.linter import lint_template
 
 _CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
@@ -269,3 +271,127 @@ class TestR207PrGate:
         assert "paths" in str(on_key["pull_request"]), "须按prompt文件路径触发(增量门禁)"
         jobs = data.get("jobs", {})
         assert jobs, "workflow缺少jobs"
+
+
+class TestR207MetricsSync:
+    """R207-6: README指标动态化核对"""
+
+    def test_sync_script_matches_real(self):
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        root = Path(__file__).parent.parent
+        result = subprocess.run(
+            [sys.executable, str(root / "scripts" / "sync_readme_metrics.py")],
+            capture_output=True,
+            text=True,
+            cwd=root,
+        )
+        # 当前README与真实值应一致(R207刚核对过); 若漂移, 脚本exit=1且报diff
+        if result.returncode != 0:
+            pytest.fail(f"README指标漂移:\n{result.stdout}")
+
+    def test_doctor_readme_metrics_check(self):
+        from ai_prompt_toolkit.prompt_doctor import _check_readme_metrics, run_doctor
+
+        # 直接调用: 当前无漂移应pass
+        results = _check_readme_metrics()
+        assert results, "DOC-01检查项缺失"
+        assert results[0].check_id == "DOC-01"
+        assert results[0].status == "pass"
+
+        # run_doctor集成: 检查项出现在完整报告中
+        report = run_doctor("你是一个助手, 请回答问题")
+        doc_checks = [r for r in report.results if r.check_id == "DOC-01"]
+        assert doc_checks, "run_doctor未集成DOC-01"
+
+    def test_doctor_detects_drift(self, tmp_path):
+        from pathlib import Path
+
+        from ai_prompt_toolkit.prompt_doctor import _check_readme_metrics
+
+        # 构造漂移README: 真实README的规则数改小 → 应报warn
+        real = Path(__file__).parent.parent / "README.md"
+        fake = tmp_path / "README.md"
+        fake.write_text(
+            real.read_text(encoding="utf-8").replace("**Lint规则** | 255", "**Lint规则** | 200", 1),
+            encoding="utf-8",
+        )
+        assert fake.read_text(encoding="utf-8") != real.read_text(encoding="utf-8"), (
+            "README应含'Lint规则 | 255'行(若此断言失败说明README表格改了, 需更新本测试)"
+        )
+        results = _check_readme_metrics(readme_path=fake)
+        assert results[0].status == "warn"
+        assert "200" in results[0].message
+        assert "sync_readme_metrics" in results[0].fix_suggestion
+
+    def test_doctor_missing_readme_no_crash(self, tmp_path):
+        from ai_prompt_toolkit.prompt_doctor import _check_readme_metrics
+
+        # README不存在时安静返回空(不阻塞doctor)
+        assert _check_readme_metrics(readme_path=tmp_path / "nonexistent.md") == []
+
+
+class TestR207ErrorI18n:
+    """R207-7: 错误信息英文补齐"""
+
+    def test_english_format(self):
+        from ai_prompt_toolkit.cli_error_formatter import format_three_part_error
+
+        result = format_three_part_error("P001", language="en")
+        assert "Problem:" in result
+        assert "Cause:" in result
+        assert "Fix:" in result
+        assert "role definition" in result
+
+    def test_chinese_default(self):
+        from ai_prompt_toolkit.cli_error_formatter import format_three_part_error
+
+        result = format_three_part_error("P001", language="zh")
+        assert "问题:" in result
+        assert "原因:" in result
+        assert "修复:" in result
+
+    def test_lang_env_selection(self, monkeypatch):
+        from ai_prompt_toolkit.cli_error_formatter import format_three_part_error
+
+        monkeypatch.setenv("LANG", "en_US.UTF-8")
+        monkeypatch.delenv("LC_ALL", raising=False)
+        result = format_three_part_error("P006")
+        assert "Problem:" in result, "LANG=en_US应选英文"
+
+        monkeypatch.setenv("LANG", "ja_JP.UTF-8")
+        result = format_three_part_error("P006")
+        assert "问题:" in result, "无日文资源时回退中文"
+
+    def test_en_fallback_missing_en_fields(self):
+        # 无problem_en的条目在en语言下回退中文(防御性)
+        from ai_prompt_toolkit.cli_error_formatter import _THREE_PART_ERRORS
+
+        missing = [c for c, p in _THREE_PART_ERRORS.items() if not p.get("problem_en")]
+        assert not missing, f"所有三段式错误应补齐英文字段: {missing}"
+
+    def test_top40_rules_covered(self):
+        """高频规则覆盖: P001-P026/P055/P105/P179/P181 + INJ/PII/CONFIG等"""
+        from ai_prompt_toolkit.cli_error_formatter import get_all_three_part_errors
+
+        all_errors = get_all_three_part_errors()
+        expected = {
+            "P001", "P005", "P006", "P007", "P008", "P009", "P010", "P018",
+            "P025", "P026", "P055", "P105", "P179", "P181",
+            "INJ-001", "INJ-002", "PII011", "CONFIG_ERROR", "PROVIDER_ERROR",
+            "FILE_NOT_FOUND", "PERMISSION_DENIED",
+        }
+        assert expected <= set(all_errors.keys()), f"缺少: {expected - set(all_errors.keys())}"
+
+    def test_format_finding_three_part_english(self):
+        from ai_prompt_toolkit.cli_error_formatter import format_finding_three_part
+
+        class FakeFinding:
+            rule_id = "P105"
+            description = "原始描述"
+
+        result = format_finding_three_part(FakeFinding(), language="en")
+        assert "Problem:" in result
+        assert "structured output" in result.lower() or "json" in result.lower()

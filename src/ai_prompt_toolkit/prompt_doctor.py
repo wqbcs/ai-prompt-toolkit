@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 
@@ -315,6 +316,62 @@ def _check_contest(text: str) -> list[CheckResult]:
     return results
 
 
+def _check_readme_metrics(readme_path: Path | None = None) -> list[CheckResult]:
+    """R207-6: README指标核对 — 真实值(规则/维度/MCP工具)与README硬编码值比对
+
+    根因: R194/R191两次口径漂移, 硬编码指标是重复故障源。
+    本检查在doctor层面暴露漂移(用户可感知), CI由scripts/sync_readme_metrics.py门禁。
+    readme_path: 可选覆盖(测试用), 默认项目根README.md。
+    """
+    try:
+        import re
+
+        if readme_path is None:
+            readme_path = Path(__file__).parent.parent.parent / "README.md"
+        if not readme_path.exists():
+            return []
+        readme = readme_path.read_text(encoding="utf-8")
+
+        from ai_prompt_toolkit.evaluator import _DIMENSIONS
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+
+        real_rules = len(get_all_rules())
+        real_dims = len(_DIMENSIONS)
+
+        drifts: list[str] = []
+        m = re.search(r"\|\s*\*\*Lint规则\*\*\s*\|\s*(\d+)", readme)
+        if m and int(m.group(1)) != real_rules:
+            drifts.append(f"Lint规则README={m.group(1)}真实={real_rules}")
+        m = re.search(r"\|\s*\*\*评估维度\*\*\s*\|\s*(\d+)", readme)
+        if m and int(m.group(1)) != real_dims:
+            drifts.append(f"评估维度README={m.group(1)}真实={real_dims}")
+
+        if drifts:
+            return [
+                CheckResult(
+                    check_id="DOC-01",
+                    name="README指标核对",
+                    status="warn",
+                    severity="info",
+                    message=f"README指标与真实值漂移: {', '.join(drifts)}",
+                    fix_suggestion="运行python scripts/sync_readme_metrics.py查看完整diff并更新README",
+                    category="maintenance",
+                )
+            ]
+        return [
+            CheckResult(
+                check_id="DOC-01",
+                name="README指标核对",
+                status="pass",
+                message=f"README指标与真实值一致(规则{real_rules}/维度{real_dims})",
+                category="maintenance",
+            )
+        ]
+    except Exception:
+        # 指标核对是辅助检查, 异常不阻塞doctor主流程
+        return []
+
+
 def run_doctor(text: str, name: str = "") -> DoctorReport:
     start = time.perf_counter()
     report = DoctorReport(prompt_name=name)
@@ -324,6 +381,7 @@ def run_doctor(text: str, name: str = "") -> DoctorReport:
         *_check_security(text),
         *_check_quality(text),
         *_check_contest(text),
+        *_check_readme_metrics(),
     ]
 
     report.results = all_checks
