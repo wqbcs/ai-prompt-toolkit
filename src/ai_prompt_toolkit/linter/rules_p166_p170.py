@@ -118,8 +118,12 @@ _BIAS_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R209校准: 毒性防护仅当prompt真实暴露用户生成内容输入面(UGC/评论/社区/
+# 群聊) — 原pattern含"用户/反馈/互动"泛词, 几乎所有prompt恒触发
+# (11/32干净样本误报)。"客服/助手"服务场景本身不构成毒性输入面。
 _TOXICITY_CTX = re.compile(
-    r"(?:用户|user|对话|chat|交流|communicat|社交|social|评论|comment|反馈|feedback|互动|interact|社区|community)",
+    r"(?:UGC|用户生成|评论|comment|社交|social|社区|community|论坛|forum|群聊|group\s?chat"
+    r"|回复.*用户.*评论|user\s+generated|社交.*内容|社交.*帖子)",
     re.IGNORECASE,
 )
 
@@ -128,13 +132,18 @@ _TOXICITY_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R209校准: 引用溯源仅当prompt明确要求研究/文献/事实核查语义 —
+# 原pattern含"数据/报告/统计"泛词, 任何数据类prompt恒触发(8/32误报)。
+# 英文单词加词边界防子串误配。
 _CITATION_CTX = re.compile(
-    r"(?:研究|research|论文|paper|报告|report|文献|literature|引用|cite|参考|reference|来源|source|证据|evidence|数据|data|统计|statistic)",
+    r"(?:研究|research|论文|paper|文献|literature|引用|cite|参考来源|reference\s?source"
+    r"|\bevidence\b|\bfact\s?check\w*|学术|academic|来源追溯|source\s?trace)",
     re.IGNORECASE,
 )
 
 _CITATION_DECL = re.compile(
-    r"(?:引用.*验证|citation.*verif|来源.*追溯|source.*trace|URL.*可达|URL.*reachab|事实.*一致|fact.*consist|参考.*验证|reference.*validat|引用.*声明|citation.*declar)",
+    r"(?:引用.*验证|citation.*verif|来源.*追溯|source.*trace|URL.*可达|URL.*reachab|事实.*一致|fact.*consist|参考.*验证|reference.*validat|引用.*声明|citation.*declar"
+    r"|引用.*编号|来源编号|文档\s*ID|citation.*number|引用来源|来源.*编号)",
     re.IGNORECASE,
 )
 

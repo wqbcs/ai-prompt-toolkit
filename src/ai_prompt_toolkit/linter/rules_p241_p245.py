@@ -129,7 +129,15 @@ def check_p241(text: str) -> list[Finding]:
 
 def check_p242(text: str) -> list[Finding]:
     findings = []
-    has_model = re.search(r"(?:model|模型|AI|LLM|GPT|generate|生成)", text, re.IGNORECASE)
+    # R209校准: AI透明度声明仅当prompt真实面向"AI生成对外内容" —
+    # 原pattern的"生成"泛词使"生成周报/生成SQL/生成工作流"等任何
+    # 生成任务恒触发(11/32干净样本误报)。收窄到明确AI/模型语义,
+    # "生成"仅在紧邻AI/模型/LLM/智能语境时计入。
+    has_model = re.search(
+        r"(?:\bmodel\b|模型|\bAI\b|\bLLM\b|\bGPT\b|人工智能|智能助手|AI助手|生成.*AI|AI.*生成|模型.*输出|模型.*回复)",
+        text,
+        re.IGNORECASE,
+    )
     if has_model and not _AI_GEN_PATTERN.search(text) and not _TRANSPARENCY_PATTERN.search(text):
         findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)", "1", "1"))
     return findings

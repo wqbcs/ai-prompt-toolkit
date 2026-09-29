@@ -78,8 +78,15 @@ _RULES_P156_P160: list[LintRule] = [
 for r in _RULES_P156_P160:
     _RULE_MAP[r.rule_id] = r
 
+# R209校准: 版本治理仅当prompt真实涉及版本发布/部署/迭代变更 —
+# 原pattern的\bCI\b误配"CI配置助手", SQL UPDATE被update子串误配,
+# 英文"CI/CD/CHANGE"加词边界与大小写区分(6/32干净样本误报)。
+# "发布"单独不构成(发布说明/Release Notes是文档生成), 需与版本/部署/
+# 上线/生产共现。
 _VERSION_CTX = re.compile(
-    r"(?:版本|version|发布|deploy|发布|release|迭代|iterat|更新|update|变更|chang|上线|rollout|CI|CD|pipeline|流水线)",
+    r"(?:版本|\bversion\b(?!\s*:)|部署(?!失败|问题|错误)|deploy(?!ment\s+(?:fail|error))|上线|rollout|迭代|iterat|流水线|\bCI/CD\b"
+    r"|(?:发布|\brelease\b).{0,20}(?:版本|\bversion\b|部署|deploy|上线|生产)"
+    r"|(?:版本|\bversion\b|部署|deploy|上线|生产).{0,20}(?:发布|\brelease\b))",
     re.IGNORECASE,
 )
 
@@ -129,6 +136,9 @@ _ROLLBACK_DECL = re.compile(
 
 def check_p156(text: str) -> Finding | None:
     rule = _RULE_MAP["P156"]
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R209: frontmatter的version字段不是版本治理语境
     if not _VERSION_CTX.search(text):
         return None
     if _VERSION_DECL.search(text):
@@ -140,6 +150,9 @@ def check_p156(text: str) -> Finding | None:
 
 def check_p157(text: str) -> Finding | None:
     rule = _RULE_MAP["P157"]
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    text = strip_frontmatter(text)  # R209: frontmatter的version字段不是版本治理语境
     if not _VERSION_CTX.search(text):
         return None
     if _CANARY_DECL.search(text):

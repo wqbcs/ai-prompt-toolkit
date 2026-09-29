@@ -94,8 +94,12 @@ _MODEL_VERIFY_PATTERN = re.compile(
     r"(?:model.card|模型卡|发布者|publisher|verify_model|社区评分|community.rating|来源验证|source.verify|model_compatibility|模型兼容)",
     re.IGNORECASE,
 )
+# R209校准: 第三方依赖仅当引入外部可执行代码面(插件/工具调用/第三方库) —
+# 原pattern含"依赖/扩展"泛词, "不引入网络依赖/不扩展到其他领域/缓存依赖层"
+# 等正常描述恒触发(9/32误报)。"依赖"整词无词边界但语义泛, 收窄到具体代码集成面。
 _DEP_PATTERN = re.compile(
-    r"(?:plugin|插件|api_key|第三方|third.party|依赖|dependency|tool_call|工具调用|扩展|extension)", re.IGNORECASE
+    r"(?:plugin|插件|api_key|第三方.*库|third.party|第三方.*服务|第三方.*API|第三方.*组件|依赖.*库|依赖.*组件|tool_call|工具调用|外部.*扩展|加载.*扩展)",
+    re.IGNORECASE,
 )
 _DEP_AUDIT_PATTERN = re.compile(
     r"(?:audit|审计|安全评估|security.assess|权限|permission|data.flow|数据流审查)", re.IGNORECASE
@@ -132,7 +136,16 @@ def check_p221(text: str) -> list[Finding]:
 def check_p222(text: str) -> list[Finding]:
     findings = []
     if _DEP_PATTERN.search(text) and not _DEP_AUDIT_PATTERN.search(text):
-        findings.append(Finding("P222", Severity.HIGH, "第三方依赖未做安全审计(缺权限/数据流审查)", "1", "1"))
+        # R209: "不引入第三方UI库"等否定约束不是依赖引入, 排除纯否定语境
+        # (clean18_React组件误报根因)。任一"第三方/third-party"命中前4字符
+        # 含否定词即视为约束声明。
+        tp_hits = [m.start() for m in re.finditer("第三方|third.party", text, re.IGNORECASE)]
+        negated_only = all(
+            re.search(r"(?:不|禁|勿|别|没|no\b|\bnot|don'?t|avoid|without)", text[max(0, i - 4) : i].lower())
+            for i in tp_hits
+        )
+        if not negated_only:
+            findings.append(Finding("P222", Severity.HIGH, "第三方依赖未做安全审计(缺权限/数据流审查)", "1", "1"))
     return findings
 
 
