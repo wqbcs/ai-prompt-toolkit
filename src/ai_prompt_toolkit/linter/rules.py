@@ -404,9 +404,13 @@ _ROLE_PATTERNS = [
 ]
 
 _OUTPUT_FORMAT_PATTERNS = [
-    re.compile(r"输出(?:格式|为|以|方式)", re.UNICODE),
+    re.compile(r"输出(?:格式|为|以|方式)|结构要求|输出形式", re.UNICODE),
     re.compile(r"(?:format|output\s+as|respond\s+in|return\s+(?:a|the))\s+", re.IGNORECASE),
+    # R210: "Output: xxx" 冒号式英文输出声明(新英文样本暴露, 原pattern只认output as/respond in)
+    re.compile(r"output\s*[:：]", re.IGNORECASE),
     re.compile(r"(?:JSON|Markdown|列表|表格|XML|YAML|CSV)", re.IGNORECASE),
+    # R210: 模板填充式prompt的输出结构由模板锁定, 等价于输出格式声明
+    re.compile(r"模板", re.UNICODE),
 ]
 
 _CONSTRAINT_PATTERNS = [
@@ -418,6 +422,8 @@ _CONSTRAINT_PATTERNS = [
     # 原pattern只认约束词本身, 章节形式不识别(R207前24/32干净样本误报)
     re.compile(r"^\s*#{1,6}\s*约束\s*$", re.MULTILINE),
     re.compile(r"^\s*#{1,6}\s*(?:constraints?|boundary|boundaries)\s*$", re.IGNORECASE | re.MULTILINE),
+    # R210: 日语约束章节"# 制約" — 多语言样本(clean49)暴露, 原pattern仅中英
+    re.compile(r"^\s*#{1,6}\s*(?:制約|制限)\s*$", re.MULTILINE),
 ]
 
 _USER_INPUT_PATTERNS = [
@@ -574,8 +580,10 @@ def check_p009(text: str) -> Finding | None:
 # R206校准: 仅外部依赖场景检查 — 回退策略只对调用外部服务/API的prompt有意义,
 # 要求所有prompt都有回退属过度要求(100%误报率)。"API"须与"调用"组合,
 # 避免"API函数签名"等文档类表述误触发
+# R210: 去掉裸"外部" — "不引入外部系统状态假设"等约束性表述(R210 clean55暴露)
+# 不构成回退需求语境, 保留与调用/服务/工具组合的外部信号
 _FALLBACK_CTX = re.compile(
-    r"(?:外部|SaaS|调用.*API|API.*调用|网络请求|外部服务|外部工具|外部依赖|外部接口|第三方服务|第三方API|external|third.?party|network.?request)",
+    r"(?:外部(?:服务|工具|依赖|接口|API)|SaaS|调用.*API|API.*调用|网络请求|第三方服务|第三方API|external|third.?party|network.?request)",
     re.IGNORECASE,
 )
 
@@ -739,12 +747,23 @@ _FEW_SHOT_GEN_CTX = re.compile(
     re.IGNORECASE,
 )
 
+# R210: 输出结构被显式锁定(章节清单/模板段数)时, 生成质量由结构决定,
+# few-shot示例价值低 — "撰写PRD, 包含背景/目标"、"邮件Subject+3段"类
+# (R210 clean40/45/53暴露: 撰写/摘要词命中但结构已锁定)
+_FEW_SHOT_STRUCTURE_LOCK = re.compile(
+    r"(?:结构要求|包含.{0,20}(?:背景|目标|模块|章节|要点)|分为.{0,10}(?:部分|章节)|\d+\s*段|三段|sections?\b)",
+    re.IGNORECASE,
+)
+
 
 def check_p018(text: str) -> Finding | None:
     rule = _RULE_MAP["P018"]
     if not _FEW_SHOT_GEN_CTX.search(text):
         return None
     if re.search(r"(?:示例|example|如：|如下|for\s+example|e\.g\.)", text, re.IGNORECASE):
+        return None
+    # R210: 结构锁定(章节清单/段数限定)等价于示例引导
+    if _FEW_SHOT_STRUCTURE_LOCK.search(text):
         return None
     return Finding(
         rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
@@ -773,8 +792,12 @@ def check_p019(text: str) -> Finding | None:
 
 # R206校准: 仅评估/打分/选型类任务检查 — 要求所有prompt都有评估标准属过度要求
 # (100%误报率); 选型/排名/评审任务缺少判据才构成真实缺陷
+# R210: 英文"select/choose"须后接选型对象(framework/solution等) —
+# SQL的"SELECT query"是查询动词, 与选型决策无关(R210 clean34暴露)
 _EVAL_TASK_CTX = re.compile(
-    r"(?:选型|挑选|排名|评选|打分|评分|选择最|选出|select|choose|ranking|score)",
+    r"(?:选型|挑选|排名|评选|打分|评分|选择最|选出"
+    r"|(?:\bselect\w*\b|\bchoose\w*\b|\bchoosing\b).{0,25}?(?:framework|approach|solution|vendor|tool|product|library|platform|technology)"
+    r"|ranking|score)",
     re.IGNORECASE,
 )
 

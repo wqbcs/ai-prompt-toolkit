@@ -140,8 +140,11 @@ for r in _RULES_P111_P120:
 # R208校准: CoT要求仅对强推理任务(因果归因/证明/诊断/决策)有意义 —
 # 原pattern含"分析/逻辑/判断"泛词, 数据分析/API设计类prompt恒触发
 # (7/32干净样本误报)。数据描述/评估判断不构成推理链需求。
+# R210: 去裸"原因"(说明原因/取舍原因/标注原因都是正常指令, 非推理任务,
+# R210 clean40/41/42暴露), 改为"分析+原因"组合; "排查"排除"排查记录"
+# (输出排查记录是交付物声明, 非推理过程)
 _REASONING_PATTERN = re.compile(
-    r"(?:原因|因果|推理|推断|证明|诊断|决策|归因|排查(?!字段)"
+    r"(?:分析.{0,10}原因|因果|推理|推断|证明|诊断|决策|归因|排查(?!字段|记录)"
     r"|\broot\s?cause\b|\binferenc\w*|\bdiagnos\w*|\btroubleshoot\w*|\bdecision\s?mak\w*)",
     re.IGNORECASE,
 )
@@ -281,13 +284,14 @@ def check_p116(text: str) -> Finding | None:
 # R208校准: 知识密集型判定收紧 — 原pattern含"数据/信息/报告"泛词
 # (任何数据处理prompt恒触发, 7/32干净样本误报)且"fact"子串误配refactor。
 # 保留真正的知识回答语义: 科学研究/医学/法律/历史/知识体系/统计事实。
+# R210: "历史"排除交互记录语境(客户历史/沟通历史), 与P118同口径
 _KNOWLEDGE_PATTERN = re.compile(
-    r"(?:知识|事实|统计|研究|历史|科学|医学|法律"
+    r"(?:知识|事实|统计|研究|(?<!客户|沟通|对话|操作|访问|交互|系统)历史|科学|医学|法律"
     r"|\bfact\w*|\bknowledge\w*|\bstatistic\w*|\bresearch\w*|\bmedical\b|\blegal\b|\bhistor\w+)",
     re.IGNORECASE,
 )
 _FACTUAL_DECL = re.compile(
-    r"(?:仅基于.*事实|不确定.*声明|fact.?based|uncertain.*declare|幻觉.*风险|hallucination|如实|准确性|accuracy|事实性|factual)",
+    r"(?:仅基于|仅依据|不确定.*声明|fact.?based|uncertain.*declare|幻觉.*风险|hallucination|如实|准确性|accuracy|事实性|factual)",
     re.IGNORECASE,
 )
 
@@ -312,9 +316,20 @@ _CUTOFF_DECL = re.compile(
 )
 
 
+# R210: 知识时效性仅对知识密集型prompt有意义 — 纯长度门(<200字)对一切
+# 长prompt恒触发(R210新样本暴露22/56误报), 代码/配置/日志类prompt无知识时效面。
+# "历史"需排除交互记录语境(客户历史/沟通历史等), 仅知识性历史(历史知识/事件/文献)触发。
+_KNOWLEDGE_TIMELINESS_CTX = re.compile(
+    r"(?:知识|knowledge|(?<!客户|沟通|对话|操作|访问|交互|系统)历史|histor|科学|science|医学|medical|新闻|时效|百科|encyclopedia|up.?to.?date|最新|current\s+events)",
+    re.IGNORECASE,
+)
+
+
 def check_p118(text: str) -> Finding | None:
     rule = _RULE_MAP["P118"]
     if len(text) < 200:
+        return None
+    if not _KNOWLEDGE_TIMELINESS_CTX.search(text):
         return None
     if _CUTOFF_DECL.search(text):
         return None

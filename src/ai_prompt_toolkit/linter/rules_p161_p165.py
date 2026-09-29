@@ -132,6 +132,14 @@ _SIDE_CHANNEL_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R210: 泄露风险面语义 — 侧信道规则的真实触发面是"信息可能被推断/泄露"。
+# 收紧: 裸"推断"是排障prompt常见词(基于日志推断原因), 不构成侧信道;
+# 仅"时间+推断/攻击/探测"组合(时序侧信道)或明确泄露/攻击词才触发。
+_SIDE_CHANNEL_LEAK = re.compile(
+    r"(?:泄露|leak|暴露|expos|时间.{0,10}(?:推断|攻击|探测)|(?:推断|攻击|探测).{0,10}时间|攻击|attack|probe)",
+    re.IGNORECASE,
+)
+
 
 def check_p161(text: str) -> Finding | None:
     rule = _RULE_MAP["P161"]
@@ -180,6 +188,10 @@ def check_p164(text: str) -> Finding | None:
 def check_p165(text: str) -> Finding | None:
     rule = _RULE_MAP["P165"]
     if not _SIDE_CHANNEL_CTX.search(text):
+        return None
+    # R210: 侧信道防护仅当prompt真实涉及泄露风险面(泄露/推断/攻击语义) —
+    # 原CTX含"时间/错误/日志"泛词, 任何含错误处理的prompt恒触发(R210新样本暴露12/56)
+    if not _SIDE_CHANNEL_LEAK.search(text):
         return None
     if _SIDE_CHANNEL_DECL.search(text):
         return None

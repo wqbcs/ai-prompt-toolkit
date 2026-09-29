@@ -47,7 +47,8 @@ class TestP081P085:
     def test_p083_doctor_suggestion(self):
         from ai_prompt_toolkit.linter.rules_p081_p085 import check_p083
 
-        text = "A" * 300
+        # R210: doctor建议仅面向生产向prompt — 用例需含生产语境(deploy)
+        text = "Deploy to production service. " + "A" * 300
         result = check_p083(text)
         assert result is not None
         assert result.rule_id == "P083"

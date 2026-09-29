@@ -96,8 +96,8 @@ _OUTPUT_FILTER_DECL = re.compile(
 # 恒触发, R207前23/32干净样本误报), 且英文单词内嵌子串误配
 # ("refactor"含"fact", "describe"含"describ")。
 _HALLUCINATION_CTX = re.compile(
-    r"(?:知识|knowledge|事实|引用|cite|来源|source|参考|reference"
-    r"|\bfact\w*|\bdata\b|\bstatistic\w*|\binformation\b|\bknowledge\b)",
+    r"(?:知识|knowledge|事实|文献引用|来源引用|引用.{0,10}(?:来源|出处|文献|权威|资料)|cite|来源|参考|reference"
+    r"|\bfact\w*|\bstatistic\w*|\binformation\b|\bknowledge\b|\bsource\b)",
     re.IGNORECASE,
 )
 
@@ -108,13 +108,21 @@ _HALLUCINATION_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R210校准: 偏见检测仅当prompt涉及受保护属性区分/群体评价 —
+# 原CTX含"判断/推荐/分类/分析"泛词, 几乎所有决策类prompt恒触发
+# (R210新样本暴露14/56误报)。普通分类(工单/日志/代码)不涉及群体偏见。
+# 英文词必须加词边界: age误配Agent/usage, group误配SQL的GROUP BY;
+# 去掉裸"简历"(简历优化是写作任务, 非群体评价), 保留招聘筛选等强信号。
 _BIAS_CTX = re.compile(
-    r"(?:判断|judge|评价|evaluat|推荐|recommend|选择|select|比较|compar|分类|classif|排序|rank|决策|decis|分析|analyz)",
+    r"(?:性别|gender|种族|\brace\b|民族|\bethnic\w*\b|年龄|\bage\b|残疾|\bdisab\w*\b|宗教|religion|职业|profession"
+    r"|候选人|candidate|招聘|hiring|人群|\bdemographic\w*\b"
+    r"|\bperson\b.{0,20}?\bevaluat\w*|\bperson\b.{0,20}?\bclassif\w*)",
     re.IGNORECASE,
 )
 
 _BIAS_DECL = re.compile(
-    r"(?:偏见|bias|公平|fair|歧视|discriminat|中立|neutral|代表性|representat|多样|diverse|无偏|unbiased|偏见.*检测|bias.*detect)",
+    r"(?:偏见|bias|公平|fair|歧视|discriminat|中立|neutral|代表性|representat|多样|diverse|无偏|unbiased|偏见.*检测|bias.*detect"
+    r"|忽略.{0,8}(?:性别|年龄|种族|民族|宗教|gender|age|race|ethnic)|只依据技能|仅依据技能)",
     re.IGNORECASE,
 )
 
@@ -136,14 +144,16 @@ _TOXICITY_DECL = re.compile(
 # 原pattern含"数据/报告/统计"泛词, 任何数据类prompt恒触发(8/32误报)。
 # 英文单词加词边界防子串误配。
 _CITATION_CTX = re.compile(
-    r"(?:研究|research|论文|paper|文献|literature|引用|cite|参考来源|reference\s?source"
+    r"(?:研究|research|论文|paper|文献|literature|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\s?source"
     r"|\bevidence\b|\bfact\s?check\w*|学术|academic|来源追溯|source\s?trace)",
     re.IGNORECASE,
 )
 
 _CITATION_DECL = re.compile(
     r"(?:引用.*验证|citation.*verif|来源.*追溯|source.*trace|URL.*可达|URL.*reachab|事实.*一致|fact.*consist|参考.*验证|reference.*validat|引用.*声明|citation.*declar"
-    r"|引用.*编号|来源编号|文档\s*ID|citation.*number|引用来源|来源.*编号)",
+    r"|引用.*编号|来源编号|文档\s*ID|citation.*number|引用来源|来源.*编号"
+    # R210: "Cite the source paragraph number" — 声明引用来源编号(R210 clean38暴露)
+    r"|cite\w*.{0,15}(?:source|paragraph|number|page))",
     re.IGNORECASE,
 )
 

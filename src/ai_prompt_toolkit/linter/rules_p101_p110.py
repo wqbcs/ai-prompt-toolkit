@@ -138,13 +138,28 @@ for r in _RULES_P101_P110:
     _RULE_MAP[r.rule_id] = r
 
 
+# R210: 阈值保持0.5(分词级下0.5已能区分"真近重复"与"同主题不同句") —
+# 日志行/代码片段等高相似数据由下方代码围栏剥离解决, 不再靠抬阈值
 _SIMILAR_SENTENCE_THRESHOLD = 0.5
 _MAX_REDUNDANT_PAIRS = 50  # R175: 报告上限(超过后早退, description显示'N+')
 
 
 def _extract_sentences(text: str) -> list[str]:
-    parts = re.split(r"[。！？\n]", text)
-    return [s.strip() for s in parts if len(s.strip()) > 5]
+    # R210: 增加英文句号切分(". "后跟空白), 否则英文prompt整段为一句无法对比
+    parts = re.split(r"[。！？\n]+|\.(?=\s)", text)
+    out = []
+    for s in parts:
+        s = s.strip()
+        if len(s) <= 5:
+            continue
+        # R210: 实义token(汉字+英文词)数 <3 的片段不构成可比句子
+        # (代码标签如"</div>"、短标记等), 避免碎片互比误报
+        cjk = sum(1 for c in s if "\u4e00" <= c <= "\u9fff")
+        latin = len(re.findall(r"[A-Za-z][A-Za-z0-9_\-]*", s))
+        if cjk + latin < 3:
+            continue
+        out.append(s)
+    return out
 
 
 def _jaccard_similarity(a: str, b: str) -> float:
@@ -157,10 +172,21 @@ def _jaccard_similarity(a: str, b: str) -> float:
 
 def check_p101(text: str) -> Finding | None:
     rule = _RULE_MAP["P101"]
+    # R210: 代码围栏(日志/代码)是数据非指令文本 — 日志行共享svc=order等字段
+    # Jaccard达0.67, 代码片段(如"</div>")互比, 都是误报(R210 clean52/55暴露)
+    text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     sentences = _extract_sentences(text)
     if len(sentences) < 3:
         return None
-    token_sets = [frozenset(s) for s in sentences]
+    # R210: 字符级Jaccard对英文失真 — 英文短句字符集天然高度重叠
+    # (字母表仅26, 任何两句英文Jaccard都>0.5, 新英文样本暴露14/56误报)。
+    # 改为分词级: CJK按单字(与字符级等价), Latin按空格分词(语义单元)。
+    def _tokens(s: str) -> frozenset[str]:
+        cjk = {c for c in s if "\u4e00" <= c <= "\u9fff"}
+        latin = {w.lower() for w in re.findall(r"[A-Za-z][A-Za-z0-9_\-]*", s)}
+        return frozenset(cjk | latin)
+
+    token_sets = [_tokens(s) for s in sentences]
     sizes = [len(ts) for ts in token_sets]
     threshold = _SIMILAR_SENTENCE_THRESHOLD
     redundant_pairs: list[tuple[int, int]] = []
@@ -283,7 +309,11 @@ def check_p104(text: str) -> Finding | None:
 
 
 _FORMAT_PATTERN = re.compile(r"(?:输出格式|输出为|返回格式|格式要求|output.*format|format.*output)", re.IGNORECASE)
-_FORMAT_COMPLETE = re.compile(r"(?:字段|示例|边界|默认值|field|example|boundary|default)", re.IGNORECASE)
+# R210: 加"带引号的JSON键"(如 {"category": ...}) — 内联JSON示例本身即字段说明,
+# 无需额外字段/边界值声明(R210 clean46暴露)
+_FORMAT_COMPLETE = re.compile(
+    r"(?:字段|示例|边界|默认值|field|example|boundary|default|\"[A-Za-z_]+\")", re.IGNORECASE
+)
 # R207校准: 格式规范完整度仅对结构化输出(JSON/YAML/CSV/表格/schema)有意义 —
 # 普通自然语言输出无需字段/边界值说明(R206前81%误报)。
 # R207二次收窄: 独立"schema"词误匹配数据库schema语境(迁移/变更类prompt),

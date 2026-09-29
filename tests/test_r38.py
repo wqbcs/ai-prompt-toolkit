@@ -62,7 +62,8 @@ class TestLintP083:
     def test_prompt_without_doctor(self):
         from ai_prompt_toolkit.linter.rules_p081_p085 import check_p083
 
-        text = "x" * 300
+        # R210: doctor建议仅面向生产向prompt — 需含生产语境(deploy)
+        text = "Deploy to production. " + "x" * 300
         f = check_p083(text)
         assert f is not None
 

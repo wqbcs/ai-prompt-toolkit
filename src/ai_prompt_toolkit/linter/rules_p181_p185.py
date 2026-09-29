@@ -99,7 +99,7 @@ _CANARY_PATTERN = re.compile(r"(?:灰度|canary|gradual|rollout|ab.test|ab-test|
 # 与P055共用生产场景语义: 部署失败=排障场景, 发布说明=文档类,
 # "不直接修改生产集群"=安全约束声明(非生产部署声明)。
 _P181_PROD_CTX = re.compile(
-    r"(?:生产|production|部署(?!失败)|deploy(?!\s+fail)|上线|正式环境|prod\b|发布(?!说明|notes))",
+    r"(?:生产(?!库)|production|部署(?!失败)|deploy(?!\s+fail)|上线|正式环境|(?<![A-Za-z0-9_/.-])prod(?![A-Za-z0-9_-])|发布(?!说明|notes|检查单|日期|前))",
     re.IGNORECASE,
 )
 _P181_PROD_NEGATION = re.compile(r"(?:不|禁止|避免|勿|无需|no|without|avoid)\s*\S{0,4}$", re.IGNORECASE)
