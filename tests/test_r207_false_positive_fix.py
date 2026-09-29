@@ -172,3 +172,100 @@ class TestR207RegistryUnification:
             assert "r207_registry_probe2" in _PROBE_REGISTRY
         finally:
             del _PROBE_REGISTRY["r207_registry_probe2"]
+
+
+class TestR207RiskScoring:
+    """R207-4: 风险评分三因子量化 + OWASP Agentic评估"""
+
+    def test_risk_factors_present(self):
+        from ai_prompt_toolkit.probe_framework import ProbeRunner
+
+        report = ProbeRunner(probe_names=["dan"]).run("r207_risk", "处理用户输入并调用工具执行任务")
+        assert report.risk_factors, "risk_factors应为空(无payload)或三因子齐全"
+        for key in ("severity", "probability", "impact", "hit_rate"):
+            assert key in report.risk_factors
+        # 三因子均在[0,1], hit_rate同
+        for v in report.risk_factors.values():
+            assert 0.0 <= v <= 1.0
+
+    def test_risk_score_bounds(self):
+        from ai_prompt_toolkit.probe_framework import ProbeRunner
+
+        report = ProbeRunner(probe_names=["dan", "promptinject"]).run(
+            "r207_risk2", "处理用户输入的工具调用agent"
+        )
+        assert 0.0 <= report.risk_score <= 10.0
+
+    def test_risk_factors_in_to_dict(self):
+        from ai_prompt_toolkit.probe_framework import ProbeRunner
+
+        report = ProbeRunner(probe_names=["dan"]).run("r207_risk3", "普通文本")
+        d = report.to_dict()
+        assert "risk_factors" in d
+        assert "agentic_assessment" in d
+
+    def test_agentic_assessment_on_agent_prompt(self):
+        from ai_prompt_toolkit.linter.owasp_agentic_mapping import is_agentic_prompt
+
+        assert is_agentic_prompt("你是一个多Agent协作系统, 调用工具完成任务")
+        assert is_agentic_prompt("You are a ReAct agent using function calling")
+        assert not is_agentic_prompt("请帮我翻译这句话")
+
+    def test_agentic_findings_mapping(self):
+        from ai_prompt_toolkit.linter.owasp_agentic_mapping import (
+            OWASP_AGENTIC_TOP_10_2026,
+            get_agentic_findings,
+        )
+
+        # 10项ASI全有name/name_zh/probes/mitigation
+        for asi_ref, info in OWASP_AGENTIC_TOP_10_2026.items():
+            assert asi_ref.startswith("ASI")
+            assert info["name"] and info["name_zh"] and info["probes"] and info["mitigation"]
+
+        class _FakeResult:
+            def __init__(self, probe_name: str, is_detected: bool) -> None:
+                self.probe_name = probe_name
+                self.is_detected = is_detected
+
+            def to_dict(self) -> dict:
+                return {"probe_name": self.probe_name, "is_detected": self.is_detected}
+
+        # goalhijack命中 → ASI01/ASI10
+        findings = get_agentic_findings([_FakeResult("goalhijack", True)])
+        assert "ASI01" in findings and "ASI10" in findings
+        assert findings["ASI01"]["total_findings"] == 1
+        # 未命中probe不产出
+        assert get_agentic_findings([_FakeResult("goalhijack", False)]) == {}
+        # 无关probe名不产出
+        assert get_agentic_findings([_FakeResult("nonexistent_probe", True)]) == {}
+
+
+class TestR207PrGate:
+    """R207-5: PR门禁模板存在且语法合法"""
+
+    def test_pr_template_exists(self):
+        from pathlib import Path
+
+        tpl = Path(".github/PULL_REQUEST_TEMPLATE.md")
+        assert tpl.exists(), "PR模板缺失"
+        content = tpl.read_text(encoding="utf-8")
+        assert "prompt-cli" in content
+        assert "lint" in content
+
+    def test_pr_gate_workflow_yaml(self):
+        from pathlib import Path
+
+        import yaml
+
+        wf = Path(".github/workflows/prompt-pr-gate.yml")
+        assert wf.exists(), "PR门禁workflow缺失"
+        data = yaml.safe_load(wf.read_text(encoding="utf-8"))
+        # YAML 1.1把裸"on"解析为布尔True — GitHub Actions workflow经典坑, 两种键都要查
+        on_key = data.get("on")
+        if on_key is None:
+            on_key = data.get(True)
+        assert on_key is not None, "workflow缺少on触发器"
+        assert "pull_request" in on_key
+        assert "paths" in str(on_key["pull_request"]), "须按prompt文件路径触发(增量门禁)"
+        jobs = data.get("jobs", {})
+        assert jobs, "workflow缺少jobs"

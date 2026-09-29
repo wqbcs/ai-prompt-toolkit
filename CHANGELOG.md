@@ -41,6 +41,28 @@
   第一批(可信度修复)/第二批(风险评分量化+PR门禁)/第三批(维护根治) +
   明确不做清单(9语言i18n/AOM/新规则P256+/DAG快照)
 
+### Added (R207-4: 红队风险评分三因子量化 + OWASP Agentic Top 10 2026)
+
+- 风险评分从"命中率x10"单一静态值升级为三因子: severity(命中探针严重度
+  均值) x probability(暴露面: 用户输入/工具/多轮/Agent特征) x impact
+  (命中类别影响面: 代码执行/泄露=1.0 > 注入/越狱=0.8), 0-10分同CVSS刻度
+- probe_framework.py: ProbeRunReport新增risk_factors(severity/probability/
+  impact/hit_rate分解), ProbeRunner._estimate_probability/_estimate_impact
+- 新模块linter/owasp_agentic_mapping.py: OWASP Agentic Top 10 2026
+  (ASI01-ASI10)与现有23探针+P141-P145 lint规则映射, Agent特征prompt
+  报告输出Agentic评估章节(asi_findings+mitigation), 非Agent prompt不输出
+- 测试: 6条(因子边界/分数区间/to_dict兼容/Agent特征判定/ASI映射)
+
+### Added (R207-5: PR级提示词门禁)
+
+- .github/PULL_REQUEST_TEMPLATE.md: 提示词变更必填项(门禁结果对比/影响
+  范围/回滚方案)
+- .github/workflows/prompt-pr-gate.yml: 仅PR含.prompt/.prompt.md变更时
+  触发, 增量文件逐个lint+scan门禁(失败阻塞合并)+evaluate报告
+- README CI/CD章节补"改Prompt要过什么门"说明
+- 测试: 2条(模板存在性+workflow YAML语法含YAML1.1 "on"布尔键兼容)
+- 验证: 全量回归通过 / ruff全绿
+
 ## [v67.25.0] - 2026-09-27
 
 ### Added (R191: PyPI发布工程 — tag触发发布流水线, 补齐用户第一触点)

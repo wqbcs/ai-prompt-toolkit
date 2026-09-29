@@ -437,6 +437,12 @@ prompt-cli compliance -t my_prompt.md --format markdown
 - `daily-scorecard.yml` - 每日安全评分卡
 - `prompt-lint.yml` - Prompt Lint
 - `prompt-quality-gate.yml` - Prompt质量门禁
+- `prompt-pr-gate.yml` - PR增量门禁(仅prompt文件变更时触发: lint+scan+evaluate)
+
+**PR级门禁（改Prompt要过什么门）**：PR含 `.prompt`/`.prompt.md` 变更时自动触发
+`prompt-pr-gate.yml` — 变更文件逐个跑 `lint`(0 CRITICAL/HIGH) + `scan`(无CRITICAL漏洞)
++ `evaluate`(评分报告)，门禁失败阻塞合并。配套 `.github/PULL_REQUEST_TEMPLATE.md`
+要求填写变更前后质量指标对比与回滚方案。
 
 ## 开发
 

@@ -1,0 +1,76 @@
+# R207-5: PR级提示词门禁 — 仅当PR含prompt文件变更时触发
+# 中文社区调研核心痛点: 提示词变更缺CI门禁(质量漂移/安全漏洞混入)
+# 复用现有 lint/scan 能力, 不重复造轮子; 与daily prompt-quality-gate互补:
+#   daily = 全量仓库基线防劣化; pr-gate = 增量变更合并前拦截
+name: Prompt PR Gate
+
+on:
+  pull_request:
+    paths:
+      - "**.prompt"
+      - "**.prompt.md"
+      - ".github/workflows/prompt-pr-gate.yml"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prompt-gate:
+    name: Lint + Scan + Evaluate (增量)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[all]" 2>/dev/null || pip install -e .
+
+      - name: Collect changed prompt files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACMR HEAD~1 -- '*.prompt' '*.prompt.md' | tr '\n' ' ')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          echo "changed: $FILES"
+
+      - name: "Lint changed prompts (gate: no CRITICAL/HIGH)"
+        if: steps.changed.outputs.files != ''
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            [ -f "$f" ] || continue
+            echo "=== lint: $f ==="
+            prompt-cli lint -t "$f" || {
+              echo "::error::$f lint 门禁未通过(CRITICAL/HIGH存在)"
+              exit 1
+            }
+          done
+
+      - name: "Scan changed prompts (gate: no CRITICAL vuln)"
+        if: steps.changed.outputs.files != ''
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            [ -f "$f" ] || continue
+            echo "=== scan: $f ==="
+            prompt-cli scan -t "$f" --depth standard || {
+              echo "::error::$f 安全扫描门禁未通过(CRITICAL漏洞)"
+              exit 1
+            }
+          done
+
+      - name: "Evaluate changed prompts (report)"
+        if: steps.changed.outputs.files != ''
+        run: |
+          for f in ${{ steps.changed.outputs.files }}; do
+            [ -f "$f" ] || continue
+            echo "=== evaluate: $f ==="
+            prompt-cli evaluate -t "$f" || true
+          done
