@@ -17,6 +17,11 @@ Probe分类(garak风格):
 - gcg: 对抗性后缀(GCG攻击)
 - snowball: 级联幻觉(递归错误放大)
 - malwaregen: 恶意内容生成(钓鱼/社工/恶意代码)
+
+R212-7 口径声明: 本文件 _PROBE_REGISTRY(23个ProbeRunner兼容探针)仅供
+`prompt-cli probe` 消费; 展示口径(README徽章/--version组件统计)统一读
+redteam.registry.get_global_probe_registry() (合并视图, 含redteam体系与
+动态生成探针, 命名冲突去重), 与 test_r207 统一性断言同源。
 """
 
 from __future__ import annotations

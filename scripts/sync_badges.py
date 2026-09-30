@@ -9,7 +9,7 @@
     - 规则数/可自动修复数: linter.rules / linter.fixer
     - 评估维度: evaluator.get_all_dimensions()
     - MCP工具: mcp_server._get_tool_dispatch()
-    - 红队探针: probe_framework._PROBE_REGISTRY
+    - 红队探针: redteam.registry.get_global_probe_registry() (R212-7统一口径)
     - 测试数: pytest --collect-only
 """
 
@@ -30,7 +30,7 @@ def collect_counts(with_tests: bool) -> dict[str, int | str]:
     from ai_prompt_toolkit.evaluator import get_all_dimensions
     from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
     from ai_prompt_toolkit.linter.rules import get_all_rules
-    from ai_prompt_toolkit.probe_framework import _PROBE_REGISTRY
+    from ai_prompt_toolkit.redteam.registry import get_global_probe_registry
 
     counts: dict[str, int | str] = {
         "version": __version__,
@@ -38,7 +38,9 @@ def collect_counts(with_tests: bool) -> dict[str, int | str]:
         "auto_fixable": len(AUTO_FIXABLE_RULES),
         "eval_dims": len(get_all_dimensions()),
         "mcp_tools": len(mcp_server._get_tool_dispatch()),
-        "probes": len(_PROBE_REGISTRY),
+        # R212-7: probes口径统一 — 徽章与--version同读统一注册表(全局视图),
+        # 消灭 23(probe_framework)/94(__subclasses__)/116(全局) 三数并存。
+        "probes": len(get_global_probe_registry()),
     }
     if with_tests:
         result = subprocess.run(

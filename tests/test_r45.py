@@ -246,6 +246,8 @@ class TestProbeRegistry:
 
     def test_list_probes(self):
         probes = list_probes()
+        # list_probes读probe_framework._PROBE_REGISTRY(ProbeRunner兼容的23探针),
+        # 口径语义不变(R212-7只统一展示口径: 徽章/--version改读全局注册表)
         assert len(probes) == 23
         assert all("name" in p and "category" in p for p in probes)
 

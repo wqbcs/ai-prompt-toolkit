@@ -9,7 +9,7 @@
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-256-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
-[![Probes](https://img.shields.io/badge/Probes-23-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+[![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 
 ## 项目简介
 

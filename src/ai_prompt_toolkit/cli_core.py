@@ -99,12 +99,15 @@ def _component_stats() -> str:
         from ai_prompt_toolkit.linter.rules import get_all_rules
         from ai_prompt_toolkit.mcp_server import _get_tool_dispatch
         from ai_prompt_toolkit.redteam.detector import BaseDetector
-        from ai_prompt_toolkit.redteam.probe import BaseProbe
+        from ai_prompt_toolkit.redteam.registry import get_global_probe_registry
 
         lint = len(get_all_rules())
         dims = len(get_all_dimensions())
         tools = len(_get_tool_dispatch())
-        probes = len(BaseProbe.__subclasses__())
+        # R212-7: probes口径统一 — 原 BaseProbe.__subclasses__()=94(单体系子类),
+        # 徽章=23(probe_framework注册表), 全局注册表=116, 三口径漂移。
+        # 统一以R207统一注册表(含冲突去重)为唯一事实源, 与test_r207断言同口径。
+        probes = len(get_global_probe_registry())
         detectors = len(BaseDetector.__subclasses__())
         return (
             f"组件统计: {lint}条Lint规则 | {dims}评估维度 | {tools} MCP工具 | {probes} Probes | {detectors} Detectors"
