@@ -65,7 +65,7 @@ class TestFalsePositiveScript:
         )
         assert proc.returncode == 0, proc.stderr[-500:]
         report = json.loads(proc.stdout)
-        assert report["checker_count"] == 255
+        assert report["checker_count"] == 256
         assert report["sample_count"] >= 30
         assert 0 <= report["global_rate"] <= 1
         assert isinstance(report["high_fp_rules"], list)

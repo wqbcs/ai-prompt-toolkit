@@ -4,9 +4,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.25.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-3665%20passed-brightgreen.svg)](tests/)
-[![Lint Rules](https://img.shields.io/badge/Lint_Rules-255-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Version](https://img.shields.io/badge/Version-67.28.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-5707%20passed-brightgreen.svg)](tests/)
+[![Lint Rules](https://img.shields.io/badge/Lint_Rules-256-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-23-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
@@ -19,7 +19,7 @@
 
 | 能力 | 数量 | 详情 |
 |------|------|------|
-| **Lint规则** | 255 | P001-P255，196条可自动修复，含多模态/安全/供应链/Agent等24大类专项规则 |
+| **Lint规则** | 256 | P001-P256，196条可自动修复，含多模态/安全/供应链/Agent等24大类专项规则 |
 | **评估维度** | 130 | D01-D130，6大类(structure/quality/security/performance/fairness/toolchain) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |

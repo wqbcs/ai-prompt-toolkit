@@ -40,6 +40,15 @@ repos:
         files: '\.prompt\.md$|\.prompt$'
         pass_filenames: true
 
+      - id: version-badge-drift
+        name: Version Badge Drift Check (R212)
+        # 根治版本号/徽章口径漂移复发: README Version徽章必须==__version__,
+        # pyproject.toml version必须==__version__ (R194/R207-6修过两次, 靠人记必复发)
+        entry: python scripts/check_version_consistency.py
+        language: system
+        files: 'README\.md|pyproject\.toml|src/ai_prompt_toolkit/__init__\.py|CHANGELOG\.md'
+        pass_filenames: false
+
       - id: pytest-smoke
         name: Pytest Smoke Test
         entry: python -m pytest tests/ -x -q --tb=line -k "not slow"

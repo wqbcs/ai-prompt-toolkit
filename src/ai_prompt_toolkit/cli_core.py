@@ -8,6 +8,13 @@ from typing import Any
 
 import click
 
+# R212: __main__自别名 — `python -m ai_prompt_toolkit.cli_core` 时本模块以
+# __main__身份执行, 而命令簇(L708 import)导包 ai_prompt_toolkit.cli_core 会
+# 加载出第二个模块实例(双main group, 命令丢失)。在命令簇import之前把
+# __main__ 注册为规范名, 使全进程共享同一 group。
+if __name__ == "__main__" and __package__:
+    sys.modules[f"{__package__}.cli_core"] = sys.modules[__name__]
+
 from ai_prompt_toolkit import __version__
 
 
@@ -549,10 +556,6 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
-
-
 @main.group(name="dataset")
 def dataset_group() -> None:
     """数据集管理: 创建/导入/运行测试用例集"""
@@ -712,3 +715,8 @@ from ai_prompt_toolkit.cli.commands import (  # noqa: E402,F401
     security_commands,
     template_commands,
 )
+
+# R212: __main__守卫必须在命令簇import之后 — 原位于文件中段(命令注册前),
+# 导致 `python -m ai_prompt_toolkit.cli_core` 只显示3/68条命令。
+if __name__ == "__main__":
+    main()

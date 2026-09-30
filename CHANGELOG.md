@@ -2,6 +2,28 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.28.0] - 2026-09-29
+
+### Added (R212 批次A: 第一触点修复 + 口径根治 + P256模板变量完整性)
+
+- R212-1 CLI `-m` 入口真bug: `python -m ai_prompt_toolkit.cli_core` 原只显示
+  3/68条命令(__main__守卫在命令簇import前执行+双模块实例)。守卫移到文件尾
+  +__main__自别名 + 新增 `__main__.py` 使 `python -m ai_prompt_toolkit` 可用
+- R212-2 版本/徽章口径根治: 代码/CHANGELOG/pip/徽章四处版本号统一到67.28.0;
+  Tests徽章3665→5707(真实值); 新增 `scripts/check_version_consistency.py`
+  (pre-commit钩子, 秒级校验, 根治R194/R207-6两次修过的复发漂移源)
+- R212-4 新规则 P256 模板变量完整性(HIGH): 畸形占位符({{my-var}}/含空格,
+  渲染器静默保留原样) + 显式声明段外的变量引用; 复用promptci/PromptOps的
+  VariableGate思路(思路复用非代码复用); 与渲染引擎 _VAR_PATTERN 同口径
+  (中文变量名合法, handlebars指令/|default回退/代码围栏放行); 56干净样本
+  0命中从第一天断言。规则数 255→256, 23处计数快照断言同步更新,
+  mcp_server prompt_lint描述改动态计算(又一硬编码口径消灭)
+- 测试: +test_r212_cli_entry_fix.py(4), +test_r212_p256_template_vars.py(12)
+- 文档: R212-改进方案与开源调研-v1.md(定位反问+promptlint/promptfoo/garak/
+  promptci/PromptOps调研+8项清单)
+
+验证: 全量 5707 passed / ruff 全绿 / mypy 棘轮 0 / 误报 1.35% / 版本口径一致
+
 ## [v67.27.0] - 2026-09-29
 
 ### Fixed (R211: 误报第五批 — Top9高误报规则处置, 全局 2.04%→1.35%)

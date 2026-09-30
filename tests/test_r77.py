@@ -73,8 +73,11 @@ class TestMCPDescriptionUpdated:
         data = json.loads(response)
         tools = data["result"]["tools"]
         lint_tool = next(t for t in tools if t["name"] == "prompt_lint")
-        assert "255" in lint_tool["description"]  # R164扩容后实际值
-        assert "P001-P255" in lint_tool["description"]  # R164扩容后实际值
+        from ai_prompt_toolkit.linter.rules import get_all_rules
+
+        _total = len(get_all_rules())  # R212: 动态口径, 不再硬编码
+        assert str(_total) in lint_tool["description"]
+        assert f"P001-P{_total}" in lint_tool["description"]
 
     def test_output_scan_tool_exists(self):
         import json

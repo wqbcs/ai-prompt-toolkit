@@ -85,10 +85,14 @@ def _handle_initialize(id_val: Any, params: dict[str, Any]) -> str:
 
 
 def _handle_tools_list(id_val: Any) -> str:
+    # R212: 规则数动态化 — 避免硬编码口径漂移(本文件惯例: 函数内局部import)
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+
+    _rule_total = len(get_all_rules())
     tools = [
         {
             "name": "prompt_lint",
-            "description": "对Prompt文件执行Lint质量检查，返回255条规则(P001-P255)的检测结果和评分",
+            "description": f"对Prompt文件执行Lint质量检查，返回{_rule_total}条规则(P001-P{_rule_total})的检测结果和评分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
