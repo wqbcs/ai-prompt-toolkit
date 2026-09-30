@@ -107,9 +107,32 @@ _FALLBACK = re.compile(
 )
 
 
+# R211校准: 输入校验/输出转义/速率限制/审计/降级五条"缺失声明"规则仅在
+# 生产服务面才有运维语义 — 原_API_CTX泛词(服务/调用/请求/call/request)
+# 命中几乎所有prompt(角色名"XX服务"即触发), R210扩样暴露48/56误报。
+# 沿用R207 P181先例(版本声明仅对生产prompt强制): 需显式生产语境
+# (生产/production/部署/上线/发布), 本地草稿/文档类prompt不强制。
+# 否定语境排除("不直接修改生产集群"=安全约束声明, 非生产部署)。
+_PROD_CTX = re.compile(
+    r"(?:生产(?!库|集群)|production|部署(?!失败)|deploy(?!\s+fail)|上线|正式环境|(?<![A-Za-z0-9_/.-])prod(?![A-Za-z0-9_-])|发布(?!说明|notes|检查单|日期|前))",
+    re.IGNORECASE,
+)
+_PROD_NEGATION = re.compile(r"(?:不|禁止|避免|勿|无需|no|without|avoid)\s*\S{0,4}$", re.IGNORECASE)
+
+
+def _has_prod_ctx(text: str) -> bool:
+    for m in _PROD_CTX.finditer(text):
+        if _PROD_NEGATION.search(text[max(0, m.start() - 8) : m.start()]):
+            continue
+        return True
+    return False
+
+
 def check_p151(text: str) -> Finding | None:
     rule = _RULE_MAP["P151"]
     if not _API_CTX.search(text):
+        return None
+    if not _has_prod_ctx(text):
         return None
     if _INPUT_VAL.search(text):
         return None
@@ -122,6 +145,8 @@ def check_p152(text: str) -> Finding | None:
     rule = _RULE_MAP["P152"]
     if not _API_CTX.search(text):
         return None
+    if not _has_prod_ctx(text):
+        return None
     if _OUTPUT_ESC.search(text):
         return None
     return Finding(
@@ -132,6 +157,8 @@ def check_p152(text: str) -> Finding | None:
 def check_p153(text: str) -> Finding | None:
     rule = _RULE_MAP["P153"]
     if not _API_CTX.search(text):
+        return None
+    if not _has_prod_ctx(text):
         return None
     if _RATE_LIM.search(text):
         return None
@@ -144,6 +171,8 @@ def check_p154(text: str) -> Finding | None:
     rule = _RULE_MAP["P154"]
     if not _API_CTX.search(text):
         return None
+    if not _has_prod_ctx(text):
+        return None
     if _AUDIT.search(text):
         return None
     return Finding(
@@ -154,6 +183,8 @@ def check_p154(text: str) -> Finding | None:
 def check_p155(text: str) -> Finding | None:
     rule = _RULE_MAP["P155"]
     if not _API_CTX.search(text):
+        return None
+    if not _has_prod_ctx(text):
         return None
     if _FALLBACK.search(text):
         return None

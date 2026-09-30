@@ -143,7 +143,19 @@ def check_p083(text: str) -> Finding | None:
 
 _JSON_OUTPUT_PATTERN = re.compile(r"JSON|json|JsonObject|返回JSON|输出JSON")
 _MD_OUTPUT_PATTERN = re.compile(r"Markdown|markdown|\.md|输出Markdown")
-_FORMAT_CONSTRAINT_PATTERN = re.compile(r"Schema|schema|格式如下|示例:|Example:")
+# R211校准: 原DECL仅识别Schema/格式如下/示例:, 漏掉干净样本中真实存在的
+# 6种格式约束形态(表头行/内联JSON示例/章节结构/字段定义/仅输出约束/
+# 英文结构词), R210扩样暴露10/56误报。扩充DECL(放行条件)不动CTX —
+# 裸"返回JSON格式"(无任何约束)仍触发。
+_FORMAT_CONSTRAINT_PATTERN = re.compile(
+    r"Schema|schema|格式如下|示例[:：]|Example[:：]"
+    r"|[^\n|]{1,24}\s*[|]\s*[^\n|]{1,24}"  # 表头行: 事项 | 负责人 | 截止日期
+    r"|\{[\"'][\w]+[\"']\s*:"  # 内联JSON字面量: {"category": ...}
+    r"|sections?\s*[:：]|章节用|二级标题|每个部分"  # 章节/分节结构
+    r"|字段定义|仅输出\s*JSON|只输出\s*JSON"  # 字段定义段/仅输出约束
+    r"|numbered list|code block|headings|with a [a-z ]+ example"  # 英文结构描述
+    r"|[一-龥A-Za-z]{2,12}\s*[+＋]\s*[一-龥A-Za-z]{2,12}",  # A+B双段输出结构
+)
 
 
 def check_p084(text: str) -> Finding | None:

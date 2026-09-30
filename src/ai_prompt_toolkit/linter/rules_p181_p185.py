@@ -114,7 +114,7 @@ def _has_prod_ctx(text: str) -> bool:
 
 
 def check_p181(text: str) -> list[Finding]:
-    findings = []
+    findings: list[Finding] = []
     if not _VERSION_PATTERN.search(text):
         if not _has_prod_ctx(text):
             return findings
@@ -125,8 +125,17 @@ def check_p181(text: str) -> list[Finding]:
 def check_p182(text: str) -> list[Finding]:
     findings = []
     if not _DEP_PATTERN.search(text):
-        has_api_call = bool(re.search(r"(?:API|接口|调用|endpoint|fetch|request|http)", text, re.IGNORECASE))
-        if has_api_call:
+        # R211校准: 原has_api_call裸泛词(API|接口|调用|endpoint|fetch|request|http)
+        # 使"工具调用/请求体/调用"等一切动词即触发, R210扩样暴露8/56误报。
+        # 依赖声明真实面=API实体+调用类动作共现(调用weather API获取天气),
+        # "写API文档/审查API设计/接口测试生成"本身不构成外部依赖调用。
+        has_api_entity = bool(
+            re.search(r"API|接口|endpoint|webhook|REST|gRPC|外部(服务|接口|API)|第三方(服务|接口)", text, re.IGNORECASE)
+        )
+        has_api_use = bool(
+            re.search(r"(?:调用|invoke|invokes|invocation|fetch|integrat\w*|calls|requests|query|查询|集成)", text, re.IGNORECASE)
+        )
+        if has_api_entity and has_api_use:
             findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", "1", "1"))
     return findings
 
@@ -135,7 +144,16 @@ def check_p183(text: str) -> list[Finding]:
     findings = []
     has_env = _ENV_PATTERN.search(text)
     if not has_env:
-        has_multi_config = bool(re.search(r"(?:开发|测试|生产|dev|test|prod|staging|uat|预发)", text, re.IGNORECASE))
+        # R211校准: 原裸多环境词(dev/test/prod/staging)命中单元测试/接口
+        # 测试/发布说明等文档prompt(裸"测试"即触发), R210扩样暴露11/56误报。
+        # 环境隔离真实触发面=≥2个不同环境名与"环境"共现(开发环境用X,
+        # 测试环境用Y), 或 environment+config 英文组合。
+        env_names = {
+            m.group(1).lower() for m in re.finditer(r"(开发|测试|生产|预发|dev|staging|prod|uat)\s*环境", text, re.IGNORECASE)
+        }
+        has_multi_config = len(env_names) >= 2 or bool(
+            re.search(r"environment.{0,12}(?:different|isolat|separat|config)", text, re.IGNORECASE)
+        )
         if has_multi_config:
             findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置", "1", "1"))
     return findings

@@ -106,8 +106,11 @@ _RETENTION_PATTERN = re.compile(
 _AUDIT_PATTERN = re.compile(
     r"(?:审计|audit|日志|log|记录|record|trace|追溯|append.only|不可篡改|immutab)", re.IGNORECASE
 )
+# R211校准: 原CRITICAL_OP裸泛词(查询/修改/访问/DELETE/UPDATE)是SQL与代码
+# 常见词, 命中一切代码类prompt(R210扩样暴露10/56误报)。审计日志真实
+# 触发面=变更类操作作用于敏感对象(用户/权限/凭据/账户数据)。
 _CRITICAL_OP_PATTERN = re.compile(
-    r"(?:删除|delete|修改|update|查询|query|访问|access|导出|export|下载|download|权限变更|permission.change)",
+    r"(?:删除|修改|变更|覆盖|更新|delete|update|modify|overwrite|revoke)\s*\w{0,6}(?:用户|个人|客户|账户|账号|权限|凭据|密码|密钥|敏感|隐私|user|account|credential|permission|password|secret|sensitive|pii)",
     re.IGNORECASE,
 )
 _CROSS_BORDER_PATTERN = re.compile(

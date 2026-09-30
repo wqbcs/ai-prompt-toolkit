@@ -78,8 +78,15 @@ _RULES_P161_P165: list[LintRule] = [
 for r in _RULES_P161_P165:
     _RULE_MAP[r.rule_id] = r
 
+# R211校准: 原CTX泛词(裸变量/format/替换/拼接/格式化)与裸{{命中一切
+# 模板填充类prompt(数据提取/邮件生成等{{var}}占位符场景),
+# R210扩样暴露11/56误报。模板注入真实攻击面=用户变量进入渲染/插值
+# 管道的组合(模板+渲染/变量), 收窄到管道语义。
 _TMPL_INJECT_CTX = re.compile(
-    r"(?:模板|template|变量|variable|渲染|render|插值|interpolat|Mustache|Jinja|Handlebars|\{\{|\}\}|format|格式化|替换|substitut|拼接|concat)",
+    r"(?:模板|template).{0,8}(?:渲染|render|注入|injection|引擎|engine|变量|variable)"
+    r"|(?:渲染|render|插值|interpolat).{0,8}(?:变量|variable)"
+    r"|(?:变量|variable).{0,8}(?:渲染|render|插值|interpolat|注入|injection)"
+    r"|模板注入|template.{0,8}injection",
     re.IGNORECASE,
 )
 
