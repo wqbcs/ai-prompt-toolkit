@@ -189,6 +189,34 @@ def determine_exit_code(
     return 0
 
 
+def expand_rule_ids(spec: str) -> list[str]:
+    """R213-P1-7: 逗号分隔的规则ID规范 → 具体规则ID列表(支持前缀)。
+
+    "P161" 精确; "P16" 前缀 → 全部 P16x; 未知条目(无精确也无前缀匹配)
+    忽略并 stderr 警告(错字不该弄崩 lint — fail safe, 与 waiver 同纪律)。
+    参考: ContextHound --excludeRules 的 prefix-glob 语义。
+    """
+    import sys as _sys
+
+    from ai_prompt_toolkit.linter.rules import get_all_rules  # 局部导入防循环引用
+
+    known = {r.rule_id for r in get_all_rules()}
+    out: set[str] = set()
+    for tok in spec.split(","):
+        tok = tok.strip().upper()
+        if not tok:
+            continue
+        if tok in known:
+            out.add(tok)
+            continue
+        matched = {r for r in known if r.startswith(tok)}
+        if matched:
+            out |= matched
+        else:
+            print(f"警告: 规则 {tok} 不存在(精确与前缀均无匹配), 已忽略", file=_sys.stderr)
+    return sorted(out)
+
+
 EXIT_CODE_MEANINGS = {
     0: "PASS — 通过，无问题",
     1: "WARN — 警告，存在中等风险",

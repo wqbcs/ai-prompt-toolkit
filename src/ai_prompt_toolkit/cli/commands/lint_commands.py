@@ -76,6 +76,8 @@ if TYPE_CHECKING:
     "trace_json_path",
     help="Trace导出: 将本次执行的OTel trace写入指定路径(JSON/OTLP兼容, 供Langfuse/Jaeger消费)",
 )
+@click.option("--rules", "rules_filter", help="规则过滤: 仅运行指定规则(逗号分隔, 支持前缀: P161或P16=P16x族)")
+@click.option("--ignore-rules", "ignore_rules_filter", help="规则过滤: 忽略指定规则(逗号分隔, 支持前缀)")
 def lint(
     target: str,
     config_path: str | None,
@@ -110,6 +112,8 @@ def lint(
     resume: bool = False,
     parallel: int = 0,
     fail_on_waiver: bool = False,
+    rules_filter: str | None = None,
+    ignore_rules_filter: str | None = None,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import (
@@ -201,7 +205,17 @@ def lint(
     _cache_dir_path = Path(cache_dir) if cache_dir else Path(".prompt-toolkit-cache")
     _cache_dir_path.mkdir(exist_ok=True)
 
-    linter = PromptLinter()
+    # R213-P1-7: CLI直接规则过滤(前缀支持; 与YAML配置include_rules/exclude_rules取交集叠加)
+    from ai_prompt_toolkit.cli_helpers import expand_rule_ids
+
+    cli_rules = expand_rule_ids(rules_filter) if rules_filter else None
+    cli_ignore = expand_rule_ids(ignore_rules_filter) if ignore_rules_filter else None
+    if cli_rules:
+        shown = ",".join(cli_rules[:5]) + ("..." if len(cli_rules) > 5 else "")
+        click.echo(f"规则过滤: 仅运行 {len(cli_rules)} 条规则 ({shown})")
+    if cli_ignore:
+        click.echo(f"规则过滤: 忽略 {len(cli_ignore)} 条规则")
+    linter = PromptLinter(rules=cli_rules, exclude=cli_ignore)
     from ai_prompt_toolkit.linter.otel_tracer import get_tracer
 
     tracer = get_tracer()  # 默认Noop零开销; PROMPT_TOOLKIT_TRACING=memory启用

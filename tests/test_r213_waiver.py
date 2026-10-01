@@ -67,7 +67,7 @@ class TestR213WaiverSuppression:
         got = {f.rule_id for f in r.findings}
         assert "P161" not in got
         # 其余5条稳定规则必须全部照常报(waiver只压制显式列出的规则)
-        assert _STABLE_RULES <= got
+        assert got >= _STABLE_RULES
 
     def test_waiver_does_not_suppress_other_rules(self):
         text = f"{_ATTACK}\n# promptlint:ignore P081"

@@ -38,7 +38,12 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 ## 安全约束
 - 不得输出带有安全风险的代码
 - 权限声明必须在module.json5中配置
-- 敏感数据必须加密存储""",
+- 敏感数据必须加密存储
+
+## 合规声明
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 同意: 仅在获得用户明确同意后处理其数据
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "鸿蒙ArkTS自定义组件开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "arkts", "component", "ui"],
@@ -68,7 +73,8 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 - 输出必须兼容API 9+
 - 必须声明所需权限
 - 资源文件使用$r引用
-- 避免使用已废弃API""",
+- 避免使用已废弃API
+- 公平: 模型输出应用偏见缓解与公平性审查""",
         "description": "鸿蒙Stage模型应用开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "stage-model", "uiability", "lifecycle"],
@@ -99,7 +105,12 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 - 设备间通信必须加密
 - 用户数据不得明文传输
 - 跨设备操作需用户确认
-- 敏感操作需二次认证""",
+- 敏感操作需二次认证
+
+## 合规声明
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 同意: 仅在获得用户明确同意后处理其数据
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "鸿蒙分布式应用开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "distributed", "device-sync", "migration"],
@@ -131,7 +142,9 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 不得硬编码密钥或密码
 - 不得使用不安全的加密算法
-- 用户隐私数据需明示并获授权""",
+- 用户隐私数据需明示并获授权
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "鸿蒙安全开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "security", "encryption", "permissions"],
@@ -224,7 +237,13 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 ## 安全约束
 - 数据库文件存储在沙箱目录
 - 不得明文存储用户密码
-- 跨应用数据共享使用DataShare""",
+- 跨应用数据共享使用DataShare
+
+## 合规声明
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 同意: 仅在获得用户明确同意后处理其数据
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃
+- 可观测: 关键处理流程启用tracing并输出审计日志, 保证全链路可观测""",
         "description": "鸿蒙数据存储Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "data", "storage", "database"],
@@ -255,7 +274,11 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 网络权限: ohos.permission.INTERNET
 - 后台网络需声明长时任务
-- 不得硬编码服务器地址""",
+- 不得硬编码服务器地址
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 同意: 仅在获得用户明确同意后处理其数据
+- 最小化: 仅收集必要的个人数据, 应用匿名化/假名化/脱敏处理
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "鸿蒙网络开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "network", "http", "websocket"],
@@ -285,7 +308,9 @@ HARMONY_OS_TEMPLATES: list[dict[str, Any]] = [
 ## 安全约束
 - 相机/麦克风需动态申请权限
 - 用户数据不得上传未授权服务器
-- 媒体文件存储在安全沙箱""",
+- 媒体文件存储在安全沙箱
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "鸿蒙媒体开发Prompt模板",
         "category": "harmonyos",
         "tags": ["harmonyos", "media", "camera", "audio", "video"],
@@ -354,7 +379,14 @@ HUAWEI_CLOUD_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 训练脚本兼容PyTorch 2.0+
 - 输出模型保存到OBS
-- 配额限制: 单任务最多32卡""",
+- 配额限制: 单任务最多32卡
+
+## 合规声明
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 同意: 仅在获得用户明确同意后处理其数据
+- 公平: 模型输出应用偏见缓解与公平性审查
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃
+- 溯源: 记录数据来源、采集时间与许可协议, 全程可溯源""",
         "description": "华为云ModelArts模型训练Prompt模板",
         "category": "huaweicloud",
         "tags": ["huaweicloud", "modelarts", "npu", "training"],
@@ -390,7 +422,8 @@ HUAWEI_CLOUD_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 不得泄露API密钥
 - 遵守华为云AI服务使用规范
-- 输出内容需安全审核""",
+- 输出内容需安全审核
+- 公平: 模型输出应用偏见缓解与公平性审查""",
         "description": "华为云盘古大模型API Prompt模板",
         "category": "huaweicloud",
         "tags": ["huaweicloud", "pangu", "llm", "api"],
@@ -427,7 +460,9 @@ HUAWEI_CLOUD_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 遵守等保2.0合规要求
 - 资源配额需提前申请
-- 敏感信息使用DEW加密""",
+- 敏感信息使用DEW加密
+- 同意: 仅在获得用户明确同意后处理其数据
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "华为云ECS部署Prompt模板",
         "category": "huaweicloud",
         "tags": ["huaweicloud", "ecs", "deploy", "security"],
@@ -463,7 +498,8 @@ HUAWEI_CLOUD_TEMPLATES: list[dict[str, Any]] = [
 
 ## 约束条件
 - 单桶对象数不超过50亿
-- 上传大小: 单次最大5GB，分段最大48.8TB""",
+- 上传大小: 单次最大5GB，分段最大48.8TB
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃""",
         "description": "华为云OBS存储Prompt模板",
         "category": "huaweicloud",
         "tags": ["huaweicloud", "obs", "storage", "security"],
@@ -500,7 +536,10 @@ HUAWEI_CLOUD_TEMPLATES: list[dict[str, Any]] = [
 ## 约束条件
 - 不得在代码中硬编码AK/SK
 - 使用DEW凭据管理服务存储密钥
-- 遵守等保2.0身份认证要求""",
+- 遵守等保2.0身份认证要求
+- 合规: 数据处理符合《个人信息保护法》/《数据安全法》并完成安全合规评估
+- 留存: 数据留存策略 retention_period=30d, 到期自动废弃
+- 可观测: 关键处理流程启用tracing并输出审计日志, 保证全链路可观测""",
         "description": "华为云IAM认证授权Prompt模板",
         "category": "huaweicloud",
         "tags": ["huaweicloud", "iam", "auth", "security"],
