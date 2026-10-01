@@ -975,6 +975,10 @@ def stats_cmd(target: str | None, fmt: str) -> None:
 
     _all_rules = get_all_rules()
     _security_rules = sum(1 for r in _all_rules if r.category == "security")
+    # R213审查修复: provider数动态化(事实源=ab_test.providers注册表, 同纪律)
+    from ai_prompt_toolkit.ab_test.providers import get_registry
+
+    _provider_count = len(get_registry())
 
     stats_data = {
         "prompt_files": len(prompt_files),
@@ -986,7 +990,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         "datasets": dataset_count,
         "lint_rules": len(_all_rules),
         "security_rules": _security_rules,
-        "providers": 19,
+        "providers": _provider_count,
     }
 
     if fmt == "json":
@@ -1001,7 +1005,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
         console.print(
-        f"  🔍 Lint规则: [bold]{len(_all_rules)}[/bold]条 | 安全规则: [bold]{_security_rules}[/bold]条 | Provider: [bold]19[/bold]个"
+        f"  🔍 Lint规则: [bold]{len(_all_rules)}[/bold]条 | 安全规则: [bold]{_security_rules}[/bold]条 | Provider: [bold]{_provider_count}[/bold]个"
     )
 
 

@@ -55,7 +55,9 @@ def run(ignore_blindspots: bool = False) -> dict:
 
     for p in probes:
         is_blind = p.get("note", "").startswith(BLINDSPOT_PREFIX)
-        r = lint_template(p["name"], p["text"])
+        # R213审查修复: 漏检度量绕过 waiver — 探针文本内的 promptlint:ignore
+        # 注释不得抑制检测能力基线(与FP基线走 _CHECKERS_EXTENDED 直调的纪律对齐)
+        r = lint_template(p["name"], p["text"], apply_waivers=False)
         got = {f.rule_id for f in r.findings}
         missed: list[str] = []
         for exp in p["expected"]:

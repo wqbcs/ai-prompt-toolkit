@@ -112,7 +112,14 @@ class PromptLinter:
     )
 
     def lint(
-        self, template_id: str, text: str, *, fix: bool = False, template_type: str = "prompt", lint_config: Any = None
+        self,
+        template_id: str,
+        text: str,
+        *,
+        fix: bool = False,
+        template_type: str = "prompt",
+        lint_config: Any = None,
+        apply_waivers: bool = True,
     ) -> LintResult:
         start = time.perf_counter()
 
@@ -142,10 +149,14 @@ class PromptLinter:
         findings = [f for f in all_findings if f.rule_id in rule_ids]
 
         # R213-P0-2: waiver — 文件级显式豁免(解析失败/无声明时零行为改变)
-        from ai_prompt_toolkit.linter.waivers import parse_waivers
-
-        waived_rules: list[str] = parse_waivers(text)
+        # R213审查修复: apply_waivers=False 供漏检率基线使用 — 检测能力不可被
+        # 文件内注释抑制(FP基线走 _CHECKERS_EXTENDED 直调, 天然不受 waiver 影响)
+        waived_rules: list[str] = []
         waived_finding_count = 0
+        if apply_waivers:
+            from ai_prompt_toolkit.linter.waivers import parse_waivers
+
+            waived_rules = parse_waivers(text)
         if waived_rules:
             waived_set = set(waived_rules)
             suppressed = [f for f in findings if f.rule_id in waived_set]
