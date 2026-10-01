@@ -99,7 +99,7 @@ class TestR213P257Baseline:
     def test_rule_count_257(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 257
+        assert len(get_all_rules()) == 260
 
     def test_p243_race_boundary_fix(self):
         # R213-B5 顺带修复: 裸 race 子串误配 trace(观测日志词) — trace-only 文本不得触发

@@ -44,9 +44,9 @@ class TestR214JaProbes:
             "atk47_ja_persona_switch",
             "atk48_ja_fake_system_tag",
         }
-        # 4 条 expected + 2 条观察型(无对应规则, 覆盖矩阵缺口)
-        assert ja["atk47_ja_persona_switch"]["expected"] == []
-        assert ja["atk48_ja_fake_system_tag"]["expected"] == []
+        # 6 条全 expected（R215: atk47/atk48 观察型 → P259/P258 落地后翻转）
+        assert ja["atk47_ja_persona_switch"]["expected"] == ["P259"]
+        assert ja["atk48_ja_fake_system_tag"]["expected"] == ["P258"]
 
 
 class TestR214JaRuleSurfaces:

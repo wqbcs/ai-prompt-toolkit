@@ -315,11 +315,11 @@ class TestR207MetricsSync:
         real = Path(__file__).parent.parent / "README.md"
         fake = tmp_path / "README.md"
         fake.write_text(
-            real.read_text(encoding="utf-8").replace("**Lint规则** | 257", "**Lint规则** | 200", 1),
+            real.read_text(encoding="utf-8").replace("**Lint规则** | 260", "**Lint规则** | 200", 1),
             encoding="utf-8",
         )
         assert fake.read_text(encoding="utf-8") != real.read_text(encoding="utf-8"), (
-            "README应含'Lint规则 | 257'行(若此断言失败说明README表格改了, 需更新本测试)"
+            "README应含'Lint规则 | 260'行(若此断言失败说明README表格改了, 需更新本测试)"
         )
         results = _check_readme_metrics(readme_path=fake)
         assert results[0].status == "warn"

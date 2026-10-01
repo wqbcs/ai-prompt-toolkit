@@ -4,9 +4,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.31.0-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-5845%20passed-brightgreen.svg)](tests/)
-[![Lint Rules](https://img.shields.io/badge/Lint_Rules-257-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Version](https://img.shields.io/badge/Version-67.32.0-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-5885%20passed-brightgreen.svg)](tests/)
+[![Lint Rules](https://img.shields.io/badge/Lint_Rules-260-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
@@ -19,7 +19,7 @@
 
 | 能力 | 数量 | 详情 |
 |------|------|------|
-| **Lint规则** | 257 | P001-P257，196条可自动修复，含多模态/安全/供应链/Agent等24大类专项规则 |
+| **Lint规则** | 260 | P001-P260，196条可自动修复，含多模态/安全/供应链/Agent等24大类专项规则 |
 | **评估维度** | 130 | D01-D130，6大类(structure/quality/security/performance/fairness/toolchain) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
@@ -34,7 +34,7 @@
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
-| **Prompt Linter** | `prompt-cli lint` | 257条Lint规则(P001-P257)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
+| **Prompt Linter** | `prompt-cli lint` | 260条Lint规则(P001-P260)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
 | **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级7项安全检查 + tool描述security族规则 + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
@@ -62,7 +62,7 @@
 ### 差异化优势
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Scan→Probe→RedTeam→Evaluate→Compliance→Version 全链路的Prompt工具
-- **零LLM调用Lint**：257条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
+- **零LLM调用Lint**：260条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
 - **OWASP LLM Top 10 2025**：23 Probe→LLM01-LLM10完整映射，自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
@@ -89,7 +89,7 @@ pip install "ai-prompt-toolkit[ab_test]"
 ### 基本使用
 
 ```bash
-# Lint检查(257条规则)
+# Lint检查(260条规则)
 prompt-cli lint -s my_prompt.md
 
 # 安全扫描(5层深度)
@@ -242,7 +242,7 @@ graph LR
     G --> H[版本管理]
     H --> I[部署上线]
 
-    B -->|257条规则| B1[196条可自动修复]
+    B -->|260条规则| B1[196条可自动修复]
     B -->|24大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等]
     C -->|5层深度| C1[quick/standard/deep]
     C -->|8层消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言]
@@ -394,7 +394,7 @@ prompt-cli compliance -t my_prompt.md --format markdown
 
 项目包含VSCode扩展 `vscode-prompt-lint/` v0.5.0，提供：
 
-- 实时Lint诊断(257条规则) + 防抖300ms
+- 实时Lint诊断(260条规则) + 防抖300ms
 - Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
 - 状态栏评分指示器
 - 保存时自动检查 + 打开文件自动Lint

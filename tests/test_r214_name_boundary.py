@@ -47,7 +47,7 @@ class TestR214LangSchema:
 
     def test_all_probes_have_valid_lang(self):
         probes = self._probes()
-        assert len(probes) == 52  # R214: 42 + ja×6 + zh-Hant×2 + 空格插入×2
+        assert len(probes) == 68  # R215: 52 + 新面×16（伪标签4/人格2/编码7/ATR CJK 3）
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -56,7 +56,7 @@ class TestR214LangSchema:
         probes = self._probes()
         langs = {p["name"]: p["lang"] for p in probes}
         assert langs["atk04_hardcoded_secret"] == "en"
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 43
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 48  # R215: 43+5（atk54/57/66/67/68）
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
 

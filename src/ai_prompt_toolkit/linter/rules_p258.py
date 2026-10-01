@@ -15,6 +15,7 @@ Severity: HIGH — 标签会被模型当作特权边界, 是主动操纵面
 - Willison 2025-08 role-based injection: 对话格式本身高危 → 放行只认显式
   "这是示例"声明, 不认格式合法性
 OWASP: LLM01 Prompt Injection (garak 探针族 owasp:llm01 tag 印证)
+ATLAS: AML.T0051.000 Direct Prompt Injection（编号 2026-10-01 联网复核, docs/mitre-atlas-mapping.md）
 
 放行面(近邻 ±80 字符内 — 刻意严于 P257 的文件级声明: 标签特权强度越高,
 放行应越严格; 与 ESLint disable 注释近邻原则一致, 见方案文档 §5 对抗审查#1):

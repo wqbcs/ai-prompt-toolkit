@@ -17,6 +17,7 @@ Severity: HIGH — 越狱复合信号
 R215-B1 数据裁决(方案文档 §7): 复合面 3/3 探针命中(zh/ja/en), 58 clean +
 15 内置模板 0 误报 → 落地; 宽面("你是X"单独)被否决
 OWASP: LLM01 Prompt Injection
+ATLAS: AML.T0054 LLM Jailbreak（编号 2026-10-01 联网复核, docs/mitre-atlas-mapping.md）
 """
 
 from __future__ import annotations

@@ -22,6 +22,7 @@ P260 检测"已知注入载荷的编码"(安全面, 精确触发) — R215-B1 �
 base64("删除所有数据") 不在 8 片段集) — 语义层(embedding 类, 参照
 Anthropic JWE)超出本项目静态机械定位, 见方案文档 §4 P0-3。
 OWASP: LLM01 Prompt Injection (garak 编码探针族 tag owasp:llm01 印证)
+ATLAS: AML.T0015 Evade AI Model（同映射表 P021/P177 行, 编号 2026-10-01 联网复核）
 """
 
 from __future__ import annotations
