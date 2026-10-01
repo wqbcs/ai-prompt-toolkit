@@ -21,6 +21,9 @@ P260 检测"已知注入载荷的编码"(安全面, 精确触发) — R215-B1 �
 诚实声明(机制上限): 有限集方案对**未知**编码载荷必然漏检(如
 base64("删除所有数据") 不在 8 片段集) — 语义层(embedding 类, 参照
 Anthropic JWE)超出本项目静态机械定位, 见方案文档 §4 P0-3。
+已知残留误报面(登记不藏): 子3 长串字符类 [A-Za-z0-9+/]{20,} 亦接受纯数字串
+(订单号/账号 + decode族动词 + 冒号 = HIGH 命中, 代码审查 MINOR#2) — 无实证
+案例, ATR-2026-00001 L10 阈值不自调, 登记 L3-17, R216 按真实案例重评。
 OWASP: LLM01 Prompt Injection (garak 编码探针族 tag owasp:llm01 印证)
 ATLAS: AML.T0015 Evade AI Model（同映射表 P021/P177 行, 编号 2026-10-01 联网复核）
 """
@@ -60,28 +63,30 @@ for r in _RULES_P260:
 
 _ZW = r"\u200b\u200c\u200d\ufeff\u2060\u180e\u200e\u200f\u202a-\u202e\u2066-\u2069"
 
-# 子1: 零宽/bidi — 5+连续(ATR-00002 L2 阈值) 或 词内插入"ignore"(ATR-00001 L13)
+# 子1: 零宽/bidi — 5+连续(ATR-00002 L2 阈值) 或 词内插入"ignore"(ATR-20001 L13)
 _SUB_ZW = re.compile(
     rf"(?:[{_ZW}]{{5,}}|i[{_ZW}]+g[{_ZW}]*n[{_ZW}]*o[{_ZW}]*r[{_ZW}]*e)",
     re.IGNORECASE,
 )
-# 子2: 已知 base64 片段有限集(ATR-00001 L11, 长片段优先避免前缀遮蔽)
+# 子2: 已知 base64 片段有限集(ATR-2026-00001 L11, 长片段优先避免前缀遮蔽)
 _SUB_B64_FRAG = re.compile(
     r"(?:aWdub3JlIGFsbCBwcmV2aW91cw|aWdub3JlIHByZXZpb3Vz|c3lzdGVtIHByb21wdA"
     r"|aWdub3Jl|ZGlzcmVnYXJk|b3ZlcnJpZGU|Zm9yZ2V0|YnlwYXNz)"
 )
-# 子3: base64/hex 长串 + 解码指令共现(ATR-00001 L10, 冒号必选=精度)
+# 子3: base64/hex 长串 + 解码指令共现(ATR-2026-00001 L10, 冒号必选=精度)
 _SUB_B64_DECODE = re.compile(
     r"(?:decode|interpret|execute|run|process|follow|read)\s+(?:this|the\s+following)?\s*"
     r"[:：]\s*[A-Za-z0-9+/]{20,}={0,2}",
     re.IGNORECASE,
 )
-# 子4: 同形异码 西里尔/Greek 混入注入关键词骨架(ATR-00001 L12)
+# 子4: 同形异码 西里尔/Greek 混入注入关键词骨架(ATR-2026-00001 L12;
+# IGNORECASE 覆盖大写拉丁骨架如大写YSTEM形态 — 代码审查MINOR#1)
 _SUB_HOMOGLYPH = re.compile(
     r"[\u0400-\u04FF\u0370-\u03FF]+(gn[\u0400-\u04FF\u0370-\u03FF]re"
-    r"|verr[\u0400-\u04FF\u0370-\u03FF]de|ystem)"
+    r"|verr[\u0400-\u04FF\u0370-\u03FF]de|ystem)",
+    re.IGNORECASE,
 )
-# 子5: hex/URL 百分号编码注入关键词有限集(ATR-00001 L14)
+# 子5: hex/URL 百分号编码注入关键词有限集(ATR-2026-00001 L14)
 _SUB_HEX_URL = re.compile(
     r"(?:%69%67%6[eE]%6[fF]%72%65|%64%69%73%72%65%67%61%72%64"
     r"|%6[fF]%76%65%72%72%69%64%65|\\x69\\x67\\x6e\\x6f\\x72\\x65)",

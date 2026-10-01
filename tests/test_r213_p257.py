@@ -96,7 +96,7 @@ class TestR213P257Baseline:
         text = (_CLEAN_DIR / "clean58_r213_rag_boundary_en.md").read_text(encoding="utf-8")
         assert _lint(text, "clean58").findings == []
 
-    def test_rule_count_257(self):
+    def test_rule_count(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
         assert len(get_all_rules()) == 260

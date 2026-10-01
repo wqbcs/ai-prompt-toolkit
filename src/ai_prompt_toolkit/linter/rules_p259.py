@@ -34,7 +34,7 @@ _RULES_P259 = [
         "security",
         Severity.HIGH,
         "Prompt含'身份重赋值'与'前约束作废'共现(越狱复合面) — 单独'你是X'是合法高频句不检, 复合共现才是信号",
-        "移除身份重赋值+约束作废的共现表述; 规则更新场景请分句表述(新角色定义与旧规则废止分开声明)",
+        "移除身份重赋值+约束作废的共现表述; 规则更新请改写旧规则废止声明避开检测动词集(作废/无效/废除/取消/解除/失效/废弃) — 仅分句表述不清除本规则",
         description_en=(
             "Prompt contains co-occurring identity reassignment ('you are now a new assistant') "
             "and prior-constraint voiding ('previous constraints are void') — a jailbreak "
@@ -42,7 +42,8 @@ _RULES_P259 = [
         ),
         remediation_en=(
             "Remove the co-occurring identity reassignment + constraint voiding; for legitimate "
-            "rule updates, declare the new role and the old-rule retirement in separate sentences"
+            "rule updates, rewrite the old-rule retirement wording to avoid the detected verb set "
+            "(void/invalid/nullified/cancelled/removed) — separate sentences alone do not clear this rule"
         ),
         family="jailbreak_surface",
         owasp_refs=["LLM01"],
@@ -52,10 +53,12 @@ _RULES_P259 = [
 for r in _RULES_P259:
     _RULE_MAP[r.rule_id] = r
 
-# 身份重赋值面(zh/en/ja — ATR-2026-00097 + ATR-2026-00001 L2a 词面)
+# 身份重赋值面(zh/en/ja — ATR-2026-00097 + ATR-2026-00001 L2a 词面;
+# IGNORECASE 覆盖中日混排小写"ai"(CJK 无大小写不受影响) — 代码审查MINOR#3)
 _IDENTITY_ZH = re.compile(
     r"(?:你现在是|你現在是|你已经是|你已經是|你变成|你變成|你成为了|你成為了|你是)"
-    r".{0,10}(?:全新的|新的|另一个|另一個|不同的)?\s*(?:助手|助理|AI|机器人|機器人|客服|模型|系统|系統)"
+    r".{0,10}(?:全新的|新的|另一个|另一個|不同的)?\s*(?:助手|助理|AI|机器人|機器人|客服|模型|系统|系統)",
+    re.IGNORECASE,
 )
 _IDENTITY_EN = re.compile(
     r"(?:you\s+are\s+now|you\s+have\s+become|now\s+you\s+are|you\s+will\s+be)"
@@ -65,7 +68,8 @@ _IDENTITY_EN = re.compile(
 )
 _IDENTITY_JA = re.compile(
     r"(?:あなたは今から|これからあなたは|今からあなたは|あなたはもう)"
-    r".{0,15}(?:別の|新しい|違う).{0,10}(?:アシスタント|助手|AI|ボット|モデル|システム)"
+    r".{0,15}(?:別の|新しい|違う).{0,10}(?:アシスタント|助手|AI|ボット|モデル|システム)",
+    re.IGNORECASE,
 )
 
 # 前约束作废面(zh/en/ja — 支持"之前所有的约束和限制规则"连词/的/重复名词形态)

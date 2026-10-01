@@ -12,7 +12,7 @@
         # 已知否定盲区(4条, 见基线文档)不计入分母, 阈值收紧
 
 设计:
-- 样本: tests/fixtures/golden_attacks.json (52条, 每条标注expected规则集 +
+- 样本: tests/fixtures/golden_attacks.json (73条, 每条标注expected规则集 +
   BCP-47 lang标签(R214-B1), 分语言漏检率机械派生, 无新启发式)
 - 判定: expected规则未命中=漏检一次; expected之外的命中不算(规则间交叉命中常态)
 - 已知盲区: 探针带 note='已知否定盲区' 前缀时, 其漏检计入blindspot计数
