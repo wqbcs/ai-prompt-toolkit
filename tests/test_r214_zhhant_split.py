@@ -12,8 +12,6 @@ from __future__ import annotations
 import json
 import pathlib
 
-import pytest
-
 _FIXDIR = pathlib.Path(__file__).parent / "fixtures"
 _CLEAN_DIR = _FIXDIR / "clean_prompts"
 
