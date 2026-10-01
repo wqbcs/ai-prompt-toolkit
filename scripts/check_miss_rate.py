@@ -12,7 +12,8 @@
         # 已知否定盲区(4条, 见基线文档)不计入分母, 阈值收紧
 
 设计:
-- 样本: tests/fixtures/golden_attacks.json (41条, 每条标注expected规则集)
+- 样本: tests/fixtures/golden_attacks.json (42条, 每条标注expected规则集 +
+  BCP-47 lang标签(R214-B1), 分语言漏检率机械派生, 无新启发式)
 - 判定: expected规则未命中=漏检一次; expected之外的命中不算(规则间交叉命中常态)
 - 已知盲区: 探针带 note='已知否定盲区' 前缀时, 其漏检计入blindspot计数
   (单列展示, 默认计入全局分母 — 盲区是真实漏检, 不应被藏起来)
@@ -52,6 +53,7 @@ def run(ignore_blindspots: bool = False) -> dict:
     zero_detect_rules: set[str] = set()
     rules_with_expected: set[str] = set()
     per_probe_miss: list[dict] = []
+    per_lang: dict[str, dict[str, int]] = {}  # R214-B1: 分语言漏检面
 
     for p in probes:
         is_blind = p.get("note", "").startswith(BLINDSPOT_PREFIX)
@@ -60,14 +62,18 @@ def run(ignore_blindspots: bool = False) -> dict:
         r = lint_template(p["name"], p["text"], apply_waivers=False)
         got = {f.rule_id for f in r.findings}
         missed: list[str] = []
+        lang = p.get("lang", "unknown")
         for exp in p["expected"]:
             total_expected += 1
             rules_with_expected.add(exp)
             slot = per_rule.setdefault(exp, {"expected": 0, "miss": 0})
             slot["expected"] += 1
+            lslot = per_lang.setdefault(lang, {"expected": 0, "miss": 0})
+            lslot["expected"] += 1
             if exp not in got:
                 total_miss += 1
                 slot["miss"] += 1
+                lslot["miss"] += 1
                 missed.append(exp)
                 if is_blind:
                     blindspot_miss += 1
@@ -105,6 +111,14 @@ def run(ignore_blindspots: bool = False) -> dict:
         "threshold": THRESHOLD,
         "high_miss_rules": [r for r in results if r["exceeds_threshold"]],
         "zero_detect_rules": sorted(zero_detect_rules),
+        "per_language": {
+            k: {
+                "expected": v["expected"],
+                "missed": v["miss"],
+                "miss_rate": round(v["miss"] / v["expected"], 4) if v["expected"] else 0.0,
+            }
+            for k, v in sorted(per_lang.items())
+        },
         "per_probe_miss": per_probe_miss,
         "results": sorted(results, key=lambda r: (-r["missed"], r["rule_id"])),
     }
@@ -129,6 +143,8 @@ def main() -> None:
         print(f"高漏检规则(>{report['threshold']:.0%}): {len(report['high_miss_rules'])} 条")
         for r in report["high_miss_rules"][:15]:
             print(f"  {r['rule_id']}: {r['missed']}/{r['expected']} = {r['miss_rate']:.0%}")
+        for lang, v in report["per_language"].items():
+            print(f"  语言[{lang}]: {v['missed']}/{v['expected']} = {v['miss_rate']:.2%}")
         if report["zero_detect_rules"]:
             print(f"零检出规则(有expected但全漏): {', '.join(report['zero_detect_rules'])}")
 

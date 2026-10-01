@@ -85,8 +85,10 @@ for r in _RULES_P241_P245:
 
 # R213-B5: race 加词边界 — 裸 "race" 子串误配 "trace"(观测日志词), P241/P243 对
 # 含 trace 的英文 prompt 恒触发(子串盲区, 与R206 "fact⊂refactor" 同类问题)
+# R214-B1: name 同样加词边界 — 裸 "name" 子串误配 "namespace"/"rename"/"filename"
+# (代码常见词, R213审查发现, 与 race 同型)
 _PERSONAL_DATA_PATTERN = re.compile(
-    r"(?:姓名|name|地址|address|身份证|ID.card|护照|passport|手机号|phone|邮箱|email|健康|health|医疗|medical|种族|\brace\b|宗教|religion|政治|politic|生物特征|biometric)",
+    r"(?:姓名|\bname\b|地址|address|身份证|ID.card|护照|passport|手机号|phone|邮箱|email|健康|health|医疗|medical|种族|\brace\b|宗教|religion|政治|politic|生物特征|biometric)",
     re.IGNORECASE,
 )
 _MINIMIZE_PATTERN = re.compile(
