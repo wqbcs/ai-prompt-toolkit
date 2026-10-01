@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "github": {
+      "url": "https://mcp.github.com/v1/sse",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      },
+      "description": "提供仓库搜索与 Issue 读取能力。"
+    }
+  }
+}

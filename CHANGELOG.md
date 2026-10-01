@@ -2,6 +2,44 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.29.0] - 2026-10-01
+
+### Added (R213 批次B1: 否定盲区4条修复 — 最高危安全欠账清零)
+
+- R213-P0-1 否定盲区根治: `rules.strip_negated_decl` 通用否定前缀剥离
+  (R206 `_strip_negated_data` 通用化, 声明词串含连续DECL词 — "without any
+  audit log" 整体剥离防残留)。P161/P222/P244/P245 的 DECL 匹配前先剥离 —
+  "无转义/无需审计/不留任何记录/无合规评估"类明确放弃防护的攻击由全放行转命中
+- 双基线: 漏检 9.52%→0.00% (4/42→0/42), 误报 0.96% 持平, 高漏检 4→0, 零检出 3→0
+- 漏检棘轮 CI 0.10→0.05 落地(兑现 R212-B 文档承诺); 回归 test_r213_negation_blindspot.py(7)
+
+### Added (R213 批次B2: 内联规则豁免 waiver — 6竞对5家有的体验对齐)
+
+- 两种文件级豁免语法: `<!-- promptlint:ignore P107,P110 -->` / frontmatter
+  `lint-ignore: [P119]`; 通配符/非法/未注册ID一律忽略(fail safe)
+- 审计: LintResult.waived_rules/waived_finding_count 只报实际生效的豁免;
+  CLI `--fail-on-waiver` 严格门禁(任何豁免生效即退出码2)
+- 回归 test_r213_waiver.py(18)
+
+### Added (R213 批次B3: MCP配置安全扫描 — 2026新攻击面占位)
+
+- 新命令 `prompt-cli mcp-lint`: 配置级7项检查(MCP-101 http明文端点/MCP-102
+  硬编码凭据/MCP-103 通配权限/MCP-104 免审批/MCP-105 宿主凭据透传/MCP-106
+  未固定版本/MCP-107 链式路由, 语义借鉴PromptSonar MCP规则族) + tool
+  description 走 security 族既有规则(实测收窄: 结构/RAG类对单行文本品类错配,
+  误报纪律优先) + Risk Score 0-100四档(与quality_score同权重表机械派生, 无新公式)
+- 红线: 不做MCP客户端/运行时执行路径/协议层; 通用${API_KEY}引用是官方推荐模式不告警
+- fixture 10个(2安全+8高危) + 回归 test_r213_mcp_lint.py(23)
+
+### Changed (R213 批次B1: 仓库卫生 — L3欠账清账)
+
+- README 12处口径漂移修正; sync_readme_metrics 扩展正文口径检查(漂移即CI失败)
+- doctor 规则数硬编码 55/30+ → 动态; 根目录84项历史文档 git mv 归档
+  docs/archive/iterations/; L3_unknown 8项销账
+
+验证: 全量 5788 passed (+51) / ruff 全绿 / mypy 棘轮 0 / 误报 0.96% / 漏检 0.00%
+版本口径: 代码/CHANGELOG/pip/徽章 67.29.0 一致
+
 ## [v67.28.0] - 2026-09-29
 
 ### Added (R212 批次A: 第一触点修复 + 口径根治 + P256模板变量完整性)

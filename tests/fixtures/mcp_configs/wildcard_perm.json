@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "tools": {
+      "command": "node",
+      "args": ["s.js"],
+      "permissions": ["*"],
+      "description": "通用工具服务器。"
+    }
+  }
+}

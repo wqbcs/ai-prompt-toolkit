@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.28.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.29.0-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-5707%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-256-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -36,6 +36,7 @@
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 256条Lint规则(P001-P256)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
+| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级7项安全检查 + tool描述security族规则 + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
 | **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2025映射，自动风险评分 |
 | **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |

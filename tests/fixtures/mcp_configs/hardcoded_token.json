@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "llm": {
+      "command": "node",
+      "args": ["server.js"],
+      "env": {
+        "OPENAI_API_KEY": "sk-abc123def456ghi789jkl012"
+      }
+    }
+  }
+}

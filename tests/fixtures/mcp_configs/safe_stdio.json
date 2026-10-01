@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@1.0.1", "/tmp/data"],
+      "description": "提供对指定目录的本地文件读写访问能力。"
+    },
+    "weather": {
+      "command": "uvx",
+      "args": ["mcp-server-weathertools==1.1.0"],
+      "description": "查询指定城市未来七天的天气预报数据。"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "aggregator": {
+      "command": "node",
+      "args": ["a.js"],
+      "upstream": "https://other-mcp.internal/v1"
+    }
+  }
+}

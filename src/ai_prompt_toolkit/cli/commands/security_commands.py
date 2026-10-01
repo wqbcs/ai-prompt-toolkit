@@ -283,3 +283,97 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     # R199: click.Choice返回str, 收窄为Theme字面量
     generate_scorecard_badge_file(scorecard, output, compact=compact, theme=cast("Theme", theme))
     success(f"评分徽章已生成到 {output} (评分: {scorecard.overall_score}/100 {scorecard.grade.value})")
+
+
+@main.command(name="mcp-lint")
+@click.option("--target", "-t", required=True, help="MCP配置文件或目录(目录自动发现含mcpServers/servers的.json)")
+@click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
+@click.option("--output", "-o", help="JSON报告输出路径")
+@click.option(
+    "--fail-on",
+    "fail_on",
+    type=click.Choice(["critical", "high"]),
+    default=None,
+    help="CI门禁: 该级别及以上finding>0时退出码2",
+)
+def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None) -> None:
+    """MCP配置安全扫描：配置级7项检查 + tool描述走security族Lint规则 + Risk Score(R213)"""
+    import json as _json
+
+    from ai_prompt_toolkit.security.mcp_config_scanner import (
+        compute_risk_score,
+        discover_mcp_configs,
+        scan_mcp_config,
+    )
+
+    files = discover_mcp_configs(target)
+    if not files:
+        click.echo(f"错误: 未发现MCP配置文件 — {target}", err=True)
+        sys.exit(3)
+
+    file_reports: list[dict] = []
+    parse_errors = 0
+    for f in files:
+        try:
+            findings = scan_mcp_config(f.read_text(encoding="utf-8"), source=f.name)
+        except _json.JSONDecodeError as e:
+            parse_errors += 1
+            click.echo(f"⚠ {f.name}: JSON解析失败({e.msg}), 已跳过", err=True)
+            continue
+        score, band = compute_risk_score(findings)
+        file_reports.append(
+            {
+                "path": str(f),
+                "risk_score": score,
+                "risk_band": band,
+                "finding_count": len(findings),
+                "findings": [x.to_dict() for x in findings],
+            }
+        )
+
+    all_findings = [x for r in file_reports for x in r["findings"]]
+    total = len(all_findings)
+
+    if fmt == "json":
+        click.echo(
+            _json.dumps(
+                {"total_files": len(file_reports), "parse_errors": parse_errors, "total_findings": total, "files": file_reports},
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+    else:
+        for r in file_reports:
+            icon = {"LOW": "🟢", "MEDIUM": "🟡", "HIGH": "🟠", "CRITICAL": "🔴"}.get(r["risk_band"], "⚪")
+            click.echo(f"{icon} {r['path']} | Risk {r['risk_score']}/100 ({r['risk_band']}) | {r['finding_count']} 处")
+            for x in r["findings"]:
+                marker = "✗" if x["severity"] in ("critical", "high") else "⚠"
+                click.echo(f"  {marker} [{x['rule_id']}] {x['description']}")
+        click.echo(f"\n共 {len(file_reports)} 个配置文件, {total} 处发现, {parse_errors} 个解析失败")
+
+    if output:
+        Path(output).write_text(
+            _json.dumps(
+                {"total_files": len(file_reports), "parse_errors": parse_errors, "total_findings": total, "files": file_reports},
+                ensure_ascii=False,
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        click.echo(f"报告: {output}")
+
+    if fail_on:
+        rank = {"critical": 0, "high": 1}
+        # 低于门禁阈值的级别(medium/low/info)不构成breach — 用99兜底防KeyError
+        breach = [x for x in all_findings if rank.get(x["severity"], 99) <= rank[fail_on]]
+        if breach:
+            click.echo(f"MCP门禁: ❌ FAIL | {fail_on}及以上 {len(breach)} 处")
+            sys.exit(2)
+        click.echo(f"MCP门禁: ✅ PASS | {fail_on}及以上 0 处")
+        sys.exit(3 if parse_errors else 0)
+
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code
+
+    sevs = {x["severity"] for x in all_findings}
+    error_severity = "critical" if "critical" in sevs else "high" if "high" in sevs else "medium" if "medium" in sevs else ("low" if sevs else None)
+    sys.exit(determine_exit_code(has_errors=parse_errors > 0, has_findings=total > 0, error_severity=error_severity))

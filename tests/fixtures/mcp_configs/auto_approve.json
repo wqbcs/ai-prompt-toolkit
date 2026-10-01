@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "auto": {
+      "command": "node",
+      "args": ["s.js"],
+      "autoApprove": true
+    }
+  }
+}

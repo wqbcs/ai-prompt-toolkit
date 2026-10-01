@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "git": {
+      "command": "git-mcp",
+      "env": {
+        "SSH_AUTH_SOCK": "/run/user/1000/ssh-agent"
+      }
+    }
+  }
+}
