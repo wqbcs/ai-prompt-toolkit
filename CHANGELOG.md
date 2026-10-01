@@ -24,6 +24,46 @@
 
 验证: 全量 5707 passed / ruff 全绿 / mypy 棘轮 0 / 误报 1.35% / 版本口径一致
 
+### Added (R212 批次B: 双基线对称可信度 — 漏检率基线首版 + probes口径统一)
+
+- R212-3 漏检率基线(度量先行, 本轮不改任何规则): 聚合 `tests/fixtures/golden_attacks.json`
+  (41条攻击探针/42个期望命中单元, 覆盖注入/越狱/编码/密钥/PII/结构/供应链/合规/
+  多模态/RAG/Agent/治理12类) + `scripts/check_miss_rate.py` + `docs/规则漏检率基线.md`。
+  首版全局漏检率 **9.52%** (阈值10%); 排除已知盲区后 **0/38 = 0%** — 对称证明
+  R211五轮误报收窄没有削减真阳性(误报基线抓不到, 漏检基线能)
+- 定位4条已知否定盲区(同一系统性根因): 规则用"文本含安全词(转义/审计/合规/记录)"
+  判定"已有防护", 攻击prompt恰好用否定形式("无转义"/"无需审计"/"无合规评估"/
+  "不留任何记录")声明**没有**防护 — P161/P222/P244/P245。R213以否定前缀剥离修复
+  (复用R206 `_strip_negated_data` 现成组件)
+- R212-7 probes口径统一: 展示口径统一到 `redteam.registry.get_global_probe_registry()`
+  (116), `BaseProbe.__subclasses__()`(94)标注弃用口径, `probe_framework._PROBE_REGISTRY`
+  (23, ProbeRunner兼容探针)归属在漏检基线文档中声明
+
+验证: 漏检脚本可复现 / 棘轮 exit=0 / 全量回归不变
+
+### Added (R212 批次C: 四维健康分 + 误报Top7清零 + lint成本预估)
+
+- R212-5 四维健康分 (Security/Quality/Completeness/Cost, A–F 总评级): 全部机械派生
+  自现有组件(scorecard扣分制 / lint_score / `_STRUCTURE_RULE_IDS` /
+  token_analyzer×pricing), 零新启发式零手调权重; 总评级=四维最低档(短板决定,
+  不平均); `score --format json` 只增 health 字段, 旧消费者不受影响。
+  参考 promptlint 四维设计(思路复用, 非代码复用)
+- R212-6 误报第六批处置 — **Top7高误报全部清零**: P107条件收窄+异常声明扩面 /
+  P119能力承诺声明门(纯长度门误报根治) / P038-P040多模态输入收窄(移除裸文件/file,
+  媒体词加词边界) / P110链式信号分强弱+工具语境门 / P036-P037 RAG语境门(同P035) /
+  P109移除裸"文档"。全局误报率 **1.35%→0.96%**, 高误报(>10%)规则 **7→0**
+- R212-8 lint成本预估 (INFO级, 不产生finding不进门禁): 复用 token_analyzer×pricing,
+  1k/1M调用两档投影, 定价数据缺失优雅降级(仅显token数)
+- 双基线CI棘轮: prompt-ci.yml 挂载 `check_false_positives.py --fail-above 0.01` +
+  `check_miss_rate.py --fail-above 0.10` (只降不升, R213盲区修复后漏检阈值收紧0.05)
+- 测试: +test_r212_false_positive_fix.py (22条: 9规则×56干净样本0命中断言 +
+  正样本保留 + R211定位根因样本复核), +test_r212_health_score.py (8条: 等级边界/
+  成本档位/短板决定/CLI JSON向后兼容)
+- 文档: docs/规则误报率基线.md 增R212列 (0.96%, 高误报0/256)
+
+验证: 全量 5737 passed / ruff 全绿 / mypy 棘轮 0 / 误报 0.96%(高误报0条) /
+漏检 9.52%(4盲区已定位)
+
 ## [v67.27.0] - 2026-09-29
 
 ### Fixed (R211: 误报第五批 — Top9高误报规则处置, 全局 2.04%→1.35%)

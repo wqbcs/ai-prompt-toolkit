@@ -361,9 +361,21 @@ def check_p106(text: str) -> Finding | None:
     )
 
 
-_CONDITION_PATTERN = re.compile(r"(?:如果|假如|当|假设|if|when|假设|条件|否则|else|otherwise)", re.IGNORECASE)
+# R212-6: 条件触发收窄 — 原pattern含裸"当/条件/when/if"无词边界:
+# "when multiple options exist"(SQL)/"diff"/"identify"子串误触发,
+# "条件"是SQL领域词(触发条件/条件句式)。真条件分支=如果/假如/假设(非否定)/
+# if|else|otherwise(独立词)。"假设"前4字含否定词(不/别/勿假设)是约束声明非分支。
+_CONDITION_PATTERN = re.compile(
+    r"(?:如果|假如|若|\bif\b|\belif\b|否则|\belse\b|\botherwise\b|(?<![不别勿])假设)", re.IGNORECASE
+)
+# R212-6: 异常处理声明扩面 — 真异常分支不只"失败/错误":
+# "如果不确定→引导联系人工"(客服)/"if not contain→I don't know"(RAG)/
+# "不假设未给出的表结构"(SQL保守声明) 都是边界处理逻辑。
 _EXCEPTION_PATTERN = re.compile(
-    r"(?:异常|错误|失败|超时|exception|error|fail|timeout|fallback|回退|兜底)", re.IGNORECASE
+    r"(?:异常|错误|失败|超时|exception|error|fail|timeout|fallback|回退|兜底"
+    r"|不确定|无法|未包含|不包含|未找到|不假设|不要假设"
+    r"|联系|人工|not\s+cover|no\s+information|don'?t\s+know|I\s+don'?t\s+know|cannot)",
+    re.IGNORECASE,
 )
 
 
@@ -417,11 +429,14 @@ def check_p108(text: str) -> Finding | None:
     )
 
 
+# R212-6: 移除裸"文档" — 技术文档/PRD/白皮书/翻译类prompt的"文档"即误触发
+# (5样本)。真实RAG面=检索/上下文/知识库/向量等检索语义词, 与"写文档"无关。
 _RAG_PATTERN = re.compile(
-    r"(?:上下文|检索|知识库|文档|context|retriev|knowledge.?base|RAG|rag|检索增强|向量|embedding)", re.IGNORECASE
+    r"(?:上下文|检索|知识库|context|retriev|knowledge.?base|RAG|rag|检索增强|向量|embedding)", re.IGNORECASE
 )
 _RAG_DECL = re.compile(
-    r"(?:信息不足|来源.*标注|置信度|引用|citation|confidence|source.*annotat|retriev.*augment)", re.IGNORECASE
+    r"(?:信息不足|来源.*标注|置信度|引用|citation|cite\b|confidence|source.*annotat|retriev.*augment)",
+    re.IGNORECASE,
 )
 
 
@@ -439,17 +454,30 @@ def check_p109(text: str) -> Finding | None:
     )
 
 
-_TOOL_CHAIN_PATTERN = re.compile(
-    r"(?:步骤|流程|依次|先.*后|首先.*然后|step|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE
+# R212-6: 链式信号分强弱。强信号=显式步骤编排(首先…然后/依次/pipeline/chain/
+# workflow)直指多步工具调用; 弱信号(步骤/流程/step)在数据分析/迁移/日志/
+# 写作类prompt中是通用流程词(6样本零工具词误报), 须与工具语境组合才构成
+# 工具链缺恢复的面。
+_TOOL_CHAIN_STRONG = re.compile(
+    r"(?:首先.*然后|依次|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE
+)
+_TOOL_CHAIN_WEAK = re.compile(r"(?:步骤|流程|先.*后|step)", re.IGNORECASE)
+# 工具语境: 显式工具/函数/API/MCP调用面(区别于通用流程词)
+_TOOL_CTX = re.compile(
+    r"(?:工具|函数|API|接口|插件|tool|function|plugin|MCP|调用.{0,4}(?:工具|API|函数|接口))", re.IGNORECASE
 )
 _TOOL_DECL = re.compile(
-    r"(?:超时|timeout|错误恢复|error.?recovery|fallback|回退|依赖|dependency|调用顺序|call.?order)", re.IGNORECASE
+    r"(?:超时|timeout|错误恢复|error.?recovery|fallback|回退|依赖|dependency|调用顺序|call.?order"
+    r"|重试|retry)",
+    re.IGNORECASE
 )
 
 
 def check_p110(text: str) -> Finding | None:
     rule = _RULE_MAP["P110"]
-    if not _TOOL_CHAIN_PATTERN.search(text):
+    strong = _TOOL_CHAIN_STRONG.search(text)
+    weak = _TOOL_CHAIN_WEAK.search(text)
+    if not (strong or (weak and _TOOL_CTX.search(text))):
         return None
     if _TOOL_DECL.search(text):
         return None

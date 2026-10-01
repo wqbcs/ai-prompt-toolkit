@@ -346,10 +346,23 @@ _LIMITATION_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R212-6: 能力声明触发门 — 原实现纯长度门(len≥300即查), SQL/模板/日志/
+# 检查单类长prompt全误报(8样本)。本规则真实检测面=对能力做过度承诺的声明
+# ("全能/回答任何…/保证/100%"), 无承诺声明的长prompt不构成过高期望风险
+# (同R210 P083/P118"长度门+域门"治法)。
+_CAPABILITY_CLAIM = re.compile(
+    r"(?:全能|万能|无所不能|回答任何|任何领域|任何情况|任何问题|任何挑战|任何任务|任何需求|任何用户"
+    r"|保证|绝对|百分之百|100%|最专业|最强|最权威|最准确"
+    r"|any\s+question|any\s+domain|any\s+task|anything|never\s+wrong|flawless|infallible|guarantee)",
+    re.IGNORECASE,
+)
+
 
 def check_p119(text: str) -> Finding | None:
     rule = _RULE_MAP["P119"]
     if len(text) < 300:
+        return None
+    if not _CAPABILITY_CLAIM.search(text):
         return None
     if _LIMITATION_DECL.search(text):
         return None

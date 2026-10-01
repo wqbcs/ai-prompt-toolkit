@@ -170,6 +170,12 @@ _RAG_HALLUCINATION_PATTERNS = [
         re.IGNORECASE,
     ),
     re.compile(r"(?:如果.*不包含|如果.*未找到|if.*not\s+(?:found|contain|include))", re.IGNORECASE),
+    # R212-6: 真RAG样本的"资料缺失声明"措辞(clean32「资料中没有相关信息」/
+    # clean38「if the context does not cover」) — 未覆盖/没有相关信息即幻觉兜底
+    re.compile(
+        r"(?:未覆盖|没有相关信息|无相关|资料中没有|not\s+cover|no\s+information|does\s+not\s+cover)",
+        re.IGNORECASE,
+    ),
 ]
 
 _RAG_CITATION_PATTERNS = [
@@ -177,9 +183,25 @@ _RAG_CITATION_PATTERNS = [
     re.compile(r"(?:段落|编号|出处|paragraph|number|origin)", re.IGNORECASE),
 ]
 
+# R212-6: RAG语境门 — 与P035(R180)同构。裸"查询/query/搜索"触发使SQL/业务
+# 查询prompt误判为RAG面(clean06/34/48/41各1条误报)。真实RAG检索面=检索引擎/
+# 知识库/向量库等组合证据, 纯SQL查询不构成。
+_RAG_CTX_GATE = re.compile(
+    r"(?:检索|RAG|知识库|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
+    r"(?:search|query).{0,10}(?:engine|index))",
+    re.IGNORECASE,
+)
+
 _MULTIMODAL_INPUT_PATTERNS = [
-    re.compile(r"(?:图片|图像|音频|视频|照片|image|audio|video|photo|picture|media)", re.IGNORECASE),
-    re.compile(r"(?:上传|附件|文件|upload|attachment|file|attach)", re.IGNORECASE),
+    # R212-6: 英文媒体词加词边界 — "imageUrl"/"filename"等标识符子串不是
+    # 多模态输入(clean52 React组件误报根因); 中文词无边界问题保持原样。
+    re.compile(
+        r"(?:图片|图像|音频|视频|照片|\bimage\b|\baudio\b|\bvideo\b|\bphoto\b|\bpicture\b|\bmedia\b)",
+        re.IGNORECASE,
+    ),
+    # R212-6: 移除裸"文件/file/attach" — 代码审查/配置类prompt的"diff文件"
+    # 即误触发(7样本7条误报)。真实多模态输入=媒体词或显式上传/附件语境。
+    re.compile(r"(?:上传|附件|upload|attachment)", re.IGNORECASE),
 ]
 
 _MULTIMODAL_VALIDATION_PATTERNS = [
@@ -287,10 +309,8 @@ def check_p035(text: str) -> Finding | None:
 
 def check_p036(text: str) -> Finding | None:
     rule = _RULE_MAP["P036"]
-    has_retrieval = bool(
-        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
-    )
-    if not has_retrieval:
+    # R212-6: RAG语境门(同P035/R180) — 裸"查询/query"是SQL/业务词汇, 不构成检索面
+    if not _RAG_CTX_GATE.search(text):
         return None
     has_hallucination_check = any(p.search(text) for p in _RAG_HALLUCINATION_PATTERNS)
     if has_hallucination_check:
@@ -302,10 +322,8 @@ def check_p036(text: str) -> Finding | None:
 
 def check_p037(text: str) -> Finding | None:
     rule = _RULE_MAP["P037"]
-    has_retrieval = bool(
-        re.search(r"(?:检索|搜索|查询|retriev|search|query|RAG|知识库|knowledge\s+base)", text, re.IGNORECASE)
-    )
-    if not has_retrieval:
+    # R212-6: RAG语境门(同P035/R180)
+    if not _RAG_CTX_GATE.search(text):
         return None
     has_citation = any(p.search(text) for p in _RAG_CITATION_PATTERNS)
     if has_citation:
@@ -317,6 +335,9 @@ def check_p037(text: str) -> Finding | None:
 
 def check_p038(text: str) -> Finding | None:
     rule = _RULE_MAP["P038"]
+    # R212-6: 触发门收窄在INPUT侧(移除裸文件/file+媒体词加边界) — 已足够区分
+    # 真多模态与纯文本prompt。VALIDATION侧"类型/格式/大小"对真多模态prompt
+    # 正是正确校验(图片大小/格式限制), 不可再加媒体专词门(会误伤内置多模态模板)。
     has_multimodal = any(p.search(text) for p in _MULTIMODAL_INPUT_PATTERNS)
     if not has_multimodal:
         return None

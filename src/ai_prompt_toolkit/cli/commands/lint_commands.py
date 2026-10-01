@@ -343,6 +343,38 @@ def lint(
         f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings} | 质量分: {avg_quality:.1f}"
     )
 
+    # R212-8: lint时成本预估(INFO级, 不产生finding不进门禁) — 成本是用户第一直觉
+    # 指标。复用 token_analyzer×pricing(零新依赖), 按原始prompt文本估token×
+    # 默认模型定价, 投影1k/1M调用两档; 定价数据缺失时优雅降级(仅显示token数)。
+    if not ci_mode and not tui_mode and fmt != "json" and templates:
+        from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens
+        from ai_prompt_toolkit.pricing import get_catalog
+
+        _n_tok = 0
+        _sum_call = 0.0
+        _count = 0
+        for _tpl in templates:
+            try:
+                _t = _tpl.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            _est = analyze_prompt_tokens(_t, "default").estimate
+            _n_tok += _est.estimated_tokens
+            _sum_call += _est.estimated_input_cost_usd + _est.estimated_output_cost_usd
+            _count += 1
+        if _count > 0:
+            # 单文件: 该prompt单次成本; 多文件: 取均值(代表性单次调用成本)
+            _avg_tok = _n_tok // _count
+            _per_call = _sum_call / _count
+            _model_price = get_catalog().get_or_default("default")
+            if _model_price.input_cost_per_token > 0 or _model_price.output_cost_per_token > 0:
+                click.echo(
+                    f"成本预估 | ~{_avg_tok} tokens | "
+                    f"~${_per_call:.4f}/call | ~${_per_call * 1000:,.2f}/1k次 | ~${_per_call * 1_000_000:,.0f}/1M次"
+                )
+            else:
+                click.echo(f"成本预估 | ~{_avg_tok} tokens (定价数据缺失, 未计价)")
+
     # D3: 无高危发现时的下一步引导(CI模式已有PASS输出, 不重复; medium/info仍列出)
     has_blocking = any(
         getattr(f.severity, "value", str(f.severity)) in ("high", "critical") for r in all_results for f in r.findings

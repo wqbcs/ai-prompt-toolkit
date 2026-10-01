@@ -135,8 +135,16 @@ def score_cmd(target: str, fmt: str) -> None:
     all_findings = list(lint_findings) + sec_findings
     scorecard = compute_scorecard(all_findings, lint_score=lint_result.score if hasattr(lint_result, "score") else None)
 
+    # R212-5: 四维健康分(Security/Quality/Completeness/Cost, A–F) — 全部派生自
+    # 现有组件(scorecard扣分制/lint_score/结构规则命中/token_analyzer×pricing)
+    from ai_prompt_toolkit.security.health_score import compute_health_score
+
+    health = compute_health_score(all_findings, lint_result.score if hasattr(lint_result, "score") else None, text)
+
     if fmt == "json":
-        click.echo(_json.dumps(scorecard.to_dict(), ensure_ascii=False, indent=2))
+        payload = scorecard.to_dict()
+        payload["health"] = health  # 只增不改: 旧JSON消费者不受影响
+        click.echo(_json.dumps(payload, ensure_ascii=False, indent=2))
     else:
         grade_colors = {"A": "green", "B": "cyan", "C": "yellow", "D": "red", "F": "bold red"}
         gc = grade_colors.get(scorecard.grade.value, "white")
@@ -153,6 +161,19 @@ def score_cmd(target: str, fmt: str) -> None:
             filled = int(dim.ratio * bar_len)
             bar = "█" * filled + "░" * (bar_len - filled)
             console.print(f"  {dim.name:10s} [{bar}] {dim.earned}/{dim.max_points}")
+        console.print("\n  [bold]四维健康分 (R212-5, 短板决定总评级):[/bold]")
+        hc = grade_colors.get(health["overall_grade"], "white")
+        console.print(f"  总评级: [{hc}][bold]{health['overall_grade']}[/bold][/{hc}]")
+        _dim_zh = {"security": "安全", "quality": "质量", "completeness": "完整性", "cost": "成本"}
+        for key in ("security", "quality", "completeness", "cost"):
+            d = health[key]
+            dgc = grade_colors.get(d["grade"], "white")
+            extra = ""
+            if key == "cost":
+                extra = f" ({d['tokens']} tokens, ${d['cost_per_1k_calls_usd']:.4f}/1k次, {d['model']})"
+            if key == "completeness" and d.get("violated"):
+                extra = f" (违反: {', '.join(d['violated'])})"
+            console.print(f"  {_dim_zh[key]:4s} {d['score']:>3d}/100 [{dgc}]{d['grade']}[/{dgc}]{extra}")
 
     if scorecard.decision == Decision.BLOCK:
         sys.exit(2)
