@@ -74,7 +74,7 @@ class TestR213CleanSamplesUnaffected:
 
     def test_four_rules_zero_hits_on_clean_prompts(self):
         samples = _clean_samples()
-        assert len(samples) == 56, f"干净样本数应为56, 实际{len(samples)}"
+        assert len(samples) == 58  # R213-B5: 56→58 (clean57/58 RAG边界样本), f"干净样本数应为56, 实际{len(samples)}"
         hits: dict[str, list[str]] = {r: [] for r in ("P161", "P222", "P244", "P245")}
         for name, text in samples.items():
             result = lint_template(name, text)

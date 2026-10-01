@@ -27,7 +27,7 @@ class TestR208NegativeSamples:
 
     def test_all_rules_zero_hits_on_clean_prompts(self):
         samples = _clean_samples()
-        assert len(samples) == 56, f"干净样本数应为56, 实际{len(samples)}"
+        assert len(samples) == 58, f"干净样本数应为58, 实际{len(samples)}"
         hits: dict[str, list[str]] = {r: [] for r in _RULES}
         for name, text in samples.items():
             result = lint_template(name, text)

@@ -123,7 +123,7 @@ class TestR213WaiverCleanSamples:
 
     def test_parse_waivers_empty_on_all_clean_samples(self):
         samples = [p for p in sorted(_CLEAN_DIR.iterdir()) if p.is_file()]
-        assert len(samples) == 56
+        assert len(samples) == 58  # R213-B5: 56→58 (clean57/58 RAG边界样本)
         for p in samples:
             assert parse_waivers(p.read_text(encoding="utf-8")) == [], f"{p.name} 误触发waiver解析"
 

@@ -11,7 +11,7 @@ from ai_prompt_toolkit.linter.rules import get_all_rules
 class TestR112WatchOption:
     def test_rules_count_unchanged(self):
         rules = get_all_rules()
-        assert len(rules) == 256  # R164扩容后实际值
+        assert len(rules) == 257  # R164扩容后实际值
 
     def test_auto_fixable_stable(self):
         assert len(AUTO_FIXABLE_RULES) >= 156

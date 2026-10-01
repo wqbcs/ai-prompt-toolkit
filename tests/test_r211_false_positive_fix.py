@@ -34,7 +34,7 @@ class TestR211NegativeSamples:
 
     def test_zero_rules_zero_hits_on_clean_prompts(self):
         samples = _clean_samples()
-        assert len(samples) == 56, f"干净样本数应为56, 实际{len(samples)}"
+        assert len(samples) == 58, f"干净样本数应为58, 实际{len(samples)}"
         hits: dict[str, list[str]] = {r: [] for r in _ZERO_RULES}
         for name, text in samples.items():
             result = lint_template(name, text)
@@ -53,7 +53,7 @@ class TestR211NegativeSamples:
                 if f.rule_id in hits:
                     hits[f.rule_id].append(name)
         for rule, hit_names in hits.items():
-            assert len(hit_names) <= 2, f"{rule} 在干净样本上误报超标(>2/56=3.6%): {hit_names}"
+            assert len(hit_names) <= 2, f"{rule} 在干净样本上误报超标(>2/58=3.4%): {hit_names}"
 
 
 class TestR211PositiveSamples:

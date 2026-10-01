@@ -2,6 +2,32 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.30.0] - 2026-10-01
+
+### Added (R213 批次B5: P257 新规则 — 双基线流程下首条新规则, 未来新规则样板)
+
+- 新规则 P257 不可信内容边界声明缺失（MEDIUM, rag_security/rag_boundary）:
+  RAG 检索语境门（复用 `_RAG_CTX_GATE` 单一事实源）+ 无边界声明（显式不可信标注/
+  分隔符包裹/源约束语言三类放行面, clean32/38 基线形态不误伤）
+- 开源参考（思路复用非代码）: promptfoo indirect-prompt-injection / AWS 加盐标签 /
+  ContextHound INJ-002/003（"treat as data" 边界语言缺失 = 规则语义直接来源）
+- ATLAS 对标: AML.T0051.001 Indirect Prompt Injection（docs/mitre-atlas-mapping.md）
+- 全流程样板: clean 56→58（clean57中文/clean58英文, 均带边界声明; clean58=0-finding
+  参考样本）+ golden +1 探针（atk41, expected=P257）+ 规则数 256→257
+  （全部测试快照断言/README/doctor 动态口径同步）
+
+### Fixed (R213-B5 发现的真实 bug)
+
+- P241/P243 `_PERSONAL_DATA_PATTERN` 裸 `race` 子串误配 "trace"（观测日志词）—
+  含 trace 的英文 prompt 恒触发个人数据门（与 R206 "fact⊂refactor" 同类子串盲区）;
+  加 `\brace\b` 词边界
+
+### Changed
+
+- 双基线: FP 0.96%→0.93%（58样本×257 checker, 0.01棘轮守住）/
+  漏检 0.00%（43/43, 0.05棘轮守住）
+- 版本口径: 代码/CHANGELOG/pip/徽章 67.30.0 一致（check_version_consistency 门禁）
+
 ## [v67.29.0] - 2026-10-01
 
 ### Added (R213 批次B1: 否定盲区4条修复 — 最高危安全欠账清零)

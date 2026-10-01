@@ -10,7 +10,7 @@ from ai_prompt_toolkit.types import Severity
 class TestR111RuleCount:
     def test_total_rules_205(self):
         rules = get_all_rules()
-        assert len(rules) == 256
+        assert len(rules) == 257
 
     def test_auto_fixable_count(self):
         assert len(AUTO_FIXABLE_RULES) >= 156
