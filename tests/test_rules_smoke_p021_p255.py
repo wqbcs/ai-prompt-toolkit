@@ -28,7 +28,9 @@ def _checkers() -> list:
 
 
 CHECKERS = _checkers()
-EXPECTED_TOTAL = 260  # P001-P260全量checker均在扩展列表(基础20条+扩展240条; R212新增P256, R213新增P257, R215新增P258-P260)
+EXPECTED_TOTAL = (
+    260  # P001-P260全量checker均在扩展列表(基础20条+扩展240条; R212新增P256, R213新增P257, R215新增P258-P260)
+)
 
 
 def test_checker_inventory_complete():

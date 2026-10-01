@@ -179,7 +179,9 @@ def check_p179(text: str) -> list[Finding]:
         has_output = bool(re.search(r"(?:输出|output|返回|return|响应|response)", text, re.IGNORECASE))
         has_filter = bool(re.search(r"(?:过滤|filter|校验|validate|检查|check)", text, re.IGNORECASE))
         if has_output and not has_filter:
-            findings.append(Finding("P179", Severity.MEDIUM, "处理外部输入但输出未配置格式过滤, 存在格式劫持风险", "1", "1"))
+            findings.append(
+                Finding("P179", Severity.MEDIUM, "处理外部输入但输出未配置格式过滤, 存在格式劫持风险", "1", "1")
+            )
     return findings
 
 

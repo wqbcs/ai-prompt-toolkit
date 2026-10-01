@@ -89,15 +89,32 @@ _FAMILY_KEYWORDS = (
     frozenset(  # 1: 全角括号族
         k.casefold()
         for k in (
-            "系统", "管理员", "管理者", "システム", "SYSTEM", "ADMIN", "SYS",
-            "INSTRUCTION", "オーバーライド", "優先", "緊急",
+            "系统",
+            "管理员",
+            "管理者",
+            "システム",
+            "SYSTEM",
+            "ADMIN",
+            "SYS",
+            "INSTRUCTION",
+            "オーバーライド",
+            "優先",
+            "緊急",
         )
     ),
     frozenset(  # 2: 半角括号族
         k.casefold()
         for k in (
-            "SYSTEM", "INST", "INSTRUCTION", "SYS", "ADMIN", "ROOT", "OVERRIDE",
-            "CONTROL", "PRIORITY", "URGENT",
+            "SYSTEM",
+            "INST",
+            "INSTRUCTION",
+            "SYS",
+            "ADMIN",
+            "ROOT",
+            "OVERRIDE",
+            "CONTROL",
+            "PRIORITY",
+            "URGENT",
         )
     ),
     frozenset(k.casefold() for k in ("SYS", "SYSTEM", "INST")),  # 3: Llama族
@@ -145,7 +162,7 @@ def check_p258(text: str) -> Finding | None:
             continue
         if not _tag_keyword_match(inner, _FAMILY_KEYWORDS[li - 1]):
             continue
-        window = text[max(0, m.start() - _NEIGHBOR_RADIUS): m.end() + _NEIGHBOR_RADIUS]
+        window = text[max(0, m.start() - _NEIGHBOR_RADIUS) : m.end() + _NEIGHBOR_RADIUS]
         if not _EXAMPLE_DECL_RE.search(window):
             return Finding(
                 rule_id=rule.rule_id,

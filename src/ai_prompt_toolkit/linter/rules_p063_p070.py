@@ -123,9 +123,7 @@ _CONTEXT_LIMIT = re.compile(r"(?:最近.*轮|仅参考|截断|摘要|summar|trun
 
 # R208校准: 事实性判定收紧 — 原pattern含"数据"泛词, 任何数据处理prompt
 # 恒触发(8/32干净样本误报); "fact"子串误配"refactor"(无词边界)。
-_FACTUAL_PATTERN = re.compile(
-    r"(?:事实|统计|年份|知识|\bfact\w*|\bstatistic\w*)", re.IGNORECASE
-)
+_FACTUAL_PATTERN = re.compile(r"(?:事实|统计|年份|知识|\bfact\w*|\bstatistic\w*)", re.IGNORECASE)
 _CUTOFF_PATTERN = re.compile(
     r"(?:截止|截至|cutoff|knowledge\s+cut|截至.*月|更新至|as\s+of|仅依据|仅基于|only\s+based\s+on)", re.IGNORECASE
 )

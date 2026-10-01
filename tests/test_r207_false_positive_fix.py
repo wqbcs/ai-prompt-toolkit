@@ -110,6 +110,7 @@ class TestR207PositiveSamples:
         r = lint_template("r207_p181_neg", "version: 1.2.3\n你是一个生产环境部署的AI助手。")
         assert not any(f.rule_id == "P181" for f in r.findings)
 
+
 class TestR207RegistryUnification:
     """R207-3: 统一注册表 — 单点注册+稳定视图+冲突可见"""
 
@@ -193,9 +194,7 @@ class TestR207RiskScoring:
     def test_risk_score_bounds(self):
         from ai_prompt_toolkit.probe_framework import ProbeRunner
 
-        report = ProbeRunner(probe_names=["dan", "promptinject"]).run(
-            "r207_risk2", "处理用户输入的工具调用agent"
-        )
+        report = ProbeRunner(probe_names=["dan", "promptinject"]).run("r207_risk2", "处理用户输入的工具调用agent")
         assert 0.0 <= report.risk_score <= 10.0
 
     def test_risk_factors_in_to_dict(self):
@@ -378,10 +377,27 @@ class TestR207ErrorI18n:
 
         all_errors = get_all_three_part_errors()
         expected = {
-            "P001", "P005", "P006", "P007", "P008", "P009", "P010", "P018",
-            "P025", "P026", "P055", "P105", "P179", "P181",
-            "INJ-001", "INJ-002", "PII011", "CONFIG_ERROR", "PROVIDER_ERROR",
-            "FILE_NOT_FOUND", "PERMISSION_DENIED",
+            "P001",
+            "P005",
+            "P006",
+            "P007",
+            "P008",
+            "P009",
+            "P010",
+            "P018",
+            "P025",
+            "P026",
+            "P055",
+            "P105",
+            "P179",
+            "P181",
+            "INJ-001",
+            "INJ-002",
+            "PII011",
+            "CONFIG_ERROR",
+            "PROVIDER_ERROR",
+            "FILE_NOT_FOUND",
+            "PERMISSION_DENIED",
         }
         assert expected <= set(all_errors.keys()), f"缺少: {expected - set(all_errors.keys())}"
 

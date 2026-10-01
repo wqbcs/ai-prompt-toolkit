@@ -241,9 +241,7 @@ def check_p025(text: str) -> Finding | None:
 
 # R207校准: P026回退行为仅对问答/客服场景有意义 — 一次性任务prompt无需
 # 声明"不确定时"行为(R206前97%误报, 与P010回退策略语义不同: P010查外部依赖失败)。
-_P026_QA_CTX = re.compile(
-    r"(?:问答|客服|咨询|答疑|FAQ|Q&A|回答.{0,6}(?:用户|客户|问题)|解答)", re.IGNORECASE
-)
+_P026_QA_CTX = re.compile(r"(?:问答|客服|咨询|答疑|FAQ|Q&A|回答.{0,6}(?:用户|客户|问题)|解答)", re.IGNORECASE)
 
 
 def check_p026(text: str) -> Finding | None:

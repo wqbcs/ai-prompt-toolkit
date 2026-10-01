@@ -50,8 +50,7 @@ def _build_probe_registry() -> dict[str, dict[str, Any]]:
             if rt_name in merged:
                 # R207: 命名冲突不再静默忽略 — 记录warning便于排查
                 logger.warning(
-                    "Probe命名冲突: %s 同时存在于probe_framework与redteam两套体系, "
-                    "统一视图以probe_framework优先",
+                    "Probe命名冲突: %s 同时存在于probe_framework与redteam两套体系, 统一视图以probe_framework优先",
                     rt_name,
                 )
                 continue
@@ -113,9 +112,7 @@ def invalidate_registry_cache() -> None:
     _DETECTOR_REGISTRY_CACHE = None
 
 
-def register_probe(
-    probe_cls: type | None = None, *, source: str = "redteam"
-) -> Callable[[type[_P]], type[_P]] | type:
+def register_probe(probe_cls: type | None = None, *, source: str = "redteam") -> Callable[[type[_P]], type[_P]] | type:
     """统一Probe注册装饰器 — 新增Probe一处注册
 
     用法(红队体系):

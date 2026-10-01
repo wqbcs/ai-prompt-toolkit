@@ -74,14 +74,7 @@ class TestP256Negative:
         assert "P256" not in _rule_ids(r)
 
     def test_declared_all_referenced_ok(self):
-        text = (
-            "# 变量\n"
-            "- name: 姓名\n"
-            "- city: 城市\n"
-            "\n"
-            "# 任务\n"
-            "为 {{name}} 生成 {{city}} 的天气摘要。"
-        )
+        text = "# 变量\n- name: 姓名\n- city: 城市\n\n# 任务\n为 {{name}} 生成 {{city}} 的天气摘要。"
         r = lint_template("r212_p256_neg4", text)
         assert "P256" not in _rule_ids(r)
 

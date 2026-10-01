@@ -337,7 +337,12 @@ def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None)
     if fmt == "json":
         click.echo(
             _json.dumps(
-                {"total_files": len(file_reports), "parse_errors": parse_errors, "total_findings": total, "files": file_reports},
+                {
+                    "total_files": len(file_reports),
+                    "parse_errors": parse_errors,
+                    "total_findings": total,
+                    "files": file_reports,
+                },
                 ensure_ascii=False,
                 indent=2,
             )
@@ -354,7 +359,12 @@ def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None)
     if output:
         Path(output).write_text(
             _json.dumps(
-                {"total_files": len(file_reports), "parse_errors": parse_errors, "total_findings": total, "files": file_reports},
+                {
+                    "total_files": len(file_reports),
+                    "parse_errors": parse_errors,
+                    "total_findings": total,
+                    "files": file_reports,
+                },
                 ensure_ascii=False,
                 indent=2,
             ),
@@ -375,5 +385,13 @@ def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None)
     from ai_prompt_toolkit.cli_helpers import determine_exit_code
 
     sevs = {x["severity"] for x in all_findings}
-    error_severity = "critical" if "critical" in sevs else "high" if "high" in sevs else "medium" if "medium" in sevs else ("low" if sevs else None)
+    error_severity = (
+        "critical"
+        if "critical" in sevs
+        else "high"
+        if "high" in sevs
+        else "medium"
+        if "medium" in sevs
+        else ("low" if sevs else None)
+    )
     sys.exit(determine_exit_code(has_errors=parse_errors > 0, has_findings=total > 0, error_severity=error_severity))

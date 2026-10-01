@@ -49,10 +49,14 @@ _CRED_KEY_RE = re.compile(
     r"access[_-]?key|secret[_-]?key|private[_-]?key|bearer)$"
 )
 # 硬编码凭据: 值形态(各平台密钥前缀)
-_SECRET_VALUE_RE = re.compile(r"(?i)\b(sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|xox[bap]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{12,})")
+_SECRET_VALUE_RE = re.compile(
+    r"(?i)\b(sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|xox[bap]-[A-Za-z0-9-]{8,}|AKIA[A-Z0-9]{12,})"
+)
 _ENV_REF_RE = re.compile(r"^\$\{?[A-Za-z_][A-Za-z0-9_]*\}?$")
 # 高敏宿主凭据透传(仅此类, 通用 ${API_KEY} 不告警 — 那是官方推荐模式)
-_HOST_CRED_RE = re.compile(r"(SSH_AUTH_SOCK|AWS_SESSION_TOKEN|GOOGLE_APPLICATION_CREDENTIALS|KUBECONFIG|/run/user/\d+/ssh\.agent)")
+_HOST_CRED_RE = re.compile(
+    r"(SSH_AUTH_SOCK|AWS_SESSION_TOKEN|GOOGLE_APPLICATION_CREDENTIALS|KUBECONFIG|/run/user/\d+/ssh\.agent)"
+)
 _UNPINNED_PACKAGER = {"npx", "uvx", "npm"}
 _ROUTE_KEY_RE = re.compile(r"(?i)^(route_?to|upstream|delegate|delegate_?to|forward_?to|proxy_?to|chained)$")
 _AUTO_APPROVE_TRUE_KEYS = ("autoexecute", "autoapprove", "auto_approve", "alwaysallow", "always_allow")
@@ -315,6 +319,7 @@ def compute_risk_score(findings: list[Finding]) -> tuple[int, str]:
 
 # ---------------------------------------------------------------- 文件发现
 
+
 def discover_mcp_configs(target: str | Path) -> list[Path]:
     """发现 MCP 配置文件: 显式文件直接返回; 目录递归找含 mcpServers/servers 键的 .json。"""
     p = Path(target)
@@ -327,7 +332,9 @@ def discover_mcp_configs(target: str | Path) -> list[Path]:
                 content = jf.read_text(encoding="utf-8")
             except (OSError, UnicodeDecodeError):
                 continue
-            if any(k in content for k in ("mcpServers", "mcp_servers")) or re.search(r"^\s*\{\s*\"servers\"\s*:", content, re.MULTILINE):
+            if any(k in content for k in ("mcpServers", "mcp_servers")) or re.search(
+                r"^\s*\{\s*\"servers\"\s*:", content, re.MULTILINE
+            ):
                 hits.append(jf)
         return hits
     return []

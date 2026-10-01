@@ -603,7 +603,9 @@ def lint(
         waived_files = [r.template_id for r in all_results if r.waived_finding_count > 0]
         if total_waived:
             shown = ", ".join(waived_files[:10]) + ("…" if len(waived_files) > 10 else "")
-            click.echo(f"Waiver门禁: ❌ FAIL | {len(waived_files)}个文件豁免生效, 共压制{total_waived}条finding: {shown}")
+            click.echo(
+                f"Waiver门禁: ❌ FAIL | {len(waived_files)}个文件豁免生效, 共压制{total_waived}条finding: {shown}"
+            )
             sys.exit(2)
         click.echo("Waiver门禁: ✅ PASS | 0个豁免生效")
 

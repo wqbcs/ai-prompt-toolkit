@@ -75,8 +75,14 @@ for r in _RULES_P051_P055:
 # R214-B2: 日语key名面(同rules.py _SENSITIVE_PATTERNS, 值约束更严{20,}/{6,})
 _CRED_PATTERNS = [
     (re.compile(r"(?:password|passwd|pwd|パスワード)\s*[:=]\s*\S{6,}", re.IGNORECASE), "硬编码密码"),
-    (re.compile(r"(?:api[_-]?key|apikey|secret[_-]?key|apiキー)\s*[:=]\s*[A-Za-z0-9_\-]{20,}", re.IGNORECASE), "硬编码API密钥"),
-    (re.compile(r"(?:token|auth[_-]?token|bearer|トークン)\s*[:=]\s*[A-Za-z0-9_\-\.]{20,}", re.IGNORECASE), "硬编码Token"),
+    (
+        re.compile(r"(?:api[_-]?key|apikey|secret[_-]?key|apiキー)\s*[:=]\s*[A-Za-z0-9_\-]{20,}", re.IGNORECASE),
+        "硬编码API密钥",
+    ),
+    (
+        re.compile(r"(?:token|auth[_-]?token|bearer|トークン)\s*[:=]\s*[A-Za-z0-9_\-\.]{20,}", re.IGNORECASE),
+        "硬编码Token",
+    ),
 ]
 
 _AMBIGUOUS_ZH = [

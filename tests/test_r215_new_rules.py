@@ -156,11 +156,7 @@ class TestR215P260Encoding:
 
     def test_details_report_subpattern(self):
         p = _probe("atk62_zw_5plus")
-        f = next(
-            x
-            for x in _lint(p["text"], p["name"]).findings
-            if x.rule_id == "P260"
-        )
+        f = next(x for x in _lint(p["text"], p["name"]).findings if x.rule_id == "P260")
         assert f.details["sub_pattern"] == "zero_width"
 
 
@@ -171,6 +167,4 @@ class TestR215NoFpOnClean:
         for p in sorted(_CLEAN_DIR.iterdir()):
             if not p.is_file():
                 continue
-            assert rid not in _rules(_lint(p.read_text(encoding="utf-8"), p.name).findings), (
-                f"{p.name} 新增 {rid} 误报"
-            )
+            assert rid not in _rules(_lint(p.read_text(encoding="utf-8"), p.name).findings), f"{p.name} 新增 {rid} 误报"

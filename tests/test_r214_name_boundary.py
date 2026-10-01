@@ -64,9 +64,7 @@ class TestR214LangSchema:
 class TestR214PerLanguageReport:
     def test_per_language_derivation(self):
         # 分语言统计机械派生自 expected 单元, 总和必须等于全局口径
-        spec = importlib.util.spec_from_file_location(
-            "check_miss_rate", _ROOT / "scripts" / "check_miss_rate.py"
-        )
+        spec = importlib.util.spec_from_file_location("check_miss_rate", _ROOT / "scripts" / "check_miss_rate.py")
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
         report = mod.run()

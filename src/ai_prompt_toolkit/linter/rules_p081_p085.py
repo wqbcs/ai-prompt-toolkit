@@ -119,9 +119,7 @@ def check_p082(text: str) -> Finding | None:
 # 100%触发(R210新样本暴露22/56误报)。未上线的prompt无需doctor诊断。
 # 收窄: 去掉"生产/发布/线上/service"等文档常见词(发布检查单/线上故障SOP/
 # 生产库配置解释都是文档写作语境, 非生产部署语境), 仅保留强部署信号。
-_PRODUCTION_HINT_CTX = re.compile(
-    r"(\bdeploy\w*|\bproduction\b|\bgo\s?live\b|上线|部署)", re.IGNORECASE
-)
+_PRODUCTION_HINT_CTX = re.compile(r"(\bdeploy\w*|\bproduction\b|\bgo\s?live\b|上线|部署)", re.IGNORECASE)
 
 
 def check_p083(text: str) -> Finding | None:

@@ -81,9 +81,7 @@ class TestR210PositiveSamples:
         assert any(f.rule_id == "P165" for f in r.findings)
 
     def test_p165_side_channel_with_decl_pass(self):
-        r = lint_template(
-            "r210_p165_neg", "接口返回登录结果, 防止通过响应时间推断账户, 统一错误提示, 恒定延迟±50ms"
-        )
+        r = lint_template("r210_p165_neg", "接口返回登录结果, 防止通过响应时间推断账户, 统一错误提示, 恒定延迟±50ms")
         assert not any(f.rule_id == "P165" for f in r.findings)
 
     def test_p165_error_handling_not_required(self):
@@ -107,21 +105,13 @@ class TestR210PositiveSamples:
 
     def test_p101_redundant_chinese_still_reports(self):
         # 中文冗余表述仍检出(分词后CJK单字等价原字符级) — 3句确保句子数≥3
-        text = (
-            "你必须严格遵循上面的全部约束条件。"
-            "你必须严格遵循上面的全部约束条件。"
-            "你必须严格遵循上面的全部约束条件。"
-        )
+        text = "你必须严格遵循上面的全部约束条件。你必须严格遵循上面的全部约束条件。你必须严格遵循上面的全部约束条件。"
         r = lint_template("r210_p101_pos", text)
         assert any(f.rule_id == "P101" for f in r.findings)
 
     def test_p101_english_short_sentences_not_flagged(self):
         # R210: 英文短句不再因字符集天然重叠误报
-        text = (
-            "You are a code reviewer. "
-            "Given a diff, identify potential bugs. "
-            "Output a markdown report with sections."
-        )
+        text = "You are a code reviewer. Given a diff, identify potential bugs. Output a markdown report with sections."
         r = lint_template("r210_p101_neg", text)
         assert not any(f.rule_id == "P101" for f in r.findings)
 

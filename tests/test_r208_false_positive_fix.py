@@ -66,7 +66,9 @@ class TestR208PositiveSamples:
 
     def test_p167_do_not_invent_decl(self):
         # R208 DECL补强: 英文"Do not invent"是事实性防护声明
-        r = lint_template("r208_p167_inv", "Reference the diff when reviewing. Do not invent changes that are not in the diff.")
+        r = lint_template(
+            "r208_p167_inv", "Reference the diff when reviewing. Do not invent changes that are not in the diff."
+        )
         assert not any(f.rule_id == "P167" for f in r.findings)
 
     def test_p117_knowledge_intensive_still_reports(self):

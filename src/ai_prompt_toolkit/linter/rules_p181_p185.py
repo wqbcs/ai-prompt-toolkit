@@ -133,7 +133,11 @@ def check_p182(text: str) -> list[Finding]:
             re.search(r"API|接口|endpoint|webhook|REST|gRPC|外部(服务|接口|API)|第三方(服务|接口)", text, re.IGNORECASE)
         )
         has_api_use = bool(
-            re.search(r"(?:调用|invoke|invokes|invocation|fetch|integrat\w*|calls|requests|query|查询|集成)", text, re.IGNORECASE)
+            re.search(
+                r"(?:调用|invoke|invokes|invocation|fetch|integrat\w*|calls|requests|query|查询|集成)",
+                text,
+                re.IGNORECASE,
+            )
         )
         if has_api_entity and has_api_use:
             findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", "1", "1"))
@@ -149,7 +153,8 @@ def check_p183(text: str) -> list[Finding]:
         # 环境隔离真实触发面=≥2个不同环境名与"环境"共现(开发环境用X,
         # 测试环境用Y), 或 environment+config 英文组合。
         env_names = {
-            m.group(1).lower() for m in re.finditer(r"(开发|测试|生产|预发|dev|staging|prod|uat)\s*环境", text, re.IGNORECASE)
+            m.group(1).lower()
+            for m in re.finditer(r"(开发|测试|生产|预发|dev|staging|prod|uat)\s*环境", text, re.IGNORECASE)
         }
         has_multi_config = len(env_names) >= 2 or bool(
             re.search(r"environment.{0,12}(?:different|isolat|separat|config)", text, re.IGNORECASE)

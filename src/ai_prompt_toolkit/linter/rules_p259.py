@@ -93,16 +93,8 @@ _VOIDING_JA = re.compile(
 
 def check_p259(text: str) -> Finding | None:
     rule = _RULE_MAP["P259"]
-    id_m = (
-        _IDENTITY_ZH.search(text)
-        or _IDENTITY_EN.search(text)
-        or _IDENTITY_JA.search(text)
-    )
-    void_m = (
-        _VOIDING_ZH.search(text)
-        or _VOIDING_EN.search(text)
-        or _VOIDING_JA.search(text)
-    )
+    id_m = _IDENTITY_ZH.search(text) or _IDENTITY_EN.search(text) or _IDENTITY_JA.search(text)
+    void_m = _VOIDING_ZH.search(text) or _VOIDING_EN.search(text) or _VOIDING_JA.search(text)
     if id_m and void_m:
         return Finding(
             rule_id=rule.rule_id,

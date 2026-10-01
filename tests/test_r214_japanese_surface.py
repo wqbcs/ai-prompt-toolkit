@@ -97,9 +97,7 @@ class TestR214JaNoFpRegression:
         for p in sorted(_CLEAN_DIR.iterdir()):
             if p.is_file():
                 text = p.read_text(encoding="utf-8")
-                assert not any(w in text for w in self._JA_WORDS), (
-                    f"{p.name} 含日语词(基线假设失效, 需重查误报面)"
-                )
+                assert not any(w in text for w in self._JA_WORDS), f"{p.name} 含日语词(基线假设失效, 需重查误报面)"
 
     @pytest.mark.parametrize("rule_id", ["P257", "P006", "P051"])
     def test_modified_rules_zero_on_clean(self, rule_id):

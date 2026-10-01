@@ -1005,8 +1005,8 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
         console.print(
-        f"  🔍 Lint规则: [bold]{len(_all_rules)}[/bold]条 | 安全规则: [bold]{_security_rules}[/bold]条 | Provider: [bold]{_provider_count}[/bold]个"
-    )
+            f"  🔍 Lint规则: [bold]{len(_all_rules)}[/bold]条 | 安全规则: [bold]{_security_rules}[/bold]条 | Provider: [bold]{_provider_count}[/bold]个"
+        )
 
 
 @main.command(name="eval-config")

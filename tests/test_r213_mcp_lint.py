@@ -146,7 +146,9 @@ class TestR213McpLintCli:
     def test_cli_fail_on_critical(self):
         from ai_prompt_toolkit.cli_core import main
 
-        result = CliRunner().invoke(main, ["mcp-lint", "-t", str(_FIXDIR / "hardcoded_token.json"), "--fail-on", "critical"])
+        result = CliRunner().invoke(
+            main, ["mcp-lint", "-t", str(_FIXDIR / "hardcoded_token.json"), "--fail-on", "critical"]
+        )
         assert result.exit_code == 2
         assert "MCP门禁: ❌ FAIL" in result.output
 

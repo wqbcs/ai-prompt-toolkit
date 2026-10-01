@@ -178,6 +178,7 @@ def check_p101(text: str) -> Finding | None:
     sentences = _extract_sentences(text)
     if len(sentences) < 3:
         return None
+
     # R210: 字符级Jaccard对英文失真 — 英文短句字符集天然高度重叠
     # (字母表仅26, 任何两句英文Jaccard都>0.5, 新英文样本暴露14/56误报)。
     # 改为分词级: CJK按单字(与字符级等价), Latin按空格分词(语义单元)。
@@ -311,9 +312,7 @@ def check_p104(text: str) -> Finding | None:
 _FORMAT_PATTERN = re.compile(r"(?:输出格式|输出为|返回格式|格式要求|output.*format|format.*output)", re.IGNORECASE)
 # R210: 加"带引号的JSON键"(如 {"category": ...}) — 内联JSON示例本身即字段说明,
 # 无需额外字段/边界值声明(R210 clean46暴露)
-_FORMAT_COMPLETE = re.compile(
-    r"(?:字段|示例|边界|默认值|field|example|boundary|default|\"[A-Za-z_]+\")", re.IGNORECASE
-)
+_FORMAT_COMPLETE = re.compile(r"(?:字段|示例|边界|默认值|field|example|boundary|default|\"[A-Za-z_]+\")", re.IGNORECASE)
 # R207校准: 格式规范完整度仅对结构化输出(JSON/YAML/CSV/表格/schema)有意义 —
 # 普通自然语言输出无需字段/边界值说明(R206前81%误报)。
 # R207二次收窄: 独立"schema"词误匹配数据库schema语境(迁移/变更类prompt),
@@ -458,9 +457,7 @@ def check_p109(text: str) -> Finding | None:
 # workflow)直指多步工具调用; 弱信号(步骤/流程/step)在数据分析/迁移/日志/
 # 写作类prompt中是通用流程词(6样本零工具词误报), 须与工具语境组合才构成
 # 工具链缺恢复的面。
-_TOOL_CHAIN_STRONG = re.compile(
-    r"(?:首先.*然后|依次|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE
-)
+_TOOL_CHAIN_STRONG = re.compile(r"(?:首先.*然后|依次|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE)
 _TOOL_CHAIN_WEAK = re.compile(r"(?:步骤|流程|先.*后|step)", re.IGNORECASE)
 # 工具语境: 显式工具/函数/API/MCP调用面(区别于通用流程词)
 _TOOL_CTX = re.compile(
@@ -469,7 +466,7 @@ _TOOL_CTX = re.compile(
 _TOOL_DECL = re.compile(
     r"(?:超时|timeout|错误恢复|error.?recovery|fallback|回退|依赖|dependency|调用顺序|call.?order"
     r"|重试|retry)",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 
 
