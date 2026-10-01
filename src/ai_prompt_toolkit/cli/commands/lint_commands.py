@@ -38,6 +38,12 @@ if TYPE_CHECKING:
     default=None,
     help="显式CI门禁: 指定级别及以上findings>0时退出码2(比--gate更直接的级别门禁)",
 )
+@click.option(
+    "--fail-on-waiver",
+    "fail_on_waiver",
+    is_flag=True,
+    help="豁免审计门禁(R213): 任何文件的waiver实际生效(压制≥1条finding)即退出码2 — 严格CI禁新增豁免",
+)
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
 @click.option(
     "--color-theme",
@@ -103,6 +109,7 @@ def lint(
     trace_json_path: str | None = None,
     resume: bool = False,
     parallel: int = 0,
+    fail_on_waiver: bool = False,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     from ai_prompt_toolkit.cli_helpers import (
@@ -575,6 +582,16 @@ def lint(
         click.echo(f"报告: {output}")
 
     has_errors = any(r.has_errors for r in all_results)
+
+    if fail_on_waiver:
+        # R213-P0-2: waiver审计门禁 — 任何豁免实际生效即FAIL(严格CI禁新增豁免)
+        total_waived = sum(r.waived_finding_count for r in all_results)
+        waived_files = [r.template_id for r in all_results if r.waived_finding_count > 0]
+        if total_waived:
+            shown = ", ".join(waived_files[:10]) + ("…" if len(waived_files) > 10 else "")
+            click.echo(f"Waiver门禁: ❌ FAIL | {len(waived_files)}个文件豁免生效, 共压制{total_waived}条finding: {shown}")
+            sys.exit(2)
+        click.echo("Waiver门禁: ✅ PASS | 0个豁免生效")
 
     if fail_on:
         # R203: 显式级别门禁 — fail-on critical/high/medium, 该级别及以上有finding即FAIL(退出码2)

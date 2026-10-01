@@ -26,6 +26,9 @@ class LintResult:
     lint_time_ms: float = 0.0
     auto_fixed: bool = False
     fixed_findings: list[Finding] = field(default_factory=list)
+    # R213-P0-2: waiver 审计 — 只报"实际生效"的豁免(有≥1条finding被压制)
+    waived_rules: list[str] = field(default_factory=list)
+    waived_finding_count: int = 0
 
     @property
     def is_clean(self) -> bool:
@@ -70,6 +73,8 @@ class LintResult:
             "lint_time_ms": self.lint_time_ms,
             "auto_fixed": self.auto_fixed,
             "fixed_findings": [f.to_dict() for f in self.fixed_findings],
+            "waived_rules": self.waived_rules,
+            "waived_finding_count": self.waived_finding_count,
             "score": self.score,
             "quality_score": self.quality_score,
         }
@@ -136,6 +141,19 @@ class PromptLinter:
         all_findings = run_all_checks(text)
         findings = [f for f in all_findings if f.rule_id in rule_ids]
 
+        # R213-P0-2: waiver — 文件级显式豁免(解析失败/无声明时零行为改变)
+        from ai_prompt_toolkit.linter.waivers import parse_waivers
+
+        waived_rules: list[str] = parse_waivers(text)
+        waived_finding_count = 0
+        if waived_rules:
+            waived_set = set(waived_rules)
+            suppressed = [f for f in findings if f.rule_id in waived_set]
+            findings = [f for f in findings if f.rule_id not in waived_set]
+            # 审计口径: 只报实际生效的豁免(压制了≥1条finding的)
+            waived_rules = sorted({f.rule_id for f in suppressed})
+            waived_finding_count = len(suppressed)
+
         fixed_findings: list[Finding] = []
         if fix:
             text, fixed_findings = self._apply_fixes(text, findings)
@@ -156,6 +174,8 @@ class PromptLinter:
             lint_time_ms=round(elapsed, 2),
             auto_fixed=fix,
             fixed_findings=fixed_findings,
+            waived_rules=waived_rules,
+            waived_finding_count=waived_finding_count,
         )
 
     def lint_batch(self, items: list[tuple[str, str]], *, fix: bool = False) -> list[LintResult]:
