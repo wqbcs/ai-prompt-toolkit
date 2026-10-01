@@ -135,7 +135,10 @@ def check_p221(text: str) -> list[Finding]:
 
 def check_p222(text: str) -> list[Finding]:
     findings = []
-    if _DEP_PATTERN.search(text) and not _DEP_AUDIT_PATTERN.search(text):
+    # R213-P0-1: 否定盲区 — "无需审计/不审计"是放弃审计的声明, 剥离后不再当DECL放行
+    from ai_prompt_toolkit.linter.rules import strip_negated_decl
+
+    if _DEP_PATTERN.search(text) and not _DEP_AUDIT_PATTERN.search(strip_negated_decl(text, _DEP_AUDIT_PATTERN)):
         # R209: "不引入第三方UI库"等否定约束不是依赖引入, 排除纯否定语境
         # (clean18_React组件误报根因)。任一"第三方/third-party"命中前4字符
         # 含否定词即视为约束声明。

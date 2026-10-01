@@ -1519,6 +1519,25 @@ def strip_frontmatter(text: str) -> str:
     return _FRONTMATTER_RE.sub("", text, count=1)
 
 
+def strip_negated_decl(text: str, decl_re: re.Pattern[str]) -> str:
+    """R213-P0-1: 否定前缀剥离 — DECL 匹配前剥离「否定词+填充+声明词串」短语。
+
+    "无转义/无需审计/不留任何记录/无合规评估/without any audit log"是明确放弃
+    防护的声明, 不是防护存在 — 剥离后 DECL 不再命中, 规则正确触发(否定盲区根治)。
+    声明词串=连续 DECL 词(可含"和/与/逗号"连接): "不留任何记录"、
+    "without any audit log"(audit 与 log 同被剥离, 否则残留 log 仍放行)。
+    R206 _strip_negated_data 的通用化(该组件只覆盖数据处理动词, 本函数以
+    调用方的 DECL pattern 为声明词集, 任意防护声明规则可复用)。
+    """
+    _negated = re.compile(
+        r"(?:无需|不留|不得|不|没|别|勿|未|无|\bnever\b|\bnot\b|\bno\b|without)"
+        r"\s*(?:任何|any\s+)?\s*(?:" + decl_re.pattern + r")"
+        r"(?:[\s,，;；、和与]*(?:" + decl_re.pattern + r"))*",
+        re.IGNORECASE,
+    )
+    return _negated.sub("", text)
+
+
 def get_rule(rule_id: str) -> LintRule | None:
     return _RULE_MAP.get(rule_id)
 

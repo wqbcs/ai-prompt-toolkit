@@ -37,7 +37,7 @@ class TestSynonymSuppress:
         """语料同触场景: 01-R1文件曾同时触发P094+P130, 去重后仅P094"""
         from pathlib import Path
 
-        corpus = Path("01-R1-改进清单-v1.0.md")
+        corpus = Path("docs/archive/iterations/01-R1-改进清单-v1.0.md")  # R213: 根目录历史文档归档
         if not corpus.exists():
             pytest.skip("语料不存在")
         ids = {f.rule_id for f in run_all_checks(corpus.read_text(encoding="utf-8"))}

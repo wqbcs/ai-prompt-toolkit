@@ -970,6 +970,12 @@ def stats_cmd(target: str | None, fmt: str) -> None:
     except Exception:
         pass
 
+    # R213-P0-4: 规则数口径动态化(单一事实源) — R192遗留的硬编码55/30+早已过期
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+
+    _all_rules = get_all_rules()
+    _security_rules = sum(1 for r in _all_rules if r.category == "security")
+
     stats_data = {
         "prompt_files": len(prompt_files),
         "total_chars": total_chars,
@@ -978,8 +984,8 @@ def stats_cmd(target: str | None, fmt: str) -> None:
         "language_distribution": lang_dist,
         "versioned_templates": version_count,
         "datasets": dataset_count,
-        "lint_rules": 55,
-        "security_rules": "30+",
+        "lint_rules": len(_all_rules),
+        "security_rules": _security_rules,
         "providers": 19,
     }
 
@@ -994,7 +1000,9 @@ def stats_cmd(target: str | None, fmt: str) -> None:
                 console.print(f"  🌐 语言分布: {lang} {cnt}个文件")
         console.print(f"  📋 版本管理: [bold]{version_count}[/bold] 个模板有版本记录")
         console.print(f"  📊 数据集: [bold]{dataset_count}[/bold] 个")
-        console.print("  🔍 Lint规则: [bold]55[/bold]条 | 安全规则: [bold]30+[/bold]条 | Provider: [bold]19[/bold]个")
+        console.print(
+        f"  🔍 Lint规则: [bold]{len(_all_rules)}[/bold]条 | 安全规则: [bold]{_security_rules}[/bold]条 | Provider: [bold]19[/bold]个"
+    )
 
 
 @main.command(name="eval-config")

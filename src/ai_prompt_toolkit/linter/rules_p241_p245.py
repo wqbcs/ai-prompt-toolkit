@@ -155,13 +155,19 @@ def check_p243(text: str) -> list[Finding]:
 
 def check_p244(text: str) -> list[Finding]:
     findings = []
-    if _CRITICAL_OP_PATTERN.search(text) and not _AUDIT_PATTERN.search(text):
+    # R213-P0-1: 否定盲区 — "不留任何记录/不记录"是放弃审计的声明, 剥离后不再当DECL放行
+    from ai_prompt_toolkit.linter.rules import strip_negated_decl
+
+    if _CRITICAL_OP_PATTERN.search(text) and not _AUDIT_PATTERN.search(strip_negated_decl(text, _AUDIT_PATTERN)):
         findings.append(Finding("P244", Severity.HIGH, "关键操作未记录审计日志(缺who/what/when/why)", "1", "1"))
     return findings
 
 
 def check_p245(text: str) -> list[Finding]:
     findings = []
-    if _CROSS_BORDER_PATTERN.search(text) and not _COMPLIANCE_PATTERN.search(text):
+    # R213-P0-1: 否定盲区 — "无合规评估/不做合规评估"是放弃合规的声明, 剥离后不再当DECL放行
+    from ai_prompt_toolkit.linter.rules import strip_negated_decl
+
+    if _CROSS_BORDER_PATTERN.search(text) and not _COMPLIANCE_PATTERN.search(strip_negated_decl(text, _COMPLIANCE_PATTERN)):
         findings.append(Finding("P245", Severity.HIGH, "跨境数据传输未做合规评估(缺SCC/安全评估/本地化)", "1", "1"))
     return findings

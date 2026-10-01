@@ -152,7 +152,10 @@ def check_p161(text: str) -> Finding | None:
     rule = _RULE_MAP["P161"]
     if not _TMPL_INJECT_CTX.search(text):
         return None
-    if _TMPL_INJECT_DECL.search(text):
+    # R213-P0-1: 否定盲区 — "无转义/不沙箱"是放弃防护的声明, 剥离后不再当DECL放行
+    from ai_prompt_toolkit.linter.rules import strip_negated_decl
+
+    if _TMPL_INJECT_DECL.search(strip_negated_decl(text, _TMPL_INJECT_DECL)):
         return None
     return Finding(
         rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation

@@ -34,11 +34,11 @@
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
-| **Prompt Linter** | `prompt-cli lint` | 255条Lint规则(P001-P255)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
+| **Prompt Linter** | `prompt-cli lint` | 256条Lint规则(P001-P256)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
-| **红队对抗** | `prompt-cli redteam` | 15个Probe+8个Detector，OWASP LLM Top 10 2025映射，自动风险评分 |
-| **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，15探针8检测器，OWASP合规报告 |
+| **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2025映射，自动风险评分 |
+| **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |
 | **评估引擎** | `prompt-cli evaluate` | 80个评估维度(D01-D80)，快速/完整双模式，7大类评估 |
 | **华为云合规** | `prompt-cli compliance` | 7域加权评分(数据隐私/模型安全/访问控制/内容安全/运维安全/供应链安全/合规认证)，等保2.0映射，CRITICAL一票否决 |
 | **条件编译** | `prompt-cli compile` | 按模型/语言/行业条件编译提示词模板（类C预处理器语法） |
@@ -61,8 +61,8 @@
 ### 差异化优势
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Scan→Probe→RedTeam→Evaluate→Compliance→Version 全链路的Prompt工具
-- **零LLM调用Lint**：255条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
-- **OWASP LLM Top 10 2025**：15个Probe→LLM01-LLM10完整映射，自动生成合规报告+修复建议
+- **零LLM调用Lint**：256条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
+- **OWASP LLM Top 10 2025**：23 Probe→LLM01-LLM10完整映射，自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
 - **Prompt消毒器**：8层检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言)
@@ -88,13 +88,13 @@ pip install "ai-prompt-toolkit[ab_test]"
 ### 基本使用
 
 ```bash
-# Lint检查(255条规则)
+# Lint检查(256条规则)
 prompt-cli lint -s my_prompt.md
 
 # 安全扫描(5层深度)
 prompt-cli scan -s my_prompt.md --depth deep
 
-# 红队对抗(15 Probe + 8 Detector)
+# 红队对抗(23 Probe + 11内置检测器, 全局注册表116)
 prompt-cli redteam -s my_prompt.md --probe dan,jailbreak
 
 # Probe扫描(OWASP LLM Top 10 2025)
@@ -206,7 +206,7 @@ src/ai_prompt_toolkit/
 │   ├── structural_analyzer.py    # 结构/边界/操控/熵分析
 │   ├── scorer.py             # CVSS-like安全评分
 │   └── inheritance_auditor.py    # 继承审计
-├── probe_framework.py        # garak风格Probe Framework(15探针+8检测器)
+├── probe_framework.py        # garak风格Probe Framework(23探针: 15探针+8检测器, 全局注册表116)
 ├── evaluator.py              # 评估引擎(80维度,7大类)
 ├── prompt_optimizer.py       # Prompt优化+verify_assertions(7种)
 ├── prompt_diff.py            # 语义Diff+合并+哈希
@@ -241,11 +241,11 @@ graph LR
     G --> H[版本管理]
     H --> I[部署上线]
 
-    B -->|255条规则| B1[196条可自动修复]
+    B -->|256条规则| B1[196条可自动修复]
     B -->|24大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等]
     C -->|5层深度| C1[quick/standard/deep]
     C -->|8层消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言]
-    D -->|15探针| D1[OWASP LLM Top 10 2025映射]
+    D -->|23探针(15+8)| D1[OWASP LLM Top 10 2025映射]
     D -->|8检测器| D2[越狱/泄露/注入/编码/伦理/偏见/误导/拒绝]
     E -->|10攻击类| E1[DAN/注入/XSS/泄露等]
     F -->|80维度| F1[D01-D80 7大类评估]
@@ -391,9 +391,9 @@ prompt-cli compliance -t my_prompt.md --format markdown
 
 ## VSCode插件
 
-项目包含VSCode扩展 `vscode-prompt-lint/` v0.4.0，提供：
+项目包含VSCode扩展 `vscode-prompt-lint/` v0.5.0，提供：
 
-- 实时Lint诊断(255条规则) + 防抖300ms
+- 实时Lint诊断(256条规则) + 防抖300ms
 - Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
 - 状态栏评分指示器
 - 保存时自动检查 + 打开文件自动Lint
