@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -558,7 +559,9 @@ _AUDIT_SENSITIVE_CTX = re.compile(
 )
 # R207: 否定/描述语境 — "不生成DELETE语句"是安全约束声明,"被删除内容的去向"
 # 是描述性说明, 均非真实敏感操作, 须排除(否则SQL专家/压缩类prompt恒触发)
-_AUDIT_NEGATION_CTX = re.compile(r"(?:不生成|禁止|不要|不得|不允许|被删除|don'?t|do\s+not|no\s+(?:delete|drop))", re.IGNORECASE)
+_AUDIT_NEGATION_CTX = re.compile(
+    r"(?:不生成|禁止|不要|不得|不允许|被删除|don'?t|do\s+not|no\s+(?:delete|drop))", re.IGNORECASE
+)
 
 
 def check_p009(text: str) -> Finding | None:
@@ -1505,6 +1508,88 @@ _CHECKERS_EXTENDED.extend(
         check_p260,
     ]
 )
+
+# R216 (L3-14 裁决): CJK-CJK 空格归一化 — 作用域受限变换, 构造处统一原地包装
+# (所有 _CHECKERS_EXTENDED 引用方看到包装后检查器: lint 管线 / FP门禁直调 /
+# 漏检门禁 / profiled版 行为一致 — FP门禁 `from ... import` 绑定的是列表对象,
+# 原地改元素而非重赋值, 否则引用方仍持旧检查器)
+# W3C《管理中文和日文中的行内空白》: 原则上日文和中文文本不使用空格字符 →
+# 两个 CJK 字符间的空格=排版异常=规避信号(空格插入攻击)。边界(各有依据,
+# 见 docs/R216-改进方案与开源调研.md D1): 仅ASCII 0x20; 仅CJK-CJK(汉字/
+# 平假名/片假名; 谚文不碰—空格是分词符; CJK↔拉丁数字边界不碰—相反惯例
+# 要求空格; 换行不碰—行号契约); U+3000不碰(CJK排版仍有合法用途)
+# 行号不变量: 变换只删行内空格 → location("line N")天然正确; 仅
+# details["position"](int字符偏移)经 pos_map 回映原文索引(报告对原文,
+# PromptSonar 归一化优先管线先例)
+_CJK_CLASS = (
+    f"{chr(0x3400)}-{chr(0x4DBF)}"  # CJK统一表意文字扩展A
+    f"{chr(0x4E00)}-{chr(0x9FFF)}"  # CJK统一表意文字
+    f"{chr(0x3040)}-{chr(0x309F)}"  # 平假名
+    f"{chr(0x30A0)}-{chr(0x30FF)}"  # 片假名
+)
+_CJK_SPACE_RUN_RE = re.compile(rf"([{_CJK_CLASS}])[ ]+(?=[{_CJK_CLASS}])")
+
+# 占位符 span — 归一化禁区(渲染器契约, 见 normalize_cjk_spaces docstring)
+_PLACEHOLDER_SPAN_RE = re.compile(r"\{\{[^{}]*\}\}")
+
+
+def normalize_cjk_spaces(text: str) -> tuple[str, list[int] | None]:
+    """删除 CJK 字符间的连续 ASCII 空格(仅匹配用, 报告回映原文)。
+
+    边界: 占位符 {{...}} 内部不碰 — 渲染器契约(渲染引擎看到的是原文;
+    占位符内空格会致渲染器静默填不上, 是 P256 的真实缺陷面, 归一化
+    "修复"它=让 P256 失明于渲染器破坏性规避)。
+    返回 (归一化文本, 归一化文本每字符的原文索引列表); 无需归一化时
+    (原文, None) — 快速路径。
+    """
+    spans = [(m.start(), m.end()) for m in _PLACEHOLDER_SPAN_RE.finditer(text)]
+    matches = [
+        m for m in _CJK_SPACE_RUN_RE.finditer(text) if not any(s <= m.start() and m.end() <= e for s, e in spans)
+    ]
+    if not matches:
+        return text, None
+    norm_parts: list[str] = []
+    pos_map: list[int] = []
+    last = 0
+    for m in matches:
+        norm_parts.append(text[last : m.start()])
+        pos_map.extend(range(last, m.start()))
+        norm_parts.append(m.group(1))
+        pos_map.append(m.start())
+        last = m.end()
+    norm_parts.append(text[last:])
+    pos_map.extend(range(last, len(text)))
+    return "".join(norm_parts), pos_map
+
+
+def _wrap_cjk_norm(checker: _CheckerFn) -> _CheckerFn:
+    """检查器包装: CJK 空格归一化(R216/L3-14)。functools.wraps 保 __name__
+    (FP 门禁的 check_p* 名称过滤依赖)。"""
+
+    @functools.wraps(checker)
+    def wrapper(text: str):
+        norm_text, pos_map = normalize_cjk_spaces(text)
+        result = checker(norm_text)
+        if pos_map is None:
+            return result
+
+        def _translate(f: Finding) -> Finding:
+            pos = f.details.get("position")
+            if isinstance(pos, int) and 0 <= pos < len(norm_text):
+                f.details["position"] = pos_map[pos]
+            return f
+
+        if isinstance(result, list):
+            return [_translate(f) for f in result]
+        if result is not None:
+            return _translate(result)
+        return result
+
+    return wrapper
+
+
+for _i, _c in enumerate(_CHECKERS_EXTENDED):
+    _CHECKERS_EXTENDED[_i] = _wrap_cjk_norm(_c)
 
 
 def _apply_owasp_refs() -> None:

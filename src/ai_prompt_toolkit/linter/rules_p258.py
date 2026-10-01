@@ -137,8 +137,13 @@ _NEIGHBOR_RADIUS = 80  # 字符 — 标签特权声明的生效半径(ESLint dis
 def check_p258(text: str) -> Finding | None:
     rule = _RULE_MAP["P258"]
     for m in _FAKE_TAG_BRACKET_RE.finditer(text):
-        inner = next(g for g in m.groups() if g is not None)
-        if not _tag_keyword_match(inner, _FAMILY_KEYWORDS[m.lastindex - 1]):
+        li = m.lastindex
+        if li is None:
+            continue
+        inner = m.group(li)
+        if inner is None:
+            continue
+        if not _tag_keyword_match(inner, _FAMILY_KEYWORDS[li - 1]):
             continue
         window = text[max(0, m.start() - _NEIGHBOR_RADIUS): m.end() + _NEIGHBOR_RADIUS]
         if not _EXAMPLE_DECL_RE.search(window):
