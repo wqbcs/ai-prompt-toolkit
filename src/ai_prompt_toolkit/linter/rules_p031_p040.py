@@ -186,8 +186,11 @@ _RAG_CITATION_PATTERNS = [
 # R212-6: RAG语境门 — 与P035(R180)同构。裸"查询/query/搜索"触发使SQL/业务
 # 查询prompt误判为RAG面(clean06/34/48/41各1条误报)。真实RAG检索面=检索引擎/
 # 知识库/向量库等组合证据, 纯SQL查询不构成。
+# R214-B2: 日语RAG词面 — 検索/ナレッジベース(知识库); 检(检)与検(检, 日文)是不同字符,
+# 与中文干净样本无碰撞(58样本0日语)
 _RAG_CTX_GATE = re.compile(
     r"(?:检索|RAG|知识库|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
+    r"検索|ナレッジベース|"
     r"(?:search|query).{0,10}(?:engine|index))",
     re.IGNORECASE,
 )

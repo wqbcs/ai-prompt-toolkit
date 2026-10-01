@@ -188,8 +188,10 @@ def check_p112(text: str) -> Finding | None:
 
 
 # R168校准: 触发需"受保护系统指令"语义 — 裸"你是/角色"是正常角色定义, 不构成注入风险面
+# R214-B2: 日语词面 — システムプロンプト(系统提示词); 不加裸"プロンプト"
+# (任何提及prompt的日语prompt会触发, 误报面过大, ATR-2026-00097同样用精确复合词)
 _SYSTEM_PROMPT_PATTERN = re.compile(
-    r"(?:系统提示|system prompt|系统指令|system instruction|内部指令|指令不可见|不要泄露|防泄露|protected.*instruction)",
+    r"(?:系统提示|system prompt|系统指令|system instruction|内部指令|指令不可见|不要泄露|防泄露|protected.*instruction|システムプロンプト)",
     re.IGNORECASE,
 )
 _INJECTION_DEFENSE = re.compile(

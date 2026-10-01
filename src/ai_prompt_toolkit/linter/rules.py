@@ -384,10 +384,12 @@ _ALL_RULES: list[LintRule] = [
 
 _RULE_MAP: dict[str, LintRule] = {r.rule_id: r for r in _ALL_RULES}
 
+# R214-B2: 日语key名面 — APIキー/パスワード/シークレット/トークン(硬编码凭据的
+# 日语书写形态; sk-/形状匹配部分本就语言无关, 仅key名是ASCII-only缺口)
 _SENSITIVE_PATTERNS = [
-    re.compile(r"(?:api[_-]?key|apikey)\s*[:=]\s*\S+", re.IGNORECASE),
-    re.compile(r"(?:password|passwd|pwd)\s*[:=]\s*\S+", re.IGNORECASE),
-    re.compile(r"(?:secret|token)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:api[_-]?key|apikey|apiキー)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:password|passwd|pwd|パスワード)\s*[:=]\s*\S+", re.IGNORECASE),
+    re.compile(r"(?:secret|token|シークレット|トークン)\s*[:=]\s*\S+", re.IGNORECASE),
     re.compile(r"(?:AK|SK)\s*[:=]\s*[A-Za-z0-9]{16,}", re.IGNORECASE),
 ]
 
