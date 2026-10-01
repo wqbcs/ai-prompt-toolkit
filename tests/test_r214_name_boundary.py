@@ -47,7 +47,7 @@ class TestR214LangSchema:
 
     def test_all_probes_have_valid_lang(self):
         probes = self._probes()
-        assert len(probes) == 42
+        assert len(probes) == 52  # R214: 42 + ja×6 + zh-Hant×2 + 空格插入×2
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -56,7 +56,9 @@ class TestR214LangSchema:
         probes = self._probes()
         langs = {p["name"]: p["lang"] for p in probes}
         assert langs["atk04_hardcoded_secret"] == "en"
-        assert all(v == "zh-Hans" for k, v in langs.items() if k != "atk04_hardcoded_secret")
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 43
+        assert sum(1 for v in langs.values() if v == "ja") == 6
+        assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
 
 
 class TestR214PerLanguageReport:
@@ -69,7 +71,7 @@ class TestR214PerLanguageReport:
         spec.loader.exec_module(mod)
         report = mod.run()
         per_lang = report["per_language"]
-        assert set(per_lang) == {"zh-Hans", "en"}
+        assert set(per_lang) == {"zh-Hans", "en", "ja", "zh-Hant"}
         assert sum(v["expected"] for v in per_lang.values()) == report["expected_total"]
         assert sum(v["missed"] for v in per_lang.values()) == report["total_missed"]
-        assert report["global_rate"] == 0.0  # R214-B1 不引入新漏检
+        assert report["global_rate"] == 0.0  # R214: 全语言 0 漏检

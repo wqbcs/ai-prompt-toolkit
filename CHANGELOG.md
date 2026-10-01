@@ -2,6 +2,36 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.31.0] - 2026-10-01
+
+### Added (R214: 多语言语言面扩展 — ja/zh-Hant/CJK空格插入)
+
+- 探针 schema 加 BCP-47 `lang` 标签（golden 52 条全标注）, 分语言漏检率
+  统计机械派生（借鉴 garak-multilingual per-payload provenance 纪律）
+- 多语言探针 +10: ja×6（4 expected + 2 观察型）/ zh-Hant×2 / CJK空格插入×2 —
+  首次量化 ja 漏检 2/5=40%、zh-Hant 2/2=100%（先扩样暴露, 不藏盲区）
+- 4 处 pattern 语言面扩展（参考 ATR-2026-00097 词源, 思路复用非代码, 逐词核对）:
+  - P113: システムプロンプト/系統\s*提示（精确复合词, 裸词防误报不加）
+  - RAG门 `_RAG_CTX_GATE`: 検索|ナレッジベース|知識\s*庫|檢\s*索
+  - P006/P051: 日语 key 名 APIキー|パスワード|シークレット|トークン
+- 新建 `docs/语言面覆盖矩阵.md`（语言×攻击类型覆盖声明, 借鉴 openclaw-defender
+  形态; 缺口诚实登记: 人格切换/伪系统标签无对应规则 → R215 候选）
+
+### Fixed
+
+- P241/P243 `_PERSONAL_DATA_PATTERN` 裸 "name" 子串误配 namespace/rename/
+  filename（代码常见词）— 加 `\bname\b` 词边界（与 R213-B5 race→trace 同类
+  子串盲区, R213 审查发现）
+
+### Changed
+
+- 诊断修正: P007 无需修复（模板语法面语言无关, atk44 日语语境验证命中）
+- CJK 空格插入: 有限 \s* 容忍仅 P113/RAG门（否决全局空白归一化 — 影响 257
+  规则全局行为, 风险入 L3-14 重评门槛）
+- 双基线: 漏检 0.00%（全语言 52/52, 0.05棘轮）/ FP 0.93%→0.92%（name修复,
+  0.01棘轮守住）
+- 版本口径: 代码/CHANGELOG/pip/徽章 67.31.0 一致（check_version_consistency 门禁）
+
 ## [v67.30.0] - 2026-10-01
 
 ### Added (R213 批次B5: P257 新规则 — 双基线流程下首条新规则, 未来新规则样板)
