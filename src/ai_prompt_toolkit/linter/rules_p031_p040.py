@@ -188,8 +188,11 @@ _RAG_CITATION_PATTERNS = [
 # 知识库/向量库等组合证据, 纯SQL查询不构成。
 # R214-B2: 日语RAG词面 — 検索/ナレッジベース(知识库); 检(检)与検(检, 日文)是不同字符,
 # 与中文干净样本无碰撞(58样本0日语)
+# R214-B3: 繁体词面(知識庫/檢索) + CJK空格插入容忍(检\s*索/知\s*识\s*库) —
+# atk50(繁体)/atk52(空格插入"知 识库")实测漏检; 容忍限于门内(门是P035-P037/P257
+# 共用入口, 扩面=全部RAG规则受益, 58干净样本0新增误报验证)
 _RAG_CTX_GATE = re.compile(
-    r"(?:检索|RAG|知识库|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
+    r"(?:检\s*索|RAG|知\s*识\s*库|知識\s*庫|檢\s*索|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
     r"検索|ナレッジベース|"
     r"(?:search|query).{0,10}(?:engine|index))",
     re.IGNORECASE,
