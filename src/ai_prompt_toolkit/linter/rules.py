@@ -1539,6 +1539,13 @@ def normalize_cjk_spaces(text: str) -> tuple[str, list[int] | None]:
     边界: 占位符 {{...}} 内部不碰 — 渲染器契约(渲染引擎看到的是原文;
     占位符内空格会致渲染器静默填不上, 是 P256 的真实缺陷面, 归一化
     "修复"它=让 P256 失明于渲染器破坏性规避)。
+
+    **占位符内部 CJK 空格 = 渲染器破坏信号** (SEC-R216-01 文档化):
+    归一化不修内部空格 = 故意保留给 P256 暴露畸形占位符（如 `{{系统 提示}}`）。
+    其他关键词类规则（P113/P258/P259 等）在归一化文本中仍看到空格分隔的关键词，
+    但这些规则的 pattern 已包含空格容忍（如 `[ ]*`）或不依赖紧邻 CJK 匹配，
+    故**不构成实质藏匿面**。
+
     返回 (归一化文本, 归一化文本每字符的原文索引列表); 无需归一化时
     (原文, None) — 快速路径。
     """
@@ -1575,7 +1582,7 @@ def _wrap_cjk_norm(checker: _CheckerFn) -> _CheckerFn:
 
         def _translate(f: Finding) -> Finding:
             pos = f.details.get("position")
-            if isinstance(pos, int) and 0 <= pos < len(norm_text):
+            if isinstance(pos, int) and 0 <= pos < len(norm_text) and pos < len(pos_map):
                 f.details["position"] = pos_map[pos]
             return f
 
