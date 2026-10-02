@@ -33,7 +33,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P260 = [
     LintRule(
@@ -111,6 +111,8 @@ def check_p260(text: str) -> Finding | None:
                 rule_id=rule.rule_id,
                 severity=rule.severity,
                 description=rule.description,
+                # R218: location 契约单一入口（1-based line:col, 注入/编码最高价值面）
+                location=loc_from_match(text, m),
                 remediation=rule.remediation,
                 details={"sub_pattern": name, "match": m.group(0)[:40]},
             )

@@ -58,6 +58,7 @@ class SarifResult:
     message: str = ""
     uri: str = ""
     start_line: int = 0
+    start_column: int = 0
     remediation: str = ""
     properties: dict[str, Any] = field(default_factory=dict)
 
@@ -71,6 +72,7 @@ class SarifResult:
             loc = SarifLocation(
                 uri=self.uri,
                 start_line=self.start_line,
+                start_column=self.start_column,
             )
             d["locations"] = [loc.to_dict()]
         if self.remediation:
@@ -140,6 +142,7 @@ class SarifRun:
         description: str,
         uri: str = "",
         line: int = 0,
+        column: int = 0,
         remediation: str = "",
     ) -> None:
         level_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
@@ -150,6 +153,7 @@ class SarifRun:
                 message=description,
                 uri=uri,
                 start_line=line,
+                start_column=column,
                 remediation=remediation,
             )
         )
@@ -220,6 +224,8 @@ def lint_results_to_sarif(
     tool_version: str = "42.0.0",
     target_uri: str = "",
 ) -> SarifReport:
+    from ai_prompt_toolkit.types import parse_location
+
     report = SarifReport()
     run = SarifRun(tool_name=tool_name, tool_version=tool_version)
 
@@ -241,12 +247,15 @@ def lint_results_to_sarif(
             )
             seen_rules.add(rule_id)
 
+        # R218: 统一走 location 契约（"" = 文件级 → 0 行, 不写 region）
+        line, col = parse_location(f.get("location", ""))
         run.add_lint_finding(
             rule_id=rule_id,
             severity=severity,
             description=description,
             uri=f.get("file_path", target_uri),
-            line=f.get("line", 0),
+            line=line or 0,
+            column=col or 0,
             remediation=remediation,
         )
 

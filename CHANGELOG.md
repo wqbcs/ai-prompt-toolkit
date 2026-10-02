@@ -2,6 +2,50 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.2] - 2026-10-01
+
+### Added (R218: location 契约 — 三端单一事实源, "Prompt的ESLint"定位补位)
+
+**背景(对抗性自审发现)**: 261 规则 301 处 Finding() 此前**全部无 location**
+(0/301 实测) — 定位是"Prompt 的 ESLint"但无法告诉用户问题在哪; 且三端各自
+硬编码解析(LSP "line:col" / CLI 隐藏 "1"/"0" / 编辑器 parseInt + description
+30字符子串**猜行**) — 契约缺失 + 硬编码互异(用户指令"避免硬编码"直接命中)。
+
+- **types.py location 契约(单一事实源)**: `build_location(line,col)` /
+  `parse_location()` / `loc_from_match(text, m)` — 语义: `""`=文件级(消费端
+  不得猜行) / `"L:<line>"` / `"L:<line>:C:<col>"`(均 1-based, VS Code/SARIF
+  同基准); 兼容旧 "line:col" 纯数字形式(LSP 历史口径)
+- **三端去硬编码统一走契约**: LSP `_lint_to_diagnostics`(原 split(":") 手写
+  解析 → parse_location; 文件级 0 宽不猜行, 原恒覆盖首行 20 字符硬编码已除) /
+  CLI(原 `!= "1" and != "0"` 隐藏逻辑 → parse_location, 有行才显示) /
+  SARIF(原读 `f.get("line")` 从未走 location 字段 → parse_location, region
+  带 startLine+startColumn, 文件级不写 region=GitHub Code Scanning 文件级标注)
+- **P260/P261 参考实现**: 注入/编码最高价值面 4 类子pattern(zw交错/BiDi/
+  base64/转义)经 `loc_from_match` 落真实 line:col; 其余 259 条留文件级
+  (诚实: 批量改 301 处 Finding() 构造=高风险无样本回归面, 不预支 — 行:列
+  覆盖率提升为后续批次, L3-13 地基已就绪)
+- **VS Code 扩展 0.5.0→0.6.0**: extension.ts 4 处 `findLineNumber` 猜行调用
+  (runLint/runScan/PII/buildRelatedInfo)统一切 `parseLocation`/`rangeFromLocation`
+  契约辅助; 删除 parseInt(location)+description 子串搜索 hack; 顺带修复 11 处
+  **存量编译错误**(readonly push×2 / QuickPickItem 缺类型标注 / spawn encoding
+  类型冲突 / 隐式 any×2 / CodeActionsProvider 拼写错误) — 扩展此前 `tsc`
+  构建失败(0 可构建), 现 exit 0 首次通过严格编译(体验短板端消除)
+- **测试 tests/test_r218_location_contract.py(19 条)**: 契约单测(构造/解析/
+  Match→location 1-based 基准/空/非法/兼容旧形) + P261/P260 四类子pattern
+  真实行号 + 三端一致(LSP range/SARIF region 同基准) + 文件级语义(LSP 0 宽
+  不猜行 + SARIF 无 region) + 防分叉守护(三端源码引用同一契约函数 + 编辑器
+  无旧 hack 残留) + finding 数量不变(契约不改门禁语义)
+
+### Changed
+
+- **L3-13 waiver 行级作用域**: 状态从"无行级地基"升级为"**地基已就绪**" —
+  定位契约+参考实现到位, 剩余=waiver 解析器行号作用域 + 规则行:列覆盖率
+  (不预支, 重评条件=覆盖率提升批次后)
+- **R217 方向反思闭环**: R217 方案指向 R218=L3-6 A/B 显著性检验 — 实施前
+  自审发现 golden 75/75 **零方差**, 对自家通过套件做显著性检验=元统计非
+  产品价值(低价值打磨陷阱) → R218 改做 location 契约(定位反问四问全过:
+  ESLint 定义特性/CI 可度量/硬编码/唯一短板端); L3-6 维持开放(前置=扩样)
+
 ## [v67.34.1] - 2026-10-01
 
 ### Added (R217 批次: 改进方案与开源调研 — 2 落地 + 3 实证否决)

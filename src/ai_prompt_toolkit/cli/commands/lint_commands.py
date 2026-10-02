@@ -351,13 +351,20 @@ def lint(
 
         render_interactive_results(all_results, avg_score, total_findings, len(templates))
     elif fmt == "cli":
+        from ai_prompt_toolkit.types import parse_location
+
         for result in all_results:
             if result.findings:
                 for f in result.findings:
                     sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                     marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                     prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
-                    loc = f" L{f.location}" if f.location and str(f.location) != "1" and str(f.location) != "0" else ""
+                    # R218: 统一走 location 契约（"" = 文件级 → 不显示行号）
+                    line1, col1 = parse_location(str(f.location or ""))
+                    if line1 is not None:
+                        loc = f" L{line1}" + (f":C{col1}" if col1 else "")
+                    else:
+                        loc = ""
                     click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
 
     click.echo(

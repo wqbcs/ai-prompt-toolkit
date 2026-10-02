@@ -16,6 +16,7 @@ interface ScanFinding {
   severity: string;
   rule_id: string;
   description: string;
+  location?: string;
   remediation?: string;
 }
 
@@ -325,14 +326,10 @@ async function runPiiScanOnActiveFile() {
     } else {
       vscode.window.showWarningMessage(`PII隐私检测: 发现 ${piiFindings.length} 处隐私信息泄露风险`);
       const doc = editor.document;
-      const text = doc.getText();
-      const existing = diagnosticCollection.get(doc.uri) || [];
+      const existing: vscode.Diagnostic[] = [...(diagnosticCollection.get(doc.uri) || [])];
       for (const finding of piiFindings) {
-        const line = findLineNumber(text, finding.description);
-        const range = new vscode.Range(
-          new vscode.Position(line, 0),
-          new vscode.Position(line, Math.min(finding.description.length, 80))
-        );
+        // R218: location 契约(scan finding 无 location → 文件级, 不猜行)
+        const range = rangeFromLocation(doc, finding.location);
         const diag = new vscode.Diagnostic(
           range,
           `[${finding.rule_id}] PII风险: ${finding.description}`,
@@ -527,7 +524,7 @@ async function runVersionDiffOnActiveFile() {
       vscode.window.showInformationMessage('Prompt Lint: 需要至少2个版本才能对比');
       return;
     }
-    const items = versions.versions.map((v: any, i: number) => ({
+    const items: vscode.QuickPickItem[] = versions.versions.map((v: any, i: number) => ({
       label: `v${i + 1}: ${v.timestamp || v.created_at || 'unknown'}`,
       description: v.hash ? v.hash.substring(0, 8) : '',
     }));
@@ -607,7 +604,6 @@ async function runLint(doc: vscode.TextDocument) {
 
   updateStatusBarLinting();
   const filePath = doc.uri.fsPath;
-  const text = doc.getText();
   const severityOverrides = config.get<Record<string, string>>('severityOverrides') || {};
 
   try {
@@ -621,15 +617,8 @@ async function runLint(doc: vscode.TextDocument) {
     for (const result of results) {
       for (const finding of result.findings) {
         allFindings.push(finding);
-        const line = findLineNumber(text, finding.description);
-        const endChar = Math.min(
-          finding.location ? parseInt(finding.location) : finding.description.length,
-          doc.lineAt(Math.min(line, doc.lineCount - 1)).text.length
-        );
-        const range = new vscode.Range(
-          new vscode.Position(line, 0),
-          new vscode.Position(line, endChar)
-        );
+        // R218: location 契约(空 = 文件级 → 不猜行; 删除旧 parseInt+description子串搜索 hack)
+        const range = rangeFromLocation(doc, finding.location);
 
         const effectiveSeverity = applySeverityOverrides(finding.severity, severityOverrides);
         const diag = new vscode.Diagnostic(
@@ -644,7 +633,7 @@ async function runLint(doc: vscode.TextDocument) {
           diag.tags = [vscode.DiagnosticTag.Unnecessary];
         }
 
-        const relatedInfo = buildRelatedInfo(doc.uri, finding, text);
+        const relatedInfo = buildRelatedInfo(doc.uri, finding, doc);
         if (relatedInfo) {
           diag.relatedInformation = [relatedInfo];
         }
@@ -667,7 +656,7 @@ async function runLint(doc: vscode.TextDocument) {
 function buildRelatedInfo(
   uri: vscode.Uri,
   finding: LintFinding,
-  text: string
+  doc: vscode.TextDocument
 ): vscode.DiagnosticRelatedInformation | undefined {
   const ruleDescriptions: Record<string, string> = {
     'P001': '提示词应包含明确的角色定义',
@@ -681,8 +670,8 @@ function buildRelatedInfo(
   if (!hint) {
     return undefined;
   }
-  const line = findLineNumber(text, finding.description);
-  const range = new vscode.Range(line, 0, line, 1);
+  // R218: location 契约
+  const range = rangeFromLocation(doc, finding.location);
   return new vscode.DiagnosticRelatedInformation(
     new vscode.Location(uri, range),
     hint
@@ -691,21 +680,17 @@ function buildRelatedInfo(
 
 async function runScan(doc: vscode.TextDocument) {
   const filePath = doc.uri.fsPath;
-  const text = doc.getText();
 
   try {
     const output = await executeCli(['scan', '-t', filePath, '--format', 'json']);
     const report = JSON.parse(output);
     const findings: ScanFinding[] = report.findings || [];
 
-    const existing = diagnosticCollection.get(doc.uri) || [];
+    const existing: vscode.Diagnostic[] = [...(diagnosticCollection.get(doc.uri) || [])];
 
     for (const finding of findings) {
-      const line = findLineNumber(text, finding.description);
-      const range = new vscode.Range(
-        new vscode.Position(line, 0),
-        new vscode.Position(line, Math.min(finding.description.length, 80))
-      );
+      // R218: location 契约(scan finding 无 location → 文件级, 不猜行)
+      const range = rangeFromLocation(doc, finding.location);
 
       const diag = new vscode.Diagnostic(
         range,
@@ -726,22 +711,37 @@ async function runScan(doc: vscode.TextDocument) {
   }
 }
 
-function findLineNumber(text: string, searchStr: string): number {
-  if (!searchStr) return 0;
-  const lines = text.split('\n');
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes(searchStr.substring(0, 30))) {
-      return i;
-    }
+// R218: location 契约 — 与 Python 端 types.parse_location 同语义(单一事实源):
+//   "" = 文件级发现(消费端不得猜行) | "L:<line>" | "L:<line>:C:<col>" (均 1-based)
+//   兼容旧 "line:col" 纯数字形式。非法/空 → null(按文件级处理)。
+function parseLocation(location?: string): { line: number | null; col: number | null } {
+  const loc = (location || '').trim();
+  if (!loc) return { line: null, col: null };
+  const raw = loc.startsWith('L:') ? loc.slice(2) : loc;
+  const parts = raw.split(':C:');
+  const line = Number.parseInt(parts[0], 10);
+  const col = parts.length > 1 ? Number.parseInt(parts[1], 10) : null;
+  if (!Number.isInteger(line) || line < 1) return { line: null, col: null };
+  return { line, col: col !== null && Number.isInteger(col) ? col : null };
+}
+
+// 契约 → 诊断 Range: 行级定位收敛到该行(1-based→0-based); 文件级 → 首行0宽标记(不猜行不覆盖全文)
+function rangeFromLocation(doc: vscode.TextDocument, location?: string): vscode.Range {
+  const { line, col } = parseLocation(location);
+  if (line === null) {
+    return new vscode.Range(0, 0, 0, 0);
   }
-  return 0;
+  const lineIdx = Math.min(line - 1, Math.max(0, doc.lineCount - 1));
+  const lineLen = doc.lineAt(lineIdx).text.length;
+  const startCol = Math.min(Math.max(0, (col ?? 1) - 1), lineLen);
+  const endCol = Math.min(startCol + Math.max(1, Math.min(20, lineLen - startCol)), lineLen);
+  return new vscode.Range(lineIdx, startCol, lineIdx, endCol);
 }
 
 function executeCli(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
     const cliPath = getCliPath();
     const proc = spawn(cliPath, args, {
-      encoding: 'utf-8',
       timeout: 30000,
     });
 
@@ -749,14 +749,14 @@ function executeCli(args: string[]): Promise<string> {
     let stderr = '';
 
     proc.stdout?.on('data', (data: Buffer) => {
-      stdout += data.toString();
+      stdout += data.toString('utf-8');
     });
 
     proc.stderr?.on('data', (data: Buffer) => {
-      stderr += data.toString();
+      stderr += data.toString('utf-8');
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', (code: number | null) => {
       if (code === 0 || code === 1) {
         resolve(stdout);
       } else {
@@ -764,7 +764,7 @@ function executeCli(args: string[]): Promise<string> {
       }
     });
 
-    proc.on('error', (err) => {
+    proc.on('error', (err: Error) => {
       reject(err);
     });
   });
@@ -825,7 +825,7 @@ class PromptCodeLensProvider implements vscode.CodeLensProvider {
   }
 }
 
-class PromptQuickFixProvider implements vscode.CodeActionsProvider {
+class PromptQuickFixProvider implements vscode.CodeActionProvider {
   static providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 
   provideCodeActions(

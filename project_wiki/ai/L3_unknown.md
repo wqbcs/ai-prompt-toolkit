@@ -21,8 +21,12 @@
 12. ~~`_PERSONAL_DATA_PATTERN` 裸 `name` 子串盲区（R213审查新增）~~ → **R214-B1 已闭环**:
    `\bname\b` 词边界, FP 0.93%→0.92%, 回归 tests/test_r214_name_boundary.py
    （遗留观察: `\b` 对 CJK 紧邻不生效（Python re \w 含 CJK）, 无实据不修）
-13. waiver 行级作用域升级（R213审查新增）— **仍开放**(R214 候选): 当前文件级
-   (finding location "1:1" 无行级地基), 未来 finding 支持行号后对齐 ESLint line-disable
+13. waiver 行级作用域升级（R213审查新增）— **仍开放(地基已就绪, R218 起)**:
+   R218 已建立 location 契约(types.py parse_location/build_location/loc_from_match
+   单一事实源, 三端去硬编码) + P260/P261 真实行:列参考实现 — 行级 waiver
+   (ESLint line-disable 对齐)的**定位地基已具备**, 剩余工作=waiver 解析器支持
+   行号作用域 + 规则侧行:列覆盖率提升(当前仅 P260/P261 落真实行:列, 其余 259
+   条文件级) — 重评条件: 规则行:列覆盖率提升批次后启动, 不预支
 14. CJK 空格插入归一化（R214-B3 登记 → R216 裁决落地）— **已销账**:
    作用域受限归一化落地（仅 CJK-CJK ASCII 空格; 汉字/平假名/片假名; 谚文/CJK↔
    拉丁边界/U+3000/换行/{{...}}占位符内部不碰 — 占位符=渲染器契约）— 构造处

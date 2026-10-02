@@ -26,9 +26,33 @@ except ImportError:
 _DEBOUNCE_MS = 300
 
 
+def _finding_range(line1: int | None, col1: int | None, lines: list[str]) -> dict[str, Any]:
+    """location 契约(1-based) → LSP range(0-based)。
+
+    - 文件级(line1=None) → 首行 0 宽标记 (0,0)-(0,0): 不猜行, 不硬编码覆盖固定宽度
+    - 越界列(col1 > 行长度, 来自 legacy/外部 location) → start 收敛到行尾,
+      防 start.character 超出行长度被客户端映射到下一行(LSP 跨行的唯一成因;
+      end ≤ line_len 是全行 range 的标准表示, 不跨行)
+    - end 宽度上限 20 字符(诊断高亮收敛, 不覆盖整段)
+    """
+    if line1 is None:
+        return {
+            "start": {"line": 0, "character": 0},
+            "end": {"line": 0, "character": 0},
+        }
+    line = max(0, line1 - 1)
+    line_len = len(lines[line]) if line < len(lines) else 0
+    char = min(max(0, (col1 or 1) - 1), line_len)
+    char_end = max(char, min(line_len, char + max(1, min(20, line_len - char))))
+    return {
+        "start": {"line": line, "character": char},
+        "end": {"line": line, "character": char_end},
+    }
+
+
 def _lint_to_diagnostics(text: str) -> list[dict[str, Any]]:
     from ai_prompt_toolkit.linter.linter import PromptLinter
-    from ai_prompt_toolkit.types import Severity
+    from ai_prompt_toolkit.types import Severity, parse_location
 
     linter = PromptLinter()
     result = linter.lint("realtime", text)
@@ -42,26 +66,15 @@ def _lint_to_diagnostics(text: str) -> list[dict[str, Any]]:
         Severity.INFO: 3,
     }
 
+    lines = text.split("\n")
+
     for finding in result.findings:
-        line = 0
-        char = 0
-        loc = str(finding.location) if finding.location is not None else ""
-        if loc:
-            parts = loc.split(":")
-            try:
-                if len(parts) >= 1:
-                    line = max(0, int(parts[0]) - 1)
-                if len(parts) >= 2:
-                    char = max(0, int(parts[1]) - 1)
-            except (ValueError, IndexError):
-                pass
+        # R218: 统一走 location 契约（1-based line:col）; 文件级(空)→ 不猜行
+        line1, col1 = parse_location(str(finding.location or ""))
 
         diagnostics.append(
             {
-                "range": {
-                    "start": {"line": line, "character": char},
-                    "end": {"line": line, "character": char + 20},
-                },
+                "range": _finding_range(line1, col1, lines),
                 "severity": sev_map.get(finding.severity, 3),
                 "code": finding.rule_id,
                 "source": "prompt-linter",

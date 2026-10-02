@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
+
+if TYPE_CHECKING:
+    from re import Match
 
 
 class Severity(Enum):
@@ -48,6 +51,71 @@ class ReportStatus(Enum):
     FAILED = "failed"
     BLOCKED = "blocked"
     PASSED = "passed"
+
+
+# ── location 契约（R218: 三端唯一事实源, 消除 CLI/LSP/编辑器各自硬编码解析）──
+#
+# Finding.location 是字符串, 全端统一语义:
+#   ""          = 文件级发现（规则无法定位到具体 span）→ 消费端不得猜测行号
+#   "L:<line>"  = 行级定位（line 从 1 起）
+#   "L:<line>:C:<col>" = 行+列定位（line/col 均从 1 起, VS Code/SARIF 同 1-based 基准）
+#   兼容: 旧 "line:col" 纯数字形式 parse_location 仍按 1-based line:col 解析
+#   （LSP 曾按此解析, 新代码一律用 build_location 产出规范形式）
+# 消费端纪律: location 为空 → 文件级（CLI 不显示行号, 编辑器不猜行,
+# SARIF 不写 region）; 禁止用 description 子串搜索等启发式猜行。
+
+
+def build_location(line: int, column: int | None = None) -> str:
+    """从 1-based 行/列构造规范 location 字符串（列缺省=行级）。"""
+    line = max(1, int(line))
+    if column is None:
+        return f"L:{line}"
+    return f"L:{line}:C:{max(1, int(column))}"
+
+
+def parse_location(location: str) -> tuple[int | None, int | None]:
+    """解析 location → (1-based line, 1-based col); 文件级/无法解析 → (None, None)。
+
+    兼容形式: "L:5" / "L:5:C:12" / 旧 "5:12"（均 1-based）。
+    非法/空 → (None, None)（调用方据此按文件级处理, 不猜行）。
+    """
+    loc = (location or "").strip()
+    if not loc:
+        return (None, None)
+    if loc.startswith("L:"):
+        parts = loc[2:].split(":C:")
+        try:
+            line = int(parts[0])
+            col = int(parts[1]) if len(parts) > 1 else None
+        except (ValueError, IndexError):
+            return (None, None)
+        if line < 1:
+            return (None, None)
+        return (line, col)
+    # 兼容旧 "line:col" 纯数字形式
+    parts = loc.split(":")
+    try:
+        line = int(parts[0])
+        col = int(parts[1]) if len(parts) > 1 else None
+    except (ValueError, IndexError):
+        return (None, None)
+    if line < 1:
+        return (None, None)
+    return (line, col)
+
+
+def loc_from_match(text: str, m: Match[str]) -> str:
+    """从正则 Match 计算 1-based 行:列 location（规则侧唯一入口）。
+
+    line = m.start() 前换行数 + 1; col = m.start() 距本行起点 + 1。
+    规则拿到 pattern.search/finditer 的 match 后统一走这里产出 location,
+    保证与消费端 parse_location 同基准（1-based, VS Code/SARIF 一致）。
+    """
+    start = m.start()
+    line = text.count("\n", 0, start) + 1
+    line_start = text.rfind("\n", 0, start) + 1
+    col = start - line_start + 1
+    return build_location(line, col)
 
 
 @dataclass

@@ -4,8 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.1-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-5935%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.2-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-5955%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
@@ -420,9 +420,12 @@ prompt-cli compliance -t my_prompt.md --format markdown
 
 ## VSCode插件
 
-项目包含VSCode扩展 `vscode-prompt-lint/` v0.5.0，提供：
+项目包含VSCode扩展 `vscode-prompt-lint/` v0.6.0，提供：
 
 - 实时Lint诊断(261条规则) + 防抖300ms
+- **行级精确定位(R218)**: 诊断按内核 location 契约(L:<line>:C:<col>)锚定到真实行/列，
+  注入/编码类规则(P260/P261)已落真实位置；文件级发现不猜行（0.5.0 的
+  description 子串猜行已移除）
 - Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
 - 状态栏评分指示器
 - 保存时自动检查 + 打开文件自动Lint
