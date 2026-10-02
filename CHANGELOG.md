@@ -2,6 +2,17 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.11] - 2026-10-02
+
+### Fixed (R223续: 测试硬编码绝对路径 — 本地绿/CI(Linux)红)
+
+- `tests/test_r117.py` 硬编码 `Path("D:/xinjian/project/prompt")` —
+  Linux runner 上不存在, 7 项检查 0 通过 → `assert 0 >= 5` 挂
+  (本地 Windows 恰好路径存在 → 本地绿 CI 红的经典环境依赖缺陷)
+- 改为 `Path(__file__).resolve().parent.parent` 相对解析仓库根 —
+  跨平台同一行为, 不再依赖本机目录布局
+- 本地 6 passed + ruff 复验; 推送后以 GitHub Actions 3 版本矩阵为准
+
 ## [v67.34.10] - 2026-10-02
 
 ### Fixed (R223续: 门禁可复现性 — lint工具版本钉死, 消除CI/本地漂移)
