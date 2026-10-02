@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.12] - 2026-10-02
+
+### Fixed (R223续: jinja2未声明依赖 — 第5连红, 同源病灶收口)
+
+- **根因**: `eval_matrix.py` 运行时 import jinja2 却**未在任何依赖声明** —
+  本地venv恰好装有 → 完整渲染器(含feedback) → 本地绿; CI无jinja2 →
+  `except ImportError` 静默降级simple模板(feedback丢失) → test_r28断言挂
+- **修复两手**:
+  1. `jinja2>=3.0` 进core依赖 — `eval matrix` HTML是核心CLI功能,
+     pip用户不该静默拿到降级报告(体验短板)
+  2. `_render_simple_html` 降级渲染器补feedback显示 —
+     **降级不得静默丢数据**; 测试从此环境无关(有/无jinja2都过)
+- **五连红同源反思**: YAML语法/fastapi/ruff漂移/硬编码路径/jinja2 —
+  都是"本地环境含CI没有的东西, 本地全绿≠CI绿"。教训固化:
+  推CI前核对src运行时import全部在pyproject声明, 或clean venv验证
+- 本地35 passed + ruff + CI降级路径模拟验证(feedback保留) ✓
+
 ## [v67.34.11] - 2026-10-02
 
 ### Fixed (R223续: 测试硬编码绝对路径 — 本地绿/CI(Linux)红)

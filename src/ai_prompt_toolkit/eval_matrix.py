@@ -256,8 +256,11 @@ def _render_simple_html(report: MatrixReport, context: dict) -> str:
             cell = _get_cell(report.cells, prompt, ev)
             if cell:
                 cls = "pass" if cell.passed else "fail"
+                # 降级渲染器也不得静默丢feedback — R223实证: CI无jinja2走此路径,
+                # feedback缺失致test_r28断言本地绿/CI红
+                feedback = f" <small>{html.escape(cell.feedback[:120])}</small>" if cell.feedback else ""
                 parts.append(
-                    f"<td class='{cls}'>{cell.score:.1f}/{cell.max_score} {'PASS' if cell.passed else 'FAIL'}</td>"
+                    f"<td class='{cls}'>{cell.score:.1f}/{cell.max_score} {'PASS' if cell.passed else 'FAIL'}{feedback}</td>"
                 )
             else:
                 parts.append("<td>-</td>")

@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.11"
+version = "67.34.12"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -37,6 +37,9 @@ dependencies = [
     "pyyaml>=6.0",
     "jsonschema>=4.17",
     "cachetools>=5.3",
+    # eval matrix HTML完整渲染器(eval matrix命令核心功能) —
+    # 此前未声明, CI无jinja2时静默降级丢feedback(R223 CI实证)
+    "jinja2>=3.0",
 ]
 
 [project.optional-dependencies]
