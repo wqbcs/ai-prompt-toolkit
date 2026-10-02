@@ -34,7 +34,7 @@ class TestR211NegativeSamples:
 
     def test_zero_rules_zero_hits_on_clean_prompts(self):
         samples = _clean_samples()
-        assert len(samples) == 58, f"干净样本数应为58, 实际{len(samples)}"
+        assert len(samples) == 60, f"干净样本数应为60, 实际{len(samples)}"
         hits: dict[str, list[str]] = {r: [] for r in _ZERO_RULES}
         for name, text in samples.items():
             result = lint_template(name, text)
@@ -156,3 +156,13 @@ class TestR211PositiveSamples:
         # R211: 内联JSON字面量是格式约束
         r = lint_template("r211_p084_ok4", '输出分类结果 JSON：{"category": "<类别>", "priority": "P1"}')
         assert not any(f.rule_id == "P084" for f in r.findings)
+
+    def test_p084_markdown_with_line_limit_pass(self):
+        # R221: 行数控约(中文数字)是格式约束 — clean59扩样暴露的DECL缺口
+        r = lint_template("r221_p084_ok5", "以 Markdown 列表输出，每条问题不超过两行")
+        assert not any(f.rule_id == "P084" for f in r.findings)
+
+    def test_p084_json_plain_still_detected(self):
+        # R221: 扩DECL不削弱检测 — 裸"返回JSON"(无任何约束形态)仍触发
+        r = lint_template("r221_p084_pos2", "请返回JSON格式的结果")
+        assert any(f.rule_id == "P084" for f in r.findings)

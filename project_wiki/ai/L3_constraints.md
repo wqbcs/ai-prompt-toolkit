@@ -15,8 +15,8 @@
 | 棘轮 | 当前值 | 挂载 |
 |---|---|---|
 | mypy | 0 / 0 | prompt-ci.yml |
-| 误报率 | 0.01 (实际 0.96%) | prompt-ci.yml (R212-C) |
-| 漏检率 | 0.10 (实际 9.52%, 含4盲区) | prompt-ci.yml (R212-C); R213 收紧 0.05 |
+| 误报率 | 0.01 (实际 0.93%, 60样本) | prompt-ci.yml (R212-C); R221 扩样 58→60 |
+| 漏检率 | 0.10 (实际 0.00%, 113探针/108单元) | prompt-ci.yml (R212-C); R213 收紧 0.05; R220 扩样 80→113 |
 | coverage | 68 (实际 68.49%) | pyproject fail_under |
 | 版本一致性 | 四处一致 | pre-commit check_version_consistency.py |
 

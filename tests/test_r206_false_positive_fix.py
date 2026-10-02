@@ -83,6 +83,15 @@ class TestP158Masking:
         """泛数据表述(原误报场景) → 不报"""
         assert check_p158("处理用户数据，存储客户信息到数据库") is None
 
+    def test_negative_no_pii_collection_declaration(self):
+        """R221: 显式'不收集个人数据'声明 = 放弃PII处理面, 脱敏要求不适用 → 不报"""
+        assert check_p158("审查代码中的问题。不收集、不存储任何个人数据。") is None
+
+    def test_positive_pii_pipeline_still_detected(self):
+        """R221: 扩DECL不削弱检测 — 真实PII管道无脱敏仍命中"""
+        f = check_p158("批量导出用户身份证号与手机号，写入数据库")
+        assert f is not None and f.rule_id == "P158"
+
 
 class TestP164Extraction:
     def test_negative_clean_samples(self):

@@ -152,7 +152,10 @@ _FORMAT_CONSTRAINT_PATTERN = re.compile(
     r"|sections?\s*[:：]|章节用|二级标题|每个部分"  # 章节/分节结构
     r"|字段定义|仅输出\s*JSON|只输出\s*JSON"  # 字段定义段/仅输出约束
     r"|numbered list|code block|headings|with a [a-z ]+ example"  # 英文结构描述
-    r"|[一-龥A-Za-z]{2,12}\s*[+＋]\s*[一-龥A-Za-z]{2,12}",  # A+B双段输出结构
+    r"|[一-龥A-Za-z]{2,12}\s*[+＋]\s*[一-龥A-Za-z]{2,12}"  # A+B双段输出结构
+    r"|(?:不超过|至多|最多|限|within)\s*[0-9一二三四五六七八九十两]+\s*(?:行|字符|字|词|lines|words|characters)",
+    # R221校准: 行数控约(每条不超过两行 / within 10 lines)是格式约束 —
+    # R221扩样clean59(代码评审"每条问题不超过两行")暴露的DECL缺口
 )
 
 

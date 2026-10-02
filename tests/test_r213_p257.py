@@ -83,7 +83,7 @@ class TestR213P257Baseline:
 
     def test_clean_samples_no_p257(self):
         samples = sorted(p for p in _CLEAN_DIR.iterdir() if p.is_file())
-        assert len(samples) == 58  # R213: 56→58
+        assert len(samples) == 60  # R221: 58→60 (clean59/60); R213: 56→58
         for p in samples:
             assert not _p257(_lint(p.read_text(encoding="utf-8"), p.name).findings), f"{p.name} 误触发 P257"
 

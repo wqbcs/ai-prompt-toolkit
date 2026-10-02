@@ -4,8 +4,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.5-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-5975%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.6-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-5979%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
@@ -93,7 +93,9 @@
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%）保证范围是**静态可检测面**
+**机制上限**——本工具的双基线（漏检 0.00%：113条golden探针/108期望命中单元；
+误报 0.91%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
+docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
 运行时防护（如 LLM Guard 类工具）。但**门禁只能建立在可复现的裁决上**：
 一次 CI fail 后重跑 pass 的门禁，等于没有门禁。适用域划分而非互相替代，

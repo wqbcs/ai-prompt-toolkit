@@ -113,7 +113,12 @@ _MASKING_CTX = re.compile(
 )
 
 _MASKING_DECL = re.compile(
-    r"(?:脱敏|desensitiz|掩码|mask|匿名|anonymi|PII|隐私|privacy|敏感.*字段|sensitive.*field|姓名.*掩码|name.*mask|身份证.*脱敏|ID.*mask|手机.*掩码|phone.*mask|邮箱.*脱敏|email.*mask|禁止.*原始|prohibit.*raw|星号|asterisk|\*{3,})",
+    r"(?:脱敏|desensitiz|掩码|mask|匿名|anonymi|PII|隐私|privacy|敏感.*字段|sensitive.*field|姓名.*掩码|name.*mask|身份证.*脱敏|ID.*mask|手机.*掩码|phone.*mask|邮箱.*脱敏|email.*mask|禁止.*原始|prohibit.*raw|星号|asterisk|\*{3,})"
+    # R221校准: 显式"不收集个人数据"声明 = 放弃PII处理面本身(无PII可脱敏),
+    # 脱敏要求不适用, 放行。注意与 R213 方向不冲突: "不审计/不留记录"是放弃
+    # 防护机制(必须不放行), "不收集数据"是放弃数据处理面(可放行)。
+    # R221扩样 clean59(代码评审"不收集、不存储任何个人数据")暴露的 DECL 缺口
+    r"|(?:不|无|禁止|无需).{0,10}(?:收集|采集|存储).{0,10}(?:个人(信息|数据)|PII|敏感(信息|数据))",
     re.IGNORECASE,
 )
 
