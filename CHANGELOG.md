@@ -2,6 +2,19 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.9] - 2026-10-02
+
+### Fixed (R223续: CI ruff版本漂移 — 本地0.15.14通过/CI最新版拦截)
+
+- CI `pip install ruff` 装最新版, 新 RUF036 拦截
+  `rules.py:826` `"Finding | None | list[Finding]"`(None不在联合类型末尾)
+  → 注解顺序改为 `"Finding | list[Finding] | None"`(PEP 8标准顺序,
+  零运行时影响, 契约不变)
+- 教训固化: 本地 ruff 版本落后 CI 最新版时门禁会漂移 — 后续升版 ruff
+  时先跑 `ruff check` 全量再提交
+- 本地复验: ruff check+format / mypy棘轮 / 版本67.34.9一致 全绿,
+  推送触发 CI 复跑验证
+
 ## [v67.34.8] - 2026-10-02
 
 ### Fixed (R223: 自家CI修复 — 产品卖CI门禁, 自家CI灯必须是真话)
