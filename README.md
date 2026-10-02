@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.1-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-5935%20passed-brightgreen.svg)](tests/)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -70,6 +70,34 @@
 - **21种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
 - **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
 - **MCP Server**：73个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
+
+### 为什么是确定性静态检测（CI 门禁场景）
+
+**lint 是 eval 与生产之间的层**：行为 eval 度量的是模型输出，不度量 prompt
+本身的结构——变量未声明（渲染后模型收到字面量 `{user_locale}` 并静默编造
+替代值）、安全 section 被删、token 预算被悄悄撑爆，这类结构缺陷 eval 全绿，
+直到生产边缘案例把它变成事故。lint 层在毫秒级、每次 prompt 变更时拦截它们，
+不依赖任何模型调用。
+
+**为什么不用 "regex 快筛 + LLM 二审" 的混合架构？** 2026 年多个竞对采用该
+路线（regex 确定性层 + LLM-as-judge 语义层 + 分数融合），并公开了离线评测
+数字（如某工具 500+500 样本 hybrid F1 0.94 vs regex-only F1 0.79）。我们
+认为该架构与 **CI 门禁**场景存在结构性冲突：
+
+| 门禁要求 | 混合架构 | 本工具（纯确定性） |
+|---|---|---|
+| 可复现（同输入同裁决） | LLM 二审层有采样方差，重跑可能翻裁决 | 100% 确定性，重跑逐字节一致 |
+| CI 热路径延迟 | LLM 层数百毫秒~秒级 | <100ms，可嵌入 pre-commit |
+| 零外部依赖/零成本 | 依赖外部模型 API（成本+供应商+可用性） | 0 调用，离线可用 |
+| 误报/漏检可审计 | 语义层裁决不可追溯 | 每条 finding 指向具体 pattern 与行号 |
+
+**对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
+评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
+**机制上限**——本工具的双基线（漏检 0.00%）保证范围是**静态可检测面**
+（注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
+运行时防护（如 LLM Guard 类工具）。但**门禁只能建立在可复现的裁决上**：
+一次 CI fail 后重跑 pass 的门禁，等于没有门禁。适用域划分而非互相替代，
+是 2026 年 Prompt 安全工具栈的正确分工。
 
 ## 快速开始
 
