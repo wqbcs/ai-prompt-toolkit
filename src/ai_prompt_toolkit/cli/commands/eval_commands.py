@@ -679,11 +679,14 @@ def version_cmd(
                 from ai_prompt_toolkit.cli_helpers import resolve_path
 
                 content = resolve_path(source).read_text(encoding="utf-8")
-            elif not click.get_text_stream("stdin").isatty():
-                content = click.get_text_stream("stdin").read()
             else:
-                click.echo("错误: 请指定--source或通过管道传入内容", err=True)
-                sys.exit(2)
+                # 用sys.stdin替代click.get_text_stream — 后者在click 8.5.0
+                # 返回类型标注为object, 致mypy棘轮跨click版本漂移
+                if not sys.stdin.isatty():
+                    content = sys.stdin.read()
+                else:
+                    click.echo("错误: 请指定--source或通过管道传入内容", err=True)
+                    sys.exit(2)
 
             v = store.create_version(template, content, author=author or "", message=message or "")
             click.echo(f"版本已创建: {template} v{v.version_number} ({v.content_hash})")
@@ -1422,11 +1425,12 @@ def prompt_version_cmd(
             content = ""
             if source:
                 content = resolve_path(source).read_text(encoding="utf-8")
-            elif not click.get_text_stream("stdin").isatty():
-                content = click.get_text_stream("stdin").read()
             else:
-                click.echo("错误: 请指定--source或通过管道传入内容", err=True)
-                sys.exit(2)
+                if not sys.stdin.isatty():
+                    content = sys.stdin.read()
+                else:
+                    click.echo("错误: 请指定--source或通过管道传入内容", err=True)
+                    sys.exit(2)
 
             if score == 0.0:
                 try:

@@ -2,6 +2,20 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.13] - 2026-10-02
+
+### Fixed (R223续: click 8.5.0类型漂移 — mypy棘轮本地0/CI 4)
+
+- **根因**: `click>=8.1` 无上界 — CI装8.5.0, `get_text_stream` 返回类型
+  标注改为 object → mypy棘轮(基线0)在CI报4个 `"object" not callable`
+  (ruff钉版之后的同款漂移病灶, 本地8.3.3无感知)
+- **修复**: `eval_commands.py` 两处stdin读取改用 `sys.stdin`
+  (typeshed稳定标注TextIO, 运行时等价) — 彻底消除对click流API的
+  类型依赖, 不再靠cast对抗上游标注
+- click 8.5.0 环境全链复验: mypy棘轮持平0 / ruff全绿 / 5979 passed
+  (运行时行为无回归)
+- 本地环境已同步升级 click 8.5.0 — 与CI同版本验证
+
 ## [v67.34.12] - 2026-10-02
 
 ### Fixed (R223续: jinja2未声明依赖 — 第5连红, 同源病灶收口)
