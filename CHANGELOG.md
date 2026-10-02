@@ -2,6 +2,41 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.5] - 2026-10-02
+
+### Added (R220-A1: 战略反问转向 — golden 攻击集低覆盖扩样 80→113)
+
+**背景(鬼才 PM 战略反问)**: R216→R219 连续四轮内部打磨(location 契约/行:列/
+sentinel), 零用户零分发下属低价值打磨陷阱。R220 战略复盘后转向**核心价值
+可信度** — README 旗舰指标"漏检 0.00%"原由 80 条自制探针撑起, 其中 33 条规则
+覆盖 <2 探针, 安全评审视角下是循环数字。本批扩样直接放大核心价值。
+
+- **golden_attacks.json +33 探针**(113 条/108 期望命中单元): 覆盖 33 条低覆盖
+  规则(P001/P002/P004/P005/P022/P114/P132/P142/P143/P159/P163/P167/P170/
+  P176/P178/P180/P182/P201/P206/P207/P216/P221/P222/P224/P239/P241/P244/
+  P245/P250/P252-P255), 全 zh-Hans
+- **防循环标注纪律**: 每条探针先过 lint_template 全管线(apply_waivers=False)
+  验证**真实触发**目标规则才纳入(expected 来自规则语义映射, 不靠"命中"反推)
+- **防门禁翻车**: 扩样只进漏检基线(golden 消费者仅 check_miss_rate.py),
+  不进 FP 基线(clean_prompts/ 不变) → 误报面零变化
+- 实测: 全局漏检率 **0.00%**(108/108, 高漏检 0 条) / FP 0.91% 不变
+  (zh-Hans 0/81, en 0/18, ja 0/7, zh-Hant 0/2)
+- 回归: `tests/test_r214_name_boundary.py` 探针数 80→113 / zh-Hans 51→84
+- 方案文档: `docs/R220_改进方案.md`(战略四问+竞品四段格局+可复用组件+否决清单)
+
+### Fixed (R220-B1/B2: explain 接线 waiver 提示 + 硬编码哨兵清除)
+
+- **B1(痛点: 误报是 adoption killer)**: `format_explanation` 每个 finding 加
+  per-finding 静默提示 `promptlint:ignore PNNN (文件级豁免)` — 用户看到误报
+  能判断+静默单条规则, 而非禁用整个工具。提示诚实标注"文件级"(waivers.py
+  当前作用域, 行级地基见 L3-13, 不误导)
+- **B2(用户"避免硬编码")**: `explain.py` location 展示从硬编码
+  `not in ("0", "1")` 哨兵改为走 R218 契约 `parse_location` 单一事实源 —
+  文件级("")不猜行, 行级(L:<line>:C:<col>)干净显示, 旧哨兵值按契约兼容口径
+  解析(与 LSP 历史口径一致)
+- 回归: `tests/test_r220_explain_waiver.py`(7 条) — 文件级不猜行/waiver 提示
+  带正确 rule_id 不串号/行级走契约
+
 ## [v67.34.4] - 2026-10-01
 
 ### Added (R219-B1b: 安全集 checker 真实行:列 — 复用 R218 loc_from_match 契约)
