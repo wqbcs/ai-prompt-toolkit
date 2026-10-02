@@ -1,14 +1,36 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+# R222-C2: 移除 "wheel" — PyPA 已弃用该发行版(部分镜像源下架), PEP 517
+# 隔离构建环境装不上 wheel 导致干净环境构建失败; setuptools>=70.1 自带
+# bdist_wheel, 无需独立 wheel 包
+requires = ["setuptools>=70.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.6"
+version = "67.34.7"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "MIT"
+authors = [{name = "Guowenchao", email = "gwc0218@qq.com"}]
+keywords = ["prompt", "llm", "prompt-engineering", "linter", "security", "ci-gate"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    # PEP 639: license 表达式(license = "MIT")已取代 License classifier
+    # (新版 setuptools 二者并存直接报错), 不写 License :: 行
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Utilities",
+]
 dependencies = [
     "click>=8.1",
     "rich>=13.0",
@@ -51,7 +73,11 @@ prompt = "ai_prompt_toolkit.cli_core:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-ai_prompt_toolkit = ["data/*.json"]
+# R222-C2 审计: templates/*.md 被 template_commands.py 运行时从包内读取
+# (Path(__file__).parent.parent / "templates"), playground/static/index.html
+# 被 playground/server.py 运行时加载 — 原 package-data 只含 data/*.json,
+# pip 安装后(非仓库内运行)模板安装/playground 功能必坏。补齐运行时资产。
+ai_prompt_toolkit = ["data/*.json", "templates/*.md", "playground/static/*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

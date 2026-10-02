@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.7] - 2026-10-02
+
+### Fixed (R222-C2: 发布就绪审计 — 打包缺口修复, pip 安装后功能必坏→可用)
+
+**背景**: 项目此前从未真实构建/安装过 wheel — 打包配置与实际运行时资产
+脱节, 3 处缺口全部会导致 pip 用户(非仓库内运行)功能损坏或干净环境构建失败:
+
+1. **package-data 漏包运行时资产(最高危)**: `templates/*.md` 被
+   `template_commands.py` 运行时从包内读取(`Path(__file__)/../templates`),
+   `playground/static/index.html` 被 `playground/server.py` 加载 — 原
+   package-data 只含 `data/*.json`, 实测 wheel 中 0 个模板文件 → pip 用户
+   `prompt-cli template` 模板安装/playground 必坏。补齐
+   `templates/*.md`(26个)+`playground/static/*.html`
+2. **build-system 弃用依赖**: `requires = ["setuptools>=68.0", "wheel"]`
+   中 `wheel` 已被 PyPA 弃用(镜像源下架)→ PEP 517 隔离构建环境装不上
+   → 干净环境构建直接失败。移除 wheel(setuptools>=70.1 自带 bdist_wheel)
+3. **PyPI 元数据不完整**: 无 authors/keywords/classifiers, license 用
+   旧式 `{text = "MIT"}` → 升级为 PEP 639 表达式 `license = "MIT"`
+   (新版 setuptools 禁止与 License classifier 并存, 已按 PEP 639 移除
+   classifier 行)
+
+**验证(构建产物即地面真相)**:
+- `python -m build --sdist --wheel` 双产物构建成功(67.34.7)
+- wheel 实测: templates.md 26 个/playground html 1 个/data json 入包
+- sdist 实测: templates.md 26 个/LICENSE/pyproject 入包
+- wheel 解压冒烟: 导入 67.34.7 / templates 26 / pricing json / playground
+  html 全部就位, `prompt-cli lint` 可执行
+- 注: 本机 pip 镜像源(tuna)未同步新版 setuptools, 隔离构建需用
+  `--no-isolation`(本地环境限制, 非包缺陷 — CI 走官方 PyPI 无此问题)
+
+**分发纪律**: 仓库名 = 分发名 = 品牌名, 三处一致
+(`ai-prompt-toolkit` @ PyPI/GitHub/AtomGit)
+
+- 门禁全绿: 5979 passed / ruff check+format / mypy 0 持平 / 版本+README
+  一致 / 双基线 FP 0.91%+漏检 0.00% / gen_rules_doc --check 一致
+
 ## [v67.34.6] - 2026-10-02
 
 ### Added (R221: 双基线对称可信度 — FP侧对称扩样 + 签名feed设计)
