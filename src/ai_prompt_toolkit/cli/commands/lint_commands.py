@@ -65,6 +65,12 @@ if TYPE_CHECKING:
 @click.option("--statistics", "statistics_mode", is_flag=True, help="规则命中率统计: 显示每条规则命中次数和占比")
 @click.option("--baseline", "baseline_path", help="基线管理: 指定基线文件路径(save=保存, compare=对比)")
 @click.option("--baseline-save", "baseline_save", is_flag=True, help="基线保存: 保存当前lint结果为基线快照")
+@click.option(
+    "--incremental",
+    "incremental",
+    is_flag=True,
+    help="增量门禁(R224): 与--baseline+--gate/--fail-on合用时, 门禁只计NEW findings(基线内已知的PRE-EXISTING放行) — 老仓库接入不被存量打回",
+)
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
@@ -104,6 +110,7 @@ def lint(
     statistics_mode: bool,
     baseline_path: str | None,
     baseline_save: bool,
+    incremental: bool,
     suggest_mode: bool,
     json_diff_path: str | None,
     explain_mode: bool,
@@ -616,6 +623,40 @@ def lint(
             sys.exit(2)
         click.echo("Waiver门禁: ✅ PASS | 0个豁免生效")
 
+    # R224-P1-2: 增量门禁 — --incremental 与 --baseline 合用时, 把 --gate/--fail-on
+    # 的判定面过滤为仅 NEW findings(不在基线快照内), 存量PRE-EXISTING放行,
+    # 解决老仓库接入被500条存量打回的采用死结。复用compare_baseline, 无新模块。
+    _incremental_new_keys: set[str] | None = None
+    if incremental:
+        if not baseline_path:
+            click.echo("错误: --incremental 需配合 --baseline <path>(基线文件)使用", err=True)
+            sys.exit(2)
+        from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline
+
+        _bp = Path(baseline_path)
+        if not _bp.exists():
+            click.echo(f"错误: 基线文件不存在 {_bp} (先 --baseline-save 保存)", err=True)
+            sys.exit(2)
+        _base = load_baseline(baseline_path)
+        _all_f: list[dict[str, str]] = []
+        for lint_res in all_results:
+            for f in lint_res.findings:
+                _all_f.append(
+                    {
+                        "rule_id": f.rule_id,
+                        "description": f.description,
+                        "severity": f.severity.value if hasattr(f.severity, "value") else str(f.severity),
+                    }
+                )
+        _diff = compare_baseline(_all_f, _base)
+        _incremental_new_keys = {f"{f['rule_id']}:{f['description']}" for f in _diff.new_findings}
+        click.echo(
+            f"── 增量门禁 ──\n"
+            f"  基线: {_base.total_findings} | 当前: {_diff.current_total} | "
+            f"新增: {len(_diff.new_findings)} | 已修复: {len(_diff.fixed_findings)}\n"
+            f"  门禁判定面 = 仅 {len(_diff.new_findings)} 条 NEW findings (存量放行)"
+        )
+
     if fail_on:
         # R203: 显式级别门禁 — fail-on critical/high/medium, 该级别及以上有finding即FAIL(退出码2)
         _level_rank = {"critical": 0, "high": 1, "medium": 2}
@@ -623,6 +664,9 @@ def lint(
         _failing = 0
         for lint_res in all_results:
             for f in lint_res.findings:
+                if _incremental_new_keys is not None:
+                    if f"{f.rule_id}:{f.description}" not in _incremental_new_keys:
+                        continue
                 sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 if _level_rank.get(sev, 99) <= _threshold:
                     _failing += 1
@@ -638,6 +682,10 @@ def lint(
         all_findings_flat = []
         for lint_res in all_results:
             all_findings_flat.extend(lint_res.findings)
+        if _incremental_new_keys is not None:
+            all_findings_flat = [
+                f for f in all_findings_flat if f"{f.rule_id}:{f.description}" in _incremental_new_keys
+            ]
         gate_result = qg.evaluate(all_findings_flat, score=avg_score)
         verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
         click.echo(

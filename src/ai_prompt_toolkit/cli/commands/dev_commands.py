@@ -13,6 +13,49 @@ import click
 from ai_prompt_toolkit.cli_core import main
 
 
+@main.command(name="gap-report")
+@click.option("--target", "-t", required=True, help="扫描目标(文件或目录, .md/.txt)")
+@click.option(
+    "--output",
+    "-o",
+    default=None,
+    help="报告输出路径(.md=Markdown, 其他=.json; 默认stdout)",
+)
+def gap_report_cmd(target: str, output: str | None) -> None:
+    """OWASP LLM Top 10 防御缺口报告 — 每文件×每风险的防御声明体检。
+
+    度量防御声明/意图存在性(静态文本面), 非实际有效性; 运行时防护不在检测域。
+    复用 OWASP LLM Top 10 2025 风险定义与 Lint 规则映射, 产出可复现的缺口
+    占比数字(社会证明面) — 参考 prompt-defense-audit 的公开缺口统计实践。
+    """
+    from ai_prompt_toolkit.gap_report import aggregate, format_markdown, write_report
+
+    root = Path(target)
+    if not root.exists():
+        click.echo(f"错误: 目标不存在 — {target}", err=True)
+        sys.exit(2)
+    files: dict[str, str] = {}
+    if root.is_file():
+        files[root.name] = root.read_text(encoding="utf-8")
+    else:
+        for p in sorted(root.rglob("*.md")) + sorted(root.rglob("*.txt")):
+            rel = p.relative_to(root).as_posix()
+            files[rel] = p.read_text(encoding="utf-8")
+    if not files:
+        click.echo(f"错误: 目标下无 .md/.txt 文件 — {target}", err=True)
+        sys.exit(2)
+
+    report = aggregate(files)
+    if output:
+        # .md → Markdown报告; 其他后缀 → JSON(供CI断言) — write_report按后缀分发
+        write_report(report, output)
+        click.echo(
+            f"缺口报告: {output} | 文件 {report['file_count']} | 平均缺口率 {report['summary']['avg_gap_rate']:.0%}"
+        )
+    else:
+        click.echo(format_markdown(report))
+
+
 @main.command(name="baseline")
 @click.option("--json", "as_json", is_flag=True, help="JSON输出(供CI断言)")
 @click.option(

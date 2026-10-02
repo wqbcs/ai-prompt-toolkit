@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.15-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-5979%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.16-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-5987%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -34,6 +34,16 @@ prompt-cli baseline
   with:
     sarif_file: lint.sarif
 ```
+
+**缺口体检（OWASP LLM Top 10 防御声明面）**：`prompt-cli gap-report -t ./prompts`
+对每个文件×每个风险度量"是否声明了防御意图"，产出可复现的缺口占比。
+对本仓库 26 个内置模板的自体检：平均缺口率 86%，LLM07（系统提示词泄露）100%
+文件缺声明 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
+口径诚实声明：度量防御**声明存在性**（静态文本面），非防御实际有效性。
+
+**老仓库接入（存量不清零也能开门禁）**：`prompt-cli lint -t ./prompts --baseline
+base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW findings，
+存量 PRE-EXISTING 放行 —— 采用路径见 [docs/adoption.md](docs/adoption.md)。
 
 ---
 
@@ -88,6 +98,8 @@ prompt-cli baseline
 | **评估对比** | `prompt-cli eval-compare` | 多版本评估结果对比 |
 | **交互向导** | `prompt-cli wizard` | 引导式Prompt创建 |
 | **双基线自证** | `prompt-cli baseline` | 漏检/误报基线一条命令复现，样本随包分发，零LLM确定性度量 |
+| **缺口体检** | `prompt-cli gap-report` | OWASP LLM Top 10 每文件×每风险防御声明缺口统计，JSON+MD，可复现缺口占比 |
+| **增量门禁** | `prompt-cli lint --incremental` | 与--baseline+--gate组合：门禁只拦NEW findings，存量放行（brownfield接入） |
 
 </details>
 

@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.16] - 2026-10-02
+
+### Added (R224-P1: brownfield增量门禁 + OWASP缺口体检)
+
+- **`prompt-cli lint --incremental` 增量门禁**: 与 `--baseline <path>` +
+  `--gate/--fail-on` 合用时, 门禁判定面过滤为仅 NEW findings(不在基线快照内),
+  存量 PRE-EXISTING 放行, 已修复单列展示 — 老仓库接入不被存量打回的
+  采用死结解决(借鉴taudit "只看新增"实践)。复用 linter/baseline.py
+  的 compare_baseline.new_findings, 无新模块; 基线棘轮纪律(重存需独立
+  commit+理由)见 docs/adoption.md
+- **`prompt-cli gap-report` OWASP LLM Top 10 防御缺口报告**: 每文件×每风险
+  度量"是否声明了防御意图", 产出可复现缺口占比(社会证明面, 参考
+  prompt-defense-audit公开缺口统计实践)。复用 OWASP_LLM_TOP_10_2025 风险
+  定义+官方remediation 与 get_owasp_coverage 规则映射, 无新数据源;
+  JSON(CI断言)+Markdown双输出; 口径诚实声明: 度量防御声明存在性
+  (静态文本面), 非实际有效性, 运行时防护不在检测域
+- **docs/gap_report.md 自体检样例**: 26内置模板平均缺口率86%,
+  LLM07(系统提示词泄露)100%文件缺声明, LLM03/LLM08/LLM10 81% —
+  自家模板先暴露缺口, 可信度前置
+- **README**: 首屏可信度区补缺口体检+增量门禁指引; 能力表补双行
+- 测试: tests/test_r224_incremental_gate.py 8用例(存量放行/新增拦截/
+  已修复/缺基线/基线不存在/向后兼容)
+
 ## [v67.34.15] - 2026-10-02
 
 ### Fixed (R224-P0-4: templates自lint 11 Critical清零 — 修规则盲点而非改模板)

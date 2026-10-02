@@ -109,6 +109,34 @@ repos:
 
 ---
 
+## Brownfield 接入：存量不清零也能开门禁（增量门禁）
+
+老仓库第一次跑 `prompt-cli lint` 可能有几十上百条存量 finding。
+**不要**为了开 `--gate` 先花几周全量清零——那样采用永远停在 Day 0。
+用增量门禁：基线锁存量，门禁只拦**新增**：
+
+```bash
+# Day 1: 保存基线(锁定当前全部 finding 为 PRE-EXISTING)
+prompt-cli lint -t ./prompts --baseline prompts.base.json --baseline-save
+
+# CI: 增量门禁 — 只判定 NEW findings, 存量放行
+prompt-cli lint -t ./prompts --baseline prompts.base.json --incremental --gate
+```
+
+行为契约：
+
+| 场景 | 增量门禁行为 |
+|---|---|
+| PR 只改文档，无新 finding | PASS（存量不判） |
+| PR 引入新的 critical/high | FAIL，报错只列新增的那几条 |
+| PR 顺手修掉存量 | PASS，且"已修复: N"单列展示（鼓励还债） |
+| 规则引擎升级导致新 finding 涌现 | 会被当作 NEW 拦下 —— 用 `--baseline-save` 重存基线并在 PR 里说明（棘轮纪律见下） |
+
+**基线棘轮纪律**（防"基线重存 = 藏 bug"）：
+- 重存基线必须是独立 commit，消息说明理由（如"规则 v67.34.15 新增 P261，补基线"）
+- 修复存量后定期重存，让基线只减不增
+- 配合 `--fail-on critical` 可只硬拦 critical 新增，high/medium 走 Code Scanning 消化
+
 ## 双基线棘轮（可选，CI 上钉住检测能力）
 
 规则引擎升级后，防"规则改动导致漏检/误报退化"无感发生：
