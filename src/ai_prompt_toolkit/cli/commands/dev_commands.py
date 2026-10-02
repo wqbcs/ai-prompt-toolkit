@@ -13,6 +13,67 @@ import click
 from ai_prompt_toolkit.cli_core import main
 
 
+@main.command(name="baseline")
+@click.option("--json", "as_json", is_flag=True, help="JSON输出(供CI断言)")
+@click.option(
+    "--fail-above-miss",
+    type=float,
+    default=None,
+    help="漏检率>阈值时退出码1(CI棘轮用, 如0.05)",
+)
+@click.option(
+    "--fail-above-fp",
+    type=float,
+    default=None,
+    help="误报率>阈值时退出码1(CI棘轮用, 如0.01)",
+)
+def baseline_cmd(as_json: bool, fail_above_miss: float | None, fail_above_fp: float | None) -> None:
+    """一条命令自证双基线 — 漏检(检测能力面) + 误报(噪音面)。
+
+    样本(60干净prompt + 113 golden攻击探针)随包分发, 任何机器 pip install
+    后即可复现, 无需克隆仓库。确定性度量: 零LLM, 每次运行结果一致。
+    """
+    import json
+
+    from ai_prompt_toolkit.baselines import run_false_positives, run_miss_rate
+
+    miss = run_miss_rate()
+    fp = run_false_positives()
+
+    if as_json:
+        print(json.dumps({"miss": miss, "false_positives": fp}, ensure_ascii=False, indent=2))
+    else:
+        click.echo("══ 双基线自证 (确定性 · 零LLM · 可复现) ══")
+        click.echo("")
+        click.echo(
+            f"漏检面  {miss['global_rate']:.2%}  |  探针 {miss['probe_count']} 条 · 期望命中单元 {miss['expected_total']}"
+        )
+        for lang, v in miss["per_language"].items():
+            click.echo(f"        语言[{lang}]: {v['missed']}/{v['expected']} = {v['miss_rate']:.2%}")
+        if miss["zero_detect_rules"]:
+            click.echo(f"        ⚠ 零检出规则: {', '.join(miss['zero_detect_rules'])}")
+        click.echo("")
+        click.echo(
+            f"误报面  {fp['global_rate']:.2%}  |  干净样本 {fp['sample_count']} 个 · checker {fp['checker_count']} 条"
+        )
+        if fp["high_fp_rules"]:
+            for r in fp["high_fp_rules"]:
+                click.echo(
+                    f"        ⚠ {r['rule_id']}: {r['false_positives']}/{fp['sample_count']} = {r['false_positive_rate']:.0%}"
+                )
+        else:
+            click.echo("        无高误报规则(>10%样本命中)")
+        click.echo("")
+        click.echo("样本数据随包分发: data/clean_prompts + data/golden_attacks.json")
+
+    if fail_above_miss is not None and miss["global_rate"] > fail_above_miss:
+        click.echo(f"FAIL: 漏检率 {miss['global_rate']:.2%} > 阈值 {fail_above_miss:.2%}", err=True)
+        sys.exit(1)
+    if fail_above_fp is not None and fp["global_rate"] > fail_above_fp:
+        click.echo(f"FAIL: 误报率 {fp['global_rate']:.2%} > 阈值 {fail_above_fp:.2%}", err=True)
+        sys.exit(1)
+
+
 @main.command(name="watch")
 @click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
 @click.option(

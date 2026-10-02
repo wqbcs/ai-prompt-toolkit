@@ -2,6 +2,32 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.14] - 2026-10-02
+
+### Added (R224-P0: 可信度自证 + 采用入口)
+
+- **`prompt-cli baseline` 一条命令自证双基线**: 漏检/误报度量逻辑与样本
+  (113 golden探针+60干净prompt) 移入包内 `ai_prompt_toolkit.baselines`
+  作单一真源, 随 wheel 分发 — pip 用户任何机器一条命令复现 0.00%/0.91%,
+  无需克隆仓库。`--fail-above-miss/--fail-above-fp` 供 CI 棘轮
+- **scripts/check_false_positives.py / check_miss_rate.py 退化为薄封装** —
+  与 CLI 复用同一实现, 消除双份度量逻辑漂移
+- **README 首屏可信度叙事升级**: 楔子定位行 + 双基线徽章前置 +
+  `prompt-cli baseline` 自证指引 + 10行 copy-paste CI 片段 +
+  LLM系竞品结构性对比表(promptfoo repeat采样/garak Fisher 54%误红/
+  API key/成本模型); 功能计数降级进 details 折叠
+- **docs/adoption.md 采用指南**: Day0(report-only+SARIF入Code Scanning)/
+  Day1(--gate分阶段收紧)/waiver纪律/双基线棘轮/air-gap安装/常见问答
+- **docs/R224_改进方案.md**: 定位反问+竞品调研(promptfoo/garak/
+  prompt-defense-audit/taudit)+P0/P1/P2清单+PM自审
+
+### Refactor
+
+- `tests/fixtures/clean_prompts/` 与 `golden_attacks.json` 移入
+  `src/ai_prompt_toolkit/data/`(包内单一真源), 原位置留符号链接 —
+  24+ 既有测试零改动, wheel 自带基线样本
+- baselines.py `_load_golden_probes` 加 cast 消除 mypy no-any-return
+
 ## [v67.34.13] - 2026-10-02
 
 ### Fixed (R223续: click 8.5.0类型漂移 — mypy棘轮本地0/CI 4)

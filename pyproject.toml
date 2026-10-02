@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.13"
+version = "67.34.14"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -86,7 +86,15 @@ where = ["src"]
 # (Path(__file__).parent.parent / "templates"), playground/static/index.html
 # 被 playground/server.py 运行时加载 — 原 package-data 只含 data/*.json,
 # pip 安装后(非仓库内运行)模板安装/playground 功能必坏。补齐运行时资产。
-ai_prompt_toolkit = ["data/*.json", "templates/*.md", "playground/static/*.html"]
+# R224-P0-1: 双基线自证数据移入包内作单一真源(原tests/fixtures, 原位置留符号链接)
+# — pip用户 prompt-cli baseline 需包内自带样本才能自证漏检/误报基线
+ai_prompt_toolkit = [
+    "data/*.json",
+    "data/clean_prompts/*.md",
+    "data/clean_prompts/*.txt",
+    "templates/*.md",
+    "playground/static/*.html",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

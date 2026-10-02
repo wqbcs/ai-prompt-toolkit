@@ -1,15 +1,44 @@
 # AI Prompt Toolkit
 
-> AI提示词工业级工具链 — Lint / 安全扫描 / 红队对抗 / 评估 / 合规 / MCP Server
+> **确定性的 Prompt 静态门禁** — 零 LLM · 可复现 · <100ms · SARIF/CI 原生。
+> 一次 CI fail 后重跑 pass 的门禁等于没有门禁。我们的门禁每次裁决逐字节一致。
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.13-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.14-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-5979%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(113 条 golden
+攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
+
+```bash
+pip install ai-prompt-toolkit
+prompt-cli baseline
+# 漏检面  0.00%  |  探针 113 条 · 期望命中单元 108
+# 误报面  0.91%  |  干净样本 60 个 · checker 261 条
+```
+
+**10 行接入 CI**（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
+
+```yaml
+# .github/workflows/prompt-ci.yml
+- run: pip install ai-prompt-toolkit
+- run: prompt-cli lint -t ./prompts --format sarif -o lint.sarif --gate
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: lint.sarif
+```
+
+---
+
+<details>
+<summary>📦 能力全貌（261 规则 / 130 维度 / 73 MCP / 23 探针，展开看）</summary>
 
 ## 项目简介
 
@@ -58,6 +87,26 @@
 | **国际化** | `prompt-cli i18n` | LLM翻译+术语表+回退策略 |
 | **评估对比** | `prompt-cli eval-compare` | 多版本评估结果对比 |
 | **交互向导** | `prompt-cli wizard` | 引导式Prompt创建 |
+| **双基线自证** | `prompt-cli baseline` | 漏检/误报基线一条命令复现，样本随包分发，零LLM确定性度量 |
+
+</details>
+
+### 与 LLM 系竞品的结构性差异
+
+promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评估**场景它们是
+好工具；对 **CI 门禁**场景，非确定性是结构性缺陷，不是参数调得出来的：
+
+| 门禁要求 | LLM 系工具（promptfoo/garak 路线） | 本工具（确定性静态） |
+|---|---|---|
+| 重跑结果一致 | 有采样方差 — promptfoo 官方文档明说 eval 输出 non-deterministic，需用 `repeat:3` + `repeat-min-pass:2` **多次采样**对冲 | 逐字节一致，重跑 1000 次裁决相同 |
+| 统计噪音 | garak 门禁实践：即便 pin 版本 + fixed seed，仍需 **one-sided Fisher 检验**对比基线；其作者实测 2 行 diff 的 no-op PR 误红率约 54% | 无采样 → 无 Fisher → 无统计误红；规则变更才变裁决，可审计 |
+| API key / 供应商 | 需要 `PROMPTFOO_API_KEY` 或 LLM endpoint，CI 多一层密钥管理+供应商可用性依赖 | 零 key，离线可跑，air-gap 环境可用 |
+| 门禁延迟 | LLM 调用数百毫秒~秒级/样本 | <100ms/文件，可进 pre-commit 钩子 |
+| 成本模型 | 按 token 计费，PR 数量×样本数线性增长 | 0 调用，CI 成本与使用量无关 |
+
+这不是贬低 LLM 路线 —— 语义层攻击（创意越狱/间接注入的对抗性改写）确实是纯静态
+检测的机制上限，应组合使用运行时防护（LLM Guard 类）。**分工**：本工具做 CI 门禁
+（可复现裁决层），LLM 系工具做语义评估与红队探测，两者互补不互替。
 
 ### 差异化优势
 
