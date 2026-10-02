@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_prompt_toolkit.linter.owasp_mapping import get_owasp_coverage
-from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2025, _OWASP_REMEDIATIONS
+from ai_prompt_toolkit.probe_framework import _OWASP_REMEDIATIONS, OWASP_LLM_TOP_10_2025
 
 # 每风险的防御意图标记词表(文本层静态检测面)。
 # 设计: 中英双语+关键语义, 宽口径(命中任一即视为"声明了该风险的防御意图")。
@@ -193,7 +193,9 @@ def format_markdown(report: dict[str, Any]) -> str:
     for ref, d in sorted(report["risks"].items()):
         rules = d["lint_rules"]
         rules_s = f"{len(rules)}条({', '.join(rules[:4])}{'…' if len(rules) > 4 else ''})" if rules else "—"
-        lines.append(f"| {ref} | {d['name']} | {d['lacking_count']}/{report['file_count']} | {d['lacking_rate']:.0%} | {rules_s} |")
+        lines.append(
+            f"| {ref} | {d['name']} | {d['lacking_count']}/{report['file_count']} | {d['lacking_rate']:.0%} | {rules_s} |"
+        )
     worst = report["summary"]["worst_risk"]
     lines += [
         "",
