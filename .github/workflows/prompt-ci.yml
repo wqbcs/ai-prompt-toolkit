@@ -55,11 +55,11 @@ jobs:
       # 双基线对称棘轮(只降不升): 误报基线抓噪音面, 漏检基线抓检测能力面
       # R212后误报0.96%(阈值0.01防回归); R213修复4条否定盲区后漏检归零,
       # 阈值收紧0.05(见 docs/规则漏检率基线.md CI棘轮约定)
-      - name: False-positive ratchet (dual baseline: noise side)
+      - name: "False-positive ratchet (dual baseline: noise side)"
         if: matrix.python-version == '3.12'
         run: python scripts/check_false_positives.py --fail-above 0.01
 
-      - name: Miss-rate ratchet (dual baseline: detection side)
+      - name: "Miss-rate ratchet (dual baseline: detection side)"
         if: matrix.python-version == '3.12'
         run: python scripts/check_miss_rate.py --fail-above 0.05
 

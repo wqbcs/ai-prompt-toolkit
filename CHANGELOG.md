@@ -2,6 +2,44 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.8] - 2026-10-02
+
+### Fixed (R223: 自家CI修复 — 产品卖CI门禁, 自家CI灯必须是真话)
+
+**背景**: 项目首次推送 GitHub 后 Actions 真实运行, 11个 workflow 中 4 个失败。
+根因(逐一从 Actions 日志定位, 非猜测):
+
+1. **主门禁 prompt-ci.yml 从未真正运行过(最高危)**: step 名
+   `False-positive ratchet (dual baseline: noise side)` 未加引号 —
+   YAML 中 `:` 后接空格构成非法 mapping → 整个文件解析失败 → 0 jobs。
+   双基线棘轮/SARIF/多版本矩阵 3.10-3.12 等所有"CI 门禁"此前从未在 GitHub
+   上真实执行。修复: step 名加引号
+2. **fastapi 依赖缺口**: `tests/test_market_api.py` 顶层 import fastapi,
+   但 [dev] extras 未含(只在 [full]) → `pip install -e ".[dev]"` 后
+   pytest 收集阶段 `ModuleNotFoundError: No module named 'fastapi'`
+   (quality-gate run 日志实证)。修复: fastapi+httpx 移入 [dev] 单一源
+3. **6 个冗余/损坏 workflow 删除**:
+   - `prompt-lint-ci.yml`: `apt lint` 解析为**系统包管理器 apt**(exit 100),
+     目标 `prompts/` 目录不存在
+   - `prompt-quality.yml`/`prompt-quality-gate.yml`: 与 quality-gate.yml
+     同名 "Prompt Quality Gate" x3 堆积; 前者引用坏 composite action
+     (装 `ai-prompt-toolkit>=42.0.0` 未加引号致 shell 重定向 + 调用不存在的
+     `promptkit` 二进制), 后者 `pip install -e ".[dev]"` 缺 fastapi 必挂
+   - `quality-gate.yml`: 全量 pytest 未过滤 slow, 与主门禁矩阵重复
+   - `prompt-lint.yml`/`prompt-pr-scan.yml`: 全部 `|| true` 空转 —
+     门禁不拦截任何东西, 比没有更危险(假绿灯)
+   - 孤儿 `.github/actions/prompt-lint/action.yml` 一并删除
+
+**保留的真实门禁(职责不重叠)**:
+- `prompt-ci.yml`(主): 多版本矩阵 + ruff + mypy棘轮 + 双基线 + 模板自lint
+- `prompt-pr-gate.yml`: PR增量 prompt 文件门禁(R207-5, 真拦截)
+- `release.yml`: tag→PyPI trusted publishing
+- `daily-scorecard.yml`/`owasp-llm-scan.yml`: 报告型(continue-on-error 语义明确)
+
+**验证**: 5/5 剩余 workflow YAML 解析通过; 门禁链全绿(5979 passed /
+ruff / mypy 0持平 / 双基线 / 版本+README一致); CI 真实状态由本次 push
+后 GitHub Actions 运行确认(此前从未绿过 — 诚实标注)
+
 ## [v67.34.7] - 2026-10-02
 
 ### Fixed (R222-C2: 发布就绪审计 — 打包缺口修复, pip 安装后功能必坏→可用)
