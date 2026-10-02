@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.10] - 2026-10-02
+
+### Fixed (R223续: 门禁可复现性 — lint工具版本钉死, 消除CI/本地漂移)
+
+- **根因**: CI 裸 `pip install ruff mypy` 装最新版 — 0.15.14→0.16.10
+  间 format 行为变更, `templates/mcp-server-dev.md` 内嵌 Python 块被重排,
+  CI `Ruff format check` 红而本地绿 → **门禁结果不可复现**
+- **修复(顶配做法)**: ruff==0.16.10 / mypy==2.1.0 钉入 [dev] 单一源,
+  CI 不再裸装 — 本地与 CI 同一版本, 门禁可复现; 升级 lint 工具时
+  一次性本地+CI同步升并复跑全量
+- 按 0.16.10 format 重排 `templates/mcp-server-dev.md`(本地0.15.14也通过,
+  双版本格式一致)
+- 本地 ruff 0.16.10 复验: check+format 全绿; 推送后以 GitHub Actions
+  真实运行为准(此前 3 连红: YAML解析/RUF036/format漂移, 逐一实证修复)
+
 ## [v67.34.9] - 2026-10-02
 
 ### Fixed (R223续: CI ruff版本漂移 — 本地0.15.14通过/CI最新版拦截)

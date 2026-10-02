@@ -64,19 +64,23 @@ from mcp.types import Tool, TextContent
 
 server = Server("file-reader")
 
+
 @server.list_tools()
 async def list_tools() -> list[Tool]:
-    return [Tool(
-        name="read_file",
-        description="Read file content within allowed directory",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "path": {"type": "string", "description": "File path"},
+    return [
+        Tool(
+            name="read_file",
+            description="Read file content within allowed directory",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File path"},
+                },
+                "required": ["path"],
             },
-            "required": ["path"],
-        },
-    )]
+        )
+    ]
+
 
 @server.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:

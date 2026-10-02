@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.9"
+version = "67.34.10"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -44,8 +44,10 @@ dev = [
     "pytest>=7.4",
     "pytest-cov>=4.1",
     "pytest-asyncio>=0.21",
-    "ruff>=0.5.0",
-    "mypy>=1.10",
+    # 版本钉死: CI与本地同一版本 — R223实证ruff 0.15.14/0.16.10存在
+    # format漂移(check/format行为随版本变), 门禁必须可复现不随上游发版抖动
+    "ruff==0.16.10",
+    "mypy==2.1.0",
     "pre-commit>=3.7",
     # market REST API 测试(test_market_api)顶层 import fastapi,
     # TestClient 依赖 httpx — 此前只在 [full], [dev] 缺失致 CI 收集报错
