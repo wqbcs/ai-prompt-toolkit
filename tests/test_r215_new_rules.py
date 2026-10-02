@@ -3,7 +3,7 @@
 - P258 伪系统标签(HIGH): 5探针命中 + 近邻放行面(±80字符) + 精度守卫
 - P259 人格切换复合面(HIGH): 3探针命中 + 单面不命中守卫(误报陷阱防线)
 - P260 编码/混淆面(HIGH): 7探针命中 + 子pattern隔离 + 阈值/有限集边界守卫
-- 注册表: 260规则, HIGH严重度, LLM01
+- 注册表: 261规则（R217 P261 后）, HIGH严重度, LLM01
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ class TestR215Registry:
     def test_total_260(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 260
+        assert len(get_all_rules()) == 261
 
 
 class TestR215P258FakeTag:

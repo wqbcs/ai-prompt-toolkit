@@ -100,7 +100,7 @@ class TestRuleCount150:
     def test_rule_map_has_150(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
 
-        assert len(_RULE_MAP) == 260
+        assert len(_RULE_MAP) == 261
 
     def test_p141_p145_in_rule_map(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP

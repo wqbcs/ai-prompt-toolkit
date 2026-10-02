@@ -47,7 +47,7 @@ class TestR214LangSchema:
 
     def test_all_probes_have_valid_lang(self):
         probes = self._probes()
-        assert len(probes) == 73  # R215: 52 + 新面×16 + review观察×5（zw/空格×2/词法/同形异码）
+        assert len(probes) == 80  # R217: 73 + P261信源探针×5(TP) + 已知缺口观察×2
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -59,6 +59,7 @@ class TestR214LangSchema:
         assert sum(1 for v in langs.values() if v == "zh-Hans") == 51  # R215-review: 48+3（atk69/70/71）
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
+        assert sum(1 for v in langs.values() if v == "en") == 21  # R217: 16+5（atk74-78, 信源探针en承载）
 
 
 class TestR214PerLanguageReport:

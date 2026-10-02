@@ -77,11 +77,11 @@ for r in _RULES_P258:
 
 # 5 族独立正则，各自绑定 family_idx（0-4），消除 lastindex 数字耦合
 _FAKE_TAG_BRACKET_PATTERNS = [
-    (0, re.compile(r"【([^【】]{0,24})】")),          # 1: 全角括号族(zh/ja)
-    (1, re.compile(r"\[([^\[\]]{0,24})\]")),        # 2: 半角括号族(en, ATR-2026-00001 L7)
+    (0, re.compile(r"【([^【】]{0,24})】")),  # 1: 全角括号族(zh/ja)
+    (1, re.compile(r"\[([^\[\]]{0,24})\]")),  # 2: 半角括号族(en, ATR-2026-00001 L7)
     (2, re.compile(r"<\s*<\s*([^\n]{0,24}?)\s*>\s*>")),  # 3: Llama族 <<SYS>> (ATR-2026-00001 L7)
-    (3, re.compile(r"<\|([^\|\n]{0,24}?)\|>")),     # 4: 模型chat template token (ATR-20002 L3)
-    (4, re.compile(r"\{\{([^\n]{0,24}?)\}\}")),     # 5: 双花括号族 (ATR-2026-00001 L7)
+    (3, re.compile(r"<\|([^\|\n]{0,24}?)\|>")),  # 4: 模型chat template token (ATR-20002 L3)
+    (4, re.compile(r"\{\{([^\n]{0,24}?)\}\}")),  # 5: 双花括号族 (ATR-2026-00001 L7)
 ]
 
 # 各族关键词有限集(出处见模块docstring逐词标注; casefold 后比较)

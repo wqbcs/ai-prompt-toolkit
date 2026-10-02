@@ -60,7 +60,11 @@ def main() -> int:
         )
 
     if args.json:
-        print(json.dumps({"templates": len(templates), "total_findings": total, "rows": rows}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"templates": len(templates), "total_findings": total, "rows": rows}, ensure_ascii=False, indent=2
+            )
+        )
     else:
         print(f"内置模板自诊: {len(templates)} 个模板, {total} 处 finding")
         for row in rows:

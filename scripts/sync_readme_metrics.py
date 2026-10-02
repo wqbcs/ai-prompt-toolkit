@@ -111,7 +111,9 @@ def main() -> int:
             f"真实值: 规则{real['lint_rules']} 维度{real['eval_dimensions']} "
             f"MCP工具{real['mcp_tools']} 探针(全局){real['probes_global']}"
         )
-        print(f"README: 规则{readme.get('lint_rules')} 维度{readme.get('eval_dimensions')} MCP工具{readme.get('mcp_tools')}")
+        print(
+            f"README: 规则{readme.get('lint_rules')} 维度{readme.get('eval_dimensions')} MCP工具{readme.get('mcp_tools')}"
+        )
         if drift:
             print("\n⚠️ 指标漂移(README与真实值不一致):")
             for key, info in drift.items():

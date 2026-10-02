@@ -314,7 +314,7 @@ class TestR207MetricsSync:
         real = Path(__file__).parent.parent / "README.md"
         fake = tmp_path / "README.md"
         fake.write_text(
-            real.read_text(encoding="utf-8").replace("**Lint规则** | 260", "**Lint规则** | 200", 1),
+            real.read_text(encoding="utf-8").replace("**Lint规则** | 261", "**Lint规则** | 200", 1),
             encoding="utf-8",
         )
         assert fake.read_text(encoding="utf-8") != real.read_text(encoding="utf-8"), (

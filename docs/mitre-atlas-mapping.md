@@ -29,7 +29,7 @@
 | AML.T0092 Manipulate User LLM Chat History | LLM01 | P161/P164 指令保护 | 部分（会话级上下文操纵需运行时） |
 | AML.T0093 Prompt Infiltration via Public-Facing Application | LLM01 | mcp-lint description层 / P022 | 覆盖 |
 | AML.T0094 Delay Execution of LLM Instructions | LLM01 | （无规则） | **缺口（记录, 候选）** |
-| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / redteam 编码探针8条（unicode_bypass/homoglyph/bidi/base64_hidden/invisible_char/zero_width/polyglot/nested） | 覆盖 |
+| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / **P261 不可见字符交错/BiDi反转面（R217, 3子pattern, 信源ATR-2026-00276）** / redteam 编码探针8条（unicode_bypass/homoglyph/bidi/base64_hidden/invisible_char/zero_width/polyglot/nested） | 覆盖 |
 | AML.T0035 Create Proxy ML Model | — | （无 — 运行时建模能力） | **缺口（记录, 不实现）** |
 | RAG Poisoning / False RAG Entry Injection / Gather RAG-Indexed Targets / RAG Credential Harvesting（2025-03 后新增, 编号以官方矩阵为准） | LLM08 | P035-P037 + **P257（R213-B5）** | 部分→R213补强 |
 
@@ -37,7 +37,7 @@
 
 | OWASP | 覆盖状态 |
 |---|---|
-| LLM01 Prompt Injection | 强（多层: 规则/探针/mcp-lint/P257/P258/P259/P260） |
+| LLM01 Prompt Injection | 强（多层: 规则/探针/mcp-lint/P257/P258/P259/P260/P261） |
 | LLM02 Sensitive Information Disclosure | 强 |
 | LLM03 Supply Chain | 强 |
 | LLM04 Data & Model Poisoning | 中（静态面覆盖, 数据管道运行时面声明为范围外） |
