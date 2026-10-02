@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P241_P245 = [
     LintRule(
@@ -146,7 +146,14 @@ def check_p242(text: str) -> list[Finding]:
         re.IGNORECASE,
     )
     if has_model and not _AI_GEN_PATTERN.search(text) and not _TRANSPARENCY_PATTERN.search(text):
-        findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)"))
+        findings.append(
+            Finding(
+                "P242",
+                Severity.MEDIUM,
+                "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+                location=loc_from_match(text, has_model),
+            )
+        )
     return findings
 
 

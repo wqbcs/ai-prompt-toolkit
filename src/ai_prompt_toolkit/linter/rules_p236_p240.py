@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P236_P240 = [
     LintRule(
@@ -153,7 +153,14 @@ def check_p239(text: str) -> list[Finding]:
             re.IGNORECASE,
         )
         if has_infer:
-            findings.append(Finding("P239", Severity.HIGH, "推理服务缺速率限制/请求大小限制(DoS风险)"))
+            findings.append(
+                Finding(
+                    "P239",
+                    Severity.HIGH,
+                    "推理服务缺速率限制/请求大小限制(DoS风险)",
+                    location=loc_from_match(text, has_infer),
+                )
+            )
     return findings
 
 

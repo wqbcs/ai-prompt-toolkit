@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _P021_PATTERNS = [
     # R180: 长串须含数字(真编码串数字频率高; 驼峰方法名列表无数字误报)
@@ -319,6 +319,7 @@ def check_p030(text: str) -> Finding | None:
         severity=Severity.LOW,
         description=f"Prompt 过度依赖特定模型 '{dep_match.group(0)}'",
         remediation="声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+        location=loc_from_match(text, dep_match),
         details={"dependency": dep_match.group(0)},
     )
 

@@ -2,6 +2,38 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.4] - 2026-10-01
+
+### Added (R219-B1b: 安全集 checker 真实行:列 — 复用 R218 loc_from_match 契约)
+
+**背景**: R218 只给 P260/P261 落真实行:列(注入/编码最高价值面), 其余 259 条
+文件级。R219 ast 全量 261 checker 逐个验证后, 把**可安全加行:列的子集**落地
+— 零新基建(复用 R218 `loc_from_match` 单一契约)。
+
+**诚实边界(错误行号比没有更糟)**: 只有 match 对**原始 text** 产生的 checker
+才能 `loc_from_match(text, m)`。逐个源码验证后:
+- **22 站点安全加行:列**(match 对 text, 锚点语义正确):
+  - P030 模型依赖 / P178 影子指令×3 / P186-P191 鸿蒙 / P193-P195 Agent
+  - P196-P198 LLM推理 / P200 流式 / P204 公平 / P210 嵌入 / P239 DoS
+  - P242 透明度 / P258 伪造系统标签
+- **诚实留文件级(不猜行, 防错误行号)**:
+  - p201/p202/p205: match 对**派生串** `_strip_negated_data(text)`, 偏移错位
+  - p256: match 相对 **fence-stripped body**, 非 text
+  - p006/p021/p022/p027/p051/p053/p054/p081: finditer 聚合, match 循环结束
+    即丢 span, 单 Finding 报"N处"无锚点
+  - p183/p192/p199/p203: 复合/bool 触发, 无单一锚点
+
+- **顺带修复 B1a 漏网**: p256 两处**多行** `"1","1"` sentinel(B1a 单行
+  search_replace 未命中多行形式) → 修为文件级 `""`
+- **行:列覆盖率(诚实声明)**: 261 checker 中 **22 站点**有真实行:列(P260/
+  P261 4 子pattern + 本批 22), 其余文件级(诚实不猜行) — 剩余提升需逐 checker
+  让 match 存活到 Finding 站点(重构检测逻辑, 非加个 location=, 高风险)
+- **回归 tests/test_r219_b1b_linecol.py(13 条)**: 逐 checker 断言触发点行
+  == 报告行(不指错行) + 派生串 checker 必须留文件级(不产假行号) + 防假行1
+  锚点复发守护
+- **行号正交于检测** → 双基线不变: FP 0.91% / 漏检 0.00%
+- 门禁全绿: 5968 passed / ruff check+format / mypy 0 持平 / 版本+README 一致
+
 ## [v67.34.3] - 2026-10-01
 
 ### Fixed (R219-B1a: 96 处垃圾 sentinel Finding 调用 — 去除用户可见"修复:1")

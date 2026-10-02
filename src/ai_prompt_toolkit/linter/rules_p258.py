@@ -48,7 +48,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P258 = [
     LintRule(
@@ -166,6 +166,7 @@ def check_p258(text: str) -> Finding | None:
                     rule_id=rule.rule_id,
                     severity=rule.severity,
                     description=rule.description,
+                    location=loc_from_match(text, m),
                     remediation=rule.remediation,
                     details={"tag": m.group(0), "position": m.start()},
                 )

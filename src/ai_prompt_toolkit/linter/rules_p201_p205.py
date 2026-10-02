@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P201_P205 = [
     LintRule(
@@ -142,7 +142,7 @@ def check_p204(text: str) -> list[Finding]:
     findings = []
     has_model = re.search(r"(?:模型|model|推理|inference|预测|predict)", text, re.IGNORECASE)
     if has_model and not _FAIRNESS_PATTERN.search(text):
-        findings.append(Finding("P204", Severity.MEDIUM, "缺少偏见公平声明"))
+        findings.append(Finding("P204", Severity.MEDIUM, "缺少偏见公平声明", location=loc_from_match(text, has_model)))
     return findings
 
 

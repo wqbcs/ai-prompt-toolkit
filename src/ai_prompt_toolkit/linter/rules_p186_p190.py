@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P186_P190 = [
     LintRule(
@@ -107,7 +107,14 @@ def check_p186(text: str) -> list[Finding]:
     findings = []
     has_arkui = _ARKUI_PATTERN.search(text)
     if has_arkui and not _ARKUI_V15_PATTERN.search(text):
-        findings.append(Finding("P186", Severity.HIGH, "Prompt涉及ArkUI但未迁移至API 15声明式范式"))
+        findings.append(
+            Finding(
+                "P186",
+                Severity.HIGH,
+                "Prompt涉及ArkUI但未迁移至API 15声明式范式",
+                location=loc_from_match(text, has_arkui),
+            )
+        )
     return findings
 
 
@@ -115,7 +122,11 @@ def check_p187(text: str) -> list[Finding]:
     findings = []
     has_napi = _NAPI_PATTERN.search(text)
     if has_napi and not _NAPI_THREADSAFE_PATTERN.search(text):
-        findings.append(Finding("P187", Severity.HIGH, "Prompt涉及Node-API但缺少线程安全声明"))
+        findings.append(
+            Finding(
+                "P187", Severity.HIGH, "Prompt涉及Node-API但缺少线程安全声明", location=loc_from_match(text, has_napi)
+            )
+        )
     return findings
 
 
@@ -123,7 +134,14 @@ def check_p188(text: str) -> list[Finding]:
     findings = []
     has_file = _SANDBOX_PATTERN.search(text)
     if has_file and not _SANDBOX_V2_PATTERN.search(text):
-        findings.append(Finding("P188", Severity.MEDIUM, "Prompt涉及文件访问但未声明沙箱2.0路径"))
+        findings.append(
+            Finding(
+                "P188",
+                Severity.MEDIUM,
+                "Prompt涉及文件访问但未声明沙箱2.0路径",
+                location=loc_from_match(text, has_file),
+            )
+        )
     return findings
 
 
@@ -131,7 +149,11 @@ def check_p189(text: str) -> list[Finding]:
     findings = []
     has_hsp = _HSP_PATTERN.search(text)
     if has_hsp and not _HSP_DEP_PATTERN.search(text):
-        findings.append(Finding("P189", Severity.MEDIUM, "Prompt涉及HSP/HAP模块但缺少依赖声明"))
+        findings.append(
+            Finding(
+                "P189", Severity.MEDIUM, "Prompt涉及HSP/HAP模块但缺少依赖声明", location=loc_from_match(text, has_hsp)
+            )
+        )
     return findings
 
 
@@ -139,5 +161,9 @@ def check_p190(text: str) -> list[Finding]:
     findings = []
     has_atomic = _ATOMIC_PATTERN.search(text)
     if has_atomic and not _ATOMIC_CONSTRAINT_PATTERN.search(text):
-        findings.append(Finding("P190", Severity.HIGH, "Prompt涉及元服务但缺少免安装规范约束"))
+        findings.append(
+            Finding(
+                "P190", Severity.HIGH, "Prompt涉及元服务但缺少免安装规范约束", location=loc_from_match(text, has_atomic)
+            )
+        )
     return findings

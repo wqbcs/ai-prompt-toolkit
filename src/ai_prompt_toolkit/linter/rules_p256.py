@@ -111,8 +111,6 @@ def check_p256(text: str) -> list[Finding]:
                 "P256",
                 Severity.HIGH,
                 f"畸形占位符 '{{{{{inner}}}}}' — 渲染器不识别(变量名须为\\w+, 回退用|default), 将静默未填充",
-                "1",
-                "1",
             )
         )
 
@@ -128,8 +126,6 @@ def check_p256(text: str) -> list[Finding]:
                     "P256",
                     Severity.HIGH,
                     f"引用了变量声明段之外的变量 '{{{name}}}' — 渲染时将保留原样未填充",
-                    "1",
-                    "1",
                 )
             )
     return findings

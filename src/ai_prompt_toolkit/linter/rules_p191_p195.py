@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P191_P195 = [
     LintRule(
@@ -102,7 +102,9 @@ def check_p191(text: str) -> list[Finding]:
     findings = []
     has_agent = _AGENT_PATTERN.search(text)
     if has_agent and not _PERMISSION_PATTERN.search(text):
-        findings.append(Finding("P191", Severity.HIGH, "AI Agent缺少权限边界声明"))
+        findings.append(
+            Finding("P191", Severity.HIGH, "AI Agent缺少权限边界声明", location=loc_from_match(text, has_agent))
+        )
     return findings
 
 
@@ -118,7 +120,9 @@ def check_p193(text: str) -> list[Finding]:
     findings = []
     has_cot = _COT_PATTERN.search(text)
     if has_cot and not _COT_ISOLATED_PATTERN.search(text):
-        findings.append(Finding("P193", Severity.MEDIUM, "Agent思维链可能泄露给用户"))
+        findings.append(
+            Finding("P193", Severity.MEDIUM, "Agent思维链可能泄露给用户", location=loc_from_match(text, has_cot))
+        )
     return findings
 
 
@@ -126,7 +130,9 @@ def check_p194(text: str) -> list[Finding]:
     findings = []
     has_multi = _MULTI_AGENT_PATTERN.search(text)
     if has_multi and not _COORD_SECURE_PATTERN.search(text):
-        findings.append(Finding("P194", Severity.HIGH, "多Agent协调缺少安全机制"))
+        findings.append(
+            Finding("P194", Severity.HIGH, "多Agent协调缺少安全机制", location=loc_from_match(text, has_multi))
+        )
     return findings
 
 
@@ -134,5 +140,7 @@ def check_p195(text: str) -> list[Finding]:
     findings = []
     has_memory = _MEMORY_PATTERN.search(text)
     if has_memory and not _MEMORY_ISOLATED_PATTERN.search(text):
-        findings.append(Finding("P195", Severity.MEDIUM, "Agent记忆未隔离脱敏"))
+        findings.append(
+            Finding("P195", Severity.MEDIUM, "Agent记忆未隔离脱敏", location=loc_from_match(text, has_memory))
+        )
     return findings

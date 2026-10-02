@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P176_P180 = [
     LintRule(
@@ -140,15 +140,27 @@ def check_p178(text: str) -> list[Finding]:
     findings = []
     for m in _HTML_COMMENT.finditer(text):
         if _SHADOW_CMD.search(m.group()):
-            findings.append(Finding("P178", Severity.CRITICAL, f"HTML注释中包含影子指令: {m.group()[:50]}"))
+            findings.append(
+                Finding(
+                    "P178",
+                    Severity.CRITICAL,
+                    f"HTML注释中包含影子指令: {m.group()[:50]}",
+                    location=loc_from_match(text, m),
+                )
+            )
     for m in _MD_LINK.finditer(text):
         link_text = m.group()
         if _SHADOW_CMD.search(link_text):
-            findings.append(Finding("P178", Severity.HIGH, "Markdown链接中包含影子指令"))
-    if _SHADOW_CMD.search(text):
+            findings.append(
+                Finding("P178", Severity.HIGH, "Markdown链接中包含影子指令", location=loc_from_match(text, m))
+            )
+    shadow = _SHADOW_CMD.search(text)
+    if shadow:
         has_protection = bool(re.search(r"(?:过滤|filter|审查|audit|禁止|prohibit)", text, re.IGNORECASE))
         if not has_protection:
-            findings.append(Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明"))
+            findings.append(
+                Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明", location=loc_from_match(text, shadow))
+            )
     return findings
 
 

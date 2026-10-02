@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P196_P200 = [
     LintRule(
@@ -104,7 +104,9 @@ def check_p196(text: str) -> list[Finding]:
         return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _TIMEOUT_PATTERN.search(text):
-        findings.append(Finding("P196", Severity.HIGH, "LLM推理未设置timeout"))
+        findings.append(
+            Finding("P196", Severity.HIGH, "LLM推理未设置timeout", location=loc_from_match(text, has_invoke))
+        )
     return findings
 
 
@@ -114,7 +116,9 @@ def check_p197(text: str) -> list[Finding]:
         return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _MAX_TOKENS_PATTERN.search(text):
-        findings.append(Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens"))
+        findings.append(
+            Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens", location=loc_from_match(text, has_invoke))
+        )
     return findings
 
 
@@ -125,7 +129,11 @@ def check_p198(text: str) -> list[Finding]:
         try:
             temp = float(match.group(1))
             if temp > 1.5:
-                findings.append(Finding("P198", Severity.MEDIUM, f"LLM温度参数{temp}过高(>1.5)"))
+                findings.append(
+                    Finding(
+                        "P198", Severity.MEDIUM, f"LLM温度参数{temp}过高(>1.5)", location=loc_from_match(text, match)
+                    )
+                )
         except ValueError:
             pass
     return findings
@@ -144,5 +152,7 @@ def check_p200(text: str) -> list[Finding]:
     findings: list[Finding] = []
     has_stream = _STREAM_PATTERN.search(text)
     if has_stream and not _STREAM_AUDIT_PATTERN.search(text):
-        findings.append(Finding("P200", Severity.HIGH, "流式输出未做实时内容审核"))
+        findings.append(
+            Finding("P200", Severity.HIGH, "流式输出未做实时内容审核", location=loc_from_match(text, has_stream))
+        )
     return findings

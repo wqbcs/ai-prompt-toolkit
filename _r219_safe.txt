@@ -1,0 +1,185 @@
+### check_p006 | rules.py | L505 | var=m | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id,
+        severity=rule.severity,
+        description=f"{rule.description} (发现 {len(matches)} 处)",
+        remediation=rule.remediation,
+        details={"matches": redacted, "total_count": len(matches)},
+    )
+---
+### check_p009 | rules.py | L580 | var=m | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id, severity=rule.severity, description=rule.description, remediation=rule.remediation
+    )
+---
+### check_p021 | rules_p021_p030.py | L112 | var=m | kind=finditer
+    return Finding(
+        rule_id="P021",
+        severity=Severity.HIGH,
+        description=f"Prompt 中存在编码混淆内容 (发现 {len(matches)} 处)",
+        remediation="移除或解码混淆内容，使用明文表达意图",
+        details={"matches": matches[:5]},
+    )
+---
+### check_p022 | rules_p021_p030.py | L130 | var=m | kind=finditer
+    return Finding(
+        rule_id="P022",
+        severity=Severity.CRITICAL,
+        description=f"Prompt 中存在模板注入标记 (发现 {len(matches)} 处)",
+        remediation="对模板变量进行校验和转义，避免注入攻击",
+        details={"matches": matches[:5]},
+    )
+---
+### check_p027 | rules_p021_p030.py | L268 | var=m | kind=finditer
+    return Finding(
+        rule_id="P027",
+        severity=Severity.LOW,
+        description=f"Prompt 中可能包含文化敏感内容 (发现 {len(matches)} 处)",
+        remediation="审查并替换可能冒犯特定文化的表述，使用中立语言",
+        details={"matches": matches[:5]},
+    )
+---
+### check_p030 | rules_p021_p030.py | L317 | var=dep_match | kind=search
+    return Finding(
+        rule_id="P030",
+        severity=Severity.LOW,
+        description=f"Prompt 过度依赖特定模型 '{dep_match.group(0)}'",
+        remediation="声明兼容性或备选模型，如'兼容GPT-4和Claude'",
+        details={"dependency": dep_match.group(0)},
+    )
+---
+### check_p051 | rules_p051_p055.py | L113 | var=_m | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id,
+        severity=rule.severity,
+        description=f"{rule.description} (发现 {len(matches)} 处: {', '.join(matches[:3])})",
+        remediation=rule.remediation,
+        details={"count": len(matches), "types": matches[:5]},
+    )
+---
+### check_p053 | rules_p051_p055.py | L145 | var=m | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id,
+        severity=rule.severity,
+        description=f"{rule.description} (发现 {len(found)} 处模糊表述)",
+        remediation=rule.remediation,
+        details={"ambiguous": found[:5]},
+    )
+---
+### check_p054 | rules_p051_p055.py | L172 | var=m | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id,
+        severity=rule.severity,
+        description=f"{rule.description} (发现 {len(found)} 处Android专用引用)",
+        remediation=rule.remediation,
+        details={"android_refs": found[:5]},
+    )
+---
+### check_p081 | rules_p081_p085.py | L93 | var=match | kind=finditer
+    return Finding(
+        rule_id=rule.rule_id,
+        severity=rule.severity,
+        description=f"{rule.description} (变量: {', '.join(vars_without_default[:5])})",
+        remediation=rule.remediation,
+        details={"vars_without_default": vars_without_default[:5]},
+    )
+---
+### check_p178 | rules_p176_p180.py | L143 | var=m | kind=finditer
+            findings.append(Finding("P178", Severity.CRITICAL, f"HTML注释中包含影子指令: {m.group()[:50]}"))
+---
+### check_p178 | rules_p176_p180.py | L147 | var=m | kind=finditer
+            findings.append(Finding("P178", Severity.HIGH, "Markdown链接中包含影子指令"))
+---
+### check_p178 | rules_p176_p180.py | L151 | var=m | kind=finditer
+            findings.append(Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明"))
+---
+### check_p183 | rules_p181_p185.py | L163 | var=has_env | kind=search
+            findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置"))
+---
+### check_p186 | rules_p186_p190.py | L110 | var=has_arkui | kind=search
+        findings.append(Finding("P186", Severity.HIGH, "Prompt涉及ArkUI但未迁移至API 15声明式范式"))
+---
+### check_p187 | rules_p186_p190.py | L118 | var=has_napi | kind=search
+        findings.append(Finding("P187", Severity.HIGH, "Prompt涉及Node-API但缺少线程安全声明"))
+---
+### check_p188 | rules_p186_p190.py | L126 | var=has_file | kind=search
+        findings.append(Finding("P188", Severity.MEDIUM, "Prompt涉及文件访问但未声明沙箱2.0路径"))
+---
+### check_p189 | rules_p186_p190.py | L134 | var=has_hsp | kind=search
+        findings.append(Finding("P189", Severity.MEDIUM, "Prompt涉及HSP/HAP模块但缺少依赖声明"))
+---
+### check_p190 | rules_p186_p190.py | L142 | var=has_atomic | kind=search
+        findings.append(Finding("P190", Severity.HIGH, "Prompt涉及元服务但缺少免安装规范约束"))
+---
+### check_p191 | rules_p191_p195.py | L105 | var=has_agent | kind=search
+        findings.append(Finding("P191", Severity.HIGH, "AI Agent缺少权限边界声明"))
+---
+### check_p193 | rules_p191_p195.py | L121 | var=has_cot | kind=search
+        findings.append(Finding("P193", Severity.MEDIUM, "Agent思维链可能泄露给用户"))
+---
+### check_p194 | rules_p191_p195.py | L129 | var=has_multi | kind=search
+        findings.append(Finding("P194", Severity.HIGH, "多Agent协调缺少安全机制"))
+---
+### check_p195 | rules_p191_p195.py | L137 | var=has_memory | kind=search
+        findings.append(Finding("P195", Severity.MEDIUM, "Agent记忆未隔离脱敏"))
+---
+### check_p196 | rules_p196_p200.py | L107 | var=has_invoke | kind=search
+        findings.append(Finding("P196", Severity.HIGH, "LLM推理未设置timeout"))
+---
+### check_p197 | rules_p196_p200.py | L117 | var=has_invoke | kind=search
+        findings.append(Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens"))
+---
+### check_p198 | rules_p196_p200.py | L128 | var=match | kind=search
+                findings.append(Finding("P198", Severity.MEDIUM, f"LLM温度参数{temp}过高(>1.5)"))
+---
+### check_p200 | rules_p196_p200.py | L147 | var=has_stream | kind=search
+        findings.append(Finding("P200", Severity.HIGH, "流式输出未做实时内容审核"))
+---
+### check_p201 | rules_p201_p205.py | L120 | var=has_data | kind=search
+        findings.append(Finding("P201", Severity.HIGH, "数据处理缺少合规声明"))
+---
+### check_p202 | rules_p201_p205.py | L128 | var=has_data | kind=search
+        findings.append(Finding("P202", Severity.HIGH, "用户数据使用缺少同意机制"))
+---
+### check_p204 | rules_p201_p205.py | L145 | var=has_model | kind=search
+        findings.append(Finding("P204", Severity.MEDIUM, "缺少偏见公平声明"))
+---
+### check_p205 | rules_p201_p205.py | L153 | var=has_data | kind=search
+        findings.append(Finding("P205", Severity.HIGH, "缺少数据留存策略"))
+---
+### check_p210 | rules_p206_p210.py | L128 | var=has_embedding | kind=search
+        findings.append(Finding("P210", Severity.MEDIUM, "嵌入模型版本未固定"))
+---
+### check_p239 | rules_p236_p240.py | L156 | var=has_infer | kind=search
+            findings.append(Finding("P239", Severity.HIGH, "推理服务缺速率限制/请求大小限制(DoS风险)"))
+---
+### check_p242 | rules_p241_p245.py | L149 | var=has_model | kind=search
+        findings.append(Finding("P242", Severity.MEDIUM, "AI输出未声明透明度(缺AI声明/可解释性/人类监督)"))
+---
+### check_p256 | rules_p256.py | L110 | var=m | kind=finditer
+            Finding(
+                "P256",
+                Severity.HIGH,
+                f"畸形占位符 '{{{{{inner}}}}}' — 渲染器不识别(变量名须为\\w+, 回退用|default), 将静默未填充",
+                "1",
+                "1",
+            )
+---
+### check_p256 | rules_p256.py | L127 | var=m | kind=finditer
+                Finding(
+                    "P256",
+                    Severity.HIGH,
+                    f"引用了变量声明段之外的变量 '{{{name}}}' — 渲染时将保留原样未填充",
+                    "1",
+                    "1",
+                )
+---
+### check_p258 | rules_p258.py | L165 | var=m | kind=finditer
+                return Finding(
+                    rule_id=rule.rule_id,
+                    severity=rule.severity,
+                    description=rule.description,
+                    remediation=rule.remediation,
+                    details={"tag": m.group(0), "position": m.start()},
+                )
+---

@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
-from ai_prompt_toolkit.types import Finding, Severity
+from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _RULES_P206_P210 = [
     LintRule(
@@ -125,5 +125,7 @@ def check_p210(text: str) -> list[Finding]:
     findings = []
     has_embedding = re.search(r"(?:embedding|嵌入|向量模型|vector.model)", text, re.IGNORECASE)
     if has_embedding and not _VERSION_LOCK_PATTERN.search(text):
-        findings.append(Finding("P210", Severity.MEDIUM, "嵌入模型版本未固定"))
+        findings.append(
+            Finding("P210", Severity.MEDIUM, "嵌入模型版本未固定", location=loc_from_match(text, has_embedding))
+        )
     return findings
