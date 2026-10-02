@@ -96,28 +96,28 @@ _VERSION_LOCK_PATTERN = re.compile(r"(?:version.lock|版本固定|pin|model.vers
 def check_p206(text: str) -> list[Finding]:
     findings = []
     if _RETRIEVAL_PATTERN.search(text) and not _SANITIZE_PATTERN.search(text):
-        findings.append(Finding("P206", Severity.HIGH, "RAG检索结果未做输入净化", "1", "1"))
+        findings.append(Finding("P206", Severity.HIGH, "RAG检索结果未做输入净化"))
     return findings
 
 
 def check_p207(text: str) -> list[Finding]:
     findings = []
     if _RETRIEVAL_PATTERN.search(text) and not _FAITHFULNESS_PATTERN.search(text):
-        findings.append(Finding("P207", Severity.HIGH, "RAG未配置幻觉检测", "1", "1"))
+        findings.append(Finding("P207", Severity.HIGH, "RAG未配置幻觉检测"))
     return findings
 
 
 def check_p208(text: str) -> list[Finding]:
     findings = []
     if _RETRIEVAL_PATTERN.search(text) and not _CITATION_PATTERN.search(text):
-        findings.append(Finding("P208", Severity.MEDIUM, "检索结果未标注来源", "1", "1"))
+        findings.append(Finding("P208", Severity.MEDIUM, "检索结果未标注来源"))
     return findings
 
 
 def check_p209(text: str) -> list[Finding]:
     findings = []
     if _RETRIEVAL_PATTERN.search(text) and not _MAX_TOKENS_PATTERN_RAG.search(text):
-        findings.append(Finding("P209", Severity.HIGH, "检索结果可能超过上下文窗口", "1", "1"))
+        findings.append(Finding("P209", Severity.HIGH, "检索结果可能超过上下文窗口"))
     return findings
 
 
@@ -125,5 +125,5 @@ def check_p210(text: str) -> list[Finding]:
     findings = []
     has_embedding = re.search(r"(?:embedding|嵌入|向量模型|vector.model)", text, re.IGNORECASE)
     if has_embedding and not _VERSION_LOCK_PATTERN.search(text):
-        findings.append(Finding("P210", Severity.MEDIUM, "嵌入模型版本未固定", "1", "1"))
+        findings.append(Finding("P210", Severity.MEDIUM, "嵌入模型版本未固定"))
     return findings

@@ -111,33 +111,33 @@ _CACHE_SECURE_PATTERN = re.compile(
 def check_p246(text: str) -> list[Finding]:
     findings = []
     if _VERSION_PATTERN.search(text) and not _AUDIT_PATTERN.search(text):
-        findings.append(Finding("P246", Severity.HIGH, "Prompt有版本但缺变更审批/审计/回滚", "1", "1"))
+        findings.append(Finding("P246", Severity.HIGH, "Prompt有版本但缺变更审批/审计/回滚"))
     return findings
 
 
 def check_p247(text: str) -> list[Finding]:
     findings = []
     if _AB_TEST_PATTERN.search(text) and not _AB_SECURE_PATTERN.search(text):
-        findings.append(Finding("P247", Severity.MEDIUM, "A/B实验缺安全防护(匿名/公平性/数据隔离)", "1", "1"))
+        findings.append(Finding("P247", Severity.MEDIUM, "A/B实验缺安全防护(匿名/公平性/数据隔离)"))
     return findings
 
 
 def check_p248(text: str) -> list[Finding]:
     findings = []
     if _DRIFT_PATTERN.search(text) and not _DRIFT_SECURE_PATTERN.search(text):
-        findings.append(Finding("P248", Severity.HIGH, "Prompt漂移检测缺安全措施(语义diff/回归测试/告警)", "1", "1"))
+        findings.append(Finding("P248", Severity.HIGH, "Prompt漂移检测缺安全措施(语义diff/回归测试/告警)"))
     return findings
 
 
 def check_p249(text: str) -> list[Finding]:
     findings = []
     if _CHAIN_PATTERN.search(text) and not _CHAIN_SECURE_PATTERN.search(text):
-        findings.append(Finding("P249", Severity.HIGH, "级联Prompt缺防护(最大深度/超时/断路器/错误隔离)", "1", "1"))
+        findings.append(Finding("P249", Severity.HIGH, "级联Prompt缺防护(最大深度/超时/断路器/错误隔离)"))
     return findings
 
 
 def check_p250(text: str) -> list[Finding]:
     findings = []
     if _CACHE_PATTERN.search(text) and not _CACHE_SECURE_PATTERN.search(text):
-        findings.append(Finding("P250", Severity.HIGH, "Prompt缓存缺安全防护(命名空间隔离/签名/TTL/清洗)", "1", "1"))
+        findings.append(Finding("P250", Severity.HIGH, "Prompt缓存缺安全防护(命名空间隔离/签名/TTL/清洗)"))
     return findings

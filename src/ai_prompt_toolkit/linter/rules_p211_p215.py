@@ -98,37 +98,37 @@ _ENCRYPT_PATTERN = re.compile(r"(?:encrypt|加密|AES|RSA|cipher|数据签名)",
 def check_p211(text: str) -> list[Finding]:
     findings = []
     if _FOREACH_PATTERN.search(text) and not _LAZY_PATTERN.search(text):
-        findings.append(Finding("P211", Severity.HIGH, "长列表未使用LazyForEach懒加载", "1", "1"))
+        findings.append(Finding("P211", Severity.HIGH, "长列表未使用LazyForEach懒加载"))
     return findings
 
 
 def check_p212(text: str) -> list[Finding]:
     findings = []
     if _OBSERVED_V2_PATTERN.search(text) and not _TRACE_PATTERN.search(text):
-        findings.append(Finding("P212", Severity.MEDIUM, "@ObservedV2未配合@Trace装饰器", "1", "1"))
+        findings.append(Finding("P212", Severity.MEDIUM, "@ObservedV2未配合@Trace装饰器"))
     return findings
 
 
 def check_p213(text: str) -> list[Finding]:
     findings = []
     if _NAPI_PATTERN.search(text) and not _NAPI_CHECK_PATTERN.search(text):
-        findings.append(Finding("P213", Severity.HIGH, "NAPI/FFI调用未做参数校验", "1", "1"))
+        findings.append(Finding("P213", Severity.HIGH, "NAPI/FFI调用未做参数校验"))
     return findings
 
 
 def check_p214(text: str) -> list[Finding]:
     findings = []
     if _PERMISSION_ALL_PATTERN.search(text):
-        findings.append(Finding("P214", Severity.MEDIUM, "声明了过度权限(ALL/ANY)", "1", "1"))
+        findings.append(Finding("P214", Severity.MEDIUM, "声明了过度权限(ALL/ANY)"))
     elif _PERMISSION_PATTERN.search(text):
         perm_count = len(re.findall(r"ohos\.permission\.\w+", text))
         if perm_count > 5:
-            findings.append(Finding("P214", Severity.MEDIUM, f"声明了{perm_count}个权限, 建议精简", "1", "1"))
+            findings.append(Finding("P214", Severity.MEDIUM, f"声明了{perm_count}个权限, 建议精简"))
     return findings
 
 
 def check_p215(text: str) -> list[Finding]:
     findings = []
     if _DISTRIBUTED_PATTERN.search(text) and not _ENCRYPT_PATTERN.search(text):
-        findings.append(Finding("P215", Severity.HIGH, "分布式数据同步未加密", "1", "1"))
+        findings.append(Finding("P215", Severity.HIGH, "分布式数据同步未加密"))
     return findings

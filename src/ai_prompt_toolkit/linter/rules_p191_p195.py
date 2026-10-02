@@ -102,7 +102,7 @@ def check_p191(text: str) -> list[Finding]:
     findings = []
     has_agent = _AGENT_PATTERN.search(text)
     if has_agent and not _PERMISSION_PATTERN.search(text):
-        findings.append(Finding("P191", Severity.HIGH, "AI Agent缺少权限边界声明", "1", "1"))
+        findings.append(Finding("P191", Severity.HIGH, "AI Agent缺少权限边界声明"))
     return findings
 
 
@@ -110,7 +110,7 @@ def check_p192(text: str) -> list[Finding]:
     findings = []
     has_tool = _TOOL_PATTERN.search(text) and _AGENT_PATTERN.search(text)
     if has_tool and not _TOOL_CONSTRAINT_PATTERN.search(text):
-        findings.append(Finding("P192", Severity.HIGH, "Agent工具调用缺少约束", "1", "1"))
+        findings.append(Finding("P192", Severity.HIGH, "Agent工具调用缺少约束"))
     return findings
 
 
@@ -118,7 +118,7 @@ def check_p193(text: str) -> list[Finding]:
     findings = []
     has_cot = _COT_PATTERN.search(text)
     if has_cot and not _COT_ISOLATED_PATTERN.search(text):
-        findings.append(Finding("P193", Severity.MEDIUM, "Agent思维链可能泄露给用户", "1", "1"))
+        findings.append(Finding("P193", Severity.MEDIUM, "Agent思维链可能泄露给用户"))
     return findings
 
 
@@ -126,7 +126,7 @@ def check_p194(text: str) -> list[Finding]:
     findings = []
     has_multi = _MULTI_AGENT_PATTERN.search(text)
     if has_multi and not _COORD_SECURE_PATTERN.search(text):
-        findings.append(Finding("P194", Severity.HIGH, "多Agent协调缺少安全机制", "1", "1"))
+        findings.append(Finding("P194", Severity.HIGH, "多Agent协调缺少安全机制"))
     return findings
 
 
@@ -134,5 +134,5 @@ def check_p195(text: str) -> list[Finding]:
     findings = []
     has_memory = _MEMORY_PATTERN.search(text)
     if has_memory and not _MEMORY_ISOLATED_PATTERN.search(text):
-        findings.append(Finding("P195", Severity.MEDIUM, "Agent记忆未隔离脱敏", "1", "1"))
+        findings.append(Finding("P195", Severity.MEDIUM, "Agent记忆未隔离脱敏"))
     return findings

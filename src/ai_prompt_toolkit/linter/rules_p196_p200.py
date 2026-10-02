@@ -104,7 +104,7 @@ def check_p196(text: str) -> list[Finding]:
         return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _TIMEOUT_PATTERN.search(text):
-        findings.append(Finding("P196", Severity.HIGH, "LLM推理未设置timeout", "1", "1"))
+        findings.append(Finding("P196", Severity.HIGH, "LLM推理未设置timeout"))
     return findings
 
 
@@ -114,7 +114,7 @@ def check_p197(text: str) -> list[Finding]:
         return findings
     has_invoke = _INVOKE_PATTERN.search(text)
     if has_invoke and not _MAX_TOKENS_PATTERN.search(text):
-        findings.append(Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens", "1", "1"))
+        findings.append(Finding("P197", Severity.HIGH, "LLM推理未限制max_tokens"))
     return findings
 
 
@@ -125,7 +125,7 @@ def check_p198(text: str) -> list[Finding]:
         try:
             temp = float(match.group(1))
             if temp > 1.5:
-                findings.append(Finding("P198", Severity.MEDIUM, f"LLM温度参数{temp}过高(>1.5)", "1", "1"))
+                findings.append(Finding("P198", Severity.MEDIUM, f"LLM温度参数{temp}过高(>1.5)"))
         except ValueError:
             pass
     return findings
@@ -136,7 +136,7 @@ def check_p199(text: str) -> list[Finding]:
     has_top_p = _TOP_P_PATTERN.search(text)
     has_temp = _TEMP_PATTERN.search(text)
     if has_top_p and has_temp:
-        findings.append(Finding("P199", Severity.MEDIUM, "同时设置top_p和temperature导致双重随机性", "1", "1"))
+        findings.append(Finding("P199", Severity.MEDIUM, "同时设置top_p和temperature导致双重随机性"))
     return findings
 
 
@@ -144,5 +144,5 @@ def check_p200(text: str) -> list[Finding]:
     findings: list[Finding] = []
     has_stream = _STREAM_PATTERN.search(text)
     if has_stream and not _STREAM_AUDIT_PATTERN.search(text):
-        findings.append(Finding("P200", Severity.HIGH, "流式输出未做实时内容审核", "1", "1"))
+        findings.append(Finding("P200", Severity.HIGH, "流式输出未做实时内容审核"))
     return findings

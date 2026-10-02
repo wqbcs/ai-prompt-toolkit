@@ -109,33 +109,33 @@ _AUTH_PATTERN = re.compile(r"(?:auth|认证|cert|证书|token|PKI|verify|验证|
 def check_p231(text: str) -> list[Finding]:
     findings = []
     if _GRADIENT_PATTERN.search(text) and not _DP_PATTERN.search(text) and not _GRADIENT_CLIP_PATTERN.search(text):
-        findings.append(Finding("P231", Severity.HIGH, "梯度传输未添加差分隐私或裁剪(梯度泄露风险)", "1", "1"))
+        findings.append(Finding("P231", Severity.HIGH, "梯度传输未添加差分隐私或裁剪(梯度泄露风险)"))
     return findings
 
 
 def check_p232(text: str) -> list[Finding]:
     findings = []
     if _FED_AGG_PATTERN.search(text) and not _DP_PATTERN.search(text):
-        findings.append(Finding("P232", Severity.HIGH, "联邦聚合未添加差分隐私噪声(无数学隐私保证)", "1", "1"))
+        findings.append(Finding("P232", Severity.HIGH, "联邦聚合未添加差分隐私噪声(无数学隐私保证)"))
     return findings
 
 
 def check_p233(text: str) -> list[Finding]:
     findings = []
     if _FED_AGG_PATTERN.search(text) and not _ROBUST_AGG_PATTERN.search(text):
-        findings.append(Finding("P233", Severity.HIGH, "联邦聚合缺模型投毒防护(无Krum/鲁棒聚合/异常检测)", "1", "1"))
+        findings.append(Finding("P233", Severity.HIGH, "联邦聚合缺模型投毒防护(无Krum/鲁棒聚合/异常检测)"))
     return findings
 
 
 def check_p234(text: str) -> list[Finding]:
     findings = []
     if _FED_AGG_PATTERN.search(text) and not _SECURE_AGG_PATTERN.search(text):
-        findings.append(Finding("P234", Severity.MEDIUM, "梯度聚合未使用安全聚合协议(服务器可窥探原始梯度)", "1", "1"))
+        findings.append(Finding("P234", Severity.MEDIUM, "梯度聚合未使用安全聚合协议(服务器可窥探原始梯度)"))
     return findings
 
 
 def check_p235(text: str) -> list[Finding]:
     findings = []
     if _CLIENT_PATTERN.search(text) and _FED_AGG_PATTERN.search(text) and not _AUTH_PATTERN.search(text):
-        findings.append(Finding("P235", Severity.HIGH, "联邦参与方未做身份认证(Sybil伪装攻击风险)", "1", "1"))
+        findings.append(Finding("P235", Severity.HIGH, "联邦参与方未做身份认证(Sybil伪装攻击风险)"))
     return findings

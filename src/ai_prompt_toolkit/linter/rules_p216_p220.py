@@ -115,37 +115,33 @@ _OUTPUT_CHECK_PATTERN = re.compile(
 def check_p216(text: str) -> list[Finding]:
     findings = []
     if _IMAGE_PATTERN.search(text) and not _IMAGE_CHECK_PATTERN.search(text):
-        findings.append(
-            Finding("P216", Severity.HIGH, "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)", "1", "1")
-        )
+        findings.append(Finding("P216", Severity.HIGH, "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)"))
     return findings
 
 
 def check_p217(text: str) -> list[Finding]:
     findings = []
     if _AUDIO_PATTERN.search(text) and not _AUDIO_CHECK_PATTERN.search(text):
-        findings.append(
-            Finding("P217", Severity.HIGH, "语音输入未经频谱分析和可听范围过滤, 存在隐藏指令注入风险", "1", "1")
-        )
+        findings.append(Finding("P217", Severity.HIGH, "语音输入未经频谱分析和可听范围过滤, 存在隐藏指令注入风险"))
     return findings
 
 
 def check_p218(text: str) -> list[Finding]:
     findings = []
     if _CROSS_MODAL_PATTERN.search(text) and not _CROSS_PROTECT_PATTERN.search(text):
-        findings.append(Finding("P218", Severity.HIGH, "跨模态上下文未做敏感信息脱敏和隔离保护", "1", "1"))
+        findings.append(Finding("P218", Severity.HIGH, "跨模态上下文未做敏感信息脱敏和隔离保护"))
     return findings
 
 
 def check_p219(text: str) -> list[Finding]:
     findings = []
     if _DEGRADE_PATTERN.search(text) and not _DEGRADE_CHECK_PATTERN.search(text):
-        findings.append(Finding("P219", Severity.MEDIUM, "模态降级后未保留/重新评估安全约束", "1", "1"))
+        findings.append(Finding("P219", Severity.MEDIUM, "模态降级后未保留/重新评估安全约束"))
     return findings
 
 
 def check_p220(text: str) -> list[Finding]:
     findings = []
     if _OUTPUT_PATTERN.search(text) and not _OUTPUT_CHECK_PATTERN.search(text):
-        findings.append(Finding("P220", Severity.HIGH, "多模态生成输出未经内容审核(NSFW/深度伪造检测)", "1", "1"))
+        findings.append(Finding("P220", Severity.HIGH, "多模态生成输出未经内容审核(NSFW/深度伪造检测)"))
     return findings

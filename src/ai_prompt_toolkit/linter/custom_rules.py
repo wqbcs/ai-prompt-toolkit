@@ -130,17 +130,17 @@ def register_custom_rules(custom_rules: list[CustomRuleDef]) -> list[str]:
 def check_custom_rule(text: str, rule_def: CustomRuleDef) -> Finding | None:
     if rule_def.check_type == "regex" and rule_def.pattern:
         if re.search(rule_def.pattern, text, re.IGNORECASE):
-            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message, "1", "1")
+            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message)
     elif rule_def.check_type == "keyword" and rule_def.keywords:
         for kw in rule_def.keywords:
             if kw.lower() in text.lower():
-                return Finding(rule_def.rule_id, rule_def.severity, rule_def.message, "1", "1")
+                return Finding(rule_def.rule_id, rule_def.severity, rule_def.message)
     elif rule_def.check_type == "not_contains" and rule_def.keywords:
         found = any(kw.lower() in text.lower() for kw in rule_def.keywords)
         if not found:
-            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message, "1", "1")
+            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message)
     elif rule_def.check_type == "min_length" and rule_def.pattern:
         min_len = int(rule_def.pattern) if rule_def.pattern.isdigit() else 0
         if len(text) < min_len:
-            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message, "1", "1")
+            return Finding(rule_def.rule_id, rule_def.severity, rule_def.message)
     return None

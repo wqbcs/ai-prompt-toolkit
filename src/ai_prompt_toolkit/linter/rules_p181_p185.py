@@ -118,7 +118,7 @@ def check_p181(text: str) -> list[Finding]:
     if not _VERSION_PATTERN.search(text):
         if not _has_prod_ctx(text):
             return findings
-        findings.append(Finding("P181", Severity.HIGH, "Prompt缺少版本声明, 建议添加version字段", "1", "1"))
+        findings.append(Finding("P181", Severity.HIGH, "Prompt缺少版本声明, 建议添加version字段"))
     return findings
 
 
@@ -140,7 +140,7 @@ def check_p182(text: str) -> list[Finding]:
             )
         )
         if has_api_entity and has_api_use:
-            findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明", "1", "1"))
+            findings.append(Finding("P182", Severity.MEDIUM, "Prompt调用外部API但缺少依赖声明"))
     return findings
 
 
@@ -160,7 +160,7 @@ def check_p183(text: str) -> list[Finding]:
             re.search(r"environment.{0,12}(?:different|isolat|separat|config)", text, re.IGNORECASE)
         )
         if has_multi_config:
-            findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置", "1", "1"))
+            findings.append(Finding("P183", Severity.MEDIUM, "提及多环境但缺少环境隔离配置"))
     return findings
 
 
@@ -169,7 +169,7 @@ def check_p184(text: str) -> list[Finding]:
     if not _FALLBACK_PATTERN.search(text):
         has_model = bool(re.search(r"(?:GPT|Claude|模型|model|LLM|大模型)", text, re.IGNORECASE))
         if has_model:
-            findings.append(Finding("P184", Severity.MEDIUM, "Prompt依赖模型但缺少降级策略", "1", "1"))
+            findings.append(Finding("P184", Severity.MEDIUM, "Prompt依赖模型但缺少降级策略"))
     return findings
 
 
@@ -178,5 +178,5 @@ def check_p185(text: str) -> list[Finding]:
     if not _CANARY_PATTERN.search(text):
         has_deploy = bool(re.search(r"(?:部署|上线|发布|deploy|release|rollout)", text, re.IGNORECASE))
         if has_deploy:
-            findings.append(Finding("P185", Severity.MEDIUM, "提及部署发布但缺少灰度配置", "1", "1"))
+            findings.append(Finding("P185", Severity.MEDIUM, "提及部署发布但缺少灰度配置"))
     return findings

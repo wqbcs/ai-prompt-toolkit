@@ -2,6 +2,32 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.3] - 2026-10-01
+
+### Fixed (R219-B1a: 96 处垃圾 sentinel Finding 调用 — 去除用户可见"修复:1")
+
+**背景(R219 ast 全量 261 checker 审计)**: 96 处 `Finding()` 调用(跨 81 个
+checker, 含 custom_rules 4 处)用 5 位置参数
+`Finding(rule_id, severity, description, "1", "1")`, 按签名
+`(rule_id, severity, description, location, remediation, details)`:
+- `location="1"` = 假行1锚点(CLI 对文件级发现显示 "L1", LSP 标注到第1行)
+- `remediation="1"` = **用户可见垃圾文案**(VS Code 扩展/JSON/CLI 全显示"修复: 1")
+- 这正是 R218 CLI 那段 `!= "1" and != "0"` 隐藏逻辑的**症状根源**(当时只隐藏了症状)
+
+**修复**: 96 处移除尾部 `, "1", "1"` 位置参数 → `location`/`remediation`
+落默认值(`""` 文件级诚实 / 无"修复:1"垃圾)。纯检测无关(location/remediation
+是报告字段, 不参与检测逻辑)→ 双基线不变。
+
+- 97 处 `, "1", "1"`(ast 审计 96 单行 + 1 多行, 全部核验为 5 参尾部, 无一
+  带第6参 details)跨 17 文件(含 custom_rules.py 4 处)
+- 修复后 P176 实测: loc='' rem=''(垃圾已除)
+- 双基线不变: FP 0.91% / 漏检 0.00%(检测逻辑未动)
+- 门禁全绿: 5955 passed / ruff check+format / mypy 0 持平 / 版本+README 一致
+
+### Note
+
+- R219-B1b(23 single + 16 finditer 安全集 checker 加真实行:列)独立批次
+
 ## [v67.34.2] - 2026-10-01
 
 ### Added (R218: location 契约 — 三端单一事实源, "Prompt的ESLint"定位补位)

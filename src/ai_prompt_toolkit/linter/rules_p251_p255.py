@@ -174,9 +174,7 @@ def check_p251(text: str) -> list[Finding]:
     matches = _PACKAGE_PATTERN.findall(text)
     for pkg in matches:
         if pkg.lower() in _HALLUCINATED_PACKAGES:
-            findings.append(
-                Finding("P251", Severity.HIGH, f"疑似包幻觉: '{pkg}' 可能是不存在的包(恶意包风险)", "1", "1")
-            )
+            findings.append(Finding("P251", Severity.HIGH, f"疑似包幻觉: '{pkg}' 可能是不存在的包(恶意包风险)"))
     if len(findings) == 0 and matches:
         suspicious = [
             p
@@ -204,30 +202,26 @@ def check_p251(text: str) -> list[Finding]:
 def check_p252(text: str) -> list[Finding]:
     findings = []
     if _BIOMETRIC_PATTERN.search(text) and not _BIOMETRIC_SECURE_PATTERN.search(text):
-        findings.append(Finding("P252", Severity.CRITICAL, "生物特征数据未保护(缺加密/模板化/本地化)", "1", "1"))
+        findings.append(Finding("P252", Severity.CRITICAL, "生物特征数据未保护(缺加密/模板化/本地化)"))
     return findings
 
 
 def check_p253(text: str) -> list[Finding]:
     findings = []
     if _FINANCIAL_PATTERN.search(text) and not _FINANCIAL_SECURE_PATTERN.search(text):
-        findings.append(Finding("P253", Severity.CRITICAL, "金融敏感信息未保护(缺Token化/脱敏/加密/PCI合规)", "1", "1"))
+        findings.append(Finding("P253", Severity.CRITICAL, "金融敏感信息未保护(缺Token化/脱敏/加密/PCI合规)"))
     return findings
 
 
 def check_p254(text: str) -> list[Finding]:
     findings = []
     if _MEDICAL_PATTERN.search(text) and not _MEDICAL_SECURE_PATTERN.search(text):
-        findings.append(
-            Finding("P254", Severity.CRITICAL, "医疗敏感信息未保护(缺脱敏/匿名化/访问控制/HIPAA合规)", "1", "1")
-        )
+        findings.append(Finding("P254", Severity.CRITICAL, "医疗敏感信息未保护(缺脱敏/匿名化/访问控制/HIPAA合规)"))
     return findings
 
 
 def check_p255(text: str) -> list[Finding]:
     findings = []
     if _MINOR_PATTERN.search(text) and not _MINOR_SECURE_PATTERN.search(text):
-        findings.append(
-            Finding("P255", Severity.CRITICAL, "未成年人信息未保护(缺年龄门控/监护人同意/快速删除)", "1", "1")
-        )
+        findings.append(Finding("P255", Severity.CRITICAL, "未成年人信息未保护(缺年龄门控/监护人同意/快速删除)"))
     return findings

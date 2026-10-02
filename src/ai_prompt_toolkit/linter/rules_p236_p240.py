@@ -123,21 +123,21 @@ _WEIGHT_VERIFY_PATTERN = re.compile(
 def check_p236(text: str) -> list[Finding]:
     findings: list[Finding] = []
     if _QUANT_PATTERN.search(text) and not _ROBUST_PATTERN.search(text):
-        findings.append(Finding("P236", Severity.MEDIUM, "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)", "1", "1"))
+        findings.append(Finding("P236", Severity.MEDIUM, "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)"))
     return findings
 
 
 def check_p237(text: str) -> list[Finding]:
     findings: list[Finding] = []
     if _SIDECHANNEL_PATTERN.search(text) and not _CONST_TIME_PATTERN.search(text):
-        findings.append(Finding("P237", Severity.HIGH, "推理存在侧信道风险(未做常量时间/缓存隔离防护)", "1", "1"))
+        findings.append(Finding("P237", Severity.HIGH, "推理存在侧信道风险(未做常量时间/缓存隔离防护)"))
     return findings
 
 
 def check_p238(text: str) -> list[Finding]:
     findings: list[Finding] = []
     if _KV_CACHE_PATTERN.search(text) and not _KV_SECURE_PATTERN.search(text):
-        findings.append(Finding("P238", Severity.HIGH, "KV缓存未做边界检查/隔离/大小限制(缓存污染风险)", "1", "1"))
+        findings.append(Finding("P238", Severity.HIGH, "KV缓存未做边界检查/隔离/大小限制(缓存污染风险)"))
     return findings
 
 
@@ -153,12 +153,12 @@ def check_p239(text: str) -> list[Finding]:
             re.IGNORECASE,
         )
         if has_infer:
-            findings.append(Finding("P239", Severity.HIGH, "推理服务缺速率限制/请求大小限制(DoS风险)", "1", "1"))
+            findings.append(Finding("P239", Severity.HIGH, "推理服务缺速率限制/请求大小限制(DoS风险)"))
     return findings
 
 
 def check_p240(text: str) -> list[Finding]:
     findings: list[Finding] = []
     if _WEIGHT_LOAD_PATTERN.search(text) and not _WEIGHT_VERIFY_PATTERN.search(text):
-        findings.append(Finding("P240", Severity.HIGH, "加载模型权重未校验完整性(替换攻击风险)", "1", "1"))
+        findings.append(Finding("P240", Severity.HIGH, "加载模型权重未校验完整性(替换攻击风险)"))
     return findings

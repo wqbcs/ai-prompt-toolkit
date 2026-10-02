@@ -115,10 +115,10 @@ def check_p176(text: str) -> list[Finding]:
         )
     )
     if has_multi_turn and not has_role:
-        findings.append(Finding("P176", Severity.CRITICAL, "多轮对话缺少角色锁定, 存在上下文污染风险", "1", "1"))
+        findings.append(Finding("P176", Severity.CRITICAL, "多轮对话缺少角色锁定, 存在上下文污染风险"))
     has_isolation = bool(re.search(r"(?:隔离|isolate|沙箱|sandbox|窗口|window)", text, re.IGNORECASE))
     if has_multi_turn and not has_isolation:
-        findings.append(Finding("P176", Severity.HIGH, "多轮对话未实现上下文窗口隔离", "1", "1"))
+        findings.append(Finding("P176", Severity.HIGH, "多轮对话未实现上下文窗口隔离"))
     return findings
 
 
@@ -127,14 +127,12 @@ def check_p177(text: str) -> list[Finding]:
     b64_matches = [m for m in _B64_PATTERN.finditer(text) if len(m.group()) >= 16]
     if b64_matches:
         findings.append(
-            Finding(
-                "P177", Severity.CRITICAL, f"检测到{len(b64_matches)}处Base64编码内容, 可能混淆绕过安全检测", "1", "1"
-            )
+            Finding("P177", Severity.CRITICAL, f"检测到{len(b64_matches)}处Base64编码内容, 可能混淆绕过安全检测")
         )
     if _HEX_PATTERN.search(text):
-        findings.append(Finding("P177", Severity.HIGH, "检测到十六进制编码内容", "1", "1"))
+        findings.append(Finding("P177", Severity.HIGH, "检测到十六进制编码内容"))
     if _UNICODE_ESCAPE.search(text):
-        findings.append(Finding("P177", Severity.MEDIUM, "检测到Unicode转义序列", "1", "1"))
+        findings.append(Finding("P177", Severity.MEDIUM, "检测到Unicode转义序列"))
     return findings
 
 
@@ -142,15 +140,15 @@ def check_p178(text: str) -> list[Finding]:
     findings = []
     for m in _HTML_COMMENT.finditer(text):
         if _SHADOW_CMD.search(m.group()):
-            findings.append(Finding("P178", Severity.CRITICAL, f"HTML注释中包含影子指令: {m.group()[:50]}", "1", "1"))
+            findings.append(Finding("P178", Severity.CRITICAL, f"HTML注释中包含影子指令: {m.group()[:50]}"))
     for m in _MD_LINK.finditer(text):
         link_text = m.group()
         if _SHADOW_CMD.search(link_text):
-            findings.append(Finding("P178", Severity.HIGH, "Markdown链接中包含影子指令", "1", "1"))
+            findings.append(Finding("P178", Severity.HIGH, "Markdown链接中包含影子指令"))
     if _SHADOW_CMD.search(text):
         has_protection = bool(re.search(r"(?:过滤|filter|审查|audit|禁止|prohibit)", text, re.IGNORECASE))
         if not has_protection:
-            findings.append(Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明", "1", "1"))
+            findings.append(Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明"))
     return findings
 
 
@@ -172,16 +170,14 @@ def check_p179(text: str) -> list[Finding]:
             re.search(r"(?:限制|restrict|白名单|whitelist|校验|validate|约束|constraint)", text, re.IGNORECASE)
         )
         if not has_constraint:
-            findings.append(Finding("P179", Severity.HIGH, "检测到输出格式强制但缺少格式约束声明", "1", "1"))
+            findings.append(Finding("P179", Severity.HIGH, "检测到输出格式强制但缺少格式约束声明"))
     # R207: 第二分支(输出未配置格式过滤)仅在处理不可信输入时构成劫持风险,
     # 否则任何含"输出"的prompt恒触发(R206前94%误报)
     if _UNTRUSTED_INPUT_CTX.search(text):
         has_output = bool(re.search(r"(?:输出|output|返回|return|响应|response)", text, re.IGNORECASE))
         has_filter = bool(re.search(r"(?:过滤|filter|校验|validate|检查|check)", text, re.IGNORECASE))
         if has_output and not has_filter:
-            findings.append(
-                Finding("P179", Severity.MEDIUM, "处理外部输入但输出未配置格式过滤, 存在格式劫持风险", "1", "1")
-            )
+            findings.append(Finding("P179", Severity.MEDIUM, "处理外部输入但输出未配置格式过滤, 存在格式劫持风险"))
     return findings
 
 
@@ -199,8 +195,8 @@ def check_p180(text: str) -> list[Finding]:
     if has_chain:
         has_sanitize = bool(re.search(r"(?:清洗|sanitize|消毒|clean|过滤|filter|检查|check)", text, re.IGNORECASE))
         if not has_sanitize:
-            findings.append(Finding("P180", Severity.CRITICAL, "链式Prompt步骤间未配置安全清洗", "1", "1"))
+            findings.append(Finding("P180", Severity.CRITICAL, "链式Prompt步骤间未配置安全清洗"))
         has_sandbox = bool(re.search(r"(?:沙箱|sandbox|隔离|isolate|独立|independent)", text, re.IGNORECASE))
         if not has_sandbox:
-            findings.append(Finding("P180", Severity.HIGH, "链式Prompt步骤间未实现沙箱隔离", "1", "1"))
+            findings.append(Finding("P180", Severity.HIGH, "链式Prompt步骤间未实现沙箱隔离"))
     return findings
