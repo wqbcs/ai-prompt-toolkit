@@ -205,7 +205,15 @@ def check_p180(text: str) -> list[Finding]:
         )
     )
     if has_chain:
-        has_sanitize = bool(re.search(r"(?:清洗|sanitize|消毒|clean|过滤|filter|检查|check)", text, re.IGNORECASE))
+        # R224: 补"校验/验证/verify/validate" — 模板普遍写"校验上一步输出"即步骤间安全校验,
+        # 原词表只认"检查|check"致8个内置模板P180 Critical误报(templates自lint实证)
+        has_sanitize = bool(
+            re.search(
+                r"(?:清洗|sanitize|消毒|clean|过滤|filter|检查|check|校验|验证|verify|validate)",
+                text,
+                re.IGNORECASE,
+            )
+        )
         if not has_sanitize:
             findings.append(Finding("P180", Severity.CRITICAL, "链式Prompt步骤间未配置安全清洗"))
         has_sandbox = bool(re.search(r"(?:沙箱|sandbox|隔离|isolate|独立|independent)", text, re.IGNORECASE))

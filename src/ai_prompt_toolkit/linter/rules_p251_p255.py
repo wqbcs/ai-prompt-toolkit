@@ -150,7 +150,8 @@ _FINANCIAL_PATTERN = re.compile(
     re.IGNORECASE,
 )
 _FINANCIAL_SECURE_PATTERN = re.compile(
-    r"(?:tokeniz|Token化|脱敏|desensitiz|mask|加密|encrypt|PCI|合规审计)", re.IGNORECASE
+    r"(?:tokeniz|Token化|脱敏|desensitiz|mask|加密|encrypt|PCI|合规审计|不访问|不读取|不记录|不落盘|人工审批)",
+    re.IGNORECASE,
 )
 _MEDICAL_PATTERN = re.compile(
     r"(?:诊断|diagnosis|处方|prescription|病历|medical.record|基因|genetic|DNA|健康档案|health.record|医保|medicare|医疗卡|medical.card|患者ID|patient.ID)",
@@ -160,12 +161,20 @@ _MEDICAL_SECURE_PATTERN = re.compile(
     r"(?:脱敏|anonymiz|匿名|k-anonymity|访问控制|access.control|最小必要|minimum.necessary|HIPAA|审计)", re.IGNORECASE
 )
 _MINOR_PATTERN = re.compile(
-    r"(?:未成年人|minor|儿童|child|青少年|年龄.*(?:<|＜|小于|不到)\s*18|age.*<.*18|学籍|student.record|监护人|guardian|家长同意|parental.consent|COPPA)",
+    r"(?:未成年人|(?<![A-Za-z])minor(?![A-Za-z])|儿童|child(?:ren)?|青少年|年龄.*(?:<|＜|小于|不到)\s*18|age.*<.*18|学籍|student.record|监护人|guardian|家长同意|parental.consent|COPPA)",
     re.IGNORECASE,
 )
 _MINOR_SECURE_PATTERN = re.compile(
     r"(?:年龄门控|age.gate|监护人同意|guardian.consent|快速删除|prompt.deletion|不公开|no.public|数据最小化|data.minimization)",
     re.IGNORECASE,
+)
+# R224: "Critical/Major/Minor"缺陷严重度分级语境 — 内置模板(code-reviewer/
+# mfg-quality-inspector)用它给代码缺陷分级, 英文minor指缺陷等级而非未成年人。
+# 判定P255前先剔除该片段, 真正的未成年人语境(中文/PII动词)不受影响。
+_SEVERITY_GRADE_CONTEXT = re.compile(
+    r"\b(?:critical|blocker|high)\b.{0,30}?\b(?:major|moderate)\b.{0,30}?\bminor\b"
+    r"|\|\s*minor\s*\|",
+    re.IGNORECASE | re.DOTALL,
 )
 
 
@@ -222,6 +231,7 @@ def check_p254(text: str) -> list[Finding]:
 
 def check_p255(text: str) -> list[Finding]:
     findings = []
-    if _MINOR_PATTERN.search(text) and not _MINOR_SECURE_PATTERN.search(text):
+    cleaned = _SEVERITY_GRADE_CONTEXT.sub(" ", text)
+    if _MINOR_PATTERN.search(cleaned) and not _MINOR_SECURE_PATTERN.search(text):
         findings.append(Finding("P255", Severity.CRITICAL, "未成年人信息未保护(缺年龄门控/监护人同意/快速删除)"))
     return findings

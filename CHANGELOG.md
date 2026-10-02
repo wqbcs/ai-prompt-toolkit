@@ -2,6 +2,27 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.15] - 2026-10-02
+
+### Fixed (R224-P0-4: templates自lint 11 Critical清零 — 修规则盲点而非改模板)
+
+- **P180 sanitize词表补"校验/验证/verify/validate"**: 8个内置模板
+  (general-assistant/rag-assistant/pangu-*/harmonyos-performance) 写
+  "步骤执行前校验上一步输出"即步骤间安全校验, 原词表只认"检查|check"
+  致8条Critical误报
+- **P255英文minor双重防护**: ①词边界`(?<![A-Za-z])minor(?![A-Za-z])`
+  ②严重度分级语境剔除(`Critical/Major/Minor`缺陷分级/`| Minor |`表格行)
+  — code-reviewer/mfg-quality-inspector的缺陷分级标签不再误判为未成年人
+- **P253保护词表补拒绝态**: "不访问/不读取/不记录/不落盘/人工审批"
+  — customer-service模板"不访问用户支付信息(银行卡号、CVV等)"
+  是保护声明而非风险, 原词表只认"脱敏/加密"
+- golden探针6条(atk07/atk09/atk24/r220_*)回归验证: 漏检0.00%不变;
+  误报0.91%不变; templates critical 11→0, high 183不变
+- **183 high记backlog** (docs/templates_high_backlog.md): 42规则全落在
+  R178部署语境豁免集内, R178快照非豁免债务=0 — 设计内处理非漏账
+- **CI口径核实**: 硬门禁作业prompt-quality-gate仅PR触发+push作业
+  continue-on-error报告模式 — 直推main从未执行硬门禁, 方案文档表述已修正
+
 ## [v67.34.14] - 2026-10-02
 
 ### Added (R224-P0: 可信度自证 + 采用入口)
