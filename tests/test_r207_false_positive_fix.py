@@ -318,7 +318,7 @@ class TestR207MetricsSync:
             encoding="utf-8",
         )
         assert fake.read_text(encoding="utf-8") != real.read_text(encoding="utf-8"), (
-            "README应含'Lint规则 | 260'行(若此断言失败说明README表格改了, 需更新本测试)"
+            "README应含'Lint规则 | 261'行(若此断言失败说明README表格改了, 需更新本测试)"
         )
         results = _check_readme_metrics(readme_path=fake)
         assert results[0].status == "warn"

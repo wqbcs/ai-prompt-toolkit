@@ -29,7 +29,7 @@
 | AML.T0092 Manipulate User LLM Chat History | LLM01 | P161/P164 指令保护 | 部分（会话级上下文操纵需运行时） |
 | AML.T0093 Prompt Infiltration via Public-Facing Application | LLM01 | mcp-lint description层 / P022 | 覆盖 |
 | AML.T0094 Delay Execution of LLM Instructions | LLM01 | （无规则） | **缺口（记录, 候选）** |
-| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / **P261 不可见字符交错/BiDi反转面（R217, 3子pattern, 信源ATR-2026-00276）** / redteam 编码探针8条（unicode_bypass/homoglyph/bidi/base64_hidden/invisible_char/zero_width/polyglot/nested） | 覆盖 |
+| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / **P261 不可见字符交错/BiDi反转面（R217, 3子pattern, 信源ATR-2026-00276）** / redteam 编码探针9条（badchars/encoding_base64/encoding_binary/encoding_bypass/encoding_hex/encoding_rot13/encoding_unicode/glitch_zerowidth/chinese_encoding_injection; R217 命名对齐统一注册表实测） | 覆盖 |
 | AML.T0035 Create Proxy ML Model | — | （无 — 运行时建模能力） | **缺口（记录, 不实现）** |
 | RAG Poisoning / False RAG Entry Injection / Gather RAG-Indexed Targets / RAG Credential Harvesting（2025-03 后新增, 编号以官方矩阵为准） | LLM08 | P035-P037 + **P257（R213-B5）** | 部分→R213补强 |
 
