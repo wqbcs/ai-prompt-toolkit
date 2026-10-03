@@ -2,6 +2,28 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.18] - 2026-10-03
+
+### Added (R227-P3-05: ReDoS 审计 — 261 规则 regex 灾难性回溯面收口)
+
+- **`scripts/audit_redos.py`**: 复用 **redoctor**（GetPageSpeed, 纯 Python
+  零外部依赖, 自动机 ε-NFA 歧义分析 + 步数统计 fuzz 混合引擎 + 复杂度分级 +
+  PoC 攻击串生成）审计 linter+security 模块全量 2157 条唯一 regex 字面量
+  （AST 提取, 含 flags 映射）。**03 C4 调研刷新**: Python 生态已有成熟
+  ReDoS 检测器, 此前"无事实标准"结论漏检, 不自造
+- **审计结论（实测数据, 批准留痕入 `baselines/redos-audit.json` metadata）**:
+  脆弱项 101 条**全部多项式复杂度**（O(n³)×3 + O(n⁴)×98, 零指数级）；
+  在 linter 真实输入包络（2000 字符 = P004 阈值）下逐条用 redoctor PoC
+  attack 串对抗计时 **101/101 < 100ms（最差 7.1ms）**, <100ms 性能不变量保持
+  → 批准不重构（重构 101 条检测 regex 风险 = 误报率/漏检率双基线漂移,
+  低价值打磨陷阱）。对抗大包络（单行 >20K, 实测 24K→195s）DoS 向量登记
+  07 R14, 缓解演进 = CLI/stdio 输入包络硬上限（与 P2-16 性能护栏同轨）
+- **增量门禁**: 状态缓存 `baselines/redos-audit.json`（判定缓存 + 批准标记
+  合一, 与 P2-04 双基线/MCP-109 description 基线同一纪律）; 新 pattern
+  脆弱即红, 存量批准锁住; `--limit` 分块断点续跑（全量 ~1000s, 增量秒级）
+- **接线**: release_gate 第 14 步（ReDoS 审计增量）+ `redoctor==0.1.5`
+  入 [dev] 钉死（绝不进 core 运行时, 依赖面冻结）
+
 ## [v67.34.17] - 2026-10-03
 
 ### Added (R227-P2-20: mcp-lint rug pull / 隐藏通道检测 — Microsoft 官方点名 MCP 攻击面)

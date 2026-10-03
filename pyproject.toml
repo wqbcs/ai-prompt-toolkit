@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.17"
+version = "67.34.18"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -61,6 +61,8 @@ dev = [
     # TestClient 依赖 httpx — 此前只在 [full], [dev] 缺失致 CI 收集报错
     "fastapi>=0.100",
     "httpx>=0.24",
+    # P3-05 ReDoS 审计(dev 工具链, 绝不进 core 运行时) — 版本钉死保门禁可复现
+    "redoctor==0.1.5",
 ]
 ab_test = [
     "httpx>=0.24",

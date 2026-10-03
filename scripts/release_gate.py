@@ -24,6 +24,8 @@
 11. sync_readme_metrics.py(README 指标漂移校验)
 12. check_version_consistency.py(版本三处一致)
 13. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
+14. ReDoS 审计增量步(audit_redos.py, P3-05: 新 pattern 脆弱即红; 存量经
+    --approve 批准入 baselines/redos-audit.json 缓存; redoctor 是 dev 依赖)
 
 用法:
     python scripts/release_gate.py                # 全链, 失败即停
@@ -94,6 +96,7 @@ def build_steps() -> list[Step]:
         Step("SARIF 合法性", [PY, "-m", "ai_prompt_toolkit", "lint", "-t", TEMPLATES_DIR,
                              "--format", "sarif", "--output", "gate-sarif-check.sarif"],
              verify="sarif", allow_lint_rc=True),
+        Step("ReDoS 审计(增量)", [PY, "scripts/audit_redos.py"]),
     ]
 
 
