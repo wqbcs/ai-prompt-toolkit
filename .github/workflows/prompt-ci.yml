@@ -10,8 +10,12 @@ on:
       - 'pyproject.toml'
       # R225-P0-02 补: 门禁自身变更必须自测 — 此前改workflow/基线不触发CI,
       # 导致 16a57a5 push 后无任何 run(改门禁却测不了门禁)
+      # R225 第2次同根因: 927a330 只改scripts/+ci/ 同样无run — scripts/是门禁链
+      # 载体, 必须自测; 至此 paths 覆盖全部"改门禁"路径
       - '.github/workflows/**'
       - 'baselines/**'
+      - 'scripts/**'
+      - 'ci/**'
   pull_request:
     branches: [main]
     paths:
@@ -21,6 +25,8 @@ on:
       - 'pyproject.toml'
       - '.github/workflows/**'
       - 'baselines/**'
+      - 'scripts/**'
+      - 'ci/**'
   workflow_dispatch:
 
 jobs:
