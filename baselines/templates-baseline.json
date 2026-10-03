@@ -1,0 +1,3153 @@
+{
+  "created_at": "2026-10-02T23:28:30.322357",
+  "template_id": "src/ai_prompt_toolkit/templates",
+  "total_findings": 629,
+  "score": 90.73846153846155,
+  "findings": [
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 2 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到3个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P068",
+      "description": "事实性Prompt中缺少防止模型编造信息的约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1391字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P099",
+      "description": "Prompt涉及多模态(图文)输入但未声明盘古多模态格式兼容性",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到3组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P132",
+      "description": "涉及图像输入的Prompt未声明图像安全校验(NSFW/恶意内容/隐写检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P159",
+      "description": "Prompt未声明沙箱隔离(执行环境隔离/资源限制/网络白名单)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P008",
+      "description": "Prompt 赋予模型过宽的操作权限",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 1 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P030",
+      "description": "Prompt 过度依赖特定模型 'gpt-4'",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前892字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P118",
+      "description": "Prompt未声明模型知识截止日期，用户可能误判信息时效性",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P119",
+      "description": "Prompt未声明模型能力局限性，可能导致用户对输出有过高期望",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P158",
+      "description": "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P160",
+      "description": "Prompt未声明回滚机制(版本回滚/快照恢复/自动回滚触发条件)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P164",
+      "description": "Prompt未声明指令提取防护(输出过滤/指令不可见/反提取措辞C)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 1 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 16 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P053",
+      "description": "Prompt中存在模糊表述(等等/之类的/可能/适当等) (发现 3 处模糊表述)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P072",
+      "description": "涉及模型训练或推理的Prompt未声明昇腾NPU适配信息",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1195字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到6组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P159",
+      "description": "Prompt未声明沙箱隔离(执行环境隔离/资源限制/网络白名单)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P193",
+      "description": "Agent思维链可能泄露给用户",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P221",
+      "description": "LLM模型来源未验证(缺model card/发布者签名/社区评分)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P225",
+      "description": "模型/配置缺少签名和校验和验证",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P249",
+      "description": "级联Prompt缺防护(最大深度/超时/断路器/错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 2 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P030",
+      "description": "Prompt 过度依赖特定模型 'gpt-4'",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到4个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P079",
+      "description": "涉及数据处理或存储的华为云Prompt未声明数据合规和跨境传输要求",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1267字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到4组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P119",
+      "description": "Prompt未声明模型能力局限性，可能导致用户对输出有过高期望",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P168",
+      "description": "Prompt未声明偏见检测(公平性/代表性/中立性)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P231",
+      "description": "梯度传输未添加差分隐私或裁剪(梯度泄露风险)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P247",
+      "description": "A/B实验缺安全防护(匿名/公平性/数据隔离)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 12 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P072",
+      "description": "涉及模型训练或推理的Prompt未声明昇腾NPU适配信息",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1349字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P099",
+      "description": "Prompt涉及多模态(图文)输入但未声明盘古多模态格式兼容性",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到4组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P102",
+      "description": "Prompt中存在自相矛盾的指令，可能导致模型行为混乱 (必须/不要矛盾)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P194",
+      "description": "多Agent协调缺少安全机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P008",
+      "description": "Prompt 赋予模型过宽的操作权限",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 14 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1207字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到2组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P110",
+      "description": "多步骤工具调用场景缺少调用链声明(顺序/依赖/超时/错误恢复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P160",
+      "description": "Prompt未声明回滚机制(版本回滚/快照恢复/自动回滚触发条件)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P036",
+      "description": "RAG型Prompt未指示模型在检索结果不包含答案时承认不知",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到3个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1110字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P099",
+      "description": "Prompt涉及多模态(图文)输入但未声明盘古多模态格式兼容性",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到1组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P118",
+      "description": "Prompt未声明模型知识截止日期，用户可能误判信息时效性",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P207",
+      "description": "RAG未配置幻觉检测",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P209",
+      "description": "检索结果可能超过上下文窗口",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P248",
+      "description": "Prompt漂移检测缺安全措施(语义diff/回归测试/告警)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P257",
+      "description": "RAG/检索内容缺少不可信边界声明(分隔符/不要服从/视为数据), 外部内容可能携带注入指令",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P014",
+      "description": "Prompt 中的条件/逻辑嵌套超过 3 层 (最大嵌套深度 7)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到3个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P075",
+      "description": "涉及华为云部署的Prompt未指定目标部署区域",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P077",
+      "description": "涉及华为云资源使用的Prompt未提示服务配额和限流策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1679字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P089",
+      "description": "鸿蒙应用Prompt未声明所需权限(ohos.permission.*)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P091",
+      "description": "鸿蒙Prompt引用资源未使用$r/$rawfile标准引用方式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P092",
+      "description": "鸿蒙耗时操作Prompt未声明TaskPool/Worker线程模型",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P094",
+      "description": "鸿蒙网络请求Prompt未声明HTTPS/证书锁定/网络安全配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到1组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P121",
+      "description": "鸿蒙开发Prompt未声明ArkTS严格模式合规要求",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P124",
+      "description": "鸿蒙开发Prompt涉及权限请求但未声明最小化原则",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P128",
+      "description": "鸿蒙开发Prompt涉及分布式场景但未声明分布式数据管理规范",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P147",
+      "description": "Stage模型Prompt未声明ExtensionAbility使用边界(ServiceExtension/DataShareExtension/FormExtension用途限制)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P186",
+      "description": "Prompt涉及ArkUI但未迁移至API 15声明式范式",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P189",
+      "description": "Prompt涉及HSP/HAP模块但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P211",
+      "description": "长列表未使用LazyForEach懒加载",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 2 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到3个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P077",
+      "description": "涉及华为云资源使用的Prompt未提示服务配额和限流策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1247字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P089",
+      "description": "鸿蒙应用Prompt未声明所需权限(ohos.permission.*)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P091",
+      "description": "鸿蒙Prompt引用资源未使用$r/$rawfile标准引用方式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P094",
+      "description": "鸿蒙网络请求Prompt未声明HTTPS/证书锁定/网络安全配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P115",
+      "description": "决策类Prompt未要求输出可解释性说明，用户无法理解决策依据",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P118",
+      "description": "Prompt未声明模型知识截止日期，用户可能误判信息时效性",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P122",
+      "description": "鸿蒙开发Prompt未声明Stage模型生命周期管理规范",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P123",
+      "description": "鸿蒙开发Prompt涉及页面导航但未声明Ability路由规范",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P124",
+      "description": "鸿蒙开发Prompt涉及权限请求但未声明最小化原则",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P146",
+      "description": "Stage模型Prompt未声明UIAbility生命周期管理(onCreate/onForeground/onBackground/onDestroy)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P147",
+      "description": "Stage模型Prompt未声明ExtensionAbility使用边界(ServiceExtension/DataShareExtension/FormExtension用途限制)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P186",
+      "description": "Prompt涉及ArkUI但未迁移至API 15声明式范式",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P189",
+      "description": "Prompt涉及HSP/HAP模块但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P248",
+      "description": "Prompt漂移检测缺安全措施(语义diff/回归测试/告警)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 1 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 4 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 16 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1495字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P093",
+      "description": "鸿蒙数据存储Prompt未声明使用关系型数据库/偏好数据/分布式数据",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到7组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P102",
+      "description": "Prompt中存在自相矛盾的指令，可能导致模型行为混乱 (必须/不要矛盾)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P121",
+      "description": "鸿蒙开发Prompt未声明ArkTS严格模式合规要求",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P122",
+      "description": "鸿蒙开发Prompt未声明Stage模型生命周期管理规范",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P124",
+      "description": "鸿蒙开发Prompt涉及权限请求但未声明最小化原则",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P127",
+      "description": "鸿蒙开发Prompt涉及数据存储/共享但未声明安全沙箱数据隔离",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P146",
+      "description": "Stage模型Prompt未声明UIAbility生命周期管理(onCreate/onForeground/onBackground/onDestroy)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P147",
+      "description": "Stage模型Prompt未声明ExtensionAbility使用边界(ServiceExtension/DataShareExtension/FormExtension用途限制)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P189",
+      "description": "Prompt涉及HSP/HAP模块但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P214",
+      "description": "声明了过度权限(ALL/ANY)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1085字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P087",
+      "description": "鸿蒙Stage模型Prompt缺少Ability声明和入口配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P089",
+      "description": "鸿蒙应用Prompt未声明所需权限(ohos.permission.*)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P091",
+      "description": "鸿蒙Prompt引用资源未使用$r/$rawfile标准引用方式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P094",
+      "description": "鸿蒙网络请求Prompt未声明HTTPS/证书锁定/网络安全配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P095",
+      "description": "鸿蒙应用发布Prompt未声明签名证书和Profile配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P119",
+      "description": "Prompt未声明模型能力局限性，可能导致用户对输出有过高期望",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P149",
+      "description": "鸿蒙ArkUI Prompt未遵循声明式开发范式(数据驱动/单向数据流/状态不可变/无副作用)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P172",
+      "description": "LazyForEach未实现IDataSource变更通知接口",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P173",
+      "description": "@Reusable组件未处理aboutToReuse状态重置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P186",
+      "description": "Prompt涉及ArkUI但未迁移至API 15声明式范式",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P188",
+      "description": "Prompt涉及文件访问但未声明沙箱2.0路径",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P236",
+      "description": "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P237",
+      "description": "推理存在侧信道风险(未做常量时间/缓存隔离防护)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 1 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 1 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 17 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1672字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P087",
+      "description": "鸿蒙Stage模型Prompt缺少Ability声明和入口配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到10组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P121",
+      "description": "鸿蒙开发Prompt未声明ArkTS严格模式合规要求",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P124",
+      "description": "鸿蒙开发Prompt涉及权限请求但未声明最小化原则",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P188",
+      "description": "Prompt涉及文件访问但未声明沙箱2.0路径",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P214",
+      "description": "声明了过度权限(ALL/ANY)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P223",
+      "description": "数据来源不可追溯(缺溯源链/许可/采集记录)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P054",
+      "description": "Prompt中包含Android专用API/组件 (发现 1 处Android专用引用)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P067",
+      "description": "涉及事实性知识的Prompt未声明知识截止日期",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1202字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P089",
+      "description": "鸿蒙应用Prompt未声明所需权限(ohos.permission.*)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P093",
+      "description": "鸿蒙数据存储Prompt未声明使用关系型数据库/偏好数据/分布式数据",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P094",
+      "description": "鸿蒙网络请求Prompt未声明HTTPS/证书锁定/网络安全配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P118",
+      "description": "Prompt未声明模型知识截止日期，用户可能误判信息时效性",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P124",
+      "description": "鸿蒙开发Prompt涉及权限请求但未声明最小化原则",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P147",
+      "description": "Stage模型Prompt未声明ExtensionAbility使用边界(ServiceExtension/DataShareExtension/FormExtension用途限制)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P150",
+      "description": "鸿蒙元服务Prompt未声明卡片更新策略(刷新频率/定时更新/按需更新/数据源声明)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P186",
+      "description": "Prompt涉及ArkUI但未迁移至API 15声明式范式",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P188",
+      "description": "Prompt涉及文件访问但未声明沙箱2.0路径",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P189",
+      "description": "Prompt涉及HSP/HAP模块但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 2 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到4个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P077",
+      "description": "涉及华为云资源使用的Prompt未提示服务配额和限流策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1079字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P118",
+      "description": "Prompt未声明模型知识截止日期，用户可能误判信息时效性",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P158",
+      "description": "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P248",
+      "description": "Prompt漂移检测缺安全措施(语义diff/回归测试/告警)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 4 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到4个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P072",
+      "description": "涉及模型训练或推理的Prompt未声明昇腾NPU适配信息",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1263字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P099",
+      "description": "Prompt涉及多模态(图文)输入但未声明盘古多模态格式兼容性",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P115",
+      "description": "决策类Prompt未要求输出可解释性说明，用户无法理解决策依据",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P132",
+      "description": "涉及图像输入的Prompt未声明图像安全校验(NSFW/恶意内容/隐写检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P158",
+      "description": "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P046",
+      "description": "Prompt中模板变量使用与格式规范不一致",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 14 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1620字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到3组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P102",
+      "description": "Prompt中存在自相矛盾的指令，可能导致模型行为混乱 (必须/不要矛盾)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P158",
+      "description": "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P197",
+      "description": "LLM推理未限制max_tokens",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P004",
+      "description": "Prompt 超过 2000 字符，可能导致模型注意力分散 (当前 2336 字符)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 2 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 1 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P066",
+      "description": "多轮对话Prompt未设定上下文截断或摘要策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前2336字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P120",
+      "description": "对话类Prompt未声明多轮对话状态管理策略(上下文/记忆/会话)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P164",
+      "description": "Prompt未声明指令提取防护(输出过滤/指令不可见/反提取措辞C)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P188",
+      "description": "Prompt涉及文件访问但未声明沙箱2.0路径",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P194",
+      "description": "多Agent协调缺少安全机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P201",
+      "description": "数据处理缺少合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P239",
+      "description": "推理服务缺速率限制/请求大小限制(DoS风险)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P030",
+      "description": "Prompt 过度依赖特定模型 'gpt-4'",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P065",
+      "description": "多步骤链式指令中缺少单步失败时的隔离和恢复机制 (检测到4个链式步骤但无错误隔离)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1377字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到5组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P110",
+      "description": "多步骤工具调用场景缺少调用链声明(顺序/依赖/超时/错误恢复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P155",
+      "description": "Prompt未声明异常降级策略(超时降级/模型切换/缓存回退)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P201",
+      "description": "数据处理缺少合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P221",
+      "description": "LLM模型来源未验证(缺model card/发布者签名/社区评分)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P225",
+      "description": "模型/配置缺少签名和校验和验证",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P039",
+      "description": "多模态Prompt未对非文本输入进行内容安全检查",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 52 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1231字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P099",
+      "description": "Prompt涉及多模态(图文)输入但未声明盘古多模态格式兼容性",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到1组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P132",
+      "description": "涉及图像输入的Prompt未声明图像安全校验(NSFW/恶意内容/隐写检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P140",
+      "description": "多模态Prompt未声明多模态审计追踪(记录各模态输入/输出/决策过程)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P196",
+      "description": "LLM推理未设置timeout",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P197",
+      "description": "LLM推理未限制max_tokens",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P236",
+      "description": "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P039",
+      "description": "多模态Prompt未对非文本输入进行内容安全检查",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1252字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到3组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P132",
+      "description": "涉及图像输入的Prompt未声明图像安全校验(NSFW/恶意内容/隐写检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P133",
+      "description": "涉及音频输入的Prompt未声明音频内容过滤(隐藏指令/超声频段/语音注入)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P134",
+      "description": "多模态Prompt未声明跨模态输出一致性校验(图像描述与文本描述是否一致)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P196",
+      "description": "LLM推理未设置timeout",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P197",
+      "description": "LLM推理未限制max_tokens",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P218",
+      "description": "跨模态上下文未做敏感信息脱敏和隔离保护",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P008",
+      "description": "Prompt 赋予模型过宽的操作权限",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 37 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1251字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到5组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P102",
+      "description": "Prompt中存在自相矛盾的指令，可能导致模型行为混乱 (必须/不要矛盾)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 59 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1395字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到1组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P158",
+      "description": "Prompt未声明数据脱敏策略(PII检测/字段掩码/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P162",
+      "description": "Prompt未声明缓存投毒防护(缓存键验证/内容签名/过期策略)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P167",
+      "description": "Prompt未声明幻觉防护(事实核查/来源引用/不确定性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P196",
+      "description": "LLM推理未设置timeout",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P197",
+      "description": "LLM推理未限制max_tokens",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P223",
+      "description": "数据来源不可追溯(缺溯源链/许可/采集记录)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P236",
+      "description": "模型量化后未重新评估对抗鲁棒性(精度-安全权衡)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P237",
+      "description": "推理存在侧信道风险(未做常量时间/缓存隔离防护)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P018",
+      "description": "Prompt 缺少 Few-shot 示例引导",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P071",
+      "description": "涉及华为云API调用的Prompt未声明具体的endpoint地址",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P075",
+      "description": "涉及华为云部署的Prompt未指定目标部署区域",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P077",
+      "description": "涉及华为云资源使用的Prompt未提示服务配额和限流策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前872字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P098",
+      "description": "Prompt涉及工具/函数调用但未声明盘古Function Calling格式规范",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P117",
+      "description": "知识密集型Prompt未声明事实性约束，模型可能产生幻觉",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P224",
+      "description": "模型版本未锁定(缺版本固定/变更检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 3 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P048",
+      "description": "Prompt中存在中英文标点混用，可能导致模型理解偏差 (发现 10 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1511字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P100",
+      "description": "使用盘古模型的Prompt未声明华为云ModelArts安全护栏和内容审核配置",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到6组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P114",
+      "description": "Prompt涉及个人数据处理但缺少GDPR/隐私合规声明",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P151",
+      "description": "Prompt未声明输入边界校验(长度/格式/范围/类型校验)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P164",
+      "description": "Prompt未声明指令提取防护(输出过滤/指令不可见/反提取措辞C)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P169",
+      "description": "Prompt未声明毒性内容过滤(仇恨言论/骚扰/自残/暴力)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P182",
+      "description": "Prompt调用外部API但缺少依赖声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P202",
+      "description": "用户数据使用缺少同意机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P205",
+      "description": "缺少数据留存策略",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P206",
+      "description": "RAG检索结果未做输入净化",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P207",
+      "description": "RAG未配置幻觉检测",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P219",
+      "description": "模态降级后未保留/重新评估安全约束",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P012",
+      "description": "Prompt 中存在重复的指令或描述 (发现 2 处重复)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P019",
+      "description": "复杂推理任务缺少 Chain-of-Thought 引导",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P028",
+      "description": "多步骤推理任务缺少链式指令 (复杂度指标: 3)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P030",
+      "description": "Prompt 过度依赖特定模型 'gpt-4'",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1228字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P083",
+      "description": "Prompt缺少Doctor诊断检查，建议运行prompt-doctor",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到4组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P120",
+      "description": "对话类Prompt未声明多轮对话状态管理策略(上下文/记忆/会话)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P152",
+      "description": "Prompt未声明输出编码转义(防止XSS/注入二次攻击)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P153",
+      "description": "Prompt未声明调用频率/速率限制(防止资源耗尽)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P155",
+      "description": "Prompt未声明异常降级策略(超时降级/模型切换/缓存回退)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P156",
+      "description": "Prompt未声明版本管理(语义版本/变更日志/兼容性标注)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P157",
+      "description": "Prompt未声明灰度发布策略(流量百分比/AB测试/逐步放量)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P159",
+      "description": "Prompt未声明沙箱隔离(执行环境隔离/资源限制/网络白名单)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P160",
+      "description": "Prompt未声明回滚机制(版本回滚/快照恢复/自动回滚触发条件)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P165",
+      "description": "Prompt未声明侧信道泄露防护(时间恒定/错误统一/日志脱敏)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P185",
+      "description": "提及部署发布但缺少灰度配置",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P204",
+      "description": "缺少偏见公平声明",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P013",
+      "description": "Prompt 中包含无效或低质量示例 (发现 1 个低质量示例)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P027",
+      "description": "Prompt 中可能包含文化敏感内容 (发现 1 处)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P030",
+      "description": "Prompt 过度依赖特定模型 'gpt-4'",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P080",
+      "description": "涉及华为云服务依赖的Prompt未声明SLA降级和服务降级策略",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P082",
+      "description": "复杂Prompt(>500字符)缺少Trace可观测性声明 (当前1137字符)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P101",
+      "description": "Prompt中存在重复或冗余的表述，可能降低模型注意力效率 (检测到2组相似表述)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P106",
+      "description": "Prompt仅提供正面示例而缺少反例/负面示例，模型可能无法识别错误模式",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P111",
+      "description": "推理类Prompt未要求Chain-of-Thought逐步推理，可能导致推理跳跃",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P112",
+      "description": "Few-Shot示例数量不足或缺乏多样性，可能影响模型泛化能力 (仅检测到2处示例标记)",
+      "severity": "low"
+    },
+    {
+      "rule_id": "P131",
+      "description": "多模态Prompt未声明输入模态类型(文本/图像/音频/视频)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P132",
+      "description": "涉及图像输入的Prompt未声明图像安全校验(NSFW/恶意内容/隐写检测)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P135",
+      "description": "多模态Prompt未声明Token/资源预算限制(图像Token消耗/音频处理时间)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P138",
+      "description": "多模态Prompt未声明跨模态组合攻击防护(图像注入+文本泄露/音频注入+越狱)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P139",
+      "description": "多模态Prompt未声明模态间数据隔离(防止跨模态信息泄露/敏感数据通过图像外泄)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P159",
+      "description": "Prompt未声明沙箱隔离(执行环境隔离/资源限制/网络白名单)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P184",
+      "description": "Prompt依赖模型但缺少降级策略",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P194",
+      "description": "多Agent协调缺少安全机制",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P206",
+      "description": "RAG检索结果未做输入净化",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P207",
+      "description": "RAG未配置幻觉检测",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P209",
+      "description": "检索结果可能超过上下文窗口",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P216",
+      "description": "图像输入未经安全预处理(元数据剥离/对抗检测/内容审核)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P241",
+      "description": "收集个人数据超出必要范围(缺匿名化/数据最小化)",
+      "severity": "high"
+    },
+    {
+      "rule_id": "P242",
+      "description": "AI输出未声明透明度(缺AI声明/可解释性/人类监督)",
+      "severity": "medium"
+    },
+    {
+      "rule_id": "P243",
+      "description": "个人数据无保留策略(缺retention_period/自动删除)",
+      "severity": "medium"
+    }
+  ]
+}
