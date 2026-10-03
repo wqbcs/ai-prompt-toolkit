@@ -102,7 +102,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
 
 
 @main.command()
-@click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
+@click.option("--target", "-t", help="Lint目标(文件或目录) — --stdio 模式无需(协议内传text)")
 @click.option(
     "--config",
     "config_path",
@@ -167,6 +167,12 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
 )
 @click.option("--rules", "rules_filter", help="规则过滤: 仅运行指定规则(逗号分隔, 支持前缀: P161或P16=P16x族)")
 @click.option("--ignore-rules", "ignore_rules_filter", help="规则过滤: 忽略指定规则(逗号分隔, 支持前缀)")
+@click.option(
+    "--stdio",
+    "stdio_mode",
+    is_flag=True,
+    help="P1-05a: 常驻 stdio 协议 server(行JSON请求/响应, 编辑器bridge用) — 忽略其他选项, 见 docs/stdio-protocol.md",
+)
 def lint(
     target: str,
     config_path: str | None,
@@ -204,8 +210,17 @@ def lint(
     fail_on_waiver: bool = False,
     rules_filter: str | None = None,
     ignore_rules_filter: str | None = None,
+    stdio_mode: bool = False,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
+    if stdio_mode:
+        from ai_prompt_toolkit.cli.stdio_server import run_stdio_server
+
+        run_stdio_server()
+        return
+    if not target:
+        click.echo("错误: 需要 --target/-t (或 --stdio 模式)", err=True)
+        sys.exit(2)
     from ai_prompt_toolkit.cli_helpers import (
         determine_exit_code,
         discover_templates,
