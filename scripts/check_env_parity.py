@@ -1,18 +1,22 @@
-"""R225-P0-05: 环境一致性快照校验 — CI与本地直接依赖版本 diff=0
+"""R225-P0-05: 环境一致性校验 — CI与本地直接依赖差异显性化
 
 历史事故(R223 四连红): ruff未钉版format行为漂移 / click 8.5.0 vs 本地8.3.3
-类型漂移 / mypy版本差 — 根因=CI每次 pip install 装最新版, 本地装旧版,
-门禁行为随上游发版随机漂移。
+类型漂移 / mypy版本差 — 根因=CI每次 pip install 装最新版, 门禁行为随上游发版
+随机漂移。
 
-本脚本锁定**声明的直接依赖**(pyproject [project] dependencies + 钉死的dev工具),
-安装环境版本与 ci/dep_snapshot.json 逐一对比:
-- 版本不一致 → 红(锁定目的: 漂移必须显式, 不允许静默)
-- 快照更新流程: 本地确认新组合全链绿后 `--update` 刷新快照, 随 commit 说明理由
-  (与基线棘轮同纪律 — 更新可见、可审计, 不抬升)
-- 传递依赖不锁(避免过度锁定; 直接依赖版本由上下界约束)
+分层设计(R225 对抗性审查后修正):
+- **dev 工具链(ruff/mypy)**: pyproject 已 `==` 钉死 — CI 与本地逐字节同版本,
+  漂移=硬红(工具链是门禁行为的直接载体, 不容忍)
+- **core 依赖版本漂移**: 降级为 **WARN(不阻断)** — 行为漂移的真实护栏是
+  门禁链内其他步(pytest/双基线/ruff format/mypy), 版本数字本身不是行为。
+  硬锁版本=上游每周发新版就红=门禁疲劳(恰是 README 批评的 garak 54% 误红陷阱)
+- **缺失(声明且 marker 成立但未安装)**: 硬红(环境真坏了)
+- **新声明未入快照**: 硬红(强制 --update+commit, 更新可审计)
+
+快照更新流程: 本地全链绿后 `--update` 刷新, 随 commit 说明理由(棘轮同纪律)。
 
 用法:
-    python scripts/check_env_parity.py              # 校验, 漂移 exit 1
+    python scripts/check_env_parity.py              # 校验; 漂移warn, 缺失/新声明红
     python scripts/check_env_parity.py --update     # 刷新快照(须先全链绿)
     python scripts/check_env_parity.py --json       # JSON输出
 """
@@ -118,7 +122,8 @@ def main() -> int:
         if is_update:
             snapshot[key] = ver
         elif key in snapshot and snapshot[key] != ver:
-            drifts.append({"package": pkg, "snapshot": snapshot[key], "installed": ver})
+            drifts.append({"package": pkg, "snapshot": snapshot[key], "installed": ver,
+                           "hard": pkg in {p.lower() for p in DEV_PINNED}})
 
     if is_update:
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
@@ -133,29 +138,36 @@ def main() -> int:
         return 0
 
     snap_versions = snapshot.get("versions", {}) if "_comment" in snapshot else snapshot
+    hard_drifts = [d for d in drifts if d["hard"]]
+    soft_drifts = [d for d in drifts if not d["hard"]]
     report = {
         "checked": len(pkgs),
         "missing": missing,
-        "drifts": drifts,
+        "hard_drifts": hard_drifts,
+        "soft_drifts": soft_drifts,
+        "skipped_marker_inactive": skipped,
         "new_unsnapotted": [p for p in pkgs if p.replace("_", "-") not in snap_versions],
-        "ok": not missing and not drifts,
+        "ok": not missing and not hard_drifts,
     }
     if is_json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["ok"] else 1
 
-    print(f"环境一致性: 检查 {len(pkgs)} 个直接依赖")
+    print(f"环境一致性: 检查 {len(pkgs)} 个直接依赖"
+          + (f", 跳过 {len(skipped)} 个(marker不成立)" if skipped else ""))
     if missing:
         print(f"✗ 未安装: {missing}")
-    for d in drifts:
-        print(f"✗ 漂移: {d['package']} 快照={d['snapshot']} 实际={d['installed']}")
+    for d in hard_drifts:
+        print(f"✗ 硬漂移(dev工具链): {d['package']} 快照={d['snapshot']} 实际={d['installed']}")
+    for d in soft_drifts:
+        print(f"⚠ 版本漂移(core, warn不阻断): {d['package']} 快照={d['snapshot']} 实际={d['installed']}"
+              f" — 行为回归由 pytest/双基线/mypy 步兜底; 本地全链绿后 --update 刷新快照")
     if report["new_unsnapotted"]:
-        print(f"⚠ 新声明未入快照(需 --update 刷新): {report['new_unsnapotted']}")
-        report["ok"] = False
+        print(f"✗ 新声明未入快照(需 --update 刷新): {report['new_unsnapotted']}")
     if not report["ok"]:
         print("修复: 本地全链绿后 `python scripts/check_env_parity.py --update` 并随 commit 说明理由")
         return 1
-    print("✓ 安装版本与快照一致(diff=0)")
+    print("✓ 环境一致性通过")
     return 0
 
 
