@@ -34,15 +34,41 @@ SNAPSHOT = ROOT / "ci" / "dep_snapshot.json"
 DEV_PINNED = ["ruff", "mypy"]
 
 
-def declared_packages() -> list[str]:
+def declared_packages() -> list[tuple[str, str]]:
+    """pyproject core 依赖 → [(包名小写, environment marker)]"""
     data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
     deps: list[str] = data.get("project", {}).get("dependencies", [])
-    pkgs: list[str] = []
+    pkgs: list[tuple[str, str]] = []
     for dep in deps:
-        m = re.match(r"^([A-Za-z0-9._\-]+)", dep)
+        base, _, marker = dep.partition(";")
+        m = re.match(r"^([A-Za-z0-9._\-]+)", base)
         if m:
-            pkgs.append(m.group(1).lower())
+            pkgs.append((m.group(1).lower(), marker.strip()))
     return pkgs
+
+
+def marker_active(marker: str) -> bool:
+    """求值 environment marker(仅支持 python_version 常见形态)
+
+    marker 不成立 = 当前解释器不该装该包(如 tomli 在 3.11+) → 跳过检查。
+    无法识别的形态保守按成立处理(宁可假警报不可漏检)。
+    """
+    if not marker:
+        return True
+    m = re.match(r'python_version\s*(<=|>=|<|>|==|!=)\s*["\']?(\d+(?:\.\d+)?)["\']?', marker)
+    if not m:
+        return True
+    op, ver = m.group(1), m.group(2)
+    target = tuple(int(x) for x in ver.split("."))
+    cur = sys.version_info[: len(target)]
+    return {
+        "<": cur < target,
+        "<=": cur <= target,
+        ">": cur > target,
+        ">=": cur >= target,
+        "==": cur == target,
+        "!=": cur != target,
+    }[op]
 
 
 def installed_versions() -> dict[str, str]:
@@ -61,13 +87,21 @@ def installed_versions() -> dict[str, str]:
 
 
 def load_snapshot() -> dict[str, str]:
+    """返回 versions 子层(快照文件结构: {_comment, versions})"""
     if not SNAPSHOT.exists():
         return {}
-    return json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    data = json.loads(SNAPSHOT.read_text(encoding="utf-8"))
+    if isinstance(data, dict) and "versions" in data and isinstance(data["versions"], dict):
+        return dict(data["versions"])
+    return dict(data)
 
 
 def main() -> int:
-    pkgs = declared_packages() + [p.lower() for p in DEV_PINNED]
+    declared = declared_packages()
+    # marker 不成立的包在当前解释器不该存在(如 tomli@3.11+) — 跳过, 不误报
+    active = [(p, mk) for p, mk in declared if marker_active(mk)]
+    skipped = [p for p, mk in declared if not marker_active(mk)]
+    pkgs = [p for p, _ in active] + [p.lower() for p in DEV_PINNED]
     installed = installed_versions()
     snapshot = load_snapshot()
     is_update = "--update" in sys.argv
