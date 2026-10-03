@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.16-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6032%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.17-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6056%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -75,7 +75,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 261条Lint规则(P001-P261)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文等24大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
-| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级7项安全检查 + tool描述security族规则 + Risk Score(0-100四档) |
+| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级8项安全检查 + tool描述security族规则 + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
 | **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2025映射，自动风险评分 |
 | **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |

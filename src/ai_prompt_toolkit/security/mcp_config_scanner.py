@@ -1,9 +1,19 @@
-"""R213-P0-3: MCP 配置安全扫描器 — 配置级 7 项检查 + tool description 256 规则。
+"""R213-P0-3: MCP 配置安全扫描器 — 配置级 8 项检查 + tool description security 族规则。
 
 定位红线(见 docs/R213-改进方案与开源调研-v2.md P0-3): 只扫 MCP 配置面 —
-tool 的 `description` 就是 prompt 文本(天然在 256 规则范围内), 配置本身做
-7 项安全检查(借鉴 PromptSonar MCP-011~109 规则语义, 非抄代码)。
+tool 的 `description` 就是 prompt 文本, 走 security 族 Lint 规则(见
+_DESC_SECURITY_CATEGORIES 注释); 配置本身做 8 项安全检查(借鉴 PromptSonar
+MCP-011~109 规则语义, 非抄代码)。
 不做: MCP 客户端、运行时执行路径、MCP 协议层扫描。
+
+R227-P2-20: rug pull / 隐藏通道面(Microsoft 官方点名的 MCP 攻击面, 12 §1.8):
+- MCP-108 description 隐藏通道(C0/ANSI ESC/C1/Unicode Tags U+E0000-E007F) —
+  零宽/BiDi 族已由 P260/P261 覆盖(security 族过滤自动作用于 description),
+  本项只补 C0/C1/Tags 缺口, 与存量规则不重叠
+- MCP-109(HIGH) description 漂移已批准基线 / MCP-110(MEDIUM) 新描述未批准 —
+  sha256 基线 + 显式批准动作(--baseline-out), 行业共识形态(开源参考
+  mcplint description hash 基线 / mcp-sentinel rug-pull detector /
+  mcplint-sec MCP012 lockfile 漂移), 纯 stdlib 零新依赖
 
 Risk Score 0-100: 机械派生自 LintResult.quality_score 的同一张扣分权重表
 (critical=12/high=6/medium=1/low=0.1/info=0, 同规则只计一次) — 无新公式,
@@ -15,6 +25,7 @@ score = min(100, 扣分和), 分档 ≤20 LOW / ≤45 MEDIUM / ≤70 HIGH / >70 
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -214,6 +225,90 @@ def _check_route_delegation(name: str, entry: dict[str, Any]) -> Finding | None:
     return None
 
 
+# ---------------------------------------------------------------- rug pull / 隐藏通道 (R227-P2-20)
+
+# 隐藏通道字符: C0 控制符(合法 \t\n\r 排除) / DEL / C1 / Unicode Tags(U+E0000-E007F)。
+# ANSI 转义从 ESC(U+001B) 起头, 已含在 C0 段。零宽/BiDi 族(U+200B 等)不入本集 —
+# P260/P261 经 security 族过滤已覆盖 description 字段, 双报无价值。
+_HIDDEN_CHANNEL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\x80-\x9f\U000E0000-\U000E007F]")
+
+
+def _check_hidden_channel(name: str, entry: dict[str, Any]) -> Finding | None:
+    """MCP-108: description 含隐藏通道字符(ANSI转义/C1/Unicode Tags, Microsoft 官方点名面)。"""
+    desc = entry.get("description")
+    if not isinstance(desc, str):
+        return None
+    m = _HIDDEN_CHANNEL_RE.search(desc)
+    if not m:
+        return None
+    ch = m.group(0)
+    return Finding(
+        "MCP-108",
+        Severity.HIGH,
+        f"[{name}] MCP tool description 含隐藏通道字符 U+{ord(ch):X}(C0/ANSI转义/C1/Unicode Tags) — 隐藏=注入通道(OWASP LLM01)",
+        f"::server:{name}::description",
+        "移除 description 隐藏字符并核查服务器来源是否被篡改; 零宽/BiDi 形态由 P260/P261 覆盖",
+        details={"server": name, "char": f"U+{ord(ch):X}"},
+    )
+
+
+def description_fingerprint(desc: str) -> str:
+    """已批准基线指纹: description 原文 sha256(纯 stdlib, 确定性)。"""
+    return hashlib.sha256(desc.encode("utf-8")).hexdigest()
+
+
+def fingerprint_servers(text: str) -> dict[str, str]:
+    """从单个 MCP 配置提取 {server名: description_sha256}(--baseline-out 基线生成用)。"""
+    cfg = json.loads(text)
+    out: dict[str, str] = {}
+    for name, entry in _extract_servers(cfg):
+        desc = entry.get("description")
+        if isinstance(desc, str) and desc.strip():
+            out[name] = description_fingerprint(desc)
+    return out
+
+
+def check_description_baseline(name: str, entry: dict[str, Any], baseline: dict[str, str]) -> list[Finding]:
+    """MCP-109/110: description 对已批准基线(rug pull 静态检测, opt-in)。
+
+    - 基线内且漂移(含 description 被移除/清空 — 移除本身即篡改形态) → MCP-109 HIGH(rug pull 信号, OWASP LLM03)
+    - 有新 description 但不在基线 → MCP-110 MEDIUM(未批准新描述)
+    - 不在基线且无 description → 不报(无攻击面)
+    """
+    findings: list[Finding] = []
+    desc = entry.get("description")
+    desc = desc if (isinstance(desc, str) and desc.strip()) else None
+    if name not in baseline:
+        if desc is not None:
+            findings.append(
+                Finding(
+                    "MCP-110",
+                    Severity.MEDIUM,
+                    f"[{name}] MCP tool description 不在已批准基线内(新/未批准描述) — 审查后用 --baseline-out 批准",
+                    f"::server:{name}::description",
+                    "确认描述可信后 mcp-lint --baseline-out 重生成批准基线(独立 commit 留痕)",
+                    details={"server": name},
+                )
+            )
+        return findings
+    if desc is None or description_fingerprint(desc) != baseline[name]:
+        findings.append(
+            Finding(
+                "MCP-109",
+                Severity.HIGH,
+                f"[{name}] MCP tool description 偏离已批准基线(rug pull 信号: 批准后描述被改, OWASP LLM03)",
+                f"::server:{name}::description",
+                "排查描述变更来源; 变更合法则 --baseline-out 重生成基线并独立 commit 留痕",
+                details={
+                    "server": name,
+                    "expected_sha256": baseline[name],
+                    "actual_sha256": description_fingerprint(desc) if desc is not None else None,
+                },
+            )
+        )
+    return findings
+
+
 _CONFIG_CHECKS = (
     _check_http_plane,
     _check_hardcoded_creds,
@@ -222,6 +317,7 @@ _CONFIG_CHECKS = (
     _check_env_passthrough,
     _check_unpinned_package,
     _check_route_delegation,
+    _check_hidden_channel,
 )
 
 
@@ -258,23 +354,30 @@ def _description_rule_ids() -> set[str]:
     return _DESC_RULE_IDS
 
 
-def scan_mcp_config(text: str, source: str = "mcp.json") -> list[Finding]:
-    """扫描单个 MCP 配置: 7 项配置级检查 + 每个 server 的 description 走 security 族规则。
+def scan_mcp_config(
+    text: str, source: str = "mcp.json", description_baseline: dict[str, str] | None = None
+) -> list[Finding]:
+    """扫描单个 MCP 配置: 8 项配置级检查 + 每个 server 的 description 走 security 族规则。
 
     description 是 tool 的自然语言说明 — 就是 prompt 文本, 走既有规则集
     (不新造检测), 但限 security 族(见 _DESC_SECURITY_CATEGORIES 注释)。
+    description_baseline(可选): 已批准描述基线 {server: sha256} — 传入后启用
+    rug pull 检测(MCP-109 漂移/MCP-110 未批准)。
     JSON 解析失败抛 json.JSONDecodeError 由调用方处理。
     """
     from ai_prompt_toolkit.linter.rules import run_all_checks  # 局部导入防循环引用
 
     active = _description_rule_ids()
     cfg = json.loads(text)
+    baseline = description_baseline or {}
     findings: list[Finding] = []
     for name, entry in _extract_servers(cfg):
         for check in _CONFIG_CHECKS:
             f = check(name, entry)
             if f:
                 findings.append(f)
+        if description_baseline is not None:
+            findings.extend(check_description_baseline(name, entry, baseline))
         desc = entry.get("description")
         if isinstance(desc, str) and desc.strip():
             for f in run_all_checks(desc):

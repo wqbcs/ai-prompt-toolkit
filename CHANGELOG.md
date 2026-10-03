@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.17] - 2026-10-03
+
+### Added (R227-P2-20: mcp-lint rug pull / 隐藏通道检测 — Microsoft 官方点名 MCP 攻击面)
+
+- **MCP-108 (HIGH) description 隐藏通道**: tool description 含 C0 控制符
+  (含 ANSI 转义 ESC)/C1/DEL/Unicode Tags (U+E0000-E007F) 即报 — Microsoft
+  官方 (developer.microsoft.com/blog/protecting-against-indirect-injection-attacks-mcp)
+  点名的隐藏指令形态。零宽/BiDi 族不入本项 — 由 P260/P261 经 security 族过滤
+  自动作用于 description (辖区切分, 不双报)
+- **MCP-109 (HIGH) description 漂移已批准基线 / MCP-110 (MEDIUM) 新描述未批准**:
+  rug pull (工具批准后延迟改描述) 的静态检测 = description sha256 对已批准
+  基线比对 (纯 stdlib, 零新依赖; 开源参考 mcplint description hash 基线 /
+  mcp-sentinel rug-pull detector / mcplint-sec MCP012 lockfile 漂移)。
+  `mcp-lint --baseline <json>` 启用比对 (opt-in, 存量调用零行为变化);
+  `--baseline-out <json>` 显式批准动作 (合并既有基线, 批准后独立 commit 留痕);
+  漂移/清空/移除描述均报 MCP-109 (actual_sha256 附 expected/actual 双指纹便于排查)
+- **配置级检查 7 项 → 8 项** (MCP-108 加入 _CONFIG_CHECKS); 退出码语义不变
+  (high→2, MCP-109 可被 `--fail-on high` 拦截; MCP-110 medium 不拦 high 门禁)
+- **ATLAS 映射**: MCP-108 → AML.T0015 Evade AI Model; MCP-109/110 →
+  AML.T0115 Publish Poisoned AI Artifacts
+- 测试: tests/test_r227_mcp_rug_pull.py 23 用例 (隐藏通道7/基线9/CLI7,
+  含辖区切分守卫: 零宽归 P261 不归 MCP-108)
+
 ## [v67.34.16] - 2026-10-02
 
 ### Added (R224-P1: brownfield增量门禁 + OWASP缺口体检)

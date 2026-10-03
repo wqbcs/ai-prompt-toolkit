@@ -296,13 +296,35 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
     default=None,
     help="CI门禁: 该级别及以上finding>0时退出码2",
 )
-def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None) -> None:
-    """MCP配置安全扫描：配置级7项检查 + tool描述走security族Lint规则 + Risk Score(R213)"""
+@click.option(
+    "--baseline",
+    "baseline_path",
+    type=click.Path(exists=True, dir_okay=False),
+    default=None,
+    help="已批准description基线JSON({server: sha256}) — 传入后启用rug pull检测(MCP-109漂移/MCP-110未批准)",
+)
+@click.option(
+    "--baseline-out",
+    "baseline_out",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="生成/批准description基线到该路径(纯生成模式, 本次不做基线比对; 批准后独立commit留痕)",
+)
+def mcp_lint_cmd(
+    target: str,
+    fmt: str,
+    output: str | None,
+    fail_on: str | None,
+    baseline_path: str | None,
+    baseline_out: str | None,
+) -> None:
+    """MCP配置安全扫描：配置级8项检查 + tool描述security族Lint规则 + rug pull检测(R227) + Risk Score"""
     import json as _json
 
     from ai_prompt_toolkit.security.mcp_config_scanner import (
         compute_risk_score,
         discover_mcp_configs,
+        fingerprint_servers,
         scan_mcp_config,
     )
 
@@ -311,11 +333,46 @@ def mcp_lint_cmd(target: str, fmt: str, output: str | None, fail_on: str | None)
         click.echo(f"错误: 未发现MCP配置文件 — {target}", err=True)
         sys.exit(3)
 
+    if baseline_out:
+        # 生成/批准模式: 提取description指纹并合并既有基线(既有保留, 本次覆盖)
+        merged: dict[str, str] = {}
+        if Path(baseline_out).exists():
+            try:
+                existing = _json.loads(Path(baseline_out).read_text(encoding="utf-8"))
+                if isinstance(existing, dict):
+                    merged = {k: v for k, v in existing.items() if isinstance(k, str) and isinstance(v, str)}
+            except (OSError, _json.JSONDecodeError):
+                pass
+        for f in files:
+            try:
+                merged.update(fingerprint_servers(f.read_text(encoding="utf-8")))
+            except (OSError, UnicodeDecodeError, _json.JSONDecodeError):
+                continue
+        Path(baseline_out).write_text(_json.dumps(merged, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        click.echo(f"已批准description基线: {baseline_out} ({len(merged)} servers) — 请独立commit留痕")
+        sys.exit(0)
+
+    description_baseline: dict[str, str] | None = None
+    if baseline_path:
+        try:
+            baseline_data = _json.loads(Path(baseline_path).read_text(encoding="utf-8"))
+        except (_json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+            click.echo(f"错误: 基线文件不可读 — {baseline_path} ({e})", err=True)
+            sys.exit(3)
+        if not isinstance(baseline_data, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in baseline_data.items()
+        ):
+            click.echo("错误: 基线格式应为 {server名: sha256字符串} 的JSON对象", err=True)
+            sys.exit(3)
+        description_baseline = baseline_data
+
     file_reports: list[dict] = []
     parse_errors = 0
     for f in files:
         try:
-            findings = scan_mcp_config(f.read_text(encoding="utf-8"), source=f.name)
+            findings = scan_mcp_config(
+                f.read_text(encoding="utf-8"), source=f.name, description_baseline=description_baseline
+            )
         except _json.JSONDecodeError as e:
             parse_errors += 1
             click.echo(f"⚠ {f.name}: JSON解析失败({e.msg}), 已跳过", err=True)

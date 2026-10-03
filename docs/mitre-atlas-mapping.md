@@ -25,11 +25,11 @@
 | AML.T0088 Generate Deepfakes | LLM05 | P038-P040 多模态声明族 / P131 多模态输入声明 | 部分 |
 | AML.T0010 ML Supply Chain Compromise（.002 Data / .003 Model） | LLM03 | P221 模型来源 / P222 依赖审计 / P224 版本锁定 / P225 签名 / MCP-106 未固定版本 | 覆盖 |
 | AML.T0020 Training Data Poisoning（2026.08 由 Publish Poisoned Datasets 更名） | LLM04 | P223 数据溯源 | 部分 |
-| AML.T0115 Publish Poisoned AI Artifacts（2026.08 合并原 T0019+T0058；.000 Datasets / .001 Models） | LLM03/LLM04 | P221 来源验证 / P224 版本锁定 / P225 供应链签名 | 覆盖（静态面） |
+| AML.T0115 Publish Poisoned AI Artifacts（2026.08 合并原 T0019+T0058；.000 Datasets / .001 Models） | LLM03/LLM04 | P221 来源验证 / P224 版本锁定 / P225 供应链签名 / **MCP-109/110 rug pull 基线漂移（R227, description sha256 已批准基线+漂移告警, Microsoft 官方点名面）** | 覆盖（静态面） |
 | AML.T0092 Manipulate User LLM Chat History | LLM01 | P161/P164 指令保护 | 部分（会话级上下文操纵需运行时） |
 | AML.T0093 Prompt Infiltration via Public-Facing Application | LLM01 | mcp-lint description层 / P022 | 覆盖 |
 | AML.T0094 Delay Execution of LLM Instructions | LLM01 | （无规则） | **缺口（记录, 候选）** |
-| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / **P261 不可见字符交错/BiDi反转面（R217, 3子pattern, 信源ATR-2026-00276）** / redteam 编码探针9条（badchars/encoding_base64/encoding_binary/encoding_bypass/encoding_hex/encoding_rot13/encoding_unicode/glitch_zerowidth/chinese_encoding_injection; R217 命名对齐统一注册表实测） | 覆盖 |
+| AML.T0015 Evade AI Model | LLM01 | P021 编码混淆 / P152 输出编码转义 / P177 Base64 / **P260 编码混淆注入面（R215-B2, 5子pattern）** / **P261 不可见字符交错/BiDi反转面（R217, 3子pattern, 信源ATR-2026-00276）** / **MCP-108 MCP description 隐藏通道（R227, C0/ANSI/C1/Unicode Tags）** / redteam 编码探针9条（badchars/encoding_base64/encoding_binary/encoding_bypass/encoding_hex/encoding_rot13/encoding_unicode/glitch_zerowidth/chinese_encoding_injection; R217 命名对齐统一注册表实测） | 覆盖 |
 | AML.T0035 Create Proxy ML Model | — | （无 — 运行时建模能力） | **缺口（记录, 不实现）** |
 | RAG Poisoning / False RAG Entry Injection / Gather RAG-Indexed Targets / RAG Credential Harvesting（2025-03 后新增, 编号以官方矩阵为准） | LLM08 | P035-P037 + **P257（R213-B5）** | 部分→R213补强 |
 
