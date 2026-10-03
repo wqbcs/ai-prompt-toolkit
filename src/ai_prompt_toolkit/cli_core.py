@@ -116,6 +116,21 @@ def _component_stats() -> str:
         return "组件统计: (加载中不可用)"
 
 
+def _is_decorative_output_allowed() -> bool:
+    """R226: 装饰性输出(首跑欢迎横幅等)仅允许出现在交互 TTY 且非协议调用。
+
+    全新环境(CI runner 的 HOME 无 .initialized marker)时, 首跑欢迎横幅
+    (ASCII 首字符是前导\\n)会写入 stdout, 把 --stdio 的 hello 挤到第二行 —
+    CI 3.11 实证: json.loads 报 line 2 column 1 (char 1)。协议/机器通道
+    (stdio/重定向的 json 输出)的 stdout 是神圣契约, 装饰性输出绝不污染。
+    """
+    if not sys.stdout.isatty():
+        return False
+    # `echo '{...}' | prompt-cli lint --stdio`: stdout 虽是 TTY 但协议仍是
+    # 机器契约, 横幅必须静默
+    return "--stdio" not in sys.argv[1:]
+
+
 @click.group()
 @click.version_option(
     version=__version__,
@@ -126,7 +141,7 @@ def main() -> None:
     """AI提示词体系工具链"""
     from ai_prompt_toolkit.easter_eggs import is_first_run, show_welcome
 
-    if is_first_run():
+    if is_first_run() and _is_decorative_output_allowed():
         show_welcome()
 
 

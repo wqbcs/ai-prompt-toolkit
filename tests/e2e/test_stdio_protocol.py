@@ -12,6 +12,7 @@ CliRunner 模拟不出 stdin/stdout 行流。覆盖协议契约的四个断言�
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 
@@ -149,3 +150,40 @@ class TestStdioProtocol:
         stdio_server.stdin.flush()
         resp = _roundtrip(stdio_server, {"op": "ping", "id": 7})
         assert resp["ok"] is True and resp["id"] == 7
+
+
+class TestFreshHomeStdio:
+    """R226 根因回归: 首跑欢迎横幅污染 stdout 协议通道
+
+    全新环境(HOME 无 .initialized marker, CI 全新 runner 即此态)曾触发
+    首跑欢迎横幅(ASCII 首字符是前导\\n)写入 stdout, 把 hello 行挤出首行 —
+    CI 3.11 实证 json.loads 报 line 2 column 1 (char 1)。装饰性输出只允许
+    交互 TTY(见 cli_core._is_decorative_output_allowed), 协议/机器通道
+    的 stdout 是神圣契约。本地绿/CI 红的原因正是本地 HOME 已有 marker,
+    此用例用临时 HOME 锁死该回归。
+    """
+
+    def test_hello_is_first_line_in_fresh_home(self, tmp_path):
+        fresh_home = tmp_path / "fresh_home"
+        fresh_home.mkdir()
+        # Windows 用 USERPROFILE / POSIX 用 HOME 解析 Path.home(), 双覆盖
+        env = dict(os.environ, USERPROFILE=str(fresh_home), HOME=str(fresh_home))
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "ai_prompt_toolkit", "lint", "--stdio"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            env=env,
+        )
+        try:
+            line = proc.stdout.readline()
+            # 若被横幅污染, 首行是 "\n" → JSONDecodeError: char 1(CI 原始症状)
+            hello = json.loads(line)
+            assert hello["ok"] is True
+            assert hello["hello"] == "prompt-cli-stdio"
+        finally:
+            if proc.poll() is None:
+                proc.kill()
+            proc.wait(timeout=10)
