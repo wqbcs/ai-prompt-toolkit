@@ -80,6 +80,9 @@ Thumbs.db
 .arts/
 
 # 会话调试/临时产物（2026-09 曾在根目录遗留97个诊断文件，已清理）
+/.gate*
+/coverage.xml
+/gate-sarif-check.sarif
 /.diag*
 /.patch*
 /.fails*

@@ -545,13 +545,20 @@ prompt-cli compliance -t my_prompt.md --format markdown
 # 开发环境
 pip install -e ".[dev]"
 
-# 运行测试(3600个)
-pytest tests/ -v
+# 运行测试
+pytest tests/ -v -k "not slow"
 
-# 代码格式化
-black src/ tests/
-isort src/ tests/
+# 收口门禁链(单入口, 独立退出码, 禁手工拆步/禁管道吞码)
+# 12步: pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
+#       → 依赖清单一致性 → gen_rules_doc重生成 → sync_badges → sync_readme_metrics
+#       → 版本一致性 → SARIF合法性
+python scripts/release_gate.py
+# 常用: --skip 1 跳过pytest | --step N 单步重跑 | --no-fail-fast 全跑完汇总
 ```
+
+**门禁链纪律**：R223/R224 三次"手工命令序列出错"（2 次升版漏跑 gen_rules_doc
+致 CI Docs drift 红、1 次 `cmd | tail` 管道吞退出码本地假绿）之后，收口一律走
+`release_gate.py`——每步独立子进程取真实退出码，失败即停。
 
 ## 许可证
 
