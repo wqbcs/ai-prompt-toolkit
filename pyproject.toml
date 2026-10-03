@@ -32,17 +32,19 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "click>=8.1",
-    "rich>=13.0",
-    "pyyaml>=6.0",
-    "jsonschema>=4.17",
-    "cachetools>=5.3",
+    # R225-P0-05: 全部加上下界 — 上界是保险丝, 上游破坏性大版本时
+    # CI先红(环境快照断言)而非静默漂移(R223 click 8.5.0类型漂移教训)
+    "click>=8.1,<9",
+    "rich>=13.0,<16",
+    "pyyaml>=6.0,<7",
+    "jsonschema>=4.17,<5",
+    "cachetools>=5.3,<8",
     # eval matrix HTML完整渲染器(eval matrix命令核心功能) —
     # 此前未声明, CI无jinja2时静默降级丢feedback(R223 CI实证)
-    "jinja2>=3.0",
+    "jinja2>=3.0,<4",
     # config._load_toml 的 Python 3.10 TOML 回退(3.11+ 用标准库 tomllib) —
     # R225 check_dep_manifest 检出: 3.10 环境缺 tomli 时配置静默返回{}
-    "tomli>=2.0; python_version < \"3.11\"",
+    "tomli>=2.0,<3; python_version < \"3.11\"",
 ]
 
 [project.optional-dependencies]

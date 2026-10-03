@@ -147,9 +147,9 @@ jobs:
           prompt-cli lint -t ./src/ai_prompt_toolkit/templates \
             --incremental --baseline baselines/templates-baseline.json --gate
 
-      # 收口门禁链 11 步(跳过 pytest, 测试走上方矩阵): ruff/format/mypy棘轮/
-      # 双基线/依赖一致性/gen_rules_doc/sync/版本一致性/SARIF合法性
-      - name: "Release Gate (11 steps, single source of truth)"
+      # 收口门禁链 12 步(跳过 pytest, 测试走上方矩阵): ruff/format/mypy棘轮/
+      # 双基线/依赖一致性/环境快照/gen_rules_doc/sync/版本一致性/SARIF合法性
+      - name: "Release Gate (12 steps, single source of truth)"
         run: python scripts/release_gate.py --skip 1
 
       - name: Quality Gate Verdict

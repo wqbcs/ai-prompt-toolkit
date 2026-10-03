@@ -549,9 +549,9 @@ pip install -e ".[dev]"
 pytest tests/ -v -k "not slow"
 
 # 收口门禁链(单入口, 独立退出码, 禁手工拆步/禁管道吞码)
-# 12步: pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
-#       → 依赖清单一致性 → gen_rules_doc重生成 → sync_badges → sync_readme_metrics
-#       → 版本一致性 → SARIF合法性
+# 13步: pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
+#       → 依赖清单一致性 → 环境一致性快照 → gen_rules_doc重生成 → sync_badges
+#       → sync_readme_metrics → 版本一致性 → SARIF合法性
 python scripts/release_gate.py
 # 常用: --skip 1 跳过pytest | --step N 单步重跑 | --no-fail-fast 全跑完汇总
 ```

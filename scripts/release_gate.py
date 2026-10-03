@@ -18,11 +18,12 @@
  5. 双基线: 误报率棘轮(check_false_positives --fail-above 0.01)
  6. 双基线: 漏检率棘轮(check_miss_rate --fail-above 0.05)
  7. 依赖清单一致性(src 运行时 import ⊆ pyproject 声明, Q2-4 反向护栏)
- 8. gen_rules_doc.py(真重生成, 非 --check — 升版后必跑防漂移)
- 9. sync_badges.py(徽章单一真源)
-10. sync_readme_metrics.py(README 指标漂移校验)
-11. check_version_consistency.py(版本三处一致)
-12. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
+ 8. 环境一致性快照(直接依赖版本与 ci/dep_snapshot.json diff=0, Q2-3)
+ 9. gen_rules_doc.py(真重生成, 非 --check — 升版后必跑防漂移)
+10. sync_badges.py(徽章单一真源)
+11. sync_readme_metrics.py(README 指标漂移校验)
+12. check_version_consistency.py(版本三处一致)
+13. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
 
 用法:
     python scripts/release_gate.py                # 全链, 失败即停
@@ -85,6 +86,7 @@ def build_steps() -> list[Step]:
         Step("双基线: 误报率棘轮", [PY, "scripts/check_false_positives.py", "--fail-above", FP_THRESHOLD]),
         Step("双基线: 漏检率棘轮", [PY, "scripts/check_miss_rate.py", "--fail-above", MISS_THRESHOLD]),
         Step("依赖清单一致性", [PY, "scripts/check_dep_manifest.py"]),
+        Step("环境一致性快照", [PY, "scripts/check_env_parity.py"]),
         Step("gen_rules_doc 重生成", [PY, "scripts/gen_rules_doc.py"]),
         Step("sync_badges", [PY, "scripts/sync_badges.py"]),
         Step("sync_readme_metrics", [PY, "scripts/sync_readme_metrics.py"]),
