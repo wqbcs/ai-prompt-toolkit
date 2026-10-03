@@ -18,6 +18,89 @@ if TYPE_CHECKING:
     from ai_prompt_toolkit.linter.linter import LintResult
 
 
+@main.command(name="audit-waivers")
+@click.option("--target", "-t", required=True, help="审计目标(文件或目录)")
+@click.option("--format", "fmt", type=click.Choice(["cli", "json"]), default="cli", help="输出格式")
+@click.option(
+    "--fail-on",
+    type=click.Choice(["expired", "no_owner", "unknown_rule"]),
+    default=None,
+    help="CI 门禁: 存在该状态 waiver 即 FAIL(exit 1)",
+)
+def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
+    """R225-P2-09: waiver 审计 — 列全仓豁免声明, 无 owner/过期/未注册规则告警
+
+    声明语法约定(adoption.md): promptlint:ignore P107 @owner 2026-12-31
+    状态: ok(有owner+未过期) / no_owner / expired / unknown_rule(未注册ID或通配符)
+    """
+    import json as _json
+    from datetime import date
+
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.linter.waivers import parse_waiver_declarations
+
+    files = discover_templates(target)
+    if not files:
+        click.echo(f"未找到可审计文件: {target}")
+        sys.exit(0)
+
+    today = date.today().isoformat()
+    all_decls: list[dict[str, str]] = []
+    for f in files:
+        text = f.read_text(encoding="utf-8")
+        for d in parse_waiver_declarations(text, today=today):
+            d["file"] = str(f)
+            all_decls.append(d)
+
+    counts = {"ok": 0, "no_owner": 0, "expired": 0, "unknown_rule": 0}
+    for d in all_decls:
+        counts[d["status"]] = counts.get(d["status"], 0) + 1
+
+    if fmt == "json":
+        click.echo(
+            _json.dumps(
+                {
+                    "total_files": len(files),
+                    "total_declarations": len(all_decls),
+                    "counts": counts,
+                    "today": today,
+                    "declarations": all_decls,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        if fail_on and counts.get(fail_on, 0) > 0:
+            sys.exit(1)
+        sys.exit(0)
+    else:
+        click.echo(f"waiver 审计: {len(files)} 文件, {len(all_decls)} 条声明 (基准日 {today})")
+        click.echo(
+            f"  ok={counts['ok']}  no_owner={counts['no_owner']}  "
+            f"expired={counts['expired']}  unknown_rule={counts['unknown_rule']}"
+        )
+        for d in all_decls:
+            mark = {"ok": "✓", "no_owner": "⚠", "expired": "✗", "unknown_rule": "✗"}[d["status"]]
+            extra = []
+            if d["owner"]:
+                extra.append(f"@{d['owner']}")
+            if d["expiry"]:
+                extra.append(f"至{d['expiry']}")
+            if d["unknown_ids"]:
+                extra.append(f"未知规则[{d['unknown_ids']}]")
+            suffix = f" ({', '.join(extra)})" if extra else ""
+            click.echo(f"  {mark} [{d['status']}] {d['file']} 规则[{d['rule_ids'] or '-'}]{suffix}")
+
+    if fail_on and counts.get(fail_on, 0) > 0:
+        click.echo(f"Waiver审计门禁: ❌ FAIL | {fail_on} 状态 {counts[fail_on]} 条")
+        sys.exit(1)
+    if all_decls and any(d["status"] != "ok" for d in all_decls):
+        click.echo("提示: 存在非 ok 状态 waiver — 补 owner(@name) 与到期日(YYYY-MM-DD), 过期者移除或重批")
+    elif not all_decls:
+        click.echo("✓ 无 waiver 声明")
+    sys.exit(0)
+
+
 @main.command()
 @click.option("--target", "-t", required=True, help="Lint目标(文件或目录)")
 @click.option(

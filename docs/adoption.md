@@ -101,9 +101,16 @@ repos:
 ```
 
 纪律：
-- waiver 必须有 owner 与复核日期（建议团队约定注释格式 `promptlint:ignore P107 @owner 2026-12-31`）
+- waiver 必须有 owner 与复核日期（注释格式 `promptlint:ignore P107 @owner 2026-12-31`）
 - `prompt-cli explain P107` 可查看规则说明与豁免方式，提示文案与实际能力一致（文件级）
-- 定期审计 waiver：`grep -rn "promptlint:ignore\|lint-ignore" prompts/`
+- 定期审计 waiver（机器可查，不用 grep）：
+
+```bash
+prompt-cli audit-waivers -t ./prompts                  # 列全仓声明: ok/no_owner/expired/unknown_rule
+prompt-cli audit-waivers -t ./prompts --fail-on expired --format json   # 进 CI: 过期 waiver 即红
+```
+
+- 严格 CI 可加 `prompt-cli lint -t ./prompts --fail-on-waiver`：任何豁免生效即 FAIL（禁新增豁免期）
 
 **反模式**：不要为了过门禁整体降级 severity —— 那等于把尺子掰弯。
 

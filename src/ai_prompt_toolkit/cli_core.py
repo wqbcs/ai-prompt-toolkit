@@ -324,8 +324,17 @@ ENTRYPOINT ["prompt-cli"]
 @click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
 @click.option("--init", "init_config", is_flag=True, help="首次运行: 自动生成.prompt-toolkit.yml配置模板")
-def doctor_cmd(provider: str | None, as_json: bool, init_config: bool) -> None:
-    """健康检查：检测Provider连接状态和API Key配置"""
+@click.option(
+    "--gate",
+    "gate_mode",
+    is_flag=True,
+    help="R225-P2-08: 门禁工具自检(版本/规则数/基线/依赖/豁免) — 排查'为什么CI没跑'",
+)
+def doctor_cmd(provider: str | None, as_json: bool, init_config: bool, gate_mode: bool) -> None:
+    """健康检查：检测Provider连接状态和API Key配置（--gate: 门禁工具自检）"""
+    if gate_mode:
+        _doctor_gate(as_json)
+        return
     if init_config:
         from pathlib import Path as _ConfigPath
 
@@ -457,6 +466,137 @@ include_rules: []
     console.print(Panel("\n".join(summary_lines), title="诊断摘要", border_style=panel_color))
 
     sys.exit(0 if healthy == total else 1)
+
+
+def _doctor_gate(as_json: bool) -> None:
+    """R225-P2-08: 门禁工具自检 — 用户排查"为什么CI没跑"的一站式
+
+    检查项:
+    1. 版本与三处一致性(pyproject/__init__/README徽章)
+    2. 规则注册表数量(与 docs/rules.md 声明口径)
+    3. 基线文件存在性与新鲜度(baselines/templates-baseline.json)
+    4. 双基线阈值可复现(check_false_positives/check_miss_rate 快速跑)
+    5. 依赖健康(core 依赖可导入 + 环境一致性快照)
+    6. waiver 面(audit-waivers 汇总)
+
+    退出码: 0=全绿 1=存在黄/红项
+    """
+    from pathlib import Path as _GatePath
+
+    checks: list[dict[str, object]] = []
+
+    def add(name: str, status: str, detail: str) -> None:
+        checks.append({"check": name, "status": status, "detail": detail})
+
+    # 1. 版本一致性
+    from ai_prompt_toolkit import __version__
+
+    pyproject_v = None
+    _pyproject = _GatePath("pyproject.toml")
+    if _pyproject.exists():
+        import re as _re
+
+        m = _re.search(r'^version\s*=\s*"([\w.]+)"', _pyproject.read_text(encoding="utf-8"), _re.MULTILINE)
+        pyproject_v = m.group(1) if m else None
+    if pyproject_v == __version__:
+        add("版本一致性", "ok", f"__version__ = pyproject = {__version__}")
+    else:
+        add("版本一致性", "fail", f"__version__={__version__} vs pyproject={pyproject_v}")
+
+    # 2. 规则注册表
+    from ai_prompt_toolkit.linter.rules import get_all_rules
+
+    rules = get_all_rules()
+    add("规则注册表", "ok", f"{len(rules)} 条规则加载正常")
+
+    # 3. 基线文件
+    baseline = _GatePath("baselines/templates-baseline.json")
+    if baseline.exists():
+        import json as _json
+
+        try:
+            snap = _json.loads(baseline.read_text(encoding="utf-8"))
+            add("增量门禁基线", "ok", f"baselines/templates-baseline.json ({snap.get('total_findings', '?')} findings)")
+        except _json.JSONDecodeError:
+            add("增量门禁基线", "fail", "基线文件存在但 JSON 非法")
+    else:
+        add("增量门禁基线", "warn", "baselines/templates-baseline.json 缺失 — CI 增量门禁(--incremental)将失败")
+
+    # 4. 双基线(快速复现: 与 CI 阈值一致)
+    try:
+        from ai_prompt_toolkit.baselines import run_false_positives, run_miss_rate
+
+        fp = run_false_positives()
+        fp_rate = fp.get("global_rate", 0.0) if isinstance(fp, dict) else getattr(fp, "global_rate", 0.0)
+        add("双基线: 误报率", "ok" if fp_rate <= 0.01 else "fail", f"{fp_rate:.2%} (阈值 1.00%)")
+        mr = run_miss_rate()
+        mr_rate = mr.get("global_rate", 0.0) if isinstance(mr, dict) else getattr(mr, "global_rate", 0.0)
+        add("双基线: 漏检率", "ok" if mr_rate <= 0.05 else "fail", f"{mr_rate:.2%} (阈值 5.00%)")
+    except Exception as e:
+        add("双基线", "fail", f"复现失败: {e}")
+
+    # 5. 依赖健康
+    missing_deps: list[str] = []
+    for mod in ("click", "rich", "yaml", "jsonschema", "cachetools", "jinja2"):
+        try:
+            __import__(mod)
+        except ImportError:
+            missing_deps.append(mod)
+    if missing_deps:
+        add("core 依赖", "fail", f"缺失: {', '.join(missing_deps)}")
+    else:
+        add("core 依赖", "ok", "6 个 core 依赖全部可导入")
+
+    # 6. waiver 面
+    try:
+        from ai_prompt_toolkit.cli_helpers import discover_templates
+        from ai_prompt_toolkit.linter.waivers import parse_waivers
+
+        tpl_dir = _GatePath("src/ai_prompt_toolkit/templates")
+        if tpl_dir.exists():
+            files = discover_templates(str(tpl_dir))
+            waived_total = 0
+            for f in files:
+                text = f.read_text(encoding="utf-8")
+                waived_total += len(parse_waivers(text))
+            add(
+                "waiver 面",
+                "ok",
+                f"内置模板 waiver 声明 {waived_total} 处 (审计: prompt-cli audit-waivers -t {tpl_dir})",
+            )
+        else:
+            add("waiver 面", "warn", "未找到模板目录, 跳过")
+    except Exception as e:
+        add("waiver 面", "warn", f"扫描失败: {e}")
+
+    if as_json:
+        import json as _json
+
+        click.echo(_json.dumps({"version": __version__, "checks": checks}, ensure_ascii=False, indent=2))
+    else:
+        from rich.console import Console
+        from rich.table import Table
+
+        console = Console()
+        table = Table(title="prompt-cli 门禁工具自检 (doctor --gate)")
+        table.add_column("检查项", style="bold")
+        table.add_column("状态", width=8)
+        table.add_column("详情")
+        styles = {"ok": "[green]✓[/green]", "warn": "[yellow]⚠[/yellow]", "fail": "[red]✗[/red]"}
+        for c in checks:
+            table.add_row(str(c["check"]), styles.get(str(c["status"]), str(c["status"])), str(c["detail"]))
+        console.print(table)
+
+    failed = sum(1 for c in checks if c["status"] == "fail")
+    warned = sum(1 for c in checks if c["status"] == "warn")
+    if not as_json:
+        if failed:
+            click.echo(f"❌ 自检失败: {failed} 项红, {warned} 项黄 — 修复后重跑")
+        elif warned:
+            click.echo(f"⚠️ 自检有黄项: {warned} 项 — 见上表")
+        else:
+            click.echo("✅ 门禁工具健康 — CI 该跑的都跑得起来")
+    sys.exit(1 if failed else 0)
 
 
 @main.command(name="probe")

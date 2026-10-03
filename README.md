@@ -6,7 +6,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.16-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-5987%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-6005%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -100,6 +100,8 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 | **双基线自证** | `prompt-cli baseline` | 漏检/误报基线一条命令复现，样本随包分发，零LLM确定性度量 |
 | **缺口体检** | `prompt-cli gap-report` | OWASP LLM Top 10 每文件×每风险防御声明缺口统计，JSON+MD，可复现缺口占比 |
 | **增量门禁** | `prompt-cli lint --incremental` | 与--baseline+--gate组合：门禁只拦NEW findings，存量放行（brownfield接入） |
+| **Waiver审计** | `prompt-cli audit-waivers` | 全仓豁免声明审计：无owner/过期/未注册规则告警，`--fail-on expired` 进CI门禁 |
+| **门禁自检** | `prompt-cli doctor --gate` | 版本/规则数/基线/双基线/依赖/waiver面一站式自检，排查"为什么CI没跑" |
 
 </details>
 

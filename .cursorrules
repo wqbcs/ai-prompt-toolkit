@@ -1,0 +1,46 @@
+# AI Prompt Toolkit — AI 编码助手规则（.cursorrules）
+
+本仓库是 **AI Prompt Toolkit**（`prompt-cli`）——确定性的 LLM 提示词静态门禁
+（prompt 的 ESLint）。修改本仓库代码或其中任何 prompt 文件时遵守以下约定。
+
+## Prompt 文件会被门禁检查
+
+- 模板目录 `src/ai_prompt_toolkit/templates/*.md` 与 `_scenarios/` 下的 prompt
+  文件由 CI 增量门禁检查：`prompt-cli lint -t <dir> --incremental
+  --baseline baselines/templates-baseline.json --gate`
+- **你修改的任何 prompt 会过 prompt-cli 门禁**——新增 critical/high finding
+  会红 CI。改完 prompt 先本地跑：
+  ```bash
+  prompt-cli lint -s <file> --gate   # 单文件
+  ```
+- 存量 finding 已锁定在 `baselines/templates-baseline.json`——**不要**为了
+  让 gate 通过而重存基线；只有规则引擎升级/有意识的债务清理才重存，且必须
+  独立 commit 说明理由。
+
+## 新增 Lint 规则的流程（探针先行）
+
+1. 先写探针（TP+TN 各 ≥2）加入 `data/golden_attacks.json` / 干净样本集
+2. 再写规则（`src/ai_prompt_toolkit/linter/rules_pXXX.py`），规则必须有
+   OWASP LLM Top 10 或内部类别映射
+3. 双基线不得回归：`python scripts/check_false_positives.py --fail-above 0.01`
+   与 `python scripts/check_miss_rate.py --fail-above 0.05`
+4. 无探针支撑的规则 = 噪音，禁止合入（陷阱 T1）
+
+## 收口门禁链（禁止手工拆步）
+
+提交前必须：`python scripts/release_gate.py` 全绿（13 步，独立退出码）。
+**禁止**用管道（`| tail` 等）包裹门禁命令——会吞退出码造成假绿（R224 事故）。
+
+## 版本纪律
+
+升版本号后的固定顺序：版本 3 处（pyproject/__init__/README 徽章）→
+`python scripts/gen_rules_doc.py`（非 --check，真重生成）→ `sync_badges.py` →
+`sync_readme_metrics.py` → `check_version_consistency.py` → commit。
+漏跑 gen_rules_doc 曾两次致 CI 红。
+
+## 不做什么（反清单，勿越界）
+
+- 不加 LLM 调用进门禁路径（确定性楔子）
+- 不为凑数加规则/维度/Provider
+- 不抬 mypy 基线/双基线阈值过门禁
+- 不批量给模板塞声明骗 gap-report 规则
