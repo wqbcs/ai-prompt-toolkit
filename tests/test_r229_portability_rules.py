@@ -65,6 +65,38 @@ class TestP262ModelBrandBinding:
         f = check_p262("你是一个助手。" + filler + "参考 GPT-4 的文档编号 12345 处理。")
         assert f is None
 
+    # ── R229 收口: frontmatter 边界（20 个模板 C5 误报复现与修复） ──
+    def test_frontmatter_brand_not_anchored(self):
+        # 模板 frontmatter model_compatibility 品牌名跨 `---` 边界落入正文
+        # 身份句 ±40 窗口 → 元数据是声明非正文, 不锚定（CI 21 处中 20 处形态）
+        text = (
+            "---\ntemplate_id: code-reviewer\nmodel_compatibility:\n  - qwen\n"
+            '  - deepseek\n  - pangu\nversion: "3.0"\n---\n\n# 角色\n\n'
+            "你是资深代码审查专家，擅长发现代码中的安全隐患。"
+        )
+        assert check_p262(text) is None
+
+    def test_frontmatter_only_brand_no_hit(self):
+        # 仅 frontmatter 有品牌、正文无身份绑定 → 不报
+        text = "---\nmodel_compatibility:\n  - deepseek\n---\n\n你是通用助手。"
+        assert check_p262(text) is None
+
+    def test_body_binding_still_hits_with_frontmatter(self):
+        # frontmatter 存在时正文真绑定仍报, 且 location 行号基于原文（不漂移）
+        text = "---\nmodel_compatibility:\n  - deepseek\n---\n\n# 角色\n\n你是DeepSeek-R1推理专家，擅长深度推理。"
+        f = check_p262(text)
+        assert f is not None
+        # location 契约: "line:col" 字符串, 消费端 parse_location 解析（R218 单一入口）
+        from ai_prompt_toolkit.types import parse_location
+
+        line, _col = parse_location(f.location)
+        assert line == 8  # 原文第 8 行（location 基于原文偏移, 不随 frontmatter 剥离漂移）
+
+    def test_no_frontmatter_behavior_unchanged(self):
+        # 无 frontmatter 输入行为不变（fm_len=0 全量扫描）
+        f = check_p262("你是Claude，你需要遵循以下规则处理输入。")
+        assert f is not None
+
 
 class TestP263DeterminismContradiction:
     def test_both_present_hits(self):

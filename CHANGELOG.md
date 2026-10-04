@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.21] - 2026-10-04
+
+### Fixed (R229 收口: P262 CI 增量门禁红 → 模板 frontmatter 边界修复)
+
+> v67.34.20 推送后 CI 增量门禁红：新规则 P262 命中本仓 21 个模板
+> （基线 629 → 650）。对抗性审查分类：20 处为 YAML frontmatter
+> `model_compatibility` 列表项（C5 列）品牌名跨 `---` 边界落入正文身份句
+> ±40 字符窗口的巧合误报（元数据是声明非正文）；1 处为真阳性
+> （deepseek-r1-reasoning.md 正文「你是DeepSeek-R1推理专家」）。
+
+- **P262 frontmatter 边界**：品牌锚点仅在正文（frontmatter 之后）扫描，
+  复用既有 `strip_frontmatter`（rules.py, R178 惯例，P100/P156/P221/P224
+  同款）计算边界；不整体剥离文本，location 行号基于原文保持精确。
+  函数内延迟导入（rules.py 导入链先于 `strip_frontmatter` 定义执行，
+  顶层导入触发循环导入 — P100 等同惯例）
+- **真阳性模板修复**：deepseek-r1-reasoning.md 正文身份句改为能力描述
+  「深度推理专家」（该模板 frontmatter 兼容 o1/qwq 等非 DeepSeek 模型，
+  正文本就该示范可移植最佳实践 — 工具 dogfooding 自己新规则）
+- **回归测试 +4**（frontmatter 边界四态 + location 精确性断言）
+- **附带**：`ruff check --fix` 顺带修复 3 个 scripts 文件 I001 import
+  排序漂移（R224 同类本地假绿，本轮在 push 前抓出）
+
+门禁: ruff check/format + mypy 棘轮 + 双基线 + 版本一致性 + ReDoS = 13/13 绿；
+CI 增量门禁本地复现 PASS（基线 629 → 当前 627, NEW=0, 顺带修复存量 P082×1）。
+
 ## [v67.34.20] - 2026-10-03
 
 ### Added (R229: 采用面扩展三件套 — 内嵌抽取/可移植性/轻量片段)

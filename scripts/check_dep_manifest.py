@@ -23,8 +23,9 @@ import ast
 import json
 import re
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "src" / "ai_prompt_toolkit"
@@ -133,18 +134,26 @@ def main() -> int:
                 continue
             if optional_file(py):
                 continue  # 可选功能降级点, 豁免(见 OPTIONAL_IMPORT_FILES 注释)
-            violations.append({
-                "file": py.relative_to(ROOT).as_posix(),
-                "import": name,
-            })
+            violations.append(
+                {
+                    "file": py.relative_to(ROOT).as_posix(),
+                    "import": name,
+                }
+            )
 
     if "--json" in sys.argv:
-        print(json.dumps({
-            "checked_files": checked_files,
-            "declared": sorted(declared),
-            "violations": violations,
-            "ok": not violations,
-        }, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {
+                    "checked_files": checked_files,
+                    "declared": sorted(declared),
+                    "violations": violations,
+                    "ok": not violations,
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     else:
         print(f"依赖清单一致性: 扫描 {checked_files} 文件, 声明 {len(declared)} 个 core 包")
         if violations:

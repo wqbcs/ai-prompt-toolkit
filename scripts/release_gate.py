@@ -41,7 +41,7 @@ import json
 import subprocess
 import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -79,8 +79,19 @@ def build_steps() -> list[Step]:
     return [
         Step(
             "pytest 全量",
-            [PY, "-m", "pytest", "tests/", "-x", "-q", "--tb=short", "-k", "not slow",
-             "--cov=ai_prompt_toolkit", "--cov-report=xml"],
+            [
+                PY,
+                "-m",
+                "pytest",
+                "tests/",
+                "-x",
+                "-q",
+                "--tb=short",
+                "-k",
+                "not slow",
+                "--cov=ai_prompt_toolkit",
+                "--cov-report=xml",
+            ],
         ),
         Step("ruff check", [PY, "-m", "ruff", "check", "src/", "tests/"]),
         Step("ruff format --check", [PY, "-m", "ruff", "format", "--check", "src/", "tests/"]),
@@ -93,9 +104,23 @@ def build_steps() -> list[Step]:
         Step("sync_badges", [PY, "scripts/sync_badges.py"]),
         Step("sync_readme_metrics", [PY, "scripts/sync_readme_metrics.py"]),
         Step("check_version_consistency", [PY, "scripts/check_version_consistency.py"]),
-        Step("SARIF 合法性", [PY, "-m", "ai_prompt_toolkit", "lint", "-t", TEMPLATES_DIR,
-                             "--format", "sarif", "--output", "gate-sarif-check.sarif"],
-             verify="sarif", allow_lint_rc=True),
+        Step(
+            "SARIF 合法性",
+            [
+                PY,
+                "-m",
+                "ai_prompt_toolkit",
+                "lint",
+                "-t",
+                TEMPLATES_DIR,
+                "--format",
+                "sarif",
+                "--output",
+                "gate-sarif-check.sarif",
+            ],
+            verify="sarif",
+            allow_lint_rc=True,
+        ),
         Step("ReDoS 审计(增量)", [PY, "scripts/audit_redos.py"]),
     ]
 
@@ -139,6 +164,7 @@ def run_step(step: Step, index: int) -> StepResult:
 
 
 # ---------------------------------------------------------------- 主流程
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="收口门禁链 — 单入口, 独立退出码, 禁管道吞码")

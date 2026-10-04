@@ -122,7 +122,16 @@ _BRAND_WINDOW = 40
 
 def check_p262(text: str) -> Finding | None:
     rule = _RULE_MAP["P262"]
-    for bm in _BRAND_RE.finditer(text):
+    # R229: 函数内延迟导入 — rules.py 在 L1427 导入本模块时 strip_frontmatter
+    # (L1628 定义)尚未执行到, 顶层导入触发循环导入; P100/P156/P221/P224 同惯例
+    from ai_prompt_toolkit.linter.rules import strip_frontmatter
+
+    # R229: frontmatter 是资产元数据(model_compatibility 声明)非正文 — 品牌名不
+    # 在元数据里做绑定锚点(同 P100/P221/P224 R178 惯例, 复用 strip_frontmatter
+    # 边界计算; 不整体剥离以保留原文 location 行号精确性)。修复: 20 个模板
+    # C5 误报(元数据品牌名跨 `---` 边界落入正文身份句 ±40 窗口)
+    fm_len = len(text) - len(strip_frontmatter(text))
+    for bm in _BRAND_RE.finditer(text, fm_len):
         lo = max(0, bm.start() - _BRAND_WINDOW)
         hi = min(len(text), bm.end() + _BRAND_WINDOW)
         if _IDENTITY_MARKER_RE.search(text, lo, hi):

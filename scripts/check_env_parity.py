@@ -27,8 +27,9 @@ import json
 import re
 import subprocess
 import sys
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
@@ -122,16 +123,27 @@ def main() -> int:
         if is_update:
             snapshot[key] = ver
         elif key in snapshot and snapshot[key] != ver:
-            drifts.append({"package": pkg, "snapshot": snapshot[key], "installed": ver,
-                           "hard": pkg in {p.lower() for p in DEV_PINNED}})
+            drifts.append(
+                {
+                    "package": pkg,
+                    "snapshot": snapshot[key],
+                    "installed": ver,
+                    "hard": pkg in {p.lower() for p in DEV_PINNED},
+                }
+            )
 
     if is_update:
         SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
         SNAPSHOT.write_text(
-            json.dumps({
-                "_comment": "R225-P0-05: 直接依赖版本快照 — 更新必须随 commit 说明理由且全链绿",
-                "versions": snapshot,
-            }, ensure_ascii=False, indent=2, sort_keys=True),
+            json.dumps(
+                {
+                    "_comment": "R225-P0-05: 直接依赖版本快照 — 更新必须随 commit 说明理由且全链绿",
+                    "versions": snapshot,
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
             encoding="utf-8",
         )
         print(f"快照已刷新: {len(snapshot)} 包")
@@ -153,15 +165,16 @@ def main() -> int:
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0 if report["ok"] else 1
 
-    print(f"环境一致性: 检查 {len(pkgs)} 个直接依赖"
-          + (f", 跳过 {len(skipped)} 个(marker不成立)" if skipped else ""))
+    print(f"环境一致性: 检查 {len(pkgs)} 个直接依赖" + (f", 跳过 {len(skipped)} 个(marker不成立)" if skipped else ""))
     if missing:
         print(f"✗ 未安装: {missing}")
     for d in hard_drifts:
         print(f"✗ 硬漂移(dev工具链): {d['package']} 快照={d['snapshot']} 实际={d['installed']}")
     for d in soft_drifts:
-        print(f"⚠ 版本漂移(core, warn不阻断): {d['package']} 快照={d['snapshot']} 实际={d['installed']}"
-              f" — 行为回归由 pytest/双基线/mypy 步兜底; 本地全链绿后 --update 刷新快照")
+        print(
+            f"⚠ 版本漂移(core, warn不阻断): {d['package']} 快照={d['snapshot']} 实际={d['installed']}"
+            f" — 行为回归由 pytest/双基线/mypy 步兜底; 本地全链绿后 --update 刷新快照"
+        )
     if report["new_unsnapotted"]:
         print(f"✗ 新声明未入快照(需 --update 刷新): {report['new_unsnapotted']}")
     if not report["ok"]:
