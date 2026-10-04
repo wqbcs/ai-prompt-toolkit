@@ -2,6 +2,52 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.19] - 2026-10-03
+
+### Changed (R228-P2-21: OWASP LLM Top 10 映射 2025→2026 — 固定触发器收口)
+
+> **2025→2026 版本差异公告（存量采用者必读）**：OWASP 于 **2026-08-03** 发布
+> LLM Top 10 **2026** 版，10 项里 **8 项换位**，**LLM07 System Prompt Leakage
+> 改名 LLM08 Hidden Context Exposure**（语义扩大：覆盖 RAG 上下文/隐藏上下文暴露）。
+> 本项目全仓映射已从 2025 迁移到 2026。若你按 2025 编号引用风险，对照下表：
+>
+> | 2025 编号 | 2026 编号 | 风险名（2026） | 变化 |
+> |-----------|-----------|----------------|------|
+> | LLM01 | LLM01 | Prompt Injection | 不变 |
+> | LLM02 | LLM02 | Sensitive Information Disclosure | 不变 |
+> | LLM03 | LLM04 | Supply Chain | 换位（升为独立 #4） |
+> | LLM04 | LLM05 | Data and Model Poisoning | 换位 |
+> | LLM05 | LLM10 | Improper Output Handling | 换位（降） |
+> | LLM06 | LLM03 | Excessive Agency | 换位（#6→#3 升） |
+> | LLM07 | LLM08 | Hidden Context Exposure | **改名**（原 System Prompt Leakage） |
+> | LLM08 | LLM09 | Vector and Embedding Weaknesses | 换位 |
+> | LLM09 | LLM07 | Misinformation | 换位 |
+> | LLM10 | LLM06 | Unbounded Consumption | 换位 |
+>
+> 官方：https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/
+
+- **`probe_framework.py`**: 新增 `OWASP_LLM_TOP_10_2026`（官方 10 风险定义+探针）
+  + `OWASP_2025_TO_2026` 重键表 + `OWASP_LLM_TOP_10`（=2026 当前版）+
+  `normalize_owasp_refs()`；`get_owasp_mapping()`/`to_owasp_report()` 切到 2026。
+  2025 常量保留为 legacy（向后兼容，不再作为当前版）
+- **`linter/owasp_mapping.py`**: `_OWASP_RULE_MAPPING` 整表按 2026 键重键
+  （8 个换位项）；`_OWASP_REMEDIATIONS` 同步重键并微调 LLM03/04/05/08/10
+  remediation（对齐 2026 语义：Supply Chain 加 promoted artifact 校验、
+  Poisoning 加 fine-tuning 数据、Hidden Context 加 RAG 暴露面、Output
+  加不安全代码拦截）；`get_owasp_coverage()`/`generate_owasp_report()` 走 2026
+- **`apply_owasp_refs()` 单一边界**: 规则文件里硬编码的 2025 时代 `owasp_refs`
+  字面量在模块加载边界统一重键到 2026（避免逐文件改 ~90 处硬编码）。
+  重键是 LLM01-10 双射、按字面量来源（2025）应用，仅对 2025 字面量安全——
+  调用时机=模块首次加载/重载（字面量重新取 2025），见 docstring
+- **`gap_report.py`**: `_RISK_DEFENSE_MARKERS` 防御意图词表按 2026 键重键
+  （8 个换位项，风险身份不变）；`aggregate()` 走 2026
+- **`compliance_report.py`**: `owasp_summary` 走 2026
+- **README**: Probe Framework 表 2025→2026（含 2025→2026 重键说明）、
+  redteam 行 2025→2026、新增"同类静态 Prompt 工具对比（2026-10 核实）"
+  + "MCP 检测适用边界（诚实声明）"
+- **测试**: `tests/test_r228_owasp_2026_migration.py`（16 测试）锁死重键正确性
+  （双射/2026 定义/normalize 边界/运行时 refs 无 2025 残留/coverage+report 走 2026）
+
 ## [v67.34.18] - 2026-10-03
 
 ### Added (R227-P3-05: ReDoS 审计 — 261 规则 regex 灾难性回溯面收口)

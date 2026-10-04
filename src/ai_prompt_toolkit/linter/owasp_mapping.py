@@ -1,16 +1,24 @@
-"""OWASP LLM Top 10 2025 映射 — P001-P150 Lint规则到OWASP风险项对照表
+"""OWASP LLM Top 10 2026 映射 — Lint规则到OWASP风险项对照表
 
-映射原则:
-- security类规则 → LLM01/LLM05/LLM06/LLM07/LLM08
-- structure/quality类规则 → LLM06(Excessive Agency)/LLM09(Misinformation)
-- compliance类规则 → LLM02/LLM03/LLM07
-- performance类规则 → LLM10(Unbounded Consumption)
-- agent类规则 → LLM06(Excessive Agency)
-- rag类规则 → LLM08/LLM09
-- harmonyos类规则 → LLM06(特定平台安全)
-- multimodal类规则 → LLM01/LLM08
+R228-P2-21: 2025→2026 标准迁移（OWASP 2026 版 2026-08-03 发布，10 项里 8 项换位、
+LLM07 System Prompt Leakage → LLM08 Hidden Context Exposure 改名）。
+重键表与 2026 风险定义在 probe_framework（单一真源）:
+  OWASP_LLM_TOP_10_2026 / OWASP_2025_TO_2026 / normalize_owasp_refs
+本表 _OWASP_RULE_MAPPING 已按 2026 键重键；规则文件里的硬编码 2025 号在
+apply_owasp_refs 边界统一 normalize 到 2026（避免逐文件改 ~90 处字面量）。
 
-参考: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+映射原则（2026 键）:
+- security类规则 → LLM01/LLM10/LLM03/LLM08/LLM09
+- structure/quality类规则 → LLM03(Excessive Agency)/LLM07(Misinformation)
+- compliance类规则 → LLM02/LLM04/LLM08
+- performance类规则 → LLM06(Unbounded Consumption)
+- agent类规则 → LLM03(Excessive Agency)
+- rag类规则 → LLM09/LLM07
+- harmonyos类规则 → LLM03(特定平台安全)
+- multimodal类规则 → LLM01/LLM09
+
+参考: https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/
+（2025→2026 重键: LLM03→04, 04→05, 05→10, 06→03, 07→08, 08→09, 09→07, 10→06）
 """
 
 from __future__ import annotations
@@ -18,6 +26,7 @@ from __future__ import annotations
 from typing import Any
 
 from ai_prompt_toolkit.linter.rules import _RULE_MAP
+from ai_prompt_toolkit.probe_framework import normalize_owasp_refs
 
 _OWASP_RULE_MAPPING: dict[str, list[str]] = {
     "LLM01": [
@@ -133,7 +142,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P254",
         "P255",
     ],
-    "LLM03": [
+    "LLM04": [
         "P024",
         "P047",
         "P048",
@@ -150,7 +159,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P233",
         "P235",
     ],
-    "LLM04": [
+    "LLM05": [
         "P029",
         "P035",
         "P036",
@@ -170,7 +179,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P249",
         "P250",
     ],
-    "LLM05": [
+    "LLM10": [
         "P007",
         "P008",
         "P031",
@@ -190,7 +199,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P072",
         "P073",
     ],
-    "LLM06": [
+    "LLM03": [
         "P008",
         "P030",
         "P041",
@@ -257,7 +266,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P247",
         "P248",
     ],
-    "LLM07": [
+    "LLM08": [
         "P006",
         "P009",
         "P024",
@@ -278,7 +287,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P242",
         "P244",
     ],
-    "LLM08": [
+    "LLM09": [
         "P035",
         "P036",
         "P037",
@@ -292,7 +301,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P138",
         "P159",
     ],
-    "LLM09": [
+    "LLM07": [
         "P015",
         "P016",
         "P017",
@@ -343,7 +352,7 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
         "P112",
         "P118",
     ],
-    "LLM10": [
+    "LLM06": [
         "P004",
         "P011",
         "P012",
@@ -362,6 +371,18 @@ _OWASP_RULE_MAPPING: dict[str, list[str]] = {
 
 
 def apply_owasp_refs() -> None:
+    """把 2026 映射表注入各规则 owasp_refs，并把规则文件里硬编码的 2025 时代
+    字面量统一重键到 2026（单一边界 — R228-P2-21）。
+
+    顺序: 先重键规则既有（文件字面量, 2025）引用, 再合并 2026 映射表。
+    重键是 LLM01-10 上的双射, 对已是 2026 的引用会二次重键——因此仅在规则字面量
+    尚为 2025 时安全, 这正是本函数的调用时机（模块首次加载/重载, 字面量重新取 2025）。
+    """
+    # Step 1: 重键规则文件里的 2025 字面量 → 2026
+    # （变量名 existing_rule 避免与 Step 2 的 rule: LintRule|None 同名冲突 — mypy 类型推断）
+    for existing_rule in _RULE_MAP.values():
+        existing_rule.owasp_refs = normalize_owasp_refs(existing_rule.owasp_refs)
+    # Step 2: 合并 2026 映射表（表已是 2026 键, 不再重键）
     for owasp_ref, rule_ids in _OWASP_RULE_MAPPING.items():
         for rid in rule_ids:
             rule = _RULE_MAP.get(rid)
@@ -374,10 +395,10 @@ def get_rules_by_owasp(owasp_ref: str) -> list[str]:
 
 
 def get_owasp_coverage() -> dict[str, dict[str, Any]]:
-    from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2025
+    from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2026
 
     result = {}
-    for ref, info in OWASP_LLM_TOP_10_2025.items():
+    for ref, info in OWASP_LLM_TOP_10_2026.items():
         rule_ids = _OWASP_RULE_MAPPING.get(ref, [])
         result[ref] = {
             "name": info["name"],

@@ -62,6 +62,7 @@ class TestP171P175Rules:
     def test_p171_p175_owasp(self):
         from ai_prompt_toolkit.linter.owasp_mapping import _OWASP_RULE_MAPPING
 
-        llm06_rules = _OWASP_RULE_MAPPING.get("LLM06", [])
+        # R228: harmonyos 平台安全规则原 2025 LLM06 → 2026 LLM03 (Excessive Agency 换位)
+        llm03_rules = _OWASP_RULE_MAPPING.get("LLM03", [])
         for rid in ("P171", "P172", "P173", "P174", "P175"):
-            assert rid in llm06_rules, f"{rid} not in LLM06"
+            assert rid in llm03_rules, f"{rid} not in LLM03"

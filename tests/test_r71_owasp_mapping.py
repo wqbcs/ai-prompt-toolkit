@@ -29,10 +29,11 @@ class TestOWASPMapping:
         with_owasp = [r for r in security_rules if r.owasp_refs]
         assert len(with_owasp) >= 15
 
-    def test_agent_rules_mapped_to_llm06(self):
-        llm06_rules = get_rules_by_owasp("LLM06")
+    # R228: 2025 LLM06 (Excessive Agency) → 2026 LLM03（换位 #6→#3）
+    def test_agent_rules_mapped_to_llm03(self):
+        llm03_rules = get_rules_by_owasp("LLM03")
         for rid in ("P141", "P142", "P143", "P144", "P145"):
-            assert rid in llm06_rules, f"{rid} should map to LLM06"
+            assert rid in llm03_rules, f"{rid} should map to LLM03"
 
     def test_injection_rules_mapped_to_llm01(self):
         llm01_rules = get_rules_by_owasp("LLM01")

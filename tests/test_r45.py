@@ -168,7 +168,7 @@ class TestDetectorClasses:
         assert result["is_detected"] is False
 
 
-class TestOWASP2025Probes:
+class TestOWASP2026Probes:
     def test_system_prompt_leak_probe(self):
         from ai_prompt_toolkit.probe_framework import SystemPromptLeakProbe
 
@@ -201,17 +201,20 @@ class TestOWASP2025Probes:
             assert "name" in mapping[key]
             assert "probes" in mapping[key]
 
-    def test_owasp_llm07_maps_to_new_probe(self):
+    # R228: 2025→2026 重键 — system_prompt_leak 探针随风险身份走到 LLM08 (Hidden Context
+    # Exposure, 原 LLM07 System Prompt Leakage 改名); vector_embedding 探针随风险身份
+    # 走到 LLM09 (Vector and Embedding Weaknesses, 2025 LLM08 换位)
+    def test_owasp_llm08_maps_to_hidden_context_probe(self):
         from ai_prompt_toolkit.probe_framework import get_owasp_mapping
 
         mapping = get_owasp_mapping()
-        assert "system_prompt_leak" in mapping["LLM07"]["probes"]
+        assert "system_prompt_leak" in mapping["LLM08"]["probes"]
 
-    def test_owasp_llm08_maps_to_new_probe(self):
+    def test_owasp_llm09_maps_to_vector_probe(self):
         from ai_prompt_toolkit.probe_framework import get_owasp_mapping
 
         mapping = get_owasp_mapping()
-        assert "vector_embedding" in mapping["LLM08"]["probes"]
+        assert "vector_embedding" in mapping["LLM09"]["probes"]
 
 
 class TestProbeRegistry:

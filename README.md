@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.18-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6056%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.19-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6072%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-261-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -77,7 +77,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
 | **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级8项安全检查 + tool描述security族规则 + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
-| **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2025映射，自动风险评分 |
+| **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2026映射，自动风险评分 |
 | **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |
 | **评估引擎** | `prompt-cli evaluate` | 80个评估维度(D01-D80)，快速/完整双模式，7大类评估 |
 | **华为云合规** | `prompt-cli compliance` | 7域加权评分(数据隐私/模型安全/访问控制/内容安全/运维安全/供应链安全/合规认证)，等保2.0映射，CRITICAL一票否决 |
@@ -121,6 +121,29 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 这不是贬低 LLM 路线 —— 语义层攻击（创意越狱/间接注入的对抗性改写）确实是纯静态
 检测的机制上限，应组合使用运行时防护（LLM Guard 类）。**分工**：本工具做 CI 门禁
 （可复现裁决层），LLM 系工具做语义评估与红队探测，两者互补不互替。
+
+### 同类静态 Prompt 工具对比（2026-10 核实）
+
+| 维度 | 本工具 | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系 |
+|------|--------|---------------|-----------|---------|---------------------------|
+| 语言/依赖 | Python 零核心第三方依赖 | Rust 单二进制 | Python（Semgrep+Sigstore+CVE feed，依赖重） | Python | Python/Node，纯正则 |
+| 检测面 | Prompt 全生命周期（lint/scan/probe/redteam/合规/版本）+ MCP 配置 | Prompt 静态 + 从代码抽取 inline prompt + 可移植性 | MCP 供应链全栈（SBOM/SAST/live server） | MCP 七模块（scan/harden/auth/pin） | Prompt 正则 lint |
+| OWASP LLM Top 10 映射 | **2026 版（当前）+ ATLAS + 等保 2.0 三标准** | 无公开标准映射 | CVE/ATTACK 面 | 无 | 部分 |
+| 裁决确定性 | 逐字节可复现 + 双基线时间序列（漏检/误报可一条命令复现） | 确定性静态 | 依赖运行时/网络 feed | 部分 | 确定性静态 |
+| 增量门禁 | 双基线（FP 棘轮 + 存量锁定）+ 增量只拦 NEW | 无公开基线纪律 | 有 | 有 | 无 |
+| 中文规则/报告 | 15 条中文注入检测 + 中文规则族 + 人话报错 | 无 | 无 | 无 | 部分 |
+
+> 定位澄清：本工具做 **CI 门禁层**（可复现裁决）；运行时防护（LLM Guard 类）、
+> LLM 评估（promptfoo 类）互补不互替。MCP 检测面见下方"适用边界"。
+
+### MCP 检测适用边界（诚实声明）
+
+`mcp-lint` 是 **config/description 静态面**检测：能挡显式投毒（恶意指令/
+`ignore previous` 类）、rug pull（description 批准基线漂移）、隐藏通道
+（零宽/控制字符）。**不能**检测 MCP-ITP 类**隐式语义投毒**——tool 描述看似
+无害、仅在运行时上下文组合下才有害的投毒（相关论文实测静态检测器规避率
+MDR 0.96%）。这类属于运行时/行为层检测域，不在本工具范围；生产环境应组合
+运行时防护（网关层 schema 校验 + 输出审查）。我们不宣称覆盖做不到的面。
 
 ### 差异化优势
 
@@ -468,20 +491,24 @@ prompt-cli compliance -t my_prompt.md --format sarif
 prompt-cli compliance -t my_prompt.md --format markdown
 ```
 
-## Probe Framework (OWASP LLM Top 10 2025)
+## Probe Framework (OWASP LLM Top 10 2026)
 
-| OWASP ID | 风险 | Probe |
+> R228: 映射升级到 OWASP LLM Top 10 **2026** 版（2026-08-03 发布，8 项换位 +
+> LLM07 System Prompt Leakage → LLM08 Hidden Context Exposure 改名）。
+> 2025→2026 重键：LLM03→04, 04→05, 05→10, 06→03, 07→08, 08→09, 09→07, 10→06。
+
+| OWASP ID (2026) | 风险 | 探针 |
 |----------|------|-------|
-| LLM01 | Prompt注入 | PromptInjectProbe |
-| LLM02 | 不安全输出处理 | XSSInjectProbe |
-| LLM03 | 训练数据投毒 | PackageHallucinationProbe |
-| LLM04 | 模型拒绝服务 | BadCharsProbe |
-| LLM05 | 供应链漏洞 | SupplyChainDetector |
-| LLM06 | 敏感信息泄露 | SystemPromptLeakProbe, LeakReplayProbe |
-| LLM07 | 不安全插件设计 | EncodingBypassProbe |
-| LLM08 | 过多代理权限 | DANProbe, GrandmaProbe |
-| LLM09 | 过度依赖 | SnowballProbe, ContinuationProbe, DonotAnswerProbe |
-| LLM10 | 模型盗窃 | VectorEmbeddingProbe |
+| LLM01 | Prompt 注入 | dan, prompt_inject, encoding_bypass, grandma, image_inject, audio_inject |
+| LLM02 | 敏感信息泄露 | leak_replay, system_prompt_leak, cross_modal_leak |
+| LLM03 | 过多代理权限 | dan, donot_answer, agent_inject, tool_abuse, priv_escalation, goal_hijack, multi_agent_adversary |
+| LLM04 | 供应链 | package_hallucination |
+| LLM05 | 数据与模型投毒 | snowball, vector_embedding |
+| LLM06 | 无限制消耗 | gcg_suffix |
+| LLM07 | 错误信息/幻觉 | snowball, continuation |
+| LLM08 | 隐藏上下文暴露 | system_prompt_leak, leak_replay |
+| LLM09 | 向量与嵌入弱点 | vector_embedding |
+| LLM10 | 不安全输出处理 | xss_inject |
 
 ## VSCode插件
 

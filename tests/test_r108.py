@@ -117,10 +117,11 @@ class TestR108P200StreamingAudit:
 
 
 class TestR108OWASPMapping:
+    # R228: 2025→2026 重键（2025 LLM09→2026 LLM07, 2025 LLM06→2026 LLM03）
     def test_p196_p200_owasp_refs(self):
         assert "LLM01" in _RULE_MAP["P196"].owasp_refs
-        assert "LLM09" in _RULE_MAP["P196"].owasp_refs
-        assert "LLM09" in _RULE_MAP["P197"].owasp_refs
-        assert "LLM06" in _RULE_MAP["P198"].owasp_refs
-        assert "LLM06" in _RULE_MAP["P199"].owasp_refs
-        assert "LLM06" in _RULE_MAP["P200"].owasp_refs
+        assert "LLM07" in _RULE_MAP["P196"].owasp_refs
+        assert "LLM07" in _RULE_MAP["P197"].owasp_refs
+        assert "LLM03" in _RULE_MAP["P198"].owasp_refs
+        assert "LLM03" in _RULE_MAP["P199"].owasp_refs
+        assert "LLM03" in _RULE_MAP["P200"].owasp_refs

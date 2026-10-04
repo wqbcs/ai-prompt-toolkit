@@ -294,9 +294,9 @@ def generate_compliance_report(
     report.failed_items = sum(1 for i in all_items if i.status == "fail")
     report.warning_items = sum(1 for i in all_items if i.status == "warn")
 
-    from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2025
+    from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2026
 
-    report.owasp_summary = {k: v["name"] for k, v in OWASP_LLM_TOP_10_2025.items()}
+    report.owasp_summary = {k: v["name"] for k, v in OWASP_LLM_TOP_10_2026.items()}
 
     if report.failed_items > 0:
         report.overall_status = "fail"

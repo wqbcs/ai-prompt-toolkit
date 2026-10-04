@@ -116,47 +116,48 @@ class TestR74RuleCount:
 
 
 class TestR74OwaspMapping:
-    def test_p121_in_llm06(self):
+    # R228: 2025→2026 标准迁移后断言按 2026 键（Excessive Agency=LLM03 等, 见 13 §1.1）
+    def test_p121_in_llm03(self):
         from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
 
-        llm06 = get_rules_by_owasp("LLM06")
+        llm03 = get_rules_by_owasp("LLM03")
         for rid in ["P121", "P122", "P123", "P124", "P125", "P126", "P127", "P128", "P129", "P130"]:
-            assert rid in llm06, f"{rid} not in LLM06"
+            assert rid in llm03, f"{rid} not in LLM03"
 
-    def test_p156_in_llm06(self):
+    def test_p156_in_llm03(self):
         from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
 
-        llm06 = get_rules_by_owasp("LLM06")
-        assert "P156" in llm06
-        assert "P157" in llm06
-        assert "P159" in llm06
+        llm03 = get_rules_by_owasp("LLM03")
+        assert "P156" in llm03
+        assert "P157" in llm03
+        assert "P159" in llm03
 
-    def test_p151_in_llm05(self):
-        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
-
-        llm05 = get_rules_by_owasp("LLM05")
-        assert "P151" in llm05
-
-    def test_p158_in_llm07(self):
-        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
-
-        llm07 = get_rules_by_owasp("LLM07")
-        assert "P152" in llm07
-        assert "P158" in llm07
-
-    def test_p159_in_llm08(self):
-        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
-
-        llm08 = get_rules_by_owasp("LLM08")
-        assert "P159" in llm08
-
-    def test_p153_in_llm10(self):
+    def test_p151_in_llm10(self):
         from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
 
         llm10 = get_rules_by_owasp("LLM10")
-        assert "P153" in llm10
-        assert "P155" in llm10
-        assert "P160" in llm10
+        assert "P151" in llm10
+
+    def test_p158_in_llm08(self):
+        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
+
+        llm08 = get_rules_by_owasp("LLM08")
+        assert "P152" in llm08
+        assert "P158" in llm08
+
+    def test_p159_in_llm03_and_llm09(self):
+        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
+
+        assert "P159" in get_rules_by_owasp("LLM03")
+        assert "P159" in get_rules_by_owasp("LLM09")
+
+    def test_p153_in_llm06(self):
+        from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
+
+        llm06 = get_rules_by_owasp("LLM06")
+        assert "P153" in llm06
+        assert "P155" in llm06
+        assert "P160" in llm06
 
 
 class TestR74EvaluatorDimensions:

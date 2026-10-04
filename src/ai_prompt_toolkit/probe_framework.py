@@ -1079,22 +1079,82 @@ OWASP_LLM_TOP_10_2025: dict[str, dict[str, str]] = {
     "LLM10": {"name": "Unbounded Consumption", "probes": "gcg_suffix"},
 }
 
+# R228-P2-21: OWASP LLM Top 10 2026（2026-08-03 发布）— 单一真源。
+# 2025→2026 变化：8 项换位 + LLM07 System Prompt Leakage → LLM08 Hidden Context Exposure 改名。
+# 探针随风险身份走（风险身份不变，仅编号/排名变），故探针列表不变、键重键。
+# 官方: https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/
+OWASP_2025_TO_2026: dict[str, str] = {
+    "LLM01": "LLM01",
+    "LLM02": "LLM02",
+    "LLM03": "LLM04",
+    "LLM04": "LLM05",
+    "LLM05": "LLM10",
+    "LLM06": "LLM03",
+    "LLM07": "LLM08",
+    "LLM08": "LLM09",
+    "LLM09": "LLM07",
+    "LLM10": "LLM06",
+}
+
+OWASP_LLM_TOP_10_2026: dict[str, dict[str, str]] = {
+    "LLM01": {
+        "name": "Prompt Injection",
+        "probes": "dan,prompt_inject,encoding_bypass,grandma,image_inject,audio_inject",
+    },
+    "LLM02": {"name": "Sensitive Information Disclosure", "probes": "leak_replay,system_prompt_leak,cross_modal_leak"},
+    "LLM03": {
+        "name": "Excessive Agency",
+        "probes": "dan,donot_answer,agent_inject,tool_abuse,priv_escalation,goal_hijack,multi_agent_adversary",
+    },
+    "LLM04": {"name": "Supply Chain", "probes": "package_hallucination"},
+    "LLM05": {"name": "Data and Model Poisoning", "probes": "snowball,vector_embedding"},
+    "LLM06": {"name": "Unbounded Consumption", "probes": "gcg_suffix"},
+    "LLM07": {"name": "Misinformation", "probes": "snowball,continuation"},
+    # LLM07(2025) System Prompt Leakage 在 2026 改名并入 LLM08 Hidden Context Exposure
+    "LLM08": {"name": "Hidden Context Exposure", "probes": "system_prompt_leak,leak_replay"},
+    "LLM09": {"name": "Vector and Embedding Weaknesses", "probes": "vector_embedding"},
+    "LLM10": {"name": "Improper Output Handling", "probes": "xss_inject"},
+}
+
+# 当前标准版本 = 2026（get_owasp_mapping / coverage / report 一律走这个）
+OWASP_LLM_TOP_10: dict[str, dict[str, str]] = OWASP_LLM_TOP_10_2026
+
+
+def normalize_owasp_refs(refs: list[str]) -> list[str]:
+    """把规则文件里硬编码的 2025 时代 OWASP 字面量重键到 2026 标准。
+
+    OWASP_2025_TO_2026 是 LLM01-10 上的**双射**（2025/2026 共用同一字符串空间，
+    但同号=不同风险身份）。本函数假设输入全部是 2025 字面量（规则文件在 2025
+    时代编写），逐个重键到 2026；非 LLM01-10 的引用（如 ATLAS 号）原样透传。
+    返回去重后的 2026 号列表。
+
+    仅用于 apply_owasp_refs 的单一边界（模块加载/重载时规则字面量尚为 2025）。
+    对已是 2026 的引用再次调用会二次重键（双射）——调用方须保证输入是 2025 字面量。
+    """
+    out: list[str] = []
+    for r in refs:
+        mapped = OWASP_2025_TO_2026.get(r, r)
+        if mapped not in out:
+            out.append(mapped)
+    return out
+
 
 def get_owasp_mapping() -> dict[str, dict[str, str]]:
-    return OWASP_LLM_TOP_10_2025.copy()
+    """当前标准（2026）OWASP LLM Top 10 风险→探针映射。"""
+    return OWASP_LLM_TOP_10_2026.copy()
 
 
 _OWASP_REMEDIATIONS: dict[str, str] = {
     "LLM01": "实施输入边界校验和指令层级隔离，对用户输入进行转义处理",
     "LLM02": "添加防泄露声明，禁止输出系统提示词/训练数据等敏感信息",
-    "LLM03": "验证第三方包名真实性，使用官方源和签名校验",
-    "LLM04": "实施数据来源验证和模型完整性校验",
-    "LLM05": "对LLM输出进行编码转义，防止XSS/注入二次攻击",
-    "LLM06": "限制LLM调用权限，实施最小权限原则和人工审批",
-    "LLM07": "系统提示词分段存储，添加Canary Token泄露检测",
-    "LLM08": "向量数据库访问控制，实施嵌入相似度阈值过滤",
-    "LLM09": "添加事实性校验和知识截止声明，启用RAG增强",
-    "LLM10": "实施速率限制和Token消耗监控，防止资源耗尽",
+    "LLM03": "限制LLM调用权限，实施最小权限原则和人工审批",
+    "LLM04": "验证第三方包名真实性，使用官方源和签名校验；校验 promoted model artifact 真实性",
+    "LLM05": "实施数据来源验证和模型完整性校验，警惕 fine-tuning 数据被投毒/篡改",
+    "LLM06": "实施速率限制和Token消耗监控，防止资源/成本耗尽",
+    "LLM07": "添加事实性校验和知识截止声明，启用RAG增强",
+    "LLM08": "系统提示词/隐藏上下文分段存储，添加Canary Token泄露检测（含 RAG 上下文暴露面）",
+    "LLM09": "向量数据库访问控制，实施嵌入相似度阈值过滤",
+    "LLM10": "对LLM输出进行编码转义，防止XSS/注入二次攻击；拦截 assistant 生成的不安全代码",
 }
 
 
@@ -1172,8 +1232,9 @@ class ProbeRunReport:
 
     def to_owasp_report(self) -> dict[str, Any]:
         # R197: 标注为dict[str, Any] — 值是{"name":..., "findings": list}混合结构, 非纯list
+        # R228: 走 2026 标准（当前版本）
         owasp_findings: dict[str, Any] = {}
-        for llm_ref, info in OWASP_LLM_TOP_10_2025.items():
+        for llm_ref, info in OWASP_LLM_TOP_10_2026.items():
             probe_names = [p.strip() for p in info["probes"].split(",")]
             findings_for_ref = []
             for r in self.results:

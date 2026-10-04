@@ -119,12 +119,13 @@ class TestR75OwaspMapping:
         assert "P161" in llm01
         assert "P163" in llm01
 
-    def test_p162_in_llm07(self):
+    # R228: P162/P165 原 2025 LLM07(System Prompt Leakage) → 2026 LLM08(Hidden Context Exposure)
+    def test_p162_in_llm08(self):
         from ai_prompt_toolkit.linter.owasp_mapping import get_rules_by_owasp
 
-        llm07 = get_rules_by_owasp("LLM07")
-        assert "P162" in llm07
-        assert "P165" in llm07
+        llm08 = get_rules_by_owasp("LLM08")
+        assert "P162" in llm08
+        assert "P165" in llm08
 
 
 class TestR75Dimensions:

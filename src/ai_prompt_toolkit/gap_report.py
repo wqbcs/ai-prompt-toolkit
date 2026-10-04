@@ -1,7 +1,8 @@
 """R224-P1-3: OWASP LLM Top 10 防御缺口报告 — 每文件×每风险的防御声明体检。
 
 复用:
-- probe_framework.OWASP_LLM_TOP_10_2025 (10风险定义+官方remediation, 不新造)
+- probe_framework.OWASP_LLM_TOP_10_2026 (10风险定义+官方remediation, 不新造;
+  R228-P2-21 从 2025 迁移, 风险身份不变/编号换位/LLM07→LLM08 改名)
 - linter.owasp_mapping.get_owasp_coverage / _OWASP_RULE_MAPPING (规则映射, 不新造)
 
 口径(诚实声明, 与prompt-defense-audit同类工具对齐):
@@ -20,7 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from ai_prompt_toolkit.linter.owasp_mapping import get_owasp_coverage
-from ai_prompt_toolkit.probe_framework import _OWASP_REMEDIATIONS, OWASP_LLM_TOP_10_2025
+from ai_prompt_toolkit.probe_framework import _OWASP_REMEDIATIONS, OWASP_LLM_TOP_10_2026
 
 # 每风险的防御意图标记词表(文本层静态检测面)。
 # 设计: 中英双语+关键语义, 宽口径(命中任一即视为"声明了该风险的防御意图")。
@@ -43,60 +44,60 @@ _RISK_DEFENSE_MARKERS: dict[str, list[str]] = {
         "数据(脱敏|最小化|不保留)",
         "个人信息.{0,6}(保护|最小)",
     ],
-    "LLM03": [
-        # Supply Chain — 包来源/版本锁定/不安装未验证包
+    "LLM04": [
+        # Supply Chain(2026) — 包来源/版本锁定/不安装未验证包/promoted artifact 真实性
         "(官方|可信).{0,6}(源|渠道|包)",
         "版本(锁定|固定|pin)",
         "不(安装|引入|调用).{0,10}(未验证|未知|不明)",
         "供应链|supply.chain",
         "签名校验|完整性校验",
     ],
-    "LLM04": [
-        # Data & Model Poisoning — 数据来源验证/不采信外部数据
+    "LLM05": [
+        # Data & Model Poisoning(2026) — 数据来源验证/不采信外部数据/fine-tuning 数据完整性
         "数据(来源|出处).{0,6}(验证|校验|标注)",
         "不(采信|信任|执行).{0,8}(外部|外部数据|未验证)",
         "数据(验证|校验|过滤).{0,8}(前|之前)",
         "投毒|poisoning",
     ],
-    "LLM05": [
-        # Improper Output Handling — 输出转义/防二次注入
+    "LLM10": [
+        # Improper Output Handling(2026) — 输出转义/防二次注入/不安全代码拦截
         "输出.{0,8}(转义|编码|过滤|校验)",
         "防.{0,6}(XSS|注入|二次)",
         "HTML.{0,6}(转义|编码|escape)",
         "输出.{0,8}(不直接|经过).{0,6}(渲染|执行|插入)",
     ],
-    "LLM06": [
-        # Excessive Agency — 权限最小化/人工审批/不自主执行高危
+    "LLM03": [
+        # Excessive Agency(2026) — 权限最小化/人工审批/不自主执行高危
         "最小权限|least.privilege",
         "人工审批|人工确认|human.in.the.loop",
         "不(自主|自行).{0,8}(执行|调用|修改|删除)",
         "高危操作.{0,8}(确认|审批|二次)",
         "权限(范围|最小|受限)",
     ],
-    "LLM07": [
-        # System Prompt Leakage — 系统提示保护/canary
+    "LLM08": [
+        # Hidden Context Exposure(2026, 由 2025 System Prompt Leakage 改名扩义) — 隐藏上下文/canary
         "系统提示.{0,8}(保密|不外泄|不泄露|保护|分段)",
         "canary|金丝雀",
         "不(复述|输出|展示).{0,8}(系统提示|system.prompt)",
         "system.prompt.{0,8}(protect|hidden)",
     ],
-    "LLM08": [
-        # Vector & Embedding Weaknesses — 检索访问控制/相似度阈值
+    "LLM09": [
+        # Vector & Embedding Weaknesses(2026) — 检索访问控制/相似度阈值
         "向量(库|数据库).{0,8}(访问控制|权限|隔离)",
         "(相似度|阈值).{0,8}(过滤|阈值)",
         "检索.{0,8}(净化|过滤|验证|白名单)",
         "embedding.{0,8}(threshold|filter)",
     ],
-    "LLM09": [
-        # Misinformation — 事实校验/知识截止/不编造
+    "LLM07": [
+        # Misinformation(2026) — 事实校验/知识截止/不编造
         "不(编造|虚构|杜撰)|no.hallucination",
         "事实(校验|核对|溯源)|fact.check",
         "知识(截止|边界|时效)",
         "不确定.{0,6}(说明|告知|承认|标注)",
         "引用.{0,6}(来源|出处)",
     ],
-    "LLM10": [
-        # Unbounded Consumption — 资源限制/token预算/速率
+    "LLM06": [
+        # Unbounded Consumption(2026) — 资源限制/token预算/速率/成本
         "token.{0,8}(预算|上限|限制|budget)",
         "(速率|频率)限制|rate.limit",
         "输出.{0,6}(不超|限制).{0,6}(字|token|长度)",
@@ -152,7 +153,7 @@ def aggregate(files: dict[str, str]) -> dict[str, Any]:
     n = len(files) or 1
     risk_gaps: dict[str, dict[str, Any]] = {}
     coverage = get_owasp_coverage()
-    for ref, info in sorted(OWASP_LLM_TOP_10_2025.items()):
+    for ref, info in sorted(OWASP_LLM_TOP_10_2026.items()):
         lacking = [name for name, d in per_file.items() if ref in d["gaps"]]
         risk_gaps[ref] = {
             "name": info["name"],
