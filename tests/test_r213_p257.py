@@ -99,7 +99,9 @@ class TestR213P257Baseline:
     def test_rule_count(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 264
+        assert (
+            len(get_all_rules()) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
 
     def test_p243_race_boundary_fix(self):
         # R213-B5 顺带修复: 裸 race 子串误配 trace(观测日志词) — trace-only 文本不得触发

@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.22] - 2026-10-04
+
+### Added (R230: P265 cache-friendly 规则 + 双基线时间序列基建 + TN 探针扩容)
+
+> 调研来源：anthropics/skills prompt-caching 官方文档 + aiproof AIP009 对标
+> （R230_改进方案 §1/§4.1）。痛点=prompt 前缀区含运行时动态内容静默击溃
+> prompt caching（成本翻倍），静态可判定、零 LLM、零新依赖。
+
+- **P265 缓存前缀含运行时动态内容**（P1-17，对标 aiproof AIP009）：
+  前缀区（正文前 512 有效字符，CJK 2× 加权同 inline_prompt 口径，
+  frontmatter 豁免 R229 同惯例）含运行时动态 token（datetime.now()/uuid/
+  {timestamp}/中文标签"当前时间：{x}"等 5 组数据驱动模式）且 prompt 有
+  缓存收益（缓存意图词或长 prompt >2×前缀区）才报——强信号共现防误报。
+  稳定模板占位符（{{title}}/{{date}}）区分不报。原型 FP 摸底 86 干净文件
+  0 命中。规则 264→265，探针 +4（TP×2/TN×2），19 新测试
+- **P2-04 双基线时间序列数据基础设施**：`docs/baseline_history.jsonl`
+  append-only + `scripts/append_baseline_history.py`（--backfill/--check）；
+  历史 7 点回填（R203 8.38% → R221 0.91%，口径变化处留痕）+ 首轮实测追加；
+  release_gate 第 15 步接线（全链通过后的收口快照，防漏跑）
+- **TN 探针扩容 +8**（P2-11 后续，HN 47689822 FP 难点面选样）：嵌套 JSON/
+  多轮对话/代码混排/'override'与'ignore'正常语境/法律文档/中文技术文档——
+  TN 7→17，探针 113→125（误报数字的可信度取决于 TN 语料质量）
+- **R230-E 规则计数硬编码动态化**：25 处 `== 264` 散落断言收拢为单锚点
+  `test_rules_smoke_p021_p255.EXPECTED_TOTAL=265` + 其余改"规则集未缩水"
+  下界断言——以后加规则只改 1 处（R229 曾一次改 26 处的机械债根除）
+
+### 门禁与纪律
+
+- P265 对本仓 26 模板 0 命中 → 增量门禁基线（627）不变，无需重存
+- 双基线不回归：误报 0.90%（≤0.91% 棘轮）/ 漏检 0.00%（≤5% 棘轮）
+- mypy 棘轮=0（rules_p265.py 零错误）；零新第三方依赖（运行时仍只 click）
+- 07 竞品监控 +2（ipi-check 两阶段管线/prompt-guard 诚实基准面）；
+  08 §7 信号 +3（prompt caching 成本 S/FP 基准趋势 S/赛道密度 A）
+- 02 总板登记：P1-17✅ / R230-B 观察区（P266 JSON key 顺序预判放弃，
+  奥卡姆）/ R230-X1✅
+
 ## [v67.34.21] - 2026-10-04
 
 ### Fixed (R229 收口: P262 CI 增量门禁红 → 模板 frontmatter 边界修复)

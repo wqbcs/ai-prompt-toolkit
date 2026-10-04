@@ -229,7 +229,16 @@ def main() -> int:
             if entry.get("vulnerable"):
                 entry["approved"] = True
 
-    if args.full or args.approve or pending:
+    # 陈旧缓存清理: 模式已不在源码中(修复/重构掉)的判定条目是死数据——若不
+    # 清理, 旧的"脆弱未批准"条目会被下方报告循环永久报为 NEW(R230 实证: P265
+    # 首跑(修复前)把旧形态写入缓存, 线性化修复后旧条目残留触发 NEW 误报)。
+    # 判定真源=当前源码扫描结果, 缓存只做增量加速与批准留痕。
+    current_keys = {(it["file"], it["pattern"]) for it in items}
+    stale_keys = [k for k in cache if (k.partition("\x00")[0], k.partition("\x00")[2]) not in current_keys]
+    for k in stale_keys:
+        del cache[k]
+
+    if args.full or args.approve or pending or stale_keys:
         CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
         meta = {"schema": "redos-audit-cache-v1", "engine": "redoctor", "entries": cache}
         if args.approve:

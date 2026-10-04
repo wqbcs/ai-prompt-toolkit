@@ -65,7 +65,7 @@ class TestFalsePositiveScript:
         )
         assert proc.returncode == 0, proc.stderr[-500:]
         report = json.loads(proc.stdout)
-        assert report["checker_count"] == 264
+        assert report["checker_count"] >= 264  # R230-E: 单锚点在 EXPECTED_TOTAL
         assert report["sample_count"] >= 30
         assert 0 <= report["global_rate"] <= 1
         assert isinstance(report["high_fp_rules"], list)

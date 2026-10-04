@@ -1429,6 +1429,7 @@ from ai_prompt_toolkit.linter.rules_p262_p264 import (  # noqa: E402
     check_p263,
     check_p264,
 )
+from ai_prompt_toolkit.linter.rules_p265 import check_p265  # noqa: E402
 
 _CHECKERS_EXTENDED.extend(
     [
@@ -1516,6 +1517,7 @@ _CHECKERS_EXTENDED.extend(
         check_p262,
         check_p263,
         check_p264,
+        check_p265,
     ]
 )
 

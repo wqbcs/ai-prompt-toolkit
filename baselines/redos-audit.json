@@ -13388,18 +13388,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p262_p264.py\u0000###\\s*Instruction:\\s*\\S.*?###\\s*(?:Response|Output):": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "###Instruction:\u0000###\t\t\t\t\t\t\t\t\t\t\t!",
-      "approved": true
-    },
-    "linter/rules_p262_p264.py\u0000###\\s*Input:\\s*\\S.*?###\\s*(?:Response|Output):": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "###Input:\u0000############!",
-      "approved": true
-    },
     "linter/rules_p262_p264.py\u0000\\[INST\\][^\\[\\]]*\\[/INST\\]": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -13441,11 +13429,90 @@
       "complexity": "O(n^4)",
       "attack": "###Input:\u0000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n#############Output:!",
       "approved": true
+    },
+    "linter/rules_p265.py\u0000P265": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000缓存前缀含运行时动态内容": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000portability": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000Prompt前缀区(前512有效字符, frontmatter豁免)含运行时动态token(datetime.now()/uuid/{timestamp}/'当前时间：{xxx}'等, 每次渲染值都变)且prompt有缓存收益(缓存意图词或长prompt) — prompt caching是前缀精确字节匹配, 前缀任一点变化击溃其后全部缓存, 成本静默翻倍": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000把运行时动态内容移到prompt末尾(追加位置不影响前缀); 序列化用sort_keys固定JSON key顺序; 时间戳/请求ID等改为API参数或尾部消息承载, 不进系统提示前缀": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000Runtime-varying tokens (datetime.now() / uuid / {timestamp} / '当前时间：{x}' etc. — value changes on every render) sit in the stable prefix zone (first 512 effective chars, frontmatter exempt) of a prompt that benefits from caching — prompt caching is an exact prefix-byte match, any prefix change invalidates everything after it (silent cost doubling)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000Move runtime-varying content to the end of the prompt (append position leaves the prefix intact); serialize JSON with sorted keys; carry timestamps/request IDs as API parameters or trailing messages instead of in the system-prompt prefix": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000prompt_caching": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000(?:缓存|cache\\w*|prefix\\s*cache)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000\\b(?:datetime\\.(?:now|utcnow)|date\\.(?:now|today)|time\\.time\\w*|uuid\\.uuid4|uuid4|secrets\\.token\\w*|random\\.(?:uuid|token\\w*|getrandbits))\\s*\\(": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000\\{\\{\\s*(?:now|current[_-]?(?:time|date|datetime)|timestamp|uuid|nonce|random\\w*|request_?id|trace_?id)\\s*\\}\\}": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000\\{\\s*(?:now|timestamp|uuid|nonce|random_?id|request_?id|trace_?id)\\s*\\}": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000\\$\\{\\s*(?:now|current[_-]?(?:time|date|datetime)|timestamp|uuid|nonce|random\\w*|trace_?id)\\s*\\}": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p265.py\u0000(?:当前时间|现在时间|当前日期|时间戳|请求ID|随机ID)[ \\t]*(?:[:：=][ \\t]*)?(?:\\{[a-zA-Z_][\\w-]*\\}|[a-zA-Z_][\\w-]*)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
-  },
-  "metadata": {
-    "approved_at": "2026-10-03",
-    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
-    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

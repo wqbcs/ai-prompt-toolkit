@@ -10,7 +10,9 @@ from ai_prompt_toolkit.types import Severity
 class TestR108RuleCount:
     def test_total_rules_200(self):
         rules = get_all_rules()
-        assert len(rules) == 264
+        assert (
+            len(rules) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
 
     def test_auto_fixable_count(self):
         assert len(AUTO_FIXABLE_RULES) >= 156

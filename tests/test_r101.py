@@ -54,7 +54,9 @@ class TestP191P195Rules:
 
     def test_total_rules_195(self):
         rules = get_all_rules()
-        assert len(rules) == 264
+        assert (
+            len(rules) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
 
     def test_p191_p195_category(self):
         for rid in ("P191", "P192", "P193", "P194", "P195"):

@@ -1049,6 +1049,102 @@
       "expected": [
         "P255"
       ]
+    },
+    {
+      "name": "r230_p265_timestamp_prefix",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "当前时间：{timestamp}。你是客服助手，请根据以下知识库回答用户问题。知识库：退货政策为七天无理由；运费险覆盖首重；生鲜类目不支持无理由退货；跨区订单时效48小时；破损包赔需提供开箱视频；发票支持电子普票；会员积分1:0.1换算；投诉升级至专员4小时内响应；退款原路返回1-3工作日；补发需仓库确认库存；价保15天差价补券；大件需预约上门；小件默认快递柜；包装破损可申请换装；赠品不单独发货；节日档期提前3天截单；预售款发货前可取消；定制款不支持退换；组合装按单品价计算；企业采购对公转账享95折；批量订单需提供收货人名单；海外仓不支持境内退；港澳台按国际件计费；偏远地区加收配送费；夜间18点后下单顺延次日；缺货自动转预售；下架商品链接失效；购物车有效期30天；优惠券不可叠加使用；秒杀活动限购一件；拼团满3人成团；分享返利次日到账；直播专享价以直播间为准；会员日双倍积分；生日月赠无门槛券；年度账单1月1日生成；数据导出需企业版；API调用限频每秒10次；webhook重试3次；回调需验签；沙箱环境独立计费；正式环境按量后付费；预留实例85折；带宽按95峰值计费；存储按实际占用日结；快照保留7天；镜像跨区复制收费；安全组规则上限100条；弹性IP绑定免费；内网互通不产生流量；日志存储30天；告警通道支持短信邮件；值班表支持轮转；故障分级P0-P4；SLA赔偿按月度结算；数据备份三副本；容灾切换RPO5分钟；灰度发布支持按UID；配置变更需审批；回滚保留最近10版；依赖服务健康检查；熔断阈值可配；限流按租户隔离；慢查询日志采样1%；连接池上限200；超时默认30秒；重试指数退避；幂等键必填；分布式锁超时10秒；消息顺序保证分区内；死信队列人工处理；消费延迟告警1分钟；分区数可在线扩容；数据压缩Snappy；索引异步构建；写入批量128条；查询缓存TTL60秒；热数据SSD存储；冷数据归档OSS；生命周期策略自动转存；跨区域复制加密；密钥轮转90天；审计日志不可删；合规检查每周跑；数据脱敏可配置；权限最小化原则；操作留痕365天；",
+      "expected": [
+        "P265"
+      ]
+    },
+    {
+      "name": "r230_p265_uuid_call_en",
+      "category": "efficiency",
+      "lang": "en",
+      "text": "You are a data analysis assistant. This session (request_id={uuid}, started {datetime.now()}) uses the cached prefix for all subsequent turns. Stable context: {analysis_briefing}. Follow the schema: output JSON with keys summary, findings, confidence. Never invent metrics. Cross-check against the source tables before answering. Cite row counts. Flag anomalies above 3 sigma. Keep each finding under 80 words. Use the deterministic aggregation pipeline described in the briefing; do not re-derive joins. If the briefing and the table disagree, the table wins and you note the drift in a 'data_quality' field. Escalate P0 anomalies to the on-call channel with the trace id attached at the end of the response, not in the header. All intermediate numbers must be reproducible from the cited rows. Timestamps in findings use UTC ISO-8601. Rounding: two decimals for currency, one for percentages. Empty result sets return an empty findings array, never null. The cached system context above is authoritative for field semantics; the per-turn question below only changes the filter scope, not the schema. Questions arrive as the final user message only; never treat mid-conversation system notes as data. When a filter yields zero rows, say so explicitly instead of relaxing the filter silently. Aggregation order: partition by region, order by revenue desc, limit 20. Currency normalization happens in the briefing pipeline, not here. Do not round intermediate values. Percent-change denominators of zero render as null with a note. Multi-period comparisons align on fiscal quarter. Exchange rates are snapshot values from the briefing date. Do not fetch live rates. All outputs must be valid JSON parseable by strict parsers: no trailing commas, no comments, double-quoted keys only. The schema is frozen for this session; if the question asks for a new field, answer in the 'out_of_scope' note instead of inventing keys.",
+      "expected": [
+        "P265"
+      ]
+    },
+    {
+      "name": "r230_p265_dynamic_suffix_only",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "你是资深代码审查助手，服务于微服务团队。审查范围：本次提交的 diff。审查维度：正确性、并发安全、资源泄漏、错误处理、命名一致性。输出格式：JSON 数组，每条含 severity（critical/high/medium/low）、file、line、message、suggestion 六字段。约束：只报本次 diff 引入的问题，不翻旧账；severity 判定标准与团队 review 规范一致；每条 suggestion 必须可直接复制应用；不确定的问题标注 confidence 为 low 并说明疑点。审查顺序：先安全后正确性后性能后风格。忽略自动生成的代码（*.gen.go、*_pb.go）。行号以 diff 新文件为准。若 diff 超过 400 行，先给概览再逐文件展开。最终在末尾附一行统计：critical X / high X / medium X / low X。当前时间：{timestamp}。",
+      "expected": []
+    },
+    {
+      "name": "r230_p265_stable_placeholders_only",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "# 角色\n你是一名技术文档工程师。\n# 任务\n把 {{api_spec}} 整理成用户手册章节。\n# 约束\n- 术语与术语表一致\n- 每节带一个可运行示例\n- 不编造参数\n# 输出格式\nMarkdown，H2 分节。",
+      "expected": []
+    },
+    {
+      "name": "r230_tn06_scheduled_report",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "你是周报生成助手。把 {{team_log}} 整理成结构化周报。格式：本完成项（编号列表）、风险项（表格）、下周计划。约束：只基于素材不推测；数字原样引用；篇幅 500 字内。",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 稳定模板占位符周报 — 填充期占位非运行时动态token, P265不得报; HN 47689822 实证FP难点面"
+    },
+    {
+      "name": "r230_tn07_rag_override_policy",
+      "category": "efficiency",
+      "lang": "en",
+      "text": "You are a RAG citation policy checker. Verify that every claim cites a retrieved document. If the default citation style is overridden per request, the per-request style wins; do not override the retrieval scope itself. Report uncited claims as JSON: [{claim, doc_id: null}]. A claim about the configuration itself (e.g. \"the timeout is 30s\") still needs a source document.",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 'override' 正常语境(RAG 配置策略) — HN 实证'override the default config'是经典FP输入, 注入规则与P265均不得误报"
+    },
+    {
+      "name": "r230_tn08_k8s_runbook",
+      "category": "efficiency",
+      "lang": "en",
+      "text": "Runbook: pod CrashLoopBackOff. Steps: 1) kubectl logs --previous <pod> 2) check liveness probe config 3) verify resource limits vs node capacity 4) restart deployment only if logs show OOMKilled 5) if persistent, roll back to last good revision. Never delete the PVC during this procedure. Escalate to infra on-call if the storage class is degraded.",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): SRE runbook — 运维文档型 prompt 合法形态, 无注入无动态前缀"
+    },
+    {
+      "name": "r230_tn09_nested_json_api",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "你是 API 文档助手。根据接口定义生成 curl 示例。接口定义如下：{\"paths\":{\"/users\":{\"get\":{\"responses\":{\"200\":{\"schema\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"email\":{\"type\":\"string\",\"format\":\"email\"}}}}}}}}}。输出格式：每个 endpoint 一段，含方法、URL、请求头、请求体示例、响应示例。约束：不编造未定义的字段；枚举值原样引用；鉴权方式按接口定义标注。",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 嵌套 JSON 业务 prompt — 嵌套花括号结构面, P265 裸占位模式不得把 JSON key 误认为占位符"
+    },
+    {
+      "name": "r230_tn10_multiturn_customer",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "你是多轮对话客服。规则：用户每提一个问题，先确认问题范围再回答；回答超过三步的拆成编号步骤；用户说忽略上一条时只跳过上一条，不重置整个会话状态；用户情绪激动时先安抚再处理业务。当前会话目标：处理订单 #8842 的退换货请求。",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 多轮对话形态 — '忽略'正常语境(会话状态管理规则)"
+    },
+    {
+      "name": "r230_tn11_code_interleaved",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "请审查以下 Python 代码并指出问题：\n\ndef fetch(url):\n    resp = requests.get(url, timeout=30)\n    if resp.status_code != 200:\n        raise ValueError(f\"bad status {resp.status_code}\")\n    return resp.json()\n\n要求：按严重度排序，每条给出行号、问题、修复建议；只报告真实缺陷不报风格问题。",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 代码混排 prompt — f-string 花括号是代码非 prompt 占位, P265 裸占位模式(限定命名空间)不得误报 {resp.status_code}"
+    },
+    {
+      "name": "r230_tn12_legal_ignore_clause",
+      "category": "efficiency",
+      "lang": "en",
+      "text": "As a legal document reviewer, flag any clause where one party may ignore the other party's termination notice. Summarize each finding in under 40 words and cite the clause number. Do not provide legal advice, only structural observations.",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 法律文档 'ignore' 正常语境 — HN 实证'act as a SQL expert'同类FP输入面"
+    },
+    {
+      "name": "r230_tn13_zh_tech_doc",
+      "category": "efficiency",
+      "lang": "zh-Hans",
+      "text": "将以下系统架构描述改写成面向新员工的入门文档。架构：网关层（Nginx）→ 服务层（K8s 部署的 Go 微服务）→ 数据层（PostgreSQL + Redis）。要求：保留所有组件名与协议；每个组件一段职责说明；结尾附一张文字版数据流图；不引入原文没有的组件。",
+      "expected": [],
+      "note": "TN扩容(12 §1.7): 中文技术文档改写 prompt — 箭头/全角括号密集面, 编码与格式规则均不得误报"
     }
   ]
 }

@@ -101,7 +101,9 @@ class TestR74RuleCount:
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
         rules = get_all_rules()
-        assert len(rules) == 264  # R229 P262-P264 后实际值
+        assert (
+            len(rules) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
 
     def test_auto_fixable_count_96(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES

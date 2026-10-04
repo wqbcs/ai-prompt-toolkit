@@ -47,5 +47,7 @@ class TestSynonymSuppress:
         """去重不删规则 — 公开API稳定, 255条不变"""
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 264
+        assert (
+            len(get_all_rules()) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
         assert get_rule("P130") is not None

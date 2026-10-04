@@ -25,7 +25,9 @@ class TestR124Profile:
     def test_profile_data_count(self):
         text = "简单的prompt"
         _findings, profile_data = run_all_checks_profiled(text)
-        assert len(profile_data) == 264  # R229 P262-P264 可移植性规则后实际值
+        assert (
+            len(profile_data) >= 264
+        )  # R230-E: 精确总数由 test_rules_smoke_p021_p255.EXPECTED_TOTAL 单锚点锁, 此处只断言规则集未缩水
 
     def test_lint_profile_cli(self):
         with tempfile.TemporaryDirectory() as tmpdir:
