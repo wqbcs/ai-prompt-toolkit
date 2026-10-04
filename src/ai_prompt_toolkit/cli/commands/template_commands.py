@@ -136,10 +136,32 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
     default=None,
     help="项目模板",
 )
-def init_project(target: str, non_interactive: bool, ci: bool, template: str | None) -> None:
+@click.option(
+    "--snippet",
+    "snippet_mode",
+    is_flag=True,
+    help="R229-P2-22: 轻量片段模式 — 只打印 toml+pre-commit+CI 三段配置片段(不创建目录/不写文件), 供已有项目按需粘贴",
+)
+def init_project(target: str, non_interactive: bool, ci: bool, template: str | None, snippet_mode: bool) -> None:
     """初始化项目：创建项目结构和配置文件"""
-    from ai_prompt_toolkit.config import generate_config
+    from ai_prompt_toolkit.config import CONFIG_TEMPLATE_TOML, generate_config
     from ai_prompt_toolkit.output import success
+
+    if snippet_mode:
+        # 轻量片段模式：零副作用（不建目录/不写文件），只打印三段配置。
+        # toml 片段与 generate_config 同一真源（CONFIG_TEMPLATE_TOML），
+        # pre-commit/CI 片段与 --ci 落盘内容同常量 —— 打印即所见即所得。
+        click.echo("── 配置片段 1/3: .prompt-cli.toml ──")
+        click.echo(CONFIG_TEMPLATE_TOML.rstrip())
+        click.echo("")
+        click.echo("── 配置片段 2/3: .pre-commit-config.yaml (本地钩子) ──")
+        click.echo(_PRECOMMIT_SNIPPET.rstrip())
+        click.echo("")
+        click.echo("── 配置片段 3/3: .github/workflows/prompt-ci.yml ──")
+        click.echo(_CI_SNIPPET.rstrip())
+        click.echo("")
+        success("片段已输出 — 按需在已有项目粘贴（与 init --ci 落盘内容一致）")
+        return
 
     target_path = Path(target).resolve()
     target_path.mkdir(parents=True, exist_ok=True)
@@ -183,22 +205,19 @@ def _apply_template(target: str, template_name: str) -> None:
     if not tpl_file:
         return
 
-    src = Path(__file__).parent.parent / "templates" / tpl_file
+    # R229 修复(既有缺陷): 模板在 src/ai_prompt_toolkit/templates/，需上溯三级
+    # (commands→cli→ai_prompt_toolkit)。原 .parent.parent 指向不存在的 cli/templates/
+    # → --template 一直静默 no-op（本轮回归测试捕获）
+    src = Path(__file__).parent.parent.parent / "templates" / tpl_file
     if src.exists():
         dest = prompts_dir / tpl_file
         dest.write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
         success(f"模板已应用: {tpl_file}")
 
 
-def _generate_ci_config(target: str) -> None:
-    from ai_prompt_toolkit.output import success
-
-    target_path = Path(target).resolve()
-
-    github_dir = target_path / ".github" / "workflows"
-    github_dir.mkdir(parents=True, exist_ok=True)
-
-    ci_content = """name: Prompt CI
+# R229-P2-22: CI 片段提升为模块常量 — init --ci 落盘与 init --snippet 打印
+# 共用同一真源（避免两处硬编码漂移）
+_CI_SNIPPET = """name: Prompt CI
 on: [push, pull_request]
 jobs:
   lint:
@@ -220,7 +239,36 @@ jobs:
       - run: pip install ai-prompt-toolkit
       - run: prompt-cli scan -t prompts/
 """
-    (github_dir / "prompt-ci.yml").write_text(ci_content, encoding="utf-8")
+
+# pre-commit 本地钩子片段（与仓库自身 .pre-commit-config.yaml 的 prompt-lint/
+# prompt-scan 钩子同 schema — 采用者粘进已有配置或独立成文件均可）
+_PRECOMMIT_SNIPPET = """- repo: local
+  hooks:
+    - id: prompt-lint
+      name: Prompt Lint
+      entry: prompt-cli lint -t
+      language: system
+      files: '\\.prompt\\.md$|\\.prompt$'
+      pass_filenames: true
+
+    - id: prompt-scan
+      name: Prompt Security Scan
+      entry: prompt-cli scan -t
+      language: system
+      files: '\\.prompt\\.md$|\\.prompt$'
+      pass_filenames: true
+"""
+
+
+def _generate_ci_config(target: str) -> None:
+    from ai_prompt_toolkit.output import success
+
+    target_path = Path(target).resolve()
+
+    github_dir = target_path / ".github" / "workflows"
+    github_dir.mkdir(parents=True, exist_ok=True)
+
+    (github_dir / "prompt-ci.yml").write_text(_CI_SNIPPET, encoding="utf-8")
     success("CI配置已生成: .github/workflows/prompt-ci.yml")
 
 

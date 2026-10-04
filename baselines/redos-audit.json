@@ -12943,11 +12943,509 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/inline_prompt.py\u0000utf-8": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000utf-8-sig": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000gb2312": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000latin-1": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000ascii": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000utf-16": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000utf-32": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000ignore": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000replace": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000strict": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000error": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000warn": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000true": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000false": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000none": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000null": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.venv": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000venv": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.env": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000node_modules": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000__pycache__": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000site-packages": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.git": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.tox": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000dist": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000build": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.eggs": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.mypy_cache": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/inline_prompt.py\u0000.ruff_cache": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000P262": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000跨模型身份绑定": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000portability": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt将自身身份绑定到特定模型品牌(你是ChatGPT/You are a GPT-4 assistant等) — 移植到其他模型时身份声明失真, 且向模型植入未授权的身份": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000删除模型品牌名的身份声明, 用能力/角色描述替代(如'你是一个专业代码审查助手'), 模型选择由调用方在API参数指定而非写进prompt正文": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000P263": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000确定性与随机性声明矛盾": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt同时声明确定性/一致性要求(必须一致/可复现/deterministic)与随机性/创造性要求(随机/creative/多样性) — 两者互斥, 不同模型对矛盾约束的取舍不同, 移植时行为漂移": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000二选一: 要可复现就删随机性要求并固定temperature=0; 要多样性就删确定性声明。明确声明预期行为边界, 不靠模型自行调和矛盾": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000P264": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000厂商专属对话格式硬编码": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt硬编码厂商专属对话分隔符(Human:/Assistant:、### Instruction:/### Response:、<|system|>、[INST]等) — 该格式只对特定模型/框架有效, 移植后结构语义丢失": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000改用调用方消息API的role字段(system/user/assistant)承载对话结构, prompt正文不硬编码厂商分隔符": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt binds its identity to a specific model brand (e.g. 'You are ChatGPT' / 'You are a GPT-4 assistant') — identity declaration goes stale when ported to another model and injects an unauthorized identity": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Remove the model-brand identity declaration; describe the role/capability instead (e.g. 'You are a professional code-review assistant'); select the model via API parameters, not prompt body": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000cross_model_portability": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt declares both determinism/consistency requirements (must be identical / reproducible / deterministic) and randomness/creativity requirements (random / creative / diverse) — mutually exclusive; different models resolve the conflict differently, so behavior drifts when ported": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Pick one: for reproducibility remove the randomness requirement and pin temperature=0; for diversity remove the determinism declaration. State the expected behavior boundary explicitly instead of letting the model reconcile": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Prompt hardcodes vendor-specific chat delimiters (Human:/Assistant:, '### Instruction:/'### Response:', <|system|>, [INST], etc.) — the format is only meaningful to one specific model/framework; structural semantics are lost when ported": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Use the API's role fields (system/user/assistant) to carry conversation structure instead of hardcoding vendor delimiters in the prompt body": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000GPT-?4[oa]?": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000GPT-?3\\.?5?": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000ChatGPT": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Claude": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Gemini": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000PaLM": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000LLaMA": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Mistral": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Mixtral": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000DeepSeek": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000ERNIE": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Kimi": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Moonshot": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Grok": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000(?:你是|你身为|作为|充当|扮演|假装是|自称|acting\\s+as|pretend(?:ing)?\\s+(?:to\\s+be|you\\s+are)|you\\s+are\\s+(?:a\\s+|an\\s+|the\\s+)?|i\\s+am\\s+(?:a\\s+|an\\s+|the\\s+)?)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000(?:确定性|必须一致|严格一致|完全一致|保持一致|输出一致|相同输出|同一输出|可复现|可重复|复现|deterministic|reproducib\\w+|consistent(?:\\s+output)?|identical\\s+output)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000(?:随机|creative(?:ly|s)?|creativity|创造性|创意(?!性?声明)|多样性|diverse\\w*|random\\w*|发挥想象|天马行空|想象力)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000human_assistant": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000hash_instruction_response": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000hash_input_response": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000llama_inst": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000system_special_tok": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000eot_bos": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000im_start_end": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000Human:\\s*\\S[^\\n]*\\n+Assistant:\\s*\\S": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000###\\s*Instruction:\\s*\\S.*?###\\s*(?:Response|Output):": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "###Instruction:\u0000###\t\t\t\t\t\t\t\t\t\t\t!",
+      "approved": true
+    },
+    "linter/rules_p262_p264.py\u0000###\\s*Input:\\s*\\S.*?###\\s*(?:Response|Output):": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "###Input:\u0000############!",
+      "approved": true
+    },
+    "linter/rules_p262_p264.py\u0000\\[INST\\][^\\[\\]]*\\[/INST\\]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000<\\|system\\|>.*?<\\|/system\\|>": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000<\\|startofprompt\\|>|<\\|eot_id\\|>": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000<\\|im_start\\|>.*?<\\|im_end\\|>": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/target_model.py\u0000P262": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p262_p264.py\u0000###\\s*Instruction:\\s*\\S[^\\n]*\\n(?:[^\\n]*\\n){0,40}###\\s*(?:Response|Output):": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "###Instruction:\u0000\n\n\n\n\n\n\n\n\n\n\n\n\n#############Output:!",
+      "approved": true
+    },
+    "linter/rules_p262_p264.py\u0000###\\s*Input:\\s*\\S[^\\n]*\\n(?:[^\\n]*\\n){0,40}###\\s*(?:Response|Output):": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "###Input:\u0000\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n#############Output:!",
+      "approved": true
     }
   },
   "metadata": {
     "approved_at": "2026-10-03",
-    "approver": "R227-P3-05 audit (AtomCode)",
-    "rationale": "101 vulnerable patterns all polynomial (O(n^3) x3, O(n^4) x98, zero exponential); measured at 2000-char envelope (P004 threshold) with redoctor PoC attack strings: 101/101 < 100ms, worst 7.1ms — <100ms performance invariant holds. Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector registered in 07 risk register."
+    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
+    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

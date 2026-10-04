@@ -63,7 +63,7 @@ class TestP176P180Rules:
 
     def test_total_rules_185(self):
         rules = get_all_rules()
-        assert len(rules) == 261
+        assert len(rules) == 264  # R229 P262-P264 后实际值
 
     def test_p176_p180_severity(self):
         assert _RULE_MAP["P176"].severity == Severity.CRITICAL

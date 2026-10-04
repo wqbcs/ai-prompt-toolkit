@@ -46,7 +46,7 @@ class TestR215Registry:
     def test_total_260(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 261
+        assert len(get_all_rules()) == 264
 
 
 class TestR215P258FakeTag:

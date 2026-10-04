@@ -175,7 +175,7 @@ class TestP166P170Rules:
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
         rules = get_all_rules()
-        assert len(rules) == 261
+        assert len(rules) == 264  # R229 P262-P264 后实际值
 
     def test_p166_p170_in_rule_map(self):
         from ai_prompt_toolkit.linter.rules import _RULE_MAP

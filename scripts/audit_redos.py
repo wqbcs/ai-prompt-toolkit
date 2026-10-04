@@ -46,17 +46,21 @@ TARGET_DIRS = ("linter", "security")
 # 多项式复杂度(O(n^3)x3 + O(n^4)x98, 零指数级)。在 linter 真实输入包络
 # (2000 字符 = P004 "Prompt 过长" 阈值)下逐条用 redoctor PoC attack 串
 # 对抗计时: 101/101 全部 <100ms, 最差 7.1ms, <100ms 性能不变量保持。
-# 批准=不重构这 101 条检测 regex(重构风险=误报率/漏检率双基线漂移, 属
-# 低价值打磨陷阱); 对抗性大包络(单行 >20K)DoS 向量登记 07 风险登记册。
+# R229 增量 +2 条(P264 厂商 hash 格式, redoctor 静态标 O(n^4) 系 {0,40} 行界
+# 嵌套量词的保守静态判定): 实测对抗计时 2000 字符包络=0.0ms、50KB=4.4ms、
+# 500KB=22ms(均 <100ms); 36MB 病态全头无尾输入=1.8s 属 >20K 对抗大包络,
+# 与存量 101 条同一 DoS 处置档(登记 07 风险登记册, 不重构检测 regex)。
+# 批准=不重构(重构风险=误报率/漏检率双基线漂移, 属低价值打磨陷阱)。
 APPROVE_METADATA = {
     "approved_at": "2026-10-03",
-    "approver": "R227-P3-05 audit (AtomCode)",
+    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
     "rationale": (
-        "101 vulnerable patterns all polynomial (O(n^3) x3, O(n^4) x98, zero exponential); "
-        "measured at 2000-char envelope (P004 threshold) with redoctor PoC attack strings: "
-        "101/101 < 100ms, worst 7.1ms — <100ms performance invariant holds. Approved without "
-        "refactor: changing detection regex risks false-positive/miss-rate dual baselines "
-        "(low-value polishing trap). Adversarial >20K single-line DoS vector registered in 07 risk register."
+        "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), "
+        "zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: "
+        "all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). "
+        "Approved without refactor: changing detection regex risks false-positive/miss-rate dual "
+        "baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB "
+        "all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
     ),
 }
 

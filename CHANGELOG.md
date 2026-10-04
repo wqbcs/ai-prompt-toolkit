@@ -2,6 +2,65 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.20] - 2026-10-03
+
+### Added (R229: 采用面扩展三件套 — 内嵌抽取/可移植性/轻量片段)
+
+> 定位对齐：本轮全部是"发布前采用面内容件"，不依赖 PyPI 授权。
+> 对抗性审查结论：三条均有竞品对标实证（aiproof AIP009/016-018/--init），
+> 非凑数；其中 P1-15 是最大采用面缺口（prompt 内嵌代码是主流形态，
+> 纯文本文件是少数）。
+
+- **P1-15 代码内嵌 prompt 静态 lint**（`prompt-cli lint --inline`）：
+  从 Python 源码静态抽取内嵌 prompt 字符串字面量再跑 264 规则引擎
+  （裁决层 100% 复用，不重造）。纯 stdlib `ast`，零新依赖。
+  三类强信号：A) SDK 调用实参/prompt 键 kwargs（`client.messages.create(...)`
+  等）；B) prompt 键字典值（`{"prompt": ...}`）；C) prompt 命名变量赋值
+  （`SYSTEM_PROMPT = """..."""`，最高频形态）。精度设计：不做"长字符串
+  启发式"（会捞进日志/SQL 造成误报）；f-string/拼接等动态形态诚实跳过
+  并计数（不猜，确定性契约）；CJK 感知长度门槛（33 汉字=66 有效长度，
+  避免中文优先场景误杀）；语法错误 fail-soft。
+  新模块 `linter/inline_prompt.py`（`InlinePrompt` 鸭子类型=模板：
+  `.name`+`.read_text()`，lint pipeline 零改复用）。
+  22 测试（`test_r229_inline_prompt.py`）
+- **P1-16 可移植性规则 3 条 + `--target-model`**（对标 aiproof AIP016-018）：
+  - **P262 跨模型身份绑定**（MEDIUM，portability）：身份标记词×模型品牌名
+    近邻共现（±40 字符窗口）才报，避免文档引用误报
+  - **P263 确定性与随机性声明矛盾**（MEDIUM）：确定性词集∩随机性词集
+    同时非空才报（单一方向不报）
+  - **P264 厂商专属对话格式硬编码**（LOW）：Human:/Assistant: 成对、
+    ### Instruction:/### Response:、`<|system|>`、`[INST]` 等成组才报
+  - **`--target-model <model>`**：声明部署目标模型后，P262 绑定的品牌若
+    与目标**跨族**→升级 HIGH 并注明矛盾双方。族表数据驱动
+    （`MODEL_FAMILIES` 11 族，新增模型族=加一行数据，非 if/else 硬编码）；
+    品牌或目标任一侧解析不到族→保守不升级（确定性+低误报）
+  - 新模块 `linter/rules_p262_p264.py` + `linter/target_model.py`（纯函数
+    `escalate_mismatched_brand`）；`PromptLinter.lint()` 加 `target_model`
+    参数（waiver 之后、fix 之前叠加）。规则 261→**264**，类别 24→25
+    （新增 `portability`）
+  - 30 测试（`test_r229_portability_rules.py`，含四态升级验证）
+- **P2-22 `prompt-cli init --snippet` 轻量片段模式**（对标 aiproof --init）：
+  只打印 toml+pre-commit+CI 三段配置片段，零副作用（不建目录/不写文件），
+  供已有项目按需粘贴。单一真源：toml 片段==`CONFIG_TEMPLATE_TOML`
+  （与 `generate_config` 同模板）、CI/pre-commit 片段==`init --ci` 落盘
+  内容（提升为模块常量 `_CI_SNIPPET`/`_PRECOMMIT_SNIPPET`，防两处硬编码
+  漂移）。9 测试（`test_r229_init_snippet.py`）
+
+### Fixed
+
+- **`init --template` 既有静默 no-op**（本轮回归测试捕获）：`_apply_template`
+  的模板路径 `.parent.parent / "templates"` 指向不存在的 `cli/templates/`
+  （真实位置 `src/ai_prompt_toolkit/templates/` 需上溯三级）→ 模板应用一直
+  静默失败。修路径 + 回归测试锁定
+- **`inline_prompt.py` ValidationError 导入路径**（测试捕获）：
+  `types` → `errors`（`discover_inline_sources` 目标不存在路径会 crash）
+
+### Changed
+
+- README：规则数 261→264（徽章/表格/正文/图/VSCode 节全同步）、类别 24→25、
+  OWASP 2025→2026 残留引用修正（R228 漏改 2 处）
+- `tests/test_rules_smoke_p021_p255.py`：EXPECTED_TOTAL 261→264
+
 ## [v67.34.19] - 2026-10-03
 
 ### Changed (R228-P2-21: OWASP LLM Top 10 映射 2025→2026 — 固定触发器收口)

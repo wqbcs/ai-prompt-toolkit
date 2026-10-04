@@ -173,6 +173,18 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     is_flag=True,
     help="P1-05a: 常驻 stdio 协议 server(行JSON请求/响应, 编辑器bridge用) — 忽略其他选项, 见 docs/stdio-protocol.md",
 )
+@click.option(
+    "--inline",
+    "inline_mode",
+    is_flag=True,
+    help="P1-15: 从 Python 源码静态抽取内嵌 prompt(字符串字面量)再 lint — 裁决层复用规则引擎, 纯 stdlib",
+)
+@click.option(
+    "--target-model",
+    "target_model",
+    default=None,
+    help="P1-16: 声明部署目标模型(如 claude/gpt-4o/qwen) — prompt 绑定到其他厂商品牌时 P262 升级为 HIGH",
+)
 def lint(
     target: str,
     config_path: str | None,
@@ -211,6 +223,8 @@ def lint(
     rules_filter: str | None = None,
     ignore_rules_filter: str | None = None,
     stdio_mode: bool = False,
+    inline_mode: bool = False,
+    target_model: str | None = None,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     if stdio_mode:
@@ -226,6 +240,7 @@ def lint(
         discover_templates,
         discover_templates_with_ignore,
         empty_state_tip,
+        load_promptignore,
         write_report,
     )
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -248,11 +263,28 @@ def lint(
                 click.echo(f"自动发现配置: {candidate}")
                 break
 
-    templates = (
-        discover_templates_with_ignore(target, ignore_file)
-        if ignore_file or Path(target).is_dir()
-        else discover_templates(target)
-    )
+    templates: list
+    if inline_mode:
+        from ai_prompt_toolkit.linter.inline_prompt import collect_inline_prompts
+
+        ignore_pats = load_promptignore(Path(target)) if Path(target).is_dir() else []
+        inline_templates = collect_inline_prompts(target, ignore_pats)
+        if not inline_templates:
+            click.echo(
+                "P1-15 内嵌抽取: 未在目标 Python 源码中发现内嵌 prompt 字符串"
+                "（信号=SDK调用实参/prompt键字典/prompt命名变量赋值; 均要求纯字符串字面量）"
+            )
+            sys.exit(0)
+        click.echo(f"P1-15 内嵌抽取: 发现 {len(inline_templates)} 个内嵌 prompt（来源 .py 源码）")
+        for it in inline_templates:
+            click.echo(f"  · {it.source}:{it.line} [{it.origin}] {len(it.text)}字符")
+        templates = list(inline_templates)
+    else:
+        templates = (
+            discover_templates_with_ignore(target, ignore_file)
+            if ignore_file or Path(target).is_dir()
+            else discover_templates(target)
+        )
     if not templates:
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
@@ -352,7 +384,13 @@ def lint(
 
         def _lint_one(tpl: Path):
             _t = tpl.read_text(encoding="utf-8")
-            return linter.lint(tpl.name, _t, template_type=_detect_template_type(_t), lint_config=lint_cfg)
+            return linter.lint(
+                tpl.name,
+                _t,
+                template_type=_detect_template_type(_t),
+                lint_config=lint_cfg,
+                target_model=target_model,
+            )
 
         with ThreadPoolExecutor(max_workers=parallel) as _ex:
             parallel_results = dict(zip([str(t) for t in templates], _ex.map(_lint_one, templates)))
@@ -378,6 +416,7 @@ def lint(
                     fix=fix or interactive or dry_run,
                     template_type=template_type,
                     lint_config=lint_cfg,
+                    target_model=target_model,
                 )
                 if dry_run and lint_res.auto_fixed:
                     click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(lint_res.fixed_findings)}处可修复(未实际修改)")
@@ -405,7 +444,12 @@ def lint(
                 _pre
                 if _pre is not None
                 else linter.lint(
-                    tpl_path.name, text, fix=fix or dry_run, template_type=template_type, lint_config=lint_cfg
+                    tpl_path.name,
+                    text,
+                    fix=fix or dry_run,
+                    template_type=template_type,
+                    lint_config=lint_cfg,
+                    target_model=target_model,
                 )
             )
             if dry_run and result.auto_fixed:
@@ -855,7 +899,11 @@ def lint(
                     for _tp in _current_templates:
                         _text = _tp.read_text(encoding="utf-8")
                         _res = _watch_linter.lint(
-                            _tp.name, _text, fix=False, template_type=_detect_template_type(_text)
+                            _tp.name,
+                            _text,
+                            fix=False,
+                            template_type=_detect_template_type(_text),
+                            target_model=target_model,
                         )
                         if _res.findings:
                             for _f in _res.findings:

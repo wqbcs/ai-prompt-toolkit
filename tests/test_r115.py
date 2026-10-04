@@ -8,7 +8,7 @@ from ai_prompt_toolkit.linter.rules import get_all_rules
 
 class TestR115CIAndDiff:
     def test_rules_count_stable(self):
-        assert len(get_all_rules()) == 261  # R164扩容后实际值
+        assert len(get_all_rules()) == 264  # R229 P262-P264 可移植性规则后实际值
 
     def test_auto_fixable_stable(self):
         assert len(AUTO_FIXABLE_RULES) >= 156

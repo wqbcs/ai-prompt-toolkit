@@ -47,5 +47,5 @@ class TestSynonymSuppress:
         """去重不删规则 — 公开API稳定, 255条不变"""
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 261
+        assert len(get_all_rules()) == 264
         assert get_rule("P130") is not None

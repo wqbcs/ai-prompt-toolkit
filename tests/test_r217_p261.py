@@ -49,7 +49,7 @@ class TestR217Registry:
     def test_total_261(self):
         from ai_prompt_toolkit.linter.rules import get_all_rules
 
-        assert len(get_all_rules()) == 261
+        assert len(get_all_rules()) == 264  # R229 P262-P264 后实际值
 
 
 class TestR217P261TruePositives:

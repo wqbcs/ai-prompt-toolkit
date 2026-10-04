@@ -311,15 +311,20 @@ class TestR207MetricsSync:
         from ai_prompt_toolkit.prompt_doctor import _check_readme_metrics
 
         # 构造漂移README: 真实README的规则数改小 → 应报warn
+        # 从真实值动态推导替换串（R229: 规则数 261→264 后旧硬编码 261 落空）
         real = Path(__file__).parent.parent / "README.md"
+        real_text = real.read_text(encoding="utf-8")
+        import re
+
+        m = re.search(r"\*\*Lint规则\*\*\s*\|\s*(\d+)", real_text)
+        assert m, "README应含'Lint规则 | N'行(若此断言失败说明README表格改了, 需更新本测试)"
+        real_count = m.group(1)
         fake = tmp_path / "README.md"
         fake.write_text(
-            real.read_text(encoding="utf-8").replace("**Lint规则** | 261", "**Lint规则** | 200", 1),
+            real_text.replace(f"**Lint规则** | {real_count}", "**Lint规则** | 200", 1),
             encoding="utf-8",
         )
-        assert fake.read_text(encoding="utf-8") != real.read_text(encoding="utf-8"), (
-            "README应含'Lint规则 | 261'行(若此断言失败说明README表格改了, 需更新本测试)"
-        )
+        assert fake.read_text(encoding="utf-8") != real_text, "漂移场景构造失败"
         results = _check_readme_metrics(readme_path=fake)
         assert results[0].status == "warn"
         assert "200" in results[0].message

@@ -120,6 +120,7 @@ class PromptLinter:
         template_type: str = "prompt",
         lint_config: Any = None,
         apply_waivers: bool = True,
+        target_model: str | None = None,
     ) -> LintResult:
         start = time.perf_counter()
 
@@ -164,6 +165,13 @@ class PromptLinter:
             # 审计口径: 只报实际生效的豁免(压制了≥1条finding的)
             waived_rules = sorted({f.rule_id for f in suppressed})
             waived_finding_count = len(suppressed)
+
+        # R229-P1-16: --target-model 声明 × P262 品牌绑定交叉判定（waiver 之后、
+        # fix 之前 — 已豁免的 P262 不存在即无需升级；纯函数不改输入列表）
+        if target_model:
+            from ai_prompt_toolkit.linter.target_model import escalate_mismatched_brand
+
+            findings = escalate_mismatched_brand(findings, target_model)
 
         fixed_findings: list[Finding] = []
         if fix:

@@ -1424,6 +1424,11 @@ from ai_prompt_toolkit.linter.rules_p258 import check_p258  # noqa: E402
 from ai_prompt_toolkit.linter.rules_p259 import check_p259  # noqa: E402
 from ai_prompt_toolkit.linter.rules_p260 import check_p260  # noqa: E402
 from ai_prompt_toolkit.linter.rules_p261 import check_p261  # noqa: E402
+from ai_prompt_toolkit.linter.rules_p262_p264 import (  # noqa: E402
+    check_p262,
+    check_p263,
+    check_p264,
+)
 
 _CHECKERS_EXTENDED.extend(
     [
@@ -1508,6 +1513,9 @@ _CHECKERS_EXTENDED.extend(
         check_p259,
         check_p260,
         check_p261,
+        check_p262,
+        check_p263,
+        check_p264,
     ]
 )
 
