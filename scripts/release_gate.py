@@ -11,29 +11,33 @@
 4. 收口一律 `python scripts/release_gate.py`, 禁手工拆步
 
 步骤序列(与 CI prompt-ci.yml 对齐 + 本地独有步):
- 1. pytest 全量(-k "not slow", 与 CI 一致)
- 2. ruff check src/ tests/
- 3. ruff format --check src/ tests/
- 4. mypy 棘轮(check_mypy_ratchet.py, 只减不增)
- 5. 双基线: 误报率棘轮(check_false_positives --fail-above 0.01)
- 6. 双基线: 漏检率棘轮(check_miss_rate --fail-above 0.05)
- 7. 依赖清单一致性(src 运行时 import ⊆ pyproject 声明, Q2-4 反向护栏)
- 8. 环境一致性快照(直接依赖版本与 ci/dep_snapshot.json diff=0, Q2-3)
- 9. gen_rules_doc.py(真重生成, 非 --check — 升版后必跑防漂移)
-10. sync_badges.py(徽章单一真源)
-11. sync_readme_metrics.py(README 指标漂移校验)
-12. check_version_consistency.py(版本三处一致)
-13. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
-14. ReDoS 审计增量步(audit_redos.py, P3-05: 新 pattern 脆弱即红; 存量经
+ 1. pytest 全量(-k "not slow", 与 CI 一致, 产 coverage.xml)
+ 2. linter 覆盖率棘轮(check_linter_coverage.py, P3-09: linter 包行覆盖≥90%
+    只收紧不放松; 依赖第 1 步 coverage.xml — CI test 作业同位置独立步,
+    CI prompt-quality-gate 以 --skip 1,2 跳过[数据在 test 作业])
+ 3. ruff check src/ tests/
+ 4. ruff format --check src/ tests/
+ 5. mypy 棘轮(check_mypy_ratchet.py, 只减不增)
+ 6. 双基线: 误报率棘轮(check_false_positives --fail-above 0.01)
+ 7. 双基线: 漏检率棘轮(check_miss_rate --fail-above 0.05)
+ 8. 依赖清单一致性(src 运行时 import ⊆ pyproject 声明, Q2-4 反向护栏)
+ 9. 环境一致性快照(直接依赖版本与 ci/dep_snapshot.json diff=0, Q2-3)
+10. gen_rules_doc.py(真重生成, 非 --check — 升版后必跑防漂移)
+11. sync_badges.py(徽章单一真源)
+12. sync_readme_metrics.py(README 指标漂移校验)
+13. check_version_consistency.py(版本三处一致)
+14. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
+15. ReDoS 审计增量步(audit_redos.py, P3-05: 新 pattern 脆弱即红; 存量经
     --approve 批准入 baselines/redos-audit.json 缓存; redoctor 是 dev 依赖)
-15. 双基线时间序列追加(append_baseline_history.py, R230-P2-04: 全链通过后的
+16. 双基线时间序列追加(append_baseline_history.py, R230-P2-04: 全链通过后的
     收口快照进 docs/baseline_history.jsonl, append-only)
 
 用法:
     python scripts/release_gate.py                # 全链, 失败即停
     python scripts/release_gate.py --no-fail-fast # 全跑完再汇总
     python scripts/release_gate.py --step 3       # 只跑第3步
-    python scripts/release_gate.py --skip 1       # 跳过pytest(仅允许在非收口场景)
+    python scripts/release_gate.py --skip 1       # 跳过pytest(仅允许在非收口场景;
+                                                   # 第2步依赖第1步数据, 需一并跳过)
 """
 
 from __future__ import annotations
@@ -95,6 +99,10 @@ def build_steps() -> list[Step]:
                 "--cov-report=xml",
             ],
         ),
+        # P3-09: linter 包覆盖率棘轮(90% 地板)。数据=第 1 步 coverage.xml;
+        # CI test 作业同位置独立步; CI prompt-quality-gate 用 --skip 1,2
+        # (coverage.xml 在 test 作业, 该作业 needs:test 后已判绿)
+        Step("linter 覆盖率棘轮", [PY, "scripts/check_linter_coverage.py"]),
         Step("ruff check", [PY, "-m", "ruff", "check", "src/", "tests/"]),
         Step("ruff format --check", [PY, "-m", "ruff", "format", "--check", "src/", "tests/"]),
         Step("mypy 棘轮", [PY, "scripts/check_mypy_ratchet.py"]),

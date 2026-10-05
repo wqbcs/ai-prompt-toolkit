@@ -57,6 +57,12 @@ jobs:
       - name: Run tests
         run: pytest tests/ -x -q --tb=short -k "not slow" --cov=ai_prompt_toolkit --cov-report=xml
 
+      # R232-P3-09: linter 包覆盖率棘轮(90% 地板, 只收紧不放松)。
+      # 与 pytest 同作业=数据新鲜(coverage.xml 刚产出); 与本地 release_gate 第 2 步同一真源
+      - name: "Linter coverage ratchet (≥90%)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_linter_coverage.py
+
       - name: Docs drift check (rules doc sync with registry)
         if: matrix.python-version == '3.12'
         run: python scripts/gen_rules_doc.py --check
@@ -159,10 +165,11 @@ jobs:
           prompt-cli lint -t ./src/ai_prompt_toolkit/templates \
             --incremental --baseline baselines/templates-baseline.json --gate
 
-      # 收口门禁链 14 步(跳过 pytest, 测试走上方矩阵): ruff/format/mypy棘轮/
-      # 双基线/依赖一致性/环境快照/gen_rules_doc/sync/版本一致性/SARIF合法性/ReDoS审计增量
-      - name: "Release Gate (14 steps, single source of truth)"
-        run: python scripts/release_gate.py --skip 1
+      # 收口门禁链 16 步(跳过 pytest+覆盖率棘轮, 两者数据在 test 作业):
+      # ruff/format/mypy棘轮/双基线/依赖一致性/环境快照/gen_rules_doc/
+      # sync/版本一致性/SARIF合法性/ReDoS审计增量/双基线时间序列
+      - name: "Release Gate (16 steps, single source of truth)"
+        run: python scripts/release_gate.py --skip 1,2
 
       - name: Quality Gate Verdict
         run: |

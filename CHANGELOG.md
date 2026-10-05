@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.25] - 2026-10-05
+
+### Added (R232: P3-09 linter 覆盖率棘轮)
+
+- **`scripts/check_linter_coverage.py`**：linter 包行覆盖棘轮——覆盖率数字从
+  "展示"变"门禁"。地板 90%（实测基线 92.44%，5542/5995，R232 收口时 pytest 全量）；
+  只收紧不放松（改地板=独立 commit+理由，与 mypy 棘轮同纪律）。缺 coverage.xml/
+  缺 linter 行数据=诚实失败红（不静默放行，mypy 棘轮缺基线同惯例）。
+- **接线**：release_gate 第 2 步（依赖第 1 步 coverage.xml；门禁链 15→16 步）；
+  CI test 作业同位置独立步（与 pytest 同作业=数据新鲜，3.12 矩阵）；
+  CI prompt-quality-gate 改 `--skip 1,2`（两数据步在 test 作业）。
+
+### 口径
+
+- 覆盖率口径=行覆盖（分支覆盖只记录不门禁——分支率受防御分支/exclude 影响，
+  棘轮信号噪声大）。规则 265/类别 25 不变；测试 6255 不变。
+
 ## [v67.34.24] - 2026-10-05
 
 ### Added (R232: P3-02 属性测试 + waiver 正交性根治)
