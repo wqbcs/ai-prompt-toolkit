@@ -102,7 +102,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
 
 
 @main.command()
-@click.option("--target", "-t", help="Lint目标(文件或目录) — --stdio 模式无需(协议内传text)")
+@click.option("-t", "-s", "--target", help="Lint目标(文件或目录) — --stdio 模式无需(协议内传text); -t 与 -s 同义")
 @click.option(
     "--config",
     "config_path",
@@ -177,7 +177,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     "--inline",
     "inline_mode",
     is_flag=True,
-    help="P1-15: 从 Python 源码静态抽取内嵌 prompt(字符串字面量)再 lint — 裁决层复用规则引擎, 纯 stdlib",
+    help="P1-15/15b: 从 Python/TS 源码静态抽取内嵌 prompt(字符串字面量)再 lint — 裁决层复用规则引擎, 纯 stdlib",
 )
 @click.option(
     "--target-model",
@@ -235,6 +235,25 @@ def lint(
     if not target:
         click.echo("错误: 需要 --target/-t (或 --stdio 模式)", err=True)
         sys.exit(2)
+    # 管道 stdin 面（05 §5 回归护栏）：`echo "text" | prompt-cli lint -t -`
+    # 把 `-` 落临时文件再走统一发现路径 — 与 --inline 目录发现正交(inline 不接 stdin)
+    if target == "-":
+        import os as _os
+        import tempfile as _tempfile
+
+        _stdin_text = sys.stdin.read()
+        _stdin_fd, _stdin_name = _tempfile.mkstemp(suffix=".prompt", prefix="promptcli-stdin-")
+        with _os.fdopen(_stdin_fd, "w", encoding="utf-8") as _stdin_file:
+            _stdin_file.write(_stdin_text)
+        target = _stdin_name
+        _stdin_tmp_path = Path(_stdin_name)  # 函数退出前清理
+
+        def _cleanup_stdin_tmp() -> None:
+            _stdin_tmp_path.unlink(missing_ok=True)
+
+        import atexit as _atexit
+
+        _atexit.register(_cleanup_stdin_tmp)
     from ai_prompt_toolkit.cli_helpers import (
         determine_exit_code,
         discover_templates,
@@ -275,7 +294,7 @@ def lint(
                 "（信号=SDK调用实参/prompt键字典/prompt命名变量赋值; 均要求纯字符串字面量）"
             )
             sys.exit(0)
-        click.echo(f"P1-15 内嵌抽取: 发现 {len(inline_templates)} 个内嵌 prompt（来源 .py 源码）")
+        click.echo(f"P1-15 内嵌抽取: 发现 {len(inline_templates)} 个内嵌 prompt（来源 .py/.ts/.tsx 源码）")
         for it in inline_templates:
             click.echo(f"  · {it.source}:{it.line} [{it.origin}] {len(it.text)}字符")
         templates = list(inline_templates)

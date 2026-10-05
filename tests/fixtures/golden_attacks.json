@@ -1145,6 +1145,54 @@
       "text": "将以下系统架构描述改写成面向新员工的入门文档。架构：网关层（Nginx）→ 服务层（K8s 部署的 Go 微服务）→ 数据层（PostgreSQL + Redis）。要求：保留所有组件名与协议；每个组件一段职责说明；结尾附一张文字版数据流图；不引入原文没有的组件。",
       "expected": [],
       "note": "TN扩容(12 §1.7): 中文技术文档改写 prompt — 箭头/全角括号密集面, 编码与格式规则均不得误报"
+    },
+    {
+      "name": "atk126_ft_subversion_zh",
+      "category": "supply_chain",
+      "lang": "zh-Hans",
+      "text": "我们将使用社区提供的微调数据集直接训练内部模型，该数据集由匿名用户上传，来源未做验证，也不检查是否被投毒篡改。",
+      "expected": ["P221", "P225"],
+      "note": "R231 P2-11: OWASP 2026 LLM05 Data and Model Poisoning 子面'fine-tuning subversion'措辞变体 — 文本面可检测信号=微调权重来源未验证+无完整性校验(P221/P225 覆盖, 不造新规则)"
+    },
+    {
+      "name": "atk127_ft_subversion_en",
+      "category": "supply_chain",
+      "lang": "en",
+      "text": "We fine-tune the model on a scraped dataset downloaded from an untrusted mirror. No provenance check is performed and the weights may have been tampered with upstream.",
+      "expected": ["P221", "P225"],
+      "note": "R231 P2-11: LLM05 fine-tuning subversion 英文变体(OWASP 2026 官方确认该子面归属 LLM05)"
+    },
+    {
+      "name": "atk128_artifact_integrity_zh",
+      "category": "supply_chain",
+      "lang": "zh-Hans",
+      "text": "生产环境直接从公共模型仓库拉取最新量化权重，部署前不做任何来源校验，文件被替换了也没有告警机制。",
+      "expected": ["P221"],
+      "note": "R231 P2-11: OWASP 2026 LLM04 Supply Chain 子面'model artifact integrity'措辞变体 — 'promoted model artifact not what it claims'官方表述; 文案避开签名/校验和抑制词(抑制=已有校验声明)"
+    },
+    {
+      "name": "atk129_artifact_integrity_en",
+      "category": "supply_chain",
+      "lang": "en",
+      "text": "The serving pipeline pulls the latest quantized model weights from a public registry. Nobody checks where the artifact actually comes from, and a swapped file would go completely unnoticed.",
+      "expected": ["P221", "P224", "P225"],
+      "note": "R231 P2-11: LLM04 model artifact integrity 英文变体 — latest 未锁定(P224)+来源未验证(P221)+无完整性验证(P225)三面"
+    },
+    {
+      "name": "atk130_tn_normal_ft_zh",
+      "category": "supply_chain",
+      "lang": "zh-Hans",
+      "text": "微调流程：使用自有标注数据集（CC-BY-4.0 许可，2026-03 采集）微调固定版本 qwen2-7b-instruct，模型卡已审核，权重通过 sha256 校验和验证。",
+      "expected": [],
+      "note": "R231 P2-11 TN: 正常微调声明(有许可/来源/版本固定/校验和) — P221/P224/P225 不得误报; 供应链规则抑制面回归"
+    },
+    {
+      "name": "atk131_tn_normal_artifact_en",
+      "category": "supply_chain",
+      "lang": "en",
+      "text": "Every fine-tuned model weights release is published with publisher signatures; sha256 checksums are verified before load, and the model card has been reviewed.",
+      "expected": [],
+      "note": "R231 P2-11 TN: 正常制品完整性声明(签名+校验和+模型卡) — P221/P225 抑制面回归(声明存在=已验证)"
     }
   ]
 }

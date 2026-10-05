@@ -47,7 +47,8 @@ class TestR214LangSchema:
 
     def test_all_probes_have_valid_lang(self):
         probes = self._probes()
-        assert len(probes) == 125  # R220: 113 | R230: +4(P265 TP×2/TN×2) +8(TN扩容) = 125
+        # R220: 113 | R230: +4(P265 TP×2/TN×2) +8(TN扩容) = 125 | R231: +6(OWASP 2026子面 TP×4/TN×2) = 131
+        assert len(probes) == 131
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -56,10 +57,10 @@ class TestR214LangSchema:
         probes = self._probes()
         langs = {p["name"]: p["lang"] for p in probes}
         assert langs["atk04_hardcoded_secret"] == "en"
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 92  # R230: 84+8（P265 zh×2+TN扩容 zh×6）
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 95  # R230: 84+8 | R231: +3(atk126/128/130 zh×3)
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        assert sum(1 for v in langs.values() if v == "en") == 25  # R230: 21+4（P265 en×1+TN扩容 en×3）
+        assert sum(1 for v in langs.values() if v == "en") == 28  # R230: 21+4 | R231: +3(atk127/129/131 en×3)
 
 
 class TestR214PerLanguageReport:

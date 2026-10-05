@@ -2,6 +2,48 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.23] - 2026-10-04
+
+### Added (R231: TS 内嵌抽取 + CLI 真子进程 e2e + OWASP 2026 子面探针)
+
+> 调研来源：aiproof tree-sitter / 96% FP 教训 + OWASP LLM Top 10 2026 版
+> （2026-08-03 发布）子面归属 LLM04/05 + ContextHound 多语言扫描共识面
+> （R231_改进方案 §1/§4）。痛点=prompt 内嵌 TS/TSX 源码是采用面缺口。
+> 不引 tree-sitter（C 扩展依赖面扩张 + wheel 平台矩阵爆炸）；aiproof
+> 96% FP 教训=精度瓶颈在门控不在解析器，与 Python 侧等强门控（AND）。
+
+- **P1-15b TS/TSX 侧内嵌 prompt 抽取**：纯 stdlib 词法扫描器（零新依赖），
+  三信号=已知 SDK 调用末段名×prompt 键×长度门槛 AND + 模板字面量静态段
+  + prompt 命名变量赋值（词表复用 Python 侧），CJK 感知长度门槛同口径；
+  动态 `${}` 段诚实跳过并计入 `dynamic_skipped`；注释/字符串字面量整体
+  不深入；标识符键（`content:`）与字符串键同门控。`lint --inline` 对
+  .ts/.tsx 出 finding；26 新测试（三信号+动态跳过+负门控+确定性+
+  fail-soft+CLI e2e 贯通）。vscode-prompt-lint 真实 TS 面 TN 摸底 0 命中
+- **P3-01 CLI 真子进程 e2e 集成层**：33 条真子进程（非 CliRunner）测接线
+  非逻辑——exit code 语义矩阵（plain/gate/fail-on 三态 × 4 实测夹具）、
+  JSON/SARIF 文件落盘结构断言、协议通道纯净（`doctor --json` stdout 纯
+  数据）、stdin 管道三态、双基线一条命令复现、性能粗护栏、裁决确定性
+  （同输入两次 verdict 逐字段一致；`lint_time_ms` 执行耗时度量不在
+  确定性契约内）
+- **P2-11 OWASP 2026 子面探针首批**：fine-tuning subversion 措辞变体×2
+  （映射 LLM05 面）+ model artifact integrity 措辞×2（映射 LLM04 面）
+  + TN×2（正常微调/制品声明不误报）；探针 125→131，漏检率 0.00% 保持
+- **P1-13 promptfoo 共存集成文档**：`docs/promptfoo-coexistence.md`
+  （`prompt-cli lint` 作为 promptfoo 配置 pre-check 的 CI 示例）+ README
+  "与 promptfoo 互补"节（PR gate 确定性层 vs nightly 统计层双轨叙事，
+  区分检测面边界）
+
+### Fixed
+- **stdin 管道面**（05 §5 回归护栏）：`echo "text" | prompt-cli lint -t -`
+  原报"目标不存在 — -"。`-` 落临时文件（`mkstemp`+`atexit` 清理）走统一
+  发现路径，e2e 锁三态（secret→rc2 / 干净→rc0）
+- **`-s` 单文件别名**：`lint -s <file>` 是 CLAUDE.md/README/adoption.md
+  8+ 处文档引用的"单文件"形态，但 `lint` 只定义 `-t`。注册 `-s` 为
+  `--target` 同义别名（改 1 处验证 8 处文档，而非改 8 处文档）
+- **doctor --json 协议通道污染**（R226 同纪律）：`doctor --json` 的
+  stdout 混入进度行"正在检查Provider健康状态..."破坏机器解析。进度提示
+  在 `--json` 时走 stderr，stdout 整段纯 JSON
+
 ## [v67.34.22] - 2026-10-04
 
 ### Added (R230: P265 cache-friendly 规则 + 双基线时间序列基建 + TN 探针扩容)

@@ -396,7 +396,8 @@ include_rules: []
             click.echo(f"可选: {', '.join(p.value for p in ProviderType)}")
             sys.exit(2)
 
-    click.echo("正在检查Provider健康状态...")
+    # R231: --json 协议通道 stdout 神圣(纯数据) — 进度提示走 stderr(R226 同纪律)
+    click.echo("正在检查Provider健康状态...", err=as_json)
     results = run_health_check(targets)
 
     if as_json:

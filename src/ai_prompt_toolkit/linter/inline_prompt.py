@@ -187,8 +187,11 @@ class InlineExtraction:
     parse_error: str | None = None  # SyntaxError 时的说明（不 crash，fail-soft）
 
 
+_INLINE_SOURCE_SUFFIXES: tuple[str, ...] = (".py", ".ts", ".tsx")
+
+
 def discover_inline_sources(target: str, ignore_patterns: list[str] | None = None) -> list[Path]:
-    """发现 .py 源文件（与 discover_templates 同形态：文件→自身 / 目录→rglob）。
+    """发现 .py/.ts/.tsx 源文件（与 discover_templates 同形态：文件→自身 / 目录→rglob）。
 
     排除虚拟环境/构建/缓存目录（.venv/venv/node_modules/__pycache__/site-packages），
     避免把依赖库当成本项目 prompt。
@@ -215,14 +218,19 @@ def discover_inline_sources(target: str, ignore_patterns: list[str] | None = Non
         }
     )
     if p.is_file():
-        return [p] if p.suffix == ".py" else []
+        return [p] if p.suffix in _INLINE_SOURCE_SUFFIXES else []
     if p.is_dir():
         results: list[Path] = []
-        for f in sorted(p.rglob("*.py")):
-            if any(part in _SKIP_DIRS for part in f.parts):
+        for suffix in _INLINE_SOURCE_SUFFIXES:
+            results.extend(f for f in p.rglob(f"*{suffix}" if suffix != ".py" else "*.py"))
+        seen_paths: set[Path] = set()
+        deduped: list[Path] = []
+        for f in sorted(set(results)):
+            if any(part in _SKIP_DIRS for part in f.parts) or f in seen_paths:
                 continue
-            results.append(f)
-        return results
+            seen_paths.add(f)
+            deduped.append(f)
+        return deduped
     from ai_prompt_toolkit.errors import ValidationError
 
     raise ValidationError(f"目标不存在 — {target}", field="target")
@@ -291,8 +299,284 @@ def _key_string(key: ast.expr | None) -> str | None:
     return None
 
 
+def _ts_extract(
+    source_text: str,
+    source_name: str,
+    seen: set[str],
+    counter: list[int],
+    result: InlineExtraction,
+) -> None:
+    """TS/TSX 内嵌 prompt 抽取（R231-P1-15b，纯 stdlib 词法扫描）。
+
+    设计对抗（R231 §4.1）：不引 tree-sitter（C 扩展依赖面扩张 + wheel 平台矩阵
+    爆炸）；aiproof 96% FP 教训=精度瓶颈在门控不在解析器 → 三信号与 Python 侧
+    等强（调用名×prompt 键/长度门槛 AND），无 AST 的精度缺口由 _is_prompt_like
+    统一门控 + TN 探针锁死。
+
+    词法扫描契约（确定性、fail-soft、逐字节可复现）：
+    - 注释（// 行 + /* */ 块）与字符串字面量整体跳过（避免把注释里的示例
+      prompt 当代码信号；字符串内部的调用形文本不触发）
+    - 信号 A：`name(` 末段名 ∈ _PROMPT_CALL_NAMES 的调用 → 括号平衡范围内
+      收集字符串/模板字面量（位置实参 + `key:` 属性键 ∈ _PROMPT_KEYS）
+    - 信号 C：`const/let/var NAME = <字面量>` 且 NAME prompt 命名 → 抽字面量
+    - 模板字面量（backtick）：静态段直接抽；含 ${...} 动态段 → 整段跳过计数
+      （与 Python f-string 同纪律：诚实跳过不猜）
+    - 无 TS 语法合法性检查（词法扫描对语法错误天然 fail-soft，不 crash）
+    """
+    i, n = 0, len(source_text)
+
+    def _line_at(pos: int) -> int:
+        return source_text.count("\n", 0, pos) + 1
+
+    def _add(text: str, origin: str, pos: int) -> None:
+        if not _is_prompt_like(text):
+            return
+        if text in seen:
+            return
+        seen.add(text)
+        counter[0] += 1
+        result.prompts.append(
+            InlinePrompt(
+                template_id=f"{source_name}:{_line_at(pos)}#{counter[0]}",
+                text=text,
+                source=source_name,
+                line=_line_at(pos),
+                origin=origin,
+                index=counter[0],
+            )
+        )
+
+    def _scan_string(i: int, quote: str) -> tuple[str, int]:
+        """从引号后扫描到匹配引号，返回 (内容, 结束位置)。处理 \\ 转义。"""
+        buf: list[str] = []
+        while i < n:
+            ch = source_text[i]
+            if ch == "\\" and i + 1 < n:
+                buf.append(ch)
+                buf.append(source_text[i + 1])
+                i += 2
+                continue
+            if ch == quote:
+                return "".join(buf), i + 1
+            if ch == "\n" and quote != "`":
+                # 非模板字符串跨行=源码本身异常，fail-soft 截断
+                return "".join(buf), i + 1
+            buf.append(ch)
+            i += 1
+        return "".join(buf), i
+
+    def _scan_template(i: int) -> tuple[str | None, int]:
+        """扫描 backtick 模板字面量（i 指向起始反引号）。
+        返回 (静态文本 或 None=含动态段, 结束位置)。
+
+        嵌套模板（`${`...`}` 内嵌 backtick）按层跟踪；任何 ${ 出现即整段动态。
+        """
+        i += 1  # 跳过起始反引号
+        buf: list[str] = []
+        dynamic = False
+        while i < n:
+            ch = source_text[i]
+            if ch == "\\" and i + 1 < n:
+                buf.append(ch)
+                buf.append(source_text[i + 1])
+                i += 2
+                continue
+            if ch == "`":
+                text = "".join(buf)
+                return (None if dynamic else text), i + 1
+            if ch == "$" and i + 1 < n and source_text[i + 1] == "{":
+                dynamic = True
+                # 跳过配对的 }（含嵌套 {} 与内嵌模板）
+                depth = 1
+                i += 2
+                while i < n and depth > 0:
+                    c2 = source_text[i]
+                    if c2 == "`":
+                        _, i = _scan_template(i)
+                        continue
+                    if c2 == "'":
+                        _, i = _scan_string(i, "'")
+                        continue
+                    if c2 == '"':
+                        _, i = _scan_string(i, '"')
+                        continue
+                    if c2 == "{":
+                        depth += 1
+                    elif c2 == "}":
+                        depth -= 1
+                    i += 1
+                continue
+            buf.append(ch)
+            i += 1
+        return (None if dynamic else "".join(buf)), i
+
+    def _read_call_args(i: int) -> int:
+        """从 `(` 后开始，括号平衡扫描到匹配的 `)`，沿途抽取字符串。返回 ) 后位置。"""
+        depth = 1
+        # last_key=紧邻当前值的键（字符串键或标识符键）；None=位置实参。
+        # 与 Python 侧等强门控：位置实参直接抽（Python 侧位置实参同语义）；
+        # 属性值仅当键 ∈ _PROMPT_KEYS 才抽（防 model:/metadata: 等长串误报）。
+        last_key: str | None = None
+        while i < n and depth > 0:
+            ch = source_text[i]
+            if ch in ("'", '"'):
+                s, i = _scan_string(i + 1, ch)
+                # 字符串后面跟 ':' → 它是对象字面量的键
+                j = i
+                while j < n and source_text[j] in " \t":
+                    j += 1
+                if j < n and source_text[j] == ":":
+                    last_key = s
+                    i = j + 1
+                    continue
+                if last_key is None or last_key in _PROMPT_KEYS:
+                    origin = f"call:{_call_name}:{last_key}" if last_key else f"call:{_call_name}"
+                    _add(s, origin, i)
+                last_key = None
+                continue
+            if ch == "`":
+                text, i = _scan_template(i)
+                if text is not None:
+                    if last_key is None or last_key in _PROMPT_KEYS:
+                        origin = f"call:{_call_name}:{last_key}" if last_key else f"call:{_call_name}"
+                        _add(text, origin, i)
+                else:
+                    result.dynamic_skipped += 1
+                last_key = None
+                continue
+            if ch == "(":
+                depth += 1
+                i += 1
+                continue
+            if ch == ")":
+                depth -= 1
+                if depth == 0:
+                    return i + 1
+                i += 1
+                continue
+            if ch.isalpha() or ch == "_" or ch == "$":
+                j = i
+                while j < n and (source_text[j].isalnum() or source_text[j] in "_$"):
+                    j += 1
+                word = source_text[i:j]
+                # 词后跟 '(' → 嵌套调用，括号平衡跳整个参数区（不深入：
+                # 嵌套调用自身若属 prompt 调用名，由外层顶层扫描另计——
+                # 词法扫描不重复计数，保守不深入=少报不假报）
+                k = j
+                while k < n and source_text[k] in " \t":
+                    k += 1
+                if k < n and source_text[k] == "(":
+                    i = _skip_call_args(k)
+                    continue
+                # 词后跟 ':' → 对象字面量的标识符键（content: `...`）
+                if k < n and source_text[k] == ":":
+                    last_key = word
+                    i = k + 1
+                    continue
+                last_key = None
+                i = j
+                continue
+            i += 1
+        return i
+
+    def _skip_call_args(i: int) -> int:
+        """从 `(` 位置整体跳过配对的参数区（不抽取），返回 ) 后位置。"""
+        depth = 0
+        while i < n:
+            ch = source_text[i]
+            if ch in ("'", '"'):
+                _, i = _scan_string(i + 1, ch)
+                continue
+            if ch == "`":
+                _, i = _scan_template(i)
+                continue
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    return i + 1
+            i += 1
+        return i
+
+    _call_name = ""  # 由外层作用域在调用点赋值
+
+    # 顶层顺序扫描：识别 `ident(` 与 `const NAME =`
+    while i < n:
+        ch = source_text[i]
+        if ch == "/" and i + 1 < n:
+            if source_text[i + 1] == "/":
+                j = source_text.find("\n", i)
+                i = n if j < 0 else j  # 保留 \n 让主循环继续
+                continue
+            if source_text[i + 1] == "*":
+                j = source_text.find("*/", i + 2)
+                i = n if j < 0 else j + 2
+                continue
+        if ch in ("'", '"'):
+            # 顶层裸字符串（无信号上下文）→ 跳过不抽
+            _, i = _scan_string(i + 1, ch)
+            continue
+        if ch == "`":
+            _, i = _scan_template(i)
+            continue
+        if ch.isalpha() or ch == "_" or ch == "$":
+            j = i
+            while j < n and (source_text[j].isalnum() or source_text[j] in "_$"):
+                j += 1
+            word = source_text[i:j]
+            k = j
+            while k < n and source_text[k] in " \t":
+                k += 1
+            if k < n and source_text[k] == "(":
+                # 调用点：末段名匹配 → 抽参数；否则整体跳过参数区
+                if word in _PROMPT_CALL_NAMES:
+                    _call_name = word
+                    i = _read_call_args(k + 1)
+                else:
+                    i = _skip_call_args(k)
+                continue
+            if k < n and source_text[k] == "=":
+                # 赋值点：prompt 命名变量 → 抽右侧字面量
+                if _is_prompt_named(word):
+                    m = k + 1
+                    while m < n and source_text[m] in " \t":
+                        m += 1
+                    if m < n and source_text[m] in ("'", '"'):
+                        s, m2 = _scan_string(m + 1, source_text[m])
+                        _add(s, f"var:{word}", m)
+                        i = m2
+                        continue
+                    if m < n and source_text[m] == "`":
+                        text, m2 = _scan_template(m)
+                        if text is not None:
+                            _add(text, f"var:{word}", m)
+                        else:
+                            result.dynamic_skipped += 1
+                        i = m2
+                        continue
+                # 非 prompt 变量 / prompt 变量的非字面量 RHS：从 `=` 后继续
+                # 顶层扫描（RHS 里的 SDK 调用/字面量仍按信号规则判定，不整行吞——
+                # `const r = client.chat("...")` 是 TS 最高频形态，跳行尾会漏掉调用）
+                i = k + 1
+                continue
+            i = j
+            continue
+        i += 1
+
+
 def extract_inline_prompts(source_text: str, source_name: str) -> InlineExtraction:
-    """从 Python 源码文本抽取内嵌 prompt（确定性、纯 stdlib、fail-soft）。"""
+    """从源码文本抽取内嵌 prompt（确定性、纯 stdlib、fail-soft）。
+
+    语言路由：`.py` 走 stdlib `ast`（精确 AST）；`.ts`/`.tsx` 走词法扫描
+    （R231-P1-15b，不引 tree-sitter——设计对抗见 `_ts_extract` 文档）。
+    其他后缀按 Python 语法解析（保持旧行为：调用方按发现面传入，fail-soft）。
+    """
+    if source_name.endswith((".ts", ".tsx")):
+        result = InlineExtraction(source=source_name)
+        _ts_extract(source_text, source_name, set(), [0], result)
+        return result
+
     result = InlineExtraction(source=source_name)
     try:
         tree = ast.parse(source_text)

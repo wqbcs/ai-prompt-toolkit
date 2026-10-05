@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.22-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6184%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.23-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6242%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40113probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-265-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -135,6 +135,14 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 
 > 定位澄清：本工具做 **CI 门禁层**（可复现裁决）；运行时防护（LLM Guard 类）、
 > LLM 评估（promptfoo 类）互补不互替。MCP 检测面见下方"适用边界"。
+
+### 与 promptfoo 双轨共存（PR 静态层 + eval 统计层）
+
+组合模式：`prompt-cli lint --gate` 做 **PR 必跑**的确定性静态门禁（<100ms/文件，零 token），
+promptfoo eval 做 **PR 后/nightly** 的行为评估（采样层，不阻塞合并——方差层做门禁会制造
+统计误红）。检测面不重叠：静态层挡结构缺陷（硬编码凭据/声明矛盾/缓存不友好），eval 层挡
+语义行为（越狱成功/质量漂移）。可直接套用的双轨 workflow + 本地开发循环 +
+与 promptfoo code-scans 的区别表见 **[docs/promptfoo-coexistence.md](docs/promptfoo-coexistence.md)**。
 
 ### MCP 检测适用边界（诚实声明）
 
