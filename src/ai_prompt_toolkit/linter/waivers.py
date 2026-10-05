@@ -60,6 +60,78 @@ def parse_waivers(text: str) -> list[str]:
     return sorted(ids)
 
 
+# R232-P3-02: 属性测试(test_r232_properties 性质2/4)发现的真实耦合 — waiver 声明
+# 文本自身被内容规则当 prompt 内容计数(P005长度/P011填充词/P012重复指令等),
+# 导致"写 waiver 的动作"翻转无关规则裁决: 同一 prompt 加不加豁免行, 长度类
+# finding 数量不同 → waiver 不幂等、不正交 → 门禁结果依赖豁免声明的写法。
+# 根治: 声明是工具自身元数据(与 ESLint disable comment 同构), 内容分析前整行剥离。
+#
+# 语义(解析器与剥离器同一触发面 — 解析器看见的声明, 内容规则一律看不见):
+# 1. 独立行注释声明(整行即 `<!-- promptlint:ignore ... -->`, 可跨行): 整段移除
+# 2. 行含 promptlint:ignore 的其余形态(# / -- 行注释与裸行): 整行移除
+# 3. frontmatter `lint-ignore: [...]` 所在行: 整行移除
+# 行移除对"同一声明重复 N 次"严格不变(裁决是 (内容, 豁免规则集) 的函数,
+# 与声明书写次数无关)。无声明时原样返回(干净样本零行为改变)。
+# 局限(已文档化): 内嵌在内容行中间的注释声明, 其行首行尾的内容保留、注释段
+# 所在行整行移除 — 与解析器同面, 仅该形态的"行内其余内容"一并消失。
+#
+# 实现: O(n) 线性扫描(str.find + 行过滤)。首版三条 regex 被 ReDoS 增量审计
+# 判 O(n^4)(双否定前瞻 + 跨行 [^\n]* 重叠), 重写后行为与首版等价(属性测试
+# 性质2/4 为锚), 且无脆弱 pattern 可批准 — 根除优于登记。
+# 行级 frontmatter 形态检查(单行内, 排除类唯一匹配 → 线性):
+_FRONTMATTER_LINE_RE = re.compile(r"lint-ignore\s*:\s*\[[^\]\n]*\]")
+
+
+def _strip_waiver_html_comments(text: str) -> str:
+    """O(n) 线性扫描移除 `<!-- ... promptlint:ignore ... -->` 段(可跨行)。
+
+    消费段前紧邻的空白+换行(段独占一行时不留空行); 保留段前同行的非空白
+    内容与段后行尾换行。不含 promptlint:ignore 的注释原样保留。
+    """
+    out: list[str] = []
+    pos = 0
+    n = len(text)
+    while True:
+        start = text.find("<!--", pos)
+        if start == -1:
+            out.append(text[pos:])
+            break
+        end = text.find("-->", start + 4)
+        if end == -1:
+            out.append(text[pos:])
+            break
+        end += 3
+        if "promptlint:ignore" not in text[start:end]:
+            out.append(text[pos:end])
+            pos = end
+            continue
+        pre = start
+        while pre > 0 and text[pre - 1] in " \t":
+            pre -= 1
+        if pre > 0 and text[pre - 1] == "\n":
+            pre -= 1
+        out.append(text[pos:pre])
+        cut = end
+        while cut < n and text[cut] in " \t":
+            cut += 1
+        pos = cut
+    return "".join(out)
+
+
+def strip_waiver_declarations(text: str) -> str:
+    """剥离全部 waiver 声明行, 供内容规则分析。
+
+    行删除语义: 消费"引入该行的分隔换行符 + 声明内容"(保留声明行自身行尾换行),
+    删除后其余各行内容不变、不残留空行。因 Finding.location 为文件级(无行级
+    语义), 多行注释导致的行数变化无副作用。
+    """
+    if "promptlint:ignore" not in text and "lint-ignore" not in text:
+        return text  # 干净样本零行为改变(快路径)
+    out = _strip_waiver_html_comments(text)
+    kept = [ln for ln in out.split("\n") if "promptlint:ignore" not in ln and not _FRONTMATTER_LINE_RE.search(ln)]
+    return "\n".join(kept)
+
+
 def parse_waiver_declarations(text: str, today: str | None = None) -> list[dict[str, str]]:
     """R225-P2-09: 提取全部 waiver 声明的审计视图(含 owner/到期/规则有效性)。
 

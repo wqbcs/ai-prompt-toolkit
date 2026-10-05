@@ -2,6 +2,28 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.24] - 2026-10-05
+
+### Added (R232: P3-02 属性测试 + waiver 正交性根治)
+
+- **P3-02 属性测试（hypothesis，13 property）**：lint 核心性质从抽查变性质锁死——
+  复现性（同输入两次裁决逐位一致，楔子核心）/waiver 幂等（重复 N 次==1 次）/
+  waiver 压制/waiver 正交/severity 五级全序/SARIF 结构+level 映射+ruleId 一致性/
+  baseline 自反+对称/计数口径自洽/rule_id 形态/异常输入不崩。
+  `derandomize=True` 每轮跑同样例子，CI 可复现失败可回放；`tests/test_r232_properties.py`。
+- **属性测试抓出的真实耦合根治：waiver 声明与内容规则正交化**。此前 waiver 声明
+  文本自身被内容规则计数（P005 长度/P011 填充词/P012 重复指令等）——同一 prompt
+  加不加豁免行，长度类 finding 数量不同，门禁结果依赖豁免声明写法。
+  修复：声明是工具自身元数据（与 ESLint disable comment 同构），内容规则分析前
+  整行剥离（`waivers.strip_waiver_declarations`，O(n) 线性扫描——首版三条 regex
+  被 ReDoS 增量审计判 O(n^4)，重写根除而非批准）。解析器与剥离器同一触发面。
+- **hypothesis>=6.82** 进 [dev]（dev 工具链，不进 core 运行时）。
+
+### 口径
+
+- 测试 6242→6255（+13 property）；规则 265/类别 25 不变；基线 627 不变
+  （剥离不改 26 模板 findings，增量门禁 NEW=0 语义保持）。
+
 ## [v67.34.23] - 2026-10-04
 
 ### Added (R231: TS 内嵌抽取 + CLI 真子进程 e2e + OWASP 2026 子面探针)

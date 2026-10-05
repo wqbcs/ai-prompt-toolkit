@@ -13513,6 +13513,12 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/waivers.py\u0000lint-ignore\\s*:\\s*\\[[^\\]\\n]*\\]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }

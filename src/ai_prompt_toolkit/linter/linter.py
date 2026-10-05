@@ -146,7 +146,15 @@ class PromptLinter:
             if lint_config.exclude_rules:
                 rule_ids = rule_ids - set(lint_config.exclude_rules)
 
-        all_findings = run_all_checks(text)
+        # R232-P3-02: waiver 声明是工具元数据, 内容规则分析前剥离 — 裁决成为
+        # (内容, 豁免规则集) 的纯函数, 与声明书写方式/次数无关(属性测试性质2/4)。
+        # 剥离在 waiver 解析之后: 解析器与剥离器同一触发面, 解析器看见的声明,
+        # 内容规则一律看不见。FP/漏检率基线走 _CHECKERS_EXTENDED 直调, 不受影响。
+        from ai_prompt_toolkit.linter.waivers import strip_waiver_declarations
+
+        analysis_text = strip_waiver_declarations(text)
+
+        all_findings = run_all_checks(analysis_text)
         findings = [f for f in all_findings if f.rule_id in rule_ids]
 
         # R213-P0-2: waiver — 文件级显式豁免(解析失败/无声明时零行为改变)
