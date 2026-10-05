@@ -43,6 +43,11 @@
 - **doctor --json 协议通道污染**（R226 同纪律）：`doctor --json` 的
   stdout 混入进度行"正在检查Provider健康状态..."破坏机器解析。进度提示
   在 `--json` 时走 stderr，stdout 整段纯 JSON
+- **CI 基建解耦（e7fea74）**：`Upload coverage`（codecov/codecov-action@v4，
+  第三方可观测性上传步，本仓未配置 token）设为 `continue-on-error:true`。
+  该步只做上传、覆盖率度量已在 `Run tests`（`pytest --cov`）完成；单步
+  flake 曾经矩阵 fail-fast 连带 cancel 3.10/3.11 + skip prompt-lint/
+  quality-gate，把观测步抖动放大成整链红而楔子门禁全绿。修复后 CI 全绿
 
 ## [v67.34.22] - 2026-10-04
 
