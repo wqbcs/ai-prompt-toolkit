@@ -78,6 +78,12 @@ jobs:
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'
+        continue-on-error: true  # R231: codecov 上传=第三方可观测性, 非质量门禁。
+        # 覆盖率度量已在"Run tests"(pytest --cov)完成并通过; 该步仅把 coverage.xml
+        # 上传到 codecov.io(本仓未配置 token/codecov.io, 私有仓)。R231 实证: 同配置
+        # 同 action 在 R230 success/R231 failure = 服务端 flake, 且会连带 cancel 3.10/
+        # 3.11 矩阵 + skip prompt-lint/quality-gate(needs:test), 把一个观测步抖动放大
+        # 成整链红。质量门禁(tests/ruff/mypy/双基线/docs)各自独立判绿, 不依赖此步。
         uses: codecov/codecov-action@v4
         with:
           file: coverage.xml
