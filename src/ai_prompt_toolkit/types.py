@@ -163,7 +163,11 @@ class BaseReport:
     findings: list[Finding] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
+        # R233-P2-02: schema 版本化(与 baseline/LintResult 同值同源, 延迟导入防循环)
+        from ai_prompt_toolkit.linter.baseline import SCHEMA_VERSION
+
         return {
+            "schema_version": SCHEMA_VERSION,
             "timestamp": self.timestamp,
             "template_id": self.template_id,
             "status": self.status.value,

@@ -29,7 +29,9 @@
 14. SARIF 输出合法性(lint --format sarif → 结构断言 version=2.1.0)
 15. ReDoS 审计增量步(audit_redos.py, P3-05: 新 pattern 脆弱即红; 存量经
     --approve 批准入 baselines/redos-audit.json 缓存; redoctor 是 dev 依赖)
-16. 双基线时间序列追加(append_baseline_history.py, R230-P2-04: 全链通过后的
+16. 缺口报告棘轮(check_gap_ratchet.py, P1-10: 平均缺口率不得比基线差,
+    只收紧不放松; 基线=baselines/gap-baseline.json, 降基线走独立 commit+理由)
+17. 双基线时间序列追加(append_baseline_history.py, R230-P2-04: 全链通过后的
     收口快照进 docs/baseline_history.jsonl, append-only)
 
 用法:
@@ -132,6 +134,8 @@ def build_steps() -> list[Step]:
             allow_lint_rc=True,
         ),
         Step("ReDoS 审计(增量)", [PY, "scripts/audit_redos.py"]),
+        # P1-10: 缺口报告棘轮(平均缺口率不得比基线差; 程序化调用同一真源, 无子进程)
+        Step("缺口报告棘轮", [PY, "scripts/check_gap_ratchet.py"]),
         Step("双基线时间序列追加", [PY, "scripts/append_baseline_history.py"]),
     ]
 

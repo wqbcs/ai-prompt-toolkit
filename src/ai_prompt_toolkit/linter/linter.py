@@ -64,7 +64,11 @@ class LintResult:
         return round(max(0.0, 100.0 - penalty), 1)
 
     def to_dict(self) -> dict[str, Any]:
+        # R233-P2-02: schema 版本化(单点常量, 与 baseline/types 同值同源)
+        from ai_prompt_toolkit.linter.baseline import SCHEMA_VERSION
+
         return {
+            "schema_version": SCHEMA_VERSION,
             "template_id": self.template_id,
             "findings": [f.to_dict() for f in self.findings],
             "rule_count": self.rule_count,

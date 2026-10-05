@@ -82,6 +82,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_miss_rate.py --fail-above 0.05
 
+      # R233-P1-10: 缺口报告棘轮(平均缺口率不得比基线差, 只收紧不放松;
+      # 程序化调用 gap_report.aggregate 同一真源, 基线=baselines/gap-baseline.json)
+      - name: "Gap report ratchet (defense-declaration coverage)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_gap_ratchet.py
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         continue-on-error: true  # R231: codecov 上传=第三方可观测性, 非质量门禁。

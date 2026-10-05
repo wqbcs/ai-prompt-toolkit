@@ -2,6 +2,43 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.26] - 2026-10-05
+
+### Added (R233: 测绘先行 + 四机制落地, 调研增量见 R233_改进方案与开源调研.md)
+
+- **P4-01 分层依赖测绘（只产文档不动代码）**：`docs/planning/14_分层依赖测绘.md`——
+  ast 扫描全 src import 边, 四层归属映射 + G1-G7 逐条判定（G1 linter 零 click/
+  零 CLI ✅, G3 硬注册单点 ✅, G7 命令间零耦合 ✅）+ 违规边 7 条（全为"io 职责
+  渗入 rules 包"同族: yaml×5/LSP 位置/tiktoken 延迟）→ P4-02/P4-03/P4-10 改造
+  点单点化, 检查器输入就位。
+- **P1-10 缺口报告 CI 棘轮**：`check_gap_ratchet.py`（程序化调用 aggregate 同一
+  真源, 无子进程）——平均缺口率（基线 0.8577, 26 模板）不得比基线差, 只收紧
+  不放松; release_gate 第 16 步 + CI test 作业步; 红绿两态验证。
+- **P2-02 JSON schema 版本化**：`SCHEMA_VERSION=1` 单点常量; LintResult/
+  BaselineSnapshot/BaseReport 三输出带 schema_version; 读取端前向兼容（未知字段
+  忽略 + 高版本 stderr warning 不阻断）+ 旧数据向后兼容; SARIF 锁 2.1.0 不含
+  自有版本字段（官方 validator 面）。
+- **P2-01 规则 deprecation 周期**（5 年版本兼容不变量的机制落地）：LintRule 加
+  `status/deprecated_since/removal_version`; deprecate 不改裁决（finding 照常出）,
+  只加 stderr 迁移提示（协议面 stdout 神圣）; gen_rules_doc ⚠弃用标记; 首个用例=
+  P017（与 P023 语义重叠, 无基线命中, 无 golden 引用; 诊断留痕: R216 CJK 归一化
+  使 P017 泛化触发面在全链中收窄, 恰强化弃用理由）, v67.36.0 计划摘除。
+
+### Changed
+
+- 调研增量（互联网实搜留痕 R233 §2）：buried-injections 基准（FP 预算坐标系
+  → P5-11 验收升级双列 operating point; 97 良性 tool output + 629 攻击静态面
+  → P2-23 语料扩容登记）; PG2 OOD 22.8% 实证（不引 ML 检测器决策再佐证）;
+  prompt 版本化四层指南（P2-02+baseline diff 对齐最小路线, 平台化入反清单）。
+- 08 增量信号区 +1（S×2/M×1）; 02 总板 P4-01/P1-10/P2-01/P2-02 状态列 + P2-23
+  登记 + P5-11 验收升级; 07 竞品面 promptlint 2026-01 feature 面更新（A–F 分/
+  autofix/.promptlintrc 对标 → P2-03 正当性再确认）。
+
+### 口径
+
+- 测试 6255→6268（+13）; 规则 265（P017 状态 deprecated, 数量不变）;
+  基线 627/双基线 0.90%/0.00%/缺口 0.8577 全不变; 门禁链 16→17 步。
+
 ## [v67.34.25] - 2026-10-05
 
 ### Added (R232: P3-09 linter 覆盖率棘轮)

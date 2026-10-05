@@ -535,6 +535,25 @@ def lint(
                         loc = ""
                     click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
 
+        # R233-P2-01: deprecation 迁移提示 — stderr 面(协议/机器通道 stdout 神圣,
+        # --json/--stdio/ci_mode 一律不出现此提示); deprecate 不改裁决, 只加信号
+        if not ci_mode:
+            from ai_prompt_toolkit.linter.rules import get_rule
+
+            # R233: 循环变量避用 r — 本函数后文 r 绑定 dict(规则搜索/回归),
+            # 复用 r 会改变 mypy 首次类型推断致 6 处既有误报(R196 同族问题)
+            _deprecated_seen: set[str] = set()
+            for lint_res in all_results:
+                for f in lint_res.findings:
+                    _rule = get_rule(f.rule_id)
+                    if _rule and _rule.status == "deprecated" and f.rule_id not in _deprecated_seen:
+                        _deprecated_seen.add(f.rule_id)
+                        click.echo(
+                            f"⚠ [{f.rule_id}] 已弃用(v{_rule.deprecated_since} 起, 计划 v{_rule.removal_version} 摘除)"
+                            f" — 裁决不变, 请按 {f.rule_id} 修复建议迁移",
+                            err=True,
+                        )
+
     click.echo(
         f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings} | 质量分: {avg_quality:.1f}"
     )

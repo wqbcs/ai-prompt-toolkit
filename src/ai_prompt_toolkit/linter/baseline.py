@@ -15,6 +15,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+# R233-P2-02: 自有 JSON 输出 schema 版本(SARIF 锁 2.1.0 不动, 版本化只加自有面)。
+# 前向兼容策略(读取端): 未知字段忽略 + schema_version 高于当前时 warning(stderr,
+# 不阻断)——新字段=新能力, 旧读取端保守消费, 不因字段新增而崩。
+SCHEMA_VERSION = 1
+
 
 @dataclass
 class BaselineSnapshot:
@@ -26,6 +31,7 @@ class BaselineSnapshot:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema_version": SCHEMA_VERSION,
             "created_at": self.created_at,
             "template_id": self.template_id,
             "total_findings": self.total_findings,
@@ -35,6 +41,16 @@ class BaselineSnapshot:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> BaselineSnapshot:
+        # P2-02: 前向兼容 — 未知字段忽略; schema_version>当前 warning 不阻断
+        v = data.get("schema_version")
+        if isinstance(v, int) and v > SCHEMA_VERSION:
+            import sys
+
+            print(
+                f"⚠ baseline schema_version={v} 高于当前读取端 v{SCHEMA_VERSION}"
+                " — 未知字段将忽略(前向兼容), 建议升级工具",
+                file=sys.stderr,
+            )
         return cls(
             created_at=data.get("created_at", ""),
             template_id=data.get("template_id", ""),

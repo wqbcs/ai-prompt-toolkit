@@ -63,6 +63,10 @@ def build_doc() -> str:
         sev = r.severity.value if hasattr(r.severity, "value") else str(r.severity)
         owasp = ", ".join(r.owasp_refs) if r.owasp_refs else "-"
         fixable = "✂" if r.rule_id in AUTO_FIXABLE_RULES else ""
+        # R233-P2-01: deprecation 标记(裁决不变, 文档加迁移信号)
+        name = r.name
+        if getattr(r, "status", "active") == "deprecated":
+            name = f"{name} ⚠弃用({getattr(r, 'removal_version', '')} 摘除)"
         desc = (r.description or "").replace("|", "\\|").replace("\n", " ")
         remediation = (r.remediation or "").replace("|", "\\|").replace("\n", " ")
         lines.append(f"| {r.rule_id} | {r.name} | {sev} | {fixable} | {owasp} | {desc} | {remediation} |")

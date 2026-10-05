@@ -23,6 +23,12 @@ class LintRule:
     remediation_en: str = ""
     family: str = ""
     owasp_refs: list[str] = field(default_factory=list)
+    # R233-P2-01: 规则 deprecation 周期(5 年版本兼容不变量的机制落地):
+    # active → deprecated(照常出 finding + stderr 提示, warn 2 版) → removed(摘除,
+    # CHANGELOG 记录)。deprecate 不改裁决语义(门禁结果不变), 只加迁移信号面。
+    status: str = "active"  # active | deprecated | removed
+    deprecated_since: str = ""  # 首次标记 deprecation 的版本
+    removal_version: str = ""  # 计划摘除版本
 
     def to_dict(self, lang: str = "zh") -> dict[str, Any]:
         desc = self.description if lang == "zh" else (self.description_en or self.description)
@@ -39,6 +45,12 @@ class LintRule:
             result["family"] = self.family
         if self.owasp_refs:
             result["owasp_refs"] = self.owasp_refs
+        if self.status != "active":
+            result["status"] = self.status
+            if self.deprecated_since:
+                result["deprecated_since"] = self.deprecated_since
+            if self.removal_version:
+                result["removal_version"] = self.removal_version
         return result
 
 
@@ -233,6 +245,14 @@ _ALL_RULES: list[LintRule] = [
         description_en="Prompt contains contradictory instructions",
         remediation_en="Review and unify contradictory instructions, ensure logical consistency",
         family="consistency",
+        # R233-P2-01: 首个 deprecation 用例。选择标准(对抗审查 §4.4): 无基线命中+
+        # 无 golden 探针引用(不碰双基线); 与 P023 指令冲突语义重叠(本文件 1699 行
+        # 已有 P017×P023 同触降级逻辑——P023 是更精确的正负向同对象检测, P017 是
+        # 泛化正负词面, 长期面归 P023)。deprecate 不改裁决: finding 照常出,
+        # 只加 stderr 迁移提示(warn 2 版后 remove, 周期进 CHANGELOG)。
+        status="deprecated",
+        deprecated_since="67.34.26",
+        removal_version="67.36.0",
     ),
     LintRule(
         "P018",
