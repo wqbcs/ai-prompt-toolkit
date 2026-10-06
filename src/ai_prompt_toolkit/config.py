@@ -77,16 +77,16 @@ class PromptCliConfig:
 
 
 def _find_project_config(start_dir: Path | None = None) -> Path | None:
+    # P4-04: 向上查找锚定逻辑复用 linter/project_config 单一真源(旧 magic-20
+    # 上限改为 git 根锚定 — 与 promptlint.toml 发现同口径, 深度无上限且一致)
+    from ai_prompt_toolkit.linter.project_config import _ancestors_up_to_root
+
     current = (start_dir or Path.cwd()).resolve()
-    for _ in range(20):
+    for cur in _ancestors_up_to_root(current):
         for name in _PROJECT_CONFIG_NAMES:
-            candidate = current / name
+            candidate = cur / name
             if candidate.exists():
                 return candidate
-        parent = current.parent
-        if parent == current:
-            break
-        current = parent
     return None
 
 

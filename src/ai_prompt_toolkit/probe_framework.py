@@ -1096,6 +1096,10 @@ OWASP_2025_TO_2026: dict[str, str] = {
     "LLM10": "LLM06",
 }
 
+# R236-P2-19: OWASP 标准名单一真源 — 原 3 处报告面硬编码 "2025"(R228 已迁 2026 漏改)。
+# 年度更新(R5 触发器)只改本常量。
+OWASP_LLM_TOP_10_2026_LABEL = "OWASP LLM Top 10 2026"
+
 OWASP_LLM_TOP_10_2026: dict[str, dict[str, str]] = {
     "LLM01": {
         "name": "Prompt Injection",
@@ -1257,7 +1261,7 @@ class ProbeRunReport:
         else:
             risk_level = "LOW"
         return {
-            "framework": "OWASP LLM Top 10 2025",
+            "framework": OWASP_LLM_TOP_10_2026_LABEL,
             "template_id": self.template_id,
             "risk_score": round(self.risk_score, 4),
             "risk_level": risk_level,

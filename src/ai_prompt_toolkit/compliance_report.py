@@ -1,7 +1,7 @@
 """华为云合规认证报告生成器
 
 生成符合华为云安全合规标准的Prompt工程认证报告，覆盖:
-- OWASP LLM Top 10 2025合规检查
+- OWASP LLM Top 10 2026合规检查
 - 等保2.0三级要求映射
 - 华为云安全基线检查
 - 数据安全法/个人信息保护法合规
@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
+
+from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2026_LABEL  # R236-P2-19: OWASP 标准名单一真源
 
 
 @dataclass
@@ -82,7 +84,7 @@ class ComplianceReport:
             f"| 警告 | {self.warning_items} |",
             f"| 通过率 | {round(self.passed_items / max(self.total_items, 1) * 100, 1)}% |",
             "",
-            "## OWASP LLM Top 10 2025 合规",
+            f"## {OWASP_LLM_TOP_10_2026_LABEL} 合规",
             "",
         ]
         for key, value in self.owasp_summary.items():

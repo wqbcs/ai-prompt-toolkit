@@ -134,10 +134,13 @@ class TestSarifRule:
 
 class TestSarifRun:
     def test_minimal_run(self):
+        from ai_prompt_toolkit import __version__
+
         run = SarifRun()
         d = run.to_dict()
         assert d["tool"]["driver"]["name"] == "ai-prompt-toolkit"
-        assert d["tool"]["driver"]["version"] == "42.0.0"
+        # R236-P2-19: 版本默认=包版本单一真源(原锚定漂移值 42.0.0 — 该断言把 bug 固化成契约)
+        assert d["tool"]["driver"]["version"] == __version__
         assert d["results"] == []
         assert d["tool"]["driver"]["rules"] == []
 

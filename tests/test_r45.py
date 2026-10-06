@@ -347,7 +347,10 @@ class TestMCPProbeTools:
 
         result = _tool_probe_owasp_report({"text": "You are a helpful assistant."})
         assert "framework" in result
-        assert result["framework"] == "OWASP LLM Top 10 2025"
+        # R236-P2-19: 单一真源断言(原锚定陈旧 "2025" — R228 已迁 2026 但标签漏改)
+        from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2026_LABEL
+
+        assert result["framework"] == OWASP_LLM_TOP_10_2026_LABEL
         assert "owasp_findings" in result
         assert len(result["owasp_findings"]) == 10
 

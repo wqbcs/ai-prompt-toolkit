@@ -3,7 +3,7 @@
 参考:
 - prompt-armor (https://github.com/prompt-armor/prompt-armor): 5层防御, 91.7% F1, ~27ms
 - prismor (https://github.com/PrismorSec/prismor): Agent运行时防火墙
-- OWASP LLM Top 10 2025: LLM07 System Prompt Leakage
+- OWASP LLM Top 10 2026: LLM07 System Prompt Leakage
 
 核心能力:
 1. Unicode规范化: NFC + 零宽字符剥离 + 同形字检测

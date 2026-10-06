@@ -128,7 +128,8 @@ class SupplyChainDetector:
                     break
 
             for pattern in _EXTERNAL_LOAD_PATTERNS:
-                if pattern.search(line):
+                ext_m = pattern.search(line)
+                if ext_m:
                     matches.append(
                         SupplyChainMatch(
                             match_type="external_load",
@@ -154,7 +155,8 @@ class SupplyChainDetector:
                     )
 
             for pattern in _PROMPT_INJECTION_VIA_RESOURCE:
-                if pattern.search(line):
+                inj_m = pattern.search(line)
+                if inj_m:
                     matches.append(
                         SupplyChainMatch(
                             match_type="resource_injection",
@@ -167,7 +169,8 @@ class SupplyChainDetector:
                     break
 
             for pattern, desc, risk_level in _AI_ML_TOOLCHAIN_PATTERNS:
-                if pattern.search(line):
+                ml_m = pattern.search(line)
+                if ml_m:
                     matches.append(
                         SupplyChainMatch(
                             match_type="ai_ml_toolchain",

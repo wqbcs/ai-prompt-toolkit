@@ -25,8 +25,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit import __version__  # R236-P2-19: 版本单一真源(同 R174 先例)
+
 _SARIF_SCHEMA = "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
 _SARIF_VERSION = "2.1.0"
+# R236-P2-19: 仓库 URL 单一真源(H6 处置 — 原 5 处硬编码且 org 缺失=死链)
+REPO_URL = "https://github.com/wqbcs/ai-prompt-toolkit"
 
 
 @dataclass
@@ -119,8 +123,9 @@ class SarifRule:
 @dataclass
 class SarifRun:
     tool_name: str = "ai-prompt-toolkit"
-    tool_version: str = "42.0.0"
-    tool_info_uri: str = "https://github.com/ai-prompt-toolkit"
+    # R236-P2-19: 默认版本=包版本单一真源(原硬编码 42.0.0 漂移, R174 修 mcp_server 漏此簇)
+    tool_version: str = __version__
+    tool_info_uri: str = REPO_URL
     results: list[SarifResult] = field(default_factory=list)
     rules: list[SarifRule] = field(default_factory=list)
     invocation_time: str = ""
@@ -221,7 +226,7 @@ def lint_results_to_sarif(
     findings: list[dict[str, Any]],
     *,
     tool_name: str = "ai-prompt-toolkit",
-    tool_version: str = "42.0.0",
+    tool_version: str = __version__,
     target_uri: str = "",
 ) -> SarifReport:
     from ai_prompt_toolkit.types import parse_location
@@ -270,7 +275,7 @@ def scan_results_to_sarif(
     target_uri: str = "",
 ) -> SarifReport:
     report = SarifReport()
-    run = SarifRun(tool_name=tool_name, tool_version="42.0.0")
+    run = SarifRun(tool_name=tool_name, tool_version=__version__)
 
     seen_rules: set[str] = set()
     for f in findings:
@@ -309,7 +314,7 @@ def eval_results_to_sarif(
     target_uri: str = "",
 ) -> SarifReport:
     report = SarifReport()
-    run = SarifRun(tool_name="ai-prompt-toolkit-eval", tool_version="42.0.0")
+    run = SarifRun(tool_name="ai-prompt-toolkit-eval", tool_version=__version__)
 
     for item in eval_data:
         dimension = item.get("dimension", item.get("name", "UNKNOWN"))

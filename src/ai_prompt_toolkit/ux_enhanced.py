@@ -15,6 +15,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 
+from ai_prompt_toolkit.sarif_report import REPO_URL  # R236-P2-19: 仓库 URL 单一真源
+
 logger = logging.getLogger(__name__)
 
 
@@ -310,7 +312,7 @@ def get_error_recovery(error_type: str) -> ErrorRecovery:
             diagnosis="发生未预期的错误",
             recovery_steps=[
                 "查看详细日志: 设置 PROMPT_CLI_DEBUG=1",
-                "提交问题: https://github.com/ai-prompt-toolkit/issues",
+                "提交问题: " + REPO_URL + "/issues",
             ],
         ),
     )

@@ -25,7 +25,7 @@ def gap_report_cmd(target: str, output: str | None) -> None:
     """OWASP LLM Top 10 防御缺口报告 — 每文件×每风险的防御声明体检。
 
     度量防御声明/意图存在性(静态文本面), 非实际有效性; 运行时防护不在检测域。
-    复用 OWASP LLM Top 10 2025 风险定义与 Lint 规则映射, 产出可复现的缺口
+    复用 OWASP LLM Top 10 2026 风险定义与 Lint 规则映射, 产出可复现的缺口
     占比数字(社会证明面) — 参考 prompt-defense-audit 的公开缺口统计实践。
     """
     from ai_prompt_toolkit.gap_report import aggregate, format_markdown, write_report
@@ -90,7 +90,7 @@ def gap_report_cmd(target: str, output: str | None) -> None:
 def baseline_cmd(as_json: bool, fail_above_miss: float | None, fail_above_fp: float | None) -> None:
     """一条命令自证双基线 — 漏检(检测能力面) + 误报(噪音面)。
 
-    样本(60干净prompt + 113 golden攻击探针)随包分发, 任何机器 pip install
+    样本(60干净prompt + 150 golden攻击探针)随包分发, 任何机器 pip install
     后即可复现, 无需克隆仓库。确定性度量: 零LLM, 每次运行结果一致。
     """
     import json

@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit import __version__  # R236-P2-19: 报告页版本动态(同 R174 先例)
+
 
 @dataclass
 class PlaygroundTemplate:
@@ -88,7 +90,7 @@ textarea:focus{box-shadow:inset 0 0 0 1px var(--accent)}
 <body>
 <div class="toolbar">
   <h1>Prompt Playground</h1>
-  <span>AI Prompt Toolkit v42.0.0</span>
+  <span>AI Prompt Toolkit v{TOOL_VERSION}</span>
 </div>
 <div class="main">
   <div class="panel panel-left">
@@ -157,9 +159,11 @@ PetiteVue.createApp({
 
 
 def generate_playground_html(output_path: str | Path | None = None) -> str:
+    # R236-P2-19: 版本动态注入(原硬编码 v42.0.0 漂移; 同 R174 mcp_server 先例)
+    html = _PLAYGROUND_HTML.replace("{TOOL_VERSION}", __version__)
     if output_path:
-        Path(output_path).write_text(_PLAYGROUND_HTML, encoding="utf-8")
-    return _PLAYGROUND_HTML
+        Path(output_path).write_text(html, encoding="utf-8")
+    return html
 
 
 def extract_template_variables(template: str) -> list[str]:

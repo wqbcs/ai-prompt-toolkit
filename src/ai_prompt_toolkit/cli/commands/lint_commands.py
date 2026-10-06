@@ -170,6 +170,39 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     sys.exit(0)
 
 
+@main.command(name="explain")
+@click.argument("rule_id")
+@click.option("--json", "as_json", is_flag=True, help="以 JSON 输出(供工具链/脚本消费)")
+@click.option(
+    "--no-metrics",
+    is_flag=True,
+    help="跳过双基线实测(免 ~1.6s 基线运行, 仅渲染规则元信息)",
+)
+def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
+    """P2-10: 规则解释页 — 单规则详情(是什么/为何是问题/怎么修/OWASP 映射/探针覆盖/静默指引)。
+
+    数据全部来自项目内单一真源(规则注册表 / golden 探针 / 双基线实测 /
+    OWASP LLM Top 10 2026 映射), 渲染为纯函数, 离线可跑、零 LLM 成本 —
+    与产品"逐字节一致"楔子对齐。本命令顺带补 R235-P3-16 digest 里
+    `prompt-cli explain <规则ID>` 的悬空引用断链(此前该命令不存在)。
+    """
+    from ai_prompt_toolkit.linter.rule_explainer import (
+        format_explanation_markdown,
+        get_rule_explanation,
+    )
+
+    e = get_rule_explanation(rule_id, include_metrics=not no_metrics)
+    if e.get("error") == "rule_not_found":
+        click.echo(f"未找到规则: {e['rule_id']}", err=True)
+        click.echo("用法: prompt-cli explain <规则ID>   (规则ID形如 P001, 见 docs/rules.md)", err=True)
+        sys.exit(1)
+    if as_json:
+        click.echo(json.dumps(e, ensure_ascii=False, indent=2))
+    else:
+        click.echo(format_explanation_markdown(e))
+    sys.exit(0)
+
+
 @main.command()
 @click.option("-t", "-s", "--target", help="Lint目标(文件或目录) — --stdio 模式无需(协议内传text); -t 与 -s 同义")
 @click.option(

@@ -38,6 +38,7 @@ def _detect_template_type(text: str) -> str:
 
 def _generate_sarif(results: list, target: str) -> dict:
     from ai_prompt_toolkit.linter.rules import get_rule
+    from ai_prompt_toolkit.sarif_report import REPO_URL
 
     # R201: 显式dict标注 — 嵌套字典字面量推断为dict[str,Collection[str]], 下标报错
     sarif: dict[str, Any] = {
@@ -49,7 +50,7 @@ def _generate_sarif(results: list, target: str) -> dict:
                     "driver": {
                         "name": "ai-prompt-toolkit",
                         "version": __version__,
-                        "informationUri": "https://github.com/ai-prompt-toolkit",
+                        "informationUri": REPO_URL,
                         "rules": [],
                     }
                 },
@@ -497,7 +498,8 @@ def _doctor_gate(as_json: bool) -> None:
 
     退出码: 0=全绿 1=存在黄/红项
     """
-    from pathlib import Path as _GatePath
+    # P4-04: 项目内资产路径经 repo_relative 解析(仓库根锚定, 消除 cwd 依赖)
+    from ai_prompt_toolkit.linter.project_config import repo_relative as _repo
 
     checks: list[dict[str, object]] = []
 
@@ -508,7 +510,7 @@ def _doctor_gate(as_json: bool) -> None:
     from ai_prompt_toolkit import __version__
 
     pyproject_v = None
-    _pyproject = _GatePath("pyproject.toml")
+    _pyproject = _repo("pyproject.toml")
     if _pyproject.exists():
         import re as _re
 
@@ -526,7 +528,7 @@ def _doctor_gate(as_json: bool) -> None:
     add("规则注册表", "ok", f"{len(rules)} 条规则加载正常")
 
     # 3. 基线文件
-    baseline = _GatePath("baselines/templates-baseline.json")
+    baseline = _repo("baselines/templates-baseline.json")
     if baseline.exists():
         import json as _json
 
@@ -568,7 +570,7 @@ def _doctor_gate(as_json: bool) -> None:
         from ai_prompt_toolkit.cli_helpers import discover_templates
         from ai_prompt_toolkit.linter.waivers import parse_waivers
 
-        tpl_dir = _GatePath("src/ai_prompt_toolkit/templates")
+        tpl_dir = _repo("src/ai_prompt_toolkit/templates")
         if tpl_dir.exists():
             files = discover_templates(str(tpl_dir))
             waived_total = 0

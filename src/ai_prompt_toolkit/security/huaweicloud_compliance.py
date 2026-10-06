@@ -2,12 +2,12 @@
 
 参考:
 - 华为云安全白皮书 (等保2.0三级/GDPR/个人信息保护法)
-- OWASP LLM Top 10 2025
+- OWASP LLM Top 10 2026
 - 华为云AI安全最佳实践 (模型部署/数据隐私/访问控制)
 
 合规维度(7大域):
 1. 数据隐私 — 个人信息保护法/GDPR合规(PII检测/数据脱敏/跨境传输)
-2. 模型安全 — OWASP LLM Top 10 2025(注入/越狱/泄露/供应链)
+2. 模型安全 — OWASP LLM Top 10 2026(注入/越狱/泄露/供应链)
 3. 访问控制 — 最小权限原则/API鉴权/速率限制
 4. 内容安全 — 内容审核/有害信息过滤/价值观对齐
 5. 运维安全 — 日志审计/变更管理/应急响应
@@ -28,6 +28,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 
+from ai_prompt_toolkit.probe_framework import OWASP_LLM_TOP_10_2026_LABEL  # R236-P2-19: OWASP 标准名单一真源
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -201,7 +202,7 @@ class HuaweiCloudComplianceReport:
             "report_id": self.report_id,
             "timestamp": self.timestamp,
             "platform": "华为云 ModelArts",
-            "framework": "华为云AI安全合规 + OWASP LLM Top 10 2025",
+            "framework": f"华为云AI安全合规 + {OWASP_LLM_TOP_10_2026_LABEL}",
             "overall_score": self.overall_score,
             "grade": self.grade.value,
             "decision": self.decision.value,

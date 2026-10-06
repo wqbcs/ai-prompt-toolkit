@@ -59,7 +59,7 @@ _MILESTONE_MESSAGES = {
         "OWASP LLM Top 10全通过! 你的Prompt安全等级达到最高!",
     ],
     "owasp_compliant": [
-        "OWASP LLM Top 10合规! 你的Prompt符合2025年最新安全标准。",
+        "OWASP LLM Top 10合规! 你的Prompt符合2026年最新安全标准。",
     ],
     "sanitize_clean": [
         "Prompt消毒完成! 零风险，可以安心上线。",

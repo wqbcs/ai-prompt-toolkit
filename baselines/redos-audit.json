@@ -13585,6 +13585,42 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rule_explainer.py\u0000critical": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rule_explainer.py\u0000high": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rule_explainer.py\u0000medium": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rule_explainer.py\u0000info": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rule_explainer.py\u0000<!-- promptlint:ignore {rid} -->": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rule_explainer.py\u0000lint-ignore: [{rid}]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }

@@ -26,6 +26,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit import __version__  # R236-P2-19: 版本单一真源(同 R174 先例)
+from ai_prompt_toolkit.sarif_report import REPO_URL
 from ai_prompt_toolkit.types import Finding, Severity
 
 _SEVERITY_TO_SARIF_LEVEL = {
@@ -65,7 +67,7 @@ def _severity_to_sarif_level(severity: Severity) -> str:
 def findings_to_sarif(
     findings: list[Finding],
     source_file: str = "",
-    tool_version: str = "42.0.0",
+    tool_version: str = __version__,
     *,
     run_id: str = "",
     exit_code: int = 0,
@@ -150,7 +152,7 @@ def findings_to_sarif(
                 "name": "ai-prompt-toolkit",
                 "version": tool_version,
                 "semanticVersion": tool_version,
-                "informationUri": "https://github.com/ai-prompt-toolkit",
+                "informationUri": REPO_URL,
                 "rules": rules_list,
                 "columnKind": "unicodeCodePoints",
             }

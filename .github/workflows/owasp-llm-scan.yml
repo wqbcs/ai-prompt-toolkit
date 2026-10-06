@@ -20,7 +20,7 @@ jobs:
         run: pip install -e .
       - name: Run OWASP LLM Top 10 Probe Scan (15 Probes)
         run: |
-          echo "=== OWASP LLM Top 10 2025 Probe Scan (15 Probes: dan/grandma/continuation/donot_answer/...) ==="
+          echo "=== OWASP LLM Top 10 2026 Probe Scan (15 Probes: dan/grandma/continuation/donot_answer/...) ==="
           for f in $(find . -name '*.prompt' -o -name '*.md' | head -20); do
             echo "Probing: $f"
             prompt-cli probe --target "$f" --output "probe-report-$(basename $f).json" || true

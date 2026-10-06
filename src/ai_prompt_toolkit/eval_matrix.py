@@ -21,6 +21,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit import __version__  # R236-P2-19: 报告页版本动态(同 R174 先例)
+
 
 @dataclass
 class MatrixCell:
@@ -173,7 +175,7 @@ footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border
 </table>
 </div>
 
-<footer>AI Prompt Toolkit v42.0.0 | 评估矩阵报告 | GEPA反射式进化引擎</footer>
+<footer>AI Prompt Toolkit v{{ version }} | 评估矩阵报告 | GEPA反射式进化引擎</footer>
 
 <script>
 document.querySelectorAll('.detail-toggle').forEach(function(el) {
@@ -211,6 +213,8 @@ def generate_eval_matrix_html(
     pass_rate = (passed / total * 100) if total > 0 else 0
 
     context = {
+        # R236-P2-19: 版本动态注入(原硬编码 v42.0.0 漂移)
+        "version": __version__,
         "title": report.title,
         "generated_at": report.generated_at,
         "prompt_names": report.prompt_names,

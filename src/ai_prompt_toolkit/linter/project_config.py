@@ -27,8 +27,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ai_prompt_toolkit.linter.lint_config import LintConfig
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 # 发现候选(就近优先: 每层先 promptlint.toml 后 pyproject.toml)
 _CONFIG_NAMES = ("promptlint.toml", "pyproject.toml")
@@ -71,14 +75,51 @@ def _promptlint_section(path: Path) -> dict:
     return {k: v for k, v in data.items() if not isinstance(v, dict) or k in ("gap", "severity_overrides")}
 
 
+def _ancestors_up_to_root(start: Path) -> Iterator[Path]:
+    """从 start(含)向上逐层产出目录, 锚定 git 根或文件系统根即止。
+
+    配置发现/仓库根发现的共享锚定逻辑(单一真源): 含 .git 的层检查完即停;
+    非仓库上下文(已 pip 安装运行/临时目录)逐层到文件系统根, 调用方按各自语义消费。
+    """
+    cur = start
+    while True:
+        yield cur
+        if (cur / ".git").exists() or cur.parent == cur:
+            return
+        cur = cur.parent
+
+
+def find_project_root(start_dir: Path | None = None) -> Path:
+    """P4-04: 仓库/项目根目录单一真源 — 向上查找, 锚定 git 根或文件系统根。
+
+    返回最高可达层(含 .git 的目录, 或文件系统根)。非仓库上下文退化为 cwd,
+    使 repo_relative 与旧 cwd 相对行为兼容(已安装运行零行为改变)。
+    配置/基线/模板等项目根相对路径一律经此解析, 消除"必须在仓库根运行"的
+    隐性 cwd 依赖(硬编码审计表簇 E 登记面)。
+    """
+    last = (start_dir or Path.cwd()).resolve()
+    for cur in _ancestors_up_to_root(last):
+        last = cur
+    return last
+
+
+def repo_relative(rel: str, start_dir: Path | None = None) -> Path:
+    """P4-04: 仓库根相对路径解析 — find_project_root / rel。
+
+    供 doctor --gate / i18n 等"项目内资产"路径复用, 替代散落的
+    Path("baselines/...")/Path("src/...") cwd 相对硬编码。
+    """
+    return find_project_root(start_dir) / rel
+
+
 def find_project_config(start_dir: Path | None = None) -> Path | None:
     """从 start_dir(默认 cwd)向上查找项目配置, 锚定 git 根或文件系统根。
 
     ruff 语义: 每层检查 promptlint.toml → pyproject.toml(须含 [tool.promptlint]
     段, 否则跳过), 第一个命中即返回(就近优先)。
     """
-    cur = (start_dir or Path.cwd()).resolve()
-    while True:
+    start = (start_dir or Path.cwd()).resolve()
+    for cur in _ancestors_up_to_root(start):
         for name in _CONFIG_NAMES:
             candidate = cur / name
             if candidate.is_file():
@@ -88,10 +129,7 @@ def find_project_config(start_dir: Path | None = None) -> Path | None:
                         return candidate
                 else:
                     return candidate
-        # git 根锚定: 本层是 git 根(检查完即停)或到文件系统根
-        if (cur / ".git").exists() or cur.parent == cur:
-            return None
-        cur = cur.parent
+    return None
 
 
 def load_project_config(path: Path | None) -> LintConfig:

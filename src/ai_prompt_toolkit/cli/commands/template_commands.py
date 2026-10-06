@@ -28,7 +28,10 @@ def i18n(
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.i18n.translator import translate_template
 
-    templates_dir = resolve_path(base_dir) if base_dir else Path("src/ai_prompt_toolkit/templates")
+    # P4-04: 默认模板目录经 repo_relative 解析(仓库根锚定, 消除 cwd 依赖)
+    from ai_prompt_toolkit.linter.project_config import repo_relative
+
+    templates_dir = resolve_path(base_dir) if base_dir else repo_relative("src/ai_prompt_toolkit/templates")
     if not templates_dir.exists():
         click.echo(f"错误: 模板目录不存在 — {templates_dir}", err=True)
         sys.exit(2)

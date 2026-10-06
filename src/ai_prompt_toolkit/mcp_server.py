@@ -715,7 +715,7 @@ def _handle_tools_list(id_val: Any) -> str:
         },
         {
             "name": "probe_run",
-            "description": "运行Red Team探针扫描: 12大探针类别(garak风格,OWASP LLM Top 10 2025)自动检测Prompt安全漏洞",
+            "description": "运行Red Team探针扫描: 12大探针类别(garak风格,OWASP LLM Top 10 2026)自动检测Prompt安全漏洞",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -748,7 +748,7 @@ def _handle_tools_list(id_val: Any) -> str:
         },
         {
             "name": "probe_owasp_report",
-            "description": "生成OWASP LLM Top 10 2025合规报告",
+            "description": "生成OWASP LLM Top 10 2026合规报告",
             "inputSchema": {
                 "type": "object",
                 "properties": {

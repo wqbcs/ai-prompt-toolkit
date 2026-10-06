@@ -27,6 +27,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from ai_prompt_toolkit import __version__  # R236-P2-19: OTel 服务版本动态(原默认 42.0.0 漂移)
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
@@ -145,7 +147,9 @@ class Trace:
             "timestamp": self.timestamp,
         }
 
-    def to_otlp_json(self, service_name: str = "ai-prompt-toolkit", service_version: str = "42.0.0") -> dict[str, Any]:
+    def to_otlp_json(
+        self, service_name: str = "ai-prompt-toolkit", service_version: str = __version__
+    ) -> dict[str, Any]:
         scope_spans: list[dict[str, Any]] = [
             {
                 "scope": {"name": service_name, "version": service_version},

@@ -2,6 +2,39 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.29] - 2026-10-06
+
+### Added (R236: P2-19 硬编码审计 + P2-10 规则解释页)
+
+- **P2-19 硬编码审计（声明面单一真源）**：七步扫描+四类分类处置，`docs/planning/15_硬编码审计表_R236.md`
+  全登记（8 簇 A-H + 声明面/规则触发面交叉维度 + 不动项）。版本漂移簇：18 处
+  硬编码版本号→`__version__` 单一真源（sarif_report/eval_matrix/redteam 报告/
+  tracing service_version/`_REPO_URL` bug 修复）。URL 死链簇：5 处缺 org 的
+  `github.com/ai-prompt-toolkit`→`wqbcs/ai-prompt-toolkit`。OWASP 标签簇：18 处
+  "2025"→"2026"（probe_framework/huaweicloud_compliance/compliance_report/
+  mcp_server 工具描述/embedding 探针/unicode_guard/easter_eggs/security-auditor
+  模板/README quickstart/gen_rules_doc 图例=文档单一真源/CI 工作流横幅）。
+  探针计数簇：dev_commands docstring+README 徽章/正文+漏检率基线文档 3 处→
+  真值 150。测试锚定：test_r36/test_r45 版本锚点同步。
+- **P2-10 规则解释页（单一真源 `linter/rule_explainer.py`）**：
+  `prompt-cli explain <规则ID>` 命令（markdown/--json/--no-metrics 三面，
+  未知规则 exit 1 友好提示）+ `docs/rules/Pxxx.md` 每规则详情页 265 页
+  （gen_rules_doc 批量生成，主表规则ID链接至详情页）。数据全部复用项目内
+  既有单一真源（规则注册表/golden 探针/双基线实测/OWASP 2026 映射/waiver
+  双语法/同义去重组），零硬编码规则内容、零新数据源。每规则页=描述(中英)+
+  修复建议(中英)+OWASP 映射+探针覆盖+当前双基线实测(非时间序列口径明示)+
+  waiver 静默指引。顺带补 R235-P3-16 digest 里 `prompt-cli explain <规则ID>`
+  悬空引用断链（此前该命令不存在）。参照系=ruff `ruff rule <code>` + ESLint
+  每规则文档页。`run_check()` 抽纯函数（--check 内核可单测断言，CI drift
+  检查同入口）。16 测试（命令三面+弃用标记+未知规则+JSON 可解析+默认面跑
+  双基线+大小写不敏感+注册表全覆盖零漂移+渲染确定性+落盘面逐字节一致+
+  --check 幂等绿）。
+
+### 口径
+
+- 测试 6307→6323（+16）; 探针 150 不变; 规则 265 不变; 双基线 0.91%/0.00%
+  与缺口基线 0.8577 全不变; 门禁链 18 步不变; docs/rules/ 新增 265 每规则页。
+
 ## [v67.34.28] - 2026-10-05
 
 ### Added (R235: P3-16 CI UX digest + P4-02 核心零依赖 + P2-11 TN 侧 150 目标, 调研增量见 R235_改进方案与开源调研.md)
