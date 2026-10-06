@@ -54,6 +54,23 @@ def gap_report_cmd(target: str, output: str | None) -> None:
         )
     else:
         click.echo(format_markdown(report))
+    # P2-03: 配置级 gap 门禁 — promptlint.toml [gap].max_rate 超阈值退出码1
+    # (仅 JSON 输出/CI 面生效? 否: 两种输出面都要拦, 数字是同一真源 aggregate)
+    from ai_prompt_toolkit.linter.project_config import find_project_config, load_project_config
+
+    _pc = find_project_config()
+    if _pc is not None:
+        _pcfg = load_project_config(_pc)
+        if _pcfg.gap_max_rate is not None:
+            _rate = report["summary"]["avg_gap_rate"]
+            if _rate > _pcfg.gap_max_rate:
+                click.echo(
+                    f"Gap门禁: ❌ FAIL | 平均缺口率 {_rate:.0%} > 阈值 {_pcfg.gap_max_rate:.0%} "
+                    f"(阈值来自 {_pc.name} [gap].max_rate)",
+                    err=True,
+                )
+                sys.exit(1)
+            click.echo(f"Gap门禁: ✅ PASS | 平均缺口率 {_rate:.0%} ≤ 阈值 {_pcfg.gap_max_rate:.0%}")
 
 
 @main.command(name="baseline")

@@ -25,6 +25,10 @@ class LintConfig:
     custom_rules_dir: str = ""
     parallel: bool = False
     timeout_ms: int = 30000
+    # P2-03: 项目级 TOML 配置面(promptlint.toml / pyproject [tool.promptlint])
+    severity_overrides: dict[str, str] = field(default_factory=dict)
+    waivers: list[str] = field(default_factory=list)
+    gap_max_rate: float | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -39,6 +43,9 @@ class LintConfig:
             "custom_rules_dir": self.custom_rules_dir,
             "parallel": self.parallel,
             "timeout_ms": self.timeout_ms,
+            "severity_overrides": self.severity_overrides,
+            "waivers": self.waivers,
+            "gap_max_rate": self.gap_max_rate,
             "extra": self.extra,
         }
 

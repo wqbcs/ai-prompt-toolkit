@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from dataclasses import replace as _dataclass_replace
 from typing import Any
 
 from ai_prompt_toolkit.linter.rules import (
@@ -177,6 +178,24 @@ class PromptLinter:
             # 审计口径: 只报实际生效的豁免(压制了≥1条finding的)
             waived_rules = sorted({f.rule_id for f in suppressed})
             waived_finding_count = len(suppressed)
+
+        # P2-03: severity 覆盖(配置级) — waiver 之后、target-model 升级之前应用,
+        # 使覆盖后的级别参与所有下游判定(gate/fail-on/has_errors); 纯函数不改输入列表
+        if lint_config and getattr(lint_config, "severity_overrides", None):
+            _ov = lint_config.severity_overrides
+            findings = [
+                _dataclass_replace(f, severity=Severity(_ov[f.rule_id])) if f.rule_id in _ov else f for f in findings
+            ]
+
+        # P2-03: 全局 waiver 列表(配置级) — 与文件内声明同一抑制语义(仅压制展示
+        # 与计数, 规则不离开规则集); 审计留痕走 git 配置史, waived_rules 只记生效项
+        if lint_config and getattr(lint_config, "waivers", None):
+            _gw = set(lint_config.waivers)
+            _suppressed_gw = [f for f in findings if f.rule_id in _gw]
+            findings = [f for f in findings if f.rule_id not in _gw]
+            if _suppressed_gw:
+                waived_rules = sorted(set(waived_rules) | {f.rule_id for f in _suppressed_gw})
+                waived_finding_count += len(_suppressed_gw)
 
         # R229-P1-16: --target-model 声明 × P262 品牌绑定交叉判定（waiver 之后、
         # fix 之前 — 已豁免的 P262 不存在即无需升级；纯函数不改输入列表）

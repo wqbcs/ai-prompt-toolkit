@@ -274,13 +274,29 @@ def lint(
         if lint_cfg.include_rules or lint_cfg.exclude_rules:
             click.echo(f"配置: rules=include{lint_cfg.include_rules}/exclude{lint_cfg.exclude_rules}")
     elif not config_path:
-        for candidate in [".lint-rc.yml", ".lint-rc.yaml", ".prompt-toolkit.yml", ".prompt-toolkit.yaml"]:
-            if Path(candidate).exists():
-                from ai_prompt_toolkit.linter.lint_config import load_lint_config
+        # P2-03: 项目级 TOML 配置优先(promptlint.toml / pyproject [tool.promptlint],
+        # 向上查找 ruff 惯例); 未命中再走既有 YAML rc 链(向后兼容)
+        from ai_prompt_toolkit.linter.project_config import find_project_config, load_project_config
 
-                lint_cfg = load_lint_config(candidate)
-                click.echo(f"自动发现配置: {candidate}")
-                break
+        _pc = find_project_config()
+        if _pc is not None:
+            lint_cfg = load_project_config(_pc)
+            _pc_parts = []
+            if lint_cfg.include_rules or lint_cfg.exclude_rules:
+                _pc_parts.append(f"rules=include{lint_cfg.include_rules}/exclude{lint_cfg.exclude_rules}")
+            if lint_cfg.severity_overrides:
+                _pc_parts.append(f"severity覆盖{len(lint_cfg.severity_overrides)}条")
+            if lint_cfg.waivers:
+                _pc_parts.append(f"全局waiver{len(lint_cfg.waivers)}条")
+            click.echo(f"项目配置: {_pc}" + (f" ({', '.join(_pc_parts)})" if _pc_parts else ""))
+        else:
+            for candidate in [".lint-rc.yml", ".lint-rc.yaml", ".prompt-toolkit.yml", ".prompt-toolkit.yaml"]:
+                if Path(candidate).exists():
+                    from ai_prompt_toolkit.linter.lint_config import load_lint_config
+
+                    lint_cfg = load_lint_config(candidate)
+                    click.echo(f"自动发现配置: {candidate}")
+                    break
 
     templates: list
     if inline_mode:
@@ -837,6 +853,11 @@ def lint(
             f"  门禁判定面 = 仅 {len(_diff.new_findings)} 条 NEW findings (存量放行)"
         )
 
+    # P2-03: 配置级 fail-on 兜底 — CLI 显式 --fail-on 优先, 未指定时用
+    # promptlint.toml 的 fail_on(默认 high), 避免 CI 命令行长参数漂移
+    if not fail_on and lint_cfg is not None:
+        fail_on = lint_cfg.fail_on
+        click.echo(f"Fail-on门禁: 级别来自项目配置 ({fail_on})")
     if fail_on:
         # R203: 显式级别门禁 — fail-on critical/high/medium, 该级别及以上有finding即FAIL(退出码2)
         _level_rank = {"critical": 0, "high": 1, "medium": 2}

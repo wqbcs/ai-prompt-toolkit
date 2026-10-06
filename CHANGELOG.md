@@ -2,6 +2,36 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.27] - 2026-10-05
+
+### Added (R234: P2-23 语料扩容 + P2-03 项目配置)
+
+- **P2-23 golden 语料扩容（buried-injections 基准源，探针先行）**：12 条新探针
+  （131→143）——TP×4：零宽 U+200B×4 连续埋入正常日志行 tool output（P261 子1）/
+  BiDi override U+202E 单字符埋入搜索结果数值（P261 子2）/ JSON 转义承载的零宽
+  载荷（P261 子3）/ 注入关键词 base64 埋入工具调用 args（P260 子2）；TN×8：文件
+  读取/代码搜索/中文 API 响应/git diff/CSV 表格行/日志行/多轮回放/emoji+RTL 工单
+  八类良性 tool output 形态。来源=buried-injections（2026-09，AgentDojo 埋入形态，
+  MIT，URL+commit 标注见探针 note）；诚实边界=只取 TN+静态可检测面 TP，语义注入
+  类不取（R233 §2.1）。漏检 0.00% 保持，双基线 6/6 绿。
+- **P2-03 promptlint.toml 项目配置**（对标 ruff 配置发现惯例，03 §E2；schema 取
+  .promptlintrc 并集最小面）：`linter/project_config.py` 新模块——双位置发现
+  （`promptlint.toml` 三态兼容 / `pyproject.toml [tool.promptlint]`）+ 向上查找
+  + git 根锚定 + 就近优先；schema 最小面=规则开关（前缀语义+fail-safe 未知 ID
+  忽略）/fail-on 级别校验/severity_overrides 表（改裁决级别参与 gate/fail-on/
+  has_errors）/waivers 全局豁免列表（与文件内声明同一抑制语义，waived_rules
+  审计口径一致）/gap.max_rate 门禁（gap-report 超阈值退出码 1）。消费层复用
+  LintConfig 数据模型（+3 字段），YAML rc 链向后兼容（无 TOML 时走原链）；CLI
+  显式 --fail-on 优先于配置；协议面纯净（发现留痕走 stdout 既有 echo 惯例，
+  解析失败/警告全走 stderr）。24 测试（发现/解析/消费/CLI 集成四层，含坏 TOML
+  不崩/红绿两态/显式优先）。零新运行时依赖（tomllib 3.11+，3.10 降级
+  tomli[dev] 已声明，缺则 fail-safe 忽略配置）。
+
+### 口径
+
+- 测试 6268→6292（+24）; 探针 131→143（zh-Hans 95→99/en 28→36）;
+  规则 265 不变; 双基线 0.90%/0.00% 与缺口基线 0.8577 全不变。
+
 ## [v67.34.26] - 2026-10-05
 
 ### Added (R233: 测绘先行 + 四机制落地, 调研增量见 R233_改进方案与开源调研.md)
