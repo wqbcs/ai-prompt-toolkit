@@ -2,6 +2,65 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.28] - 2026-10-05
+
+### Added (R235: P3-16 CI UX digest + P4-02 核心零依赖 + P2-11 TN 侧 150 目标, 调研增量见 R235_改进方案与开源调研.md)
+
+- **P3-16 CI UX digest（`--format summary` + GITHUB_STEP_SUMMARY）**：lint 新增
+  `summary` 输出面——红/绿两态 digest（三要素首行=结论+文件/问题数+耗时，失败面
+  附 top-5 规则表+`prompt-cli explain` 入口）；`GITHUB_STEP_SUMMARY` 原生 env
+  存在时自动写 GH step summary 文件（append 不覆盖），不存在零副作用。preview
+  退出码复用 determine_exit_code/QualityGate 同一裁决真源（不另造逻辑），与
+  --format cli 面退出码逐字一致（e2e 断言）；装饰面（"Lint完成"/成本预估/门禁
+  行/下一步引导）在 summary 面抑制但**不 return**（正式 fail-on/gate 裁决+
+  sys.exit 全保留=协议不变）。零新依赖。15 测试（纯函数红绿两态+e2e 退出码一致
+  +GH env 落盘+零副作用+cli 面回归）。对齐 ruff-action 级 CI 首触体验（HN 实证
+  "promptfoo is a pain to set up"采用摩擦）。
+- **P4-02 核心零依赖验证（机器护栏）**：`scripts/check_layer_deps.py`——复用
+  check_dep_manifest 的 runtime_imports 扫描基建（不新造轮子），ast 扫描 kernel
+  层（types+linter 核心+rules 族+映射/diff 辅助，14 §1 第一行清单）断言零第三方
+  runtime import；已知违规边 14 §3 V5（rules_p051_p055 frontmatter 延迟 import
+  yaml）留痕豁免（带违规边号+P4-07 候选首改排期，修复落地须同 commit 删豁免）。
+  与 check_dep_manifest 正交（包级"声明⊇import" vs 层级"根本不允许"）。
+  release_gate 第 17 步+CI step。5 年架构不变量"任意端技术栈迭代不影响业务
+  内核"的静态护栏（内核零依赖=可被 WASM/Node/Rust 桥复用）。
+- **P2-11 TN 侧 150 目标（buried-injections 剩余面）**：+7 TN 探针（143→150）——
+  JSON 对象数组(中文字段名)/终端 shell 会话(Windows 反斜杠路径)/邮件正文(中文
+  行政通知)/SQL 查询+表格结果/YAML 配置/base64 安全事件日志(仅 8 字符描述无
+  实际载荷)/服务心跳 key=value。选面避重：R230 已覆盖嵌套 JSON 单对象/多轮/
+  代码混排/法律条款，R234 已覆盖文件读取/代码搜索/API 响应/git diff/CSV/日志
+  行/emoji+RTL——本轮 7 条均从信源 97 良性源**剩余面**取。全部 `expected=[]`
+  （TP 面零改动→漏检 0.00% 保持）。zh-Hans 99→101/en 36→41。
+
+### Changed
+
+- **P2-05 模板缺口补强暂停（对抗审查实证否决）**：原型在 general-assistant 追加
+  8 行"部署安全边界"声明（命 gap marker 措辞）→ 单文件 lint 21→33（+16 新
+  findings：P063 系统提示泄露面/P142-143 Agent 面/P206-209 RAG 面/P098 工具面/
+  计数漂移）。根因=gap marker 关键词与 P063/P142/P206 触发面**同一词汇**，
+  双约束（命 marker+不触发 265 规则+不漂移既有 rule:count 面）几乎不可满足；
+  硬推=T4 邻变体（为数字好看破坏 findings 面另一不变量）。诚实 86% 本身是可信
+  资产，做假数字反伤"我们诚实度量"叙事。登记 02 暂停项区（原型证据留痕，季度
+  审查三选一）。**教训入 02：数字好看但破坏另一不变量=陷阱，停手登记而非硬做。**
+- **调研增量（R235 §2 实搜留痕）**：DeepSeek 官方 Harness 插件生态（dsh-
+  secure-audit/dsh-defend/dsh-prompt-forensics，2026-09-23 创建 6 天 431★）——
+  中文"agent 安全"需求被官方亲自下场验证，ICP-②（air-gap/信创）从"待验证"升
+  "存在且被官方供给验证"；官方形态=运行时插件与我方静态入库前面辖区正交互补。
+  赛道普查 2 个月新面孔 ≥7（lintlang/nukon-pi-detect/prompt-armor/Little
+  Canary/prompt-lint/SylasLabs/Lint/Glyph），"prompt lint"占位 ≥8 家但**无一家**
+  做"双基线时间序列+逐字节复现+OWASP 2026 映射+多语言分基线"组合——可验证性
+  =仅剩独占轴。benchmark 化趋势（pi-detector-bench/IJCAI 2026+buried-injections
+  合流 ≥3 源）→P5-11 从打磨面升"获客主渠道"（公开后首轮做）。反清单 +2
+  （不做运行时插件/不做 benchmark 平台运营，02 §反清单）。07 竞品 +2
+  （DeepSeek Harness 系/Glyph）+ §2 触发条件登记；08 信号 +2（ICP 实证 S/
+  赛道+benchmark S×2+A×1）。
+
+### 口径
+
+- 测试 6292→6307（+15）; 探针 143→150（zh-Hans 99→101/en 36→41, 纯 TN 侧）;
+  规则 265 不变; 双基线 0.91%/0.00% 与缺口基线 0.8577 全不变;
+  门禁链 17→18 步（+核心零依赖验证）。
+
 ## [v67.34.27] - 2026-10-05
 
 ### Added (R234: P2-23 语料扩容 + P2-03 项目配置)

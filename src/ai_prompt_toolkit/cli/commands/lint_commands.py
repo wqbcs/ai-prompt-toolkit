@@ -6,7 +6,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -16,6 +18,73 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 
 if TYPE_CHECKING:
     from ai_prompt_toolkit.linter.linter import LintResult
+
+# P3-16: summary digest helper(纯函数, 无 IO — 便于单测)
+_SEV_MARKERS = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}
+_RANK = {"critical": 0, "high": 1, "medium": 2}
+
+
+def _build_summary_markdown(
+    *,
+    templates: list[Path],
+    total_findings: int,
+    avg_score: float,
+    by_rule: list[tuple[str, int]],
+    by_sev: dict[str, int],
+    elapsed_s: float,
+    exit_code: int,
+) -> str:
+    """P3-16: 红/绿两态 digest — 首行三要素(结论+计数+耗时), 失败面附 top rules
+    与 explain 入口。纯函数返回 Markdown, 由调用方决定 echo/GITHUB_STEP_SUMMARY。"""
+    # 状态以裁决退出码为准(与正式 exit 同口径): 0=PASS(含仅 low/medium 非阻塞
+    # finding 的情形 — finding 数≠裁决, 表仍列出供参考), 1=WARN, 2+=FAIL
+    if exit_code == 0:
+        status = "✅ PASS"
+    elif exit_code == 1:
+        status = "⚠ FAIL (exit 1)"
+    else:
+        status = f"❌ FAIL (exit {exit_code})"
+    sev_line = " · ".join(f"{_SEV_MARKERS.get(k, '·')} {k} {v}" for k, v in sorted(by_sev.items())) or "无 finding"
+    lines = [
+        f"**prompt-cli lint** — {status} | 文件 {len(templates)} | 问题 {total_findings} | 均分 {avg_score:.1f}/100 | {elapsed_s:.2f}s",
+        "",
+        sev_line,
+    ]
+    if total_findings > 0:
+        lines.append("")
+        lines.append("| 规则 | 计数 | 说明 |")
+        lines.append("|---|---|---|")
+        for rule_id, cnt in by_rule:
+            lines.append(f"| `{rule_id}` | {cnt} | `prompt-cli explain {rule_id}` |")
+        lines.append("")
+        lines.append("修复指引: `prompt-cli explain <规则ID>` | 完整报告: `--format cli` 或 `--format json`")
+    return "\n".join(lines)
+
+
+def _preview_exit_code(all_results: list, fail_on: str | None, gate: bool, avg_score: float = 0.0) -> int:
+    """P3-16: summary 首行预告退出码 — 与后续 sys.exit 路径同一裁决真源(不另造
+    逻辑): gate 面走 QualityGate(3/2/0), 非 gate 面走 determine_exit_code +
+    fail_on(该级别及以上→2)。preview 只做预告, 裁决仍以正式 exit 为准。"""
+    findings = [f for r in all_results for f in r.findings]
+    if gate:
+        from ai_prompt_toolkit.linter.quality_gate import QualityGate, verdict_to_exit_code
+
+        return verdict_to_exit_code(QualityGate().evaluate(findings, score=avg_score).verdict)
+    # 非 gate: 与正式 exit 路径同一口径(命令尾 determine_exit_code 调用逐字对齐 —
+    # has_errors=任一 HIGH 及以上 LintResult, error_severity="high")
+    from ai_prompt_toolkit.cli_helpers import determine_exit_code
+
+    has_errors = any(r.has_errors for r in all_results)
+    code = determine_exit_code(has_findings=bool(findings), error_severity="high" if has_errors else None)
+    if fail_on:
+        # 与 fail-on 门禁段同一口径(该级别及以上→2)
+        threshold = _RANK[fail_on]
+        if any(
+            _RANK.get(f.severity.value if hasattr(f.severity, "value") else str(f.severity), 99) <= threshold
+            for f in findings
+        ):
+            code = max(code, 2)
+    return code
 
 
 @main.command(name="audit-waivers")
@@ -108,7 +177,9 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     "config_path",
     help="Lint配置YAML文件路径(新格式: severity_threshold/exclude_categories/include_categories等)",
 )
-@click.option("--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif"]), default="cli", help="输出格式")
+@click.option(
+    "--format", "fmt", type=click.Choice(["json", "html", "cli", "sarif", "summary"]), default="cli", help="输出格式"
+)
 @click.option("--fix", is_flag=True, help="自动修复可修复的问题")
 @click.option("--dry-run", is_flag=True, help="干运行: 预览修复内容但不实际修改文件(需配合--fix)")
 @click.option("--interactive", "-i", is_flag=True, help="交互式修复: 逐条确认每个修复")
@@ -227,6 +298,7 @@ def lint(
     target_model: str | None = None,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
+    _lint_start = time.time()  # P3-16: summary digest 耗时
     if stdio_mode:
         from ai_prompt_toolkit.cli.stdio_server import run_stdio_server
 
@@ -394,8 +466,6 @@ def lint(
     if html_report:
         fmt = "html"
     if color_theme != "default":
-        import os
-
         os.environ["PROMPT_TOOLKIT_THEME"] = color_theme
     # R196: 显式标注消除dict[str, object].findings误报(all_results实为LintResult列表)
     all_results: list[LintResult] = []
@@ -534,6 +604,44 @@ def lint(
         from ai_prompt_toolkit.tui_browser import render_interactive_results
 
         render_interactive_results(all_results, avg_score, total_findings, len(templates))
+    elif fmt == "summary":
+        # P3-16: CI UX digest — 红/绿两态 digest(top rules/耗时/退出码三要素首行)。
+        # 独立 fmt 分支: json/sarif/cli/html 面零改动; 装饰性输出过 _is_decorative_output_allowed
+        _sum_by_rule: dict[str, int] = {}
+        _sum_by_sev: dict[str, int] = {}
+        for _sum_res in all_results:
+            for _f in _sum_res.findings:
+                _sum_by_rule[_f.rule_id] = _sum_by_rule.get(_f.rule_id, 0) + 1
+                _sev_v = _f.severity.value if hasattr(_f.severity, "value") else str(_f.severity)
+                _sum_by_sev[_sev_v] = _sum_by_sev.get(_sev_v, 0) + 1
+        _top_rules = sorted(_sum_by_rule.items(), key=lambda kv: (-kv[1], kv[0]))[:5]
+        _elapsed_s = time.time() - _lint_start
+        # fail-on 配置兜底前置(与后文正式裁决段同一解析: CLI 显式优先, 否则配置级)
+        _eff_fail_on = fail_on or (lint_cfg.fail_on if lint_cfg is not None else None)
+        _md = _build_summary_markdown(
+            templates=templates,
+            total_findings=total_findings,
+            avg_score=avg_score,
+            by_rule=_top_rules,
+            by_sev=_sum_by_sev,
+            elapsed_s=_elapsed_s,
+            exit_code=_preview_exit_code(all_results, _eff_fail_on, gate, avg_score=avg_score),
+        )
+        click.echo(_md)
+        # GITHUB_STEP_SUMMARY: GH Actions 原生 env — 存在时写文件(不进 stdout 协议面),
+        # 不存在时零副作用(本地/其他 CI 完全不受影响)
+        _gh_sum = os.environ.get("GITHUB_STEP_SUMMARY")
+        if _gh_sum:
+            try:
+                _sum_path = Path(_gh_sum)
+                if _sum_path.exists():
+                    _sum_path.write_text(_sum_path.read_text(encoding="utf-8") + _md, encoding="utf-8")
+                else:
+                    _sum_path.write_text(_md, encoding="utf-8")
+            except OSError as e:
+                click.echo(f"warning: GITHUB_STEP_SUMMARY 写入失败(已忽略): {e}", err=True)
+        # summary 面自带三要素 digest — 不 return: 必须继续走 fail-on/gate 正式裁决
+        # (return 会绕过 sys.exit 门禁=协议破坏); 装饰面由下方 fmt != "summary" 排除
     elif fmt == "cli":
         from ai_prompt_toolkit.types import parse_location
 
@@ -570,14 +678,15 @@ def lint(
                             err=True,
                         )
 
-    click.echo(
-        f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings} | 质量分: {avg_quality:.1f}"
-    )
+    if fmt != "summary":
+        click.echo(
+            f"\nLint完成 | 文件: {len(templates)} | 平均分: {avg_score:.1f}/100 | 问题: {total_findings} | 质量分: {avg_quality:.1f}"
+        )
 
     # R212-8: lint时成本预估(INFO级, 不产生finding不进门禁) — 成本是用户第一直觉
     # 指标。复用 token_analyzer×pricing(零新依赖), 按原始prompt文本估token×
     # 默认模型定价, 投影1k/1M调用两档; 定价数据缺失时优雅降级(仅显示token数)。
-    if not ci_mode and not tui_mode and fmt != "json" and templates:
+    if not ci_mode and not tui_mode and fmt not in ("json", "summary") and templates:
         from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens
         from ai_prompt_toolkit.pricing import get_catalog
 
@@ -610,7 +719,7 @@ def lint(
     has_blocking = any(
         getattr(f.severity, "value", str(f.severity)) in ("high", "critical") for r in all_results for f in r.findings
     )
-    if not has_blocking and not ci_mode:
+    if not has_blocking and not ci_mode and fmt != "summary":
         from ai_prompt_toolkit.cli_helpers import clean_result_next_steps
 
         click.echo(clean_result_next_steps(avg_score, len(templates)))
@@ -857,7 +966,8 @@ def lint(
     # promptlint.toml 的 fail_on(默认 high), 避免 CI 命令行长参数漂移
     if not fail_on and lint_cfg is not None:
         fail_on = lint_cfg.fail_on
-        click.echo(f"Fail-on门禁: 级别来自项目配置 ({fail_on})")
+        if fmt != "summary":
+            click.echo(f"Fail-on门禁: 级别来自项目配置 ({fail_on})")
     if fail_on:
         # R203: 显式级别门禁 — fail-on critical/high/medium, 该级别及以上有finding即FAIL(退出码2)
         _level_rank = {"critical": 0, "high": 1, "medium": 2}
@@ -872,9 +982,11 @@ def lint(
                 if _level_rank.get(sev, 99) <= _threshold:
                     _failing += 1
         if _failing:
-            click.echo(f"Fail-on门禁: ❌ FAIL | {fail_on}及以上 {_failing} 处 (阈值: >0)")
+            if fmt != "summary":
+                click.echo(f"Fail-on门禁: ❌ FAIL | {fail_on}及以上 {_failing} 处 (阈值: >0)")
             sys.exit(2)
-        click.echo(f"Fail-on门禁: ✅ PASS | {fail_on}及以上 0 处")
+        if fmt != "summary":
+            click.echo(f"Fail-on门禁: ✅ PASS | {fail_on}及以上 0 处")
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate
@@ -889,9 +1001,10 @@ def lint(
             ]
         gate_result = qg.evaluate(all_findings_flat, score=avg_score)
         verdict_emoji = {"pass": "✅", "warn": "⚠️", "fail": "❌"}
-        click.echo(
-            f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}"
-        )
+        if fmt != "summary":
+            click.echo(
+                f"Quality Gate: {verdict_emoji.get(gate_result.verdict.value, '')} {gate_result.verdict.value.upper()} | {gate_result.summary}"
+            )
         if output:
             report_data["quality_gate"] = gate_result.to_dict()
         from ai_prompt_toolkit.linter.quality_gate import verdict_to_exit_code

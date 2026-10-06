@@ -88,6 +88,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_gap_ratchet.py
 
+      # R235-P4-02: 核心零依赖验证(kernel 层零第三方 runtime import;
+      # R233-P4-01 手测结论固化为机器护栏; 与 release_gate 第 17 步同命令)
+      - name: "Layer deps (kernel zero third-party)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_layer_deps.py
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         continue-on-error: true  # R231: codecov 上传=第三方可观测性, 非质量门禁。
