@@ -39,9 +39,10 @@ class TestCiAuditJob:
         text = WORKFLOW.read_text(encoding="utf-8")
         assert "dependency-audit:" in text
         assert "pip-audit" in text
-        # 声明面 + 已装面两维
-        assert "pip_audit -r pyproject.toml --strict" in text
-        assert "pip_audit --no-deps" in text
+        # 声明面审计=先装声明依赖再审计已装面(R237 缺陷修复: pip-audit -r
+        # 只收 requirements 文件, 不接受 pyproject.toml — v2 文档实证)
+        assert 'pip install -e ".[dev]"' in text
+        assert "python -m pip_audit" in text
 
     def test_job_not_chained_to_main(self):
         """独立作业: 无 needs: 依赖 — 审计抖动不放大成整链红(R231 codecov 纪律)"""

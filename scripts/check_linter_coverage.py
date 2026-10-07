@@ -76,7 +76,7 @@ def main() -> int:
     pct = covered / total * 100
     print(f"linter 包行覆盖: {pct:.2f}% ({covered}/{total}) | 棘轮地板: {args.min:.1f}%")
     if pct < args.min:
-        print(f"✗ 覆盖率低于棘轮地板 — 新代码未带测试, 禁止收口(只收紧不放松)")
+        print("✗ 覆盖率低于棘轮地板 — 新代码未带测试, 禁止收口(只收紧不放松)")
         return 1
     print("✓ 覆盖率棘轮通过")
     return 0

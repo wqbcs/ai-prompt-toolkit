@@ -25,7 +25,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import tomllib
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:  # Python 3.10(CI 矩阵含 3.10) — 走正则回退
+    tomllib = None  # type: ignore[assignment]
 
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
@@ -35,19 +38,30 @@ WORKFLOW = ROOT / ".github" / "workflows" / "prompt-ci.yml"
 PINNED_RE = re.compile(r"^([A-Za-z0-9._\-]+)==([0-9][^\s;]*)")
 
 
+def _pinned_from_text(text: str) -> dict[str, str]:
+    """正则回退路径(3.10): 扫描所有依赖行的 `==` 钉版 — 只认引号包裹的
+    依赖项(排除 version 等其他键的引号串), 行形态 `[\"pkg==x.y\"]`。"""
+    pins: dict[str, str] = {}
+    for m in re.finditer(r'"([A-Za-z0-9._\-]+)==([0-9][^"\s;]*)"', text):
+        pins[m.group(1).lower()] = m.group(2)
+    return pins
+
+
 def pinned_pins() -> dict[str, str]:
     """pyproject 全部依赖组里 `==` 钉死的包 → {包名小写: 版本}"""
-    data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
-    pins: dict[str, str] = {}
-    deps: list[str] = list(data.get("project", {}).get("dependencies", []))
-    for group in data.get("project", {}).get("optional-dependencies", {}).values():
-        deps.extend(group)
-    for dep in deps:
-        base, _, _marker = dep.partition(";")
-        m = PINNED_RE.match(base.strip())
-        if m:
-            pins[m.group(1).lower()] = m.group(2)
-    return pins
+    if tomllib is not None:
+        data = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))
+        deps: list[str] = list(data.get("project", {}).get("dependencies", []))
+        for group in data.get("project", {}).get("optional-dependencies", {}).values():
+            deps.extend(group)
+        pins: dict[str, str] = {}
+        for dep in deps:
+            base, _, _marker = dep.partition(";")
+            m = PINNED_RE.match(base.strip())
+            if m:
+                pins[m.group(1).lower()] = m.group(2)
+        return pins
+    return _pinned_from_text(PYPROJECT.read_text(encoding="utf-8"))
 
 
 def installed_version(pkg: str) -> str | None:

@@ -168,12 +168,14 @@ jobs:
       - name: Install pip-audit
         run: pip install pip-audit
 
-      # 审计 pyproject 声明面(core+dev, 不装项目本体 — 声明面即攻击面)
-      - name: "pip-audit (declared deps)"
-        run: python -m pip_audit -r pyproject.toml --strict
+      # R237 缺陷修复: pip-audit -r 只收 requirements 文件, 不接受 pyproject.toml
+      # (v2 文档实证: pyproject 只能经已装环境审计) — 声明面审计改为
+      # 先装声明依赖再审计已装面(声明面=core+dev 全装, 攻击面不漏)
+      - name: "Install declared deps (core+dev)"
+        run: pip install -e ".[dev]"
 
-      - name: "pip-audit (installed env)"
-        run: python -m pip_audit --no-deps
+      - name: "pip-audit (declared deps via installed env)"
+        run: python -m pip_audit
 
   # R225-P0-02: push 硬门禁 — 卖"CI门禁"却直推 main 无门禁的叙事漏洞收口
   # 此前本作业仅 pull_request 触发; 现 push main/develop + PR 双触发

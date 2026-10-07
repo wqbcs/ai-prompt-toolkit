@@ -130,3 +130,4 @@ Thumbs.db
 
 # 本地代码图谱缓存(非项目资产)
 /.codegraph/
+.cr_tmp.json

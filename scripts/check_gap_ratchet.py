@@ -72,7 +72,7 @@ def main() -> int:
     print(f"平均缺口率: 当前 {current:.4f} ({report['file_count']} 文件) | 基线 {base_rate:.4f}")
     if current > base_rate:
         print("✗ 缺口率上升 — 防御声明覆盖下降, 禁止收口(棘轮只收紧不放松)")
-        print(f"  若为有意变更(模板重构/口径调整): 独立 commit 跑 --update 降/升基线+理由")
+        print("  若为有意变更(模板重构/口径调整): 独立 commit 跑 --update 降/升基线+理由")
         return 1
     print("✓ 缺口棘轮通过(未变差; 下降不强制降基线, 收紧留独立 commit)")
     return 0
