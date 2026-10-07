@@ -2,6 +2,47 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.33] - 2026-10-06
+
+### Added (R240: P266 连接串密码字面暴露 + X4 语料库观察探针)
+
+- **P266 连接串密码字面暴露**（R240-X2 立项，规则 265→266）：
+  `scheme://user:password@host` 密码段非空 → CRITICAL。立项证据全留痕：
+  2 独立 TP（mysql/postgres 形态）凑齐 ≥2 阈值 + 原型 11/11（6 TP 全中 +
+  5 TN 全排除：user@ 无密码/jdbc 无 user/env 引用/host:port/空密码占位）+
+  **立项前**双基线冲击面全量验证（157 探针零误报+120 语料行零命中+26
+  模板零命中）。OWASP=2026 LLM02 Sensitive Information Disclosure
+  （对抗审查修正，见下）；与 P006（赋值面 password=xxx）正交互补；
+  16 测试 test_r240_p266_connstr.py
+- **X4 对抗语料库观察探针 8 条**（探针 161→169）：memgar 公开语料库
+  （slcxtor/memgar，10 种子×20 变换）取 14 变换×5 种子=70 样本定量——
+  零宽 5/5 已覆盖（P260/P261）、base64 已知片段 1/5、homoglyph 1/5
+  （P260 同形异码骨架面）+1 条 TP 锁死该覆盖，leetspeak/rot13/hex/
+  URL/Unicode Tags/fullwidth/spaced 0/5 全盲点（7 条 TN 登记观察区
+  07 T-6）；无单形态达 ≥2 独立真实 TP 立项阈值，维持观察区
+- **X5 首次板 vs 代码盘点抽查**（P3-17 纪律首跑）：P1-18（73 tools+
+  协商）/P3-15（五态+content_sha256）/P3-16（summary 三要素）3/3 通过
+
+### Fixed (R240 对抗审查 + R239 勘误)
+
+- **P266 OWASP 映射修正**（对抗审查命中）：初版声明 2025 号 LLM06 被
+  重键表（06→03）错归 2026 LLM03 Excessive Agency——敏感信息泄露应为
+  2026 LLM02 Sensitive Information Disclosure（与同族 P252-255 一致）；
+  教训=2025→2026 重键表非单调平移，声明前对照 OWASP_LLM_TOP_10_2026
+  单一真源（07 A15 反模式固化）
+- **R239 PII 评估勘误**：P005 实为 "Prompt 过短"（structure/low）非 PII
+  规则——R239"SSN/AKSK 已覆盖（P005）"系误归因，精确 PII 集
+  （P006/P051/P252-255）重跑确认为**真缺口**（登记 07 T-7，各补 1 独立
+  TP 即立项）；信用卡（P253）/API key（P006+P051）覆盖结论不变
+- **R240-X3 关闭（前提证伪）**：P005 双基线 FP=0 且非 PII 规则，
+  "辖区收窄"不成立，无需改动
+
+### 验证
+
+- 测试 6382→6400（+18：P266 16 + 既有面回归）
+- 双基线：FP 0.90% 持平（棘轮内）/ 漏检 0.00% 保持
+- 收口：release_gate 全链 + mypy 0/0 + ruff 全绿
+
 ## [v67.34.32] - 2026-10-06
 
 ### Fixed (R239: MCP 既有实现缺口收口 + P1-18 板漂移更正)

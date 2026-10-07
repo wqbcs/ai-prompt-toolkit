@@ -13621,6 +13621,66 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p266.py\u0000P266": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000连接串密码字面暴露": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000Prompt中含带密码段的连接串(scheme://user:password@host, 密码非空) — 凭据字面进 prompt 即泄露(对话记录/日志/模型输出面均可复现); 与P006(赋值面password=xxx)互补, 本规则管URL内嵌面": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000凭据移出prompt: 环境变量/密钥管理服务(KMS)引用, prompt内只保留无密码的连接信息(scheme://host:port/db); 已暴露的凭据立即轮换": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000Connection string with embedded password (scheme://user:password@host, non-empty password) in the prompt — a literal credential in a prompt is a leak (reproducible from chat logs, traces, and model outputs); complements P006 (assignment form password=xxx): this rule covers the URL-embedded form": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000Move the credential out of the prompt: reference it via environment variable or KMS, keep only password-free connection info (scheme://host:port/db) in the prompt; rotate any already-exposed credential": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000pii_exposure": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000LLM02": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p266.py\u0000(?:[a-zA-Z][a-zA-Z0-9+.\\-]*)://[^:/@\\s]+:[^\\s@]+@[\\w.\\-]+": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }
