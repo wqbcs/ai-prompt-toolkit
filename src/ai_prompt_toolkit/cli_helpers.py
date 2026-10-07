@@ -59,8 +59,14 @@ def discover_templates(target: str | Path) -> list[Path]:
 
 
 def load_promptignore(directory: Path) -> list[str]:
-    ignore_file = directory / ".promptignore"
-    if not ignore_file.exists():
+    """加载 .promptignore 模式。P4-04: 发现走 project_config 单一真源
+    (向上查找, git 根锚定, 就近优先) — 此前只查 directory 一层,
+    子目录运行找不到仓库根的 ignore 文件。匹配 base 保持 directory
+    (patterns 是相对被扫目录的, 发现位置不影响匹配口径)。"""
+    from ai_prompt_toolkit.linter.project_config import find_promptignore
+
+    ignore_file = find_promptignore(directory)
+    if ignore_file is None:
         return []
     lines = ignore_file.read_text(encoding="utf-8").splitlines()
     return [line.strip() for line in lines if line.strip() and not line.strip().startswith("#")]

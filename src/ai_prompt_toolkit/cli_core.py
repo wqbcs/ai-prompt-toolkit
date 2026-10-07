@@ -527,7 +527,7 @@ def _doctor_gate(as_json: bool) -> None:
     rules = get_all_rules()
     add("规则注册表", "ok", f"{len(rules)} 条规则加载正常")
 
-    # 3. 基线文件
+    # 3. 基线文件 + P3-15 完整性(尺子可篡改=双基线数字不可信)
     baseline = _repo("baselines/templates-baseline.json")
     if baseline.exists():
         import json as _json
@@ -537,6 +537,25 @@ def _doctor_gate(as_json: bool) -> None:
             add("增量门禁基线", "ok", f"baselines/templates-baseline.json ({snap.get('total_findings', '?')} findings)")
         except _json.JSONDecodeError:
             add("增量门禁基线", "fail", "基线文件存在但 JSON 非法")
+        try:
+            from ai_prompt_toolkit.linter.baseline import verify_baseline
+
+            _bv = verify_baseline(baseline)
+            _status = _bv["status"]
+            if _status == "ok":
+                add("基线完整性", "ok", f"content_sha256 一致 ({_bv.get('sha256', '')[:12]}…)")
+            elif _status == "tampered":
+                add(
+                    "基线完整性",
+                    "warn",
+                    "findings 段与 content_sha256 不匹配 — 可能被篡改; 有意变更请重存(独立 commit+理由)",
+                )
+            else:  # legacy(无哈希字段) / missing / corrupt — 不阻断
+                add("基线完整性", "ok", f"{_status}(向后兼容, 无 content_sha256 字段时静默)")
+        except Exception as _e:
+            # 完整性面异常显性化(A3 纪律: 禁静默吞异常) — 该面为增强自检,
+            # 降级 warn 不影响主六项, 但异常本身必须可见
+            add("基线完整性", "warn", f"完整性检查自身异常(降级): {type(_e).__name__}: {_e}")
     else:
         add("增量门禁基线", "warn", "baselines/templates-baseline.json 缺失 — CI 增量门禁(--incremental)将失败")
 

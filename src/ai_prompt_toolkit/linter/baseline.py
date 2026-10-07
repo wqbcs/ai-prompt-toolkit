@@ -4,11 +4,13 @@
 - save_baseline: 保存当前lint结果为基线快照(JSON)
 - load_baseline: 加载基线快照
 - compare_baseline: 对比当前结果与基线, 检测回归
+- verify_baseline: P3-15 基线篡改检测 — sha256 完整性校验(告警不阻断)
 - BaselineDiff: 新增/修复/未变/回归 分类统计
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -28,6 +30,10 @@ class BaselineSnapshot:
     findings: list[dict[str, Any]]
     template_id: str = ""
     score: float = 0.0
+    # P3-15: 基线篡改检测 — 对 findings 段(canonical JSON)的 sha256。
+    # 自指规避: 哈希只覆盖 findings 段, 不含自身字段; legacy 基线(无该字段)
+    # 校验时跳过不告警(向后兼容)。
+    content_sha256: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -36,6 +42,7 @@ class BaselineSnapshot:
             "template_id": self.template_id,
             "total_findings": self.total_findings,
             "score": self.score,
+            "content_sha256": self.content_sha256,
             "findings": self.findings,
         }
 
@@ -57,6 +64,7 @@ class BaselineSnapshot:
             total_findings=data.get("total_findings", 0),
             score=data.get("score", 0.0),
             findings=data.get("findings", []),
+            content_sha256=str(data.get("content_sha256", "")),
         )
 
 
@@ -88,6 +96,12 @@ def _finding_key(f: dict[str, Any]) -> str:
     return f"{f.get('rule_id', '')}:{f.get('description', '')}"
 
 
+def _content_sha256(findings_data: list[dict[str, Any]]) -> str:
+    """P3-15: findings 段的 canonical 哈希(键排序+紧凑分隔, 跨机器逐字节一致)。"""
+    canonical = json.dumps(findings_data, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 def save_baseline(
     findings_data: list[dict[str, Any]], path: str | Path, template_id: str = "", score: float = 0.0
 ) -> None:
@@ -97,6 +111,7 @@ def save_baseline(
         findings=findings_data,
         template_id=template_id,
         score=score,
+        content_sha256=_content_sha256(findings_data),
     )
     Path(path).write_text(json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -104,6 +119,42 @@ def save_baseline(
 def load_baseline(path: str | Path) -> BaselineSnapshot:
     data = json.loads(Path(path).read_text(encoding="utf-8"))
     return BaselineSnapshot.from_dict(data)
+
+
+def verify_baseline(path: str | Path) -> dict[str, Any]:
+    """P3-15: 基线文件完整性校验 — 返回状态 dict(供 doctor / --incremental 告警)。
+
+    状态:
+    - ok: content_sha256 与 findings 段重算值一致
+    - tampered: 字段存在但不匹配 — findings 段被改过(尺子被动过)
+    - legacy: 无 content_sha256 字段(旧版基线) — 不告警(向后兼容)
+    - missing: 文件不存在
+    - corrupt: JSON 非法
+
+    纪律(07 TH7): 校验是**告警面**不是门禁 — 不改变退出码 0/1/2 契约
+    (5 年不变量⑤), 篡改只产生 warning, 处置由人决定(重存基线需独立
+    commit+理由, 02 总板棘轮纪律)。
+    """
+    p = Path(path)
+    if not p.exists():
+        return {"status": "missing", "path": str(p)}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {"status": "corrupt", "path": str(p)}
+    stored = str(data.get("content_sha256", ""))
+    findings = data.get("findings", [])
+    if not stored:
+        return {"status": "legacy", "path": str(p)}
+    recomputed = _content_sha256(findings if isinstance(findings, list) else [])
+    if stored == recomputed:
+        return {"status": "ok", "path": str(p), "sha256": stored}
+    return {
+        "status": "tampered",
+        "path": str(p),
+        "stored_sha256": stored,
+        "recomputed_sha256": recomputed,
+    }
 
 
 def compare_baseline(current_findings: list[dict[str, Any]], baseline: BaselineSnapshot) -> BaselineDiff:

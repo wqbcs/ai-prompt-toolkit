@@ -148,6 +148,33 @@ jobs:
             token-report.json
             scenario-lint.json
 
+  # R237-P3-06: 依赖审计自动化 — 供应链面机器护栏(Shai-Hulud/pkg-inject 热度,
+  # R237 调研 §2.3)。独立作业不与 test 矩阵联动: pip-audit 需网络查 PyPI
+  # advisory DB, 抖动不该放大成整链红(同 R231 codecov 解耦纪律)。
+  # 首 2 版观察期: continue-on-error 收集基线数据; 稳定后去掉该标记转硬门禁。
+  # 与 .github/dependabot.yml 周更 PR 互补: dependabot 管"版本新鲜",
+  # pip-audit 管"已装版本是否有已知 CVE"。
+  dependency-audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # 观察期(首 2 版), R239 评审转硬门禁
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      # 审计 pyproject 声明面(core+dev, 不装项目本体 — 声明面即攻击面)
+      - name: "pip-audit (declared deps)"
+        run: python -m pip_audit -r pyproject.toml --strict
+
+      - name: "pip-audit (installed env)"
+        run: python -m pip_audit --no-deps
+
   # R225-P0-02: push 硬门禁 — 卖"CI门禁"却直推 main 无门禁的叙事漏洞收口
   # 此前本作业仅 pull_request 触发; 现 push main/develop + PR 双触发
   # 设计(05 §Q1): push 作业只跑 gate 不重跑 pytest 矩阵(减重见 P6-03);

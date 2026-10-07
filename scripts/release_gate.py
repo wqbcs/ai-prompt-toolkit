@@ -35,6 +35,9 @@
     import; R233-P4-01 手测结论固化为机器护栏; 已知违规边 14 §3 V5 留痕豁免)
 18. 双基线时间序列追加(append_baseline_history.py, R230-P2-04: 全链通过后的
     收口快照进 docs/baseline_history.jsonl, append-only)
+19. 本地=CI 验证(verify_local_ci_parity.py, R237-P3-11: 钉死包版本断言 +
+    CI workflow 命令面可达性 — 收口前确认本地执行面=CI 执行面, R223 四连红
+    根因的机器护栏)
 
 用法:
     python scripts/release_gate.py                # 全链, 失败即停
@@ -141,6 +144,9 @@ def build_steps() -> list[Step]:
         # P4-02: 核心零依赖验证(kernel 层零第三方, R233-P4-01 手测结论固化为机器护栏)
         Step("核心零依赖验证", [PY, "scripts/check_layer_deps.py"]),
         Step("双基线时间序列追加", [PY, "scripts/append_baseline_history.py"]),
+        # R237-P3-11: 本地=CI 验证(钉死包版本断言 + CI workflow 命令面可达;
+        # 收口前确认"本地跑的就是 CI 跑的命令", R223 四连红根因的机器护栏)
+        Step("本地=CI 验证", [PY, "scripts/verify_local_ci_parity.py"]),
     ]
 
 

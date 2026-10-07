@@ -2,6 +2,50 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.30] - 2026-10-06
+
+### Added (R237: P4-04 配置发现统一 + P3-15 基线篡改检测 + P3-11 本地=CI 验证 + P3-06 依赖审计自动化)
+
+- **P4-04 配置发现机制统一（.promptignore 向上查找缺口收口）**：三面盘点
+  结论=两已单点（promptlint.toml 侧 P2-03 已实现/waiver=行内 pragma 无文件
+  发现/基线=`repo_relative`）+ **唯一真实缺口=`.promptignore` 只查 target
+  目录一层**（子目录运行找不到仓库根 ignore 文件）。`find_promptignore()`
+  入 `linter/project_config.py`（共享 `_ancestors_up_to_root` 原语，与配置
+  发现同语义：就近优先+git 根锚定）+ `cli_helpers.load_promptignore` 改走
+  单一真源（匹配 base 不变=patterns 口径向后兼容）。同目录发现行为逐字节
+  不变（测试锁定）。11 测试 test_r237_p4_04_config_discovery.py
+- **P3-15 基线文件篡改检测（"尺子本身可验证"=可信度叙事机器化）**：
+  `linter/baseline.py` 新增 `content_sha256` 字段（findings 段 canonical
+  JSON 哈希——自指规避=哈希不覆盖自身字段；legacy 基线无字段→静默向后
+  兼容）+ `verify_baseline()` 五态 ok/tampered/legacy/missing/corrupt；
+  `--incremental` 运行时 tampered/corrupt→stderr warning（**告警面不改裁决**：
+  退出码 0/1/2 契约不变=5 年不变量⑤，e2e 断言 tampered 与 intact 同退出码）；
+  `doctor` 新增基线完整性面（第七项自检，异常显性化不静默吞）。
+  13 测试 test_r237_p3_15_baseline_integrity.py
+- **P3-11 本地=CI 验证脚本**：`scripts/verify_local_ci_parity.py`——命令
+  真源=解析 CI workflow 本身（不复制命令=无双维护漂移源，奥卡姆）：
+  `run: |` 多行块+单行两形态解析（24 条全解析）+反斜杠续行合并+注释跳过；
+  钉死包版本断言（pyproject `==` 钉版 vs 本地安装，漂移=硬红，R223 四连红
+  根因的机器护栏）；`--replay` 逐条独立子进程重放（禁管道吞码纪律内置）；
+  release_gate 第 19 步接线。9 测试 test_r237_p3_11_local_ci_parity.py
+- **P3-06 依赖审计自动化**：CI 独立作业 `dependency-audit`（pip-audit
+  声明面 `--strict` + 已装面 `--no-deps`，continue-on-error 首 2 版观察期
+  R239 评审转硬；独立作业不与 test 矩阵联动=R231 codecov 解耦纪律，网络
+  advisory 查询抖动不放大整链红）+ `.github/dependabot.yml` 双生态周更
+  （pip+github-actions，只 PR 不自动合=依赖变更过门禁人工确认）。
+  8 测试 test_r237_p3_06_dep_audit.py
+- **调研文档 R237_改进方案与开源调研.md**：互联网调研 7 路刷新（promptfoo
+  归属变更/promptpale/skilldoctor/promptfence 新面孔+掘金 ICP-② S 级双锚
+  +供应链面 Shai-Hulud/pkg-inject）；02 总板登记 P1-18（MCP server 端点，
+  aiproof v0.3 A 级信号）+反清单追加 5 条；07 观察区 R237-X1/X2；**修复
+  R236 调研文档未落盘致 00 悬空引用缺陷**（A13 反模式登记 07 §4）
+- 测试 6323→6364（+41）；release_gate 18→19 步
+
+### Fixed
+
+- 00 交接文档 §5 悬空引用（引用 `R236_改进方案与开源调研.md` 但文件未
+  入库）→ 改指 R237 调研文档（R236 调研结论并入 R237 §2）
+
 ## [v67.34.29] - 2026-10-06
 
 ### Added (R236: P2-19 硬编码审计 + P2-10 规则解释页)

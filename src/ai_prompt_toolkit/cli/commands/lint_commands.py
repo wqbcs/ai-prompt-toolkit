@@ -994,6 +994,21 @@ def lint(
             f"新增: {len(_diff.new_findings)} | 已修复: {len(_diff.fixed_findings)}\n"
             f"  门禁判定面 = 仅 {len(_diff.new_findings)} 条 NEW findings (存量放行)"
         )
+        # P3-15: 基线完整性告警(尺子可篡改=双基线数字不可信) — warning 不阻断,
+        # 不改变退出码 0/1/2 契约(5 年不变量⑤); legacy 基线(无哈希字段)静默
+        from ai_prompt_toolkit.linter.baseline import verify_baseline
+
+        _bv = verify_baseline(baseline_path)
+        if _bv["status"] == "tampered":
+            click.echo(
+                "  ⚠️ 基线完整性: findings 段与 content_sha256 不匹配 — "
+                f"基线 {_bp} 可能被篡改(存储 {_bv['stored_sha256'][:12]}…/"
+                f"重算 {_bv['recomputed_sha256'][:12]}…)。"
+                "若为有意变更请 --baseline-save 重存(独立 commit+理由)",
+                err=True,
+            )
+        elif _bv["status"] == "corrupt":
+            click.echo(f"  ⚠️ 基线完整性: 基线文件 JSON 非法 {_bp}", err=True)
 
     # P2-03: 配置级 fail-on 兜底 — CLI 显式 --fail-on 优先, 未指定时用
     # promptlint.toml 的 fail_on(默认 high), 避免 CI 命令行长参数漂移

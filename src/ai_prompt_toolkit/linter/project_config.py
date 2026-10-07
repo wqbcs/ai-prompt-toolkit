@@ -1,7 +1,16 @@
-"""P2-03: 项目级 lint 配置发现 — promptlint.toml / pyproject.toml [tool.promptlint]
+"""P2-03/P4-04: 项目级资产发现单一真源 — 配置/忽略/基线的向上查找统一收口
 
 对标 ruff 配置发现惯例(03 §E2): 双位置 + 目录向上查找 + 项目根锚定。
-不重复造轮子: 消费层复用 LintConfig 数据模型(lint_config.py), 本模块只做
+本模块是**所有"从 cwd 向上找项目资产"语义的单一真源**(P4-04):
+
+- promptlint.toml / pyproject.toml [tool.promptlint] — lint 配置(P2-03)
+- .promptignore — 忽略文件(P4-04: 原 cli_helpers 只查 target 目录,
+  统一为与配置发现同语义的向上查找, git 根锚定)
+- find_project_root / repo_relative — 仓库根锚定原语(基线/模板/文档等
+  项目内资产路径一律经 repo_relative 解析, 消除"必须在仓库根运行"的
+  隐性 cwd 依赖)
+
+不重复造轮子: 消费层复用 LintConfig 数据模型(lint_config.py), 配置侧只做
 发现 + TOML 解析 + 校验, 把结果映射进 LintConfig 既有字段与三个新增字段
 (severity_overrides/waivers/gap_max_rate) — YAML 加载路径零改动。
 
@@ -110,6 +119,23 @@ def repo_relative(rel: str, start_dir: Path | None = None) -> Path:
     Path("baselines/...")/Path("src/...") cwd 相对硬编码。
     """
     return find_project_root(start_dir) / rel
+
+
+def find_promptignore(start_dir: Path | None = None) -> Path | None:
+    """P4-04: 从 start_dir(默认 cwd)向上查找 .promptignore, git 根锚定。
+
+    与 find_project_config 同一发现语义(共享 _ancestors_up_to_root):
+    就近优先, 第一个命中即返回。非仓库上下文逐层到文件系统根。
+    供 cli_helpers.load_promptignore 消费——此前只查 target 目录一层,
+    子目录运行找不到仓库根 ignore 文件(与配置发现的"必须跑在根目录"
+    隐性依赖同族)。
+    """
+    start = (start_dir or Path.cwd()).resolve()
+    for cur in _ancestors_up_to_root(start):
+        candidate = cur / ".promptignore"
+        if candidate.is_file():
+            return candidate
+    return None
 
 
 def find_project_config(start_dir: Path | None = None) -> Path | None:
