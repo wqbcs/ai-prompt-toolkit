@@ -55,7 +55,7 @@ dev = [
     # 版本钉死: CI与本地同一版本 — R223实证ruff 0.15.14/0.16.10存在
     # format漂移(check/format行为随版本变), 门禁必须可复现不随上游发版抖动
     "ruff==0.16.10",
-    "mypy==2.1.0",
+    "mypy==2.4.0",
     "pre-commit>=3.7",
     # market REST API 测试(test_market_api)顶层 import fastapi,
     # TestClient 依赖 httpx — 此前只在 [full], [dev] 缺失致 CI 收集报错
