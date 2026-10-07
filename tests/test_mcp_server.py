@@ -273,3 +273,29 @@ class TestMCPProtocol:
         result = _tool_huaweicloud_iam_auth({})
         assert "available_methods" in result
         assert set(result["available_methods"]) == {"aksk", "token", "agency"}
+
+
+class TestInitializeVersionNegotiation:
+    """R239: initialize 协议版本协商(规格 basic/lifecycle) — 此前硬编码
+    2024-11-05 单版本, 新版客户端(请求 2025-06-18)按规格 SHOULD disconnect"""
+
+    def test_supported_version_echoed(self):
+        """支持的版本 → 回同版本(向后兼容: 旧客户端 2024-11-05 与新版都通)"""
+        for v in ("2025-06-18", "2025-03-26", "2024-11-05"):
+            resp = json.loads(_handle_initialize(1, {"protocolVersion": v}))
+            assert resp["result"]["protocolVersion"] == v, v
+
+    def test_unsupported_version_falls_back_to_latest(self):
+        """不支持的版本 → 回我方支持的最新版(标准降级面, 不断连)"""
+        resp = json.loads(_handle_initialize(2, {"protocolVersion": "1999-01-01"}))
+        assert resp["result"]["protocolVersion"] == "2025-06-18"
+
+    def test_missing_version_defaults_to_latest(self):
+        """缺失 protocolVersion → 回最新版(此前默认 2024-11-05 硬编码)"""
+        resp = json.loads(_handle_initialize(3, {}))
+        assert resp["result"]["protocolVersion"] == "2025-06-18"
+
+    def test_non_string_version_falls_back(self):
+        """非法类型(protocolVersion=数字) → 回最新版, 不崩"""
+        resp = json.loads(_handle_initialize(4, {"protocolVersion": 42}))
+        assert resp["result"]["protocolVersion"] == "2025-06-18"

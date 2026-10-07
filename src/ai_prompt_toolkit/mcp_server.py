@@ -1,4 +1,4 @@
-"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(53个Tools)
+"""MCP Server — 将ai-prompt-toolkit核心能力暴露为MCP协议(工具数见 _handle_tools_list, R239 动态化)
 
 参考:
 - MCP官方规范 (https://modelcontextprotocol.io)
@@ -41,7 +41,11 @@ if TYPE_CHECKING:
 
     from ai_prompt_toolkit.types import Finding
 
-_MCP_VERSION = "2024-11-05"
+# R239: 支持的协议版本(新→旧)。MCP 规格协商语义(2025-06-18 basic/lifecycle):
+# 客户端 MUST 发其支持的版本, server 支持则回同版本, 否则回 server 支持的
+# 最新版 — 此前硬编码 2024-11-05 单版本, 新版客户端(请求 2025-06-18)按规格
+# "client SHOULD disconnect" 会拒接; 保留 2024-11-05 向后兼容旧客户端。
+_MCP_SUPPORTED_VERSIONS = ("2025-06-18", "2025-03-26", "2024-11-05")
 _SERVER_NAME = "ai-prompt-toolkit"
 # 版本动态取包版本, 避免硬编码漂移(R174前曾硬编码42.0.0)
 _SERVER_VERSION = __version__
@@ -68,10 +72,18 @@ def _make_error(id_val: Any, code: int, message: str) -> str:
 
 
 def _handle_initialize(id_val: Any, params: dict[str, Any]) -> str:
+    # R239 协商语义(规格 basic/lifecycle): 客户端版本受支持→回同版本;
+    # 否则回我方支持的最新版本 — 此前硬编码 2024-11-05, 新版客户端
+    # (请求 2025-06-18)按规格"client SHOULD disconnect"会拒接
+    requested = params.get("protocolVersion")
+    if isinstance(requested, str) and requested in _MCP_SUPPORTED_VERSIONS:
+        negotiated = requested
+    else:
+        negotiated = _MCP_SUPPORTED_VERSIONS[0]
     return _make_response(
         id_val,
         {
-            "protocolVersion": _MCP_VERSION,
+            "protocolVersion": negotiated,
             "capabilities": {
                 "tools": {"listChanged": False},
                 "resources": {"subscribe": False, "listChanged": False},

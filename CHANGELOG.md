@@ -2,6 +2,46 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.32] - 2026-10-06
+
+### Fixed (R239: MCP 既有实现缺口收口 + P1-18 板漂移更正)
+
+- **P1-18 板漂移更正（本轮头号发现）**：02 总板 P1-18 标 ⬜（"MCP server
+  端点待评估"）但 `mcp_server.py`（3096 行/**73 个 MCP 工具**/零依赖手写
+  JSON-RPC）R197 起就在仓库中——登记时未做能力存在性搜索导致板漂移。
+  状态列 ⬜→✅；原"待评估"降级为"既有实现缺口收口"
+- **MCP initialize 协议版本协商**：2024-11-05 硬编码单版本→
+  `_MCP_SUPPORTED_VERSIONS=("2025-06-18","2025-03-26","2024-11-05")` 协商
+  语义（客户端版本受支持回同版本/否则回我方最新版）——此前新版客户端
+  （请求 2025-06-18）按规格 "client SHOULD disconnect" 会拒接我方 server。
+  4 测试（支持版本回同×3/不支持回最新/缺失回最新/非字符串回最新）
+- **mcp_server.py docstring 工具数动态化**："53 个 Tools"（R236 硬编码
+  审计未覆盖面）→实际 73，改动态表述（R194/R212 动态化惯例）
+- 验证：79 既有 MCP 测试不回归（83 passed 含 4 新测试）+双基线
+  FP 0.90%/漏检 0.00% 保持+ruff/mypy 绿+e2e 冒烟（initialize/tools/list/
+  tools/call 四请求全正确响应）
+
+### Added (R239: 调研刷新 + PII 面评估)
+
+- **R239_改进方案与开源调研.md**：CSA/Elastic Unicode 注入 ASR 数据
+  （homoglyph 42-58%/编码 64-67%/隐写 92%）→X2 五面优先级重排+我方 BiDi
+  面覆盖度 ≥ OWASP Cheat Sheet 建议线（P261 单字符即报）；aiproof 迁移
+  Frostbyte-Devs+Rust 化 v0.1.4（赛道热度验证+其 96% FP 修复史公开=
+  FP 率成赛道共识生死指标）；prompt-lockbox 新邻接竞品（.plb.lock 与
+  P3-15 同语义对照+CI/CD 指南=ICP-① 采用形态验证）；ClawGuard 14 变体
+  链式归一化（自报 262 用例零 FP=小样本自报，反清单追加）；wunderwuzzi
+  Unicode Tags（E0001-E007F）第 6 混淆面（R240-X4 观察区探针先行）
+- **PII-exfiltration 面评估（R239-X1）**：10 例对照（7 TP+3 TN）——覆盖
+  确认（SSN→P005/信用卡→P005+P253/API key→P006+P051/AKSK→P005）；
+  缺口=连接串密码 `mysql://user:pass@host` PII 族零命中（登记 R240-X2，
+  补 1 例独立 TP 即立项）；FP 信号=P005 误击短哈希/证件边界说明 2 例
+  （登记 R240-X3 辖区收窄评估）
+- **反清单 +4**：ClawGuard 链式归一化/Rust 化语言迁移/lockbox 产品/
+  Unicode Tags 面规则（均本轮调研实证）
+- **事故留痕（§7）**：write_file 覆盖既有 mcp_server.py（3096 行）——
+  靠返回提示 "was 3096 lines"+git restore 零损失止损；教训固化=write_file
+  前必须确认目标不存在（memory+07 §4 A14）
+
 ## [v67.34.31] - 2026-10-06
 
 ### Added (R238: P2-17 git 原生增量 + P2-11 信源剩余面)
