@@ -58,6 +58,34 @@ def discover_templates(target: str | Path) -> list[Path]:
     raise ValidationError(f"目标不存在 — {p}", field="target")
 
 
+def git_changed_since_rev(rev: str, cwd: Path | None = None, base_dir: str = ".") -> list[Path] | None:
+    """P2-17: git 原生增量 — 返回 <rev> 之后有变更(含 rev 内新增/删除)的
+    prompt 模板路径(相对 base_dir 的 Path 列表)。
+
+    语义边界(诚实声明, 5 年不变量③):
+    - 只覆盖 **tracked 且相对 rev 有变更** 的文件 — untracked(未入 git 的
+      全新文件)不在 diff 内, 不覆盖; 这是 brownfield "对变更负责" 的
+      设计语义, 非缺陷
+    - 删除文件在 diff --name-only 内但已不存在 → 调用方按 exists() 过滤
+    - 非 git 仓库 / rev 不存在 / git 不可用 → 返回 None(调用方给清晰错误)
+
+    复用 --changed 的 subprocess 形态(零新依赖, git 是仓库固有前提)。
+    """
+    import subprocess
+
+    cmd = ["git", "diff", "--name-only", rev, "--", "*.md", "*.prompt", "*.prompt.md"]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd or base_dir)
+    except (OSError, FileNotFoundError):
+        return None
+    if proc.returncode != 0:
+        return None
+    out = Path(base_dir)
+    files = [out / line.strip() for line in proc.stdout.splitlines() if line.strip()]
+    # 删除文件已不存在 → 过滤(门禁只对现存文件有效)
+    return [p for p in files if p.exists()]
+
+
 def load_promptignore(directory: Path) -> list[str]:
     """加载 .promptignore 模式。P4-04: 发现走 project_config 单一真源
     (向上查找, git 根锚定, 就近优先) — 此前只查 directory 一层,

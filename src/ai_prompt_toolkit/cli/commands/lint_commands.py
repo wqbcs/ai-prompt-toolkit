@@ -258,6 +258,13 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     is_flag=True,
     help="增量门禁(R224): 与--baseline+--gate/--fail-on合用时, 门禁只计NEW findings(基线内已知的PRE-EXISTING放行) — 老仓库接入不被存量打回",
 )
+@click.option(
+    "--new-from-rev",
+    "new_from_rev",
+    default=None,
+    metavar="REV",
+    help="P2-17 git原生增量: 只lint <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
+)
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
@@ -316,6 +323,7 @@ def lint(
     baseline_path: str | None,
     baseline_save: bool,
     incremental: bool,
+    new_from_rev: str | None,
     suggest_mode: bool,
     json_diff_path: str | None,
     explain_mode: bool,
@@ -364,6 +372,7 @@ def lint(
         discover_templates,
         discover_templates_with_ignore,
         empty_state_tip,
+        git_changed_since_rev,
         load_promptignore,
         write_report,
     )
@@ -425,7 +434,34 @@ def lint(
             if ignore_file or Path(target).is_dir()
             else discover_templates(target)
         )
+
+    # P2-17: git 原生增量 — <rev> 后有变更的模板才进门禁面(brownfield 免基线)。
+    # 与 --incremental(基线面)互斥: 两增量语义叠加=行为不可预测, 显式报错。
+    # 语义边界(诚实声明): 只覆盖 tracked 且相对 rev 变更的文件 — untracked
+    # 新文件不在 git diff 内, 不覆盖(对变更负责的设计语义)。
+    if new_from_rev:
+        if incremental:
+            click.echo("错误: --new-from-rev 与 --incremental 互斥(两套增量语义, 选其一)", err=True)
+            sys.exit(2)
+        _changed_tpls = git_changed_since_rev(new_from_rev, base_dir=target)
+        if _changed_tpls is None:
+            click.echo(
+                f"错误: --new-from-rev 失败 — 非 git 仓库或 rev 不存在: {new_from_rev}",
+                err=True,
+            )
+            sys.exit(2)
+        _changed_set = {str(p) for p in _changed_tpls}
+        _total_before = len(templates)
+        templates = [t for t in templates if str(t) in _changed_set]
+        click.echo(
+            f"── git 原生增量 ──\n"
+            f"  rev: {new_from_rev} | git 变更模板: {len(_changed_tpls)} | "
+            f"门禁面 = {len(templates)}/{_total_before} 个(仅 rev 后变更, 未变更/未跟踪文件跳过)"
+        )
     if not templates:
+        if new_from_rev:
+            click.echo(f"--new-from-rev {new_from_rev}: 无变更的 prompt 模板 — 门禁面为空, PASS")
+            sys.exit(0)
         click.echo(empty_state_tip("lint"))
         sys.exit(0)
 
@@ -1149,6 +1185,13 @@ def lint(
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
 @click.option("--explain", is_flag=True, help="交互式解释: 每个安全发现的详细说明+修复建议")
 @click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
+@click.option(
+    "--new-from-rev",
+    "new_from_rev",
+    default=None,
+    metavar="REV",
+    help="P2-17 git原生增量: 只扫描 <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
+)
 def scan(
     target: str,
     provider: str | None,
@@ -1157,12 +1200,41 @@ def scan(
     incremental: bool,
     explain: bool,
     resume: bool = False,
+    new_from_rev: str | None = None,
 ) -> None:
     """安全扫描：检测Prompt注入、敏感信息泄露等安全风险"""
-    from ai_prompt_toolkit.cli_helpers import determine_exit_code, discover_templates, empty_state_tip, write_report
+    from ai_prompt_toolkit.cli_helpers import (
+        determine_exit_code,
+        discover_templates,
+        empty_state_tip,
+        git_changed_since_rev,
+        write_report,
+    )
     from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
 
     templates = discover_templates(target)
+    if new_from_rev:
+        if incremental:
+            click.echo("错误: --new-from-rev 与 --incremental 互斥(两套增量语义, 选其一)", err=True)
+            sys.exit(2)
+        _changed = git_changed_since_rev(new_from_rev, base_dir=target)
+        if _changed is None:
+            click.echo(
+                f"错误: --new-from-rev 失败 — 非 git 仓库或 rev 不存在: {new_from_rev}",
+                err=True,
+            )
+            sys.exit(2)
+        _changed_set = {str(p) for p in _changed}
+        _total_before = len(templates)
+        templates = [t for t in templates if str(t) in _changed_set]
+        click.echo(
+            f"── git 原生增量 ──\n"
+            f"  rev: {new_from_rev} | git 变更模板: {len(_changed)} | "
+            f"门禁面 = {len(templates)}/{_total_before} 个(仅 rev 后变更, 未变更/未跟踪文件跳过)"
+        )
+        if not templates:
+            click.echo(f"--new-from-rev {new_from_rev}: 无变更的 prompt 模板 — 门禁面为空, PASS")
+            sys.exit(0)
     if not templates:
         click.echo(empty_state_tip("scan"))
         sys.exit(0)

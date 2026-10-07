@@ -2,6 +2,37 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.31] - 2026-10-06
+
+### Added (R238: P2-17 git 原生增量 + P2-11 信源剩余面)
+
+- **P2-17 `--new-from-rev <rev>` git 原生增量（brownfield 杀手锏，免基线）**：
+  lint/scan 共享 CLI 选项——`git diff --name-only <rev>` 得变更模板集，
+  门禁面=仅 rev 后变更文件（未变更/未跟踪文件跳过=零噪音）；非 git 仓库/
+  rev 不存在→退出码 2 清晰错误（5 年不变量⑤）；与 `--incremental`（基线面）
+  互斥（两增量语义叠加=行为不可预测）；语义边界诚实声明=只覆盖 tracked
+  变更（untracked 新文件不在 diff 面，07 A2 登记）。`git_changed_since_rev`
+  入 cli_helpers（与 `--changed` 同族 subprocess 形态，零新依赖——git 是仓库
+  固有前提）。r/LLMDevs 自建 CI replay gate 痛点实证（R237 §2.2）的直接
+  替代：老仓库首用零 setup。14 测试 test_r238_p2_17_new_from_rev.py
+- **P2-11 信源剩余面继续取（TN 150→157）**：buried-injections 97 良性源
+  再取 7 形态 TN（HTTP access log/Markdown 技术报告(zh)/Jupyter In-Out
+  混排/XML Atom feed/git log/package.json/中文工单）——避重 R230/234/235
+  已覆盖 15 形态；expected=[] 纯 TN 侧→漏检 0.00% 保持，FP 0.90% 持平；
+  zh-Hans 101→103/en 41→46。fixtures 同步（tests/fixtures 与 data 同内容）
+- **归一化覆盖度对照表（docs/planning/16_归一化覆盖度对照_R238.md）**：
+  prompt-guard 7 形态清单×我方 P258/260/261 实测——覆盖 2/7（base64→P260/
+  零宽→P261），漏检 5 面（hex/`\u00XX` 转义/rot13/leetspeak/homoglyph）
+  登记 07 X2（T1：≥2 独立 TP 探针才立规则；`\u00XX` 面 FP 风险最高=中文
+  `\u4e2d\u6587` 常态实证）；方法论结论="归一化≠覆盖"进 02 反清单
+- **调研文档 R238_改进方案与开源调研.md**：prompt-guard 新竞品（A 级，
+  "ESLint for the new attack surface" 59 规则+归一化 7 形态，辖区重叠
+  核对+PII 面缺口登记 X1）+ tianpan.co 中文面规模化实证（S 级：生产三层
+  防御=启发式预筛选+分类器+行为监控，我方=第一层仓库级前置形态）+
+  **P5-10 中文专项诚实负结果**（公开话语偏运行时检测技术内容，静态门禁+
+  信创合规中文话语空白=无采用者证据→回"维持观察"，观察触发器 07 T-4）
+- 测试 6364→6378（+14）；探针 150→157
+
 ## [v67.34.30] - 2026-10-06
 
 ### Added (R237: P4-04 配置发现统一 + P3-15 基线篡改检测 + P3-11 本地=CI 验证 + P3-06 依赖审计自动化)

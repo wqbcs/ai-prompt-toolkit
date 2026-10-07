@@ -50,7 +50,8 @@ class TestR214LangSchema:
         # R220: 113 | R230: +4(P265 TP×2/TN×2) +8(TN扩容) = 125 | R231: +6(OWASP 2026子面 TP×4/TN×2) = 131
         # R234: +12(P2-23 buried-injections 基准语料 TP×4/TN×8) = 143
         # R235: +7(P2-11 TN 侧 buried-injections 剩余面: json数组/终端/邮件/sql结果/yaml/base64日志/心跳) = 150
-        assert len(probes) == 150
+        # R238: +7(P2-11 TN 侧 buried-injections 剩余面: http日志/markdown报告/notebook/xml feed/git log/package.json/中文工单) = 157
+        assert len(probes) == 157
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -61,10 +62,12 @@ class TestR214LangSchema:
         assert langs["atk04_hardcoded_secret"] == "en"
         # R234: zh-Hans 99 | en 36 | R235: +2 zh-Hans(r235_tn09/tn11) +5 en(r235_tn10/12/13/14/15)
         # R235: zh-Hans 101 | en 41 | ja 6 | zh-Hant 2 (TP 面不变, 纯 TN 侧扩容)
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 101
+        # R238: +2 zh-Hans(r238_tn17/tn22) +5 en(r238_tn16/18/19/20/21)
+        # R238: zh-Hans 103 | en 46 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 103
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        assert sum(1 for v in langs.values() if v == "en") == 41
+        assert sum(1 for v in langs.values() if v == "en") == 46
 
 
 class TestR214PerLanguageReport:
