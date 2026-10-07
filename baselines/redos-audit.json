@@ -13681,6 +13681,66 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p267.py\u0000P267": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000AWS凭据ID字面暴露": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000Prompt中含AWS Access Key ID字面(AKIA/ASIA/ABIA/ACCA前缀+16位大写, 共20位) — key ID是凭据对的一半, 出现即高置信度真实凭据对正在被处理(secret常伴生, 对话记录/日志/模型输出面均可复现); 与P051(命名赋值面)互补, 本规则管云厂商凭据标识符字面形态": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000凭据移出prompt: 环境变量/KMS/IAM Role引用, prompt内不保留key ID; 已暴露的key ID立即轮换(key ID暴露即使secret未暴露也需轮换, 凭据对任一半泄露即失效)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000AWS Access Key ID literal (AKIA/ASIA/ABIA/ACCA prefix + 16 uppercase alphanumeric chars, 20 total) in the prompt — the key ID is half of the credential pair; its presence is a high-confidence marker that a real credential pair is being handled (secret often co-located, reproducible from chat logs, traces, model outputs); complements P051 (named assignment form): this rule covers the bare cloud-credential-token form": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000Move the credential out of the prompt: reference it via environment variable, KMS, or IAM Role; never keep the key ID in the prompt. Rotate any exposed key ID immediately (an exposed half of the pair invalidates the credential even without the secret)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000pii_exposure": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000LLM02": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p267.py\u0000\\b(?:AKIA|ASIA|ABIA|ACCA)[A-Z0-9]{16}\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }

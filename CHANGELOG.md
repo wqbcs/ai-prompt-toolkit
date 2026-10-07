@@ -2,6 +2,33 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.34] - 2026-10-06
+
+### Added (R241: P267 AWS 凭据 ID 字面暴露 — T-7 AKSK 面立项)
+
+- **P267 AWS 凭据 ID 字面暴露**（R241-X2 立项，规则 266→267）：
+  `AKIA/ASIA/ABIA/ACCA` 前缀 + 16 位大写字母数字（20 位定长）→ CRITICAL。
+  立项证据全留痕：2 独立 TP（AKIA 长期/ASIA 临时）+ 全量规则重验确认
+  PII/凭据族（P006/P051/P252-255/P266）零覆盖=真缺口 + 正则原型 11/11
+  （4 TP 全中 + 7 TN 全排除：短 key/小写/19 位/日期/电话/订单号/版本号）+
+  **立项前**双基线冲击面全量验证（clean_prompts 120 行/26 模板/golden TN
+  三源零误报）。前缀集=AWS IAM 官方 4 前缀（A3T 剔除：gitleaks 自标
+  "might not be a valid AWS token"，A15 对照真源收窄）；`\b` 双向锚定
+  零长度容差（19/21 位不匹配）；OWASP=2026 LLM02 Sensitive Information
+  Disclosure（与同族 P252-255/P266 一致）；5 探针入 golden（169→174）；
+  15 测试 test_r241_p267_awskey.py
+- **对抗审查方案修正（R241 §5）**：原 T-7 双形态（SSN+AKSK）收窄为
+  **AKSK-only 立项**——SSN 裸形态 `\d{3}-\d{2}-\d{4}` 匹配电话/日期/
+  序列号=高误报磁铁，与"FP 率是赛道生死指标"的楔子冲突（不对称 downside：
+  上线高误报规则伤核心口碑 vs 观察区零损失）；SSN 转 07 T-7 观察区
+  （需关键词上下文增强+真实语料 FP 量化后再评估）
+
+### 验证
+
+- 测试 6407→6422（+15：P267 TP 5+TN 6+注册面 4）
+- 双基线：FP 0.90% 持平（棘轮内）/ 漏检 0.00% 保持
+- 收口：release_gate 全链 + mypy 0/0 + ruff 全绿
+
 ## [v67.34.33] - 2026-10-06
 
 ### Added (R240: P266 连接串密码字面暴露 + X4 语料库观察探针)
