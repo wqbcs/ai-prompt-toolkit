@@ -126,6 +126,10 @@ def build_steps() -> list[Step]:
         # R243-1: 02 总板状态列 vs CHANGELOG 声称 vs sha 存在性三向核对
         # (P3-17 脚本化: 3 轮内 3 处板漂移="完成轮次未回写状态列"机器全查)
         Step("板状态核对", [PY, "scripts/check_board_status.py"]),
+        # R244-1: <100ms/文件 楔子不变量机器断言 (P2-16 轻量形态, 与 P2-15
+        # OTEL 解耦): 固定语料 60 文件 warmup+3 遍中位数, per-file max<100ms
+        # (R244 校准 max≈16ms, 6× 余量; 绝对预算非相对回归=CI 无历史依赖)
+        Step("性能楔子断言 (<100ms/文件)", [PY, "scripts/check_lint_performance.py"]),
         Step("check_version_consistency", [PY, "scripts/check_version_consistency.py"]),
         Step(
             "SARIF 合法性",

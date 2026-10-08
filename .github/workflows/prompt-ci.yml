@@ -100,6 +100,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_board_status.py
 
+      # R244-1: <100ms/文件 楔子不变量机器断言 (P2-16 轻量形态;
+      # 与本地 release_gate 同命令)
+      - name: "Performance wedge (<100ms/file)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_lint_performance.py
+
       # R235-P4-02: 核心零依赖验证(kernel 层零第三方 runtime import;
       # R233-P4-01 手测结论固化为机器护栏; 与 release_gate 第 17 步同命令)
       - name: "Layer deps (kernel zero third-party)"
