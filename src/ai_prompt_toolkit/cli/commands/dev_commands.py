@@ -134,6 +134,50 @@ def baseline_cmd(as_json: bool, fail_above_miss: float | None, fail_above_fp: fl
         sys.exit(1)
 
 
+@main.command(name="export-rules")
+@click.option("--output", "-o", default=None, help="导出文件路径(默认 stdout)")
+@click.option(
+    "--lang",
+    "lang_choice",
+    type=click.Choice(["zh", "en", "both"]),
+    default="both",
+    show_default=True,
+    help="描述/修复语言面",
+)
+@click.option("--with-metrics", is_flag=True, help="附双基线指标(慢面: 跑一次双基线 ~2s; 默认关=快速面毫秒级)")
+def export_rules_cmd(output: str | None, lang_choice: str, with_metrics: bool) -> None:
+    """R242-P2-14: 导出全部规则元数据 JSON — 多端架构的数据前置。
+
+    规则**数据**可移植(前端 playground/npm 包装器/未来 WASM 消费同一份数据),
+    规则**逻辑**留 Python 内核。形态参照 ESLint 规则 `meta` 导出。
+    确定性: 同一树两次导出逐字节一致(无时间戳, tool_version 替代)。
+    退出码: 0 成功 / 1 导出面异常 / 2 参数错误。
+    """
+    import json
+
+    from ai_prompt_toolkit.linter.rule_explainer import build_rules_export
+
+    try:
+        data = build_rules_export(lang=lang_choice, include_metrics=with_metrics)
+    except ValueError as e:
+        click.echo(f"错误: {e}", err=True)
+        sys.exit(2)
+    except Exception as e:  # 导出面异常=fail-closed(门禁工具自身故障不得静默)
+        click.echo(f"错误: 规则导出失败 — {e}", err=True)
+        sys.exit(1)
+
+    text = json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True)
+    if output:
+        try:
+            Path(output).write_text(text + "\n", encoding="utf-8")
+        except OSError as e:
+            click.echo(f"错误: 无法写入 {output} — {e}", err=True)
+            sys.exit(1)
+        click.echo(f"规则导出: {output} | {data['rule_count']} 规则 | schema v{data['schema_version']}")
+    else:
+        click.echo(text)
+
+
 @main.command(name="watch")
 @click.option("--target", "-t", required=True, help="监视目标(文件或目录)")
 @click.option(

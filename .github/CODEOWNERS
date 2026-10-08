@@ -1,0 +1,19 @@
+# R242-P3-13: 尺子类文件保护面 — 变更需双人 review(TH1/TH2/TH4 缓解, 05 §5)。
+# 探针集=尺子, 投毒=基线数字造假; 本文件声明"哪些文件是尺子",
+# 与 P3-15 基线篡改检测(机器面)互补 = 制度面+机器面双保险。
+# 注: GitHub 对无分支保护的仓库也展示 ownership; 分支保护启用=D 项(00 §4)。
+
+# 规则=检测逻辑(误报/漏检裁决面)
+/src/ai_prompt_toolkit/linter/rules_*.py   @wqbcs
+/src/ai_prompt_toolkit/linter/rules.py     @wqbcs
+
+# 探针=尺子(golden 攻击/干净样本, 双基线数据源)
+/src/ai_prompt_toolkit/data/golden_attacks.json   @wqbcs
+/src/ai_prompt_toolkit/data/clean_prompts/        @wqbcs
+/tests/fixtures/golden_attacks.json               @wqbcs
+
+# 门禁定义(CI 裁决链)
+/.github/workflows/                              @wqbcs
+
+# 棘轮锚点(基线文件, 只收紧不放松)
+/baselines/                                      @wqbcs

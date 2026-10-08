@@ -2,6 +2,54 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.35] - 2026-10-07
+
+### Added (R242: 让差异化可见 + 保护信任资产 + 多端数据前置 — 重心转向轮)
+
+> 定位反问（R242 §1/§5）：267 规则内部质量过边际递减拐点，差异化（双基线时序+
+> 多语言分基线+OWASP 2026 映射）全是内部资产 clone 者看不到=真瓶颈是发布非
+> 规则数。本轮三件纯增量零授权依赖动作（零新规则零新探针零新 core 依赖），
+> 不加 P268（凭据族天花板，SSN/Secret 已正确推迟观察区）。
+
+- **P2-12 分语言检测基线公开**（差异化轴 1/3 落地可见）：README 新增
+  "分语言检测基线"节（Probe Framework 节后）——zh-Hans 88/en 30/ja 7/
+  zh-Hant 2 期望命中单元，漏检全 0；数据源=`run_miss_rate() per_language`
+  单一真源（对抗收窄：表只锁三数字列，探针计数真源留 golden_attacks.json
+  本身，防双真源漂移=02 P2-11 状态列 103/46/6/2 陈旧计数族同病）；
+  `scripts/check_language_baseline_readme.py` 机器核对（红绿两态验证），
+  进 release_gate 新步骤 + CI test 作业步同命令
+- **P3-13 CODEOWNERS 保护面**（保护信任资产=尺子投毒缓解 TH1/TH2/TH4）：
+  `.github/CODEOWNERS` 四类保护路径（rules_*.py+rules.py/golden_attacks.json
+  ×2+clean_prompts//.github/workflows//baselines/）owner=wqbcs，纯声明
+  文件零代码；与 P3-15 基线篡改检测（机器面）互补=制度面+机器面双保险；
+  分支保护启用=D5 新 D 项（00 §4），CONTRIBUTING 提交纪律节同步
+- **P2-14 规则数据 JSON 化导出**（多端架构唯一数据前置=5 年可演进落地路径）：
+  `prompt-cli export-rules -o rules.json [--lang zh|en|both]
+  [--with-metrics]`——`rule_explainer.build_rules_export()` 纯函数+
+  `RULES_SCHEMA_VERSION=1`（与 baseline SCHEMA_VERSION 解耦）；形态参照
+  ESLint 规则 `meta` 导出（2026-10-07 调研 S 级真源），每规则
+  {rule_id/name/category/severity/description(zh/en)/remediation/fixable/
+  status/owasp_refs/golden_probes/waiver 模板}；零新逻辑=复用
+  `LintRule.to_dict()`+explainer 聚合单一真源；确定性=同一树逐字节一致
+  （无时间戳，tool_version 替代）；退出码 0/1/2 契约；18 测试
+  test_r242_p214_export_rules.py（含真子进程逐字节确定性 e2e）
+- **竞品监控 +2**（07）：cognis-promptlint（直接同 lane 命名极近，
+  `{lint,version,test,check}`+PyPI 直装+ports 四端→观察区 R242-X1）/
+  LintLang v0.3.2（agent-config linter 新检测面+first-party Action/
+  pre-commit+uvx 免安装→观察区 R242-X2/X3）
+- **反清单 +3**（02）：in-place sanitize 管线（promptguard Sanitizer 形态）/
+  agent 运行时监控拦截（LintLang 诚实边界=赛道共识）/为"全端"而全端
+  （cognis 四端 ports=摊薄信号，我方=数据面解耦端按 ICP 逐个上）
+- **README 对比表更新**（2026-10 核实列补 cognis/LintLang 实证）
+
+### 验证
+
+- 测试 6422→6440（+18：P2-14 结构/全数/fixable/三语言/metrics 两态/
+  真子进程确定性）
+- 双基线：零新规则零新探针→FP/漏检必然持平（棘轮内）
+- 收口：release_gate 全链（含新步骤"分语言基线 README 核对"）+ mypy 棘轮 +
+  ruff check/format 全绿
+
 ## [v67.34.34] - 2026-10-06
 
 ### Added (R241: P267 AWS 凭据 ID 字面暴露 — T-7 AKSK 面立项)

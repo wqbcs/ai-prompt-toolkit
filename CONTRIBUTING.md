@@ -158,7 +158,8 @@ README 徽章。升版后的固定顺序（漏跑曾两次致 CI 红）：
   的变更在 CI paths 过滤内，push 后必须轮询确认 run 出现且绿
   （16a57a5 无 run 教训）
 - 探针集（`data/golden_*`）/ 规则文件 / workflow / 基线 = 尺子面，
-  变更需双人 review（CODEOWNERS，P3-13 建设中）
+  变更需双人 review（`.github/CODEOWNERS`，R242-P3-13 已落；分支保护
+  启用=仓库管理员操作，见 00 交接文档 §4）
 
 ## 安全规范
 

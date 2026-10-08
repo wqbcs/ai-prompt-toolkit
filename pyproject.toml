@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.34"
+version = "67.34.35"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -110,6 +110,9 @@ ai_prompt_toolkit = [
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+markers = [
+    "slow: 慢面测试(跑一次双基线等, CI 默认 -k 'not slow' 排除, 显式跑: pytest -m slow)",
+]
 filterwarnings = [
     "ignore::pytest.PytestCollectionWarning",
 ]

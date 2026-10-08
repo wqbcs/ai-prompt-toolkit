@@ -160,6 +160,77 @@ def get_all_explanations(include_metrics: bool = True) -> list[dict[str, Any]]:
     ]
 
 
+# R242-P2-14: 规则数据 JSON 化导出的 schema 版本(与 baseline SCHEMA_VERSION
+# 解耦——规则元数据 schema 独立演进, 读取端前向兼容策略同 P2-02)。
+RULES_SCHEMA_VERSION = 1
+
+
+def build_rules_export(lang: str = "both", include_metrics: bool = False) -> dict[str, Any]:
+    """R242-P2-14: 全部规则元数据导出的单一真源(纯函数, 确定性)。
+
+    供 `prompt-cli export-rules` 消费——多端架构(前端 playground/npm 包装器/
+    未来 WASM)的数据前置: 规则**数据**可移植, 规则**逻辑**留 Python 内核
+    (P4-06 路线)。形态参照 ESLint 规则 `meta` 导出(docs/extend/custom-rules):
+    每规则 {rule_id, name, category, severity, description, remediation,
+    fixable, status, owasp_refs, golden_probes, waiver 模板}。
+
+    lang: zh / en / both(zh 缺省回退 en 再回退 zh, 与 to_dict 同策略)。
+    确定性: 同一树两次调用产出逐字节一致 JSON(无时间戳, tool_version 替代)。
+    零新逻辑: 复用 _explanation_for 聚合面(to_dict 单一真源 + golden 探针/
+    waiver 模板/synonym 既有数据), 不复制规则内容。
+    """
+    from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
+
+    if lang not in ("zh", "en", "both"):
+        raise ValueError(f"未知 lang={lang!r} (zh|en|both)")
+    explanations = get_all_explanations(include_metrics=include_metrics)
+    rules_out: list[dict[str, Any]] = []
+    for e in explanations:
+        if e.get("error"):
+            continue
+        rec: dict[str, Any] = {
+            "rule_id": e["rule_id"],
+            "name": e["name"],
+            "category": e["category"],
+            "severity": e["severity"],
+            "family": e.get("family", ""),
+            "status": e.get("status", "active"),
+            "fixable": e["rule_id"] in AUTO_FIXABLE_RULES,
+            "owasp_refs": list(e.get("owasp_refs", [])),
+            "golden_probes": list(e.get("golden_probes", [])),
+            "synonym_main": e.get("synonym_main"),
+            "synonym_subs": list(e.get("synonym_subs", [])),
+            "waiver_inline": e["waiver_inline"],
+            "waiver_frontmatter": e["waiver_frontmatter"],
+        }
+        if e.get("status") != "active":
+            rec["deprecated_since"] = e.get("deprecated_since", "")
+            rec["removal_version"] = e.get("removal_version", "")
+        if lang in ("zh", "both"):
+            rec["description"] = e["description"]
+            rec["remediation"] = e["remediation"]
+        if lang in ("en", "both"):
+            desc_en = e.get("description_en") or e["description"]
+            rem_en = e.get("remediation_en") or e["remediation"]
+            if lang == "en":
+                rec["description"] = desc_en
+                rec["remediation"] = rem_en
+            else:
+                rec["description_en"] = desc_en
+                rec["remediation_en"] = rem_en
+        if "metrics" in e:
+            rec["metrics"] = e["metrics"]
+        rules_out.append(rec)
+    # 导出面=注册表全数(防注册表/解释面漂移): rule_count 必须等于注册表长度
+    assert len(rules_out) == len(get_all_rules()), "导出规则数与注册表长度漂移(解释面与注册表失同步)"
+    return {
+        "schema_version": RULES_SCHEMA_VERSION,
+        "tool_version": __version__,
+        "rule_count": len(rules_out),
+        "rules": rules_out,
+    }
+
+
 def format_explanation_markdown(e: dict[str, Any]) -> str:
     """把解释数据渲染为每规则页 Markdown(纯函数, 确定性)。"""
     if e.get("error"):

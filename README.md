@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.34-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6429%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.35-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6447%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40150probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -124,14 +124,14 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 
 ### 同类静态 Prompt 工具对比（2026-10 核实）
 
-| 维度 | 本工具 | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系 |
+| 维度 | 本工具 | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系（cognis/LintLang 等） |
 |------|--------|---------------|-----------|---------|---------------------------|
 | 语言/依赖 | Python 零核心第三方依赖 | Rust 单二进制 | Python（Semgrep+Sigstore+CVE feed，依赖重） | Python | Python/Node，纯正则 |
-| 检测面 | Prompt 全生命周期（lint/scan/probe/redteam/合规/版本）+ MCP 配置 | Prompt 静态 + 从代码抽取 inline prompt + 可移植性 | MCP 供应链全栈（SBOM/SAST/live server） | MCP 七模块（scan/harden/auth/pin） | Prompt 正则 lint |
+| 检测面 | Prompt 全生命周期（lint/scan/probe/redteam/合规/版本）+ MCP 配置 | Prompt 静态 + 从代码抽取 inline prompt + 可移植性 | MCP 供应链全栈（SBOM/SAST/live server） | MCP 七模块（scan/harden/auth/pin） | Prompt 正则 lint（LintLang 另加 agent-config 面） |
 | OWASP LLM Top 10 映射 | **2026 版（当前）+ ATLAS + 等保 2.0 三标准** | 无公开标准映射 | CVE/ATTACK 面 | 无 | 部分 |
 | 裁决确定性 | 逐字节可复现 + 双基线时间序列（漏检/误报可一条命令复现） | 确定性静态 | 依赖运行时/网络 feed | 部分 | 确定性静态 |
 | 增量门禁 | 双基线（FP 棘轮 + 存量锁定）+ 增量只拦 NEW | 无公开基线纪律 | 有 | 有 | 无 |
-| 中文规则/报告 | 15 条中文注入检测 + 中文规则族 + 人话报错 | 无 | 无 | 无 | 部分 |
+| 中文规则/报告 | 15 条中文注入检测 + 中文规则族 + 人话报错 + **分语言检测基线表** | 无 | 无 | 无 | 部分 |
 
 > 定位澄清：本工具做 **CI 门禁层**（可复现裁决）；运行时防护（LLM Guard 类）、
 > LLM 评估（promptfoo 类）互补不互替。MCP 检测面见下方"适用边界"。
@@ -536,6 +536,25 @@ prompt-cli compliance -t my_prompt.md --format markdown
 | LLM08 | 隐藏上下文暴露 | system_prompt_leak, leak_replay |
 | LLM09 | 向量与嵌入弱点 | vector_embedding |
 | LLM10 | 不安全输出处理 | xss_inject |
+
+### 分语言检测基线
+
+golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一组合面之一，
+2026-10-07 实查；`prompt-cli baseline` 一条命令在任意机器复现同一数字，
+零 LLM 确定性）：
+
+| 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
+|------|------|------|------|
+| zh-Hans | 88 | 0 | 0.00% |
+| en | 30 | 0 | 0.00% |
+| ja | 7 | 0 | 0.00% |
+| zh-Hant | 2 | 0 | 0.00% |
+
+口径：期望命中单元/漏检单元=`run_miss_rate()` 的 per_language 单一真源
+（blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
+`scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
+（R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
+（2026-10-07：总 174=zh-Hans 110/en 56/ja 6/zh-Hant 2）。
 
 ## VSCode插件
 

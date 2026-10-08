@@ -120,6 +120,9 @@ def build_steps() -> list[Step]:
         Step("gen_rules_doc 重生成", [PY, "scripts/gen_rules_doc.py"]),
         Step("sync_badges", [PY, "scripts/sync_badges.py"]),
         Step("sync_readme_metrics", [PY, "scripts/sync_readme_metrics.py"]),
+        # R242-P2-12: README 分语言检测基线表数字核对(与 run_miss_rate per_language
+        # 单一真源一致; 防手写漂移=02 P2-11 状态列 103/46/6/2 陈旧计数族同病)
+        Step("分语言基线 README 核对", [PY, "scripts/check_language_baseline_readme.py"]),
         Step("check_version_consistency", [PY, "scripts/check_version_consistency.py"]),
         Step(
             "SARIF 合法性",
