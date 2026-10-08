@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.39] - 2026-10-08
+
+### Changed (R246: SARIF 字节级确定性护栏 + P2-07 收口 + P2-13 重判 — 零新检测面轮)
+
+> 定位反问（R246 §1/§5）：楔子四要素中"逐字节一致"的机器护栏此前只锁 finding
+> 序列面（P3-02），SARIF 输出面还埋着时钟（datetime.now/time.gmtime）——同一
+> 输入连跑两次 SARIF 字节级不同，恰是 07 R8"假确定性"预警的形态。本轮把楔子
+> 最后一条护栏补到输出字节面，并收口 P2-07 板行（板漂移勘误第三例）。
+
+- **SARIF 时钟可注入**（`report/sarif_reporter.py` findings_to_sarif/
+  write_sarif_report + `sarif_report.py` SarifRun）：`start_time`/`end_time`
+  可注入参数（默认 None/""=真实时间，人读/审计面不变）；注入固定时间戳后
+  同一输入输出逐字节一致——时钟是唯一外部变量，变为可注入参数（与 run_id
+  同形态，非"假确定性"）。OASIS 2.1.0 核对：invocations 时间戳为可选字段，
+  注入不违反 SARIF 语义
+- **SARIF 字节级确定性 e2e**（`tests/test_r246_sarif_determinism.py`，10 测试）：
+  两生成器各 3 次逐字节相等 + 注入值落点断言（防回归回真实时钟）+ 默认真实
+  时间面不变 + write 落盘逐字节一致
+- **SARIF 离线结构 validator**（`scripts/check_sarif_schema.py`，P2-07 板行
+  验收"SARIF 过 validator"收口）：零网络零新依赖（完整 OASIS schema 数 MB
+  需联网，与"离线可跑"楔子冲突；air-gap 可用），校验 Code Scanning 必需
+  结构子集（$schema/version/runs/tool.driver/results 字段/locations 完整
+  结构）；GitHub upload-sarif 侧完整校验兜底（口径留痕）
+- **release_gate 内联 verify_sarif 改委托** check_sarif_schema.py 单一真源
+  （消除双校验面漂移；原 4 断言为最小面）
+- **CI 新步**：SARIF schema check（3.12 矩阵，与 release_gate 同命令真源；
+  lint 退出码=findings 判定非命令失败，判绿标准=validator 步）；真语料
+  627 results 实测绿
+- **P2-13 Playground 重判 ⏸**：规则是 Python check 函数非纯 regex 数据
+  （export-rules JSON 无 patterns 字段）=纯前端前提不成立，前置 P4-06 规则
+  数据 JSON 化+ICP 信号；竞品 prompt-guard web UI/PromptLint VS Code 插件
+  标配面=体验缺口真实存在但差异化不在端数量（08 调研留痕，季度审查恢复
+  条件已登记）
+- 07 R8 行 🟡→🟢（SARIF 字节级 e2e 落地）；测试 6476→6486。
+  全记录见 `docs/planning/R246_改进方案与开源调研.md`
+
 ## [v67.34.38] - 2026-10-08
 
 ### Added (R245: CI 绿史徽章 + OTEL 降级 + promptfoo 共存存量核实 — 零新检测面轮)
