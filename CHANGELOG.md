@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.37] - 2026-10-08
+
+### Added (R244: <100ms/文件 楔子不变量机器断言 — 零新检测面轮)
+
+> 定位反问（R244 §1/§5）：楔子四要素中"逐字节一致/零 LLM/离线可跑"均有机器
+> 护栏，唯"<100ms/文件"只存在于 README 文案——规则集 0→267 的过程中该预算
+> 无人看管。本轮把楔子最后一条变门禁（轻量形态，与 P2-15 OTEL 解耦先行）。
+
+- **P2-16 性能楔子断言**（`scripts/check_lint_performance.py`，S）：
+  计时真源=`lint_template().lint_time_ms`（linter.py:224 既有每文件计时，
+  与 tracer/LSP 同一字段，不另造计时器=无双源）+ 固定语料=baselines.
+  CLEAN_DIR 60 文件单一真源（R243-2 固化后直读）+ warmup 1 遍（热导入/
+  缓存）+ 3 遍中位数降噪（median-of-3：CI runner 噪声实证 20%+，点估计
+  不可作裁决——开源调研 a2a-rust regression-gate / criterion "3-trial
+  median" 同形态）+ 门控=per-file 中位数 max<100ms **绝对预算**（非相对
+  回归：CI 全新 runner 无本地历史，相对面留 P2-15 OTEL/本地 SQLite 辖区；
+  绝对预算=楔子原话，跨 runner 稳定）。R244 本机校准：P50=3.04ms
+  P90=6.29ms P99=14.87ms max=15.74ms（6.3× 余量）；9 测试
+  test_r244_p216_performance.py（fake 计时面 8 + 真语料楔子断言 1，含
+  max≤60ms 余量护栏=防规则集膨胀悄悄吃掉楔子）；release_gate 新步 +
+  CI test 作业同命令（verify_local_ci_parity 27 条全解析）。
+- 测试 6454→6463（+9 性能楔子）。全记录见 `R244_改进方案与开源调研.md`
+
 ## [v67.34.36] - 2026-10-08
 
 ### Added (R243: 流程机器护栏补强 + 单一真源固化 — 零新检测面轮)
