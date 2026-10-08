@@ -18,9 +18,11 @@
 | 模板 | prompt-template, prompt-merge, recommend, registry-pull/push/search, market | 模板市场/注册表 |
 | 版本 | version, prompt-version, prompt-diff | Git-like 语义 Diff |
 | 引擎 | engine, serve, mcp, lsp, playground, tui (内嵌) | 运行时 |
+| 开发工具 | baseline, gap-report, export-rules | 双基线自证/缺口报告/规则数据 JSON 导出（R242-P2-14，多端数据前置；`--lang zh/en/both` `--with-metrics`） |
 | 工具 | init, doctor, prompt-doctor, i18n, locale, token, trace, cache, notify, feedback, wizard, plugin-list, plugin (组), completion | 基础设施 |
 
 **退出码约定**: 0=PASS, 1=有 finding(非门禁), 2=门禁 FAIL (`--fail-on`/`--gate`)
+（export-rules 例外：0=成功, 1=导出面异常, 2=参数错误 — R242-P2-14 独立契约）
 
 **输出格式**: 默认 rich 彩色; `--format json` (machine); SARIF/JUnit 专用命令
 
