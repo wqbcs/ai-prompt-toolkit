@@ -52,7 +52,7 @@
 - `action/action.yml` — GitHub Action
 - `Dockerfile` + `docker-compose.yml`
 - `.github/workflows/` — 11 个 CI workflow
-- `scripts/` — 棘轮/同步/生成脚本 (check_mypy_ratchet / check_false_positives / check_miss_rate / check_version_consistency / check_board_status / verify_local_ci_parity / gen_rules_doc / sync_badges / sync_readme_metrics)
+- `scripts/` — 棘轮/同步/生成脚本 (check_mypy_ratchet / check_false_positives / check_miss_rate / check_version_consistency / check_board_status / check_lint_performance / verify_local_ci_parity / gen_rules_doc / sync_badges / sync_readme_metrics)
 
 ## CI 门禁（prompt-ci.yml 为准）
 
