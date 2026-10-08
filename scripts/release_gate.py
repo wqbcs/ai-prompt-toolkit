@@ -50,7 +50,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 import time
@@ -161,24 +160,16 @@ def build_steps() -> list[Step]:
 
 
 def verify_sarif(path: Path) -> int:
-    """SARIF 结构断言: 合法 JSON + version 2.1.0 + runs 非空(Q3 第10步)"""
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        print(f"✗ SARIF 非法 JSON: {e}")
-        return 1
-    if data.get("version") != "2.1.0":
-        print(f"✗ SARIF version != 2.1.0: {data.get('version')}")
-        return 1
-    runs = data.get("runs")
-    if not isinstance(runs, list) or not runs:
-        print("✗ SARIF runs 缺失或为空")
-        return 1
-    if not runs[0].get("tool", {}).get("driver", {}).get("name"):
-        print("✗ SARIF tool.driver.name 缺失")
-        return 1
-    print(f"  SARIF OK: {len(runs[0].get('results', []))} results, version 2.1.0")
-    return 0
+    """SARIF 结构校验（R246-P2-07: 委托 scripts/check_sarif_schema.py 单一真源，
+    离线结构子集校验——原内联 4 断言为最小面，脚本版覆盖 results 字段/locations
+    完整结构，消除双校验面漂移）。"""
+    import subprocess
+
+    proc = subprocess.run(
+        [PY, str(ROOT / "scripts" / "check_sarif_schema.py"), str(path)],
+        cwd=ROOT,
+    )
+    return proc.returncode
 
 
 def run_step(step: Step, index: int) -> StepResult:

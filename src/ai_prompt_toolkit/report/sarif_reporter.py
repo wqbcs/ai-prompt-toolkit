@@ -71,11 +71,20 @@ def findings_to_sarif(
     *,
     run_id: str = "",
     exit_code: int = 0,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
 ) -> dict[str, Any]:
+    """生成 SARIF 2.1.0 报告。
+
+    R246-P2-07: ``start_time``/``end_time`` 可注入（默认 ``None`` = 真实
+    ``datetime.now(timezone.utc)``，人读/审计友好）。注入同一固定时间戳后，
+    同一 findings 输入的输出逐字节一致——"逐字节一致"楔子在 SARIF 输出面
+    的机器护栏（07 R8：时钟是唯一外部变量，变为可注入参数=与 run_id 同形态）。
+    """
     rules_map: dict[str, dict[str, Any]] = {}
     rules_list: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
-    start_time = datetime.now(timezone.utc)
+    start_time = start_time or datetime.now(timezone.utc)
 
     for finding in findings:
         if finding.rule_id not in rules_map:
@@ -136,7 +145,7 @@ def findings_to_sarif(
 
         results.append(result_entry)
 
-    end_time = datetime.now(timezone.utc)
+    end_time = end_time or datetime.now(timezone.utc)
 
     invocation: dict[str, Any] = {
         "executionSuccessful": exit_code == 0,
@@ -195,8 +204,17 @@ def write_sarif_report(
     *,
     run_id: str = "",
     exit_code: int = 0,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
 ) -> None:
-    sarif = findings_to_sarif(findings, source_file=source_file, run_id=run_id, exit_code=exit_code)
+    sarif = findings_to_sarif(
+        findings,
+        source_file=source_file,
+        run_id=run_id,
+        exit_code=exit_code,
+        start_time=start_time,
+        end_time=end_time,
+    )
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:

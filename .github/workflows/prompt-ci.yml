@@ -106,6 +106,20 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_lint_performance.py
 
+      # R246-P2-07: SARIF 离线结构校验 (收口 P2-07 板行验收"SARIF 过 validator"
+      # 的离线口径: 零网络零新依赖, air-gap 可用; 与本地 release_gate SARIF 步
+      # 同命令真源 check_sarif_schema.py。lint 退出码=findings 判定非命令失败
+      # (模板语料预期有 findings), 判绿标准=后续 validator 步的退出码)
+      - name: "SARIF schema check (offline structural subset)"
+        if: matrix.python-version == '3.12'
+        run: |
+          set +e
+          python -m ai_prompt_toolkit lint -t src/ai_prompt_toolkit/templates --format sarif --output gate-sarif-check.sarif
+          LINT_RC=$?
+          set -e
+          echo "lint rc=$LINT_RC (findings verdict, not command failure)"
+          python scripts/check_sarif_schema.py gate-sarif-check.sarif
+
       # R235-P4-02: 核心零依赖验证(kernel 层零第三方 runtime import;
       # R233-P4-01 手测结论固化为机器护栏; 与 release_gate 第 17 步同命令)
       - name: "Layer deps (kernel zero third-party)"

@@ -129,6 +129,9 @@ class SarifRun:
     results: list[SarifResult] = field(default_factory=list)
     rules: list[SarifRule] = field(default_factory=list)
     invocation_time: str = ""
+    # R246-P2-07: 结束时间可注入（默认 "" = to_dict 时取真实时间，人读/审计友好）。
+    # 注入固定 invocation_time + end_time 后同一输入输出逐字节一致（07 R8 护栏）。
+    end_time: str = ""
 
     def __post_init__(self) -> None:
         if not self.invocation_time:
@@ -180,7 +183,7 @@ class SarifRun:
                 {
                     "executionSuccessful": True,
                     "startTimeUtc": self.invocation_time,
-                    "endTimeUtc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                    "endTimeUtc": self.end_time or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 }
             ]
         return d
