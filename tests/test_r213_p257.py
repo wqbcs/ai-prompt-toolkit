@@ -13,12 +13,11 @@ ATLAS: AML.T0051.001 Indirect Prompt Injection (docs/mitre-atlas-mapping.md)
 from __future__ import annotations
 
 import json
-import pathlib
 
 import pytest
 
-_FIXDIR = pathlib.Path(__file__).parent / "fixtures"
-_CLEAN_DIR = _FIXDIR / "clean_prompts"
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
+from ai_prompt_toolkit.baselines import GOLDEN_FILE
 
 
 def _lint(text: str, name: str = "t"):
@@ -35,7 +34,7 @@ class TestR213P257Positive:
     """正样本: RAG 检索语境 + 无边界声明 → 必须命中"""
 
     def test_atk41_golden_probe(self):
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         atk41 = next(p for p in g["probes"] if p["name"] == "atk41_rag_untrusted_boundary")
         assert "P257" in atk41["expected"]
         assert _p257(_lint(atk41["text"]).findings), "atk41 必须命中 P257(漏检=0红线)"

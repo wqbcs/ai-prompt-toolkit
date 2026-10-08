@@ -18,7 +18,8 @@ from ai_prompt_toolkit.linter.rules_p161_p165 import check_p164
 from ai_prompt_toolkit.linter.rules_p166_p170 import check_p166
 from ai_prompt_toolkit.linter.rules_p201_p205 import check_p203
 
-FIXTURES = "tests/fixtures/clean_prompts"
+# R243-2: 直读包内单一真源(原 tests/fixtures 副本已删, 消除双源漂移面)
+FIXTURES = "src/ai_prompt_toolkit/data/clean_prompts"
 
 
 def _hits(checker, text: str) -> int:

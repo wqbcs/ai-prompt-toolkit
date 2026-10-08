@@ -44,8 +44,8 @@ estimated_tokens: int; estimated_input_cost_usd / estimated_output_cost_usd: flo
 
 | Fixture | 位置 | 口径 |
 |---|---|---|
-| 干净样本 ×60 | tests/fixtures/clean_prompts/ | 误报基线分母; 32→56(R210)→58(R213)→60(R221 FP对称扩样, 覆盖英文/长文/Agent/模板/代码块/多语言) |
-| golden 攻击 ×113 | tests/fixtures/golden_attacks.json | 漏检基线(108期望命中单元); 41→80→113(R220低覆盖扩样); 每条标注 expected 规则集 + note（"已知否定盲区"前缀单列） |
+| 干净样本 ×60 | src/ai_prompt_toolkit/data/clean_prompts/（R243-2 固化后唯一真源） | 误报基线分母; 32→56(R210)→58(R213)→60(R221 FP对称扩样, 覆盖英文/长文/Agent/模板/代码块/多语言) |
+| golden 攻击 ×113 | src/ai_prompt_toolkit/data/golden_attacks.json（R243-2 固化后唯一真源） | 漏检基线(108期望命中单元); 41→80→113(R220低覆盖扩样); 每条标注 expected 规则集 + note（"已知否定盲区"前缀单列） |
 
 ## 数据流（典型）
 

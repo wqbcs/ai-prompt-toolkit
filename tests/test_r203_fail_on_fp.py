@@ -13,6 +13,7 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
+from ai_prompt_toolkit.baselines import CLEAN_DIR
 from ai_prompt_toolkit.cli_core import main
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -52,7 +53,7 @@ class TestFailOnGate:
 
 class TestFalsePositiveScript:
     def test_fixture_samples_exist(self):
-        samples = list((ROOT / "tests" / "fixtures" / "clean_prompts").glob("clean*"))
+        samples = list(CLEAN_DIR.glob("clean*"))  # R243-2: 直读包内单一真源
         assert len(samples) >= 30, f"干净样本应≥30, 实际{len(samples)}"
 
     def test_script_runs_and_reports(self):

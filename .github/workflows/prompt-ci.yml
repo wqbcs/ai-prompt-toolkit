@@ -94,6 +94,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_language_baseline_readme.py
 
+      # R243-1: 02 总板状态列 vs CHANGELOG 声称 vs sha 存在性三向核对
+      # (P3-17 脚本化; 与本地 release_gate 同命令)
+      - name: "Board status check"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_board_status.py
+
       # R235-P4-02: 核心零依赖验证(kernel 层零第三方 runtime import;
       # R233-P4-01 手测结论固化为机器护栏; 与 release_gate 第 17 步同命令)
       - name: "Layer deps (kernel zero third-party)"

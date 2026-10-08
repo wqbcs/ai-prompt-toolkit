@@ -15,9 +15,9 @@ import re
 import sys
 
 _ROOT = pathlib.Path(__file__).resolve().parent.parent
-_FIXDIR = pathlib.Path(__file__).parent / "fixtures"
 sys.path.insert(0, str(_ROOT / "src"))
 
+from ai_prompt_toolkit.baselines import GOLDEN_FILE  # noqa: E402
 from ai_prompt_toolkit.linter import lint_template  # noqa: E402
 
 _BCP47_RE = re.compile(r"^[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*$")
@@ -42,7 +42,7 @@ class TestR214NameBoundary:
 
 class TestR214LangSchema:
     def _probes(self) -> list[dict]:
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         return g["probes"]
 
     def test_all_probes_have_valid_lang(self):
@@ -51,7 +51,9 @@ class TestR214LangSchema:
         # R234: +12(P2-23 buried-injections 基准语料 TP×4/TN×8) = 143
         # R235: +7(P2-11 TN 侧 buried-injections 剩余面: json数组/终端/邮件/sql结果/yaml/base64日志/心跳) = 150
         # R238: +7(P2-11 TN 侧 buried-injections 剩余面: http日志/markdown报告/notebook/xml feed/git log/package.json/中文工单) = 157
-        assert len(probes) == 157
+        # R240: +12(P266 连接串/同形字面 TP×3/TN×9) | R241: +5(P267 AWS凭据ID面 TP×2/TN×3) = 174
+        # R243-2: 直读真源 data/golden_attacks.json(原锁陈旧 fixture 快照 157, 漂移实锤)
+        assert len(probes) == 174
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -64,10 +66,13 @@ class TestR214LangSchema:
         # R235: zh-Hans 101 | en 41 | ja 6 | zh-Hant 2 (TP 面不变, 纯 TN 侧扩容)
         # R238: +2 zh-Hans(r238_tn17/tn22) +5 en(r238_tn16/18/19/20/21)
         # R238: zh-Hans 103 | en 46 | ja 6 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 103
+        # R240: +7 zh-Hans | +10 en (P266 连接串/同形字面 12 探针)
+        # R241: zh-Hans/en 面不变 (P267 AWS凭据ID 5 探针: TP×2/TN×3 均 en 面已计入上轮?)
+        # R243-2: 直读真源后分布 = zh-Hans 110 | en 56 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 110
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        assert sum(1 for v in langs.values() if v == "en") == 46
+        assert sum(1 for v in langs.values() if v == "en") == 56
 
 
 class TestR214PerLanguageReport:

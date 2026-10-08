@@ -4,8 +4,9 @@
 样本锁在 tests/fixtures (不进 wheel) → pip 用户无法自证。
 现在: 逻辑与样本都进包 (data/), 脚本与 `prompt-cli baseline` 都复用本模块。
 
-样本真源: ai_prompt_toolkit/data/clean_prompts/ + data/golden_attacks.json
-(原 tests/fixtures 同名文件已移入此处, 原位置保留符号链接供既有测试读取。)
+样本真源(唯一): ai_prompt_toolkit/data/clean_prompts/ + data/golden_attacks.json
+(R243-2 固化: tests/fixtures 的实体副本已删除, 既有测试直读本模块 CLEAN_DIR/
+GOLDEN_FILE — 全仓 0 符号链接, 无 core.symlinks 平台地雷。)
 """
 
 from __future__ import annotations

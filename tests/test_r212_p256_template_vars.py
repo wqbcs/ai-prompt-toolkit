@@ -7,11 +7,8 @@
 
 from __future__ import annotations
 
-import pathlib
-
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
 from ai_prompt_toolkit.linter import lint_template
-
-_CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
 
 
 def _rule_ids(result) -> list[str]:

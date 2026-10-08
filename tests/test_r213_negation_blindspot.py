@@ -13,11 +13,8 @@
 
 from __future__ import annotations
 
-import pathlib
-
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
 from ai_prompt_toolkit.linter import lint_template
-
-_CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
 
 # (名称, 攻击文本, 期望命中的规则) — 前4条与 golden_attacks.json 逐字一致
 _BLINDSPOT_CASES = [

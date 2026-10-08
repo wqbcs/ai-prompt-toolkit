@@ -7,10 +7,9 @@
 /src/ai_prompt_toolkit/linter/rules_*.py   @wqbcs
 /src/ai_prompt_toolkit/linter/rules.py     @wqbcs
 
-# 探针=尺子(golden 攻击/干净样本, 双基线数据源)
+# 探针=尺子(golden 攻击/干净样本, 双基线数据源; R243-2 固化后唯一真源=包内 data/)
 /src/ai_prompt_toolkit/data/golden_attacks.json   @wqbcs
 /src/ai_prompt_toolkit/data/clean_prompts/        @wqbcs
-/tests/fixtures/golden_attacks.json               @wqbcs
 
 # 门禁定义(CI 裁决链)
 /.github/workflows/                              @wqbcs

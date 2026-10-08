@@ -10,10 +10,9 @@
 from __future__ import annotations
 
 import json
-import pathlib
 
-_FIXDIR = pathlib.Path(__file__).parent / "fixtures"
-_CLEAN_DIR = _FIXDIR / "clean_prompts"
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
+from ai_prompt_toolkit.baselines import GOLDEN_FILE
 
 
 def _lint(text: str, name: str = "t"):
@@ -27,7 +26,7 @@ def _rules(findings) -> set[str]:
 
 
 def _probe(name: str) -> dict:
-    g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+    g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
     return next(p for p in g["probes"] if p["name"] == name)
 
 

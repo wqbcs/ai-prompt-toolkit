@@ -9,11 +9,9 @@
 
 from __future__ import annotations
 
-import pathlib
-
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
 from ai_prompt_toolkit.linter import lint_template
 
-_CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
 _RULES = ["P169", "P242", "P222", "P170", "P156", "P157"]
 
 

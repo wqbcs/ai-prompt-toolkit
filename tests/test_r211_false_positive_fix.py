@@ -14,11 +14,9 @@
 
 from __future__ import annotations
 
-import pathlib
-
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
 from ai_prompt_toolkit.linter import lint_template
 
-_CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
 # 本批收窄后应完全清零的规则
 _ZERO_RULES = ["P151", "P152", "P153", "P154", "P155", "P161", "P183", "P084"]
 # 残留低于阈值(≤2/56)的规则

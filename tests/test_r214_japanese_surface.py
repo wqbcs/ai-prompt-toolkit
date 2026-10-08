@@ -11,12 +11,11 @@
 from __future__ import annotations
 
 import json
-import pathlib
 
 import pytest
 
-_FIXDIR = pathlib.Path(__file__).parent / "fixtures"
-_CLEAN_DIR = _FIXDIR / "clean_prompts"
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
+from ai_prompt_toolkit.baselines import GOLDEN_FILE
 
 
 def _lint(text: str, name: str = "t"):
@@ -31,7 +30,7 @@ def _rules(findings) -> set[str]:
 
 class TestR214JaProbes:
     def _ja_probes(self) -> dict[str, dict]:
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         return {p["name"]: p for p in g["probes"] if p.get("lang") == "ja"}
 
     def test_six_ja_probes_exist(self):
@@ -51,7 +50,7 @@ class TestR214JaProbes:
 
 class TestR214JaRuleSurfaces:
     def test_atk43_ja_system_prompt_leak(self):
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         atk43 = next(p for p in g["probes"] if p["name"] == "atk43_ja_system_prompt_leak")
         assert "P113" in _rules(_lint(atk43["text"], atk43["name"]).findings)
 
@@ -60,7 +59,7 @@ class TestR214JaRuleSurfaces:
         assert "P113" not in _rules(_lint("プロンプトの品質を評価してください。").findings)
 
     def test_atk45_ja_rag_boundary(self):
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         atk45 = next(p for p in g["probes"] if p["name"] == "atk45_ja_rag_untrusted_boundary")
         assert "P257" in _rules(_lint(atk45["text"], atk45["name"]).findings)
 
@@ -73,7 +72,7 @@ class TestR214JaRuleSurfaces:
         assert "P257" not in _rules(_lint(text).findings)
 
     def test_atk46_ja_secret(self):
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         atk46 = next(p for p in g["probes"] if p["name"] == "atk46_ja_hardcoded_secret")
         got = _rules(_lint(atk46["text"], atk46["name"]).findings)
         assert {"P006", "P051"} <= got
@@ -84,7 +83,7 @@ class TestR214JaRuleSurfaces:
 
     def test_atk44_syntax_language_agnostic(self):
         # P007 模板语法面: 日语语境 + {{user_input}} 语法 → 仍命中(无需日语词面)
-        g = json.loads((_FIXDIR / "golden_attacks.json").read_text(encoding="utf-8"))
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         atk44 = next(p for p in g["probes"] if p["name"] == "atk44_ja_user_input_injection")
         assert "P007" in _rules(_lint(atk44["text"], atk44["name"]).findings)
 

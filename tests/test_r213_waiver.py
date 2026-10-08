@@ -13,14 +13,16 @@
 
 from __future__ import annotations
 
-import pathlib
+from typing import TYPE_CHECKING
 
 from click.testing import CliRunner
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
+from ai_prompt_toolkit.baselines import CLEAN_DIR as _CLEAN_DIR
 from ai_prompt_toolkit.linter import lint_template
 from ai_prompt_toolkit.linter.waivers import parse_waivers
-
-_CLEAN_DIR = pathlib.Path(__file__).parent / "fixtures" / "clean_prompts"
 
 # 已知正样本: P161 模板注入攻击文本(命中 P001/P003/P005/P022/P046/P081/P161 共7条)。
 # 注意: 文本必须保持短小 — 加长中文正文会触发 P161 的"模板.*安全"DECL分支
@@ -131,7 +133,7 @@ class TestR213WaiverCleanSamples:
 class TestR213FailOnWaiverGate:
     """CLI --fail-on-waiver: 豁免生效→退出码2; 无豁免→PASS"""
 
-    def _write_tmp(self, tmp_path: pathlib.Path, text: str) -> str:
+    def _write_tmp(self, tmp_path: Path, text: str) -> str:
         f = tmp_path / "waiver_case.md"
         f.write_text(text, encoding="utf-8")
         return str(f)

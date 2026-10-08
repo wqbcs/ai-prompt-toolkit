@@ -14,12 +14,7 @@ R218 建立 types.py 单一契约(build_location/parse_location/loc_from_match)
 
 from __future__ import annotations
 
-import pathlib
-
 import pytest
-
-_FIXDIR = pathlib.Path(__file__).parent / "fixtures"
-
 
 # ── 1. 契约单测 ──
 
