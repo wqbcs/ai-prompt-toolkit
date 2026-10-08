@@ -5,14 +5,15 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.37-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6463%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.38-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6476%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40150probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+[![CI Green Streak](badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(150 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：

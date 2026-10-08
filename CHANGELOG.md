@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.38] - 2026-10-08
+
+### Added (R245: CI 绿史徽章 + OTEL 降级 + promptfoo 共存存量核实 — 零新检测面轮)
+
+> 定位反问（R245 §1/§5）：S1"可信"阶段的可展示数字缺口——双基线有时间序列，
+> "自家 CI 绿"没有。本轮补 P3-10（pyeron 范式：数字客观刷新/语义固定函数），
+> 并完成两个存量重评（P2-15 OTEL 降级观察区、P1-13 无增量确认）。
+
+- **P3-10 CI 绿史徽章**（`scripts/check_ci_green_streak.py`，S）：
+  computeStreak 纯函数（连续绿天数=从最近失败往前数的 success 链，
+  pyeron green-streak 范式）+ n/a 态（历史不足/无 token=徽章灰而非 0，
+  诚实边界）+ 色阶固定函数（n/a=灰/1-6=黄/7-29=橙/30+=绿，不自动升级）
+  + 独立 cron workflow `ci-green-streak.yml`（每日 UTC 17:00 读 Actions
+  历史→写 `badges/ci-streak.svg`→内容变化才 commit=git log 零噪音；
+  badge 路径不命中 prompt-ci paths=无自触发环）+ README 徽章 + 13 测试
+- **P2-15 OTEL 降级观察区**：R244 已把 <100ms 楔子变绝对预算门禁
+  （per-file，无历史依赖），OTEL 依赖面/复杂度收益低于轻量项；
+  per-rule 计时面（ESLint stats 形态）待真实性能回归分析需求时再立项
+- **P1-13 存量核实=无增量**：R231 已完整落地（docs/promptfoo-coexistence.md
+  126 行：分工矩阵/双轨 CI workflow/code-scans 对比/边界诚实声明），
+  官方 paths 过滤+custom assertion 模式已在文档内，不重复建设（奥卡姆）
+- 07 板漂移勘误：R9 状态"🟡 待 P2-16"→🟢 缓解中（P2-16 已落 R244）；
+  R8 缓解列 OTEL 采样对比随 P2-15 降级留痕
+- 测试 6463→6476（+13）。全记录见 `docs/planning/R245_改进方案与开源调研.md`
+
 ## [v67.34.37] - 2026-10-08
 
 ### Added (R244: <100ms/文件 楔子不变量机器断言 — 零新检测面轮)
