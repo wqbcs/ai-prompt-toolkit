@@ -266,6 +266,12 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     help="P2-17 git原生增量: 只lint <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
 )
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
+@click.option(
+    "--fix-hint",
+    "fix_hint",
+    is_flag=True,
+    help="P5-01: CLI 面每个 finding 下输出'修复:'提示行(数据=规则自带 remediation, 默认 off 不动 gate 输出契约)",
+)
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
 @click.option("--export-lcov", "export_lcov_path", help="覆盖率导出: 输出lcov格式规则覆盖率到指定路径")
@@ -337,6 +343,7 @@ def lint(
     stdio_mode: bool = False,
     inline_mode: bool = False,
     target_model: str | None = None,
+    fix_hint: bool = False,
 ) -> None:
     """Prompt Linter：静态检查提示词质量"""
     _lint_start = time.time()  # P3-16: summary digest 耗时
@@ -727,6 +734,17 @@ def lint(
                     else:
                         loc = ""
                     click.echo(f"  {marker} [{result.template_id}{loc}] {prefix}{f.rule_id}: {f.description}")
+                    if fix_hint:
+                        # P5-01: finding 级"下一步"内联(默认 off; ci_mode/机器面
+                        # 由 fmt=cli 分支天然排除, 与 deprecation 提示同纪律)
+                        _hint = f.remediation or ""
+                        if not _hint:
+                            from ai_prompt_toolkit.linter.rules import get_rule as _get_rule
+
+                            _hint_rule = _get_rule(f.rule_id)
+                            _hint = _hint_rule.remediation if _hint_rule else ""
+                        if _hint:
+                            click.echo(f"      修复: {_hint}")
 
         # R233-P2-01: deprecation 迁移提示 — stderr 面(协议/机器通道 stdout 神圣,
         # --json/--stdio/ci_mode 一律不出现此提示); deprecate 不改裁决, 只加信号
@@ -1184,6 +1202,12 @@ def lint(
 @click.option("--output", "-o", help="报告输出路径")
 @click.option("--incremental", is_flag=True, help="增量扫描模式")
 @click.option("--explain", is_flag=True, help="交互式解释: 每个安全发现的详细说明+修复建议")
+@click.option(
+    "--fix-hint",
+    "fix_hint",
+    is_flag=True,
+    help="P5-01: CLI 面每个发现下输出'修复:'提示行(与 lint 路径同口径, 默认 off)",
+)
 @click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
 @click.option(
     "--new-from-rev",
@@ -1199,6 +1223,7 @@ def scan(
     output: str | None,
     incremental: bool,
     explain: bool,
+    fix_hint: bool = False,
     resume: bool = False,
     new_from_rev: str | None = None,
 ) -> None:
@@ -1289,6 +1314,16 @@ def scan(
                 sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
                 marker = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                 click.echo(f"  {marker} [{result.template_id}] {f.rule_id}: {f.description}")
+                if fix_hint:
+                    # P5-01: 与 lint 路径同口径的 finding 级"下一步"内联
+                    _hint = f.remediation or ""
+                    if not _hint:
+                        from ai_prompt_toolkit.linter.rules import get_rule as _get_rule
+
+                        _hint_rule = _get_rule(f.rule_id)
+                        _hint = _hint_rule.remediation if _hint_rule else ""
+                    if _hint:
+                        click.echo(f"      修复: {_hint}")
                 if explain:
                     click.echo(f"      规则: {f.rule_id} | 严重度: {sev}")
                     click.echo(f"      描述: {f.description}")
