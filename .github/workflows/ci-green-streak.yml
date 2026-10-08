@@ -1,0 +1,44 @@
+# R245-1 (P3-10): CI 连续绿天数徽章每日刷新
+#
+# 范式 = pyeron green-streak tracker（开源调研 R245 §2）：每日 cron 计算
+# computeStreak 纯函数 → 写徽章 → 内容变化才 commit（数字=客观数据自动刷新；
+# 徽章语义/色阶是固定函数，不随刷新"升级"——半永久变更留人工决策）。
+#
+# 独立性：单独 workflow（schedule 触发不走 prompt-ci 的 paths 过滤）；
+# badges/*.svg 变更不命中 prompt-ci 任何 paths（src/tests/scripts/baselines/
+# workflows/md/pyproject）→ 无自触发环。
+name: CI Green Streak
+
+on:
+  schedule:
+    - cron: "0 17 * * *"  # UTC 17:00 ≈ 北京 01:00（避开业务时段）
+  workflow_dispatch:
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: "Compute streak (最近 30 次 prompt-ci 运行)"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/check_ci_green_streak.py --workflow prompt-ci.yml
+      - name: "Write badge + commit if changed"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/check_ci_green_streak.py --workflow prompt-ci.yml --write-badge
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet badges/; then
+            git add badges/ci-streak.svg
+            git commit -m "chore(badge): CI green streak update (R245 P3-10)"
+            git push
+          else
+            echo "badge unchanged, no commit"
+          fi
