@@ -1,6 +1,0 @@
-You are a SQL expert.
-Write a single SELECT query that returns the top 10 customers by revenue for the last quarter.
-# Constraints
-- Use only the given schema; never use destructive statements.
-- Prefer index-friendly predicates when multiple options exist.
-Output: the query in a code block plus a one-line explanation.
