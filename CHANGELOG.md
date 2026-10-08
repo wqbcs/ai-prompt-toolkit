@@ -2,6 +2,51 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.36] - 2026-10-08
+
+### Added (R243: 流程机器护栏补强 + 单一真源固化 — 零新检测面轮)
+
+> 定位反问（R243 §1/§5）：267 规则内部质量过边际递减拐点，本轮零新规则零新
+> 探针——把"收口未回写状态列"（R239/R240/R241 三轮 3 处板漂移根因）与"双源
+> 语料副本静默漂移"（P3-12 符号链接临时产物）从人肉纪律变机器强制，保护
+> 可信度叙事的根基（尺子自身可信）。
+
+- **P3-17 板漂移脚本化**（流程纪律根治）：`scripts/check_board_status.py`
+  三向核对——①板 ✅ 行 commit sha 可解析（git cat-file）②CHANGELOG Added
+  标题引用的轮次存在 ③板任务 ID 规范；真板首跑 rc=0（103 任务行/46 ✅/
+  sha 全可解析），双红态注入验证（板未回写 rc=1 含轮次定位/sha 腐烂
+  rc=1 含行定位）；7 测试 `test_r243_check_board_status.py`；release_gate
+  新步骤 + CI test 作业同命令——漂移从人肉抽查变机器全查
+- **P3-12 测试夹具治理固化**（单一真源机器强制）：符号链接地雷排查闭合=
+  全仓 0 symlink（git index mode 120000=0、工作树 find -type l=0、
+  core.symlinks=false）→ 无 clone 地雷；真问题=陈旧实体快照漂移
+  （`tests/fixtures/golden_attacks.json` 157⊂174 被 5 测试消费，
+  `tests/fixtures/clean_prompts` 副本 14 测试消费）→ 两份副本全删，
+  14 测试统一 import `baselines.CLEAN_DIR`/`GOLDEN_FILE`（与双基线同一
+  解析真源）；`test_r214_name_boundary` 硬编码计数 157/103/46 更新为真源
+  口径 174/110/56（漂移实锤：测试静默追踪了陈旧面）；CODEOWNERS 收口为
+  包内 data 单路径；docs 样本路径引用改指 data/
+- **X4 语料升级立项判定**（诚实结论留痕）：全部 ≥2 真实 TP 的静态可检测
+  形态已被现规则覆盖（base64×6→P260/零宽×7→P261/同形字×3→P260/
+  连接串 2TP→P266/AWS 凭据ID 2TP→P267）；剩余候选形态（rot13/URL 全量
+  编码/unicode-tags/全角/逐字空格/leetspeak/裸 hex）均零 TP 盲点（R240
+  已登记 TN）——加它们是重复 TN 而非语料升级，违反"单形态 ≥2 真实 TP
+  才立项"准入判据；静态可检测子集已挖到边际递减点（R234–R241 共取
+  26 条），后续只在新规则族出现时按同判据取用
+- 测试 6447→6454（+7：板漂移 check_board_status 7 测试；P3-12 改直读改写
+  净 0 增删测试函数〔git diff 证实〕，X4 零新探针——零新检测面轮）。
+  **计数勘误**：R242 条目声称 6440，但本轮 collect-only 实证 R243 基数=6447
+  =R242 条目为陈旧计数（本轮要根治的病），以实证值为准，R242 条目作历史
+  记录保留不改。全记录见 `R243_改进方案与开源调研.md`
+
+### Fixed
+
+- `tests/test_r214_name_boundary.py` 语言分布断言锁死在陈旧 fixture 快照
+  （157 探针）→ 改直读真源 `data/golden_attacks.json`（174 探针）后计数
+  暴露失配=双源漂移实锤，更新为真源口径
+- `baselines.py` docstring 失实（声称 fixture 为单一真源，实为包内 data）
+  → 修正为单一真源声明
+
 ## [v67.34.35] - 2026-10-07
 
 ### Added (R242: 让差异化可见 + 保护信任资产 + 多端数据前置 — 重心转向轮)
