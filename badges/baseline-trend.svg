@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="160" role="img" aria-label="false-positive rate trend: 8.38% to 0.90%">
+<!-- source: docs/baseline_history.jsonl | records: 34 | fp_points: 34 | miss_points: 26 -->
+<title>FP rate: 8.38% → 0.90% (34 rounds); miss rate: 0.00%</title>
+<rect width="100%" height="160" fill="#0d1117"/>
+<line x1="44" y1="20.00" x2="584" y2="20.00" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="20.00" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" fill="#8b949e" text-anchor="end" dominant-baseline="middle">10%</text>
+<line x1="44" y1="73.00" x2="584" y2="73.00" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="73.00" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" fill="#8b949e" text-anchor="end" dominant-baseline="middle">5%</text>
+<line x1="44" y1="126.00" x2="584" y2="126.00" stroke="#30363d" stroke-width="1"/>
+<text x="38" y="126.00" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" fill="#8b949e" text-anchor="end" dominant-baseline="middle">0%</text>
+<polyline points="44.00,126.00 65.60,126.00 87.20,126.00 108.80,126.00 130.40,126.00 152.00,126.00 173.60,126.00 195.20,126.00 216.80,126.00 238.40,126.00 260.00,126.00 281.60,126.00 303.20,126.00 324.80,126.00 346.40,126.00 368.00,126.00 389.60,126.00 411.20,126.00 432.80,126.00 454.40,126.00 476.00,126.00 497.60,126.00 519.20,126.00 540.80,126.00 562.40,126.00 584.00,126.00" fill="none" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,3"/>
+<polyline points="44.00,37.17 60.36,62.08 76.73,92.40 93.09,109.78 109.45,104.38 125.82,115.82 142.18,116.35 158.55,116.35 174.91,116.46 191.27,116.46 207.64,116.46 224.00,116.46 240.36,116.46 256.73,116.46 273.09,116.46 289.45,116.46 305.82,116.46 322.18,116.46 338.55,116.46 354.91,116.46 371.27,116.46 387.64,116.46 404.00,116.46 420.36,116.46 436.73,116.46 453.09,116.46 469.45,116.46 485.82,116.46 502.18,116.46 518.55,116.46 534.91,116.46 551.27,116.46 567.64,116.46 584.00,116.46" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linejoin="round"/>
+<circle cx="44.00" cy="37.17" r="3" fill="#22c55e"/>
+<circle cx="584.00" cy="116.46" r="3" fill="#22c55e"/>
+<text x="44.00" y="14" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11" fill="#22c55e" text-anchor="start">8.38%</text>
+<text x="584.00" y="14" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="11" fill="#22c55e" text-anchor="end">0.90%</text>
+<line x1="44" y1="148" x2="68" y2="148" stroke="#22c55e" stroke-width="2.5"/>
+<text x="74" y="148" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" fill="#c9d1d9" dominant-baseline="middle">false-positive rate</text>
+<line x1="194" y1="148" x2="218" y2="148" stroke="#f85149" stroke-width="1.5" stroke-dasharray="4,3"/>
+<text x="224" y="148" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" font-size="10" fill="#c9d1d9" dominant-baseline="middle">miss rate</text>
+</svg>

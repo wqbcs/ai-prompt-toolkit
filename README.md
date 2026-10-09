@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.40-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6495%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.41-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6504%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40150probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -24,6 +24,11 @@ prompt-cli baseline
 # 漏检面  0.00%  |  探针 150 条 · 期望命中单元 122
 # 误报面  0.91%  |  干净样本 60 个 · checker 267 条
 ```
+
+**误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
+固定刻度 0–10%，曲线不随数据缩放）：
+
+[![Baseline Trend](badges/baseline-trend.svg)](docs/baseline_history.jsonl)
 
 **10 行接入 CI**（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
 

@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.41] - 2026-10-08
+
+### Added (R248: P2-04 双基线时间序列 sparkline — 可信度收紧史可见化; 零新检测面轮)
+
+> 定位反问（R248 §1/§5）：门禁只在"被相信"时才有价值，而"被相信"最直接的
+> 素材是收紧史——FP 8.38%→0.9%、漏检恒 0 这条曲线本身就是"工具在变诚实、
+> 没在放水"的证据。数据（33 点 jsonl）100% 就绪，缺的只是画成 README 里
+> 一张图（与 R247 P5-01 同形态：数据在、展示断链的最后一公里）。
+
+- **确定性 sparkline 生成器**（`scripts/gen_baseline_sparkline.py`，纯 stdlib
+  零依赖）：读 `docs/baseline_history.jsonl`（append-only 文件序=时间序）→
+  `badges/baseline-trend.svg`。**逐字节一致楔子延伸至资产面**：同 jsonl→同
+  SVG 字节（无时间戳/随机/时钟，坐标固定 2 位小数，头部注释只含数据源+点数）；
+  **固定刻度 0–10%**（不随数据缩放——自动缩放任曲线"看起来平"=视觉欺骗）；
+  `<2 点=n/a` 灰化态（ci-streak 同纪律，不画假曲线）；miss_rate 底线恒画
+  （漏检恒 0 史可见）
+- **接线**：release_gate 新步"双基线 sparkline 重生成"（与 append 步相邻=
+  数据先追再画图，序不可逆）；CI 自动继承（quality gate 作业
+  `release_gate --skip 1,2` 单一真源，**零 CI 改动**）；README 可信度节引用
+  静态 SVG（`badges/` 下 git 版本化=曲线历史可 diff，同 ci-streak.svg 形态）
+- **R248 勘误（第四例板漂移）**：P0 区曾存 P2-04 重复行（🟡"sparkline 留
+  P5-11"=范围误绑——README 图属 P2-04 自身验收，公开数据页才属 P5-11），
+  合并为单一真源行 ✅
+- **纪律缺口回补**：00 交接文档补 R247 漏写回写（P5-01 --fix-hint + P2-06/
+  P5-02 重判）+ "下一轮建议"节从过期的 R245 刷新到 R249
+- 9 测试（test_r248_p204_sparkline.py：同输入同字节 e2e/无时间戳护栏/幂等/
+  结构断言/null 跳过/miss 底线/固定刻度/n/a 态/--check 红绿两态）。
+  测试 6495→6504。全记录见 `docs/planning/R248_改进方案与开源调研.md`
+
 ## [v67.34.40] - 2026-10-08
 
 ### Added (R247: P5-01 finding 消息可行动化 — CLI 修复提示面; 零新检测面轮)

@@ -153,6 +153,9 @@ def build_steps() -> list[Step]:
         # P4-02: 核心零依赖验证(kernel 层零第三方, R233-P4-01 手测结论固化为机器护栏)
         Step("核心零依赖验证", [PY, "scripts/check_layer_deps.py"]),
         Step("双基线时间序列追加", [PY, "scripts/append_baseline_history.py"]),
+        # R248-P2-04: 双基线 sparkline 重生成+一致性断言（确定性纯 stdlib,
+        # 同 jsonl→同 SVG 字节; 与 append 步相邻=数据先追再画图, 序不可逆）
+        Step("双基线 sparkline 重生成", [PY, "scripts/gen_baseline_sparkline.py"]),
         # R237-P3-11: 本地=CI 验证(钉死包版本断言 + CI workflow 命令面可达;
         # 收口前确认"本地跑的就是 CI 跑的命令", R223 四连红根因的机器护栏)
         Step("本地=CI 验证", [PY, "scripts/verify_local_ci_parity.py"]),

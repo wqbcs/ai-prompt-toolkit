@@ -212,7 +212,9 @@ jobs:
   # R225-P0-02: push 硬门禁 — 卖"CI门禁"却直推 main 无门禁的叙事漏洞收口
   # 此前本作业仅 pull_request 触发; 现 push main/develop + PR 双触发
   # 设计(05 §Q1): push 作业只跑 gate 不重跑 pytest 矩阵(减重见 P6-03);
-  # 判绿标准 = 增量门禁(NEW findings) + release_gate 11步(与本地收口同一真源)
+  # 判绿标准 = 增量门禁(NEW findings) + release_gate 全链(与本地收口同一真源,
+  # 跳 pytest+覆盖率 2 步; 步数真源=release_gate.build_steps(), 此处不硬编码
+  # 计数防漂移 — R230-X1 计数硬编码机械债同病)
   prompt-quality-gate:
     runs-on: ubuntu-latest
     needs: test
@@ -238,10 +240,11 @@ jobs:
           prompt-cli lint -t ./src/ai_prompt_toolkit/templates \
             --incremental --baseline baselines/templates-baseline.json --gate
 
-      # 收口门禁链 16 步(跳过 pytest+覆盖率棘轮, 两者数据在 test 作业):
+      # 收口门禁链全链(跳过 pytest+覆盖率棘轮, 两者数据在 test 作业):
       # ruff/format/mypy棘轮/双基线/依赖一致性/环境快照/gen_rules_doc/
-      # sync/版本一致性/SARIF合法性/ReDoS审计增量/双基线时间序列
-      - name: "Release Gate (16 steps, single source of truth)"
+      # sync/版本一致性/SARIF合法性/ReDoS审计增量/双基线时间序列+sparkline。
+      # 步数不硬编码(R248: 硬编码计数随步表增长必漂移, 与 R230-X1 同病)
+      - name: "Release Gate (full chain, single source of truth)"
         run: python scripts/release_gate.py --skip 1,2
 
       - name: Quality Gate Verdict
