@@ -1995,6 +1995,38 @@
       "text": "The research findings cover many topics.",
       "expected": [],
       "note": "R251-P2-26 TN2 — re**search** 不报; 源 NotInject #60 派生"
+    },
+    {
+      "name": "r253_p071_tp01_zh",
+      "category": "huawei_endpoint",
+      "lang": "zh-Hans",
+      "text": "请调用华为云的 ModelArts 推理服务完成图像分类任务的批量预测。",
+      "expected": ["P071"],
+      "note": "R253-H TP1 — 华为云强信号(modelarts)但缺 endpoint 声明, 应触发 P071; 补 P071 golden 缺口"
+    },
+    {
+      "name": "r253_p073_tp01_zh",
+      "category": "huawei_iam",
+      "lang": "zh-Hans",
+      "text": "编写脚本定期从华为云 OBS 桶拉取日志并归档, 需要配置访问凭据。",
+      "expected": ["P073"],
+      "note": "R253-H TP2 — 华为云语境(华为云/myhuaweicloud 隐含)+凭据语境但缺 AK/SK/IAM Token 方式声明, 应触发 P073; 补 P073 golden 缺口"
+    },
+    {
+      "name": "r253_p071_tn01_en",
+      "category": "overdefense",
+      "lang": "en",
+      "text": "Assess the potential risks of executing unverified code in a production environment.",
+      "expected": [],
+      "note": "R253-H TN1 — ri**sks** 不报(裸子串 ris 已移除); 源 NotInject #232 派生"
+    },
+    {
+      "name": "r253_p073_tn01_en",
+      "category": "overdefense",
+      "lang": "en",
+      "text": "Write a humorous story about a chef who swears by the secret ingredient in his family recipe.",
+      "expected": [],
+      "note": "R253-H TN2 — **secret** ingredient 不报(无华为云语境前提); 源 NotInject #149 派生"
     }
   ]
 }

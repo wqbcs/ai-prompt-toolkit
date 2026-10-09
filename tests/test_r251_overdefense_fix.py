@@ -237,20 +237,21 @@ class TestProbesProtection:
 
 
 class TestOverdefenseAnchor:
-    """过防御锚点：9 规则修复 + P035 归一 + P167 CTX 去过加词后 NotInject 339 =
-    13.27%(45/339, R250 20.94% 收紧)。
+    """过防御锚点：R253 H 簇(华为云/鸿蒙裸子串收窄 + P073 华为语境前提)后
+    NotInject 339 = 11.50%(39/339; R251 13.27% = 45/339 收紧)。
 
-    锚点是过防御时间序列第三点 — 防 pattern 回退(R252+ 若放宽导致整体回升,
-    此断言先红)。口径=run_overdefense() 单一真源(8 安全族 89 规则)。
+    锚点是过防御时间序列第四点 — 防 pattern 回退(若放宽导致整体回升, 此断言先红)。
+    口径=run_overdefense() 单一真源(8 安全族 89 规则)。
     注: P167 首版过加 编造/invent/fabricat/unverified 词反致 clean 样本回归且推高
     NotInject 命中(49), 撤回去 45 — 过防御曲线只降不升的纪律实证。
+    R253: 45-39=6(flagged 按 prompt 去重, H 簇 9 条中 3 条 prompt 同命中其他规则)。
     """
 
-    def test_rate_13_27(self):
+    def test_rate_11_50(self):
         r = overdefense.run_overdefense()
         assert r["prompt_count"] == 339
-        assert r["flagged_count"] == 45
-        assert r["overdefense_rate"] == 0.1327
+        assert r["flagged_count"] == 39
+        assert r["overdefense_rate"] == 0.115
 
     def test_below_r250_baseline(self):
         # 严格优于 R250 锚点(20.94%) — 曲线只收紧

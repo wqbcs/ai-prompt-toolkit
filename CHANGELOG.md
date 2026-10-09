@@ -2,6 +2,34 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.46] - 2026-10-09
+
+### Fixed (R253: 过防御残留 45/339 分类 — 只修无 TP 支撑的纯 FP 根因)
+
+> 四问反思（R253 §0）：45 条 flagged 逐条定性成 H/I/J 三类。**只修 H 簇**
+> （华为云/鸿蒙裸子串误触发，P071-P080 整族 0 golden TP）；I 簇（P163 越狱 10 条，
+> 4 TP 支撑）与 J 簇（26 条防御缺失型单例，均有 TP）登记不动手——为指标收窄有
+> TP 支撑的安全规则 = 漏检风险，低价值打磨陷阱。
+
+- **P071/P075 `_HW_CLOUD_API_PATTERN` 收窄**：裸子串 `ecs|obs|ris` 移除——`ris`
+  撞 risk/risks/risky/risking、`obs` 撞 observed/observe（6/6 NotInject 残留 P071
+  全部由 `ris` 误触发）。华为云语境改由强信号锚定（华为云/huawei.?cloud/
+  api.huaweicloud/maas.cn/modelarts）；裸服务缩写跨云歧义（AWS/阿里云）不判。
+- **P073 华为云语境前提**：`_HW_CLOUD_CTX`（华为云/huawei/myhuaweicloud）共现
+  才构成"涉及华为云服务调用"——裸 secret/token/IAM 撞 "secret ingredient" 不再报。
+- **P073 漏检面修复**：`_IAM_PATTERN` 补 `凭据` 同义词（"配置访问凭据" 是中文语料
+  高频写法，探针先行时 TP2 首跑 FAIL 实证）。
+- **P074/P078 `_HARMONYOS_API_PATTERN` 收窄**：裸 `Ability` 移除——撞英文通用词
+  "ability"（2/2 NotInject 残留 P078 均由其误触发）。鸿蒙语境以 HarmonyOS/鸿蒙/
+  ArkTS/ArkUI/Stage模型 锚定（裸 UIAbility 无鸿蒙词时不判，可接受：鸿蒙 TP 探针=0）。
+- **探针先行（4 条落 golden，190 族→226 族口径不变，总数 226→230）**：
+  TP1 华为云 ModelArts 缺 endpoint（P071）/ TP2 华为云 OBS 缺认证方式（P073，补
+  凭据同义词）/ TN1 risks 非华为云（P071/P073 静默）/ TN2 secret ingredient（P073 静默）。
+- **过防御时间序列第四点**：45/339 → **39/339（13.27% → 11.50%）**，漏检恒 0、
+  FP 0.82% 不升。锚点测试 test_rate_13_27 → test_rate_11_50（R251 文件）+
+  test_r253_huawei_narrowing.py 14 测试锁定收窄面（TN 变体/强信号保留/鸿蒙面）。
+- I 簇（T6 越狱召回/精度联合调优）+ J 簇（棘轮锁定区）登记于 02 总板，不动手。
+
 ## [v67.34.45] - 2026-10-09
 
 ### Added (R252: 采用摩擦削减 + 可靠性楔子加固 — 不加规则、不铺端)

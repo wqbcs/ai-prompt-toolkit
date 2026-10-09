@@ -3434,12 +3434,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p071_p080.py\u0000(?:华为云|huawei.?cloud|api\\.huaweicloud|maas\\.cn|modelarts|ecs|obs|ris)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p071_p080.py\u0000(?:endpoint|端点|接口地址|https://[a-z0-9.-]+\\.myhuaweicloud\\.com)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -3458,19 +3452,7 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p071_p080.py\u0000(?:华为云.*认证|huawei.*auth|IAM|ak/sk|密钥|secret|token|凭证)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p071_p080.py\u0000(?:AK/SK|IAM Token|Agency|委托|永久安全凭证|临时安全凭证)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p071_p080.py\u0000(?:HarmonyOS|鸿蒙|ArkTS|ArkUI|Stage模型|Ability)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13771,11 +13753,30 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p071_p080.py\u0000(?:华为云|huawei.?cloud|api\\.huaweicloud|maas\\.cn|modelarts)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p071_p080.py\u0000(?:华为云|huawei|myhuaweicloud)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p071_p080.py\u0000(?:华为云.*认证|huawei.*auth|IAM|ak/sk|密钥|secret|token|凭证|凭据)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p071_p080.py\u0000(?:HarmonyOS|鸿蒙|ArkTS|ArkUI|Stage模型)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
-  },
-  "metadata": {
-    "approved_at": "2026-10-03",
-    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
-    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

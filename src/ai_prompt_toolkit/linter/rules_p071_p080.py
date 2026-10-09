@@ -137,18 +137,26 @@ for r in _RULES_P071_P080:
     _RULE_MAP[r.rule_id] = r
 
 
-_HW_CLOUD_API_PATTERN = re.compile(
-    r"(?:华为云|huawei.?cloud|api\.huaweicloud|maas\.cn|modelarts|ecs|obs|ris)", re.IGNORECASE
-)
+# R253-H: 裸子串 ecs|obs|ris 已移除 — 撞通用英文(risk/risks/risky/observed/recs),
+# 6/6 NotInject 残留 P071 全部由 ris 子串误触发。华为云语境以强信号锚定
+# (华为云/huaweicloud/maas.cn/modelarts); 裸服务缩写无华为语境时跨云歧义(AWS/阿里云)不判。
+_HW_CLOUD_API_PATTERN = re.compile(r"(?:华为云|huawei.?cloud|api\.huaweicloud|maas\.cn|modelarts)", re.IGNORECASE)
+# R253-H: P073 华为云语境前提 — 裸 secret/token/IAM 撞通用英文(secret ingredient),
+# 必须与华为云语境共现才构成"涉及华为云服务调用"。
+_HW_CLOUD_CTX = re.compile(r"(?:华为云|huawei|myhuaweicloud)", re.IGNORECASE)
 _ENDPOINT_PATTERN = re.compile(r"(?:endpoint|端点|接口地址|https://[a-z0-9.-]+\.myhuaweicloud\.com)", re.IGNORECASE)
 
 _NPU_PATTERN = re.compile(r"(?:训练|推理|模型部署|train|inference|deploy|GPU|显卡|算力)", re.IGNORECASE)
 _NPU_ADAPT_PATTERN = re.compile(r"(?:昇腾|NPU|CANN|Ascend|达芬奇|DaVinci)", re.IGNORECASE)
 
-_IAM_PATTERN = re.compile(r"(?:华为云.*认证|huawei.*auth|IAM|ak/sk|密钥|secret|token|凭证)", re.IGNORECASE)
+# R253-H: 凭据 = 凭证 同义词(漏检面: "配置访问凭据" 是中文语料高频写法)
+_IAM_PATTERN = re.compile(r"(?:华为云.*认证|huawei.*auth|IAM|ak/sk|密钥|secret|token|凭证|凭据)", re.IGNORECASE)
 _IAM_METHOD_PATTERN = re.compile(r"(?:AK/SK|IAM Token|Agency|委托|永久安全凭证|临时安全凭证)", re.IGNORECASE)
 
-_HARMONYOS_API_PATTERN = re.compile(r"(?:HarmonyOS|鸿蒙|ArkTS|ArkUI|Stage模型|Ability)", re.IGNORECASE)
+# R253-H: 裸 Ability 已移除 — 撞英文通用词 "ability"(user's ability / review ability),
+# 2/2 NotInject 残留 P078 均由英文 ability 误触发。鸿蒙语境以 HarmonyOS/鸿蒙/ArkTS/ArkUI/
+# Stage模型 锚定(均含华为/鸿蒙强信号), 裸 UIAbility 无鸿蒙词时不判(可接受, 鸿蒙 TP 探针=0)。
+_HARMONYOS_API_PATTERN = re.compile(r"(?:HarmonyOS|鸿蒙|ArkTS|ArkUI|Stage模型)", re.IGNORECASE)
 _API_VERSION_PATTERN = re.compile(r"(?:API\s*\d+|SDK\s*\d+|HarmonyOS.*\d+\.\d+|NEXT\s*\d+|版本.*\d+)", re.IGNORECASE)
 
 _REGION_PATTERN = re.compile(
@@ -211,6 +219,9 @@ def check_p072(text: str) -> Finding | None:
 
 def check_p073(text: str) -> Finding | None:
     rule = _RULE_MAP["P073"]
+    # R253-H: 华为云语境前提 — 无华为云语境时裸 secret/token/IAM 不构成"涉及华为云服务调用"
+    if not _HW_CLOUD_CTX.search(text):
+        return None
     has_iam = bool(_IAM_PATTERN.search(text))
     if not has_iam:
         return None
