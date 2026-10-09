@@ -100,6 +100,15 @@ def main() -> int:
 
     report = run_overdefense()
     if args.json:
+        # R251-P2-26(G): set-cover 单元素权重 — 仅被该规则独家命中的 flagged prompt
+        # 数(修它一个即可解标)。治理排序按此而非 per_rule_hits(共标簇下命中数
+        # 系统性高估边际收益, 见 docs/planning/R251 §1.3 纠偏1)。历史 jsonl
+        # schema 不变(append-only 纪律), 仅 --json 诊断输出新增。
+        clearable: dict[str, int] = {}
+        for f in report["flagged"]:
+            if len(f["rules"]) == 1:
+                rid = f["rules"][0]
+                clearable[rid] = clearable.get(rid, 0) + 1
         out = {
             "version": _version(),
             "prompt_count": report["prompt_count"],
@@ -108,6 +117,7 @@ def main() -> int:
             "overdefense_rate": report["overdefense_rate"],
             "per_rule_hits": report["per_rule_hits"],
             "top_rules": report["top_rules"],
+            "clearable_prompts": {rid: clearable[rid] for rid in sorted(clearable)},
         }
         print(json.dumps(out, ensure_ascii=False))
         return 0

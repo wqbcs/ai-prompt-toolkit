@@ -1,2 +1,3 @@
 {"ts": "2026-10-08T18:55:49", "version": "67.34.42", "rules": 89, "prompt_count": 339, "flagged_count": 115, "overdefense_rate": 0.3392, "top_rule": ["P162", 27], "backfill": false}
-{"ts": "2026-10-08T22:38:54", "version": "67.34.43", "rules": 89, "prompt_count": 339, "flagged_count": 71, "overdefense_rate": 0.2094, "top_rule": ["P163", 21], "backfill": false}
+{"ts": "2026-10-09T05:42:30", "version": "67.34.43", "rules": 89, "prompt_count": 339, "flagged_count": 45, "overdefense_rate": 0.1327, "top_rule": ["P163", 15], "backfill": false}
+{"ts": "2026-10-09T06:13:14", "version": "67.34.44", "rules": 89, "prompt_count": 339, "flagged_count": 45, "overdefense_rate": 0.1327, "top_rule": ["P163", 15], "backfill": false}

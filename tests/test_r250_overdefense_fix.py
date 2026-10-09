@@ -164,11 +164,13 @@ class TestOverdefenseAnchor:
     导致整体回升, 此断言先红)。口径=run_overdefense() 单一真源(8 安全族 89 规则)。
     """
 
-    def test_rate_20_94(self):
+    def test_rate_le_20_94_ratchet(self):
+        # R250 锚点(71/339=20.94%) 是轮次快照 — R251 进一步收紧至 13.27%(45/339)
+        # 后此精确值不再成立。转为棘轮断言: 不得回到 R250 点(71)之上, 防 pattern
+        # 回退。绝对锚点由 R251 测试文件(test_r251_overdefense_fix)的 13.27% 接管。
         r = overdefense.run_overdefense()
         assert r["prompt_count"] == 339
-        assert r["flagged_count"] == 71
-        assert r["overdefense_rate"] == 0.2094
+        assert r["flagged_count"] <= 71
 
     def test_below_r249_baseline(self):
         # 严格优于 R249 锚点(33.92%) — 曲线只收紧

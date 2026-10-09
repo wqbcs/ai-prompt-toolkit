@@ -83,8 +83,13 @@ _RULES_P206_P210 = [
 for r in _RULES_P206_P210:
     _RULE_MAP[r.rule_id] = r
 
+# R251-P2-26(A): 裸 rag/search/knowledge 子串误杀 — "para**rag**aph"/"co**rag**e"/
+# "re**search**"/"knowle**dge**able" 全命中(11 benign)。修复: RAG 用显式 ASCII 词边界
+# (Python re 中 CJK 是 \w, \bRAG知 无边界会漏"RAG知识库", lookaround 限 ASCII 类);
+# search 左侧边界(右侧词干照吞 searching); knowledge 收窄为 knowledge base 组合。
 _RETRIEVAL_PATTERN = re.compile(
-    r"(?:检索|retrieval|retrieve|RAG|rag|搜索|search|知识库|knowledge|向量|vector|embedding)", re.IGNORECASE
+    r"(?:检[ ]*索|retriev|(?<![A-Za-z0-9])RAG(?![A-Za-z0-9])|(?<![A-Za-z0-9])search|搜索|知识库|knowledge\s+base|向量|vector|embedding)",
+    re.IGNORECASE,
 )
 _SANITIZE_PATTERN = re.compile(r"(?:sanitize|净化|审核|filter|clean|content.check|moderation)", re.IGNORECASE)
 _FAITHFULNESS_PATTERN = re.compile(r"(?:faithfulness|事实性|factual|source.verification|来源验证|claim)", re.IGNORECASE)

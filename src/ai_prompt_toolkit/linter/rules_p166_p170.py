@@ -95,9 +95,18 @@ _OUTPUT_FILTER_DECL = re.compile(
 # 知识回答语义。原pattern含"数据/生成/描述/解释"泛词(任何数据处理prompt
 # 恒触发, R207前23/32干净样本误报), 且英文单词内嵌子串误配
 # ("refactor"含"fact", "describe"含"describ")。
+# R251-P2-26(D): 二次收窄 — 裸 information/reference/source/cite/参考/来源 是信息面
+# 提及("summarize the information"/"cite the source paragraph" 类 13 benign 中 8 命中),
+# 非幻觉风险面; knowledge 收词边界(knowledgeable 不再中); \bfact\w* 误中
+# "factors"(factor≠fact) 收为 fact(s)/factual; 保留幻觉风险语义面(hallucin/幻觉)。
+# R251(D-fix): 撤回首版过加的 编造/捏造/臆造/杜撰/虚构/invent/fabricat/unverified —
+# 这些词在 prompt 里压倒性地以防御否定形态出现("Never invent fields"/"不编造函数"),
+# 进 CTX 反而扩大过防御(clean37/clean59 干净样本回归), 与本轮降过防御目标相悖;
+# golden 4 TP 全走 事实/统计/来源引用/factual 面, 不依赖这批词。另撤 hallucin/幻觉:
+# DECL 侧本就有裸 幻觉|hallucin, CTX 含之则 CTX∧¬DECL=空集(死分支, 零检测贡献), 奥卡姆移除。
 _HALLUCINATION_CTX = re.compile(
-    r"(?:知识|knowledge|事实|文献引用|来源引用|引用.{0,10}(?:来源|出处|文献|权威|资料)|cite|来源|参考|reference"
-    r"|\bfact\w*|\bstatistic\w*|\binformation\b|\bknowledge\b|\bsource\b)",
+    r"(?:知识|\bknowledge\b|事实|文献引用|来源引用|引用.{0,10}(?:来源|出处|文献|权威|资料)|\bfacts?\b|\bfactual\w*"
+    r"|\bstatistic\w*)",
     re.IGNORECASE,
 )
 

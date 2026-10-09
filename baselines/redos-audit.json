@@ -2312,12 +2312,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000(?:删除|delete|drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules.py\u0000(?:不生成|禁止|不要|不得|不允许|被删除|don'?t|do\\s+not|no\\s+(?:delete|drop))": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2762,12 +2756,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p031_p040.py\u0000(?:检[ ]*索|RAG|知[ ]*识[ ]*库|知識[ ]*庫|檢[ ]*索|knowledge\\s+base|retriev|向量|vector.{0,6}store|文档库|検索|ナレッジベース|(?:search|query).{0,10}(?:engine|index))": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p031_p040.py\u0000(?:图片|图像|音频|视频|照片|\\bimage\\b|\\baudio\\b|\\bvideo\\b|\\bphoto\\b|\\bpicture\\b|\\bmedia\\b)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2829,12 +2817,6 @@
       "approved": false
     },
     "linter/rules_p031_p040.py\u0000(?:删除|支付|发送|执行命令|转账|delete|payment|send|execute|transfer)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p031_p040.py\u0000(?:检索|RAG|知识库|knowledge\\s+base|retriev|向量库|vector.{0,6}store|文档库|(?:search|query).{0,10}(?:engine|index))": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -4598,12 +4580,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p161_p165.py\u0000(?:越狱|jailbreak|DAN|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|假装|pretend|扮演|impersonat|角色扮演|身份切换|不设限|无限制|unrestricted)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p161_p165.py\u0000(?:越狱.*防护|jailbreak.*protect|固化|anchor|锚定|锁定|lock|不可.*覆盖|cannot.*override|不可.*修改|immutable|拒绝.*策略|deny.*policy|禁止.*列表|deny.*list|角色.*固定|role.*fix|身份.*不可变|identity.*immutable|不得.{0,6}(?:建议|提供|帮助|协助).{0,12}(?:绕过|攻击|越狱|漏洞))": {
       "vulnerable": true,
       "complexity": "O(n^4)",
@@ -4651,12 +4627,6 @@
       "complexity": "O(n^4)",
       "attack": "output\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000filter!",
       "approved": true
-    },
-    "linter/rules_p166_p170.py\u0000(?:知识|knowledge|事实|文献引用|来源引用|引用.{0,10}(?:来源|出处|文献|权威|资料)|cite|来源|参考|reference|\\bfact\\w*|\\bstatistic\\w*|\\binformation\\b|\\bknowledge\\b|\\bsource\\b)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
     },
     "linter/rules_p166_p170.py\u0000(?:幻觉|hallucin|事实.*核查|fact.*check|不确定|uncertain|来源.*引用|source.*cite|禁止.*编造|no.*fabricat|标注.*不确定|mark.*uncertain|幻觉.*防护|hallucinat.*protect|do\\s+not\\s+invent|don'?t\\s+invent|不虚构|不臆造|不杜撰|仅依据|仅基于|only\\s+based\\s+on|不补充.*之外)": {
       "vulnerable": false,
@@ -7005,12 +6975,6 @@
       "approved": false
     },
     "linter/rules_p206_p210.py\u0000LLM09": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p206_p210.py\u0000(?:检索|retrieval|retrieve|RAG|rag|搜索|search|知识库|knowledge|向量|vector|embedding)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13735,6 +13699,83 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules.py\u0000(?:drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000(?:文件|file|系统|system|数据库|数据|data|记录|record|日志|版本|version|代码|code|程序|program|文档|document|数据表|table|备份|backup|旧版)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000删除|delete": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p031_p040.py\u0000(?:检[ ]*索|(?<![A-Za-z0-9])RAG(?![A-Za-z0-9])|知[ ]*识[ ]*库|知識[ ]*庫|檢[ ]*索|knowledge\\s+base|retriev|向量|vector.{0,6}store|文档库|検索|ナレッジベース|(?:search|query).{0,10}(?:engine|index))": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p156_p160.py\u0000(?:发布|deploy|上线|rollout|迁移|migrat|升级|upgrade|切换|switch|release)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000\\bDAN\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000DAN\\s*[(（]\\s*Data\\s+Access\\s+Object|Data\\s+Access\\s+Object\\s*[(（]\\s*DAN": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:假装|pretend|扮演|impersonat|角色扮演|roleplay|role[ ]?play)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:no\\s+restrict|without\\s+restrict|freed?\\s+from\\s+(?:all\\s+)?rules?|free\\s+from\\s+(?:all\\s+)?rules?|unrestricted|no\\s+rules|不受.{0,6}(?:规则|限制|约束)|不受限制|忽略.{0,6}(?:所有|全部).{0,6}规则|ignore\\s+(?:all\\s+)?rules|无任何限制|没有.{0,4}(?:限制|约束))": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "no\t\t\t\t\t\t\t\t\t\t\t!",
+      "approved": true
+    },
+    "linter/rules_p166_p170.py\u0000(?:知识|\\bknowledge\\b|事实|文献引用|来源引用|引用.{0,10}(?:来源|出处|文献|权威|资料)|\\bfacts?\\b|\\bfactual\\w*|\\bstatistic\\w*)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p206_p210.py\u0000(?:检[ ]*索|retriev|(?<![A-Za-z0-9])RAG(?![A-Za-z0-9])|(?<![A-Za-z0-9])search|搜索|知识库|knowledge\\s+base|向量|vector|embedding)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
+  },
+  "metadata": {
+    "approved_at": "2026-10-03",
+    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
+    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

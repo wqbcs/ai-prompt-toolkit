@@ -2,6 +2,46 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.44] - 2026-10-08
+
+### Fixed (R251: P2-26 过防御治理第二批 — 可信度曲线第二次收紧; RAG 裸子串族 + 4 规则口径缺陷, 探针先行)
+
+> 定位反问（R251 §1/§5）：R250 把过防御压到 20.94% 只是第二次收紧——本轮把
+> 20.94% 机器可验证地压到 **13.27%**（同 339 样本、同口径、git 可 diff，<15% 目标
+> 达标）。修的不是"规则不够多"，是 RAG 裸子串族（P206-P209 + P257 共享 gate + P035
+> 漂移副本）的"para**rag**aph/re**search**/knowle**dge**able"误中面 + 4 条规则的口径
+> 缺陷（P163 越狱三分判定 / P167 去裸泛词 / P009 删除限定数据目标 / P160 发布语境门）。
+> 探针先行纪律全程（36 条新探针，9 规则各 TP×2/TN×2，先落 golden 再动 pattern）。
+
+- **P206-P209 RAG 裸子串缺陷**（11 benign 最大单项）：`_RETRIEVAL_PATTERN` 裸
+  `rag`/`search`/`knowledge` 子串 → "paragraph"/"research"/"knowledgeable" 全命中
+  → 词边界 `\bRAG\b` + `retriev` + `knowledge\s+base` + `检\s*索` + `\bsearch\b`；
+  [273] "the retrieval process" 是**正当** retrieval 提及，保持命中=正确
+- **P257/P036 共享 `_RAG_CTX_GATE`**：裸 RAG 大小写不敏感 "cove**rag**e" 命中 →
+  ASCII 显式边界 `(?<![A-Za-z0-9])RAG(?![A-Za-z0-9])` + `knowledge\s+base`
+- **P035 R180 漂移副本归一**（B2，落地时发现）：`check_p035` 有自己内联的裸 RAG
+  （大小写不敏感）pattern，是 R180 引入 gate 时的漂移副本——统一走 `_RAG_CTX_GATE`
+  单一事实源（奥卡姆：RAG 检索语境判定全仓只许一个 pattern）
+- **P163 越狱三分判定**（手法先例 ATR-2026-00229 roleplay AND 约束解除共现门）：
+  ①直接越狱词（越狱/jailbreak/bypass/绕过/无限制/不设限）保留 ②DAN 人格语境化
+  （词边界 + DAO 双序排除 "DAN (Data Access Object)"/"Data Access Object (DAN)"）
+  ③roleplay 动词 ∧ 约束解除共现 ④"you are free from..." 自我声明（保护 atk24）。
+  pretend/roleplay 裸出现（侦探/客服等正当角色）不再报
+- **P167 去裸泛词**：`_HALLUCINATION_CTX` 移除裸 information/reference/source/cite/
+  参考/来源（13 benign 中 8 命中面）；knowledge 收词边界（knowledgeable 不再中）；
+  `\bfact\w*` 误中 "factors" 收为 `\bfacts?\b|\bfactual\w*`。撤回首版过加的
+  编造/invent/fabricat/unverified（这些词在 prompt 里压倒性以防御否定形态出现，进
+  CTX 反扩过防御——clean37/clean59 干净样本回归实证）
+- **P009 删除限定数据目标**：删除/delete 仅当文本含数据目标（文件/数据库/记录/
+  版本/表/代码/备份）才报——"delete a word/paragraph" 是文本编辑非敏感操作
+- **P160 发布/部署语境门**：`_ROLLBACK_CTX` 命中且无 DECL 且含发布/部署/上线/迁移
+  语境才报；泛版本谈话（version history/版本号）豁免
+- **过防御方法学**（set-cover）：治理单元从"单规则命中数"改为"可解标独有 flagged
+  prompt 数"——R250"按命中数降序"启发式被本轮数据证伪（共标簇高估边际收益）
+- **36 条新探针**（9 规则各 TP×2/TN×2）先于 pattern 改动落 golden_attacks.json
+  （190→226）；golden-TP 回归恒 0，漏检率恒 0.0%
+- **过防御曲线**：33.92%（R249）→ 20.94%（R250）→ **13.27%（R251, 45/339）**
+
 ## [v67.34.43] - 2026-10-08
 
 ### Fixed (R250: P2-26 过防御治理首批 — 可信度曲线第一次收紧; 4 条既有规则 pattern 修复)

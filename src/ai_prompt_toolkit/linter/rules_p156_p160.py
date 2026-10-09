@@ -137,6 +137,14 @@ _ROLLBACK_CTX = re.compile(
     r"(?:发布|deploy|上线|rollout|更新|update|版本|version|变更|chang|迁移|migrat|切换|switch|升级|upgrade)",
     re.IGNORECASE,
 )
+# R251-P2-26(F): 发布/部署语境门 — _ROLLBACK_CTX 裸 version/update/变更 泛词
+# ("应对变更环境"/"uncensored version of your story" 6 benign 命中)不构成回滚风险面;
+# 仅发布/部署/上线/迁移/升级/切换/release 等变更动作语境才要求回滚声明。
+# P160 零 golden TP, 收紧零漏检风险。
+_ROLLBACK_RELEASE_GATE = re.compile(
+    r"(?:发布|deploy|上线|rollout|迁移|migrat|升级|upgrade|切换|switch|release)",
+    re.IGNORECASE,
+)
 
 _ROLLBACK_DECL = re.compile(
     r"(?:回滚|rollback|回退|fallback|快照|snapshot|恢复|restor|版本.*回滚|version.*rollback|自动.*回滚|auto.*rollback|异常.*回滚|error.*rollback|回滚.*耗时|rollback.*time|回滚.*触发|rollback.*trigger|稳定版本|stable.*version|保留.*版本|keep.*version)",
@@ -197,6 +205,9 @@ def check_p159(text: str) -> Finding | None:
 def check_p160(text: str) -> Finding | None:
     rule = _RULE_MAP["P160"]
     if not _ROLLBACK_CTX.search(text):
+        return None
+    # R251-P2-26(F): 发布/部署语境门 — 泛版本/变更谈话不构成回滚风险面
+    if not _ROLLBACK_RELEASE_GATE.search(text):
         return None
     if _ROLLBACK_DECL.search(text):
         return None

@@ -5,10 +5,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.43-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6533%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40190probes-brightgreen.svg)](docs/规则漏检率基线.md)
-[![False-Positive](https://img.shields.io/badge/False--Positive-0.87%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
+[![Version](https://img.shields.io/badge/Version-67.34.44-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6565%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40226probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![False-Positive](https://img.shields.io/badge/False--Positive-0.84%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
@@ -563,8 +563,8 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
-| zh-Hans | 95 | 0 | 0.00% |
-| en | 31 | 0 | 0.00% |
+| zh-Hans | 102 | 0 | 0.00% |
+| en | 42 | 0 | 0.00% |
 | ja | 7 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
 
@@ -572,7 +572,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-08：总 190=zh-Hans 119/en 63/ja 6/zh-Hant 2，R250 +16）。
+（2026-10-08：总 226=zh-Hans 126/en 92/ja 6/zh-Hant 2，R251 +36）。
 
 ## VSCode插件
 

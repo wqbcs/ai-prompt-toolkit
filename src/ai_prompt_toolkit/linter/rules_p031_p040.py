@@ -192,8 +192,11 @@ _RAG_CITATION_PATTERNS = [
 # atk50(繁体)/atk52(空格插入"知 识库")实测漏检; 容忍限于门内(门是P035-P037/P257
 # 共用入口, 扩面=全部RAG规则受益, 58干净样本0新增误报验证)
 # R214审查修复: \s*→[ ]* — 排除换行跨行误报面, 保留测试过的空格插入检测
+# R251-P2-26(B): 裸 RAG 大小写不敏感误杀 "cove**rag**e"/"cove**nant**" — 改显式 ASCII
+# 词边界(CJK 是 \w, \b 不生效)。门=P035/P036/P037/P257 共用入口(单一事实源),
+# P257 的 4 条 golden TP 全走 检索/知识库/ナレッジベース/知識庫 分支, 零回归。
 _RAG_CTX_GATE = re.compile(
-    r"(?:检[ ]*索|RAG|知[ ]*识[ ]*库|知識[ ]*庫|檢[ ]*索|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
+    r"(?:检[ ]*索|(?<![A-Za-z0-9])RAG(?![A-Za-z0-9])|知[ ]*识[ ]*库|知識[ ]*庫|檢[ ]*索|knowledge\s+base|retriev|向量|vector.{0,6}store|文档库|"
     r"検索|ナレッジベース|"
     r"(?:search|query).{0,10}(?:engine|index))",
     re.IGNORECASE,
@@ -296,15 +299,9 @@ def check_p034(text: str) -> Finding | None:
 def check_p035(text: str) -> Finding | None:
     rule = _RULE_MAP["P035"]
     # R180: 需RAG检索语境证据 — "订单查询"等业务查询不构成RAG面
-    has_retrieval = bool(
-        re.search(
-            r"(?:检索|RAG|知识库|knowledge\s+base|retriev|向量库|vector.{0,6}store|文档库|"
-            r"(?:search|query).{0,10}(?:engine|index))",
-            text,
-            re.IGNORECASE,
-        )
-    )
-    if not has_retrieval:
+    # R251-P2-26(B2): 统一走 _RAG_CTX_GATE 单一事实源 — 本函数原内联裸 RAG
+    # (大小写不敏感) 是 R180 漂移副本, "para**rag**aph" 误杀面与 gate 同源缺陷
+    if not _RAG_CTX_GATE.search(text):
         return None
     has_source_validation = any(p.search(text) for p in _RAG_SOURCE_PATTERNS)
     if has_source_validation:

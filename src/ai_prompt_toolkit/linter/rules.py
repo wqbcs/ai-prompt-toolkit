@@ -577,8 +577,15 @@ def check_p008(text: str) -> Finding | None:
 # R207校准: 审计/追踪声明仅对敏感操作场景有意义 — 无状态问答/文档类prompt
 # 无条件要求审计指令属过度要求(R206前88%误报)。
 _AUDIT_SENSITIVE_CTX = re.compile(
-    r"(?:删除|delete|drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)"
+    r"(?:drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)"
     r"|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)",
+    re.IGNORECASE,
+)
+# R251-P2-26(E): 删除/delete 独立分支 — "delete a word/paragraph in a text" 是文本
+# 编辑非敏感操作(benign 高频面), 仅当删除对象是数据目标(文件/系统/数据库/记录/
+# 版本/代码/程序/文档/表)才构成需审计的敏感操作; 否定窗口纪律同上(20字符左窗)。
+_DELETE_DATA_TARGET = re.compile(
+    r"(?:文件|file|系统|system|数据库|数据|data|记录|record|日志|版本|version|代码|code|程序|program|文档|document|数据表|table|备份|backup|旧版)",
     re.IGNORECASE,
 )
 # R207: 否定/描述语境 — "不生成DELETE语句"是安全约束声明,"被删除内容的去向"
@@ -597,6 +604,14 @@ def check_p009(text: str) -> Finding | None:
             continue
         has_sensitive = True
         break
+    if not has_sensitive:
+        # R251-P2-26(E): 删除/delete 独立分支 — 仅数据目标语境构成敏感操作
+        if _DELETE_DATA_TARGET.search(text):
+            for m in re.finditer(r"删除|delete", text, re.IGNORECASE):
+                if _AUDIT_NEGATION_CTX.search(text[max(0, m.start() - 20) : m.end()]):
+                    continue
+                has_sensitive = True
+                break
     if not has_sensitive:
         return None
     if re.search(r"审计|audit|日志|log|记录|trace|追踪", text, re.IGNORECASE):

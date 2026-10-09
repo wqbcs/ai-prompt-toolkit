@@ -108,8 +108,27 @@ _CACHE_POISON_DECL = re.compile(
 )
 
 # R168校准: 需对抗性/劫持语义 — 裸"系统/角色/指令/禁止"过宽(任何带角色的Prompt都误触发CRITICAL)
+# R251-P2-26(C): 三分判定 — ①直接越狱词 ②DAN人格(旧裸 DAN+IGNORECASE 误中
+# "danger"/"damage" 子串, 改词边界) ③roleplay 动词 AND 约束解除语言共现
+# (Agent-Threat-Rule ATR-2026-00229/00234: 角色设定且显式解除约束才报; 单独
+# pretend/roleplay=正当创作/游戏语境, 其 false_positives 字段明列)。
 _JAILBREAK_CTX = re.compile(
-    r"(?:越狱|jailbreak|DAN|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|假装|pretend|扮演|impersonat|角色扮演|身份切换|不设限|无限制|unrestricted)",
+    r"(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted)",
+    re.IGNORECASE,
+)
+_JAILBREAK_DAN = re.compile(r"\bDAN\b", re.IGNORECASE)
+# R251-P2-26(C-fix): DAO 排除双序 — "DAN (Data Access Object)" 与更常见的
+# "Data Access Object (DAN)"(全称+缩写) 都排除; 单序版漏掉后者, Java DAO
+# 设计讨论被 DAN 人格分支误报
+_DAN_DAO_EXCLUDE = re.compile(
+    r"DAN\s*[(（]\s*Data\s+Access\s+Object|Data\s+Access\s+Object\s*[(（]\s*DAN",
+    re.IGNORECASE,
+)
+_ROLEPLAY_VERB = re.compile(r"(?:假装|pretend|扮演|impersonat|角色扮演|roleplay|role[ ]?play)", re.IGNORECASE)
+_CONSTRAINT_REMOVE = re.compile(
+    r"(?:no\s+restrict|without\s+restrict|freed?\s+from\s+(?:all\s+)?rules?|free\s+from\s+(?:all\s+)?rules?"
+    r"|unrestricted|no\s+rules|不受.{0,6}(?:规则|限制|约束)|不受限制|忽略.{0,6}(?:所有|全部).{0,6}规则"
+    r"|ignore\s+(?:all\s+)?rules|无任何限制|没有.{0,4}(?:限制|约束))",
     re.IGNORECASE,
 )
 
@@ -178,7 +197,10 @@ def check_p162(text: str) -> Finding | None:
 
 def check_p163(text: str) -> Finding | None:
     rule = _RULE_MAP["P163"]
-    if not _JAILBREAK_CTX.search(text):
+    # R251-P2-26(C): 三分判定 — 直接越狱词 / DAN人格(排除DAO语境) / roleplay∧约束解除共现
+    dan_hit = _JAILBREAK_DAN.search(text) and not _DAN_DAO_EXCLUDE.search(text)
+    roleplay_hit = _ROLEPLAY_VERB.search(text) and _CONSTRAINT_REMOVE.search(text)
+    if not (_JAILBREAK_CTX.search(text) or dan_hit or roleplay_hit):
         return None
     if _JAILBREAK_DECL.search(text):
         return None

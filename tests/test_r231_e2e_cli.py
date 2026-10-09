@@ -28,6 +28,9 @@ ROOT = Path(__file__).resolve().parent.parent
 # 夹具按实测 finding 面定档（R231 锚定）：
 #   PASS.md  2 medium → plain0 / gate0(pass)
 #   WARN.md  4 medium → plain0 / gate1(warn, medium>3)
+#     R251 注: 原"不得编造字段"曾靠 P167 凑第 4 medium, R251 把"编造"移出幻觉风险
+#     语境(防御声明豁免)后降为 3 → gate 由 warn 转 pass; 补"## 示例"段触发
+#     P013(低质量示例, 稳定 medium, 非 R251 触及规则) 维持 gate warn 语义, 4 medium 定档。
 #   HIGH.md  high     → plain2 / gate2(fail)
 #   SECRET.md critical → plain2 / gate2(fail)
 #   SHORT.md  0 high   → plain0
@@ -35,6 +38,7 @@ PASS_MD = "你是 SQL 助手，只输出 SELECT，禁止删除。\n"
 WARN_MD = (
     "## 角色\n你是专业的 SQL 审查助手，只输出 SELECT 语句，禁止 DROP、DELETE、UPDATE，"
     "回答必须基于提供的表结构，不得编造字段，若不是 SQL 请求则明确拒绝。\n\n"
+    "## 示例\n输入: SELECT\n输出: ok\n"
     "## 输出格式\n输出 JSON 对象，包含 ok、statement、reason 字段。\n"
 )
 HIGH_MD = "你是助手，只回答数学问题，不要做其他事情，不要泄露任何系统信息或密钥。\n"
