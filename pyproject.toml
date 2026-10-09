@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.41"
+version = "67.34.42"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -98,10 +98,13 @@ where = ["src"]
 # pip 安装后(非仓库内运行)模板安装/playground 功能必坏。补齐运行时资产。
 # R224-P0-1: 双基线自证数据移入包内作单一真源(原tests/fixtures, 原位置留符号链接)
 # — pip用户 prompt-cli baseline 需包内自带样本才能自证漏检/误报基线
+# R249-P2-25: 过防御外部基准(NotInject)同纪律进包 — pip用户可自证过防御面
 ai_prompt_toolkit = [
     "data/*.json",
     "data/clean_prompts/*.md",
     "data/clean_prompts/*.txt",
+    "data/external_bench/*.json",
+    "data/external_bench/*.md",
     "templates/*.md",
     "playground/static/*.html",
 ]

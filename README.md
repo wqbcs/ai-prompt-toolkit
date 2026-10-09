@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.41-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6504%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.42-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6516%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40150probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.91%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -29,6 +29,14 @@ prompt-cli baseline
 固定刻度 0–10%，曲线不随数据缩放）：
 
 [![Baseline Trend](badges/baseline-trend.svg)](docs/baseline_history.jsonl)
+
+**过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
+"含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
+用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
+实测：**安全族误杀率 33.92%**（89 规则 @ 339 样本），逐轮追进
+[`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl)——
+这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
+曲线只收紧不放松。
 
 **10 行接入 CI**（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
 

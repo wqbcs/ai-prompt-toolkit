@@ -2,6 +2,49 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.42] - 2026-10-08
+
+### Added (R249: P2-25 过防御（over-defense）度量面 — 外部独立基准锚点; 零新规则/零新依赖轮)
+
+> 定位反问（R249 §1/§5）：内部 60 干净样本 FP 基线是**自选面**——没有
+> "含触发词的良性语句"（support ticket 引用攻击串/安全文档本身），这是
+> 行业公认的过防御盲区（PIGuard/InjecGuard，ACL 2025：SotA 模型过防御
+> 准确率跌到 60%≈随机）。竞品 prompt-guard 把 OOD recall ~20% 如实写进
+> README（"read this honestly"）反而获客——本轮把外部锚点第一次机器化，
+> 如实公开，不藏差数字。
+
+- **NotInject 339 条独立基准落盘**（`src/ai_prompt_toolkit/data/external_bench/`，
+  leolee99/PIGuard，MIT，91KB 原样不改写 + `LICENSE_NOTES.md` 出处/许可/
+  拉取通道留痕）——3 级难度×4 主题良性触发词语句，267 规则零训练零调优
+  =天然独立 holdout（Meta PromptGuard2/PINT 博客"独立评测才有意义"纪律
+  的天然满足）
+- **过防御度量单一真源** `src/ai_prompt_toolkit/overdefense.py`
+  （baselines.py 同形态：包内逻辑+样本进包=pip 用户可自证）：
+  - **口径护栏**=安全族动态派生自注册表（category 含 "security" 且非
+    arkts/harmonyos 生态族，R249 时点=8 族 89 规则——生态族对通用语料
+    命中=口径错误非过防御信号）
+  - `apply_waivers=False`（漏检基线同纪律：度量绕过 waiver）
+  - **确定性纯 stdlib 零 LLM**（同输入同输出，无时钟/随机进结果；
+    实测 0.7s/339 样本）
+- **薄封装脚本** `scripts/check_overdefense.py`（--json/--check；
+  append-only `docs/overdefense_history.jsonl` 时间序列+**同 version 幂等
+  覆盖末行**——release_gate 重复跑不重复追加，双基线同纪律；**首点锚定轮
+  只追不判**——无历史无棘轮，--fail-above 留治理后收紧）
+- **接线**：release_gate 新步"过防御基线追加"（数据链末尾）；CI 经
+  --skip 1,2 自动继承，**零 CI 命令改动**
+- **README 可信度节如实公开**：安全族误杀率 **33.92%**（115/339，89 规则）
+  + 治理清单指针（P2-26 按命中数降序，曲线只收紧不放松）
+- **P2-26 治理清单登记 ⬜**（02 总板）：排序=P2-25 per_rule_hits 命中数
+  降序；排除面 P226 优先（arkts 32 命中，中文"格调"房间描述误判=疑似
+  真缺陷非口径问题）+ 通用族 Top P162(27)/P044(21)/P163(21)/P008(19)/
+  P167(13)；探针先行纪律（TN=NotInject 命中样本直接复用，零新语料成本）；
+  附带 deepset/prompt-injections 662 条漏检面 OOD 候选（HF 通道需换，
+  R249 实证 datasets-server 本机连接失败）
+- 12 测试（test_r249_overdefense.py：数据面 339/口径护栏 8 族排除生态族/
+  动态派生/确定性两次相等/无时间戳/计数自洽/flagged 全安全族/top 降序/
+  append 幂等+递增/--check 红绿），测试 6503→6515。
+- 全记录见 `docs/planning/R249_改进方案与开源调研.md`
+
 ## [v67.34.41] - 2026-10-08
 
 ### Added (R248: P2-04 双基线时间序列 sparkline — 可信度收紧史可见化; 零新检测面轮)

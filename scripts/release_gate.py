@@ -156,6 +156,9 @@ def build_steps() -> list[Step]:
         # R248-P2-04: 双基线 sparkline 重生成+一致性断言（确定性纯 stdlib,
         # 同 jsonl→同 SVG 字节; 与 append 步相邻=数据先追再画图, 序不可逆）
         Step("双基线 sparkline 重生成", [PY, "scripts/gen_baseline_sparkline.py"]),
+        # R249-P2-25: 过防御基线追加（NotInject 339 硬负样本安全族误杀面,
+        # 外部独立基准锚点; 同 version 幂等覆盖末行, 无历史无棘轮=只追不判）
+        Step("过防御基线追加", [PY, "scripts/check_overdefense.py"]),
         # R237-P3-11: 本地=CI 验证(钉死包版本断言 + CI workflow 命令面可达;
         # 收口前确认"本地跑的就是 CI 跑的命令", R223 四连红根因的机器护栏)
         Step("本地=CI 验证", [PY, "scripts/verify_local_ci_parity.py"]),
