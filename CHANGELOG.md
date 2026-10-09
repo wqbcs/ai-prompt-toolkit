@@ -2,6 +2,57 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.45] - 2026-10-09
+
+### Added (R252: 采用摩擦削减 + 可靠性楔子加固 — 不加规则、不铺端)
+
+> 定位反问（R252 §0）：项目已越过"内部可信度建设期"（251 轮、6565→6576 测试、FP
+> 0.84%、漏检 0%、过防御 13.27%），进入"楔子可验证/可采用期"——真瓶颈是楔子无法被
+> 外部验证（未发 PyPI/README 全中文/Action 与官方 hook 缺位），不是规则不够。
+> 本轮只降采用摩擦 + 加固可靠性，不碰 T1（加规则）/T7（铺端）/T6（重构契约）。
+
+- **I-1 官方 pre-commit 钩子修复（P1-02 真交付物）**：`.pre-commit-hooks.yaml`（R47
+  2026-07-23 遗留）用已不存在的 `promptkit` 命令族 + 幽灵命令 sanitize/eval + 陈旧
+  "100 规则+84 family"计数 → 按旧版接入的用户拿到坏钩子（采用阻塞）。修复：entry
+  指向真实 CLI（`prompt-cli`，pyproject [project.scripts] 单一真源）、删幽灵命令、
+  `files` 收窄为 prompt 声明文件（`.prompt`/`.prompt.md`，README/文档 md 非语料）、
+  `additional_dependencies` 声明包（借鉴 ruff-pre-commit 黄金先例）。
+- **I-2 目录扫描默认路径排除（FP 削减杠杆）**：`cli_helpers.py` 加
+  `DEFAULT_EXCLUDE_DIRS`（node_modules/__pycache__/.git/venv/build/dist 等 13 项，
+  单一真源，`discover_templates` 一处过滤）——目录扫描不再命中依赖树/构建产物/缓存
+  下的 .md（竞品 Whitney/agentlint 同构实践："依赖树里的 finding 对开发者=误报"）。
+  纯数据驱动 frozenset；60 干净样本 FP 0.84% 不变、漏检 0% 不变。
+- **I-3 零网络机器护栏**：新增 `tests/test_r252_integration.py`（11 测试）——AST 静态
+  断言确定性核心（linter 包 30+ 规则文件 + baselines/overdefense/cli_helpers）零网络
+  库导入 + 运行时 booby-trap（socket/urlopen/HTTPConnection.connect）断言
+  lint/baseline/overdefense 三路径零网络调用。5 年不变量 #1（零 LLM/零外部依赖）从
+  设计声明变机器断言。范围纪律：mcp_server.py 是 by-design 网络面（doctor/Provider
+  连通）不在此列——整包锁=错误断言。
+- **I-4 GitHub Action 工件（P1-01，发布等 P0-03 公开仓 + P0-04 PyPI）**：
+  `.github/actions/prompt-lint/action.yml`（composite）：setup-python 3.12 → pip
+  install → `prompt-cli lint --ci --fail-on --format sarif` → upload-sarif → gate rc
+  透传（0 pass / 1 warn 可配置阻断 / 2 fail）。纯 Python 运行时（不学 promptfoo
+  code-scan 的 Node24+OIDC——零 LLM 无 token 计费需求，依赖面更窄=奥卡姆）。旗标全
+  经 CLI 实测核验，SARIF 干跑合法。
+- **I-5 README 英文楔子 + 60 秒 Quickstart**：徽章下补英文楔子段（byte-identical
+  verdicts / zero LLM / <100ms / offline）+ `pipx run ai-prompt-toolkit lint` 免安装
+  试用命令（标注 P0-04 后生效）；双基线自证块真值刷新（探针 190→226、命中单元
+  135→153、误报 0.87%→0.84%）。
+- **PyPI 打包核验**：`python -m build --no-isolation` 可构建（本地沙箱无法拉隔离
+  环境 setuptools，隔离构建交 CI release-build 作业同命令），wheel 383 文件含全部
+  自证资产（golden 226 探针/60 干净样本/NotInject 339/templates/playground static）。
+
+### 竞品增量调研（03 系统基线之上的 3 周 delta）
+- promptfoo **并入 OpenAI**（仍 MIT 开源）+ 新出 code-scanning GitHub Action
+  （Node24+OIDC，LLM-agent 驱动，默认走 Promptfoo Cloud）——零 LLM 确定性楔子被
+  顶级背书验证（LLM 路线=采样方差+token 计费+Cloud 依赖是其结构性短板）
+- Whitney（transilienceai，最接近竞品）：Semgrep+薄 wrapper+可选 LLM-judge，默认
+  零 LLM 逐字节一致，盲测 81.8% precision（我方 FP 0.84% 更优）——印证 I-2/I-3
+- agentlint：确定性配置 linter，confidence tier + fingerprint baseline + 零网络
+  booby-trap 护栏——印证 I-3，I-7/I-8（指纹/置信度）仅登记不动手（T6+奥卡姆）
+- 结论：无可直接复用开源包（竞品=引擎+规则集整体），借鉴形态（Action 结构/
+  additional_dependencies/booby-trap/排除清单）不自造引擎
+
 ## [v67.34.44] - 2026-10-08
 
 ### Fixed (R251: P2-26 过防御治理第二批 — 可信度曲线第二次收紧; RAG 裸子串族 + 4 规则口径缺陷, 探针先行)

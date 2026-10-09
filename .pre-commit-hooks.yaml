@@ -1,41 +1,36 @@
+# 官方 pre-commit 钩子声明（R252-I-1 修复，P1-02 真交付物）。
+# 用户在 .pre-commit-config.yaml 接入:
+#   - repo: https://github.com/<owner>/ai-prompt-toolkit
+#     rev: v67.34.x
+#     hooks:
+#       - id: promptkit-lint
+# 背景：本文件 R47 版（2026-07-23）用已不存在的 `promptkit` 命令族 +
+# 幽灵命令 sanitize/eval + 陈旧规则计数（"100 规则+84 family"）——按旧版接入
+# 的用户拿到坏钩子=采用阻塞。R252 修复：entry 指向真实 CLI（pyproject
+# [project.scripts] 单一真源=prompt-cli）、删幽灵命令、files 收窄为 prompt
+# 声明文件（README/文档 md 非 prompt 语料，扫它=FP）。
 - id: promptkit-lint
   name: Prompt Lint
-  description: Lint检查Prompt文件质量(100条规则+84个family)
-  entry: promptkit lint --fail-on high
+  description: Lint prompt 文件（267 规则，确定性静态门禁，零 LLM）
+  entry: prompt-cli lint --fail-on high
   language: python
-  types: [file]
-  files: '\.(md|txt|prompt|ya?ml)$'
+  additional_dependencies: [ai-prompt-toolkit]
+  files: '\.prompt(\.md)?$'
   stages: [commit]
 - id: promptkit-security
   name: Prompt Security Scan
-  description: 安全扫描Prompt文件(注入/PII/泄露/OWASP)
-  entry: promptkit scan
+  description: 安全扫描 prompt 文件（注入/PII/泄露/OWASP LLM Top 10 映射）
+  entry: prompt-cli scan
   language: python
-  types: [file]
-  files: '\.(md|txt|prompt|ya?ml)$'
+  additional_dependencies: [ai-prompt-toolkit]
+  files: '\.prompt(\.md)?$'
   stages: [push]
 - id: promptkit-probe
   name: Prompt Probe Scan (OWASP LLM Top 10)
-  description: 12大探针类别安全扫描(garak风格)
-  entry: promptkit probe --target
+  description: 12 大探针类别安全扫描（garak 风格）
+  entry: prompt-cli probe --target
   language: python
-  types: [file]
+  additional_dependencies: [ai-prompt-toolkit]
   files: '\.prompt$'
   stages: [push]
   require_serial: true
-- id: promptkit-sanitize
-  name: Prompt Sanitize
-  description: Prompt消毒(编码绕过/模板注入/敏感信息/不可见字符)
-  entry: bash -c 'for f in "$@"; do promptkit lint --target "$f" --fail-on critical 2>/dev/null || true; done' --
-  language: system
-  types: [file]
-  files: '\.(md|txt|prompt)$'
-  stages: [manual]
-- id: promptkit-eval
-  name: Prompt Eval
-  description: 62维度质量评估
-  entry: promptkit evaluate --quick --threshold 60 --fail-on-error
-  language: python
-  types: [file]
-  files: '\.(md|txt|prompt|ya?ml)$'
-  stages: [manual]

@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.44-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6565%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.45-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6576%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40226probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.84%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -15,15 +15,17 @@
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(190 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(226 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 190 条 · 期望命中单元 135
-# 误报面  0.87%  |  干净样本 60 个 · checker 267 条
+# 漏检面  0.00%  |  探针 226 条 · 期望命中单元 153
+# 误报面  0.84%  |  干净样本 60 个 · checker 267 条
 ```
+
+> **Quick start (no install):** `pipx run ai-prompt-toolkit lint <file>` — first finding in seconds.
 
 **误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
 固定刻度 0–10%，曲线不随数据缩放）：
@@ -203,7 +205,7 @@ MDR 0.96%）。这类属于运行时/行为层检测域，不在本工具范围�
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
 **机制上限**——本工具的双基线（漏检 0.00%：190条golden探针/135期望命中单元；
-误报 0.87%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
+误报 0.84%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
 运行时防护（如 LLM Guard 类工具）。但**门禁只能建立在可复现的裁决上**：

@@ -46,6 +46,41 @@ def load_config(path: str | Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+# R252-I-2: 目录扫描默认排除目录（单一真源，lint/scan/auto_discover 共用）。
+# 依据：竞品 Whitney/agentlint 同构实践——"finding inside a dependency tree /
+# test fixture is a false positive from the developer's perspective"。这些目录是
+# 依赖树/构建产物/缓存，永不承载用户 prompt 语料；rglob 命中它们=FP 假象 + 扫描变慢。
+# 纯数据驱动（frozenset，非 if/else 链）。与 .promptignore 正交：后者是用户可加
+# 的*额外*排除层；本清单是硬排除（依赖树非语料，无真实"重新包含 node_modules"需求）。
+DEFAULT_EXCLUDE_DIRS = frozenset(
+    {
+        "node_modules",
+        "__pycache__",
+        ".git",
+        ".venv",
+        "venv",
+        "env",
+        "build",
+        "dist",
+        "site-packages",
+        ".prompt-toolkit-cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        "target",
+    }
+)
+
+
+def _in_default_excluded(path: Path, base: Path) -> bool:
+    """path 相对 base 的任一段落在 DEFAULT_EXCLUDE_DIRS 内 → 排除。
+    对非 base 下文件（相对失败）返回 False（不排除，交给上层判定）。"""
+    try:
+        rel = path.relative_to(base)
+    except ValueError:
+        return False
+    return any(part in DEFAULT_EXCLUDE_DIRS for part in rel.parts)
+
+
 def discover_templates(target: str | Path) -> list[Path]:
     p = Path(target) if not isinstance(target, Path) else target
     if p.is_file():
@@ -54,7 +89,8 @@ def discover_templates(target: str | Path) -> list[Path]:
         results: list[Path] = []
         for pattern in ("*.md", "*.prompt", "*.prompt.md"):
             results.extend(p.rglob(pattern))
-        return sorted(set(results))
+        # R252-I-2: 剔除依赖树/构建产物/缓存下的文件（FP 削减，单一真源）
+        return sorted({r for r in results if not _in_default_excluded(r, p)})
     raise ValidationError(f"目标不存在 — {p}", field="target")
 
 
