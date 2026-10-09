@@ -2,6 +2,54 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.43] - 2026-10-08
+
+### Fixed (R250: P2-26 过防御治理首批 — 可信度曲线第一次收紧; 4 条既有规则 pattern 修复)
+
+> 定位反问（R250 §1/§5）：R249 把外部过防御锚点 33.92% 如实公开只是第一步——
+> 行业看的是**曲线方向**（"这个工具在变诚实"的收紧史叙事，与双基线 33 点 FP
+> 收紧史同构）。本轮把 33.92% 机器可验证地压到 **20.94%**（同 339 样本、同
+> 口径、git 可 diff）。修的不是"规则不够多"，是 4 条既有规则的 pattern 缺陷——
+> 探针先行纪律全程（每条先补 TP+TN 探针 ≥2 再动 pattern）。
+
+- **P226 ArkTS any 类型绕过**（NotInject 32 命中，口径内最大单项）：
+  `\bany\b` 忽略大小写命中英语单词 any（"prevent any accident"/"any questions"）
+  → any 仅在**类型标注语境**计数（`: any`+语句终结符 / `as any` / `any[]`）；
+  @ts-ignore 分支不变（手法先例：ai-tc `write-detection-rule` 负向上下文约束）
+- **P162 缓存投毒防护缺失**（27 命中，全为误报）：`_CACHE_POISON_CTX` 含
+  `stor`/`hit` 裸子串 → 命中 story/history/white → `stor`→`storage|storing|\bstore\w*`、
+  `hit`→`\bhit\w*`（词边界，真存储语义）
+- **P008 权限过宽**（19 命中）：中文 fallback "宽量化词裸出现即报"（"请描述
+  关于'空'的任何信息" 被报）→ 改**授权动词邻接**（`可以/允许/准许/授权/放行/let/
+  may/can/allowed` 后 20 字内出现 任何/任意/所有 才算过宽授权）；英文 all/any 补
+  `\b` 词边界（手法先例：ai-tc `requiresNearby` 共现门）；**ReDoS 根治**：授权词
+  与宽量化词间的无界 `\s+.*`（嵌套量词 O(n²) 回溯隐患，audit_redos 标 [NEW]）
+  改单一有界非贪婪间隙 `[^。！？\n]{0,40}?`（O(n)，额外清 2 个 NotInject 误报
+  → 过防御 21.53%→20.94%）
+- **P044 上下文边界侵蚀**（21 命中）：context 类 OR transfer 类独立命中即报
+  （"art history 作文题 + 任一 transfer 词" 组合爆炸）→ 改 **AND 双信号**（有上下文
+  **且**往外传才进 DECL 判定，BOUNDARY 豁免面不变）
+- **16 条新探针**（4 规则 × TP×2/TN×2，golden 174→190，expected 单元 127→135）：
+  TN 从 NotInject 命中样本派生（`source: NotInject #N` 留痕）+ TP 人工构造真形态；
+  4 条规则**从此有探针保护**（此前零探针覆盖=纪律缺口，本轮闭合）
+- **过防御时间序列第二点**：33.92% → **20.94%**（71/339，release_gate 自动落
+  `overdefense_history.jsonl`，git 可 diff 首次收紧）；剩余 top 命中 P163=21/P167=13/
+  P009=12/P208=11 等登记 R251+（P163 pretend/roleplay 纯正则面不可分=需二阶信号
+  独立设计轮，本轮不混入——一轮一主题）
+- **双基线不回归**：漏检率恒 0.0（135 期望单元含 8 新 TP）；60 干净样本 FP
+  0.0091→**0.0087**（P162 story/history 误报清除，不升反降）
+- 模板基线：P008 清除 3 处防御性否定声明 FP（"不执行任何代码"/"拒绝任何改变
+  角色" 式），增量门禁记为"修复"，状态 ✅ 改善；基线文件本身不重存（重存属
+  独立 commit+理由，不在本轮 scope）
+
+### Changed (R250: 受影响测试断言随 pattern 修复更新)
+
+- `tests/test_r214_name_boundary.py`：探针计数 174→190，语言分布 zh-Hans 110→119 /
+  en 56→63（R250 +9 zh-Hans +7 en）
+- `tests/test_r213_mcp_lint.py`：注入 description 命中集去 P008（"忽略之前所有
+  指令/无需任何确认" 的 所有/任何 是注入话术宾语非权限授予，旧版靠宽量化词裸出现
+  误命中=过防御面；注入完整性由 P113/P163/P164 保证）
+
 ## [v67.34.42] - 2026-10-08
 
 ### Added (R249: P2-25 过防御（over-defense）度量面 — 外部独立基准锚点; 零新规则/零新依赖轮)

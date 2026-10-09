@@ -548,17 +548,21 @@ def check_p007(text: str) -> Finding | None:
 
 def check_p008(text: str) -> Finding | None:
     rule = _RULE_MAP["P008"]
+    # R250-P2-26: 英文分支 all/any 补 \b 词边界(裸子串命中 everything/allan 式误报);
+    # 中文 fallback 从"宽量化词裸出现即报"改为授权动词邻接(动词后 20 字内出现
+    # 任何/任意/所有才算过宽授权) — "请描述关于'空'的任何信息"无授权动词=不报
+    # 间隙用单一有界非贪婪量词(无嵌套量词, 避免 \s+.* 式 O(n²) 回溯 — ReDoS 根治)
     broad_perms = re.findall(
-        r"(?:可以|能|may|can|allowed)\s+.*(?:任何|任意|所有|anything|everything|all|any)",
+        r"(?:可以|能|may|can|allowed)[^。！？\n]{0,40}?(?:任何|任意|所有|\banything\b|\beverything\b|\ball\b|\bany\b)",
         text,
         re.IGNORECASE,
     )
     if not broad_perms:
-        broad_zh = re.findall(r"(?:任何|任意|所有)", text)
-        if broad_zh:
-            has_restriction = bool(re.search(r"(?:仅|只|只能|仅限|限制|limit|only|restrict)", text, re.IGNORECASE))
-            if not has_restriction:
-                broad_perms = broad_zh
+        broad_perms = re.findall(
+            r"(?:可以|允许|准许|授权|放行|let|may|can|allowed)\s*[^。！？\n]{0,20}(?:任何|任意|所有)",
+            text,
+            re.IGNORECASE,
+        )
     if not broad_perms:
         return None
     return Finding(

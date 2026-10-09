@@ -53,7 +53,8 @@ class TestR214LangSchema:
         # R238: +7(P2-11 TN 侧 buried-injections 剩余面: http日志/markdown报告/notebook/xml feed/git log/package.json/中文工单) = 157
         # R240: +12(P266 连接串/同形字面 TP×3/TN×9) | R241: +5(P267 AWS凭据ID面 TP×2/TN×3) = 174
         # R243-2: 直读真源 data/golden_attacks.json(原锁陈旧 fixture 快照 157, 漂移实锤)
-        assert len(probes) == 174
+        # R250: +16(P2-26 过防御首批探针 P226/P162/P008/P044 各 TP×2/TN×2) = 190
+        assert len(probes) == 190
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -69,10 +70,11 @@ class TestR214LangSchema:
         # R240: +7 zh-Hans | +10 en (P266 连接串/同形字面 12 探针)
         # R241: zh-Hans/en 面不变 (P267 AWS凭据ID 5 探针: TP×2/TN×3 均 en 面已计入上轮?)
         # R243-2: 直读真源后分布 = zh-Hans 110 | en 56 | ja 6 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 110
+        # R250: +9 zh-Hans + 7 en (P2-26 16 探针) = zh-Hans 119 | en 63 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 119
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        assert sum(1 for v in langs.values() if v == "en") == 56
+        assert sum(1 for v in langs.values() if v == "en") == 63
 
 
 class TestR214PerLanguageReport:

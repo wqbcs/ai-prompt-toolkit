@@ -80,7 +80,10 @@ class TestR213McpDescriptionLint:
         desc_fs = [f for f in fs if f.location == "::server:rogue::description"]
         assert desc_fs, "注入载荷 description 必须命中 security 族规则"
         ids = {f.rule_id for f in desc_fs}
-        assert ids == {"P008", "P113", "P163", "P164"}  # R213 实测锁定
+        # R250-P2-26: P008 收窄后不再命中 — 注入话术"忽略之前所有指令/无需任何确认"
+        # 的"所有/任何"是攻击宾语非权限授予, 旧版靠宽量化词裸出现误命中(过防御面);
+        # 注入完整性由 P113/P163/P164 保证(核心断言 desc_fs 非空不受影响)
+        assert ids == {"P113", "P163", "P164"}  # R213 实测锁定, R250 去 P008
 
     def test_malformed_json_raises(self):
         with pytest.raises(json.JSONDecodeError):

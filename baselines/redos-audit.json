@@ -2372,12 +2372,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000(?:可以|能|may|can|allowed)\\s+.*(?:任何|任意|所有|anything|everything|all|any)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "能\t\t\t\t\t\t\t\t\t\t\t\t任何!",
-      "approved": true
-    },
     "linter/rules.py\u0000审计|audit|日志|log|记录|trace|追踪": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2432,12 +2426,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000(?:任何|任意|所有)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules.py\u0000\\s+": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2451,12 +2439,6 @@
       "approved": false
     },
     "linter/rules.py\u0000转义|escape|sanitize|校验|验证|validate": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000(?:仅|只|只能|仅限|限制|limit|only|restrict)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -4605,12 +4587,6 @@
       "approved": false
     },
     "linter/rules_p161_p165.py\u0000(?:转义|escap|沙箱|sandbox|隔离|isolat|禁止.*渲染|no.*render|原始.*渲染|raw.*render|注入.*防护|injection.*protect|模板.*安全|template.*safe|净化|sanitiz|过滤.*变量|filter.*variable)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p161_p165.py\u0000(?:缓存|cache|存储|stor|Redis|Memcached|CDN|命中|hit|过期|TTL|失效|invalidat|预热|warm.?up)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -8175,12 +8151,6 @@
       "approved": false
     },
     "linter/rules_p226_p230.py\u0000@ts-ignore|@ts-expect-error|//\\s*eslint-disable": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p226_p230.py\u0000\\bany\\b": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13737,6 +13707,30 @@
       "approved": false
     },
     "linter/rules_p267.py\u0000\\b(?:AKIA|ASIA|ABIA|ACCA)[A-Z0-9]{16}\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000(?:可以|允许|准许|授权|放行|let|may|can|allowed)\\s*[^。！？\\n]{0,20}(?:任何|任意|所有)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:缓存|cache|存储|stor(?:age|ing)|\\bstore\\w*|Redis|Memcached|CDN|命中|\\bhit\\w*|过期|TTL|失效|invalidat|预热|warm.?up)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p226_p230.py\u0000(?::\\s*any\\b\\s*[;,)\\}\\]=]|as\\s+any\\b|\\bany\\s*\\[)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000(?:可以|能|may|can|allowed)[^。！？\\n]{0,40}?(?:任何|任意|所有|\\banything\\b|\\beverything\\b|\\ball\\b|\\bany\\b)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

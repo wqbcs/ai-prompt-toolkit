@@ -50,10 +50,12 @@ _H3_INTENT_PATTERNS = [
     re.compile(r"(?:用于|用来|use\s+for|used\s+to)", re.IGNORECASE),
 ]
 
-_H4_CONTEXT_LEAK_PATTERNS = [
-    re.compile(r"(?:上下文|context|会话|conversation|历史|history)", re.IGNORECASE),
-    re.compile(r"(?:传递|发送|共享|pass|send|share|forward)", re.IGNORECASE),
-]
+# R250-P2-26: 泄漏语义 = 有上下文【且】往外传(AND 双信号) — 原设计两 pattern
+# OR 命中即报,"art history 作文题 + 任一 transfer 词"组合爆炸(NotInject 21 命中)。
+# 手法先例: ai-tc requiresNearby 共现门(语境信号必须与动作信号共现)
+_H4_CTX_PATTERN = re.compile(r"(?:上下文|context|会话|conversation|历史|history)", re.IGNORECASE)
+_H4_XFER_PATTERN = re.compile(r"(?:传递|发送|共享|pass|send|share|forward)", re.IGNORECASE)
+_H4_CONTEXT_LEAK_PATTERNS = [_H4_CTX_PATTERN, _H4_XFER_PATTERN]
 
 _H4_BOUNDARY_PATTERNS = [
     re.compile(r"(?:隔离|隔离区|isolation|sandbox|沙箱|沙盒)", re.IGNORECASE),
@@ -299,8 +301,9 @@ def check_p043(text: str) -> Finding | None:
 
 def check_p044(text: str) -> Finding | None:
     rule = _RULE_MAP["P044"]
-    has_context = any(p.search(text) for p in _H4_CONTEXT_LEAK_PATTERNS)
-    if not has_context:
+    # R250-P2-26: OR→AND 双信号 — 泄漏需"上下文语境 + 外传动作"共现,
+    # 单一信号(纯 history 作文 / 纯 send 指令)不再触发
+    if not (_H4_CTX_PATTERN.search(text) and _H4_XFER_PATTERN.search(text)):
         return None
     has_boundary = any(p.search(text) for p in _H4_BOUNDARY_PATTERNS)
     if has_boundary:

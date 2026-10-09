@@ -84,7 +84,9 @@ for r in _RULES_P226_P230:
     _RULE_MAP[r.rule_id] = r
 
 _TS_IGNORE_PATTERN = re.compile(r"@ts-ignore|@ts-expect-error|//\s*eslint-disable", re.IGNORECASE)
-_ANY_TYPE_PATTERN = re.compile(r"\bany\b", re.IGNORECASE)
+# R250-P2-26: \bany\b 忽略大小写命中英语单词 any(NotInject 32/339 过防御单项最大) —
+# any 仅在类型标注语境计数: `: any`(后接语句终结符)/`as any`/`any[]`; @ts-ignore 分支不变
+_ANY_TYPE_PATTERN = re.compile(r"(?::\s*any\b\s*[;,)\}\]=]|as\s+any\b|\bany\s*\[)")
 _STRICT_NULL_PATTERN = re.compile(r"strictNullChecks|noImplicitAny|strict", re.IGNORECASE)
 _STATE_PATTERN = re.compile(r"@(?:State|Link|Prop|Provide|Consume|StorageLink|StorageProp|Watch)\b", re.IGNORECASE)
 _SENSITIVE_STATE_PATTERN = re.compile(r"(?:password|secret|token|key|credential|隐私|敏感|密钥|密码)", re.IGNORECASE)

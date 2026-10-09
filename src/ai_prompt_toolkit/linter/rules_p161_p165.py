@@ -95,8 +95,11 @@ _TMPL_INJECT_DECL = re.compile(
     re.IGNORECASE,
 )
 
+# R250-P2-26: stor/hit 裸子串命中 story/history/white(NotInject 27 命中全为误报) —
+# stor→storage/storing + \bstore\w*(真存储语义), hit→\bhit\w*(词边界)
 _CACHE_POISON_CTX = re.compile(
-    r"(?:缓存|cache|存储|stor|Redis|Memcached|CDN|命中|hit|过期|TTL|失效|invalidat|预热|warm.?up)", re.IGNORECASE
+    r"(?:缓存|cache|存储|stor(?:age|ing)|\bstore\w*|Redis|Memcached|CDN|命中|\bhit\w*|过期|TTL|失效|invalidat|预热|warm.?up)",
+    re.IGNORECASE,
 )
 
 _CACHE_POISON_DECL = re.compile(
