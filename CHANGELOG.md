@@ -2,6 +2,37 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.59] - 2026-10-10
+
+### Added (R264 P2-27 零探针补欠第四批：10 HIGH 规则 × 1TP+1TN = 20 探针)
+
+> 四问：定位未漂移（探针先行还欠账，零规则变更 T1）；核心价值=探针覆盖度
+> 91/267→101/267（漏检 0.00% 锚点扩到 101 条有探针规则，HIGH 清零进度
+> 50/72=69%）；方向=延续 P2-27 bounded ≤10 规则/轮纪律；陷阱自查=同 R261-
+> R263（还欠账非新指标）。
+
+- **golden 探针 301→321**（+20：10 规则各 1TP+1TN，18 zh-Hans + 2 en，
+  HIGH 前缀序第四批 P139/P141/P146/P148/P171/P172/P174/P175/P179/P181）；
+  期望命中单元 193→203；语言面 zh-Hans 194→212、en 99→101（P179 探针
+  en）
+- **漏检面**：0.00% 保持（203/203，全语言 0 漏检）
+- **双基线不回归**：FP 0.82% 持平、过防御/OOD 三面不受影响（探针纯 golden 侧）
+- **探针设计实证**：20 条全部经 267 全规则管道（`lint_template`
+  apply_waivers=False，与 `run_miss_rate` 同路径）交叉核验——TP 10/10 实火、
+  TN 10/10 不火；触发面取证抓出 2 条设计期失配修正（诚实留痕）：① P171 守卫
+  为字面 `param: <type>` 形态（规则 remediation 原文），任意参数名
+  （`title: string`）不满足→TN 改 `card(param: string = '')` 形态 ② P179
+  `_FORMAT_HIJACK` 词表仅英文强制形态（respond only in JSON/SQL/XML/YAML/
+  Python code），中文"输出必须是"不触发→TP/TN 改英文面（whitelist/validated
+  为 TN 护栏词）
+- **规则页回写**：10 个规则页"探针覆盖 (golden)"段从"暂无"转锚定
+  （gen_rules_doc 机械生成）；README 公开面数字同步（301→321/193→203/
+  194→212/en 99→101/zh-Hans 期望单元 137→145 + 徽章）
+- **P2-27 进展**：HIGH 50/72 完成（69%），余 32 条（P186 起前缀序 + P130
+  归并面）
+- 升版门禁序：版本 3 处 + README 徽章 → gen_rules_doc（非 --check）→
+  sync_readme_metrics → check_version_consistency
+
 ## [v67.34.58] - 2026-10-10
 
 ### Added (R263 P2-27 零探针补欠第三批：10 HIGH 规则 × 1TP+1TN = 20 探针)
