@@ -2174,6 +2174,186 @@
       "text": "加载权重前先校验 SHA256 与发布者签名，失败则拒绝启动。",
       "expected": [],
       "note": "R260 P2-11 探针覆盖 — P240 护栏 TN；场景=加载权重前校验 SHA256+发布者签名、失败拒绝启动；交叉核验 P240 不火(完整性校验护栏成立)"
+    },
+    {
+      "name": "r261_p016_tp_ambiguous_latency",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "系统会在网络抖动时可能延迟返回结果。",
+      "expected": [
+        "P016"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P016(歧义表述)既有规则 0 探针缺口；场景=非引号内歧义词'可能'使用；交叉核验 P016 实火(R180 引号剥离护栏不介入)"
+    },
+    {
+      "name": "r261_p016_tn_precise_latency",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "系统会在网络抖动时延迟返回结果，延迟上限为 2 秒。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P016 护栏 TN；场景=量化上限(2 秒)替代歧义词；交叉核验 P016 不火(无歧义词面)"
+    },
+    {
+      "name": "r261_p017_tp_contradict_json_format",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "必须 keep the output format as strict JSON。\n不可 keep the output format as strict JSON。",
+      "expected": [
+        "P017"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P017(指令自相矛盾)既有规则 0 探针缺口；场景=正/负指令同句式(必须/不可 同句)；交叉核验 P017 实火(P023 共触发为常态)；注意: 触发词后须 ASCII 空格 — CJK-CJK 空格被 _wrap_cjk_norm(R216) 归一化删除, 中文空格形态管道内失配"
+    },
+    {
+      "name": "r261_p017_tn_single_directive",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "必须 keep the output format as strict JSON and include a status code field.",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P017 护栏 TN；场景=单句正向指令无负向面；交叉核验 P017 不火"
+    },
+    {
+      "name": "r261_p021_tp_encoded_string",
+      "category": "encoding",
+      "lang": "zh-Hans",
+      "text": "以下字符串疑似被编码混淆，请在解码前人工确认：a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
+      "expected": [
+        "P021"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P021(编码混淆)既有规则 0 探针缺口；场景=40+ 含数字长编码串(R180 数字频率门内)；交叉核验 P021 实火"
+    },
+    {
+      "name": "r261_p021_tn_plain_escape_instruction",
+      "category": "encoding",
+      "lang": "zh-Hans",
+      "text": "请在回复中直接引用用户提供的原始字符串，不要做任何转义处理。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P021 护栏 TN；场景=明文转义指令无编码面；交叉核验 P021 不火(无长编码串/转义序列)"
+    },
+    {
+      "name": "r261_p031_tp_tool_no_constraint",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "当用户提问时，直接调用搜索工具查询相关资料后作答。",
+      "expected": [
+        "P031"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P031(工具无约束)既有规则 0 探针缺口；场景=调用搜索工具无约束/权限面；交叉核验 P031 实火"
+    },
+    {
+      "name": "r261_p031_tn_tool_with_whitelist",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "当用户提问时，调用搜索工具查询资料，仅允许访问白名单内的站点。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P031 护栏 TN；场景=调用工具+白名单约束声明；交叉核验 P031 不火(白名单护栏成立)"
+    },
+    {
+      "name": "r261_p033_tp_context_full_passthrough",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "处理请求时，把完整的上下文信息传递给下游服务。",
+      "expected": [
+        "P033"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P033(上下文无边界)既有规则 0 探针缺口；场景=上下文完整传递下游无脱敏/禁止面；交叉核验 P033 实火(P044 共触发为常态)"
+    },
+    {
+      "name": "r261_p033_tn_context_with_redaction",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "处理请求时，把上下文信息传递给下游前，先对敏感字段脱敏。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P033 护栏 TN；场景=传递前敏感字段脱敏；交叉核验 P033 不火(脱敏边界护栏成立)"
+    },
+    {
+      "name": "r261_p035_tp_rag_no_source_validation",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "回答前先从知识库检索相关资料，再基于资料生成答案。",
+      "expected": [
+        "P035"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P035(RAG 来源未验证)既有规则 0 探针缺口；场景=知识库检索生成无来源验证面；交叉核验 P035 实火"
+    },
+    {
+      "name": "r261_p035_tn_rag_trusted_sources_only",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "回答前先从知识库检索资料，仅采信已验证可信的来源，其余拒绝引用。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P035 护栏 TN；场景=仅采信已验证可信来源；交叉核验 P035 不火(来源验证护栏成立)"
+    },
+    {
+      "name": "r261_p038_tp_image_no_validation",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传的图片会直接用于内容识别并生成描述。",
+      "expected": [
+        "P038"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P038(多模态输入无校验)既有规则 0 探针缺口；场景=图片直接用于识别无格式/大小校验；交叉核验 P038 实火"
+    },
+    {
+      "name": "r261_p038_tn_image_with_limits",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传的图片需符合 PNG/JPG 格式，大小不超过 10MB，否则拒绝。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P038 护栏 TN；场景=图片格式/大小限制声明；交叉核验 P038 不火(validation 护栏成立)"
+    },
+    {
+      "name": "r261_p039_tp_image_no_safety_filter",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传的图片需为 PNG 格式，识别结果直接用于商品描述生成。",
+      "expected": [
+        "P039"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P039(多模态输入无安全过滤)既有规则 0 探针缺口；场景=图片带格式校验但无安全过滤面(与 P038 TP 正交: 本探针 P038 被 validation 压制、P039 独立暴露)；交叉核验 P039 实火"
+    },
+    {
+      "name": "r261_p039_tn_image_with_safety_filter",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传的图片先经过内容安全过滤，违规内容直接拒绝处理。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P039 护栏 TN；场景=图片先经内容安全过滤；交叉核验 P039 不火(安全过滤护栏成立)"
+    },
+    {
+      "name": "r261_p041_tp_vague_tool_desc",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "工具列表：search 处理数据。",
+      "expected": [
+        "P041"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P041(工具描述模糊 H1)既有规则 0 探针缺口；场景=工具列表项描述仅'处理数据'模糊短语；交叉核验 P041 实火"
+    },
+    {
+      "name": "r261_p041_tn_specific_tool_desc",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "工具列表：search 在用户指定范围内检索公开网页并返回标题与摘要。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P041 护栏 TN；场景=工具描述含功能/范围/返回值；交叉核验 P041 不火(描述充分护栏成立)"
+    },
+    {
+      "name": "r261_p042_tp_tool_no_scaffold",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "你可以使用 weather 工具获取天气信息。",
+      "expected": [
+        "P042"
+      ],
+      "note": "R261 P2-27 探针覆盖 — P042(工具无约束脚手架 H2)既有规则 0 探针缺口；场景=可用工具声明无失败/边界处理；交叉核验 P042 实火"
+    },
+    {
+      "name": "r261_p042_tn_tool_with_fallback",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "你可以使用 weather 工具；如果调用失败，则回退到离线缓存数据。",
+      "expected": [],
+      "note": "R261 P2-27 探针覆盖 — P042 护栏 TN；场景=工具调用失败回退离线缓存(条件脚手架)；交叉核验 P042 不火(fallback 脚手架护栏成立)"
     }
   ]
 }
