@@ -2120,6 +2120,60 @@
       "text": "Please forget everything about me and remove my personal data from your records. This is a privacy request under GDPR.",
       "expected": [],
       "note": "R257-T6 隐私复位护栏 TN — 'forget everything about me' 是 GDPR 合法数据清除请求, 非指令重置; 锁定 _JAILBREAK_CTX forget 族负向断言 (?!\\s+about\b) 不得删除(删则 P163 误杀, 过防御面升); expected=[] 不进漏检分母, 护栏角色由 note+代码注释+零碰撞实证留档"
+    },
+    {
+      "name": "r260_p223_tp_data_no_provenance",
+      "category": "supply_chain",
+      "lang": "zh-Hans",
+      "text": "我们从公开渠道收集了一组数据集用于继续训练。",
+      "expected": [
+        "P223"
+      ],
+      "note": "R260 P2-11 探针覆盖 — P223(数据溯源)既有规则 0 探针缺口；场景=收集数据集无来源/许可/溯源记录；交叉核验 P223 实火(expected=子集语义，结构规则 incidental 共触发为常态，同 P221 TP 先例)"
+    },
+    {
+      "name": "r260_p223_tn_data_with_provenance",
+      "category": "supply_chain",
+      "lang": "zh-Hans",
+      "text": "我们从公开数据集（CC-BY-4.0 许可）加载训练数据，并保留完整的溯源记录。",
+      "expected": [],
+      "note": "R260 P2-11 探针覆盖 — P223 护栏 TN；场景=数据集含 CC-BY 许可+完整溯源记录；交叉核验 P223 不火(provenance 声明护栏成立)"
+    },
+    {
+      "name": "r260_p236_tp_quant_no_robustness",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "线上服务对模型做 INT8 量化以降低成本。",
+      "expected": [
+        "P236"
+      ],
+      "note": "R260 P2-11 探针覆盖 — P236(量化鲁棒性)既有规则 0 探针缺口；场景=INT8 量化上线未重新评估对抗鲁棒性；交叉核验 P236 实火"
+    },
+    {
+      "name": "r260_p236_tn_quant_with_robustness",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "模型做 INT8 量化后重新评估对抗鲁棒性，关键层采用混合精度。",
+      "expected": [],
+      "note": "R260 P2-11 探针覆盖 — P236 护栏 TN；场景=INT8 量化+对抗鲁棒性重评估+混合精度；交叉核验 P236 不火(鲁棒性声明护栏成立)"
+    },
+    {
+      "name": "r260_p240_tp_weight_no_verify",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "from_pretrained 加载权重并直接部署上线。",
+      "expected": [
+        "P240"
+      ],
+      "note": "R260 P2-11 探针覆盖 — P240(权重完整性)既有规则 0 探针缺口；场景=from_pretrained 直接加载权重部署无校验/签名；交叉核验 P240 实火"
+    },
+    {
+      "name": "r260_p240_tn_weight_with_verify",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "加载权重前先校验 SHA256 与发布者签名，失败则拒绝启动。",
+      "expected": [],
+      "note": "R260 P2-11 探针覆盖 — P240 护栏 TN；场景=加载权重前校验 SHA256+发布者签名、失败拒绝启动；交叉核验 P240 不火(完整性校验护栏成立)"
     }
   ]
 }

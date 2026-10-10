@@ -58,7 +58,8 @@ class TestR214LangSchema:
         # R253: +4(H 簇华为云/鸿蒙探针: P071/P073 各 TP×1 zh-Hans + TN×1 en) = 230
         # R256: +2(OOD 泛化 TP: deepset #9/#12 ignore-previous 形态, en) = 232
         # R257: +3(T6 P163 forget 族: TP×2 deepset #97/#18 + TN×1 隐私复位护栏, en) = 235
-        assert len(probes) == 235
+        # R260: +6(P2-11 探针覆盖补欠: P223/P236/P240 各 1TP+1TN, 全 zh-Hans) = 241
+        assert len(probes) == 241
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -81,7 +82,8 @@ class TestR214LangSchema:
         #       = zh-Hans 128 | en 94 | ja 6 | zh-Hant 2
         # R256: +2 en (OOD 泛化 TP) = zh-Hans 128 | en 96 | ja 6 | zh-Hant 2
         # R257: +3 en (T6 forget 族 3 探针) = zh-Hans 128 | en 99 | ja 6 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 128
+        # R260: +6 zh-Hans (P223/P236/P240 各 1TP+1TN) = zh-Hans 134 | en 99 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 134
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         assert sum(1 for v in langs.values() if v == "en") == 99
