@@ -113,7 +113,12 @@ _CACHE_POISON_DECL = re.compile(
 # (Agent-Threat-Rule ATR-2026-00229/00234: 角色设定且显式解除约束才报; 单独
 # pretend/roleplay=正当创作/游戏语境, 其 false_positives 字段明列)。
 _JAILBREAK_CTX = re.compile(
-    r"(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted)",
+    r"(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted"
+    # R257-T6: forget 指令重置族 — deepset 16 条真实 OOD 变体(forget everything
+    # before that/above/we/I...)=经典越狱外壳; 负向断言排除 "forget ... about"
+    # (GDPR 隐私复位合法请求, 见 r257_tn01_privacy_reset 探针护栏)。
+    # 零碰撞实证: golden 232 / NotInject 339 / 干净 60 均 0(ODT-1 过防御约束)。
+    r"|forget\s+(?:all|everything)(?!\s+about\b))",
     re.IGNORECASE,
 )
 _JAILBREAK_DAN = re.compile(r"\bDAN\b", re.IGNORECASE)

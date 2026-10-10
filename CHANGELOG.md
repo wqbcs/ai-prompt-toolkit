@@ -2,6 +2,44 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.50] - 2026-10-09
+
+### Changed (R257: T6 越狱检测召回联合调优首轮 — P163 forget 族扩词，探针先行)
+
+> 四问（R257 §0）：T6 是三轮登记（R253 起）的主项，前置条件 R256 刚齐
+> （18 条真实 OOD 变体 + OOD TP 探针先例 + ODT-1 机器断言）。对抗性审查
+> 抓到并纠正两处归因：① R253 假设 I 簇 FP 主因=roleplay∧约束解除共现，
+> 分支归属实证=15/15 走 CTX 直接词分支（仅 1 条兼 RP）；② R256 文档
+> "P163/P178 词表缺口" 的 P178 归因错误——P178 实为影子指令规则，真实
+> 召回缺口 100% 在 P163。I 簇 15 条逐条定性后维持"检测下限不动手"
+> （4 条 golden TP 分支级支撑 + 域标记同是攻击框架=用逃逸面换 precision
+> 数字的陷阱）。
+
+- **P163 `_JAILBREAK_CTX` 扩 forget 指令重置族**：`forget\s+(?:all|
+  everything)(?!\s+about\b)`——deepset 16 条真实 OOD 变体
+  （forget everything before that/above/we/I...）为探针支撑；负向断言
+  排除 "forget ... about"（GDPR 隐私复位合法请求）。**ODT-1 三处零碰撞
+  实证**：golden 232 / NotInject 339 / 干净 60 样本均 0。候选对比实证
+  选精度最高形态（裸词 16/16 但误杀隐私请求；语境白名单 13/16 且留
+  逃逸面；负向断言 16/16+隐私安全）。
+- **3 探针入 golden（232→235）**：r257_tp01/tp02（deepset #97/#18 原文，
+  expected [P163]，同形态 ≥2 真实 TP=外部样本非自构造）+ r257_tn01_
+  privacy_reset_gdpr（合法复位护栏 TN，expected []，钉死负向断言不得
+  删除）。
+- **指标**：外部 OOD 召回 25.10%→**31.18%**（82/263，P163 命中 18→26，
+  纯新增召回零漏检回归 golden 0 miss）；过防御面 **11.50% 不变**
+  （NotInject 0 碰撞，ODT-1 机器断言通过）；golden 分语言 en 期望单元
+  45→47。
+- **I 簇 15 条检测下限留档**（R257 §1，不动手）：分支归属实证（15/15
+  CTX 直接词：jailbreak×6/unrestricted×5/bypass×3/窗口外×1）+ 逐条
+  区分特征表 + R253→HEAD pattern 逐字节未变（10→15 口径差=聚类归属
+  重叠非漂移）+ 域标记清单留档为未来语义层轮输入素材（静态不加语境
+  排除）。18 条变体中 disregard/new-instructions 各 1 条=单例不满足
+  ≥2 判据，登记观察区。
+- 规则文档 267 页再生（P163 页 +3 探针 +forget 族说明）。
+- 详见 `docs/planning/R257_T6越狱联合调优_P163.md`（四问/定性/聚类/
+  实施/验证全记录）。
+
 ## [v67.34.49] - 2026-10-09
 
 ### Added (R256: OOD 外部漏检锚落地 — deepset 662 拉取+测量+2 探针+扩展决策)

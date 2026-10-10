@@ -13712,12 +13712,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p161_p165.py\u0000(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p161_p165.py\u0000\\bDAN\\b": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -13773,6 +13767,12 @@
       "approved": false
     },
     "linter/rules_p071_p080.py\u0000(?:HarmonyOS|鸿蒙|ArkTS|ArkUI|Stage模型)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:越狱|jailbreak|绕过|bypass|忽略.{0,6}(?:指令|instruction)|ignore.{0,6}instruction|覆盖.{0,6}(?:指令|规则|instruction)|override|身份切换|不设限|无限制|unrestricted|forget\\s+(?:all|everything)(?!\\s+about\\b))": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
