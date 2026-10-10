@@ -2894,6 +2894,186 @@
       "text": "本提示词 version: 2.4.1，部署到生产环境，变更需灰度发布。",
       "expected": [],
       "note": "R264 P2-27 探针覆盖 — P181 护栏 TN；场景=生产语境+version: x.y.z 声明(_VERSION_PATTERN 命中面)；交叉核验 P181 不火(版本声明护栏成立)"
+    },
+    {
+      "name": "r265_p186_tp_arkui_no_v15",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "用 ArkUI 开发首页，@Component 装饰器封装卡片组件。",
+      "expected": [
+        "P186"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P186(ArkUI 未迁移 API15 声明式范式)既有规则 0 探针缺口；场景=ArkUI/@Component 面无 API 15/声明式范式/@Styles/@Extend 面；交叉核验 P186 实火"
+    },
+    {
+      "name": "r265_p186_tn_arkui_v15",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "用 ArkUI 开发首页，遵循 API 15 声明式范式，@Styles 与 @Extend 复用样式。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P186 护栏 TN；场景=ArkUI+API 15 声明式范式/@Styles/@Extend 面；交叉核验 P186 不火(V15 范式声明护栏成立)"
+    },
+    {
+      "name": "r265_p187_tp_napi_no_threadsafe",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "通过 Node-API 调用原生图像处理库，napi_env 环境初始化后执行。",
+      "expected": [
+        "P187"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P187(Node-API 缺线程安全声明)既有规则 0 探针缺口；场景=Node-API/napi_env 面无线程安全/napi_threadsafe_function 面；交叉核验 P187 实火"
+    },
+    {
+      "name": "r265_p187_tn_napi_threadsafe",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "通过 Node-API 调用图像处理库，使用 napi_threadsafe_function 保证线程安全。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P187 护栏 TN；场景=Node-API+napi_threadsafe_function/线程安全声明；交叉核验 P187 不火(threadsafe 声明护栏成立)"
+    },
+    {
+      "name": "r265_p190_tp_atomic_no_constraint",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "开发一个天气元服务，用户免安装直接使用。",
+      "expected": [
+        "P190"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P190(元服务缺免安装规范约束)既有规则 0 探针缺口；场景=元服务/免安装面无 ≤2MB/包体限制/基础权限/无后台/禁止文件写入 面；交叉核验 P190 实火(P150 共触发为常态)"
+    },
+    {
+      "name": "r265_p190_tn_atomic_with_constraint",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "开发天气元服务：包体 ≤2MB，仅申请基础权限，禁止文件写入，无后台任务。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P190 护栏 TN；场景=元服务+包体 ≤2MB/基础权限/禁止文件写入/无后台 约束面；交叉核验 P190 不火(atomic constraint 声明护栏成立)"
+    },
+    {
+      "name": "r265_p191_tp_agent_no_perm",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "这是一个客服 Agent，回答用户问题。",
+      "expected": [
+        "P191"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P191(Agent 缺权限边界声明)既有规则 0 探针缺口；场景=Agent 面无权限/允许/禁止/capabilities/scope 面；交叉核验 P191 实火"
+    },
+    {
+      "name": "r265_p191_tn_agent_with_perm",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "这是一个客服 Agent，权限范围仅限查询订单，禁止执行退款操作。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P191 护栏 TN；场景=Agent+权限范围/禁止面声明；交叉核验 P191 不火(permission boundary 声明护栏成立)"
+    },
+    {
+      "name": "r265_p192_tp_tool_no_constraint",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "Agent 可以调用查询天气的工具回答用户。",
+      "expected": [
+        "P192"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P192(Agent 工具调用缺约束)既有规则 0 探针缺口；场景=Agent+工具/调用面 无约束/频率/超时/max_calls/限制 面；交叉核验 P192 实火"
+    },
+    {
+      "name": "r265_p192_tn_tool_with_constraint",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "Agent 调用天气工具：单次会话最多调用 5 次，超时 3 秒即中止。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P192 护栏 TN；场景=Agent 工具调用+次数限制/超时约束面；交叉核验 P192 不火(tool constraint 声明护栏成立)"
+    },
+    {
+      "name": "r265_p194_tp_multi_no_secure",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "规划 Agent 与执行 Agent 之间通过消息通信协作完成任务。",
+      "expected": [
+        "P194"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P194(多 Agent 协调缺安全机制)既有规则 0 探针缺口；场景=多 Agent/通信/协调面 无加密/TLS/认证/签名/token 面；交叉核验 P194 实火"
+    },
+    {
+      "name": "r265_p194_tn_multi_secure",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "多 Agent 协调通信走 TLS 加密通道，消息带签名认证与 token 校验。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P194 护栏 TN；场景=多 Agent 协调+TLS/加密/签名/认证/token 安全面；交叉核验 P194 不火(coordination security 声明护栏成立)"
+    },
+    {
+      "name": "r265_p196_tp_invoke_no_timeout",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用模型生成商品描述，直接返回结果。",
+      "expected": [
+        "P196"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P196(LLM 推理未设 timeout)既有规则 0 探针缺口；场景=调用模型面 无 timeout/超时/max_retries 面(避开思维链行为排除面)；交叉核验 P196 实火(P197 共触发为常态)"
+    },
+    {
+      "name": "r265_p196_tn_invoke_with_timeout",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用模型生成商品描述，超时 10 秒自动中止并重试。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P196 护栏 TN；场景=调用模型+超时/重试声明；交叉核验 P196 不火(timeout 声明护栏成立)"
+    },
+    {
+      "name": "r265_p197_tp_invoke_no_maxtok",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用模型生成周报摘要，输出最终文本。",
+      "expected": [
+        "P197"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P197(LLM 推理未限 max_tokens)既有规则 0 探针缺口；场景=调用模型面 无 max_tokens/最大长度/token.limit 面；交叉核验 P197 实火(P196 共触发为常态)"
+    },
+    {
+      "name": "r265_p197_tn_invoke_maxtok",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用模型生成周报摘要，max_tokens 限制为 1024。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P197 护栏 TN；场景=调用模型+max_tokens 限制声明；交叉核验 P197 不火(max_tokens 声明护栏成立)"
+    },
+    {
+      "name": "r265_p200_tp_stream_no_audit",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "回答采用流式输出，边生成边推送到前端。",
+      "expected": [
+        "P200"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P200(流式输出未做实时内容审核)既有规则 0 探针缺口；场景=流式/流式输出面 无审核/audit/中断/abort 面；交叉核验 P200 实火"
+    },
+    {
+      "name": "r265_p200_tn_stream_with_audit",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "回答采用流式输出，逐块过内容审核，命中违规则立即中断。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P200 护栏 TN；场景=流式输出+内容审核/中断声明；交叉核验 P200 不火(stream audit 声明护栏成立)"
+    },
+    {
+      "name": "r265_p202_tp_data_no_consent",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "应用收集用户行为数据并存储用于推荐。",
+      "expected": [
+        "P202"
+      ],
+      "note": "R265 P2-27 探针覆盖 — P202(用户数据使用缺同意机制)既有规则 0 探针缺口；场景=收集/存储用户数据面 无 consent/同意/授权/opt.in 面；交叉核验 P202 实火(P201/P205 共触发为常态)"
+    },
+    {
+      "name": "r265_p202_tn_data_consent",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "应用收集用户行为数据前取得用户授权同意，存储仅用于推荐并支持撤回。",
+      "expected": [],
+      "note": "R265 P2-27 探针覆盖 — P202 护栏 TN；场景=数据处理+用户授权同意声明；交叉核验 P202 不火(consent 声明护栏成立)"
     }
   ]
 }
