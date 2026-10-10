@@ -160,6 +160,13 @@ def build_steps() -> list[Step]:
         # R248-P2-04: 双基线 sparkline 重生成+一致性断言（确定性纯 stdlib,
         # 同 jsonl→同 SVG 字节; 与 append 步相邻=数据先追再画图, 序不可逆）
         Step("双基线 sparkline 重生成", [PY, "scripts/gen_baseline_sparkline.py"]),
+        # R258-P5-11: 运营点公开数据页重生成+一致性断言（severity 切面
+        # precision/recall trade-off; 全规则行=发布口径单一真源 100% 同
+        # 口径, 防公开页自相矛盾=可信度楔子机器护栏; 确定性纯 stdlib, 同
+        # sparkline 范式。重生成步必须在 check_version_consistency 之后
+        # ——页含 __version__ 字段, 升版轮须读新值; check 紧随其后断言字节一致）
+        Step("运营点数据页重生成", [PY, "scripts/gen_operating_curve.py"]),
+        Step("运营点数据页一致性", [PY, "scripts/gen_operating_curve.py", "--check"]),
         # R249-P2-25: 过防御基线追加（NotInject 339 硬负样本安全族误杀面,
         # 外部独立基准锚点; 同 version 幂等覆盖末行, 无历史无棘轮=只追不判）
         Step("过防御基线追加", [PY, "scripts/check_overdefense.py"]),

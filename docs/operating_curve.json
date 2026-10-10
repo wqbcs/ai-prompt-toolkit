@@ -1,0 +1,84 @@
+{
+  "version": "67.34.51",
+  "calibers": {
+    "fp": "pair-level (rule,sample) pairs / (active_rules x 60 clean samples); single source = baselines.run_false_positives()",
+    "overdefense": "sample-level, security-family rules x 339 NotInject external benign hard negatives (leolee99/PIGuard, MIT); single source = overdefense.security_family_rules()",
+    "miss": "golden probe expected units (probe, rule); full-rule row = published 0-miss caliber",
+    "ood": "sample-level, security-family rules x 263 deepset/prompt-injections external injections (HF, apache-2.0/cc-by-4.0)"
+  },
+  "denominators": {
+    "clean_samples": 60,
+    "notinject": 339,
+    "deepset_injections": 263,
+    "golden_units": 160,
+    "total_rules": 267,
+    "security_family_rules": 89
+  },
+  "points": [
+    {
+      "cutoff": ">= CRITICAL",
+      "active_rules": 12,
+      "fp_pairs": 7,
+      "fp_pair_rate": 0.0097,
+      "overdefense_flagged": 15,
+      "overdefense_rate": 0.044248,
+      "miss_units_covered": 28,
+      "miss_units_total": 160,
+      "miss_unit_coverage": 0.175,
+      "ood_caught": 26,
+      "ood_rate": 0.098859
+    },
+    {
+      "cutoff": ">= HIGH",
+      "active_rules": 117,
+      "fp_pairs": 51,
+      "fp_pair_rate": 0.0073,
+      "overdefense_flagged": 21,
+      "overdefense_rate": 0.061947,
+      "miss_units_covered": 126,
+      "miss_units_total": 160,
+      "miss_unit_coverage": 0.7875,
+      "ood_caught": 60,
+      "ood_rate": 0.228137
+    },
+    {
+      "cutoff": ">= MEDIUM",
+      "active_rules": 238,
+      "fp_pairs": 112,
+      "fp_pair_rate": 0.0078,
+      "overdefense_flagged": 32,
+      "overdefense_rate": 0.094395,
+      "miss_units_covered": 156,
+      "miss_units_total": 160,
+      "miss_unit_coverage": 0.975,
+      "ood_caught": 81,
+      "ood_rate": 0.307985
+    },
+    {
+      "cutoff": ">= LOW",
+      "active_rules": 267,
+      "fp_pairs": 132,
+      "fp_pair_rate": 0.0082,
+      "overdefense_flagged": 39,
+      "overdefense_rate": 0.115044,
+      "miss_units_covered": 160,
+      "miss_units_total": 160,
+      "miss_unit_coverage": 1.0,
+      "ood_caught": 82,
+      "ood_rate": 0.311787
+    },
+    {
+      "cutoff": "full",
+      "active_rules": 267,
+      "fp_pairs": 132,
+      "fp_pair_rate": 0.0082,
+      "overdefense_flagged": 39,
+      "overdefense_rate": 0.115044,
+      "miss_units_covered": 160,
+      "miss_units_total": 160,
+      "miss_unit_coverage": 1.0,
+      "ood_caught": 82,
+      "ood_rate": 0.311787
+    }
+  ]
+}

@@ -2,6 +2,39 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.51] - 2026-10-09
+
+### Added (R258: 运营点公开数据页 — severity 切面 precision/recall trade-off，P5-11 首轮)
+
+> 四问（R258 §0）：可信度轴数字面边际递减，下一增量=数字的**外部可
+> 验证性**（"measured, not vibes"，prompt-guard 先例同形态）。P5-11
+> 已被上调 P2（12 §1.6：行业开始用 operating curve 评检测器），数据源
+> 全就绪且无用户依赖。不建前端应用（单页 MD+JSON，React=低价值打磨）。
+
+- **公开数据页 `docs/operating_curve.{md,json}`**：severity 切面 5 行
+  （≥CRITICAL / +HIGH / +MEDIUM / +LOW / 全规则）× 4 指标（误报对级率
+  / 外部良性过防御 339 / golden 漏检单元 / 外部 OOD 召回 263）。
+  静态规则无置信阈值，**severity 是唯一运营点维度**——切面=LLM 检测器
+  "阈值切到 X" 的等价操作，precision/召回取舍一目了然（全规则行=发布
+  口径：0.82% / 11.50% / 0 miss / 31.18%；≥CRITICAL+HIGH 行：外部良性
+  误杀 39→15、外部 OOD 27.0%→35.4% 的取舍面）。
+- **口径纪律=可信度楔子机器护栏**：每列与**发布口径单一真源 100% 同
+  口径**（FP 对级=run_false_positives 同 4 位舍入、过防御=安全族×
+  NotInject 339、漏检=golden expected 单元 160、OOD=安全族×deepset
+  263）——否则公开页自相矛盾=比没有页面更糟。
+- **`scripts/gen_operating_curve.py`**：确定性纯 stdlib（无时钟/随机，
+  同数据→同字节；只含 version 非时间戳），`--check` 断言与当前数据一致。
+- **e2e 一致性测试 `tests/test_r258_operating_curve.py`（4 测试）**：
+  ① 全规则行与三单一真源当前真值一致（防口径漂移=第二个板漂移源；实
+  测抓出 FP 4 vs 6 位舍入差 0.00824 vs 0.0082=公开页与 README 自相矛
+  盾，已修同 4 位口径）② severity 切面单调性（数学不变量）③ 口径留档
+  + 公开页三要素（口径节/复现命令/诚实边界）。
+- **release_gate 2 步接线（26→28 步）**：`gen_operating_curve.py`（重
+  生成，排在 check_version_consistency 之后=读 __version__）+
+  `--check`（一致性断言）——同 sparkline house 范式，CI 同命令自动
+  吸收（parity 只抽 CI 命令不枚举 gate 步骤）。
+- 全量 pytest 6619 全绿（+4）；ruff/mypy 棘轮过；升版 67.34.50→51。
+
 ## [v67.34.50] - 2026-10-09
 
 ### Changed (R257: T6 越狱检测召回联合调优首轮 — P163 forget 族扩词，探针先行)
