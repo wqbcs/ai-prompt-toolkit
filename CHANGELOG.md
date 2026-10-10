@@ -2,6 +2,39 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.56] - 2026-10-10
+
+### Added (R261 次项 P2-18 GO 探针预研轮：MCP 工具定义注入，0 规则改动)
+
+> 四问：定位未漂移（MCP 工具定义=静态 JSON 辖区，楔子纯正辖区；运行时响应体
+> 显式排除=反清单）；核心价值=竞品空档实证（确定性 TPA 专用检测）+ 既有
+> 规则集对新攻击形态的盲区机器留痕；方向=白皮书 §7 bounded 预研轮兑现；
+> 陷阱自查=本轮 NO-GO 立规（真实样本 0 命中=规则能力缺口未填，立规=凑数，T1）。
+
+- **预研报告**：`docs/planning/P2-18_MCP预研轮_R261.md`——真实样例 5 源采集
+  （Invariant 2025-04-01 原始 TPA / CyberArk FSP 2025-05-30 嵌套 description+
+  extra 字段+参数名 / mcp-rt red-team subtle 变体，来源 URL+日期标注）
+- **决定性机器实证**（本 linter 实测，A16 实证非推断）：真实 TPA/FSP payload
+  在 security 族 97 规则 **0 命中**（S1 Invariant 原始放顶层 description 也 0、
+  既有 mcp-lint 面 0 findings；P178 影子指令规则不覆盖 `<IMPORTANT>` 标签——
+  短句直测 0）；R259 白皮书"缺口=字段作用域非规则弱点"结论**被真实样本证伪**
+  ——其对照 B 3 命中由合成 payload 支撑，payload 依赖性未检验
+- **双缺口定性**：规则触发面缺口（既有规则=prompt 工程面，对工具元数据注入面
+  形态错配）× 字段作用域缺口（mcp-lint 只 walk 顶层 description）
+- **TN 护栏 6/6 干净 schema 0 误报**（预研轮实证，立规后复跑面）；2 条边缘 FP
+  诚实留痕（教育文本触发 P008 / inference 族品类错配 P196/P197/P239）→ 立规时
+  `_DESC_SECURITY_CATEGORIES` 10→8 类收窄（剔除推理资源类）
+- **判定 = 本轮 NO-GO 立规**；**P2-28 候选登记**（02 板新行）：先立 TPA 形态
+  规则（真实探针 ≥2 独立 TP 先行：S1+S2/S3）再扩 `inputSchema` 递归字段 walk
+  （顺序纪律——顺序反了=walk 出的字段走 0 命中规则集=白做）；竞品对照=pipelock
+  3 层架构（层 2 递归 walk 与 MCP-111+ 形态对齐=先例，层 1 TPA 专用 6 类模式集
+  为我方空档）；mcp-scan LLM 分类器面不采纳（零 LLM 楔子）
+- **07 风险登记册新增 A17 反模式**：合成样本当 go/no-go 依据（合成 fixture 只
+  能证"缺口存在"，不能证"规则能力"；go/no-go 决策的规则检测面须 ≥1 真实样本
+  机器复验——预研轮中间结论同样适用，不只最终立规）
+- 02 P2-18 行回写 🟡 + P2-28 新行；00 §5 R261 收口状态 + R262 指针更新；
+  升版门禁序执行（规则页重生成/sync/version_consistency）
+
 ## [v67.34.55] - 2026-10-10
 
 ### Added (R261 P2-27 零探针补欠首批：10 HIGH 规则 × 1TP+1TN = 20 探针)
