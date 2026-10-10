@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.48-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.49-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6616%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40226probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.84%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -566,7 +566,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
 | zh-Hans | 104 | 0 | 0.00% |
-| en | 42 | 0 | 0.00% |
+| en | 45 | 0 | 0.00% |
 | ja | 7 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
 

@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.49] - 2026-10-09
+
+### Added (R256: OOD 外部漏检锚落地 — deepset 662 拉取+测量+2 探针+扩展决策)
+
+> 四问（R256 §0）：可信度主轴的可审计性延伸到漏检面——外部 precision 锚
+> （NotInject 339）R249 已落，外部 recall 锚（"该报的攻击报了吗，在我方从未
+> 见过的攻击上"）此前缺位。本轮把 R255 解卡的 OOD 候选（deepset 662 条）
+> 从"通道卡 6 轮"推进到"拉取→去重→测量→判据选探针→扩展决策"闭环。
+> **零规则改动**（CLAUDE.md 无探针支撑不合规入；只登记探针与决策）。
+
+- **OOD 数据落盘**（external_bench 标准位，NotInject 先例对齐）：deepset/
+  prompt-injections 662 条（263 注入/399 良性，HF）——parquet 双文件上游原
+  形态留档 + JSON 纯 stdlib 工作副本（pyarrow 未声明依赖，转换面不进门禁/
+  CI）+ LICENSE_NOTES 双许可面留痕（仓库 tag apache-2.0 / card 数据面
+  cc-by-4.0）。**与 NotInject 339 去重=0 重叠**（两外部基准互不污染，各自
+  保持独立 holdout）。
+- **`scripts/measure_ood_recall.py`**（研究测量工具，纯 stdlib 读 JSON，不进
+  release_gate）：安全族 89 规则（overdefense 单一真源复用零复制）对 263 注入
+  的**外部 OOD 召回 = 66/263 = 25.10%**；197 漏检形态分类：语义变体面 133
+  （68%，静态文本辖区外——"正则单腿上限"第三方实证，prompt-guard 自曝
+  OOD recall ~20% 同量级）/长文嵌入 51/直接短语变体 18（**唯一静态可处理
+  面**=P163/P178 词表缺 above/before that 变体，扩词须过 ODT-1 过防御约束
+  =T6 联合调优轮输入）/系统提示提取变体 2。
+- **OOD 扩展决策**（02 P2-26 三选一判定，R256 文档 §3）：**OOD 不入漏检
+  基线分母**（197 漏检 68% 在静态辖区外，扩分母=棘轮红且绿不回来=棘轮语义
+  错误，与 overdefense 口径排除 arkts 族同族纪律）；**作独立外部 recall 锚
+  + 观察区**（脚本每轮可跑，数字进 P5-11 公开叙事"如实公开"纪律；形态级
+  晋升判据=单形态 ≥2 真实 TP + ODT-1 约束下可扩词→探针先行→T6 轮）。
+- **2 条 OOD 泛化 TP 探针**入 golden（230→232）：r256_ood_tp01/tp02
+  （deepset #9/#12，ignore-previous 形态 ≥2 真实 TP=外部样本非自构造；
+  当前 267 规则已命中=expected_total 收紧不加码，漏检基线非回归）。
+  133 条语义变体面登记为文档观察区（奥卡姆：不做 133 条空探针=清单稀释）。
+- 三坐标系对称结构完成（P5-11 素材）：precision 锚 NotInject 339（过防御
+  11.50%）/ recall 锚 deepset 263（OOD 25.10%）/ 内部 golden 232（0 miss）
+  ——口径各自写死单一真源，公开页同坐标系呈现。
+
 ## [v67.34.48] - 2026-10-09
 
 ### Added (R255: 过防御二阶信号机器化 + 中文专项调研闭环 + OOD 通道解卡)
