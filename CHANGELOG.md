@@ -2,6 +2,37 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.47] - 2026-10-09
+
+### Added (R254: 架构可演进最后一块机器护栏 — 分层方向检查 + 5 年路线文档)
+
+> 四问反思（R254 §0）：可信度数字轴（FP/漏检/过防御）边际递减后，5 年架构
+> 不变量的机器护栏盘点发现唯一缺口——04 §1 依赖方向铁律（adapters→io→
+> rules→kernel）仍只有 R233 手测结论无机器护栏。预扫实证该手测面会漂移：
+> linter/test_suite.py→cli_helpers 跨层边未被 14 §3 登记（14 §3 只列第三方边）。
+> 本轮交付：分层方向检查器 + 多语言绑定路线文档 + 死任务闭合。零代码重构、
+> 零新依赖、零规则改动。
+
+- **分层方向检查器**（`scripts/check_layering.py`，纯 stdlib ast）：L1 rules→io/
+  adapters 禁入面（14 §1 第三/四行 12 目标精确表）+ L2 kernel 第一方纯度
+  （kernel 清单复用 check_layer_deps.kernel_files() 单一真源）；豁免表 (源,目标)
+  精确粒度+14 编号+处置轮次留痕（修复落地同 commit 删行）+豁免腐烂提示面；
+  首跑即抓出 R233 手测漏登记的 1 条跨层边（护栏价值自证）；release_gate 新步
+  （25 步全链，第 21 步）+ CI test 作业新步（与本地同命令）；14 测试
+  （红绿两态+四形态 import 解析+符号名过滤）。
+- **多语言绑定路线文档**（`docs/planning/17_多语言绑定路线_P4-06.md`，0 代码）：
+  4 段路线（数据面 JSON 化已落→协议契约已落→端执行器透传远期→WASM 逃生门）
+  + 端选型表引用 04 §5 单一真源不复制 + 竞品路线实证（cognis 四端 ports 漂移面/
+  aiproof Rust 迁移生态收缩两个已付成本教训）+ 激活触发器表（防自主启动边界）。
+- **P5-08 死任务闭合**（零代码判定）：waivers.py 的 owner/expiry 解析四态
+  （ok/no_owner/expired/unknown_rule）+ `audit-waivers --fail-on` 已被 R225 P2-09
+  全覆盖——P5-08"解析器+测试"验收项系重复登记，02 回写合并。
+
+### Fixed (R254: 门禁脚本 docstring 步骤表陈旧)
+
+- `release_gate.py` docstring 步骤表停在 19 步（实际 24 步，R248/R249 加步未
+  同步）——本轮加步顺手补全 25 步表（A7 文档一致性）。
+
 ## [v67.34.46] - 2026-10-09
 
 ### Fixed (R253: 过防御残留 45/339 分类 — 只修无 TP 支撑的纯 FP 根因)

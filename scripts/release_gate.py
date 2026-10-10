@@ -152,6 +152,10 @@ def build_steps() -> list[Step]:
         Step("缺口报告棘轮", [PY, "scripts/check_gap_ratchet.py"]),
         # P4-02: 核心零依赖验证(kernel 层零第三方, R233-P4-01 手测结论固化为机器护栏)
         Step("核心零依赖验证", [PY, "scripts/check_layer_deps.py"]),
+        # R254-P4-10: 分层方向验证(04 §1 铁律机器护栏: L1 rules→io/adapters +
+        # L2 kernel 第一方纯度; 与 check_layer_deps 正交=包内跨层第一方面;
+        # 首跑即抓出 R233 手测漏登记的 test_suite→cli_helpers 跨层边)
+        Step("分层方向验证", [PY, "scripts/check_layering.py"]),
         Step("双基线时间序列追加", [PY, "scripts/append_baseline_history.py"]),
         # R248-P2-04: 双基线 sparkline 重生成+一致性断言（确定性纯 stdlib,
         # 同 jsonl→同 SVG 字节; 与 append 步相邻=数据先追再画图, 序不可逆）

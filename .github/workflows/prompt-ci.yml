@@ -126,6 +126,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_layer_deps.py
 
+      # R254-P4-10: 分层方向验证(04 §1 依赖方向铁律: 只允许上层 import 下层;
+      # 与 check_layer_deps 正交=包内跨层第一方面; 与 release_gate 同命令)
+      - name: "Layering (dependency direction)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_layering.py
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         continue-on-error: true  # R231: codecov 上传=第三方可观测性, 非质量门禁。
