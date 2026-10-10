@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.61] - 2026-10-10
+
+### Added (R266 P2-27 零探针补欠第六批：10 HIGH 规则 × 1TP+1TN = 20 探针)
+
+> 四问：定位未漂移（探针先行还欠账，零规则变更 T1）；核心价值=探针覆盖度
+> 111/267→121/267（漏检 0.00% 锚点扩到 121 条有探针规则，HIGH 清零进度
+> 70/72=97%）；方向=延续 P2-27 bounded ≤10 规则/轮纪律；陷阱自查=同
+> R261-R265（还欠账非新指标）。
+
+- **golden 探针 341→361**（+20：10 规则各 1TP+1TN 全 zh-Hans，HIGH 前缀序
+  第六批 P205/P211/P213/P215/P217/P218/P220/P227/P228/P230）；期望命中单元
+  213→223；语言面 zh-Hans 232→252（en 101/ja 6/zh-Hant 2 不变）
+- **漏检面**：0.00% 保持（223/223，全语言 0 漏检）
+- **双基线不回归**：FP 0.82% 持平、过防御/OOD 三面不受影响（探针纯 golden 侧）
+- **探针设计实证**：20 条全部经 267 全规则管道（`lint_template`
+  apply_waivers=False，与 `run_miss_rate` 同路径）交叉核验——TP 10/10 实火、
+  TN 10/10 不火；**连续第二轮零失配**——常量级取证形态稳定（按
+  `_RETENTION_PATTERN`/`_LAZY_PATTERN`/`_NAPI_CHECK_PATTERN`/
+  `_ENCRYPT_PATTERN`/`_AUDIO_CHECK_PATTERN`/`_CROSS_PROTECT_PATTERN`/
+  `_OUTPUT_CHECK_PATTERN`/`_STATE_PATTERN`/`_PERMISSION_PATTERN`/
+  `_DOMAIN_DECLARED_PATTERN` 词表正/反面构造）
+- **规则页回写**：10 个规则页"探针覆盖 (golden)"段从"暂无"转锚定
+  （gen_rules_doc 机械生成）；README 公开面数字同步（341→361/213→223/
+  232→252/zh-Hans 期望单元 156→166 + 徽章）
+- **P2-27 进展**：HIGH 70/72 完成（97%），余 12 条（P231 起前缀序 + P130
+  归并面），预计 R267 收尾 10 + R268 收尾 2
+- 升版门禁序：版本 3 处 + README 徽章 → gen_rules_doc（非 --check）→
+  sync_readme_metrics → check_version_consistency
+
 ## [v67.34.60] - 2026-10-10
 
 ### Added (R265 P2-27 零探针补欠第五批：10 HIGH 规则 × 1TP+1TN = 20 探针)

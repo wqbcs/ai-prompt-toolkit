@@ -3074,6 +3074,186 @@
       "text": "应用收集用户行为数据前取得用户授权同意，存储仅用于推荐并支持撤回。",
       "expected": [],
       "note": "R265 P2-27 探针覆盖 — P202 护栏 TN；场景=数据处理+用户授权同意声明；交叉核验 P202 不火(consent 声明护栏成立)"
+    },
+    {
+      "name": "r266_p205_tp_data_no_retention",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "应用收集用户注册信息并存储到云端，用于账号体系。",
+      "expected": [
+        "P205"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P205(数据处理缺留存策略)既有规则 0 探针缺口；场景=收集/存储用户数据面 无留存/删除策略/匿名化/auto.delete 面；交叉核验 P205 实火(P201/P202 共触发为常态)"
+    },
+    {
+      "name": "r266_p205_tn_data_retention",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "应用收集用户注册信息并存储到云端，数据留存 30 天后自动删除并匿名化。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P205 护栏 TN；场景=数据处理+留存 30 天/自动删除/匿名化声明；交叉核验 P205 不火(retention 声明护栏成立)"
+    },
+    {
+      "name": "r266_p211_tp_foreach_no_lazy",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "列表渲染使用 ForEach 遍历商品数据。",
+      "expected": [
+        "P211"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P211(长列表未用 LazyForEach 懒加载)既有规则 0 探针缺口；场景=ForEach/列表渲染面 无 LazyForEach/懒加载面；交叉核验 P211 实火"
+    },
+    {
+      "name": "r266_p211_tn_foreach_lazy",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "长列表渲染使用 LazyForEach 懒加载商品数据。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P211 护栏 TN；场景=LazyForEach/懒加载声明；交叉核验 P211 不火(lazy load 声明护栏成立)"
+    },
+    {
+      "name": "r266_p213_tp_napi_no_check",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "通过原生调用 ffi 加载图像处理库执行任务。",
+      "expected": [
+        "P213"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P213(NAPI/FFI 调用未做参数校验)既有规则 0 探针缺口；场景=原生调用/ffi 面 无 napi_typeof/类型检查/null 检查 面；交叉核验 P213 实火"
+    },
+    {
+      "name": "r266_p213_tn_napi_with_check",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "通过 NAPI 原生调用前做参数类型检查与 null 检查，napi_typeof 校验后执行。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P213 护栏 TN；场景=NAPI/ffi 面+napi_typeof/类型检查/null 检查声明；交叉核验 P213 不火(param check 声明护栏成立)"
+    },
+    {
+      "name": "r266_p215_tp_dist_no_encrypt",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "应用使用 distributedDB 做跨设备数据同步。",
+      "expected": [
+        "P215"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P215(分布式数据同步未加密)既有规则 0 探针缺口；场景=distributedDB/跨设备面 无 encrypt/AES/数据签名 面；交叉核验 P215 实火(P175/P229 共触发为常态)"
+    },
+    {
+      "name": "r266_p215_tn_dist_encrypt",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "应用使用 distributedDB 跨设备同步，配置 AES-256 加密与数据签名。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P215 护栏 TN；场景=分布式数据+AES-256 加密/数据签名声明；交叉核验 P215 不火(encrypt 声明护栏成立)"
+    },
+    {
+      "name": "r266_p217_tp_audio_no_spectral",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "语音输入直接转录后交给模型处理。",
+      "expected": [
+        "P217"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P217(语音输入未做频谱分析/可听范围过滤)既有规则 0 探针缺口；场景=语音/转录面 无频谱/可听范围/音频过滤 面；交叉核验 P217 实火(P131/P133 共触发为常态)"
+    },
+    {
+      "name": "r266_p217_tn_audio_spectral",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "语音输入先做频谱分析与可听范围过滤，再做转录。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P217 护栏 TN；场景=语音面+频谱分析/可听范围过滤声明；交叉核验 P217 不火(spectral 声明护栏成立)"
+    },
+    {
+      "name": "r266_p218_tp_cross_no_redact",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "把 OCR 识别的图片文字直接拼入多模态上下文。",
+      "expected": [
+        "P218"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P218(跨模态上下文未脱敏/隔离)既有规则 0 探针缺口；场景=OCR/图片文字/多模态上下文面 无脱敏/敏感标/模态隔离 面；交叉核验 P218 实火"
+    },
+    {
+      "name": "r266_p218_tn_cross_redact",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "OCR 文字拼入跨模态上下文前做敏感信息脱敏，模态间数据隔离。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P218 护栏 TN；场景=跨模态面+脱敏/模态隔离声明；交叉核验 P218 不火(redaction 声明护栏成立)"
+    },
+    {
+      "name": "r266_p220_tp_output_no_check",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "根据用户描述生成图像并直接返回。",
+      "expected": [
+        "P220"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P220(多模态生成输出未审核)既有规则 0 探针缺口；场景=生成图像面 无 NSFW/深度伪造检测/水印/输出审核 面；交叉核验 P220 实火"
+    },
+    {
+      "name": "r266_p220_tn_output_check",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "生成图像前做 NSFW 审核，输出加水印并过内容审核。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P220 护栏 TN；场景=生成输出面+NSFW 审核/水印/内容审核声明；交叉核验 P220 不火(output moderation 声明护栏成立)"
+    },
+    {
+      "name": "r266_p227_tp_state_secret_no_enc",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "登录态用 @State 保存用户 token 与密码哈希。",
+      "expected": [
+        "P227"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P227(敏感数据 @State 未加密)既有规则 0 探针缺口；场景=@State 装饰器+token/密码敏感状态面 无加密/CryptoFramework 面；交叉核验 P227 实火"
+    },
+    {
+      "name": "r266_p227_tn_state_secret_enc",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "登录态用 @State 保存 token，敏感字段经 CryptoFramework 加密后存储。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P227 护栏 TN；场景=@State+敏感状态+CryptoFramework 加密声明；交叉核验 P227 不火(encrypt 声明护栏成立)"
+    },
+    {
+      "name": "r266_p228_tp_ability_no_perm",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "实现 EntryAbility 主入口，启动后读取传感器数据。",
+      "expected": [
+        "P228"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P228(Ability 声明缺 ohos.permission)既有规则 0 探针缺口；场景=EntryAbility 面 无 ohos.permission/权限 面；交叉核验 P228 实火(P088/P122 共触发为常态)"
+    },
+    {
+      "name": "r266_p228_tn_ability_with_perm",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "实现 EntryAbility 主入口，module.json5 声明 ohos.permission.READ_SENSOR 权限。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P228 护栏 TN；场景=EntryAbility+ohos.permission 声明面；交叉核验 P228 不火(permission 声明护栏成立)"
+    },
+    {
+      "name": "r266_p230_tp_fetch_no_domain",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "页面加载时 httpRequest 请求后端接口获取数据。",
+      "expected": [
+        "P230"
+      ],
+      "note": "R266 P2-27 探针覆盖 — P230(沙箱违规路径/网络未限域名)既有规则 0 探针缺口；场景=httpRequest 网络面 无 allowedDomain/域名白名单 面(避沙箱违规路径面, 单分支触发)；交叉核验 P230 实火"
+    },
+    {
+      "name": "r266_p230_tn_fetch_with_domain",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "页面加载时 httpRequest 请求后端接口，allowedDomain 限定声明域名白名单。",
+      "expected": [],
+      "note": "R266 P2-27 探针覆盖 — P230 护栏 TN；场景=网络面+allowedDomain 域名白名单声明；交叉核验 P230 不火(domain 声明护栏成立)"
     }
   ]
 }
