@@ -163,6 +163,9 @@ def build_steps() -> list[Step]:
         # R249-P2-25: 过防御基线追加（NotInject 339 硬负样本安全族误杀面,
         # 外部独立基准锚点; 同 version 幂等覆盖末行, 无历史无棘轮=只追不判）
         Step("过防御基线追加", [PY, "scripts/check_overdefense.py"]),
+        # R255-I-1: 过防御二阶信号时间序列断言(ODT-1 棘轮单调/ODT-2 最小样本/
+        # ODT-3 收敛面提示/ODT-4 目标达成提示; 插基线追加之后=追加完成后立即断言)
+        Step("过防御二阶信号", [PY, "scripts/check_overdefense_trend.py"]),
         # R237-P3-11: 本地=CI 验证(钉死包版本断言 + CI workflow 命令面可达;
         # 收口前确认"本地跑的就是 CI 跑的命令", R223 四连红根因的机器护栏)
         Step("本地=CI 验证", [PY, "scripts/verify_local_ci_parity.py"]),

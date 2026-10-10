@@ -132,6 +132,12 @@ jobs:
         if: matrix.python-version == '3.12'
         run: python scripts/check_layering.py
 
+      # R255-I-1: 过防御二阶信号时间序列断言(棘轮单调+收敛面提示;
+      # 与 release_gate 同命令)
+      - name: "Overdefense trend (second-order signal)"
+        if: matrix.python-version == '3.12'
+        run: python scripts/check_overdefense_trend.py
+
       - name: Upload coverage
         if: matrix.python-version == '3.12'
         continue-on-error: true  # R231: codecov 上传=第三方可观测性, 非质量门禁。
