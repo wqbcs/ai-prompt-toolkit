@@ -53,3 +53,4 @@
 {"ts": "2026-10-10T07:40:20", "version": "67.34.55", "rules": 267, "probes": 261, "tn_probes": 95, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 173, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-10T10:38:51", "version": "67.34.56", "rules": 267, "probes": 261, "tn_probes": 95, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 173, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-10T11:09:20", "version": "67.34.57", "rules": 267, "probes": 281, "tn_probes": 105, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 183, "template_baseline_findings": 629, "backfill": false}
+{"ts": "2026-10-10T11:27:51", "version": "67.34.58", "rules": 267, "probes": 301, "tn_probes": 115, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 193, "template_baseline_findings": 629, "backfill": false}
