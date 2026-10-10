@@ -3434,6 +3434,42 @@
       "text": "环境准备：pip install requests 后调用接口。",
       "expected": [],
       "note": "R267 P2-27 探针覆盖 — P251 护栏 TN；场景=pip install + 真实包 requests(非幻觉词表/非 4+ 非标准库)；交叉核验 P251 不火"
+    },
+    {
+      "name": "r268_p256_tp_malformed_placeholder",
+      "category": "template",
+      "lang": "zh-Hans",
+      "text": "请向 {{user-name}} 发送欢迎消息。",
+      "expected": [
+        "P256"
+      ],
+      "note": "R268 P2-27 收尾批探针 — P256(占位符畸形/未声明)既有规则 0 探针缺口；场景=检查 1 畸形占位符 {{user-name}}(连字符非 \\w+ 变量名, 不被渲染器 _VALID_VAR 完整匹配, 将静默未填充)；交叉核验 P256 实火"
+    },
+    {
+      "name": "r268_p256_tn_valid_template",
+      "category": "template",
+      "lang": "zh-Hans",
+      "text": "请向 {{customer_name}} 发送欢迎消息，编号 {{order_id}}。",
+      "expected": [],
+      "note": "R268 P2-27 收尾批探针 — P256 护栏 TN；场景=合法变量模板(\\w+ 变量名, 无显式声明段→检查 2 跳过)；交叉核验 P256 不火"
+    },
+    {
+      "name": "r268_p130_tp_ws_no_decl",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用通过 websocket 连接实时消息通道，推送新消息提醒。",
+      "expected": [
+        "P130"
+      ],
+      "note": "R268 P2-27 收尾批探针 — P130(鸿蒙网络请求安全声明缺失, P094 同义从规则)独立触发形态：websocket 在 P130 `_NETWORK_PATTERN` 词表内但不在 P094 `_NETWORK_PATTERN` 词表内→P094 沉默、P130 独立实火(不依赖同义组抑制, 管道核验实证 P094 不火)；场景=鸿蒙语境+websocket 网络面无 TLS/证书固定声明；交叉核验 P130 实火"
+    },
+    {
+      "name": "r268_p130_tn_ws_with_decl",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用通过 websocket 连接实时通道，启用 TLS 与证书固定，禁止明文传输。",
+      "expected": [],
+      "note": "R268 P2-27 收尾批探针 — P130 护栏 TN；场景=鸿蒙+websocket 面+TLS/证书固定/禁止明文声明；交叉核验 P130 不火(network security 声明护栏成立)"
     }
   ]
 }
