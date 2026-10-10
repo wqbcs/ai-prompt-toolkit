@@ -3254,6 +3254,186 @@
       "text": "页面加载时 httpRequest 请求后端接口，allowedDomain 限定声明域名白名单。",
       "expected": [],
       "note": "R266 P2-27 探针覆盖 — P230 护栏 TN；场景=网络面+allowedDomain 域名白名单声明；交叉核验 P230 不火(domain 声明护栏成立)"
+    },
+    {
+      "name": "r267_p231_tp_grad_no_dp",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "客户端将本地梯度直接上传服务器用于全局更新。",
+      "expected": [
+        "P231"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P231(梯度传输未加 DP/裁剪)既有规则 0 探针缺口；场景=梯度上传面 无差分隐私/裁剪/norm 面；交叉核验 P231 实火"
+    },
+    {
+      "name": "r267_p231_tn_grad_with_dp",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "客户端上传梯度前做差分隐私噪声注入与梯度裁剪。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P231 护栏 TN；场景=梯度面+差分隐私/梯度裁剪声明；交叉核验 P231 不火(DP/clip 声明护栏成立)"
+    },
+    {
+      "name": "r267_p232_tp_fedagg_no_dp",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "服务器对参与方提交的模型参数做 FedAvg 聚合。",
+      "expected": [
+        "P232"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P232(联邦聚合未加 DP 噪声)既有规则 0 探针缺口；场景=FedAvg/聚合面 无 DP/epsilon/隐私预算 面；交叉核验 P232 实火(P233 共触发为常态)"
+    },
+    {
+      "name": "r267_p232_tn_fedagg_dp",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "联邦聚合采用 FedAvg，并加入 DP-SGD 差分隐私噪声与 epsilon 隐私预算。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P232 护栏 TN；场景=联邦聚合+DP-SGD/epsilon 隐私预算声明；交叉核验 P232 不火(DP 声明护栏成立)"
+    },
+    {
+      "name": "r267_p233_tp_fedagg_no_robust",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "服务器聚合各参与方模型，直接取平均更新全局模型。",
+      "expected": [
+        "P233"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P233(联邦聚合缺投毒防护)既有规则 0 探针缺口；场景=聚合/全局模型面 无 Krum/鲁棒/中位数/异常检测 面；交叉核验 P233 实火(P232 共触发为常态)"
+    },
+    {
+      "name": "r267_p233_tn_fedagg_robust",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "联邦聚合使用 Krum 鲁棒聚合与异常检测，过滤投毒梯度。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P233 护栏 TN；场景=联邦聚合+Krum/鲁棒聚合/异常检测声明；交叉核验 P233 不火(robust agg 声明护栏成立)"
+    },
+    {
+      "name": "r267_p235_tp_client_no_auth",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "联邦学习中客户端参与方提交本地模型到服务器。",
+      "expected": [
+        "P235"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P235(联邦参与方未做身份认证)既有规则 0 探针缺口；场景=客户端/参与方+联邦面 无认证/证书/token/验证 面；交叉核验 P235 实火(P232/P233 共触发为常态)"
+    },
+    {
+      "name": "r267_p235_tn_client_auth",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "联邦学习中客户端参与方提交模型前做证书认证与身份验证。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P235 护栏 TN；场景=联邦参与方+证书认证/身份验证声明；交叉核验 P235 不火(auth 声明护栏成立)"
+    },
+    {
+      "name": "r267_p237_tp_timing_no_const",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "推理引擎存在 timing 侧信道风险，响应时间随输入长度变化。",
+      "expected": [
+        "P237"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P237(推理侧信道风险)既有规则 0 探针缺口；场景=timing/侧信道面 无常量时间/缓存隔离/TEE 面；交叉核验 P237 实火"
+    },
+    {
+      "name": "r267_p237_tn_timing_const",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "推理引擎响应时间恒定，缓存隔离防缓存攻击，敏感计算在 TEE 中执行。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P237 护栏 TN；场景=侧信道面+常量时间/缓存隔离/TEE 声明；交叉核验 P237 不火(constant-time 声明护栏成立)"
+    },
+    {
+      "name": "r267_p238_tp_kv_no_bound",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "长上下文场景使用 KV缓存 保存历史注意力键值。",
+      "expected": [
+        "P238"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P238(KV 缓存无边界/隔离/限制)既有规则 0 探针缺口；场景=KV缓存/长上下文面 无边界检查/隔离/max_tokens/清除缓存 面；交叉核验 P238 实火"
+    },
+    {
+      "name": "r267_p238_tn_kv_bound",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "KV缓存 配置最大长度限制与命名空间隔离，定期清除缓存。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P238 护栏 TN；场景=KV缓存+长度限制/隔离/清除缓存声明；交叉核验 P238 不火(kv secure 声明护栏成立)"
+    },
+    {
+      "name": "r267_p246_tp_changelog_no_audit",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "提示词维护变更记录，记录每次版本发布内容。",
+      "expected": [
+        "P246"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P246(有版本记录缺审批/审计/回滚)既有规则 0 探针缺口；场景=变更记录/版本发布面 无审计/审批/回滚 面；交叉核验 P246 实火"
+    },
+    {
+      "name": "r267_p246_tn_changelog_audit",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "提示词变更记录需变更审批与审计，支持一键回滚。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P246 护栏 TN；场景=版本变更面+审批/审计/回滚声明；交叉核验 P246 不火(audit 声明护栏成立)"
+    },
+    {
+      "name": "r267_p248_tp_drift_no_secure",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "定期检查提示词行为是否偏离基线预期。",
+      "expected": [
+        "P248"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P248(漂移检测缺安全措施)既有规则 0 探针缺口；场景=漂移/偏离/基线面 无语义diff/回归测试/自动告警 面；交叉核验 P248 实火"
+    },
+    {
+      "name": "r267_p248_tn_drift_secure",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "提示词漂移检测做语义 diff 与回归测试，偏离自动告警。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P248 护栏 TN；场景=漂移面+语义 diff/回归测试/自动告警声明；交叉核验 P248 不火(drift secure 声明护栏成立)"
+    },
+    {
+      "name": "r267_p249_tp_chain_no_guard",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "多个提示词按顺序调用组成管道，前一个输出接后一个输入。",
+      "expected": [
+        "P249"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P249(级联 Prompt 缺防护)既有规则 0 探针缺口；场景=顺序调用/管道面 无最大深度/超时/断路器/错误隔离 面；交叉核验 P249 实火"
+    },
+    {
+      "name": "r267_p249_tn_chain_guard",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "级联管道设置最大深度与超时，触发断路器并做错误隔离。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P249 护栏 TN；场景=级联面+最大深度/超时/断路器/错误隔离声明；交叉核验 P249 不火(chain guard 声明护栏成立)"
+    },
+    {
+      "name": "r267_p251_tp_halluc_pkg",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "环境准备：pip install torchh 后加载模型权重。",
+      "expected": [
+        "P251"
+      ],
+      "note": "R267 P2-27 探针覆盖 — P251(疑似包幻觉)既有规则 0 探针缺口；场景=pip install + 幻觉包词表内 torchh(真实包 torch 的拼写混淆形态)；交叉核验 P251 实火"
+    },
+    {
+      "name": "r267_p251_tn_real_pkg",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "环境准备：pip install requests 后调用接口。",
+      "expected": [],
+      "note": "R267 P2-27 探针覆盖 — P251 护栏 TN；场景=pip install + 真实包 requests(非幻觉词表/非 4+ 非标准库)；交叉核验 P251 不火"
     }
   ]
 }
