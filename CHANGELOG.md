@@ -2,6 +2,33 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.65] - 2026-10-10
+
+### Fixed (R270 P2-28 后续面：MCP-112 walk 补 list 字符串元素 + S4/S5 探针 fixture)
+
+> 四问：定位未漂移（MCP-112 已声明的 inputSchema 递归 walk 作用域内补缺，
+> 非规则本体扩展）；核心价值=闭合 CyberArk FSP 真实攻击面最后一块
+> （required 数组毒化）+ 锁定隐式语义边界（S5 MCP-ITP 类）防未来扩标过吞；
+> 方向=P2-28 后续面 bounded 收官（00 §5 R269 建议 ① 执行）；陷阱自查=
+> 2 行补缺 + 2 fixture，零规则面扩张、零新指标。
+
+- **walk 补缺**：`_walk_schema_strings` 对 list 节点现收集字符串元素
+  （此前只递归子节点、不收集 list 内字符串）——CyberArk FSP S4 required
+  数组毒化形态（数组元素即毒化参数名）由 0 命中转实火 key_instruction
+  （R270 取证脚本实证留痕：扩展前 required 数组来源 0 命中）
+- **S4 fixture**：`tpa_s4_cyberark_required.json`（CyberArk FSP 2025-05-30
+  required 数组键名毒化，`_probe_source` 来源标注）+ 测试
+  （required 数组毒化实火 / 干净 required 数组沉默）
+- **S5 边界 TN**：`tpa_s5_mcp_rt_subtle.json`（vedp1712/mcp-rt 真实仓库
+  "caching" 隐式措辞变体）——判定=MCP-ITP 隐式语义投毒，确定性静态面外；
+  测试锁定"MCP-111/112 必须沉默"防未来扩标过吞入隐式语义面（过防御纪律）
+- **fixture 面**：7 条 TPA/FSP 探针（3TP + 2TN + S4/S5），discover 计数
+  15→17，mcp-lint 单测 38/38
+- **双基线不回归**：lint 主管道 0 变更（MCP 面独立于 267 规则管道）——
+  FP 0.82% / 漏检 0.00% / 过防御 11.50% / OOD 31.18% 复验不变
+- **P2-28 收官**：S1-S5 五形态探针全部落盘（3 独立 TP fixture + required
+  数组面 + 隐式语义边界 TN），MCP 工具定义注入检测面 closed
+
 ## [v67.34.64] - 2026-10-10
 
 ### Added (R269 P2-28 MCP 工具定义注入 TPA/FSP 形态规则 — MCP-111/MCP-112)

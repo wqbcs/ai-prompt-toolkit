@@ -122,6 +122,42 @@ class TestMcp112InputSchemaWalk:
         assert shallow112, "浅层恶意串必须被 walk 检出（截断唯一性对照）"
 
 
+class TestS4RequiredArrayPoisoning:
+    """R270: S4 CyberArk FSP required 数组毒化 — 数组元素即毒化参数名
+
+    R269 walk 只收集嵌套 dict 键名, list 内字符串元素未覆盖（R270 #1 取证
+    实证：required 数组毒化面 0 命中）— 本轮补 list 字符串元素收集后,
+    required 数组内的毒化参数名必须命中 key_instruction。
+    """
+
+    def test_s4_required_array_poison_fires(self):
+        fs = _scan("tpa_s4_cyberark_required.json")
+        mcp112 = [f for f in fs if f.rule_id == "MCP-112"]
+        req_hits = [f for f in mcp112 if "required[" in f.location]
+        assert req_hits, "required 数组毒化面必须命中（R270 walk 扩展）"
+        assert any(f.details["surface"] == "key_instruction" for f in req_hits)
+
+    def test_s4_clean_required_array_silent(self):
+        # 干净 required 数组（正常参数名）必须 0 MCP-112 命中
+        fs = _scan("tpa_tn_clean_schemas.json")
+        assert [f for f in fs if f.rule_id == "MCP-112"] == []
+
+
+class TestS5SubtleVariantBoundary:
+    """R270: S5 mcp-rt subtle 变体 = 隐式语义投毒（MCP-ITP 类）边界 TN
+
+    真实仓库（vedp1712/mcp-rt）weather 工具描述 'retrieve all stored items
+    ... for caching' — 无标签/无路径外传/无键名指令, 属确定性静态面外的
+    隐式语义投毒。锁定边界 TN: MCP-111/112 必须沉默（防未来扩标过吞入
+    隐式语义面=过防御）; 既有 security 族 description 规则（P143/P162/P191
+    等）可继续命中, 不在此断言。
+    """
+
+    def test_s5_subtle_variant_tpa_silent(self):
+        fs = _scan("tpa_s5_mcp_rt_subtle.json")
+        assert [f for f in fs if f.rule_id in ("MCP-111", "MCP-112")] == []
+
+
 class TestTnGuards:
     """TN 护栏：干净 schema 0 误报 + 教育文本不触发 TPA 形态"""
 

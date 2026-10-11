@@ -451,7 +451,12 @@ def _walk_schema_strings(node: Any, path: str, depth: int = 0) -> list[tuple[str
             out.extend(_walk_schema_strings(v, child, depth + 1))
     elif isinstance(node, list):
         for i, v in enumerate(node):
-            out.extend(_walk_schema_strings(v, f"{path}[{i}]", depth + 1))
+            child = f"{path}[{i}]"
+            # R270: list 内字符串元素单独成项 — required 数组毒化面
+            # (CyberArk FSP S4: 数组元素即毒化参数名, 非嵌套 dict 键名)
+            if isinstance(v, str) and v.strip():
+                out.append((child, "-", v))
+            out.extend(_walk_schema_strings(v, child, depth + 1))
     return out
 
 

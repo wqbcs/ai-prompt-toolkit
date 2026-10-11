@@ -126,8 +126,9 @@ class TestR213McpRiskScore:
 
 class TestR213McpDiscover:
     def test_discover_directory(self):
-        # R269: +5 TPA/FSP 探针 fixture (tpa_s1/s2/s3 + tpa_tn 两条)
-        assert len(discover_mcp_configs(_FIXDIR)) == 15
+        # R269: +5 TPA/FSP 探针 fixture (tpa_s1/s2/s3 + tpa_tn 两条);
+        # R270: +2 (tpa_s4 required 数组毒化 + tpa_s5 subtle 变体边界 TN)
+        assert len(discover_mcp_configs(_FIXDIR)) == 17
 
     def test_discover_single_file(self):
         assert discover_mcp_configs(_FIXDIR / "safe_stdio.json") == [_FIXDIR / "safe_stdio.json"]
