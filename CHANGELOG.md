@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.69] - 2026-10-10
+
+### Added (R274 P2-27 零探针补欠 MEDIUM 第四批：10 规则 × 1TP+1TN = 20 探针)
+
+> 四问：定位未漂移（探针先行还欠账，零规则变更 T1）；核心价值=MEDIUM 队列
+> 第四批 10 条入漏检面锚点（探针覆盖度 183/267→193/267，72.3%），"漏检
+> 0.00%"锚点从 265 单元扩到 275 单元；方向=00 §5 R274 建议 ①（MEDIUM
+> 余 77 条前缀序 ≤10/轮 bounded）；陷阱自查=还欠账非新指标，触发面取证
+> 全部到常量级。本批 6/10 为鸿蒙/华为云生态族（P072/P074/P076/P078/P086/
+> P088），为 P2-27 补欠首次集中覆盖生态专项规则。
+
+- **golden 探针 445→465**（+20：MEDIUM 第四批 10 规则 P070/P072/P074/P076/
+  P078/P081/P084/P085/P086/P088 各 1TP+1TN 全 zh-Hans）；期望命中单元
+  265→275；语言面 zh-Hans 336→356
+- **267 管道核验**：TP 10/10 实火目标规则 + TN 10/10 目标规则沉默
+- **触发面取证（常量级）留痕**：P070 `len(text)*0.6>4000` 阈值面（TP 取
+  6845 字符/4107 tokens；首跑 FAIL 实证 6660 字符不足，倍率 180→185 修正
+  后实火）/ P072 `_NPU_PATTERN`+`_NPU_ADAPT` 豁免 / P074+P078 R253-H 鸿蒙
+  锚定面（无裸 Ability）/ P076 ModelArts 门+规格词表豁免 / P081
+  `{{var}}` 无 `default('...')` 面 / P084 JSON 声明无 `_FORMAT_CONSTRAINT`
+  / P085 `[INST]` Llama 语法无模型声明 / P086 ArkTS 语境+`as const` 命中
+  `_ARKTS_UNSUPPORTED` / P088 gate-decl 差集面（"Ability" 是 gate 词而
+  非 decl 词，TP 须用 "Ability" 措辞触发）
+- **规则页回写**：10 个规则页"探针覆盖 (golden)"段从"暂无"转锚定
+  （gen_rules_doc 机械生成）；README 公开面数字同步（445→465/265→275/
+  zh-Hans 336→356 + Miss-Rate 徽章 + 分语言表 zh-Hans 期望 208→218）
+- **后续**：MEDIUM 余 67 条 ≤10/轮 bounded 推进（R275 起），LOW 27 条待
+  MEDIUM 清零
+
 ## [v67.34.68] - 2026-10-10
 
 ### Added (R273 P2-27 零探针补欠 MEDIUM 第三批：10 规则 × 1TP+1TN = 20 探针)
