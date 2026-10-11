@@ -83,7 +83,9 @@ class TestR214LangSchema:
         #       各 1TP+1TN, 全 zh-Hans) = 445
         # R274: +20(P2-27 MEDIUM 第四批 10 规则 P070/P072/P074/P076/P078/P081/P084/P085/P086/P088
         #       各 1TP+1TN, 全 zh-Hans; 含 6 条鸿蒙/华为云生态族) = 465
-        assert len(probes) == 465
+        # R275: +20(P2-27 MEDIUM 第五批 10 规则 P092/P093/P095/P098/P099/P101/P102/P104/P105/P107
+        #       各 1TP+1TN, 全 zh-Hans; 含 5 条鸿蒙/盘古生态族) = 485
+        assert len(probes) == 485
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -119,7 +121,8 @@ class TestR214LangSchema:
         # R272: +20 zh-Hans (P2-27 MEDIUM 第二批 10 规则各 1TP+1TN) = zh-Hans 316 | en 101 | ja 6 | zh-Hant 2
         # R273: +20 zh-Hans (P2-27 MEDIUM 第三批 10 规则各 1TP+1TN) = zh-Hans 336 | en 101 | ja 6 | zh-Hant 2
         # R274: +20 zh-Hans (P2-27 MEDIUM 第四批 10 规则各 1TP+1TN) = zh-Hans 356 | en 101 | ja 6 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 356
+        # R275: +20 zh-Hans (P2-27 MEDIUM 第五批 10 规则各 1TP+1TN) = zh-Hans 376 | en 101 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 376
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101

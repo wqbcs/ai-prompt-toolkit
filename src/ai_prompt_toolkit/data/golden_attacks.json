@@ -4190,6 +4190,186 @@
       "text": "在鸿蒙应用中，Ability 组件需要正确处理运行态切换，实现生命周期回调 onCreate 与 onDestroy。",
       "expected": [],
       "note": "TN：'onCreate/onDestroy/生命周期回调'命中 _LIFECYCLE_DECL→沉默"
+    },
+    {
+      "name": "r275_p092_tp_thread_no_decl",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要在后台执行耗时的数据同步操作，保证界面流畅。",
+      "expected": [
+        "P092"
+      ],
+      "note": "鸿蒙语境+耗时（_THREAD_PATTERN）无 TaskPool/线程模型 声明→实火"
+    },
+    {
+      "name": "r275_p092_tn_thread_with_decl",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要在后台执行耗时的数据同步操作，声明线程模型：放入 TaskPool 执行，UI 更新回主线程。",
+      "expected": [],
+      "note": "TN：'TaskPool/线程模型/主线程'命中 _THREAD_DECL→沉默"
+    },
+    {
+      "name": "r275_p093_tp_data_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要将用户配置持久化，并在启动时自动恢复。",
+      "expected": [
+        "P093"
+      ],
+      "note": "鸿蒙语境+持久化（_DATA_MGMT）无 Preferences/RDB 声明→实火"
+    },
+    {
+      "name": "r275_p093_tn_data_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要将用户配置持久化，使用 Preferences 保存，并声明数据管理策略。",
+      "expected": [],
+      "note": "TN：'Preferences/数据管理策略'命中 _DATA_DECL→沉默"
+    },
+    {
+      "name": "r275_p095_tp_sign_no_decl",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用即将上架应用市场，请生成构建说明。",
+      "expected": [
+        "P095"
+      ],
+      "note": "鸿蒙语境+上架/应用市场（_SIGN）无 .p7b/发布签名 声明→实火"
+    },
+    {
+      "name": "r275_p095_tn_sign_with_decl",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用即将上架应用市场，使用 .p7b Profile 与发布签名完成构建。",
+      "expected": [],
+      "note": "TN：'.p7b/发布签名'命中 _SIGN_DECL→沉默"
+    },
+    {
+      "name": "r275_p098_tp_tool_no_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "基于盘古大模型构建客服助手，需要调用API查询订单状态。",
+      "expected": [
+        "P098"
+      ],
+      "note": "_PANGU_CTX（盘古）+调用API（_TOOL_CALL）无工具调用格式声明→实火"
+    },
+    {
+      "name": "r275_p098_tn_tool_with_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "基于盘古大模型构建客服助手，需要调用API查询订单状态，遵循盘古工具调用格式声明。",
+      "expected": [],
+      "note": "TN：'盘古工具调用格式'命中 _TOOL_DECL→沉默"
+    },
+    {
+      "name": "r275_p099_tp_mm_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "基于盘古大模型分析用户上传的图片，识别其中的票据信息。",
+      "expected": [
+        "P099"
+      ],
+      "note": "_PANGU_CTX+图片（_MULTIMODAL）无 base64/多模态格式声明→实火"
+    },
+    {
+      "name": "r275_p099_tn_mm_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "基于盘古大模型分析用户上传的图片，图片以 base64 编码后传入。",
+      "expected": [],
+      "note": "TN：'base64'命中 _MULTIMODAL_DECL→沉默"
+    },
+    {
+      "name": "r275_p101_tp_redundant",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请将报告保存为PDF。请将报告保存为PDF版本。输出前检查一遍错别字。",
+      "expected": [
+        "P101"
+      ],
+      "note": "分词级 Jaccard（s1/s2 共享 8/10 tokens=0.8>0.5 阈值）→实火"
+    },
+    {
+      "name": "r275_p101_tn_no_redundant",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请为团队撰写季度总结。总结覆盖目标达成与资源消耗。输出控制在三行以内。",
+      "expected": [],
+      "note": "TN：三句 token 重叠 ≤2/union≈0.1 远低于 0.5→沉默"
+    },
+    {
+      "name": "r275_p102_tp_contradiction",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你必须使用中文回复，禁止输出英文内容。",
+      "expected": [
+        "P102"
+      ],
+      "note": "必须.{0,20}禁止 词对面（_CONTRADICTION_PATTERNS 第3条）→实火"
+    },
+    {
+      "name": "r275_p102_tn_no_contradiction",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请保持输出简洁。每条要点不超过两行。避免使用专业术语。",
+      "expected": [],
+      "note": "TN：无 必须/禁止/不要 词对→沉默"
+    },
+    {
+      "name": "r275_p104_tp_role_mismatch",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是一名后端开发工程师，熟悉高并发系统。请为新品撰写一段富有创意的推广文案，风格轻松活泼。",
+      "expected": [
+        "P104"
+      ],
+      "note": "角色段技术词（开发）且正文创作词（撰写/创意）→实火"
+    },
+    {
+      "name": "r275_p104_tn_role_consistent",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是一名后端开发工程师，熟悉高并发系统。请实现一个订单查询接口，并补充单元测试。",
+      "expected": [],
+      "note": "TN：角色与正文均为技术面→沉默"
+    },
+    {
+      "name": "r275_p105_tp_format_incomplete",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请将结果输出为JSON格式。",
+      "expected": [
+        "P105"
+      ],
+      "note": "输出为+输出.{0,6}JSON（结构化面）无字段/示例/默认值→实火"
+    },
+    {
+      "name": "r275_p105_tn_format_complete",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请将结果输出为JSON格式，字段包括 status 与 data，默认值：status 为 0。",
+      "expected": [],
+      "note": "TN：'字段/默认值'命中 _FORMAT_COMPLETE→沉默"
+    },
+    {
+      "name": "r275_p107_tp_cond_no_exception",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "如果用户提交了表单，就直接保存并给出成功提示。",
+      "expected": [
+        "P107"
+      ],
+      "note": "如果（_CONDITION R212-6 面）无异常处理词（_EXCEPTION R212-6 扩面）→实火"
+    },
+    {
+      "name": "r275_p107_tn_cond_with_exception",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "如果用户提交了表单，就保存；如果校验失败，给出错误提示并允许重新提交。",
+      "expected": [],
+      "note": "TN：'失败/错误'命中 _EXCEPTION→沉默"
     }
   ]
 }
