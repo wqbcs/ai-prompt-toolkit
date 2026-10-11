@@ -4550,6 +4550,186 @@
       "text": "鸿蒙应用支持跨设备同步用户数据，声明分布式数据管理策略与同步机制。",
       "expected": [],
       "note": "TN：'分布式数据/数据管理'命中 _DISTRIBUTED_DECL→沉默"
+    },
+    {
+      "name": "r277_p129_tp_form_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙元服务，在桌面上展示服务卡片，实时显示天气信息。",
+      "expected": [
+        "P129"
+      ],
+      "note": "鸿蒙门+元服务/卡片（_FORM_PATTERN）无 FormExtension/更新频率 声明→实火"
+    },
+    {
+      "name": "r277_p129_tn_form_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙元服务，在桌面上展示服务卡片。卡片更新频率为 30 分钟，遵循 FormExtension 生命周期规范。",
+      "expected": [],
+      "note": "TN：'更新频率/FormExtension/卡片生命周期'命中 _FORM_DECL→沉默"
+    },
+    {
+      "name": "r277_p134_tp_mm_no_consistency",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "处理图像输入后，生成图片与对应的文字描述，两者分别输出。",
+      "expected": [
+        "P134"
+      ],
+      "note": "多模态门+生成图片/文字描述（_MULTI_OUTPUT 双门）无一致性声明→实火"
+    },
+    {
+      "name": "r277_p134_tn_mm_with_consistency",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "处理图像输入后，生成图片与文字描述，确保跨模态一致，图像与文本不矛盾。",
+      "expected": [],
+      "note": "TN：'跨模态一致/一致性/不矛盾'命中 _CONSISTENCY_DECL→沉默"
+    },
+    {
+      "name": "r277_p135_tp_mm_no_budget",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "处理音频文件，将语音内容转录为文字并归档保存。",
+      "expected": [
+        "P135"
+      ],
+      "note": "多模态门（音频/语音）无 Token 预算/资源限制声明→实火"
+    },
+    {
+      "name": "r277_p135_tn_mm_with_budget",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "处理音频文件，将语音内容转录为文字。设定 Token 预算上限，音频时长不超过 60 秒。",
+      "expected": [],
+      "note": "TN：'Token 预算/音频.*时长'命中 _BUDGET_DECL→沉默"
+    },
+    {
+      "name": "r277_p136_tp_mm_no_fallback",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "分析用户上传的图片，生成对应的产品使用说明。",
+      "expected": [
+        "P136"
+      ],
+      "note": "多模态门（图片）无降级/回退策略声明→实火"
+    },
+    {
+      "name": "r277_p136_tn_mm_with_fallback",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "分析用户上传的图片，生成产品说明。如果图片不可用，回退为纯文本描述流程。",
+      "expected": [],
+      "note": "TN：'不可用/回退'命中 _FALLBACK_DECL→沉默"
+    },
+    {
+      "name": "r277_p137_tp_mm_no_format",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "完成图像处理任务后，将结果连同图片一并返回给用户。",
+      "expected": [
+        "P137"
+      ],
+      "note": "多模态门（图片）无输出格式规范（尺寸/格式/分辨率）声明→实火"
+    },
+    {
+      "name": "r277_p137_tn_mm_with_format",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "完成图像处理任务后返回结果。输出图片为 PNG 格式，分辨率 1024×1024，质量 90%。",
+      "expected": [],
+      "note": "TN：'输出.*格式/PNG/分辨率'命中 _OUTPUT_FORMAT_DECL→沉默"
+    },
+    {
+      "name": "r277_p140_tp_mm_no_audit",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "对图像与文本进行多模态融合分析，给出综合判断结果。",
+      "expected": [
+        "P140"
+      ],
+      "note": "多模态门（多模态/图像）无审计追踪声明→实火"
+    },
+    {
+      "name": "r277_p140_tn_mm_with_audit",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "对图像与文本进行多模态融合分析。记录各模态输入输出与决策过程的审计日志。",
+      "expected": [],
+      "note": "TN：'审计/决策.*记录'命中 _AUDIT_DECL→沉默"
+    },
+    {
+      "name": "r277_p144_tp_agent_no_ctxmgmt",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "构建一个 Agent，自动整理用户文件夹中的文档并按主题分类。",
+      "expected": [
+        "P144"
+      ],
+      "note": "_AGENT_CTX 门（Agent）无上下文窗口管理策略声明→实火"
+    },
+    {
+      "name": "r277_p144_tn_agent_with_ctxmgmt",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "构建一个 Agent，自动整理文档。管理上下文窗口：保留最近十轮对话，超出部分做截断。",
+      "expected": [],
+      "note": "TN：'上下文.*管理/保留.*最近/截断'命中 _CONTEXT_MGMT_DECL→沉默"
+    },
+    {
+      "name": "r277_p145_tp_multiagent_no_conflict",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "系统由规划代理与执行代理构成，两个 agent 协作完成复杂任务。",
+      "expected": [
+        "P145"
+      ],
+      "note": "_MULTI_AGENT_CTX 门（agent.*协作/多.*代理）无冲突解决/死锁防护声明→实火"
+    },
+    {
+      "name": "r277_p145_tn_multiagent_with_conflict",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "系统由规划代理与执行代理构成，两个 agent 协作完成复杂任务。声明冲突解决机制：出现冲突时按优先级裁决。",
+      "expected": [],
+      "note": "TN：'冲突/优先级/裁决'命中 _CONFLICT_DECL→沉默"
+    },
+    {
+      "name": "r277_p147_tp_stage_no_boundary",
+      "category": "harmonyos",
+      "lang": "zh-Hans",
+      "text": "在鸿蒙 Stage 模型应用中，使用 ServiceExtension 提供后台常驻能力。",
+      "expected": [
+        "P147"
+      ],
+      "note": "鸿蒙+Stage模型/ServiceExtension（_STAGE_MODEL_CTX）无 Extension 使用边界声明→实火"
+    },
+    {
+      "name": "r277_p147_tn_stage_with_boundary",
+      "category": "harmonyos",
+      "lang": "zh-Hans",
+      "text": "在鸿蒙 Stage 模型应用中，使用 ServiceExtension 提供后台能力。声明 ServiceExtension 使用边界，遵循最小权限原则。",
+      "expected": [],
+      "note": "TN：'Extension.*边界/最小权限'命中 _EXTENSION_BOUNDARY→沉默"
+    },
+    {
+      "name": "r277_p149_tp_arkui_no_paradigm",
+      "category": "harmonyos",
+      "lang": "zh-Hans",
+      "text": "请用鸿蒙 ArkUI 的 @Component 构建列表页，用 @State 数据更新视图。",
+      "expected": [
+        "P149"
+      ],
+      "note": "鸿蒙门（_HARMONYOS_CTX 须含鸿蒙强信号，ArkUI 不在此门）+ArkUI/@Component/@State 无声明式范式声明→实火"
+    },
+    {
+      "name": "r277_p149_tn_arkui_with_paradigm",
+      "category": "harmonyos",
+      "lang": "zh-Hans",
+      "text": "请用鸿蒙 ArkUI 的 @Component 构建列表页，用 @State 数据更新视图。遵循声明式数据驱动范式，状态不可变且无副作用。",
+      "expected": [],
+      "note": "TN：'声明式/数据驱动/状态不可变/无副作用'命中 _DECLARATIVE_PARADIGM→沉默"
     }
   ]
 }
