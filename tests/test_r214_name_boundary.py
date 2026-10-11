@@ -77,7 +77,9 @@ class TestR214LangSchema:
         #       独立触发形态实证不依赖同义组抑制) = 385 → HIGH 72+10 清零收官
         # R271: +20(P2-27 MEDIUM 首批 10 规则 P003/P010/P012/P013/P014/P018/P020/P023/P024/P026
         #       各 1TP+1TN, 全 zh-Hans; MEDIUM 队列 107 条启动) = 405
-        assert len(probes) == 405
+        # R272: +20(P2-27 MEDIUM 第二批 10 规则 P028/P029/P032/P034/P036/P037/P040/P043/P045/P046
+        #       各 1TP+1TN, 全 zh-Hans) = 425
+        assert len(probes) == 425
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -110,7 +112,8 @@ class TestR214LangSchema:
         # R267: +20 zh-Hans (P2-27 第七批 10 规则各 1TP+1TN) = zh-Hans 272 | en 101 | ja 6 | zh-Hant 2
         # R268: +4 zh-Hans (P2-27 收尾批 P256/P130 各 1TP+1TN) = zh-Hans 276 | en 101 | ja 6 | zh-Hant 2
         # R271: +20 zh-Hans (P2-27 MEDIUM 首批 10 规则各 1TP+1TN) = zh-Hans 296 | en 101 | ja 6 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 296
+        # R272: +20 zh-Hans (P2-27 MEDIUM 第二批 10 规则各 1TP+1TN) = zh-Hans 316 | en 101 | ja 6 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 316
         assert sum(1 for v in langs.values() if v == "ja") == 6
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101

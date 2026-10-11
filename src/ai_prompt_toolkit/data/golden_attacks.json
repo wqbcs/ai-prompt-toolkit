@@ -3650,6 +3650,186 @@
       "text": "请根据产品手册回答客户的问题，答复保持专业友好。如果无法确定答案，请直接回复信息不足，不要编造内容。",
       "expected": [],
       "note": "TN：'如果无法…回复信息不足'命中回退表达→沉默"
+    },
+    {
+      "name": "r272_p028_tp_complex_no_chain",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请分析用户留存曲线并比较新旧版本的差异，评估流失风险后给出判断。输出结论与依据两部分。",
+      "expected": [
+        "P028"
+      ],
+      "note": "复杂度词 ≥2（分析/比较/评估/判断）无链式指令→实火"
+    },
+    {
+      "name": "r272_p028_tn_complex_with_chain",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请分析用户留存曲线并比较新旧版本的差异，评估流失风险后给出判断。首先看首周留存，然后看次月留存，最后给出整体判断。",
+      "expected": [],
+      "note": "TN：'首先…然后…最后'命中 _P028_MULTI_STEP→沉默"
+    },
+    {
+      "name": "r272_p029_tp_user_input_no_escape",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "请整理 {{user_input}} 中的用户反馈并归类。输出按主题分组，不要遗漏任何观点。",
+      "expected": [
+        "P029"
+      ],
+      "note": "{{user_input}} 命中 _P029_USER_INPUT 模板变量面，无转义校验词→实火"
+    },
+    {
+      "name": "r272_p029_tn_user_input_with_escape",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "请整理 {{user_input}} 中的用户反馈并归类。对输入内容先做转义与校验，过滤特殊标记后再处理。",
+      "expected": [],
+      "note": "TN：'转义/校验/过滤'命中 _P029_ESCAPE_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p032_tp_tool_no_error",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "请调用查询工具与数据接口获取信息。根据用户问题选择工具并汇总答案。",
+      "expected": [
+        "P032"
+      ],
+      "note": "'调用/查询+工具'命中 _AGENT_TOOL_PATTERNS 门，无错误处理面→实火"
+    },
+    {
+      "name": "r272_p032_tn_tool_with_error",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "请调用查询工具与数据接口获取信息。如果工具调用出现异常或超时，向用户说明原因并给出降级建议。",
+      "expected": [],
+      "note": "TN：'异常/超时/降级'命中 _AGENT_ERROR_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p034_tp_risk_no_approval",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "根据用户指令执行删除操作，把标记的旧文件全部删除并发送清理结果给管理员。",
+      "expected": [
+        "P034"
+      ],
+      "note": "高危动作（删除/发送）无审批面→实火"
+    },
+    {
+      "name": "r272_p034_tn_risk_with_approval",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "根据用户指令执行删除操作，把标记的旧文件全部删除并发送清理结果给管理员。删除前需获得用户二次确认。",
+      "expected": [],
+      "note": "TN：'删除…需…确认'命中 _AGENT_APPROVAL_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p036_tp_rag_no_hallucination",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "从企业知识库检索相关文档，结合检索结果回答员工关于报销流程的问题。",
+      "expected": [
+        "P036"
+      ],
+      "note": "_RAG_CTX_GATE 门（检索+文档），无防幻觉声明→实火"
+    },
+    {
+      "name": "r272_p036_tn_rag_with_hallucination",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "从企业知识库检索相关文档，结合检索结果回答员工关于报销流程的问题。如果资料未包含相关信息，直接说明资料未包含，不要凭空生成。",
+      "expected": [],
+      "note": "TN：'未包含/如果…不包含'命中 _RAG_HALLUCINATION_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p037_tp_rag_no_citation",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "基于产品文档库检索到的内容撰写功能说明，确保表述与官方口径一致。",
+      "expected": [
+        "P037"
+      ],
+      "note": "_RAG_CTX_GATE 门，无引用标注面→实火"
+    },
+    {
+      "name": "r272_p037_tn_rag_with_citation",
+      "category": "rag",
+      "lang": "zh-Hans",
+      "text": "基于产品文档库检索到的内容撰写功能说明，确保表述与官方口径一致。每个结论须标注来源文档编号。",
+      "expected": [],
+      "note": "TN：'来源'命中 _RAG_CITATION_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p040_tp_mm_no_fallback",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传截图后，识别图中的报错信息并给出排查建议。",
+      "expected": [
+        "P040"
+      ],
+      "note": "多模态输入面（截图/图中）无降级路径→实火"
+    },
+    {
+      "name": "r272_p040_tn_mm_with_fallback",
+      "category": "multimodal",
+      "lang": "zh-Hans",
+      "text": "用户上传截图后，识别图中的报错信息并给出排查建议。如果图片无法识别，请回退为纯文本方式，让用户直接粘贴内容。",
+      "expected": [],
+      "note": "TN：'回退/纯文本'命中 _MULTIMODAL_FALLBACK_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p043_tp_schema_no_intent",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "调用订单查询接口。参数：order_id、type：string、limit：number。返回：订单列表。",
+      "expected": [
+        "P043"
+      ],
+      "note": "_H3_SCHEMA_PATTERNS（参数[:]/类型[:string]/返回[:])，无意图声明→实火"
+    },
+    {
+      "name": "r272_p043_tn_schema_with_intent",
+      "category": "agent",
+      "lang": "zh-Hans",
+      "text": "调用订单查询接口。参数：order_id、type：string、limit：number。返回：订单列表。目的：核对近三月未完结订单。",
+      "expected": [],
+      "note": "TN：'目的：'命中 _H3_INTENT_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p045_tp_implicit_no_explicit",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "处理请求时默认输出中文，假设输入均为标准格式，直接给出结果即可。",
+      "expected": [
+        "P045"
+      ],
+      "note": "_H5_IMPLICIT（默认/假设）无显式声明面→实火"
+    },
+    {
+      "name": "r272_p045_tn_implicit_with_explicit",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "处理请求时默认输出中文，假设输入均为标准格式，直接给出结果即可。规则：输出语言必须为简体中文。",
+      "expected": [],
+      "note": "TN：'必须/规则：'命中 _H5_EXPLICIT_PATTERNS→沉默"
+    },
+    {
+      "name": "r272_p046_tp_var_no_format",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "向员工发送提醒：你的工号是 {{employee_id}}，请尽快提交季度报告。",
+      "expected": [
+        "P046"
+      ],
+      "note": "{{employee_id}} 命中 _H6_TEMPLATE_VAR，无格式声明→实火"
+    },
+    {
+      "name": "r272_p046_tn_var_with_format",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "向员工发送提醒：你的工号是 {{employee_id}}，请尽快提交季度报告。格式：两行以内，第二行附截止日期。",
+      "expected": [],
+      "note": "TN：'格式：'命中 _H6_FORMAT_SPEC_PATTERNS→沉默"
     }
   ]
 }
