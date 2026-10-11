@@ -28,6 +28,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -327,10 +328,15 @@ _CONFIG_CHECKS = (
 # 注入/泄露/凭据索取 — 结构/质量/RAG 类规则对单行文本是品类错配
 # (R213 实测: structure 5条恒触发, rag_security 对"搜索/读取"措辞误触发)。
 # 误报纪律(0.96%基线)优先于规则覆盖广度。
+# R269-P2-28: 10→8 类收窄 — 剔除 inference_security/inference2security:
+# 探针先行实证(TN fixture tpa_tn_clean_schemas.json 的 qr_clean 单行描述
+# "Generate QR codes for URLs..." 经既有 10 类触发 P196/P197/P239 推理资源类
+# 规则 = 品类错配 FP; 预研 R259 §3.2 同款边缘 FP 记录)。TPA 面由 MCP-111/112
+# 专用形态规则接管, 收窄不影响既有 injection 断言(P113/P163/P164 均属
+# security 类, 收窄后保留)。
 _DESC_SECURITY_CATEGORIES = frozenset(
     {
         "security",
-        "inference_security",
         "agent_security",
         "multimodal_security",
         "supply_chain",
@@ -338,7 +344,6 @@ _DESC_SECURITY_CATEGORIES = frozenset(
         "federated_security",
         "pii_enhanced",
         "hallucination_security",
-        "inference2security",
     }
 )
 _DESC_RULE_IDS: set[str] | None = None
@@ -352,6 +357,154 @@ def _description_rule_ids() -> set[str]:
 
         _DESC_RULE_IDS = {r.rule_id for r in get_all_rules() if r.category in _DESC_SECURITY_CATEGORIES}
     return _DESC_RULE_IDS
+
+
+# ---------------------------------------------------------------- R269-P2-28: TPA/FSP 形态检测
+# Tool/Full-Schema Poisoning (OWASP MCP Top10 MCP03; Invariant Labs 2025-04-01
+# 命名 TPA, CyberArk FSP 2025-05-30)。真实 payload × 既有 267 规则 = 0 命中
+# (R269 探针先行基线实证: tpa_s1/s2/s3 fixture 走 security 族与全规则管道均 0,
+# <IMPORTANT> 不在 P178 影子指令触发面, 文件外传指令不触发 P113/P164) —
+# 既有规则集对"工具元数据注入面"形态整体失明, 需专用形态规则(不重复造轮子:
+# 形态面参照 pipelock 层 1 的 6 类 TPA 模式 + mcp-scan 启发式, 取 3 类我方
+# 探针实证面; LLM 分类器面不采纳=零 LLM 楔子)。
+# 单一真源: _tpa_find_hits 被 MCP-111(顶层 description) 与 MCP-112(inputSchema
+# 递归 walk) 共用 — 规则面只写一次, 字段作用域由 walk 扩展(先规则面后 walk 的
+# 顺序是 R261 预研勘误: walk 出来的字段若走 0 命中规则集=白做)。
+
+
+def _norm_nfkc(s: str) -> str:
+    """NFKC 归一化 — 防全角/兼容字符绕过标签匹配(pipelock 层 1 同款前置)。"""
+    return unicodedata.normalize("NFKC", s)
+
+
+_TPA_INSTRUCTION_TAG = re.compile(
+    r"<\s*(?:IMPORTANT|CRITICAL|SYSTEM|NOTE|WARNING)\s*>|<\s*/\s*(?:IMPORTANT|CRITICAL|SYSTEM)\s*>"
+    r"|\[\s*(?:CRITICAL|SYSTEM|IMPORTANT)\s*\]"
+    r"|\*\*\s*(?:SYSTEM|IMPORTANT|INSTRUCTION)\s*\*\*",
+    re.IGNORECASE,
+)
+_TPA_SECRET_PATH = re.compile(
+    r"~/\.(?:ssh|aws|cursor|config|gnupg)/[\w./-]+"
+    r"|/root/\.ssh/[\w./-]+"
+    r"|id_rsa|id_ed25519|\.aws/credentials",
+    re.IGNORECASE,
+)
+_TPA_EXFIL_VERB = re.compile(
+    r"(?:read|append|include|pass|send|post|upload|exfiltrat|attach|transmit|write|copy|paste|embed)"
+    r".{0,40}?(?:param|field|variable|var|input|argument|response|message|file|content)"
+    r"|(?:param|field|variable|var|input|argument|response|message|file|content).{0,40}?(?:read|append|include|pass|send|post|upload|exfiltrat|attach|transmit)",
+    re.IGNORECASE,
+)
+# 键名即指令(CyberArk FSP S4 形态: content_from_reading_ssh_id_rsa) — 键名含
+# 动词+敏感对象共现, 非字符串字段值, 只能由 walk 在键名层检测。
+_TPA_KEY_INSTRUCTION = re.compile(
+    r"(?:content|body|text|data)?_?(?:from|of|reading|read)[\w-]*(?:ssh|key|token|secret|credential|passw)",
+    re.IGNORECASE,
+)
+_WALK_DEPTH_LIMIT = 20  # 递归深度截断, pipelock 层 2 同款有界(防深嵌套 DoS)
+
+
+def _tpa_find_hits(text: str) -> list[str]:
+    """TPA 形态命中面(单一真源, 返回命中类别标签列表; 空=干净)。
+
+    三类实证面(探针先行): ① 指令标签集 ② 敏感文件路径+外传动词共现
+    (路径或动词单独出现不告警 — 教育/文档文本 TN 护栏) ③ 键名指令面。
+    全部模式在 NFKC 归一化文本上匹配。
+    """
+    if not text or not text.strip():
+        return []
+    normed = _norm_nfkc(text)
+    hits: list[str] = []
+    if _TPA_INSTRUCTION_TAG.search(normed):
+        hits.append("instruction_tag")
+    has_path = bool(_TPA_SECRET_PATH.search(normed))
+    has_verb = bool(_TPA_EXFIL_VERB.search(normed))
+    if has_path and has_verb:
+        hits.append("secret_exfiltration")
+    elif has_path:
+        # 路径单独出现: 仅当伴随指令性语境(read/first/you must/before answering)
+        # 才告警 — 纯引用(文档列举路径)是 TN 护栏面
+        if re.search(r"\b(?:read|first|you\s+must|must|before\s+answering)\b", normed, re.IGNORECASE):
+            hits.append("secret_reference_imperative")
+    if _TPA_KEY_INSTRUCTION.search(normed):
+        hits.append("key_instruction")
+    return hits
+
+
+def _walk_schema_strings(node: Any, path: str, depth: int = 0) -> list[tuple[str, str, str]]:
+    """递归 walk JSON Schema 节点 → [(path, 键名或'-', 字符串值)]。
+
+    覆盖 description/title 字符串值(层 2 主面) + 所有非标准字符串字段
+    (CyberArk FSP S3 'extra' 形态); 键名单独成项(path 为父路径, 值=键名)
+    供键名指令面检测(S4 形态)。深度截断 _WALK_DEPTH_LIMIT。
+    """
+    out: list[tuple[str, str, str]] = []
+    if depth > _WALK_DEPTH_LIMIT:
+        return out
+    if isinstance(node, dict):
+        for k, v in node.items():
+            child = f"{path}.{k}" if path else str(k)
+            if isinstance(v, str) and v.strip():
+                out.append((child, "-", v))
+            # 键名面: 键名本身可能是指令(S4)
+            out.append((child, k, k))
+            out.extend(_walk_schema_strings(v, child, depth + 1))
+    elif isinstance(node, list):
+        for i, v in enumerate(node):
+            out.extend(_walk_schema_strings(v, f"{path}[{i}]", depth + 1))
+    return out
+
+
+def check_tool_poisoning_top(name: str, entry: dict[str, Any]) -> list[Finding]:
+    """MCP-111(HIGH): 顶层 tool description 含 TPA 注入形态(OWASP MCP03)。"""
+    desc = entry.get("description")
+    if not isinstance(desc, str):
+        return []
+    hits = _tpa_find_hits(desc)
+    if not hits:
+        return []
+    return [
+        Finding(
+            "MCP-111",
+            Severity.HIGH,
+            f"[{name}] tool description 含 TPA 注入形态: {', '.join(hits)}",
+            f"::server:{name}::description",
+            "审查该工具来源; 指令标签+敏感文件外传指令是 tool poisoning 特征(OWASP MCP03), 移除或换可信实现",
+            details={"server": name, "surfaces": hits},
+        )
+    ]
+
+
+def check_input_schema_walk(name: str, entry: dict[str, Any]) -> list[Finding]:
+    """MCP-112(HIGH): inputSchema 递归 walk 检测 TPA 形态(Full-Schema Poisoning)。
+
+    字段作用域扩展(预研 R259 §7 形态, R261 勘误后次序: 规则面实火后再扩):
+    嵌套 property description / 非标准字段(extra) / 键名指令面, 全部走
+    _tpa_find_hits 单一真源。位置报告 ::server:X::inputSchema:<json path>。
+    """
+    schema = entry.get("inputSchema")
+    if not isinstance(schema, (dict, list)):
+        return []
+    findings: list[Finding] = []
+    seen: set[tuple[str, str]] = set()  # 同位置同类面只报一次
+    for path, key, value in _walk_schema_strings(schema, ""):
+        target = key if key != "-" else value
+        hits = _tpa_find_hits(target)
+        for h in hits:
+            if (path, h) in seen:
+                continue
+            seen.add((path, h))
+            findings.append(
+                Finding(
+                    "MCP-112",
+                    Severity.HIGH,
+                    f"[{name}] inputSchema 含 TPA 注入形态({h}): {path}",
+                    f"::server:{name}::inputSchema:{path}",
+                    "审查该工具来源; inputSchema 字段中的注入指令是 full-schema poisoning 特征(OWASP MCP03)",
+                    details={"server": name, "field": path, "surface": h},
+                )
+            )
+    return findings
 
 
 def scan_mcp_config(
@@ -393,6 +546,9 @@ def scan_mcp_config(
                         details={"server": name},
                     )
                 )
+        # R269-P2-28: TPA/FSP 形态检测(顶层 description + inputSchema 递归 walk)
+        findings.extend(check_tool_poisoning_top(name, entry))
+        findings.extend(check_input_schema_walk(name, entry))
     return findings
 
 

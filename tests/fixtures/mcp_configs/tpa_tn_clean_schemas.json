@@ -1,0 +1,52 @@
+{
+  "_probe_source": "TN guard set for MCP-111+ (P2-27/whitepaper R259 section 3.2 six clean schemas, consolidated). Surfaces: clean weather top-level description / file_path parameter with default / pagination required array / clean add top-level / QR code generation top-level (pre-narrowing this triggered P196/P197/P239 via inference_security+inference2security categories - the category mismatch that motivated the 10->8 narrowing).",
+  "mcpServers": {
+    "get_weather_clean": {
+      "command": "node",
+      "args": ["weather.js"],
+      "description": "Get the current weather for a city.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "description": "The city name." },
+          "unit": { "type": "string", "description": "Unit of measurement (celsius or fahrenheit)." }
+        },
+        "required": ["city"]
+      }
+    },
+    "read_file_clean": {
+      "command": "node",
+      "args": ["read.js"],
+      "description": "Read a text file from the workspace and return its contents.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "file_path": { "type": "string", "description": "Path to the file to read.", "default": "README.md" }
+        }
+      }
+    },
+    "search_clean": {
+      "command": "node",
+      "args": ["search.js"],
+      "description": "Search documents and return paginated results.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Search query." },
+          "page": { "type": "integer", "description": "Page number starting from 1.", "default": 1 }
+        },
+        "required": ["query", "page"]
+      }
+    },
+    "add_clean": {
+      "command": "node",
+      "args": ["add.js"],
+      "description": "Adds two numbers together and returns the sum."
+    },
+    "qr_clean": {
+      "command": "node",
+      "args": ["qr.js"],
+      "description": "Generate QR codes for URLs from the provided input string."
+    }
+  }
+}

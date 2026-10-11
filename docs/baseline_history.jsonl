@@ -59,3 +59,4 @@
 {"ts": "2026-10-10T12:10:42", "version": "67.34.61", "rules": 267, "probes": 361, "tn_probes": 145, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 223, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-10T12:26:56", "version": "67.34.62", "rules": 267, "probes": 381, "tn_probes": 155, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 233, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-10T12:38:03", "version": "67.34.63", "rules": 267, "probes": 385, "tn_probes": 157, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 235, "template_baseline_findings": 629, "backfill": false}
+{"ts": "2026-10-11T04:26:51", "version": "67.34.64", "rules": 267, "probes": 385, "tn_probes": 157, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 235, "template_baseline_findings": 629, "backfill": false}

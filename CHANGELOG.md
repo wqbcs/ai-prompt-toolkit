@@ -2,6 +2,45 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.64] - 2026-10-10
+
+### Added (R269 P2-28 MCP 工具定义注入 TPA/FSP 形态规则 — MCP-111/MCP-112)
+
+> 四问：定位未漂移（确定性静态门禁补 MCP 工具元数据注入面，OWASP MCP03）；
+> 核心价值=真实 TPA/FSP payload（Invariant 2025-04-01 / CyberArk FSP
+> 2025-05-30）在既有 267 规则安全族 **0 命中**（R269 探针先行基线实证留痕，
+> 双缺口=规则触发面×字段作用域），本轮补该缺口；方向=预研 P2-18 两轮
+> （R259 白皮书 + R261 机器实证）后立规，晋升条件 §6 五项全达成；陷阱自查=
+> 不重复造轮子（pipelock 层 1 取 3 类我方实证面 + 层 2 walk 先例对齐，LLM
+> 分类器面不采纳=零 LLM 楔子）。
+
+- **MCP-111 (HIGH)**：顶层 tool description TPA 注入形态（`::server:X::description`）
+- **MCP-112 (HIGH)**：inputSchema 递归 walk FSP 面（嵌套 property description /
+  非标字段如 `extra` / 键名即指令；`::server:X::inputSchema:<json path>` 位置
+  报告；depth 截断 20 防深嵌套 DoS，pipelock 层 2 同款有界）
+- **单一真源** `_tpa_find_hits` 三类实证面：①指令标签集（`<IMPORTANT>` /
+  `[CRITICAL]` / `**SYSTEM**`，NFKC 归一化匹配——全角标签绕过被单测钉死）
+  ②敏感文件路径（`~/.ssh|~/.aws|~/.cursor|id_rsa`）+ 外传动词共现
+  （路径/动词单独出现不告警=教育文本 TN 护栏）③键名指令面
+  （`content_from_reading_*ssh*` 形态）
+- **收窄** `_DESC_SECURITY_CATEGORIES` 10→8 类：剔除 inference_security /
+  inference2security——TN 实证品类错配（干净单行描述 "Generate QR codes..."
+  曾触发 P196/P197/P239 推理资源类规则）；既有 injection 断言
+  （P113/P163/P164）均属 security 类，收窄不影响
+- **探针先行 fixture**（`tests/fixtures/mcp_configs/`，`_probe_source` 来源
+  标注）：3 TP（tpa_s1_invariant 顶层 / tpa_s2_cyberark_nested 嵌套 /
+  tpa_s3_cyberark_extra 非标字段）+ 2 TN（tpa_tn_clean_schemas 6 干净
+  schema 0 findings / tpa_tn_educational 教育文本不触发 TPA 形态）
+- **单测** `tests/test_r269_mcp_tpa.py` 12 测试全绿（含深度截断 25 层不检出
+  vs 4 层浅层检出对照唯一性）；mcp-lint 既有面 23 测试不回归
+  （discover fixture 计数 10→15）
+- **映射登记**：MITRE AML.T0115（Publish Poisoned AI Artifacts）行补
+  MCP-111/112；OWASP MCP Top 10 = MCP03 Tool Poisoning
+- **双基线不回归**：lint 主管道 0 变更（MCP 面独立于 267 规则管道，
+  golden/漏检/FP/过防御/OOD 五面分母不变）——release_gate 全链复验
+- README 公开面：mcp-lint 能力表行 + "MCP 检测适用边界"段补 TPA/FSP 覆盖
+  声明（诚实边界保留：MCP-ITP 隐式语义投毒仍不覆盖）
+
 ## [v67.34.63] - 2026-10-10
 
 ### Added (R268 P2-27 零探针补欠收尾批：2 HIGH 规则 × 1TP+1TN = 4 探针 — HIGH 全量清零)

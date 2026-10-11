@@ -11546,12 +11546,6 @@
       "attack": null,
       "approved": false
     },
-    "security/mcp_config_scanner.py\u0000inference_security": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "security/mcp_config_scanner.py\u0000agent_security": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -11589,12 +11583,6 @@
       "approved": false
     },
     "security/mcp_config_scanner.py\u0000hallucination_security": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "security/mcp_config_scanner.py\u0000inference2security": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13777,6 +13765,41 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "security/mcp_config_scanner.py\u0000<\\s*(?:IMPORTANT|CRITICAL|SYSTEM|NOTE|WARNING)\\s*>|<\\s*/\\s*(?:IMPORTANT|CRITICAL|SYSTEM)\\s*>|\\[\\s*(?:CRITICAL|SYSTEM|IMPORTANT)\\s*\\]|\\*\\*\\s*(?:SYSTEM|IMPORTANT|INSTRUCTION)\\s*\\*\\*": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "<\t\t\t\t\t\t\t\t\t\t\t!",
+      "approved": true
+    },
+    "security/mcp_config_scanner.py\u0000~/\\.(?:ssh|aws|cursor|config|gnupg)/[\\w./-]+|/root/\\.ssh/[\\w./-]+|id_rsa|id_ed25519|\\.aws/credentials": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/mcp_config_scanner.py\u0000(?:read|append|include|pass|send|post|upload|exfiltrat|attach|transmit|write|copy|paste|embed).{0,40}?(?:param|field|variable|var|input|argument|response|message|file|content)|(?:param|field|variable|var|input|argument|response|message|file|content).{0,40}?(?:read|append|include|pass|send|post|upload|exfiltrat|attach|transmit)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/mcp_config_scanner.py\u0000(?:content|body|text|data)?_?(?:from|of|reading|read)[\\w-]*(?:ssh|key|token|secret|credential|passw)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/mcp_config_scanner.py\u0000\\b(?:read|first|you\\s+must|must|before\\s+answering)\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
+  },
+  "metadata": {
+    "approved_at": "2026-10-03",
+    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
+    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.63-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6620%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.64-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6629%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40385probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -92,7 +92,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 267条Lint规则(P001-P267)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等25大类 |
 | **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
-| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级8项安全检查 + tool描述security族规则 + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
+| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级8项安全检查 + tool描述security族规则(8类) + TPA/FSP注入形态检测(MCP-111/112, inputSchema递归walk, OWASP MCP03) + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
 | **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2026映射，自动风险评分 |
 | **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |
@@ -164,11 +164,14 @@ promptfoo eval 做 **PR 后/nightly** 的行为评估（采样层，不阻塞合
 ### MCP 检测适用边界（诚实声明）
 
 `mcp-lint` 是 **config/description 静态面**检测：能挡显式投毒（恶意指令/
-`ignore previous` 类）、rug pull（description 批准基线漂移）、隐藏通道
-（零宽/控制字符）。**不能**检测 MCP-ITP 类**隐式语义投毒**——tool 描述看似
-无害、仅在运行时上下文组合下才有害的投毒（相关论文实测静态检测器规避率
-MDR 0.96%）。这类属于运行时/行为层检测域，不在本工具范围；生产环境应组合
-运行时防护（网关层 schema 校验 + 输出审查）。我们不宣称覆盖做不到的面。
+`ignore previous` 类）、**TPA/FSP 工具定义注入**（MCP-111 顶层 description /
+MCP-112 inputSchema 递归 walk——指令标签+敏感文件外传+键名指令形态，
+OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
+批准基线漂移）、隐藏通道（零宽/控制字符）。**不能**检测 MCP-ITP 类
+**隐式语义投毒**——tool 描述看似无害、仅在运行时上下文组合下才有害的投毒
+（相关论文实测静态检测器规避率 MDR 0.96%）。这类属于运行时/行为层检测域，
+不在本工具范围；生产环境应组合运行时防护（网关层 schema 校验 + 输出审查）。
+我们不宣称覆盖做不到的面。
 
 ### 差异化优势
 

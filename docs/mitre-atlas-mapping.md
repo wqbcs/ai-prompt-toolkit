@@ -25,7 +25,7 @@
 | AML.T0088 Generate Deepfakes | LLM05 | P038-P040 多模态声明族 / P131 多模态输入声明 | 部分 |
 | AML.T0010 ML Supply Chain Compromise（.002 Data / .003 Model） | LLM03 | P221 模型来源 / P222 依赖审计 / P224 版本锁定 / P225 签名 / MCP-106 未固定版本 | 覆盖 |
 | AML.T0020 Training Data Poisoning（2026.08 由 Publish Poisoned Datasets 更名） | LLM04 | P223 数据溯源 | 部分 |
-| AML.T0115 Publish Poisoned AI Artifacts（2026.08 合并原 T0019+T0058；.000 Datasets / .001 Models） | LLM03/LLM04 | P221 来源验证 / P224 版本锁定 / P225 供应链签名 / **MCP-109/110 rug pull 基线漂移（R227, description sha256 已批准基线+漂移告警, Microsoft 官方点名面）** | 覆盖（静态面） |
+| AML.T0115 Publish Poisoned AI Artifacts（2026.08 合并原 T0019+T0058；.000 Datasets / .001 Models） | LLM03/LLM04 | P221 来源验证 / P224 版本锁定 / P225 供应链签名 / **MCP-109/110 rug pull 基线漂移（R227, description sha256 已批准基线+漂移告警, Microsoft 官方点名面）** / **MCP-111/112 TPA/FSP 形态检测（R269, 指令标签+敏感文件外传+键名指令, OWASP MCP03 Tool Poisoning, 真实 payload 探针先行）** | 覆盖（静态面） |
 | AML.T0092 Manipulate User LLM Chat History | LLM01 | P161/P164 指令保护 | 部分（会话级上下文操纵需运行时） |
 | AML.T0093 Prompt Infiltration via Public-Facing Application | LLM01 | mcp-lint description层 / P022 | 覆盖 |
 | AML.T0094 Delay Execution of LLM Instructions | LLM01 | （无规则） | **缺口（记录, 候选）** |

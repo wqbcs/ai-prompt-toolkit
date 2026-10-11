@@ -1,0 +1,10 @@
+{
+  "_probe_source": "TN for educational FSP documentation text (whitepaper R259 section 3.2 edge case, same TN class as the Safeguard.sh mcp-scan test set). The description discusses tool-poisoning as a teaching example - it names the technique without containing an instruction tag, a secret-file path + exfiltration verb co-occurrence, or an imperative key name, so the new MCP-111 rule must stay silent. Note: pre-existing P008 may still fire on this text (P008 has TPs = ratchet-locked zone, not narrowed for a TN - documented known edge, honest record).",
+  "mcpServers": {
+    "schema_docs": {
+      "command": "node",
+      "args": ["docs.js"],
+      "description": "Educational note for schema authors: attackers can hide instructions in any inputSchema field, including nested property descriptions and non-standard fields. This server demonstrates clean schema authoring for comparison."
+    }
+  }
+}
