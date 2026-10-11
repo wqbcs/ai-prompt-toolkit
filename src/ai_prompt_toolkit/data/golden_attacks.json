@@ -3470,6 +3470,186 @@
       "text": "鸿蒙应用通过 websocket 连接实时通道，启用 TLS 与证书固定，禁止明文传输。",
       "expected": [],
       "note": "R268 P2-27 收尾批探针 — P130 护栏 TN；场景=鸿蒙+websocket 面+TLS/证书固定/禁止明文声明；交叉核验 P130 不火(network security 声明护栏成立)"
+    },
+    {
+      "name": "r271_p003_tp_no_constraint",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请为新版功能写一个产品的介绍，覆盖核心价值、适用场景与升级收益，让内容通俗易懂、生动自然。",
+      "expected": [
+        "P003"
+      ],
+      "note": "缺失检测面：无 _CONSTRAINT_PATTERNS 任一约束词→实火"
+    },
+    {
+      "name": "r271_p003_tn_with_constraint",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请为新版功能写一个产品的介绍，覆盖核心价值、适用场景与升级收益。不要编造数据，字数控制在五百字以内。",
+      "expected": [],
+      "note": "TN：'不要/字数/控制在'命中 _CONSTRAINT_PATTERNS→沉默"
+    },
+    {
+      "name": "r271_p010_tp_api_no_fallback",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "调用天气 API 获取实时温度，为用户生成每日简报，输出必须使用 Markdown 格式。不要附加任何寒暄内容。",
+      "expected": [
+        "P010"
+      ],
+      "note": "_FALLBACK_CTX 门（API 调用）+ 无失败/回退表达→实火"
+    },
+    {
+      "name": "r271_p010_tn_api_with_fallback",
+      "category": "security",
+      "lang": "zh-Hans",
+      "text": "调用天气 API 获取实时温度。如果调用失败，回退到前一天的缓存数据，并在输出中注明这是缓存数据。不要附加任何寒暄内容。",
+      "expected": [],
+      "note": "TN：'如果…失败/回退'命中回退表达→沉默"
+    },
+    {
+      "name": "r271_p012_tp_dup_sentence",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请将结果以 JSON 格式输出。请将结果以 JSON 格式输出。不要附加任何多余说明，输出需包含状态码与数据主体两部分。",
+      "expected": [
+        "P012"
+      ],
+      "note": "句子级归一化重复（同句两次）→实火"
+    },
+    {
+      "name": "r271_p012_tn_no_dup",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请将结果以 JSON 格式输出。不要附加任何多余说明，输出需包含状态码与数据主体两部分。",
+      "expected": [],
+      "note": "TN：无重复句子→沉默"
+    },
+    {
+      "name": "r271_p013_tp_weak_example",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请概括会议内容的要点。\n示例：OK\n请确保摘要覆盖全部议题与行动项负责人。",
+      "expected": [
+        "P013"
+      ],
+      "note": "示例块 'OK' <20 字符=低质量→实火"
+    },
+    {
+      "name": "r271_p013_tn_rich_example",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请概括会议内容的要点。\n示例：首先议程讨论了三个议题，每个议题都有结论和行动项被明确记录。其次预算提案通过。\n请确保摘要覆盖全部议题与行动项负责人。",
+      "expected": [],
+      "note": "TN：示例块 >20 字符且信息完整→沉默"
+    },
+    {
+      "name": "r271_p014_tp_depth4",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "解析配置文件时，嵌套结构是 {\"a\": {\"b\": {\"c\": {\"d\": 1}}}}。请输出顶层键名，不要输出全部内容。",
+      "expected": [
+        "P014"
+      ],
+      "note": "花括号嵌套 4 层 >3→实火"
+    },
+    {
+      "name": "r271_p014_tn_depth3",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "解析配置文件时，嵌套结构是 {\"a\": {\"b\": {\"c\": 1}}}。请输出顶层键名，不要输出全部内容。",
+      "expected": [],
+      "note": "TN：恰好 3 层（边界值）不触发→沉默"
+    },
+    {
+      "name": "r271_p018_tp_gen_no_fewshot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请撰写一个产品的推广文案，语气要生动，不要使用任何标题党表达。目标读者是存量用户，发布渠道是官方公众号。",
+      "expected": [
+        "P018"
+      ],
+      "note": "_FEW_SHOT_GEN_CTX 门（撰写）+ 无示例 + 无结构锁定→实火"
+    },
+    {
+      "name": "r271_p018_tn_gen_with_fewshot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请撰写一个产品的推广文案，语气要生动，不要使用任何标题党表达。示例：'一键同步，文件始终保持最新，无需手动导出，随时查看历史记录。'",
+      "expected": [],
+      "note": "TN：带示例（'示例'命中豁免）→沉默"
+    },
+    {
+      "name": "r271_p020_tp_select_no_criteria",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请帮我挑选适合知识库项目的向量数据库，考虑数据量、查询 QPS 与运维成本，不要推荐任何付费方案。最终输出给出对比表。",
+      "expected": [
+        "P020"
+      ],
+      "note": "_EVAL_TASK_CTX 门（挑选=选型，R206 校准面）+ 无评估标准词表→实火"
+    },
+    {
+      "name": "r271_p020_tn_select_with_criteria",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请帮我挑选适合知识库项目的向量数据库，考虑数据量、查询 QPS 与运维成本，不要推荐任何付费方案。评估标准是：查询延迟、存储成本与社区活跃度。",
+      "expected": [],
+      "note": "TN：'评估标准'命中豁免词表→沉默"
+    },
+    {
+      "name": "r271_p023_tp_pos_neg_conflict",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请以 JSON 格式输出结果。不要以 JSON 格式输出结果。",
+      "expected": [
+        "P023"
+      ],
+      "note": "正指令'以 JSON 格式输出' vs 负指令同对象→归一化后冲突实火"
+    },
+    {
+      "name": "r271_p023_tn_no_conflict",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请以 JSON 格式输出结果。不要包含任何个人信息。输出的字段顺序需保持稳定，便于下游解析与比对。",
+      "expected": [],
+      "note": "TN：正负指令对象不同（JSON 输出 vs 个人信息）→无冲突沉默"
+    },
+    {
+      "name": "r271_p024_tp_example_violates",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "不要使用任何专业术语。\n示例：你可以使用专业术语。",
+      "expected": [
+        "P024"
+      ],
+      "note": "示例正向动作'使用专业术语' vs 负向指令同串→实火"
+    },
+    {
+      "name": "r271_p024_tn_example_consistent",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "不要使用任何专业术语。\n示例：请用最日常的大白话表达这一点，让普通用户也能立刻明白其中的含义。\n请确保输出的语气前后保持一致。",
+      "expected": [],
+      "note": "TN：示例语义与约束一致（大白话=不用术语）→ngram 重叠不足沉默"
+    },
+    {
+      "name": "r271_p026_tp_qa_no_fallback",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请根据产品手册回答客户的问题，答复保持专业友好，避免夸大宣传，必要时给出手工处理步骤。",
+      "expected": [
+        "P026"
+      ],
+      "note": "_P026_QA_CTX 门（回答客户问题，R207 校准面）+ 无回退表达→实火"
+    },
+    {
+      "name": "r271_p026_tn_qa_with_fallback",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "请根据产品手册回答客户的问题，答复保持专业友好。如果无法确定答案，请直接回复信息不足，不要编造内容。",
+      "expected": [],
+      "note": "TN：'如果无法…回复信息不足'命中回退表达→沉默"
     }
   ]
 }
