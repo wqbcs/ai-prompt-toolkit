@@ -4370,6 +4370,186 @@
       "text": "如果用户提交了表单，就保存；如果校验失败，给出错误提示并允许重新提交。",
       "expected": [],
       "note": "TN：'失败/错误'命中 _EXCEPTION→沉默"
+    },
+    {
+      "name": "r276_p109_tp_rag_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请基于知识库检索结果回答用户问题，直接给出答案。",
+      "expected": [
+        "P109"
+      ],
+      "note": "R212-6 RAG 面（知识库/检索）无 引用/置信度 声明→实火"
+    },
+    {
+      "name": "r276_p109_tn_rag_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请基于知识库检索结果回答用户问题，答案须标注引用来源并给出置信度。",
+      "expected": [],
+      "note": "TN：'引用/置信度'命中 _RAG_DECL→沉默"
+    },
+    {
+      "name": "r276_p110_tp_chain_no_recovery",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "首先调用工具A获取数据，然后调用工具B生成报告，依次完成全部环节。",
+      "expected": [
+        "P110"
+      ],
+      "note": "强信号（首先…然后/依次）+ 工具语境，无超时/错误恢复声明→实火"
+    },
+    {
+      "name": "r276_p110_tn_chain_with_recovery",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "首先调用工具A获取数据，然后调用工具B生成报告。每个调用需设置超时，失败时回退到缓存。",
+      "expected": [],
+      "note": "TN：'超时/回退'命中 _TOOL_DECL→沉默"
+    },
+    {
+      "name": "r276_p111_tp_reasoning_no_cot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请诊断系统延迟升高的根因，给出归因结论。",
+      "expected": [
+        "P111"
+      ],
+      "note": "R208-R210 推理面（诊断/归因）无 逐步/思维链 声明→实火"
+    },
+    {
+      "name": "r276_p111_tn_reasoning_with_cot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请诊断系统延迟升高的根因。请展示推理过程，逐步编号列出每个判断。",
+      "expected": [],
+      "note": "TN：'逐步/推理/编号'命中 _COT_DECL→沉默"
+    },
+    {
+      "name": "r276_p116_tp_bias_two",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "显然这是最好的方案，绝对优于其他选项，肯定不需要再评估。",
+      "expected": [
+        "P116"
+      ],
+      "note": "3 处 _BIAS_WORDS（显然/绝对/肯定）≥2 阈值，无中性声明→实火"
+    },
+    {
+      "name": "r276_p116_tn_neutral",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请客观比较两套方案，保持中立视角，从多角度给出权衡说明。",
+      "expected": [],
+      "note": "TN：'客观/中立/多角度'命中 _NEUTRAL_DECL→沉默"
+    },
+    {
+      "name": "r276_p117_tp_knowledge_no_factual",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请介绍统计学中的经典假设检验方法，并说明适用场景。",
+      "expected": [
+        "P117"
+      ],
+      "note": "R208-R210 知识面（统计）无 事实性约束声明→实火"
+    },
+    {
+      "name": "r276_p117_tn_knowledge_with_factual",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请介绍统计学中的经典假设检验方法，并说明适用场景。仅基于权威教材，不确定时如实说明。",
+      "expected": [],
+      "note": "TN：'仅基于/如实'命中 _FACTUAL_DECL→沉默"
+    },
+    {
+      "name": "r276_p120_tp_dialog_no_state",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "你是多轮对话助手，请理解用户意图并持续回复。",
+      "expected": [
+        "P120"
+      ],
+      "note": "R212-6 对话门（多轮）无 状态/记忆/最近N轮 声明→实火"
+    },
+    {
+      "name": "r276_p120_tn_dialog_with_state",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "你是多轮对话助手，请维护对话状态，仅保留最近五轮上下文。",
+      "expected": [],
+      "note": "TN：'状态/最近…轮'命中 _STATE_DECL→沉默"
+    },
+    {
+      "name": "r276_p123_tp_routing_no_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙应用时，实现从首页到详情页的页面导航跳转。",
+      "expected": [
+        "P123"
+      ],
+      "note": "鸿蒙门+导航/跳转（_ROUTING）无 Navigation/路由参数 声明→实火"
+    },
+    {
+      "name": "r276_p123_tn_routing_with_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙应用时，实现从首页到详情页的页面导航跳转，按 Navigation 路由规范传递路由参数。",
+      "expected": [],
+      "note": "TN：'Navigation/路由参数'命中 _ROUTING_DECL→沉默"
+    },
+    {
+      "name": "r276_p125_tp_multidevice_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要在手机与平板上运行，界面布局需兼顾两种形态。",
+      "expected": [
+        "P125"
+      ],
+      "note": "鸿蒙门+手机/平板（_MULTI_DEVICE）无 适配策略声明→实火"
+    },
+    {
+      "name": "r276_p125_tn_multidevice_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要在手机与平板上运行，采用多设备适配策略与响应式布局。",
+      "expected": [],
+      "note": "TN：'多设备.*适配/响应式.*布局'命中 _MULTI_DEVICE_DECL→沉默"
+    },
+    {
+      "name": "r276_p126_tp_a11y_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用的列表页需要支持屏幕阅读器朗读，保证障碍用户可用。",
+      "expected": [
+        "P126"
+      ],
+      "note": "鸿蒙门+屏幕阅读器/障碍用户（_ACCESSIBILITY）无 无障碍组件 声明→实火"
+    },
+    {
+      "name": "r276_p126_tn_a11y_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用的列表页需要支持屏幕阅读器朗读，使用无障碍组件并设置 contentDescription。",
+      "expected": [],
+      "note": "TN：'无障碍组件/contentDescription'命中 _ACCESSIBILITY_DECL→沉默"
+    },
+    {
+      "name": "r276_p128_tp_distributed_no_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用支持跨设备同步用户数据，手机与平板间流转偏好设置。",
+      "expected": [
+        "P128"
+      ],
+      "note": "鸿蒙门+跨设备/同步（_DISTRIBUTED）无 分布式数据规范声明→实火"
+    },
+    {
+      "name": "r276_p128_tn_distributed_with_decl",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用支持跨设备同步用户数据，声明分布式数据管理策略与同步机制。",
+      "expected": [],
+      "note": "TN：'分布式数据/数据管理'命中 _DISTRIBUTED_DECL→沉默"
     }
   ]
 }
