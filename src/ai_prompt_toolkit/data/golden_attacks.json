@@ -5396,6 +5396,186 @@
       "text": "输出必须每次完全一致，结果可复现；风格保持稳定专业，不做额外装饰。",
       "expected": [],
       "note": "TN：仅确定性面（完全一致/可复现），无 随机/创意/多样性/发挥想象（_RANDOMNESS_RE 不命中）→沉默"
+    },
+    {
+      "name": "r282_p011_tp_filler_ratio",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请检查这段代码。\n\n\n\n\n\n\n\n\n输出结果。",
+      "expected": [
+        "P011"
+      ],
+      "note": "10 行中 8 行空行（填充率 0.8>0.4 阈值）→实火"
+    },
+    {
+      "name": "r282_p011_tn_dense_text",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请检查这段代码，列出问题并按严重程度排序，给出修复建议。",
+      "expected": [],
+      "note": "TN：单行高密度文本填充率 0→沉默"
+    },
+    {
+      "name": "r282_p015_tp_constraint_overload",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "不要使用外部依赖。不可访问网络。禁止输出敏感信息。不能修改原文件。不允许删除数据。不得泄露凭据。切勿硬编码密钥。限制输出为纯文本。最多3个段落。至少给出2个示例。字数不超过200。",
+      "expected": [
+        "P015"
+      ],
+      "note": "约束词计数 13>10 阈值（_CONSTRAINT_PATTERNS 4 模式累计：约束词 8+数量词 5）→实火"
+    },
+    {
+      "name": "r282_p015_tn_light_constraints",
+      "category": "performance",
+      "lang": "zh-Hans",
+      "text": "请总结这段内容的核心观点，用三句话表达。",
+      "expected": [],
+      "note": "TN：约束词计数 0→沉默"
+    },
+    {
+      "name": "r282_p019_tp_complex_no_cot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "分析这份销售数据，评估其增长趋势，并判断下季度的主要风险。",
+      "expected": [
+        "P019"
+      ],
+      "note": "复杂度词 3（分析/评估/判断）≥2 且无 CoT 词（逐步/思考过程）→实火"
+    },
+    {
+      "name": "r282_p019_tn_complex_with_cot",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "分析这份销售数据，评估其增长趋势，请逐步展示思考过程后再给出结论。",
+      "expected": [],
+      "note": "TN：复杂度词 2 但'逐步+思考过程'命中 CoT 豁免→沉默"
+    },
+    {
+      "name": "r282_p025_tp_longform_no_length",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "帮我写一份产品分析报告，聚焦市场与竞品两个维度。",
+      "expected": [
+        "P025"
+      ],
+      "note": "长文语境（报告，_P025_LONGFORM_CTX）且无长度约束（_P025_LENGTH_PATTERNS 0 命中）→实火"
+    },
+    {
+      "name": "r282_p025_tn_longform_with_length",
+      "category": "structure",
+      "lang": "zh-Hans",
+      "text": "帮我写一份产品分析报告，聚焦市场与竞品两个维度，字数不超过800。",
+      "expected": [],
+      "note": "TN：'字数…不超过'命中 _P025_LENGTH_PATTERNS→沉默"
+    },
+    {
+      "name": "r282_p027_tp_cultural_safety_review",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请审查这份招聘文案，评估其中是否存在种族或性别歧视的表述风险。",
+      "expected": [
+        "P027"
+      ],
+      "note": "敏感词命中（种族/性别歧视，_P027_SENSITIVE_CULTURAL）——安全审查语境引用亦触发=LOW 审查提示设计面→实火"
+    },
+    {
+      "name": "r282_p027_tn_neutral_copy",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请审查这份产品说明的措辞是否中性、客观、清晰。",
+      "expected": [],
+      "note": "TN：_P027_SENSITIVE_CULTURAL 0 命中→沉默"
+    },
+    {
+      "name": "r282_p030_tp_model_dependent",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "本提示词依赖 GPT-4 完成复杂推理任务。",
+      "expected": [
+        "P030"
+      ],
+      "note": "模型依赖（GPT-4，_P030_MODEL_DEPENDENCY）且无兼容声明（兼容/适配/fallback/备选模型）→实火"
+    },
+    {
+      "name": "r282_p030_tn_model_compatible",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "本提示词依赖 GPT-4 完成复杂推理任务，兼容 Claude 与 Gemini。",
+      "expected": [],
+      "note": "TN：'兼容'命中 _P030_COMPATIBILITY→沉默"
+    },
+    {
+      "name": "r282_p048_tp_mixed_punctuation",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请,帮我审查这份合同,并列出主要风险点。",
+      "expected": [
+        "P048"
+      ],
+      "note": "中文标点存在（。）+中文语境英文标点（请,帮，[\\u4e00-\\u9fff][,.:;!?][\\u4e00-\\u9fff]）→实火"
+    },
+    {
+      "name": "r282_p048_tn_pure_zh_punct",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请帮我审查这份合同，并列出主要风险点。",
+      "expected": [],
+      "note": "TN：全角标点纯中文（，。），ASCII 标点 0 命中→沉默"
+    },
+    {
+      "name": "r282_p050_tp_redundant_phrases",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "您您请确认一下这份方案，如果可行的话，请请安排评审。",
+      "expected": [
+        "P050"
+      ],
+      "note": "冗余/敬语重复（您您+请请，_ZH_CN_HONORIFIC/_REDUNDANT_PATTERNS）→实火"
+    },
+    {
+      "name": "r282_p050_tn_clean_phrases",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请确认一下这份方案，如果可行的话，安排评审。",
+      "expected": [],
+      "note": "TN：无 您您/请请/的话的话/了的 重复形态（单'的话'不命中）→沉默"
+    },
+    {
+      "name": "r282_p053_tp_ambiguous_words",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请准备一些评审材料，尽量按时提交，大概在下周之前完成。",
+      "expected": [
+        "P053"
+      ],
+      "note": "模糊词汇（尽量/大概，_AMBIGUOUS_ZH 模糊词组）→实火"
+    },
+    {
+      "name": "r282_p053_tn_precise_words",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请在10月15日前提交3份评审材料。",
+      "expected": [],
+      "note": "TN：确定性表述（具体日期+数量），_AMBIGUOUS_ZH 0 命中→沉默"
+    },
+    {
+      "name": "r282_p055_tp_prod_no_version",
+      "category": "toolchain",
+      "lang": "zh-Hans",
+      "text": "这是一个用于生产环境部署的发布检查清单，覆盖配置核对、依赖锁定、回滚预案与监控告警四项内容，供上线前逐项核对使用。清单要求每个检查项都给出明确的通过标准与责任人，未通过的项目必须在部署前完成整改并留痕，确保生产环境变更可追溯、可回滚、可审计。",
+      "expected": [
+        "P055"
+      ],
+      "note": "len>100 且生产语境（生产/部署/上线，_P055_PROD_CTX 无否定前缀）无 frontmatter 版本标记→实火"
+    },
+    {
+      "name": "r282_p055_tn_prod_with_version",
+      "category": "toolchain",
+      "lang": "zh-Hans",
+      "text": "---\nversion: 1.2.0\n---\n这是一个用于生产环境部署的发布检查清单，覆盖配置核对、依赖锁定、回滚预案与监控告警四项内容，供上线前逐项核对使用。清单要求每个检查项都给出明确的通过标准与责任人，未通过的项目必须在部署前完成整改并留痕，确保生产环境变更可追溯、可回滚、可审计。",
+      "expected": [],
+      "note": "TN：同文但 frontmatter 含 version 字段→沉默（版本标记即豁免面）"
     }
   ]
 }
