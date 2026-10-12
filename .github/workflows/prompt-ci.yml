@@ -48,11 +48,13 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      # 本地体验中心(playground)随上线纳入门禁面：与 src/ 同一 lint 标准
+      # （scripts/ 其余为内部工具不在此列）。与本地 release_gate.py ruff 步逐字对齐（两处同改）。
       - name: Ruff check
-        run: ruff check src/ tests/
+        run: ruff check src/ tests/ scripts/playground.py
 
       - name: Ruff format check
-        run: ruff format --check src/ tests/
+        run: ruff format --check src/ tests/ scripts/playground.py
 
       - name: Run tests
         run: pytest tests/ -x -q --tb=short -k "not slow" --cov=ai_prompt_toolkit --cov-report=xml

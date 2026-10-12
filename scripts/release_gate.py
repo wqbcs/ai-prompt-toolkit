@@ -109,8 +109,11 @@ def build_steps() -> list[Step]:
         # CI test 作业同位置独立步; CI prompt-quality-gate 用 --skip 1,2
         # (coverage.xml 在 test 作业, 该作业 needs:test 后已判绿)
         Step("linter 覆盖率棘轮", [PY, "scripts/check_linter_coverage.py"]),
-        Step("ruff check", [PY, "-m", "ruff", "check", "src/", "tests/"]),
-        Step("ruff format --check", [PY, "-m", "ruff", "format", "--check", "src/", "tests/"]),
+        # 本地体验中心(playground)随上线纳入门禁面：与 src/ 同一 lint 标准。
+        # scripts/ 其余为内部 gate 工具不在此列（playground 是唯一对外交付脚本）。
+        # 命令与 CI prompt-ci.yml 的 Ruff check/format check 步逐字对齐（两处同改）。
+        Step("ruff check", [PY, "-m", "ruff", "check", "src/", "tests/", "scripts/playground.py"]),
+        Step("ruff format --check", [PY, "-m", "ruff", "format", "--check", "src/", "tests/", "scripts/playground.py"]),
         Step("mypy 棘轮", [PY, "scripts/check_mypy_ratchet.py"]),
         Step("双基线: 误报率棘轮", [PY, "scripts/check_false_positives.py", "--fail-above", FP_THRESHOLD]),
         Step("双基线: 漏检率棘轮", [PY, "scripts/check_miss_rate.py", "--fail-above", MISS_THRESHOLD]),

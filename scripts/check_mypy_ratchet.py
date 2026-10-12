@@ -19,7 +19,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE_FILE = ROOT / "mypy_baseline.txt"
-MYPY_ARGS = ["src/ai_prompt_toolkit", "--ignore-missing-imports", "--no-error-summary"]
+# 本地体验中心(playground)随上线纳入 mypy 棘轮面：CI 与本地都调本脚本（单真源），
+# 在此加文件即两处同生效。playground 零三方 import，只查 stdlib + 第一方。
+MYPY_ARGS = ["src/ai_prompt_toolkit", "scripts/playground.py", "--ignore-missing-imports", "--no-error-summary"]
 MAX_SAMPLE = 15  # 失败时输出的错误样例数
 
 # mypy退出码: 0=无错误 1=有类型错误 >=2=自身故障(内部错误/配置错误/未安装)
