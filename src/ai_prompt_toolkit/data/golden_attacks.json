@@ -5090,6 +5090,186 @@
       "text": "应用拆分为两个 HAP 模块。在 module.json5 中声明模块依赖：dependencies: {feature: 1.0.0}。",
       "expected": [],
       "note": "TN：'dependencies:'命中 _HSP_DEP_PATTERN（小写形式，该 pattern 大小写敏感）→沉默"
+    },
+    {
+      "name": "r280_p193_tp_cot_visible",
+      "category": "agent_security",
+      "lang": "zh-Hans",
+      "text": "在多 Agent 协作场景中，将思维链实时展示给用户，让推理过程透明可理解。",
+      "expected": [
+        "P193"
+      ],
+      "note": "思维链+推理过程（_COT_PATTERN）且无 内部/隔离/不暴露/不显示（_COT_ISOLATED_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p193_tn_cot_internal",
+      "category": "agent_security",
+      "lang": "zh-Hans",
+      "text": "Agent 的思维链仅保留在内部，不暴露给用户，对外只显示最终结论。",
+      "expected": [],
+      "note": "TN：'内部/不暴露'命中 _COT_ISOLATED_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p195_tp_memory_raw",
+      "category": "agent_security",
+      "lang": "zh-Hans",
+      "text": "助手需要保存用户的长期记忆，并在后续对话中检索这些记忆以提供个性化服务。",
+      "expected": [
+        "P195"
+      ],
+      "note": "长期记忆（_MEMORY_PATTERN）且无 隔离/脱敏/TTL/过期/per_user（_MEMORY_ISOLATED_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p195_tn_memory_isolated",
+      "category": "agent_security",
+      "lang": "zh-Hans",
+      "text": "长期记忆采用 per_user 隔离存储，设置 30 天过期 TTL，敏感字段写入前脱敏。",
+      "expected": [],
+      "note": "TN：'隔离/TTL/过期/per_user/脱敏'命中 _MEMORY_ISOLATED_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p198_tp_temp_high",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "模型生成参数配置：temperature: 2.0，以获得更多样的创意内容。",
+      "expected": [
+        "P198"
+      ],
+      "note": "temperature: 2.0 > 1.5 阈值（_TEMP_PATTERN 数值组）→实火"
+    },
+    {
+      "name": "r280_p198_tn_temp_normal",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "模型生成参数配置：temperature: 0.7，保持稳定专业的输出风格。",
+      "expected": [],
+      "note": "TN：temperature: 0.7 ≤ 1.5→沉默"
+    },
+    {
+      "name": "r280_p199_tp_dual_sampling",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "采样参数设置：top_p: 0.9，temperature: 0.7，兼顾多样性与稳定性。",
+      "expected": [
+        "P199"
+      ],
+      "note": "top_p:= 与 temperature:= 同现（_TOP_P_PATTERN + _TEMP_PATTERN 双门）→实火"
+    },
+    {
+      "name": "r280_p199_tn_single_sampling",
+      "category": "inference_security",
+      "lang": "zh-Hans",
+      "text": "采样参数：只设置 temperature: 0.7，top_p 保持模型默认值不显式配置。",
+      "expected": [],
+      "note": "TN：'top_p 保持…不显式配置'后无 :/=（_TOP_P_PATTERN 要求 top_p\\s*[:=]）→仅单参数→沉默"
+    },
+    {
+      "name": "r280_p203_tp_ai_unlabeled",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "生成的文案直接发布到对外渠道，并展示给终端用户阅读。",
+      "expected": [
+        "P203"
+      ],
+      "note": "生成+对外发布+终端用户+展示给…用户（_AI_USER_FACING_CTX）且无 AI生成/人工智能生成标识（_AI_LABEL_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p203_tn_ai_labeled",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "生成的文案展示给终端用户，页面底部明确标注'AI生成'与'人工智能生成'标识。",
+      "expected": [],
+      "note": "TN：'AI生成/人工智能生成'命中 _AI_LABEL_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p204_tp_model_no_fairness",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "系统使用大模型完成求职者评分与排名，结果直接输出给招聘方。",
+      "expected": [
+        "P204"
+      ],
+      "note": "模型（has_model）且无 公平/偏见/歧视/protected（_FAIRNESS_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p204_tn_model_fair",
+      "category": "compliance",
+      "lang": "zh-Hans",
+      "text": "系统使用大模型完成评分，上线前完成公平性评估，并对受保护群体做定期偏见审计。",
+      "expected": [],
+      "note": "TN：'公平/偏见/受保护'命中 _FAIRNESS_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p210_tp_embed_no_lock",
+      "category": "rag_security",
+      "lang": "zh-Hans",
+      "text": "RAG 管道使用嵌入模型对文档库向量化后存入向量数据库。",
+      "expected": [
+        "P210"
+      ],
+      "note": "嵌入/向量模型（has_embedding）且无 版本固定/pin/model.version/@v（_VERSION_LOCK_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p210_tn_embed_locked",
+      "category": "rag_security",
+      "lang": "zh-Hans",
+      "text": "RAG 管道使用嵌入模型向量化文档，嵌入模型版本固定，配置文件中以 model.version 字段锁定。",
+      "expected": [],
+      "note": "TN：'版本固定/model.version'命中 _VERSION_LOCK_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p212_tp_observed_v2_no_trace",
+      "category": "harmonyos_v16",
+      "lang": "zh-Hans",
+      "text": "性能监控函数添加 @ObservedV2 注解，启用鸿蒙系统的自动性能采集。",
+      "expected": [
+        "P212"
+      ],
+      "note": "@ObservedV2（_OBSERVED_V2_PATTERN）且无 @Trace/Trace 装饰（_TRACE_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p212_tn_observed_v2_with_trace",
+      "category": "harmonyos_v16",
+      "lang": "zh-Hans",
+      "text": "性能监控函数添加 @ObservedV2 注解，并配合 @Trace 装饰器实现分布式链路追踪。",
+      "expected": [],
+      "note": "TN：'@Trace/装饰器'命中 _TRACE_PATTERN→沉默"
+    },
+    {
+      "name": "r280_p214_tp_perm_all",
+      "category": "harmonyos_v16",
+      "lang": "zh-Hans",
+      "text": "服务在 manifest 中申请全权限 ohos.permission.ALL，确保系统能力全部可用。",
+      "expected": [
+        "P214"
+      ],
+      "note": "全权限+ohos.permission.ALL（_PERMISSION_ALL_PATTERN）→实火"
+    },
+    {
+      "name": "r280_p214_tn_perm_least",
+      "category": "harmonyos_v16",
+      "lang": "zh-Hans",
+      "text": "服务 manifest 仅声明最小必要权限：ohos.permission.INTERNET 与 ohos.permission.GET_NETWORK_INFO，遵循最小权限原则。",
+      "expected": [],
+      "note": "TN：2 条 ohos.permission.* ≤ 5 且无 ALL/ANY/全权限→沉默"
+    },
+    {
+      "name": "r280_p219_tp_degrade_no_check",
+      "category": "multimodal_security",
+      "lang": "zh-Hans",
+      "text": "若图像生成不可用，降级为纯文本描述，保证服务连续性。",
+      "expected": [
+        "P219"
+      ],
+      "note": "降级+纯文本（_DEGRADE_PATTERN）且无 约束保留/降级…评估/降级边界（_DEGRADE_CHECK_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r280_p219_tn_degrade_with_check",
+      "category": "multimodal_security",
+      "lang": "zh-Hans",
+      "text": "若图像生成不可用，降级为纯文本描述，降级后重新评估安全约束，确认约束保留。",
+      "expected": [],
+      "note": "TN：'约束保留'+'降级…评估'命中 _DEGRADE_CHECK_PATTERN→沉默"
     }
   ]
 }
