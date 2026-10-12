@@ -2,6 +2,40 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.76] - 2026-10-12
+
+### Added (R281 P2-27 零探针补欠 MEDIUM 收官第十一批：7 规则 × 1TP+1TN = 14 探针，MEDIUM 107 条清零)
+
+> 四问：定位未漂移（探针先行还欠账，零规则变更 T1）；核心价值=MEDIUM 队列
+> 收官批 7 条入漏检面锚点（探针覆盖度 233/267→240/267，89.9%，MEDIUM
+> 107 条全量清零），"漏检 0.00%"锚点从 335 单元扩到 342 单元；方向=
+> R280 方案文档 §4 P1（R281 收官批）；陷阱自查=还欠账非新指标，MEDIUM
+> 阶段收官=P2-27 第二阶段里程碑。
+
+- **golden 探针 585→599**（+14：MEDIUM 收官批 7 规则 P229/P234/P242/P243/
+  P247/P262/P263 各 1TP+1TN 全 zh-Hans，arkts_security×1 +
+  federated_security×1 + compliance_audit×2 + prompt_governance×1 +
+  portability×2）；期望命中单元 335→342；语言面 zh-Hans 476→490
+- **P2-27 MEDIUM 阶段清零（107/107=100%）**：R271-R281 十一批 214 探针
+  （20×10+14）；探针覆盖度 240/267=89.9%；漏检 0.00%（342/342）保持
+- **267 管道核验**：TP 7/7 实火目标规则 + TN 7/7 目标规则沉默（连续 6 轮
+  零失配）
+- **触发面取证（常量级）留痕**：P229 跨设备/DistributedDB+CommonEvent
+  （分布式+emitter 双门）无 签名/验证/加密/认证/校验 声明 / P234 联邦
+  FedAvg 聚合无 安全聚合/secret sharing/同态/加密/TEE 声明 / P242
+  智能助手+模型（R209 收窄 has_model）无 AI生成/透明/人类监督 声明 /
+  P243 姓名+地址+手机号 无 保留期/自动删除/删除策略 声明 / P247 A/B+
+  实验+treatment+variant 无 匿名/公平/隔离 声明 / P262 品牌 GPT-4 +
+  身份标记"你是/身份"共现（±40 窗口 _BRAND_WINDOW，frontmatter 是元数据
+  非锚点面）/ P263 完全一致+可复现（_DETERMINISM_RE）与 随机+创意
+  （_RANDOMNESS_RE）互斥共现
+- **规则页回写**：7 个规则页"探针覆盖 (golden)"段从"暂无"转锚定
+  （gen_rules_doc 机械生成）；README 公开面数字同步（585→599/335→342/
+  zh-Hans 476→490 + Miss-Rate 徽章 + 分语言表 zh-Hans 期望 278→285）
+- **后续**：LOW 27 条 ≤10/轮 bounded 3 批（R282 首批=前缀序前 10：
+  P011/P015/P019/P025/P027/P030/P048/P050/P053/P055）→ 267/267 探针
+  覆盖 100% 收口数字
+
 ## [v67.34.75] - 2026-10-11
 
 ### Added (R280 P2-27 零探针补欠 MEDIUM 第十批：10 规则 × 1TP+1TN = 20 探针)

@@ -5270,6 +5270,132 @@
       "text": "若图像生成不可用，降级为纯文本描述，降级后重新评估安全约束，确认约束保留。",
       "expected": [],
       "note": "TN：'约束保留'+'降级…评估'命中 _DEGRADE_CHECK_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p229_tp_dist_no_secure",
+      "category": "arkts_security",
+      "lang": "zh-Hans",
+      "text": "跨设备协同功能使用 DistributedDB 在设备间同步数据，并通过 CommonEvent 广播状态变化。",
+      "expected": [
+        "P229"
+      ],
+      "note": "分布式+跨设备+CommonEvent（_DISTRIBUTED_PATTERN/_EMITTER_PATTERN）且无 签名/验证/加密/认证/校验（_COMM_SECURE_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r281_p229_tn_dist_with_secure",
+      "category": "arkts_security",
+      "lang": "zh-Hans",
+      "text": "跨设备协同功能使用 DistributedDB 同步数据，全程端对端加密，CommonEvent 事件经签名验证后投递。",
+      "expected": [],
+      "note": "TN：'加密/签名/验证'命中 _COMM_SECURE_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p234_tp_fedavg_no_secureagg",
+      "category": "federated_security",
+      "lang": "zh-Hans",
+      "text": "联邦学习框架使用 FedAvg 算法聚合各设备上传的模型梯度，生成全局模型。",
+      "expected": [
+        "P234"
+      ],
+      "note": "联邦+FedAvg+聚合（_FED_AGG_PATTERN）且无 安全聚合/secret.shar/同态/加密/TEE（_SECURE_AGG_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r281_p234_tn_fedavg_secureagg",
+      "category": "federated_security",
+      "lang": "zh-Hans",
+      "text": "联邦学习框架使用 FedAvg 并结合安全聚合协议（SecureAgg）与 secret sharing，服务器无法窥探原始梯度。",
+      "expected": [],
+      "note": "TN：'安全聚合/secret sharing'命中 _SECURE_AGG_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p242_tp_model_no_transparency",
+      "category": "compliance_audit",
+      "lang": "zh-Hans",
+      "text": "智能助手使用大模型撰写工作日报，直接返回给业务方使用。",
+      "expected": [
+        "P242"
+      ],
+      "note": "智能助手+模型（has_model）且无 _AI_GEN_PATTERN（AI生成/由AI/模型输出/自动生成）与 _TRANSPARENCY_PATTERN（透明/可解释/声明/人类监督）→实火"
+    },
+    {
+      "name": "r281_p242_tn_model_with_transparency",
+      "category": "compliance_audit",
+      "lang": "zh-Hans",
+      "text": "智能助手使用大模型生成内容，页面明确标注'由AI生成'，并附决策逻辑透明声明与人类监督机制。",
+      "expected": [],
+      "note": "TN：'由AI生成/透明/声明/人类监督'命中 _AI_GEN_PATTERN 与 _TRANSPARENCY_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p243_tp_pii_no_retention",
+      "category": "compliance_audit",
+      "lang": "zh-Hans",
+      "text": "系统收集用户的姓名、地址与手机号，用于构建用户画像并做定向广告投放。",
+      "expected": [
+        "P243"
+      ],
+      "note": "姓名+地址+手机号（_PERSONAL_DATA_PATTERN）且无 保留/保留期/删除策略/自动删除/存储期限（_RETENTION_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r281_p243_tn_pii_with_retention",
+      "category": "compliance_audit",
+      "lang": "zh-Hans",
+      "text": "系统收集用户的姓名与手机号，保留期为 180 天，到期自动删除，删除策略已在隐私政策中公示。",
+      "expected": [],
+      "note": "TN：'保留/保留期/自动删除/删除策略'命中 _RETENTION_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p247_tp_abtest_no_guard",
+      "category": "prompt_governance",
+      "lang": "zh-Hans",
+      "text": "计划上线 A/B 实验：一半用户使用新版本（treatment 组），一半使用旧版本（control 组），两周后对比各组 variant 的指标差异。",
+      "expected": [
+        "P247"
+      ],
+      "note": "A/B+实验+treatment+variant（_AB_TEST_PATTERN）且无 匿名/公平/隔离/minimal（_AB_SECURE_PATTERN 豁免）→实火"
+    },
+    {
+      "name": "r281_p247_tn_abtest_with_guard",
+      "category": "prompt_governance",
+      "lang": "zh-Hans",
+      "text": "计划上线 A/B 实验，用户随机分组；实验期间对用户数据做匿名化处理，两组数据隔离，确保分组公平。",
+      "expected": [],
+      "note": "TN：'匿名/隔离/公平'命中 _AB_SECURE_PATTERN→沉默"
+    },
+    {
+      "name": "r281_p262_tp_identity_bind_brand",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "你是 GPT-4，一个强大的 AI 助手，请以 GPT-4 的身份回答以下问题。",
+      "expected": [
+        "P262"
+      ],
+      "note": "品牌 GPT-4（_MODEL_BRANDS）+身份标记'你是/身份'共现（_IDENTITY_MARKER_RE，±40 窗口 _BRAND_WINDOW）→实火"
+    },
+    {
+      "name": "r281_p262_tn_brand_no_identity",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "本工具支持 GPT-4 与 Claude 等多家模型服务商，用户可在运行时切换底层模型。",
+      "expected": [],
+      "note": "TN：品牌名（GPT-4/Claude）出现但 ±40 窗口内无身份标记（你是/作为/充当/扮演/自称）→沉默"
+    },
+    {
+      "name": "r281_p263_tp_determinism_conflict",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "输出必须每次完全一致且可复现，同时每次生成都要随机产生不同的创意内容。",
+      "expected": [
+        "P263"
+      ],
+      "note": "完全一致+可复现（_DETERMINISM_RE）与 随机+创意（_RANDOMNESS_RE）矛盾共现→实火"
+    },
+    {
+      "name": "r281_p263_tn_pure_determinism",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "输出必须每次完全一致，结果可复现；风格保持稳定专业，不做额外装饰。",
+      "expected": [],
+      "note": "TN：仅确定性面（完全一致/可复现），无 随机/创意/多样性/发挥想象（_RANDOMNESS_RE 不命中）→沉默"
     }
   ]
 }
