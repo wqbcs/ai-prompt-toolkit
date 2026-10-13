@@ -54,8 +54,9 @@ prompt-cli baseline
 
 **缺口体检（OWASP LLM Top 10 防御声明面）**：`prompt-cli gap-report -t ./prompts`
 对每个文件×每个风险度量"是否声明了防御意图"，产出可复现的缺口占比。
-对本仓库 26 个内置模板的自体检：平均缺口率 86%，LLM07（系统提示词泄露）100%
-文件缺声明 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
+对本仓库 26 个内置模板的自体检：平均缺口率 24.6%（R284 补强后，原 86%）；残留缺口
+（LLM09 向量 25 / LLM06 无约束消耗 17 / LLM04 供应链 12 / LLM03 越权 10）多为模板真实不
+涉及的攻击面 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
 口径诚实声明：度量防御**声明存在性**（静态文本面），非防御实际有效性。
 
 **老仓库接入（存量不清零也能开门禁）**：`prompt-cli lint -t ./prompts --baseline
