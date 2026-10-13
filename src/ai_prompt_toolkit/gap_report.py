@@ -126,11 +126,23 @@ def assess_text(text: str) -> dict[str, bool]:
     return {ref: any(p.search(text) for p in pats) for ref, pats in _MARKERS.items()}
 
 
+def assess_quality(text: str) -> dict[str, float]:
+    """返回 {LLMxx: 质量分 0..1} = 命中防御面数 / 该风险总防御面数。
+
+    连续度量声明质量(覆盖面): 命中越多防御面=声明越全=质量越高; 只命中 1 个
+    面=薄声明(低分)。与 assess_text(存在性, 命中任一即"声明了")并存——R235
+    选项①: 存在性可被"凑一个词"刷低, 质量分要求覆盖面, 更诚实。仍为静态文本
+    面, 非实际有效性。
+    """
+    return {ref: sum(1 for p in pats if p.search(text)) / len(pats) for ref, pats in _MARKERS.items()}
+
+
 def assess_files(files: dict[str, str]) -> dict[str, dict[str, Any]]:
     """每文件: 缺哪些风险防御 + gap率 + 分级。"""
     result: dict[str, dict[str, Any]] = {}
     for name, text in sorted(files.items()):
         covered = assess_text(text)
+        quality = assess_quality(text)
         gaps = sorted(ref for ref, ok in covered.items() if not ok)
         gap_rate = len(gaps) / len(covered)
         grade = "pass"
@@ -142,13 +154,15 @@ def assess_files(files: dict[str, str]) -> dict[str, dict[str, Any]]:
             "covered": [ref for ref, ok in covered.items() if ok],
             "gaps": gaps,
             "gap_rate": round(gap_rate, 4),
+            "quality": round(sum(quality.values()) / len(quality), 4),
+            "quality_facets": {ref: round(quality[ref], 4) for ref in quality},
             "grade": grade,
         }
     return result
 
 
 def aggregate(files: dict[str, str]) -> dict[str, Any]:
-    """聚合: 每风险缺防御的文件占比(社会证明数字) + 每文件分级 + 总缺口率。"""
+    """聚合: 每风险缺防御占比(存在性) + 每风险声明质量(质量) + 每文件分级 + 总缺口率/总质量。"""
     per_file = assess_files(files)
     n = len(files) or 1
     risk_gaps: dict[str, dict[str, Any]] = {}
@@ -160,10 +174,12 @@ def aggregate(files: dict[str, str]) -> dict[str, Any]:
             "lacking_count": len(lacking),
             "lacking_rate": round(len(lacking) / n, 4),
             "lacking_files": lacking,
+            "avg_quality": round(sum(d["quality_facets"][ref] for d in per_file.values()) / n, 4),
             "remediation": _OWASP_REMEDIATIONS.get(ref, ""),
             "lint_rules": coverage.get(ref, {}).get("lint_rules", []),
         }
     grades = [d["grade"] for d in per_file.values()]
+    avg_quality = round(sum(d["quality"] for d in per_file.values()) / n, 4)
     return {
         "generated_at": datetime.now().isoformat(),
         "file_count": len(files),
@@ -172,9 +188,16 @@ def aggregate(files: dict[str, str]) -> dict[str, Any]:
         "summary": {
             "grade_distribution": {g: grades.count(g) for g in ("critical", "high", "medium", "low", "pass")},
             "avg_gap_rate": round(sum(d["gap_rate"] for d in per_file.values()) / n, 4),
+            "avg_quality": avg_quality,
+            "avg_quality_deficit": round(1 - avg_quality, 4),
             "worst_risk": max(risk_gaps.items(), key=lambda kv: kv[1]["lacking_rate"])[0] if risk_gaps else "",
+            "thinnest_risk": min(risk_gaps.items(), key=lambda kv: kv[1]["avg_quality"])[0] if risk_gaps else "",
         },
-        "caveat": "度量防御声明/意图存在性(静态文本面), 非防御实际有效性; 运行时防护不在检测域",
+        "caveat": (
+            "双口径(均静态文本面, 非实际有效性, 运行时防护不在检测域): "
+            "存在性=gap_rate, 每风险命中任一防御面即视为声明了; "
+            "质量=quality, 每风险命中防御面数/总面数(多面=声明越全, 薄声明=低分)。"
+        ),
     }
 
 
@@ -182,33 +205,43 @@ def format_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# OWASP LLM Top 10 防御缺口报告",
         "",
-        f"生成: {report['generated_at']} · 文件数: {report['file_count']} · 平均缺口率: {report['summary']['avg_gap_rate']:.0%}",
+        (
+            f"生成: {report['generated_at']} · 文件数: {report['file_count']} · "
+            f"平均缺口率(存在性): {report['summary']['avg_gap_rate']:.0%} · "
+            f"平均声明质量: {report['summary']['avg_quality']:.0%}(质量缺口 {report['summary']['avg_quality_deficit']:.0%})"
+        ),
         "",
-        "> 口径: 度量**防御声明/意图存在性**(静态文本面), 非实际有效性; 运行时防护不在检测域。",
+        "> 双口径(均静态文本面, 非实际有效性, 运行时防护不在检测域): "
+        "**存在性**=每风险命中任一防御面即视为声明了; "
+        "**质量**=每风险命中防御面数/总面数(多面=声明越全, 薄声明=低分)。",
         "",
-        "## 每风险防御缺口(缺声明的文件占比)",
+        "## 每风险防御缺口(存在性) × 声明质量",
         "",
-        "| 风险 | 名称 | 缺声明文件 | 占比 | 映射Lint规则 |",
-        "|---|---|---|---|---|",
+        "| 风险 | 名称 | 缺声明文件 | 存在性占比 | 声明质量 | 映射Lint规则 |",
+        "|---|---|---|---|---|---|",
     ]
     for ref, d in sorted(report["risks"].items()):
         rules = d["lint_rules"]
         rules_s = f"{len(rules)}条({', '.join(rules[:4])}{'…' if len(rules) > 4 else ''})" if rules else "—"
         lines.append(
-            f"| {ref} | {d['name']} | {d['lacking_count']}/{report['file_count']} | {d['lacking_rate']:.0%} | {rules_s} |"
+            f"| {ref} | {d['name']} | {d['lacking_count']}/{report['file_count']} | {d['lacking_rate']:.0%} | {d['avg_quality']:.0%} | {rules_s} |"
         )
     worst = report["summary"]["worst_risk"]
+    thinnest = report["summary"]["thinnest_risk"]
     lines += [
         "",
-        f"**最大缺口风险**: {worst} {report['risks'][worst]['name']} ({report['risks'][worst]['lacking_rate']:.0%} 文件缺防御声明)",
+        f"**最大缺口风险(存在性)**: {worst} {report['risks'][worst]['name']} ({report['risks'][worst]['lacking_rate']:.0%} 文件缺防御声明)  "
+        f"**最薄风险(质量)**: {thinnest} {report['risks'][thinnest]['name']} (平均声明质量 {report['risks'][thinnest]['avg_quality']:.0%})",
         "",
         "## 每文件分级",
         "",
-        "| 文件 | 缺口 | 缺哪些风险 | 分级 |",
-        "|---|---|---|---|",
+        "| 文件 | 缺口(存在性) | 声明质量 | 缺哪些风险 | 分级 |",
+        "|---|---|---|---|---|",
     ]
     for name, d in sorted(report["per_file"].items(), key=lambda kv: -kv[1]["gap_rate"]):
-        lines.append(f"| {name} | {len(d['gaps'])}/10 | {', '.join(d['gaps']) or '—'} | {d['grade']} |")
+        lines.append(
+            f"| {name} | {len(d['gaps'])}/10 | {d['quality']:.0%} | {', '.join(d['gaps']) or '—'} | {d['grade']} |"
+        )
     lines += ["", "## 修复建议(按最大缺口风险)", ""]
     for ref, d in sorted(report["risks"].items(), key=lambda kv: -kv[1]["lacking_rate"])[:3]:
         if d["lacking_count"] == 0:

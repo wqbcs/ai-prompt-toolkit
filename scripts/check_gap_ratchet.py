@@ -1,21 +1,22 @@
-"""R233-P1-10: 缺口报告 CI 棘轮(平均缺口率只收紧不放松)。
+"""R233-P1-10 / R284: 缺口报告 CI 棘轮(双口径只收紧不放松)。
 
-gap-report 平均缺口率(当前基线 0.8577, 26 模板)从"展示"变"门禁":
-缺口数字变差(防御声明覆盖下降)即红; 变好=棘轮自动受益(降基线走独立
-commit+理由, 同双基线纪律)。
+双口径(R284 升级, R235 选项①):
+- 存在性 avg_gap_rate: 每风险命中任一防御面即"声明了"。不得上升。
+- 质量 avg_quality: 每风险命中防御面数/总面数(多面=声明越全, 薄声明=低分)。
+  不得下降。存在性可被"凑一个词"刷低, 质量分要求覆盖面, 更诚实(R235 关切)。
 
 设计(对抗性审查后):
 1. 程序化调用 gap_report.aggregate(同一真源, 非子进程)——与 CLI gap-report
    同一函数, 数字 100% 一致。
-2. 棘轮语义: avg_gap_rate > 基线 即红(严格"不得变差"; 0 容差——缺口率是
-   4 位小数, 同输入逐字节一致=楔子, 无浮点漂移需要容差)。
-3. 基线文件缺=红(诚实失败, 与 mypy 棘轮缺基线同惯例)。
+2. 棘轮语义: 任一指标变差即红(严格"不得变差"; 0 容差——4 位小数, 同输入
+   逐字节一致=楔子, 无浮点漂移需要容差)。
+3. 基线文件缺=红; 基线缺质量字段(旧基线)=红(诚实失败, 与 mypy 棘轮缺基线同惯例)。
 4. 目标面=src/ai_prompt_toolkit/templates(与 CI 增量门禁同目录, 口径统一);
-   P2-05 模板补强后 86%→<70% 走独立 commit 降基线。
+   模板补强/口径调整后走独立 commit 降/升基线。
 
 用法:
-    python scripts/check_gap_ratchet.py               # 基线对比, 变差即红
-    python scripts/check_gap_ratchet.py --update      # 重存基线(独立 commit+理由)
+    python scripts/check_gap_ratchet.py               # 双基线对比, 变差即红
+    python scripts/check_gap_ratchet.py --update      # 重存双基线(独立 commit+理由)
 """
 
 from __future__ import annotations
@@ -37,22 +38,24 @@ def _load_files() -> dict[str, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--update", action="store_true", help="重存基线(需独立 commit+理由)")
+    ap.add_argument("--update", action="store_true", help="重存双基线(需独立 commit+理由)")
     args = ap.parse_args()
 
     from ai_prompt_toolkit.gap_report import aggregate
 
     report = aggregate(_load_files())
-    current = report["summary"]["avg_gap_rate"]
+    current_rate = report["summary"]["avg_gap_rate"]      # 存在性: 不得上升
+    current_quality = report["summary"]["avg_quality"]    # 质量: 不得下降
 
     if args.update:
         BASELINE.write_text(
             json.dumps(
                 {
-                    "avg_gap_rate": current,
+                    "avg_gap_rate": current_rate,
+                    "avg_quality": current_quality,
                     "file_count": report["file_count"],
                     "updated_at": datetime.now().isoformat(),
-                    "note": "R233-P1-10 基线初值(当前实测)",
+                    "note": "双口径基线(R284): 存在性 avg_gap_rate + 质量 avg_quality, 各自只收紧不放松",
                 },
                 ensure_ascii=False,
                 indent=2,
@@ -60,7 +63,10 @@ def main() -> int:
             + "\n",
             encoding="utf-8",
         )
-        print(f"基线已更新: avg_gap_rate={current} ({BASELINE}) — 独立 commit+理由")
+        print(
+            f"基线已更新: 存在性 avg_gap_rate={current_rate} | 质量 avg_quality={current_quality} "
+            f"({BASELINE}) — 独立 commit+理由"
+        )
         return 0
 
     if not BASELINE.exists():
@@ -69,12 +75,21 @@ def main() -> int:
 
     base = json.loads(BASELINE.read_text(encoding="utf-8"))
     base_rate = base["avg_gap_rate"]
-    print(f"平均缺口率: 当前 {current:.4f} ({report['file_count']} 文件) | 基线 {base_rate:.4f}")
-    if current > base_rate:
-        print("✗ 缺口率上升 — 防御声明覆盖下降, 禁止收口(棘轮只收紧不放松)")
+    base_quality = base.get("avg_quality")
+    print(f"存在性缺口率: 当前 {current_rate:.4f} ({report['file_count']} 文件) | 基线 {base_rate:.4f}")
+    if current_rate > base_rate:
+        print("✗ 存在性缺口率上升 — 防御声明覆盖下降, 禁止收口(棘轮只收紧不放松)")
         print("  若为有意变更(模板重构/口径调整): 独立 commit 跑 --update 降/升基线+理由")
         return 1
-    print("✓ 缺口棘轮通过(未变差; 下降不强制降基线, 收紧留独立 commit)")
+    if base_quality is None:
+        print(f"✗ 基线缺质量字段(旧基线) — 当前质量 {current_quality:.4f}; 跑 --update 立质量基线+理由")
+        return 1
+    print(f"声明质量: 当前 {current_quality:.4f} | 基线 {base_quality:.4f}")
+    if current_quality < base_quality:
+        print("✗ 声明质量下降 — 防御声明覆盖面变薄, 禁止收口(棘轮只收紧不放松)")
+        print("  若为有意变更: 独立 commit 跑 --update 降/升基线+理由")
+        return 1
+    print("✓ 缺口棘轮通过(双口径均未变差; 收紧留独立 commit)")
     return 0
 
 

@@ -1,6 +1,7 @@
 {
   "avg_gap_rate": 0.2462,
+  "avg_quality": 0.3302,
   "file_count": 26,
-  "updated_at": "2026-10-13T10:00:01.871259",
-  "note": "R233-P1-10 基线初值(当前实测)"
+  "updated_at": "2026-10-13T10:17:54.856212",
+  "note": "双口径基线(R284): 存在性 avg_gap_rate + 质量 avg_quality, 各自只收紧不放松"
 }
