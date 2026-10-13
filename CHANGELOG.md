@@ -2,6 +2,27 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.78] - 2026-10-12
+
+### Added (上线前巡检完善：本地体验中心纳入上线门禁面)
+
+> 四问：定位未漂移（上线前全面自动巡检 + playground 收口，零规则变更 T1）；
+> 核心价值=体验中心随上线进门禁面（ruff/mypy 本地=CI 两处同改，杜绝
+> "未跟踪 WIP 绕过质量面"）；方向=巡检发现的唯一待定项（playground）按
+> 既有"每轮=升版"节奏收口；陷阱自查=只修根因（mypy 变量复用）不抬基线，
+> 门禁写步在未变版本上的重复 baseline 快照已还原，本次升版=真实新点。
+
+- **playground 纳入门禁面**：`ruff check/format`（本地 `release_gate` +
+  CI `prompt-ci` 两处逐字同改）+ mypy 棘轮 `MYPY_ARGS`（单真源，本地/CI
+  同生效）纳入 `scripts/playground.py`；依赖清单无需扩展（零三方 import）
+- **修根因**：`_baseline_payload()` 的 `b/o` 先推断 `list[dict]` 再赋 dict
+  致 mypy 9 error——变量改名 `b_list/o_list`，基线 0 未抬
+- **安全加固**：加 `MAX_BODY_BYTES=1MB`（超限 413，localhost 纵深防御）；
+  安全审查=127.0.0.1 绑定/路径全精确匹配无逃逸/无外呼/只读/前端 `esc()`
+  全字段转义无 XSS
+- **巡检基线**：pytest 6631 通过 0 失败；release_gate 全链 26/26 绿；
+  误报 0.82%（<1%）/ 漏检 0%（<5%）/ 过防御 11.50% 不回归
+
 ## [v67.34.77] - 2026-10-12
 
 ### Added (R282 P2-27 零探针补欠 LOW 首批：10 规则 × 1TP+1TN = 20 探针)
