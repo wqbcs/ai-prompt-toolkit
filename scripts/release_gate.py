@@ -125,6 +125,10 @@ def build_steps() -> list[Step]:
         # R242-P2-12: README 分语言检测基线表数字核对(与 run_miss_rate per_language
         # 单一真源一致; 防手写漂移=02 P2-11 状态列 103/46/6/2 陈旧计数族同病)
         Step("分语言基线 README 核对", [PY, "scripts/check_language_baseline_readme.py"]),
+        # R283: README 组件统计数字核对(过防御误杀率/评估维度数·类别数/Provider 数
+        # 对齐运行时单一真源; 防手写漂移=过防御停 R250/维度停 80/Provider 21-24 不一致
+        # 同源; 与 check_language_baseline_readme 同形态, 补齐"组件统计"面)
+        Step("README 组件统计核对", [PY, "scripts/check_readme_metrics_drift.py"]),
         # R243-1: 02 总板状态列 vs CHANGELOG 声称 vs sha 存在性三向核对
         # (P3-17 脚本化: 3 轮内 3 处板漂移="完成轮次未回写状态列"机器全查)
         Step("板状态核对", [PY, "scripts/check_board_status.py"]),
