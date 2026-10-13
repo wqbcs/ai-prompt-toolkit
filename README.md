@@ -35,8 +35,8 @@ prompt-cli baseline
 **过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
 "含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
 用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
-实测：**安全族误杀率 20.94%**（89 规则 @ 339 样本，首点 33.92%→R250 首批
-4 条 pattern 修复后 20.94%，见
+实测：**安全族误杀率 11.50%**（89 规则 @ 339 样本，首点 33.92%，R250→R251→R253
+逐批探针先行修复后 11.50%，见
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
 这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
 曲线只收紧不放松。
@@ -76,13 +76,13 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 | 能力 | 数量 | 详情 |
 |------|------|------|
 | **Lint规则** | 267 | P001-P267，196条可自动修复，含多模态/安全/供应链/Agent/可移植性等25大类专项规则 |
-| **评估维度** | 130 | D01-D130，6大类(structure/quality/security/performance/fairness/toolchain) |
+| **评估维度** | 130 | D01-D130，8大类(structure/quality/security/performance/fairness/toolchain/harmonyos/compliance) |
 | **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
 | **红队探针** | 23 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗/图像注入/音频注入/跨模态泄露 |
 | **红队检测器** | 11 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常/多模态输出检测/链式攻击检测 |
 | **MCP工具** | 73 | 完整MCP Server，字典O(1)路由 |
-| **LLM Provider** | 24 | OpenAI/Claude/DeepSeek/通义千问/智谱/Moonshot/百度/MiniMax/华为/盘古/ModelArts/豆包/星火/百川/商汤等 |
+| **LLM Provider** | 25 | OpenAI/Claude/DeepSeek/通义千问/智谱/Moonshot/百度/MiniMax/华为/盘古/ModelArts/豆包/星火/百川/商汤等 |
 | **内置模板** | 18 | 华为云/鸿蒙/盘古5/通用QA等 |
 | **Prompt消毒** | 8层 | 注入/PII/Unicode/供应链/结构/编码/格式/语言 |
 
@@ -96,10 +96,10 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
 | **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2026映射，自动风险评分 |
 | **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |
-| **评估引擎** | `prompt-cli evaluate` | 80个评估维度(D01-D80)，快速/完整双模式，7大类评估 |
+| **评估引擎** | `prompt-cli evaluate` | 130个评估维度(D01-D130)，快速/完整双模式，8大类评估 |
 | **华为云合规** | `prompt-cli compliance` | 7域加权评分(数据隐私/模型安全/访问控制/内容安全/运维安全/供应链安全/合规认证)，等保2.0映射，CRITICAL一票否决 |
 | **条件编译** | `prompt-cli compile` | 按模型/语言/行业条件编译提示词模板（类C预处理器语法） |
-| **A/B测试** | `prompt-cli ab-test` | 贝叶斯统计(Thompson Sampling+SPRT)，21种LLM Provider |
+| **A/B测试** | `prompt-cli ab-test` | 贝叶斯统计(Thompson Sampling+SPRT)，25种LLM Provider |
 | **版本管理** | `prompt-cli version` | Git-like diff/rollback，语义Diff(安全策略变更=critical) |
 | **Prompt优化** | `prompt-cli optimize` | 自动优化+7种断言验证(contains/not_contains/regex/length_min/max/no_pii/no_injection) |
 | **MCP Server** | `prompt-cli mcp` | 73个MCP工具，标准stdio JSON-RPC，字典O(1)路由 |
@@ -181,7 +181,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
 - **Prompt消毒器**：8层检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言)
-- **21种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
+- **25种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
 - **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
 - **MCP Server**：73个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
 
@@ -248,7 +248,7 @@ prompt-cli redteam -s my_prompt.md --probe dan,jailbreak
 # Probe扫描(OWASP LLM Top 10 2026)
 prompt-cli probe -s my_prompt.md --probe all
 
-# 评估(80维度)
+# 评估(130维度)
 prompt-cli evaluate -s my_prompt.md --mode full
 
 # 华为云合规检查
@@ -374,7 +374,7 @@ src/ai_prompt_toolkit/
 │   ├── scorer.py             # CVSS-like安全评分
 │   └── inheritance_auditor.py    # 继承审计
 ├── probe_framework.py        # garak风格Probe Framework(23探针: 15探针+8检测器, 全局注册表116)
-├── evaluator.py              # 评估引擎(80维度,7大类)
+├── evaluator.py              # 评估引擎(130维度,8大类)
 ├── prompt_optimizer.py       # Prompt优化+verify_assertions(7种)
 ├── prompt_diff.py            # 语义Diff+合并+哈希
 ├── prompt_template.py        # 18个内置模板(华为云/鸿蒙/盘古5)
@@ -385,7 +385,7 @@ src/ai_prompt_toolkit/
 ├── adversarial.py            # 10个攻击类
 ├── compiler/                 # 条件编译引擎
 ├── redteam/                  # 红队对抗引擎
-├── ab_test/                  # A/B测试引擎(21 Provider)
+├── ab_test/                  # A/B测试引擎(25 Provider)
 ├── i18n/                     # 国际化引擎
 ├── market/                   # 模板市场(FastAPI)
 ├── dataset/                  # 数据集管理
@@ -415,7 +415,7 @@ graph LR
     D -->|23探针(15+8)| D1[OWASP LLM Top 10 2026映射]
     D -->|8检测器| D2[越狱/泄露/注入/编码/伦理/偏见/误导/拒绝]
     E -->|10攻击类| E1[DAN/注入/XSS/泄露等]
-    F -->|80维度| F1[D01-D80 7大类评估]
+    F -->|130维度| F1[D01-D130 8大类评估]
     G -->|7域加权| G1[数据隐私/模型安全/访问控制/内容安全/运维/供应链/合规]
     G -->|CRITICAL一票否决| G2[等保2.0映射+SARIF]
     H -->|语义Diff| H1[安全变更=critical/角色=high]
@@ -430,7 +430,7 @@ graph TB
         SCAN[scan] --> DEPTH[5层深度检测]
         PROBE[probe] --> OWASP[OWASP Top 10]
         REDTEAM[redteam] --> ATTACK[10攻击类]
-        EVAL[evaluate] --> DIMS[80维度]
+        EVAL[evaluate] --> DIMS[130维度]
         COMPLIANCE[compliance] --> HC[华为云7域]
         COMPILE[compile] --> CMP[条件编译]
         AB[ab-test] --> BAYES[贝叶斯统计]
@@ -479,16 +479,18 @@ graph TB
     CLI --> PROBES
 ```
 
-## 评估维度 (80个)
+## 评估维度 (130个)
 
 | 类别 | 维度 | 示例 |
 |------|------|------|
-| **structure** | 11 | D01角色清晰度/D02指令明确性/D03约束完整性/D04输出格式/... |
-| **quality** | 17 | D17示例覆盖/D18错误处理/D19边界情况/D25思维链/D26工具调用/... |
-| **security** | 12 | D34注入防御/D35PII保护/D36供应链安全/D74隐私合规/D75审计追溯/... |
-| **performance** | 10 | D46Token效率/D47缓存友好/D48延迟优化/... |
-| **fairness** | 5 | D54偏见检测/D55公平性/D72伦理对齐/D73偏见缓解/... |
-| **toolchain** | 25 | D56模板化/D57版本管理/D66CoT/D78i18n/D79盘古适配/D80鸿蒙贴合/... |
+| **structure** | 16 | D01角色清晰度/D02目标明确性/D03输出格式规范/... |
+| **quality** | 28 | D31示例质量/D32推理链引导/D33错误处理完整性/... |
+| **security** | 32 | D11注入防御/D12敏感信息保护/D13权限最小化/... |
+| **performance** | 16 | D21Token效率/D22响应延迟优化/D23缓存友好性/... |
+| **fairness** | 5 | D63偏见公平性/D64文化包容性/D65可访问性/... |
+| **toolchain** | 29 | D41工具链可运行性/D42API可达性/D43依赖完整性/... |
+| **harmonyos** | 1 | D96鸿蒙分布式一致性 |
+| **compliance** | 3 | D100赛事评分契合度/D122合规框架覆盖/D130鸿蒙NEXT适配 |
 
 ## 内置模板 (18个)
 
