@@ -5576,6 +5576,312 @@
       "text": "---\nversion: 1.2.0\n---\n这是一个用于生产环境部署的发布检查清单，覆盖配置核对、依赖锁定、回滚预案与监控告警四项内容，供上线前逐项核对使用。清单要求每个检查项都给出明确的通过标准与责任人，未通过的项目必须在部署前完成整改并留痕，确保生产环境变更可追溯、可回滚、可审计。",
       "expected": [],
       "note": "TN：同文但 frontmatter 含 version 字段→沉默（版本标记即豁免面）"
+    },
+    {
+      "name": "r285_p056_tp_deep_heading",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "### 部署步骤\n1. 检查配置\n2. 执行发布\n#### 回滚要点\n- 保留旧版本镜像\n##### 应急联系人\n值班群 12345，负责人见值班表。",
+      "expected": [
+        "P056"
+      ],
+      "note": "TP：含 5 级标题 #####（P056=标题层级>4，_HEADING_PATTERN 捕获组长度>4）"
+    },
+    {
+      "name": "r285_p056_tn_heading_max4",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "### 部署步骤\n1. 检查配置\n2. 执行发布\n#### 回滚要点\n- 保留旧版本镜像\n值班群 12345，负责人见值班表。",
+      "expected": [],
+      "note": "TN：同文最高 4 级标题 ####（len≤4 不满足 deep 条件）→沉默"
+    },
+    {
+      "name": "r285_p061_tp_three_blanks",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "## 角色\n你是客服助手，解答用户问题。\n\n\n\n## 任务\n保持回答简洁，控制在三句话以内。",
+      "expected": [
+        "P061"
+      ],
+      "note": "TP：4 个连续换行=3 个连续空行（_CONSECUTIVE_BLANKS 四连换行形态）"
+    },
+    {
+      "name": "r285_p061_tn_two_blanks",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "## 角色\n你是客服助手，解答用户问题。\n\n\n## 任务\n保持回答简洁，控制在三句话以内。",
+      "expected": [],
+      "note": "TN：3 个换行=2 个连续空行（低于四连换行门槛）→沉默"
+    },
+    {
+      "name": "r285_p064_tp_fm_no_version",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "---\nname: support-template\ndescription: 客服场景提示词模板\n---\n你是客服助手，解答用户问题。",
+      "expected": [
+        "P064"
+      ],
+      "note": "TP：以 --- 起始的 frontmatter 且 fm 内无 version 字段（P064=旧版 frontmatter 未声明迁移信息）"
+    },
+    {
+      "name": "r285_p064_tn_fm_with_version",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "---\nname: support-template\nversion: 1.0\ndescription: 客服场景提示词模板\n---\n你是客服助手，解答用户问题。",
+      "expected": [],
+      "note": "TN：同文 frontmatter 含 version 字段→沉默（版本声明即豁免面）"
+    },
+    {
+      "name": "r285_p075_tp_hw_no_region",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "部署华为云推理服务，配置模型文件上传与在线服务参数（内存 32GB），API 调用限流 100 QPS，使用昇腾算力，启动前完成依赖检查。",
+      "expected": [
+        "P075"
+      ],
+      "note": "TP：华为云语境（_HW_CLOUD_API_PATTERN）无区域声明（region/区域/华北/cn-* 均无）；限流+QPS 压 P077、内存压 P076、昇腾压 P072=目标规则净触发"
+    },
+    {
+      "name": "r285_p075_tn_hw_with_region",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "部署华为云推理服务到 cn-north-4 区域，配置在线服务参数（内存 32GB）与限流 100 QPS。",
+      "expected": [],
+      "note": "TN：同文含 cn-north-4 区域声明（_REGION_PATTERN）→P075 沉默"
+    },
+    {
+      "name": "r285_p077_tp_hw_no_quota",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用华为云 API 在 cn-east-2 区域完成资源查询与工单创建，处理响应码并记录操作日志。",
+      "expected": [
+        "P077"
+      ],
+      "note": "TP：华为云语境无配额/限流声明（配额/限流/QPS/QPM/quota/rate limit 均无）；cn-east-2 区域压 P075=目标规则净触发"
+    },
+    {
+      "name": "r285_p077_tn_hw_with_quota",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "调用华为云 API 在 cn-east-2 区域完成资源查询，限流策略为 100 QPS，超限自动排队。",
+      "expected": [],
+      "note": "TN：同文含限流策略（限流+QPS，_QUOTA_PATTERN）→P077 沉默"
+    },
+    {
+      "name": "r285_p080_tp_sla_no_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "该支付链路对可用性要求高，需要容灾能力，故障时服务须快速恢复，避免长时间中断影响用户交易。",
+      "expected": [
+        "P080"
+      ],
+      "note": "TP：SLA 语境（可用性/容灾，_SLA_PATTERN）无降级声明（99.x%/降级策略/备用/切换/fallback 均无，_SLA_DECL_PATTERN）"
+    },
+    {
+      "name": "r285_p080_tn_sla_with_decl",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "该支付链路可用性目标 99.95%，降级策略为自动切换备用链路。",
+      "expected": [],
+      "note": "TN：同文含 99.95%+降级策略+切换/备用声明→P080 沉默"
+    },
+    {
+      "name": "r285_p082_tp_long_no_trace",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是订单处理助手，负责核对用户订单信息并给出处理建议。处理流程包括以下环节：第一步核对订单字段完整性，确认商品、数量、单价与收货地址是否齐全，缺失字段逐条列出并说明影响；第二步检查订单金额异常，单订单金额超过阈值时标记为可疑并转入人工复核，同时核对历史订单是否出现相同收货地址与相同支付账号的重复下单；第三步结合用户近期下单频率判断是否存在刷单风险，频率明显高于常规水平时标记风控提醒，并给出建议的冻结与解冻条件。输出内容需结构化：每条建议给出处理依据、执行动作与预期效果，不确定的字段明确标注待用户补充。整个处理过程需保留记录，保证每一笔订单的处理结果可回溯、可复核，处理意见与原始订单字段一一对应，避免遗漏任何异常项。处理完成后汇总当日异常订单清单，按风险等级从高到低排序，便于值班同学优先处理高风险项。对连续三天出现的同类异常，需在汇总清单中单独标注趋势说明，供后续策略调整参考。汇总清单中的每一项异常需注明首次出现时间与累计次数，便于区分新发问题与存量问题。对于涉及用户资金安全的异常，需在当日值班群内同步通报，并跟进至最终关闭状态。处理记录保存周期不少于三十天，到期按档案规范处理。若同一异常项在观察期内复发，应提升其风险等级一档并重新评估处理策略。处理过程中如遇规则冲突，以最严格口径执行并在清单中备注说明。",
+      "expected": [
+        "P082"
+      ],
+      "note": "TP：560 字符>500 且无 trace/Trace/tracing/observability/可观测 关键词（P082 长度门+关键词双条件）"
+    },
+    {
+      "name": "r285_p082_tn_long_with_trace",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是订单处理助手，负责核对用户订单信息并给出处理建议。处理流程包括以下环节：第一步核对订单字段完整性，确认商品、数量、单价与收货地址是否齐全，缺失字段逐条列出并说明影响；第二步检查订单金额异常，单订单金额超过阈值时标记为可疑并转入人工复核，同时核对历史订单是否出现相同收货地址与相同支付账号的重复下单；第三步结合用户近期下单频率判断是否存在刷单风险，频率明显高于常规水平时标记风控提醒，并给出建议的冻结与解冻条件。输出内容需结构化：每条建议给出处理依据、执行动作与预期效果，不确定的字段明确标注待用户补充。整个处理过程需保留记录，保证每一笔订单的处理结果可回溯、可复核，处理意见与原始订单字段一一对应，避免遗漏任何异常项。处理完成后汇总当日异常订单清单，按风险等级从高到低排序，便于值班同学优先处理高风险项。对连续三天出现的同类异常，需在汇总清单中单独标注趋势说明，供后续策略调整参考。汇总清单中的每一项异常需注明首次出现时间与累计次数，便于区分新发问题与存量问题。对于涉及用户资金安全的异常，需在当日值班群内同步通报，并跟进至最终关闭状态。处理记录保存周期不少于三十天，到期按档案规范处理。若同一异常项在观察期内复发，应提升其风险等级一档并重新评估处理策略。处理过程中如遇规则冲突，以最严格口径执行并在清单中备注说明。可观测性要求：每个处理环节记录全链路 trace 日志，含时间戳与处理节点。",
+      "expected": [],
+      "note": "TN：同文（598 字符>500）含全链路 trace+可观测声明→P082 沉默（同长文对照，排除长度门干扰）"
+    },
+    {
+      "name": "r285_p083_tp_prod_no_doctor",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "本模板用于订单服务的上线评审，需在发布检查单阶段执行。评审内容包括：核对配置变更完整性，确认数据库迁移脚本已执行且可回滚，验证监控告警配置齐备且覆盖发布范围，确认回滚预案明确并指定责任人，确认灰度策略与观察时长符合规范，核对依赖服务的版本兼容性，确认日志采集与告警通知渠道已完成联调。各责任人须在检查单上逐项签字确认，未确认项不得进入下一环节，评审记录需归档留存作为发布追溯依据。评审通过后进入发布执行阶段，仍有未整改项时暂缓发布并整改后重新评审。",
+      "expected": [
+        "P083"
+      ],
+      "note": "TP：224 字符>200+生产部署语境（上线，_PRODUCTION_HINT_CTX）无 doctor/健康检查 声明（R210 收窄后强部署信号门）"
+    },
+    {
+      "name": "r285_p083_tn_prod_with_doctor",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "本模板用于订单服务的上线评审，需在发布检查单阶段执行。评审内容包括：核对配置变更完整性，确认数据库迁移脚本已执行且可回滚，验证监控告警配置齐备且覆盖发布范围，确认回滚预案明确并指定责任人，确认灰度策略与观察时长符合规范，核对依赖服务的版本兼容性，确认日志采集与告警通知渠道已完成联调。各责任人须在检查单上逐项签字确认，未确认项不得进入下一环节，评审记录需归档留存作为发布追溯依据。评审通过后进入发布执行阶段，仍有未整改项时暂缓发布并整改后重新评审。上线前运行 doctor 健康检查并留存健康报告。",
+      "expected": [],
+      "note": "TN：同文含 doctor 健康检查声明→P083 沉默"
+    },
+    {
+      "name": "r285_p090_tp_hmy_no_apivers",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙应用首页，使用 List 组件展示订单列表，使用 Swiper 组件轮播公告。",
+      "expected": [
+        "P090"
+      ],
+      "note": "TP：鸿蒙语境（_HARMONYOS_CTX）+ArkUI 组件（List/Swiper，_ARKUI_COMPONENT）无最低 API 版本声明（_API_VERSION_DECL 四形态均无）"
+    },
+    {
+      "name": "r285_p090_tn_hmy_with_apivers",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "开发鸿蒙应用首页，使用 List 组件展示订单列表，最低 API 12 起兼容。",
+      "expected": [],
+      "note": "TN：同文含最低 API 12 声明（API+数字，_API_VERSION_DECL）→P090 沉默"
+    },
+    {
+      "name": "r285_p091_tp_hmy_raw_res",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用需要引用启动图片与应用图标资源，并在多语言场景下替换字符串资源。",
+      "expected": [
+        "P091"
+      ],
+      "note": "TP：鸿蒙语境+资源词（图片/图标/字符串/资源，_RESOURCE_REF_PATTERN）无 $r($rawfile(app.* 标准引用（_STANDARD_REF_PATTERN 均无）"
+    },
+    {
+      "name": "r285_p091_tn_hmy_std_ref",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "鸿蒙应用使用 $r('app.media.start_icon') 引用启动图片，通过 $rawfile('strings/zh.json') 加载中文字符串表。",
+      "expected": [],
+      "note": "TN：同文含 $r()/$rawfile() 标准资源引用→P091 沉默"
+    },
+    {
+      "name": "r285_p106_tp_pos_only",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请为产品写一句推广语。例如：针对办公场景，突出效率提升与数据安全。",
+      "expected": [
+        "P106"
+      ],
+      "note": "TP：正面示例标记（例如，_EXAMPLE_POSITIVE）在位且负面示例标记（不要/避免/反面/错误示例/反例/do not/avoid 等，_EXAMPLE_NEGATIVE）全缺席"
+    },
+    {
+      "name": "r285_p106_tn_with_neg",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请为产品写一句推广语。例如：针对办公场景，突出效率提升与数据安全。错误示例：只喊口号，没有具体卖点。",
+      "expected": [],
+      "note": "TN：同文含错误示例标记（_EXAMPLE_NEGATIVE）→P106 沉默"
+    },
+    {
+      "name": "r285_p108_tp_term_conflict",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "使用缓存(cache)加速读取。命中失败时回源数据库，cache(缓存池)采用 LRU 淘汰。",
+      "expected": [
+        "P108"
+      ],
+      "note": "TP：同一英文术语 cache 映射两个不同中文（zh_terms 贪婪捕获'使用缓存'/en_terms'缓存池'）→term_map 冲突实火；取证：_ZH_TERM 贪婪捕获前缀 CJK"
+    },
+    {
+      "name": "r285_p108_tn_term_consistent",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "缓存层使用 LRU 策略，cache(缓存)淘汰过期项，cache(缓存)重建时双写。",
+      "expected": [],
+      "note": "TN：同一英文术语 cache 两处映射同一中文（en_terms 同键同值）→沉默；取证：中文前缀不同会被贪婪捕获判冲突，改 en 术语同映射形态"
+    },
+    {
+      "name": "r285_p112_tp_one_example",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请把口语句子改写为书面语。例如：将'明天再聊'改写为'明日再行沟通'。",
+      "expected": [
+        "P112"
+      ],
+      "note": "TP：示例标记仅 1 处（<3，_FEW_SHOT_PATTERN findall 计数）→P112 实火"
+    },
+    {
+      "name": "r285_p112_tn_three_examples",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "请把口语句子改写为书面语。示例一：'明天再聊'改写为'明日再行沟通'。示例二：'搞定了'改写为'已完成'。示例三：'帮我看看'改写为'请协助核查'。",
+      "expected": [],
+      "note": "TN：示例标记 3 处（≥3 门槛）→P112 沉默"
+    },
+    {
+      "name": "r285_p115_tp_decision_no_reason",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是审批助手，负责判断提交的用章申请是否通过，直接输出批准或驳回结论。",
+      "expected": [
+        "P115"
+      ],
+      "note": "TP：决策语境（判断/审批，_DECISION_PATTERN）无可解释性声明（解释/依据/原因/理由/explain/reason 等，_EXPLAINABILITY_DECL 全缺席）"
+    },
+    {
+      "name": "r285_p115_tn_decision_with_reason",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是审批助手，负责判断提交的用章申请是否通过，输出结论时须附判断依据。",
+      "expected": [],
+      "note": "TN：同文含判断依据声明（依据，_EXPLAINABILITY_DECL）→P115 沉默"
+    },
+    {
+      "name": "r285_p118_tp_knowledge_no_cutoff",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是知识助手，负责回答用户关于科学、医学与历史的问题。回答应基于权威资料，区分事实与观点，对时效性强的信息提示可能变化。若问题超出知识范围，明确说明不确定，不强行作答。对于跨学科问题，先界定学科边界再作答。保持准确简洁，避免过度引申，重要结论给出可查证的参考方向，帮助用户进一步核实信息。涉及专业内容时说明适用范围与常见误区，防止用户将结论误用于超出处境之外。回答长度控制在用户阅读负担之内，优先给出结论再展开说明。",
+      "expected": [
+        "P118"
+      ],
+      "note": "TP：208 字符≥200+知识时效语境（知识/科学/医学/历史/时效，_KNOWLEDGE_TIMELINESS_CTX）无知识截止声明（截止/cutoff/日期形态均无，_CUTOFF_DECL）"
+    },
+    {
+      "name": "r285_p118_tn_knowledge_with_cutoff",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是知识助手，负责回答用户关于科学、医学与历史的问题。回答应基于权威资料，区分事实与观点，对时效性强的信息提示可能变化。若问题超出知识范围，明确说明不确定，不强行作答。对于跨学科问题，先界定学科边界再作答。保持准确简洁，避免过度引申，重要结论给出可查证的参考方向，帮助用户进一步核实信息。涉及专业内容时说明适用范围与常见误区，防止用户将结论误用于超出处境之外。回答长度控制在用户阅读负担之内，优先给出结论再展开说明。知识截止日期为 2025年6月，超出该范围的动态信息请提示用户自行核实。",
+      "expected": [],
+      "note": "TN：同文含知识截止+2025年6月 声明（双形态命中 _CUTOFF_DECL）→P118 沉默"
+    },
+    {
+      "name": "r285_p119_tp_claim_no_boundary",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是全能助手，能够回答任何领域、任何任务的问题，保证输出准确可靠，100% 满足用户需求。无论用户提出什么挑战，都能给出专业解答，覆盖编程、写作、数据分析、翻译、方案设计等全部场景，并且始终稳定输出，是用户最可靠的工作伙伴。你可以处理长篇文档的总结与提炼，也可以完成从零开始的系统架构设计，帮助用户把想法落地为可执行的方案，并持续跟进多轮补充说明，直到问题被彻底解决。你还可以协助制定项目计划、跟踪进度、识别风险、整理会议纪要、翻译多语言文档，覆盖个人工作与团队协作的各个环节。同时提供多语言输出与格式转换能力，支持将同一内容输出为摘要、完整报告与表格三种形态，满足不同使用场景的阅读需求，对超长输入自动分段处理并汇总结果。",
+      "expected": [
+        "P119"
+      ],
+      "note": "TP：312 字符≥300+过度承诺声明（全能/任何领域/任何任务/保证/100%，_CAPABILITY_CLAIM）无能力边界声明（局限/限制/边界/人工验证/建议验证等，_LIMITATION_DECL 全缺席；R212-6 承诺门非长度门）"
+    },
+    {
+      "name": "r285_p119_tn_claim_with_boundary",
+      "category": "quality",
+      "lang": "zh-Hans",
+      "text": "你是全能助手，能够回答任何领域、任何任务的问题，保证输出准确可靠，100% 满足用户需求。无论用户提出什么挑战，都能给出专业解答，覆盖编程、写作、数据分析、翻译、方案设计等全部场景，并且始终稳定输出，是用户最可靠的工作伙伴。你可以处理长篇文档的总结与提炼，也可以完成从零开始的系统架构设计，帮助用户把想法落地为可执行的方案，并持续跟进多轮补充说明，直到问题被彻底解决。你还可以协助制定项目计划、跟踪进度、识别风险、整理会议纪要、翻译多语言文档，覆盖个人工作与团队协作的各个环节。同时提供多语言输出与格式转换能力，支持将同一内容输出为摘要、完整报告与表格三种形态，满足不同使用场景的阅读需求，对超长输入自动分段处理并汇总结果。能力边界说明：医学与法律领域的专业结论可能不准确，重要结果建议人工验证后再使用。",
+      "expected": [],
+      "note": "TN：同文含能力边界声明（能力边界/可能不准确/建议人工验证 三形态命中 _LIMITATION_DECL）→P119 沉默"
+    },
+    {
+      "name": "r285_p264_tp_human_assistant",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "对话格式如下：\nHuman: 帮我查一下昨天的订单状态\nAssistant: 您的订单已发货，预计明日送达。",
+      "expected": [
+        "P264"
+      ],
+      "note": "TP：Human:/Assistant: 成对厂商专属对话分隔符（_VENDOR_FORMATS human_assistant 成对才报，单 Human: 不报）"
+    },
+    {
+      "name": "r285_p264_tn_no_vendor_fmt",
+      "category": "portability",
+      "lang": "zh-Hans",
+      "text": "请以客服身份回答用户问题，语气友好，控制在三句话以内。",
+      "expected": [],
+      "note": "TN：纯角色指令，无任何厂商专属对话分隔符对（7 形态全缺席）→P264 沉默"
     }
   ]
 }
