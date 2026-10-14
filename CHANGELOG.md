@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.80] - 2026-10-14
+
+### Added（R286 P2-11 ja 面探针扩容：ja 6→16，golden 653→663）
+
+- ja 探针 +10（267 管道交叉核验）：TP×4（P261 零宽交错 ja / P260 零宽连续 ja / P266 连接串凭据 ja / P267 AWS key ID ja）+ TN×4（汉字多义性 / 敬语伪装对照 / buried-injections 引用+防护声明 / 全角数字锚）+ 观察×2（形态素空格规避 / 全角字母 bypass 缺口）
+- 期望命中单元 369→376（ja 7→14），漏检 0.00%（376/376）保持，FP 0.82% 持平
+- 双缺口登记（02 总板）：P2-29（全角字母 bypass U+FF21-FF5A，267 规则零覆盖，JSAI2026+zenn 双源，T1≥2 独立真实 TP 才规则化）+ P2-30（P178 引用语境精度，无防护声明引用 FP，rezaduty+Model Armor 双源，需逃生舱评估）
+- README 可信度段第三方双背书：rezaduty 2026 学术 FP 审计（7 检测器，「9 条良性 8 条是安全文档引用攻击短语」）+ Google Model Armor 日语实测（良性引用 5 例 1 误判）——埋入式注入 TN 纪律（学术+大厂产品双源）
+
+### Changed（R286 CI 加固+减重）
+
+- 新增 CodeQL workflow（P3-07）：python 语言 init+autobuild+analyze，@v3 钉版（GitHub 自动生成工作流同形态），与主 CI 解耦（可用性抖动不放大成整链红）
+- CI 矩阵减重（P6-03）：3.11（中间版本）降为 lint 静态面，全量 pytest 留 3.10（最低版本兼容面）+3.12（最高版本+全部门禁步）；矩阵语义不变（最低+最高全量，中间静态面）
+- pip 缓存（P6-04）：4 处 setup-python 全部加 `cache: pip`（test 矩阵 + prompt-lint/dependency-audit/prompt-quality-gate）
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）

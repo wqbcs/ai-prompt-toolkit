@@ -33,7 +33,7 @@ class TestR214JaProbes:
         g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         return {p["name"]: p for p in g["probes"] if p.get("lang") == "ja"}
 
-    def test_six_ja_probes_exist(self):
+    def test_sixteen_ja_probes_exist(self):
         ja = self._ja_probes()
         assert set(ja) == {
             "atk43_ja_system_prompt_leak",
@@ -42,10 +42,29 @@ class TestR214JaProbes:
             "atk46_ja_hardcoded_secret",
             "atk47_ja_persona_switch",
             "atk48_ja_fake_system_tag",
+            # R286 P2-11 ja 面探针扩容（ja 6→16）
+            "r286_ja_p261_zw_interleave",
+            "r286_ja_p260_zw_run",
+            "r286_ja_p266_connstr",
+            "r286_ja_p267_aws_key",
+            "r286_ja_tn_shiji_business",
+            "r286_ja_tn_keigo_polite",
+            "r286_ja_tn_security_doc_quote",
+            "r286_ja_tn_fullwidth_benign",
+            "r286_ja_obs_morph_space",
+            "r286_ja_obs_fullwidth_bypass",
         }
-        # 6 条全 expected（R215: atk47/atk48 观察型 → P259/P258 落地后翻转）
+        # 原 6 条全 expected（R215: atk47/atk48 观察型 → P259/P258 落地后翻转）
         assert ja["atk47_ja_persona_switch"]["expected"] == ["P259"]
         assert ja["atk48_ja_fake_system_tag"]["expected"] == ["P258"]
+        # R286: TP×4 目标规则实火 / TN×4+观察×2 攻击面沉默（expected=[]）
+        assert ja["r286_ja_p261_zw_interleave"]["expected"] == ["P113", "P261"]
+        assert ja["r286_ja_p260_zw_run"]["expected"] == ["P260", "P261"]
+        assert ja["r286_ja_p266_connstr"]["expected"] == ["P266"]
+        assert ja["r286_ja_p267_aws_key"]["expected"] == ["P177", "P267"]
+        assert ja["r286_ja_tn_shiji_business"]["expected"] == []
+        assert ja["r286_ja_tn_security_doc_quote"]["expected"] == []
+        assert ja["r286_ja_obs_fullwidth_bypass"]["expected"] == []
 
 
 class TestR214JaRuleSurfaces:

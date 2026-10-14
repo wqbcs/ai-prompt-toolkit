@@ -1,0 +1,39 @@
+# R286-P3-07: CodeQL 进 CI — 安全工具审计自身（扫描器代码的注入/路径遍历面）。
+# 形态=GitHub 自动生成 CodeQL 工作流同型（python 语言, init+autobuild+analyze,
+# @v3 钉版防上游漂移=dev 工具链钉版纪律同族）。
+# 与主 CI 解耦: CodeQL 分析独立作业, 其可用性抖动不放大成整链红
+# (同 R231 codecov / R237 dependency-audit 解耦纪律)。
+name: "CodeQL"
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '33 8 * * 3'
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    name: Analyze (python)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

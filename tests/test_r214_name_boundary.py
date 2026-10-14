@@ -103,7 +103,10 @@ class TestR214LangSchema:
         # R285: +34(P2-27 LOW 次批 10 规则 P056/P061/P064/P075/P077/P080/P082/P083/P090/P091
         #       + 收官批 7 规则 P106/P108/P112/P115/P118/P119/P264 各 1TP+1TN, 全 zh-Hans;
         #       LOW 27 条清零, 探针覆盖 267/267=100% 收官) = 653
-        assert len(probes) == 653
+        # R286: +10 ja (P2-11 ja 面扩容: P261/P260/P266/P267 ja 语境 TP×4 +
+        #       多义性/敬语/buried-injections/全角数字 TN×4 + 形态素/全角 bypass
+        #       观察×2; 全角字母 bypass 缺口登记 02 总板) = 663
+        assert len(probes) == 663
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -149,8 +152,10 @@ class TestR214LangSchema:
         # R282: +20 zh-Hans (P2-27 LOW 首批 10 规则各 1TP+1TN) = zh-Hans 510 | en 101 | ja 6 | zh-Hant 2
         # R285: +34 zh-Hans (P2-27 LOW 次批 10 + 收官批 7 各 1TP+1TN, LOW 清零收官)
         #       = zh-Hans 544 | en 101 | ja 6 | zh-Hant 2
+        # R286: +10 ja (P2-11 ja 面扩容: TP×4/TN×4/观察×2)
+        #       = zh-Hans 544 | en 101 | ja 16 | zh-Hant 2
         assert sum(1 for v in langs.values() if v == "zh-Hans") == 544
-        assert sum(1 for v in langs.values() if v == "ja") == 6
+        assert sum(1 for v in langs.values() if v == "ja") == 16
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101
         assert sum(1 for v in langs.values() if v == "en") == 101

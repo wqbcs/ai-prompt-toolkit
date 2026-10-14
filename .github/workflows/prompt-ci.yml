@@ -42,6 +42,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip  # R286-P6-04: pip 缓存(减安装时长/PyPI 负载)
 
       # [dev]已钉死ruff/mypy版本(单一源) — 不再裸装最新版,
       # 否则门禁随上游发版随机漂移(R223实证: 0.15.14→0.16.10 format行为变)
@@ -56,7 +57,11 @@ jobs:
       - name: Ruff format check
         run: ruff format --check src/ tests/ scripts/playground.py
 
+      # R286-P6-03: 矩阵减重 — 3.11(中间版本)只跑上方 lint 静态面, 全量 pytest
+      # 留给 3.10(最低支持版本兼容面)+3.12(最高版本+全部门禁步); 3.12 作业
+      # 仍承载全部 gate 步(含覆盖率棘轮, 依赖本步 coverage.xml), 语义不变
       - name: Run tests
+        if: matrix.python-version != '3.11'
         run: pytest tests/ -x -q --tb=short -k "not slow" --cov=ai_prompt_toolkit --cov-report=xml
 
       # R232-P3-09: linter 包覆盖率棘轮(90% 地板, 只收紧不放松)。
@@ -168,6 +173,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip  # R286-P6-04: pip 缓存
 
       - name: Install ai-prompt-toolkit
         run: pip install -e ".[dev]"
@@ -216,6 +222,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip  # R286-P6-04: pip 缓存
 
       - name: Install pip-audit
         run: pip install pip-audit
@@ -245,6 +252,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: pip  # R286-P6-04: pip 缓存
 
       - name: Install ai-prompt-toolkit
         run: pip install -e ".[dev]"
