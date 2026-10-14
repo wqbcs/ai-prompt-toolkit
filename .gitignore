@@ -131,3 +131,6 @@ Thumbs.db
 # 本地代码图谱缓存(非项目资产)
 /.codegraph/
 .cr_tmp.json
+
+# 营销物料草稿(含未发布内容, 仅本地保留)
+/marketing/
