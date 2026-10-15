@@ -134,3 +134,30 @@ class TestDoctorCLI:
             assert isinstance(data, list)
             assert len(data) == 1
             assert data[0]["provider"] == "ollama"
+
+
+class TestDefaultEndpointAlignment:
+    """R291: provider.py 的 _PROVIDER_DEFAULT_ENDPOINTS 必须与各 provider 真实调用默认一致
+    （漂移护栏：HUAWEI 条目曾漂移到百度文心旧路径、PANGU 曾漂移到 infer 域名；
+    影响面 = run_health_check/doctor 端点展示+可达性探测，非真实调用路径）。"""
+
+    def test_huawei_endpoint_aligned(self):
+        from ai_prompt_toolkit.ab_test.provider import _PROVIDER_DEFAULT_ENDPOINTS
+        from ai_prompt_toolkit.ab_test.providers.huawei import HuaweiProvider
+
+        assert _PROVIDER_DEFAULT_ENDPOINTS[ProviderType.HUAWEI] == HuaweiProvider._HUAWEI_MODELARTS_BASE
+
+    def test_pangu_endpoint_aligned(self):
+        from ai_prompt_toolkit.ab_test.provider import _PROVIDER_DEFAULT_ENDPOINTS
+        from ai_prompt_toolkit.ab_test.providers.pangu import PanguProvider
+
+        assert _PROVIDER_DEFAULT_ENDPOINTS[ProviderType.PANGU] == PanguProvider._PANGU_API_BASE
+
+    def test_huawei_modelarts_endpoint_aligned(self):
+        from ai_prompt_toolkit.ab_test.provider import _PROVIDER_DEFAULT_ENDPOINTS
+        from ai_prompt_toolkit.ab_test.providers.huawei_modelarts import HuaweiModelArtsProvider
+
+        assert (
+            _PROVIDER_DEFAULT_ENDPOINTS[ProviderType.HUAWEI_MODELARTS]
+            == HuaweiModelArtsProvider._DEFAULT_ENDPOINTS["cn-north-4"]
+        )

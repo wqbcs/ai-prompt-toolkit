@@ -36,6 +36,12 @@
 - release_checklist.md 与 R289 双通道流程同步：4 处漂移修正（header 作业链描述 / tag 步注释 / 发版后验证补 `docker pull`+`docker run --version` 冒烟 / 触发器表补 P1-03 双通道实测行）
 - P5-09 provider 矩阵表落地：`docs/provider-matrix.md`（25 provider 一张表=端点/环境变量/形态 + 调用模式统一说明，从 `provider.py` 注册表真源投影，逐行机器核对 25/25 一致；README provider 行加链接）；留痕 1 注册表疑点（HUAWEI 默认端点指向百度文心路径，待专项调查）
 
+### Fixed（R291 provider 注册表漂移：HUAWEI/PANGU 默认端点）
+
+- `_PROVIDER_DEFAULT_ENDPOINTS` HUAWEI 条目原为百度文心旧路径（`aip.baidubce.com/.../wenxinworkshop`）→ 对齐 `providers/huawei.py` `_HUAWEI_MODELARTS_BASE`（modelarts.cn-north-4）；PANGU 条目原为 `infer` 域名 → 对齐 `providers/pangu.py` `_PANGU_API_BASE`（pangu-api.cn-north-4）
+- 定性：漂移影响面 = `run_health_check`/`doctor` 端点展示+可达性探测，真实调用路径不受影响（各 provider invoke 自带默认值，工厂不注入字典）；`HUAWEI_MODELARTS` 条目为审计误报（原值正确）
+- 3 条漂移护栏测试（`TestDefaultEndpointAlignment`：字典 × provider 类常量逐条对齐；provider_split 14→17）；`provider-matrix.md` 2 行+备注同步（25/25 复验 OK）
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）

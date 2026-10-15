@@ -261,8 +261,8 @@ _PROVIDER_DEFAULT_ENDPOINTS: dict[ProviderType, str] = {
     ProviderType.ANTHROPIC: "https://api.anthropic.com/v1",
     ProviderType.ALIYUN: "https://dashscope.aliyuncs.com/compatible-mode/v1",
     ProviderType.DEEPSEEK: "https://api.deepseek.com/v1",
-    ProviderType.HUAWEI: "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
-    ProviderType.PANGU: "https://infer.cn-north-4.myhuaweicloud.com",
+    ProviderType.HUAWEI: "https://modelarts.cn-north-4.myhuaweicloud.com/v1",  # R291: 原百度文心旧路径（注册表漂移）→ 对齐 huawei.py _HUAWEI_MODELARTS_BASE
+    ProviderType.PANGU: "https://pangu-api.cn-north-4.myhuaweicloud.com/v1",  # R291: 原 infer 域名（注册表漂移）→ 对齐 pangu.py _PANGU_API_BASE
     ProviderType.GOOGLE: "https://generativelanguage.googleapis.com/v1beta/openai",
     ProviderType.MISTRAL: "https://api.mistral.ai/v1",
     ProviderType.COHERE: "https://api.cohere.com/v2",

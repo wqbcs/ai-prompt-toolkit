@@ -20,8 +20,8 @@
 | Anthropic | `anthropic` | https://api.anthropic.com/v1 | `ANTHROPIC_API_KEY` | 云 |
 | 阿里云（通义） | `aliyun` | https://dashscope.aliyuncs.com/compatible-mode/v1 | `ALIYUN_API_KEY` | 云 |
 | DeepSeek | `deepseek` | https://api.deepseek.com/v1 | `DEEPSEEK_API_KEY` | 云 |
-| 华为 | `huawei` | https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop | `HUAWEI_API_KEY` | 云 |
-| 盘古 | `pangu` | https://infer.cn-north-4.myhuaweicloud.com | `HUAWEI_CLOUD_AK` | 云 |
+| 华为 | `huawei` | https://modelarts.cn-north-4.myhuaweicloud.com/v1 | `HUAWEI_API_KEY` | 云 |
+| 盘古 | `pangu` | https://pangu-api.cn-north-4.myhuaweicloud.com/v1 | `HUAWEI_CLOUD_AK` | 云 |
 | Google | `google` | https://generativelanguage.googleapis.com/v1beta/openai | `GOOGLE_API_KEY` | 云 |
 | Mistral | `mistral` | https://api.mistral.ai/v1 | `MISTRAL_API_KEY` | 云 |
 | Cohere | `cohere` | https://api.cohere.com/v2 | `COHERE_API_KEY` | 云 |
@@ -44,8 +44,11 @@
 
 ## 备注（如实留痕）
 
-- `HUAWEI` 的默认端点指向百度文心路径（`aip.baidubce.com/.../wenxinworkshop`）
-  ——注册表原样呈现，端点归属存疑，待专项调查（本表不改注册表）。
+- R291 注册表漂移修复：`HUAWEI` 条目原为百度文心旧路径（`aip.baidubce.com/.../wenxinworkshop`）、
+  `PANGU` 条目原为 `infer` 域名——均与各 provider 代码真实调用默认不一致（本表从注册表
+  生成，同步错）。已修正对齐 `providers/huawei.py`/`pangu.py` 并加 3 条漂移护栏测试
+  （`HUAWEI_MODELARTS` 条目审计误报，原即正确）。漂移影响面 = `run_health_check`/
+  `doctor` 端点展示+可达性探测，非真实调用路径（各 provider invoke 自带默认值）。
 - `HUAWEI_CLOUD_AK` 为 3 个 provider 共享（PANGU / HUAWEI_MODELARTS /
   FUNCTIONGRAPH，华为云统一凭据）。
 - 2 个本地 provider（OLLAMA / LMSTUDIO）无环境变量——本地服务地址即端点，
