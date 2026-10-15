@@ -8,7 +8,8 @@
 > 状态基线（2026-10-14 实测）：
 > - `pypi.org/pypi/ai-prompt-toolkit/json` → **404 = 项目未创建、包名未被占用**
 > - 最新 tag `v67.25.0`，当前版本 `67.34.80`（未发布）
-> - `release.yml`：tag `v*` 触发 → build sdist+wheel → trusted publishing（OIDC，零 API token）
+> - `release.yml`：tag `v*` 触发 → 3 作业链：release-build（sdist+wheel）→
+>   pypi-publish（trusted publishing，OIDC，零 API token）→ docker-publish（ghcr 双通道，R289）
 
 ## 发布前 30 秒自检
 
@@ -64,7 +65,7 @@ git log --oneline -3      # 确认收口 commit 在 HEAD
 
 ```bash
 git tag v67.34.80          # 若本轮收口已升版，用新版本号
-git push origin v67.34.80  # 触发 release.yml → PyPI 自动发布
+git push origin v67.34.80  # 触发 release.yml → PyPI + ghcr 双通道（R289：docker-publish 在 pypi-publish 后）
 ```
 
 **发版后 30 分钟验证**（06 §1 纪律）：
@@ -75,6 +76,8 @@ python -m venv /tmp/pypi-smoke && /tmp/pypi-smoke/bin/pip install ai-prompt-tool
 /tmp/pypi-smoke/bin/prompt-cli --version
 /tmp/pypi-smoke/bin/prompt-cli baseline     # 必须输出 0.00%/0.82% 当前双基线
 /tmp/pypi-smoke/bin/prompt-cli lint -s src/ai_prompt_toolkit/templates/   # 必须出 finding
+docker pull ghcr.io/wqbcs/ai-prompt-toolkit:67.34.80   # R289 双通道镜像（若升版改新版本号）
+docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit:67.34.80 --version
 ```
 
 ## 发布后触发器（登记在 02 总板，按信号逐个执行）
@@ -82,6 +85,7 @@ python -m venv /tmp/pypi-smoke && /tmp/pypi-smoke/bin/pip install ai-prompt-tool
 | 触发器 | 动作 | 板项 |
 |---|---|---|
 | 发布完成 | `uvx prompt-cli` 实测（1 轮内） | R242-X3 |
+| 发布完成 | docker pull 冒烟（双通道实测；CI 已内置 docker run baseline） | P1-03 |
 | 发布完成 | P1-19 GitLab/Azure snippet fork 仓冒烟各 1 次 | P1-19 |
 | 发布完成 | P1-20 MCP ≥1 客户端实连 + registry 收录 | P1-20 |
 | 首次发布后 | Homebrew tap 启用 | P1-21 |

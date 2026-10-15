@@ -193,7 +193,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
 - **Prompt消毒器**：8层检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言)
-- **25种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型
+- **25种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型（完整矩阵表 = `docs/provider-matrix.md`）
 - **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
 - **MCP Server**：73个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
 

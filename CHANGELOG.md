@@ -31,6 +31,11 @@
 - 06 §4 验收命令（`docker run … baseline`）内置为 CI smoke = 首次发布机器验证在 CI 面完成，非人工后置
 - 镜像名口径裁定：`ghcr.io/<owner>/ai-prompt-toolkit`（06 §4 验收 + Dockerfile LABEL 同口径；02 板行旧口径 `prompt-lint` 废弃）
 
+### Changed（R290 发布前文档面收口）
+
+- release_checklist.md 与 R289 双通道流程同步：4 处漂移修正（header 作业链描述 / tag 步注释 / 发版后验证补 `docker pull`+`docker run --version` 冒烟 / 触发器表补 P1-03 双通道实测行）
+- P5-09 provider 矩阵表落地：`docs/provider-matrix.md`（25 provider 一张表=端点/环境变量/形态 + 调用模式统一说明，从 `provider.py` 注册表真源投影，逐行机器核对 25/25 一致；README provider 行加链接）；留痕 1 注册表疑点（HUAWEI 默认端点指向百度文心路径，待专项调查）
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）
