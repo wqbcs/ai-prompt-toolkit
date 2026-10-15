@@ -25,6 +25,12 @@
 - mcp_server 元数据计数漂移修正：8 处陈旧硬编码（53工具/130规则/80维度/15 Probes/18模板/P001-P130 等）→ 运行时动态引用（R239/R212 惯例）
 - P1-01 GitHub Action 运行修复：lint 步 `--threshold` 已除选项 → `--fail-on` 级别门禁 + `--format json` 落盘（e2e 两态验证 dirty exit 2 / clean exit 0）
 
+### Changed（R289 打 tag 前工作：Docker build-push 作业）
+
+- release.yml 新增 `docker-publish` 作业（06 §4 双通道"一次发版=PyPI+镜像"）：`needs: pypi-publish` lockstep（PyPI 成功后才发镜像），ghcr 3 tag 策略（latest+全版本+主版本，air-gap 用户按主版本锁），GITHUB_TOKEN 内建权限（packages: write，无外部凭据），actions 钉版（checkout@v4/login@v3/build-push@v6）
+- 06 §4 验收命令（`docker run … baseline`）内置为 CI smoke = 首次发布机器验证在 CI 面完成，非人工后置
+- 镜像名口径裁定：`ghcr.io/<owner>/ai-prompt-toolkit`（06 §4 验收 + Dockerfile LABEL 同口径；02 板行旧口径 `prompt-lint` 废弃）
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）
