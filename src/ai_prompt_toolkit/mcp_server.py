@@ -5,11 +5,11 @@
 - claude-prompts MCP Server (https://github.com/minipuft/claude-prompts)
 - mcp-server-langfuse (https://github.com/langfuse/mcp-server-langfuse)
 
-暴露的MCP Tools (53个):
-- Lint/Scan: prompt_lint(130规则), prompt_scan, prompt_judge, prompt_canary_inject/check
-- 评估: prompt_evaluate(80维度), prompt_scorecard, prompt_dataset_run, eval_matrix
+暴露的MCP Tools (数量见 _handle_tools_list 运行时注册表, R239 动态化惯例):
+- Lint/Scan: prompt_lint, prompt_scan, prompt_judge, prompt_canary_inject/check
+- 评估: prompt_evaluate, prompt_scorecard, prompt_dataset_run, eval_matrix
 - 安全引擎: prompt_engine(5层融合), prompt_badge, prompt_token_analyze
-- 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan(15 Probes, 8 Detectors)
+- 红队/Probe: prompt_redteam, probe_run/detect/list/owasp_report/detector_run/owasp_summary/ethics_scan (数量见运行时注册表)
 - 编译/优化: prompt_compile, prompt_gepa_optimize, prompt_auto_optimize, prompt_sanitize
 - 版本/缓存: prompt_version_save/list, prompt_cache_stats/lookup/invalidate
 - 报告: prompt_junit_report, prompt_sarif_report, prompt_diff, prompt_merge, prompt_semantic_diff
@@ -18,8 +18,8 @@
 - 其他: prompt_template_render, prompt_doctor, prompt_trace_export, prompt_contest_eval...
 
 暴露的MCP Resources:
-1. prompt://templates — 场景模板列表(18个内置)
-2. prompt://rules — Lint规则列表(P001-P130)
+1. prompt://templates — 场景模板列表(清单见 _scenarios 目录运行时)
+2. prompt://rules — Lint规则列表(数量与编号区间见规则注册表运行时)
 3. prompt://datasets — 数据集列表
 
 使用方式:
@@ -174,7 +174,7 @@ def _handle_tools_list(id_val: Any) -> str:
         },
         {
             "name": "prompt_evaluate",
-            "description": "对Prompt执行80维度(D01-D80)质量评估，返回综合评分和各维度得分",
+            "description": "对Prompt执行多维度(D01系列)质量评估(维度数见评估引擎注册表运行时)，返回综合评分和各维度得分",
             "inputSchema": {
                 "type": "object",
                 "properties": {
@@ -1114,13 +1114,13 @@ def _handle_resources_list(id_val: Any) -> str:
         {
             "uri": "prompt://templates",
             "name": "场景模板列表",
-            "description": "内置53个行业场景模板（鸿蒙/华为云/可观测性/混沌工程/GitOps等）",
+            "description": "内置行业场景模板（鸿蒙/华为云/可观测性/混沌工程/GitOps等，清单见 _scenarios 目录运行时）",
             "mimeType": "application/json",
         },
         {
             "uri": "prompt://rules",
             "name": "Lint规则列表",
-            "description": "170条Lint规则(P001-P170)和40+安全检测规则(INJ/PII/STRUCT/ANOMALY/INJ-ZH)",
+            "description": "Lint规则清单(P编号系列+INJ/PII/STRUCT/ANOMALY/INJ-ZH安全检测规则，数量见规则注册表运行时)",
             "mimeType": "application/json",
         },
         {
