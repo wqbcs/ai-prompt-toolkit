@@ -6,10 +6,10 @@ inputs:
   target:
     description: "Path to prompt template file or directory"
     required: true
-  lint-threshold:
-    description: "Minimum lint score to pass (0-100)"
+  fail-on:
+    description: "拦截级别: 该级别及以上 findings 使 job 红 (critical/high/medium)"
     required: false
-    default: "90"
+    default: "critical"
   security-threshold:
     description: "Minimum security score to pass (0-100)"
     required: false
@@ -62,13 +62,14 @@ runs:
       shell: bash
       run: |
         set +e
-        prompt-cli lint -t "${{ inputs.target }}" --gate --threshold ${{ inputs.lint-threshold }} --output lint-report.json
+        # R287 修复: --threshold 已移除(评分制门禁废弃)→--fail-on 级别门禁; 默认 cli 格式 -o 不落盘→--format json
+        prompt-cli lint -t "${{ inputs.target }}" --format json --output lint-report.json --fail-on "${{ inputs.fail-on }}"
         LINT_EXIT=$?
         LINT_SCORE=$(python -c "import json; d=json.load(open('lint-report.json')); print(d.get('average_score', 0))" 2>/dev/null || echo "0")
         echo "lint_score=$LINT_SCORE" >> $GITHUB_OUTPUT
         echo "lint_passed=$([ $LINT_EXIT -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
         if [ "$LINT_EXIT" -ne 0 ] && [ "${{ inputs.fail-on-error }}" = "true" ]; then
-          echo "::error::Lint check failed with score $LINT_SCORE (threshold: ${{ inputs.lint-threshold }})"
+          echo "::error::Lint check failed (exit $LINT_EXIT, fail-on=${{ inputs.fail-on }}, score=$LINT_SCORE)"
           exit 1
         fi
 
