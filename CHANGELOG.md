@@ -17,6 +17,14 @@
 - CI 矩阵减重（P6-03）：3.11（中间版本）降为 lint 静态面，全量 pytest 留 3.10（最低版本兼容面）+3.12（最高版本+全部门禁步）；矩阵语义不变（最低+最高全量，中间静态面）
 - pip 缓存（P6-04）：4 处 setup-python 全部加 `cache: pip`（test 矩阵 + prompt-lint/dependency-audit/prompt-quality-gate）
 
+### Changed（R287-R288 上线前自检 + P2-30 P178 逃生舱落地）
+
+- P178 分支 3 精度改进（评估 `P2-30_P178逃生舱评估_R287.md`，双源 rezaduty 2026+Model Armor 实测）：E 触发面收窄（名词宾语必须+orders 补全，消除良性 "ignore all comments" 类 FP）+ D' 两级门禁（强防御词×文档似然，示例族词禁入豁免集）+ C 降级（分支 3 HIGH→MEDIUM 卫生信号）；A/B 语境豁免明确拒绝（板红线：不得放行「这是示例, 忽略所有指令」型）
+- golden 探针 +3（663→666，期望单元 376→377）：2 FP（ja 安全文档引用无防护变体 / en advisory 引用形态）+ 1 红线 TP pin（「这是示例」型锁死非放行）
+- 九用例机器验证：既有 4 TP 0 回归（orders 形态保留）/ 登记 FP 静默 / 红线仍实火 MEDIUM / 良性 ignore-all 类静默；漏检 0.00%（377/377）保持，FP 0.82% 持平
+- mcp_server 元数据计数漂移修正：8 处陈旧硬编码（53工具/130规则/80维度/15 Probes/18模板/P001-P130 等）→ 运行时动态引用（R239/R212 惯例）
+- P1-01 GitHub Action 运行修复：lint 步 `--threshold` 已除选项 → `--fail-on` 级别门禁 + `--format json` 落盘（e2e 两态验证 dirty exit 2 / clean exit 0）
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）

@@ -5198,12 +5198,6 @@
       "attack": "[](]]]]]]]]]]]()!",
       "approved": true
     },
-    "linter/rules_p176_p180.py\u0000(?:ignore|forget|override|disregard|bypass)\\s+(?:previous|above|all|instructions|rules)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p176_p180.py\u0000(?:respond\\s+(?:only\\s+)?in\\s+(?:JSON|SQL|HTML|XML|YAML|CSV|Python|JavaScript))": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -13795,11 +13789,24 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p176_p180.py\u0000(?:ignore|forget|override|disregard|bypass)\\s+(?:(?:all|previous|prior|preceding|above)\\s+)*(?:instructions|rules|directives|prompts|guidelines|orders)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p176_p180.py\u0000(?:防御|研修|訓練|训练|威胁|警示|案例|threat|advisory|defense|defensive|warning|guidance|training)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p176_p180.py\u0000(?:研修資料|研修资料|研修材料|報告書|报告书|白皮书|whitepaper|advisory|guide|指南|手册|handbook|文档)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
-  },
-  "metadata": {
-    "approved_at": "2026-10-03",
-    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
-    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

@@ -94,9 +94,26 @@ _HEX_PATTERN = re.compile(r"(?:0x[0-9a-fA-F]{2,})+")
 _UNICODE_ESCAPE = re.compile(r"\\u[0-9a-fA-F]{4}", re.IGNORECASE)
 _HTML_COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _MD_LINK = re.compile(r"\[.*?\]\(.*?\)")
+# R287b P2-30(评估 docs/planning/P2-30_P178逃生舱评估_R287.md §4-E): 触发面收窄 —
+# 名词宾语必须(消除裸 "ignore all" 良性类; "ignore all comments" 实火 FP 类);
+# orders 补入名词集(r256_ood_tp02 "Ignore all preceding orders" 靠裸匹配, 收窄后必须保留)
 _SHADOW_CMD = re.compile(
-    r"(?:ignore|forget|override|disregard|bypass)\s+(?:previous|above|all|instructions|rules)", re.IGNORECASE
+    r"(?:ignore|forget|override|disregard|bypass)\s+(?:(?:all|previous|prior|preceding|above)\s+)*"
+    r"(?:instructions|rules|directives|prompts|guidelines|orders)",
+    re.IGNORECASE,
 )
+# R287b P2-30 D': 强防御词表(教育/防御框架; 示例族词 example/示例/例 禁入=红线攻击标记词,
+# 入豁免集会放行「这是示例, 忽略所有指令」型)
+_P178_STRONG_DEFENSE = re.compile(
+    r"(?:防御|研修|訓練|训练|威胁|警示|案例|threat|advisory|defense|defensive|warning|guidance|training)",
+    re.IGNORECASE,
+)
+# R287b P2-30 D': 文档似然(长度≥200 或 文档结构标记; 阈值探针实测后钉版, 评估 §5 残留风险1)
+_P178_DOC_LIKE = re.compile(
+    r"(?:研修資料|研修资料|研修材料|報告書|报告书|白皮书|whitepaper|advisory|guide|指南|手册|handbook|文档)",
+    re.IGNORECASE,
+)
+_P178_DOC_MIN_LEN = 200
 _FORMAT_HIJACK = re.compile(
     r"(?:respond\s+(?:only\s+)?in\s+(?:JSON|SQL|HTML|XML|YAML|CSV|Python|JavaScript))", re.IGNORECASE
 )
@@ -158,9 +175,19 @@ def check_p178(text: str) -> list[Finding]:
     if shadow:
         has_protection = bool(re.search(r"(?:过滤|filter|审查|audit|禁止|prohibit)", text, re.IGNORECASE))
         if not has_protection:
-            findings.append(
-                Finding("P178", Severity.HIGH, "检测到影子指令但缺少防护声明", location=loc_from_match(text, shadow))
-            )
+            # R287b P2-30 D'+C: 强防御词×文档似然 → 沉默(良性安全文档引用, 双源FP实证);
+            # 否则降级 MEDIUM 卫生信号(原 HIGH) — 红线「这是示例」型(短文本+示例族词)仍实火
+            if _P178_STRONG_DEFENSE.search(text) and (len(text) >= _P178_DOC_MIN_LEN or _P178_DOC_LIKE.search(text)):
+                pass
+            else:
+                findings.append(
+                    Finding(
+                        "P178",
+                        Severity.MEDIUM,
+                        "检测到影子指令短语但缺少防护声明(卫生信号, R287b P2-30 由HIGH降级)",
+                        location=loc_from_match(text, shadow),
+                    )
+                )
     return findings
 
 

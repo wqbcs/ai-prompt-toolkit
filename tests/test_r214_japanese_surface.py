@@ -33,7 +33,7 @@ class TestR214JaProbes:
         g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
         return {p["name"]: p for p in g["probes"] if p.get("lang") == "ja"}
 
-    def test_sixteen_ja_probes_exist(self):
+    def test_seventeen_ja_probes_exist(self):
         ja = self._ja_probes()
         assert set(ja) == {
             "atk43_ja_system_prompt_leak",
@@ -53,6 +53,8 @@ class TestR214JaProbes:
             "r286_ja_tn_fullwidth_benign",
             "r286_ja_obs_morph_space",
             "r286_ja_obs_fullwidth_bypass",
+            # R288 P2-30 P178 逃生舱探针（ja 16→17）
+            "r287b_p230_fp_ja_quote_noprotect",
         }
         # 原 6 条全 expected（R215: atk47/atk48 观察型 → P259/P258 落地后翻转）
         assert ja["atk47_ja_persona_switch"]["expected"] == ["P259"]

@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.80-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6632%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40663probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40666probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-267-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -15,13 +15,13 @@
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(663 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(666 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 663 条 · 期望命中单元 376
+# 漏检面  0.00%  |  探针 666 条 · 期望命中单元 377
 # 误报面  0.82%  |  干净样本 60 个 · checker 267 条
 ```
 
@@ -219,7 +219,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：663条golden探针/376期望命中单元；
+**机制上限**——本工具的双基线（漏检 0.00%：666条golden探针/377期望命中单元；
 误报 0.82%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
@@ -583,7 +583,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
 | zh-Hans | 312 | 0 | 0.00% |
-| en | 48 | 0 | 0.00% |
+| en | 49 | 0 | 0.00% |
 | ja | 14 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
 
@@ -591,7 +591,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-14：总 663=zh-Hans 544/en 101/ja 16/zh-Hant 2，R286 +10，P2-11 ja 面扩容）。
+（2026-10-15：总 666=zh-Hans 544/en 103/ja 17/zh-Hant 2，R288 +3，P2-30 P178 逃生舱探针）。
 
 ## VSCode插件
 
