@@ -26,7 +26,7 @@ pytest tests/ -q -k "not slow"
 ruff format src/ tests/
 ruff check src/ tests/
 
-# 5. 收口前全链门禁（13 步，独立退出码，禁管道）
+# 5. 收口前全链门禁（29 步，独立退出码，禁管道）
 python scripts/release_gate.py
 ```
 
@@ -79,7 +79,7 @@ test: 简短描述
    python scripts/check_miss_rate.py --fail-above 0.05
    ```
 
-4. **全链收口**：`python scripts/release_gate.py`（13 步全绿才提交）
+4. **全链收口**：`python scripts/release_gate.py`（29 步全绿才提交）
 
 ### 规则落地位置（10 步，探针先行流程的具体落点）
 

@@ -334,16 +334,16 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 以下条目已设计/验证完毕，**仅待项目负责人授权**即可落地（均为公开/分发
 动作，不改变现有确定性门禁行为）。授权后单轮落地：
 
-| 条目 | 内容 | 发布前置依赖 |
-|------|------|------|
-| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） |
-| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 |
-| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 |
-| P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） |
-| P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 |
-| P1-07 | 英文首屏（README i18n 双语切换） | 无 |
-| P5-11 | 误报/漏检曲线公开数据页（precision 时间序列，获客面） | P0-03（数据页随公开仓库发布） |
-| P1-18 | MCP 发布面（README MCP 接入片段+工具清单页；73 tools 已就绪） | P0-03 |
+| 条目 | 内容 | 发布前置依赖 | 状态 |
+|------|------|------|------|
+| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） | ⬜ 待授权（单步，~1 分钟） |
+| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 | 🟡 仓库侧就绪（release.yml 双通道作业：PyPI+ghcr，R289）；待 D1-D5 操作 |
+| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（action.yml + e2e 两态验证，R287 修复）；公开后 marketplace 发布 |
+| P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） | 🟡 清单修复（R252） |
+| P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 | ⬜ |
+| P1-07 | 英文首屏（README i18n 双语切换） | 无 | ⬜ |
+| P5-11 | 误报/漏检曲线公开数据页（precision 时间序列，获客面） | P0-03（数据页随公开仓库发布） | 🟡 数据页已进门禁链（运营点数据页，每次收口重生成）；公开=转公开后 |
+| P1-18 | MCP 发布面（README MCP 接入片段+工具清单页；73 tools 已就绪） | P0-03 | ✅ README MCP 接入节 + `docs/mcp-setup.md`（R287） |
 
 > 状态口径：本表是唯一真源（与 `docs/planning/02_任务总板.md` P0/P1 区同步）；
 > 授权任一子集即可单独推进，条目间除标注依赖外互不阻塞。
@@ -638,13 +638,14 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
   run: prompt-cli probe -t ./prompts/ --probe all
 ```
 
-项目内置GitHub Actions Workflow：
-- `quality-gate.yml` - 质量门禁
-- `owasp-llm-scan.yml` - OWASP深度扫描+Compliance Gate阻断
-- `daily-scorecard.yml` - 每日安全评分卡
-- `prompt-lint.yml` - Prompt Lint
-- `prompt-quality-gate.yml` - Prompt质量门禁
+项目内置 GitHub Actions Workflow（7 个，与 `.github/workflows/` 盘面一致）：
+- `prompt-ci.yml` - 全量 CI（测试矩阵 + ruff/mypy 棘轮 + 双基线 + 门禁链）
 - `prompt-pr-gate.yml` - PR增量门禁(仅prompt文件变更时触发: lint+scan+evaluate)
+- `release.yml` - tag触发 PyPI + ghcr 双通道发布（pypi-publish 后 lockstep 发镜像，CI 内置镜像验收 smoke）
+- `owasp-llm-scan.yml` - OWASP深度扫描+Compliance Gate阻断
+- `codeql.yml` - CodeQL 安全扫描
+- `daily-scorecard.yml` - 每日安全评分卡
+- `ci-green-streak.yml` - CI 绿史徽章（M1 验收口径：连续 14 天双绿）
 
 **PR级门禁（改Prompt要过什么门）**：PR含 `.prompt`/`.prompt.md` 变更时自动触发
 `prompt-pr-gate.yml` — 变更文件逐个跑 `lint`(0 CRITICAL/HIGH) + `scan`(无CRITICAL漏洞)

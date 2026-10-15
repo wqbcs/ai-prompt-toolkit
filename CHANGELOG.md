@@ -42,6 +42,14 @@
 - 定性：漂移影响面 = `run_health_check`/`doctor` 端点展示+可达性探测，真实调用路径不受影响（各 provider invoke 自带默认值，工厂不注入字典）；`HUAWEI_MODELARTS` 条目为审计误报（原值正确）
 - 3 条漂移护栏测试（`TestDefaultEndpointAlignment`：字典 × provider 类常量逐条对齐；provider_split 14→17）；`provider-matrix.md` 2 行+备注同步（25/25 复验 OK）
 
+### Changed（R292 四维评审面：治理补缺 + 发布面漂移修正）
+
+- CONTRIBUTING.md "13 步"门禁描述 ×2 → 29 步（与实际门禁链对齐）
+- 新建 `CODE_OF_CONDUCT.md`（Contributor Covenant 2.0 改编中文版）
+- README Roadmap 表加状态列（P0-04/P1-01/P1-02/P5-11 🟡 仓库侧现状、P1-18 ✅）
+- README CI/CD workflow 列表修正为盘面真实 7 条（quality-gate.yml/prompt-lint.yml/prompt-quality-gate.yml 为不存在旧名；补 codeql/release/ci-green-streak）
+- 审计结论：01 技术创新叙事 README 已充分（不重复建设）；02 部署证据链齐；03 缺口补全
+
 ## [v67.34.79] - 2026-10-13
 
 ### Added（R285 P2-27 零探针补欠 LOW 次批+收官批：17 规则 × 1TP+1TN = 34 探针，LOW 清零收官）
