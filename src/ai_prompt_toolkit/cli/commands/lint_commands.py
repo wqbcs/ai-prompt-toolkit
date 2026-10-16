@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import click
 
@@ -18,6 +18,7 @@ from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, m
 
 if TYPE_CHECKING:
     from ai_prompt_toolkit.linter.linter import LintResult
+    from ai_prompt_toolkit.types import Finding
 
 # P3-16: summary digest helper(纯函数, 无 IO — 便于单测)
 _SEV_MARKERS = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}
@@ -61,7 +62,7 @@ def _build_summary_markdown(
     return "\n".join(lines)
 
 
-def _preview_exit_code(all_results: list, fail_on: str | None, gate: bool, avg_score: float = 0.0) -> int:
+def _preview_exit_code(all_results: list[LintResult], fail_on: str | None, gate: bool, avg_score: float = 0.0) -> int:
     """P3-16: summary 首行预告退出码 — 与后续 sys.exit 路径同一裁决真源(不另造
     逻辑): gate 面走 QualityGate(3/2/0), 非 gate 面走 determine_exit_code +
     fail_on(该级别及以上→2)。preview 只做预告, 裁决仍以正式 exit 为准。"""
@@ -419,7 +420,7 @@ def lint(
                     click.echo(f"自动发现配置: {candidate}")
                     break
 
-    templates: list
+    templates: list[Any]
     if inline_mode:
         from ai_prompt_toolkit.linter.inline_prompt import collect_inline_prompts
 
@@ -563,7 +564,7 @@ def lint(
     if parallel > 0 and not interactive and not dry_run and not fix and not watch and len(templates) > 1:
         from concurrent.futures import ThreadPoolExecutor
 
-        def _lint_one(tpl: Path):
+        def _lint_one(tpl: Path) -> LintResult:
             _t = tpl.read_text(encoding="utf-8")
             return linter.lint(
                 tpl.name,
@@ -653,7 +654,7 @@ def lint(
         _write_trace_json(tracer, Path(trace_json_path))
         click.echo(f"Trace: {trace_json_path}")
 
-    mm_findings_total: list = []
+    mm_findings_total: list[Finding] = []
     if multimodal:
         from ai_prompt_toolkit.linter.multimodal import check_multimodal_prompt
 
@@ -1235,7 +1236,8 @@ def scan(
         git_changed_since_rev,
         write_report,
     )
-    from ai_prompt_toolkit.security import DictTemplateProvider, scan_template
+    from ai_prompt_toolkit.security import scan_template
+    from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider
 
     templates = discover_templates(target)
     if new_from_rev:

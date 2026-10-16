@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.88] - 2026-10-15
+
+### Changed（R300 strict 棘轮收口：286/286 全量 strict 锁定 100%，P3-08 子工作流收口）
+
+- 余 6 模块 45 错误一次收完（正确分布：dataset_api 19/gepa 7/lsp_server 6/lint_commands 5/benchmarks __init__ 4/eval_commands 4）：
+  - `dataset_api.py`：9 个 FastAPI 端点 `dict[str, Any]` 返回注解 + `_get_store() -> DatasetStore`（TYPE_CHECKING 导入，消 9 处 no-untyped-call）
+  - `gepa.py`：6 个 FeedbackMetric 静态方法 `dict[str, Any]` + `default_execute` 签名对齐 `GEPAOptimizer.execute_fn`
+  - `lint_commands.py`：`list[LintResult]`/`list[Finding]` 注解 + `DictTemplateProvider` 改从定义模块导入（no_implicit_reexport）
+  - `lsp_server.py`：pygls 无类型 6 处 `type: ignore`（1 misc + 5 untyped-decorator）
+  - `eval_commands.py`：删 unused `type: ignore[call-arg]` + `reflection_lm` 全注解
+  - `benchmarks/__init__.py`：4 个内部闭包 `_fn() -> None`
+- **勘误**：v67.34.87 段（R299 注）逐模块分布为误记（合计 55≠45）；真源分布如上
+- 级联残错 4 类教训沉淀：mypy ignore 注释说明须第二个 # 之后（破折号直连=Invalid "type: ignore" syntax）/异构容器用 list[Any]/no-any-return 须显式 str() 包裹/默认实现签名对齐消费方期望类型
+
+### Added
+
+- 02 总板 P3-08 状态列 R300 收口注（100% 子工作流收口，S4 可晋升面永久为空）；00 交接文档 R300 收口状态 + R301 建议
+- 版本 67.34.87→67.34.88（pyproject/__init__/README 徽章）
+
 ## [v67.34.87] - 2026-10-15
 
 ### Changed（R299 strict 棘轮第三轮收紧：3 模块晋升，280/286 锁定 98%）

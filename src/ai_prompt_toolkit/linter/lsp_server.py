@@ -101,7 +101,7 @@ def _compute_score(text: str) -> dict[str, Any]:
 
 if _HAS_LSP:
 
-    class PromptLanguageServer(LanguageServer):
+    class PromptLanguageServer(LanguageServer):  # type: ignore[misc]  # pygls 无类型存根(Any 基类)
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, **kwargs)
             self._debounce_timers: dict[str, asyncio.TimerHandle] = {}
@@ -146,14 +146,14 @@ if _HAS_LSP:
 
     server = PromptLanguageServer("prompt-lsp", "v1.0.0")
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
+    @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)  # type: ignore[untyped-decorator]  # pygls 无存根
     def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
         uri = params.text_document.uri
         text = params.text_document.text
         server._documents[uri] = text
         server._schedule_lint(uri, text)
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
+    @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)  # type: ignore[untyped-decorator]  # pygls 无存根
     def did_change(params: lsp.DidChangeTextDocumentParams) -> None:
         uri = params.text_document.uri
         text = ""
@@ -162,7 +162,7 @@ if _HAS_LSP:
         server._documents[uri] = text
         server._schedule_lint(uri, text)
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
+    @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)  # type: ignore[untyped-decorator]  # pygls 无存根
     def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
         uri = params.text_document.uri
         server._documents.pop(uri, None)
@@ -171,7 +171,7 @@ if _HAS_LSP:
             del server._debounce_timers[uri]
         server.publish_diagnostics(uri, [])
 
-    @server.feature(lsp.TEXT_DOCUMENT_HOVER)
+    @server.feature(lsp.TEXT_DOCUMENT_HOVER)  # type: ignore[untyped-decorator]  # pygls 无存根
     def hover(params: lsp.HoverParams) -> lsp.Hover | None:
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
@@ -193,7 +193,7 @@ if _HAS_LSP:
                     return lsp.Hover(contents=lsp.MarkupContent(kind=lsp.MarkupKind.Markdown, value=content))
         return None
 
-    @server.feature(lsp.TEXT_DOCUMENT_CODE_ACTION)
+    @server.feature(lsp.TEXT_DOCUMENT_CODE_ACTION)  # type: ignore[untyped-decorator]  # pygls 无存根
     def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction] | None:
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.rules import _RULE_MAP

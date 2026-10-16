@@ -133,7 +133,7 @@ def bench_lexer_large() -> BenchResult:
 
 
 def bench_parser_single() -> BenchResult:
-    def _fn():
+    def _fn() -> None:
         tokens = Lexer(SINGLE_CONDITION).tokenize()
         Parser(tokens).parse()
 
@@ -141,7 +141,7 @@ def bench_parser_single() -> BenchResult:
 
 
 def bench_parser_nested() -> BenchResult:
-    def _fn():
+    def _fn() -> None:
         tokens = Lexer(NESTED_CONDITION).tokenize()
         Parser(tokens).parse()
 
@@ -155,12 +155,12 @@ def bench_evaluator_simple() -> BenchResult:
     cond = ast.children[0].condition if ast.children else None
     if cond is None:
 
-        def _fn():
+        def _fn() -> None:
             pass
     else:
         ev = Evaluator(ctx)
 
-        def _fn():
+        def _fn() -> None:
             ev.evaluate(cond)
 
     return _run_bench("evaluator_simple", _fn)

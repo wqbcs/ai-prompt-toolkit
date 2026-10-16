@@ -498,7 +498,7 @@ class GEPAOptimizer:
 
 class FeedbackMetric:
     @staticmethod
-    def exact_match(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
+    def exact_match(gold: dict[str, Any], pred: dict[str, Any], **kwargs: Any) -> ScoreWithFeedback:
         expected = str(gold.get("expected", "")).strip().lower()
         actual = str(pred.get("answer", pred.get("output", ""))).strip().lower()
         is_match = expected == actual
@@ -510,7 +510,7 @@ class FeedbackMetric:
         )
 
     @staticmethod
-    def contains_match(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
+    def contains_match(gold: dict[str, Any], pred: dict[str, Any], **kwargs: Any) -> ScoreWithFeedback:
         expected_parts = gold.get("expected_parts", [])
         answer = str(pred.get("answer", pred.get("output", ""))).lower()
         matched = [p for p in expected_parts if p.lower() in answer]
@@ -523,7 +523,7 @@ class FeedbackMetric:
         return ScoreWithFeedback(score=score, feedback=feedback)
 
     @staticmethod
-    def regex_match(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
+    def regex_match(gold: dict[str, Any], pred: dict[str, Any], **kwargs: Any) -> ScoreWithFeedback:
         import re
 
         pattern = gold.get("regex_pattern", "")
@@ -539,7 +539,7 @@ class FeedbackMetric:
         )
 
     @staticmethod
-    def lint_score(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
+    def lint_score(gold: dict[str, Any], pred: dict[str, Any], **kwargs: Any) -> ScoreWithFeedback:
         from ai_prompt_toolkit.linter.linter import PromptLinter
 
         text = pred.get("answer", pred.get("output", pred.get("prompt", "")))
@@ -559,7 +559,7 @@ class FeedbackMetric:
 
     @staticmethod
     def llm_judge(
-        gold: dict, pred: dict, *, judge_lm: Callable[[str], str] | None = None, **kwargs: Any
+        gold: dict[str, Any], pred: dict[str, Any], *, judge_lm: Callable[[str], str] | None = None, **kwargs: Any
     ) -> ScoreWithFeedback:
         if judge_lm is None:
             return FeedbackMetric.lint_score(gold, pred, **kwargs)
@@ -597,7 +597,7 @@ Feedback: <brief explanation of the score>"""
             return ScoreWithFeedback(score=0.0, feedback=f"Judge LM failed: {e}")
 
     @staticmethod
-    def pangu_judge(gold: dict, pred: dict, **kwargs: Any) -> ScoreWithFeedback:
+    def pangu_judge(gold: dict[str, Any], pred: dict[str, Any], **kwargs: Any) -> ScoreWithFeedback:
         try:
             from ai_prompt_toolkit.ab_test.providers.pangu import PanguProvider
 
@@ -702,7 +702,7 @@ def gepa_optimize(
 ) -> GEPAResult:
     feedback_fn = custom_metric or FEEDBACK_METRICS.get(metric, FeedbackMetric.lint_score)
 
-    def default_execute(instructions, inputs):
+    def default_execute(instructions: dict[str, str], inputs: dict[str, Any]) -> dict[str, Any]:
         return {
             "answer": instructions.get("main", ""),
             "output": instructions.get("main", ""),

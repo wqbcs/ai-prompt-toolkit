@@ -10,16 +10,19 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Query
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.dataset import DatasetStore
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/datasets", tags=["datasets"])
 
 
-def _get_store():
+def _get_store() -> DatasetStore:
     from ai_prompt_toolkit.dataset import DatasetStore
 
     return DatasetStore()
@@ -29,7 +32,7 @@ def _get_store():
 async def api_list_datasets(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-):
+) -> dict[str, Any]:
     store = _get_store()
     datasets, total = store.list_datasets(page, page_size)
     return {
@@ -41,7 +44,7 @@ async def api_list_datasets(
 
 
 @router.post("")
-async def api_create_dataset(body: dict[str, Any]):
+async def api_create_dataset(body: dict[str, Any]) -> dict[str, Any]:
     store = _get_store()
     name = body.get("name", "")
     if not name:
@@ -51,7 +54,7 @@ async def api_create_dataset(body: dict[str, Any]):
 
 
 @router.get("/{dataset_id}")
-async def api_get_dataset(dataset_id: str):
+async def api_get_dataset(dataset_id: str) -> dict[str, Any]:
     store = _get_store()
     ds = store.get_dataset(dataset_id)
     if not ds:
@@ -63,7 +66,7 @@ async def api_get_dataset(dataset_id: str):
 
 
 @router.delete("/{dataset_id}")
-async def api_delete_dataset(dataset_id: str):
+async def api_delete_dataset(dataset_id: str) -> dict[str, Any]:
     store = _get_store()
     if not store.delete_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="数据集不存在")
@@ -71,7 +74,7 @@ async def api_delete_dataset(dataset_id: str):
 
 
 @router.post("/{dataset_id}/cases")
-async def api_add_case(dataset_id: str, body: dict[str, Any]):
+async def api_add_case(dataset_id: str, body: dict[str, Any]) -> dict[str, Any]:
     store = _get_store()
     if not store.get_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="数据集不存在")
@@ -86,7 +89,7 @@ async def api_add_case(dataset_id: str, body: dict[str, Any]):
 
 
 @router.delete("/{dataset_id}/cases/{case_id}")
-async def api_delete_case(dataset_id: str, case_id: str):
+async def api_delete_case(dataset_id: str, case_id: str) -> dict[str, Any]:
     store = _get_store()
     if not store.delete_case(case_id):
         raise HTTPException(status_code=404, detail="用例不存在")
@@ -94,7 +97,7 @@ async def api_delete_case(dataset_id: str, case_id: str):
 
 
 @router.post("/{dataset_id}/import")
-async def api_import_dataset(dataset_id: str, body: dict[str, Any]):
+async def api_import_dataset(dataset_id: str, body: dict[str, Any]) -> dict[str, Any]:
     store = _get_store()
     if not store.get_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="数据集不存在")
@@ -113,7 +116,7 @@ async def api_import_dataset(dataset_id: str, body: dict[str, Any]):
 
 
 @router.get("/{dataset_id}/export")
-async def api_export_dataset(dataset_id: str, fmt: str = Query("json")):
+async def api_export_dataset(dataset_id: str, fmt: str = Query("json")) -> dict[str, Any]:
     store = _get_store()
     if not store.get_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="数据集不存在")
@@ -123,7 +126,7 @@ async def api_export_dataset(dataset_id: str, fmt: str = Query("json")):
 
 
 @router.post("/{dataset_id}/run")
-async def api_run_dataset(dataset_id: str, body: dict[str, Any]):
+async def api_run_dataset(dataset_id: str, body: dict[str, Any]) -> dict[str, Any]:
     store = _get_store()
     if not store.get_dataset(dataset_id):
         raise HTTPException(status_code=404, detail="数据集不存在")

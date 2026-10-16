@@ -1319,11 +1319,11 @@ def gepa_optimize_cmd(
             # 此路径实际必然异常并被下方except吞掉, R197+用create_provider重构
             from ai_prompt_toolkit.ab_test.providers import get_provider  # type: ignore[attr-defined]
 
-            provider = get_provider(reflection_model)  # type: ignore[call-arg]
+            provider = get_provider(reflection_model)
             if provider:
 
-                def reflection_lm(prompt):
-                    return provider.call(prompt, model=reflection_model).get("text", "")
+                def reflection_lm(prompt: str) -> str:
+                    return str(provider.call(prompt, model=reflection_model).get("text", ""))
         except Exception:
             click.echo(f"警告: 无法加载反射模型 '{reflection_model}', 将使用启发式提议", err=True)
 
@@ -2210,7 +2210,7 @@ def _render_trace_file(path: str, fmt: str) -> None:
     )
     tree = Tree(f"[bold]Trace[/bold] {len(spans)}个span · 总耗时 {total_duration * 1000:.1f}ms")
 
-    def _attr_summary(span: dict) -> str:
+    def _attr_summary(span: dict[str, Any]) -> str:
         keys = [
             "prompt.template.id",
             "gen_ai.operation.name",
@@ -2221,7 +2221,7 @@ def _render_trace_file(path: str, fmt: str) -> None:
         parts = [f"{k.split('.')[-1]}={span['attributes'][k]}" for k in keys if k in span.get("attributes", {})]
         return f" [dim]{' · '.join(parts)}[/dim]" if parts else ""
 
-    def _add_node(parent_tree: Any, node: dict) -> None:
+    def _add_node(parent_tree: Any, node: dict[str, Any]) -> None:
         span = node["span"]
         status_color = "green" if span.get("status") == "ok" else "red"
         label = (
