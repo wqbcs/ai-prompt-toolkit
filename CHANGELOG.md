@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.83] - 2026-10-15
+
+### Added（R295 P3-08 mypy strict 模块级棘轮：新模块 --strict，旧模块只紧不松）
+
+- `check_mypy_ratchet.py` 扩展模块级 strict 棘轮（板行 P3-08 验收标准="棘轮脚本支持模块级 strict"）：
+  - 注册表 `mypy_strict_registry.json`：{模块相对路径: strict(bool)}，true=strict 锁定（--strict 0 错误）
+  - 首轮播种即 **256/286 模块 strict 锁定**（89% 存量代码 0 strict 错误），30 模块=逐步收紧候选
+  - S1（红）：mypy 目标面全量覆盖（新模块不得靠遗漏逃逸 strict）；S1b（红）：HEAD 注册表不存在的新模块必须 strict=true
+  - S2（红）：strict 锁定模块必须 0 --strict 错误（锁定区违约）；S3（红）：HEAD strict=true 模块必须保持 true（禁放松，同基线棘轮语义）
+  - S4（提示不阻断）：strict=false 且 0 --strict 错误模块=可晋升面（"每轮至少收 5% 若有余力"流程目标→机器观察）
+  - `--update-strict` 刷新注册表（只紧不松：true→false 拒绝，--force 需理由）；Windows mypy 反斜杠路径归一 + rc=1 零错误行归属解析失配护栏（fail-closed）
+- 10 测试 `tests/test_r295_mypy_strict_ratchet.py`（S1/S1b/S2/S3/S4 + 播种/放松拒绝/基线行为不回归，hermetic monkeypatch 数据面）；CI 同命令继承（prompt-ci.yml 单真源）
+
+### Changed
+
+- 02 总板 P3-08 → ✅ R295；00 交接文档 R295 收口状态 + R296 建议
+- 版本 67.34.82→67.34.83（pyproject/__init__/README 徽章）
+
 ## [v67.34.82] - 2026-10-15
 
 ### Added（R294 P3-17 板 vs 代码盘点机制补全：check 4/5 机器护栏）
