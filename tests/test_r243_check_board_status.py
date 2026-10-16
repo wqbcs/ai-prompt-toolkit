@@ -72,10 +72,12 @@ def run_check(board: Path, changelog: Path) -> tuple[int, str]:
 
 
 def test_parse_board_rows_and_status_column(board: Path) -> None:
+    """R294 契约: parse_board → [(任务 ID, 列列表)], 状态列=cells[-1]。"""
     rows = cbs.parse_board(board.read_text(encoding="utf-8"))
-    assert ("P0-03", "⬜ 待用户") in rows
-    assert ("P3-02", "✅ 2026-10-01 (c1de19d 验证)") in rows
-    assert ("R243-X1", "⏸ 暂停") in rows
+    by_id = dict(rows)
+    assert by_id["P0-03"][-1] == "⬜ 待用户"
+    assert by_id["P3-02"][-1] == "✅ 2026-10-01 (c1de19d 验证)"
+    assert by_id["R243-X1"][-1] == "⏸ 暂停"
     # 非表格行的 P9-99 不解析
     assert all(rid != "P9-99" for rid, _ in rows)
 
