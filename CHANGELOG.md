@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.85] - 2026-10-15
+
+### Changed（R297 strict 棘轮首轮收紧：13 模块晋升，269/286 锁定 94%）
+
+- 晋升 13 个单错误模块至 strict 锁定（256→269/286，89%→94%）：
+  - 缺注解 ×5：`__post_init__`（harmonyos_templates/prompt_version/custom_rules）→ `-> None`；preflight_hook `_sev(f: Finding)`；rules.py `_wrap_cjk_norm` wrapper 返回注解（与 `_CheckerFn` 同口径）
+  - 缺类型参数 ×7：`re.Match[str]`（prompt_template）/ `re.Pattern[str]`（pii_detector/gap_report）/ `list[InjectionRule]`（security/engine）/ `dict[str, Any]`（eval_matrix/output/security_commands）
+  - 显式再导出 ×1：`security/types.py` `__all__ = ["Finding", "Severity"]`（strict no_implicit_reexport：顶层 types 再导出面须显式）
+- ruff 风格修复（TC001 注解专用导入移 TYPE_CHECKING：preflight_hook Finding / engine InjectionRule；UP037 去引号注解）
+- 余 17 模块 84 错误（S4 可晋升面：dataset_api 19 错误为最大单面，2 错误×6 模块为下批）
+
+### Added
+
+- 02 总板 P3-08 状态列 R297 留痕；00 交接文档 R297 收口状态 + R298 建议
+- 版本 67.34.84→67.34.85（pyproject/__init__/README 徽章）
+
 ## [v67.34.84] - 2026-10-15
 
 ### Added（R296 P1-09 采用清单 Day30/Day90 扩展：纪律变零操心）

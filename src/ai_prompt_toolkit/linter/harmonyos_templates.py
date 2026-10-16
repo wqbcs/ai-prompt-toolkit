@@ -21,7 +21,7 @@ class ArkTSSnippet:
     language: str = "arkts"
     tags: list[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.tags is None:
             self.tags = []
 

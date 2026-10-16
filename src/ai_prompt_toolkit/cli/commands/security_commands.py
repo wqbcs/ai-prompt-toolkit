@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 import click
 
@@ -366,7 +366,7 @@ def mcp_lint_cmd(
             sys.exit(3)
         description_baseline = baseline_data
 
-    file_reports: list[dict] = []
+    file_reports: list[dict[str, Any]] = []
     parse_errors = 0
     for f in files:
         try:

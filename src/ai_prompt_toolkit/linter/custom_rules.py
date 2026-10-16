@@ -47,7 +47,7 @@ class CustomRuleDef:
     remediation: str = ""
     check_type: str = "regex"
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.keywords is None:
             self.keywords = []
 

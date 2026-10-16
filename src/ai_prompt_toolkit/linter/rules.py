@@ -1631,7 +1631,7 @@ def _wrap_cjk_norm(checker: _CheckerFn) -> _CheckerFn:
     (FP 门禁的 check_p* 名称过滤依赖)。"""
 
     @functools.wraps(checker)
-    def wrapper(text: str):
+    def wrapper(text: str) -> Finding | list[Finding] | None:
         norm_text, pos_map = normalize_cjk_spaces(text)
         result = checker(norm_text)
         if pos_map is None:

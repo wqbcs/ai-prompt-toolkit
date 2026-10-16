@@ -35,7 +35,7 @@ class PIIMatch:
         return self.value[:2] + "*" * max(len(self.value) - 4, 2) + self.value[-2:]
 
 
-_PII_PATTERNS: list[tuple[str, re.Pattern, float]] = [
+_PII_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("email", re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"), 0.95),
     ("mobile", re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)"), 0.9),
     (

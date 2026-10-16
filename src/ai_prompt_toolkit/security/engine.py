@@ -31,6 +31,8 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from ai_prompt_toolkit.security.types import InjectionRule
+
 from ai_prompt_toolkit.security.anomaly_detector import compute_anomaly_score, extract_features
 from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 from ai_prompt_toolkit.security.prompt_scorecard import Decision
@@ -161,7 +163,7 @@ def _normalize_text(text: str) -> str:
 
 
 class L1RegexLayer:
-    def __init__(self, extra_rules: list | None = None) -> None:
+    def __init__(self, extra_rules: list[InjectionRule] | None = None) -> None:
         self._detector = InjectionDetector(extra_rules=extra_rules or ZH_INJECTION_RULES)
 
     @property

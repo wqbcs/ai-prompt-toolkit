@@ -114,7 +114,7 @@ _SEVERITY_BY_GAP_COUNT = (
 )
 
 
-def _compile_markers() -> dict[str, list[re.Pattern]]:
+def _compile_markers() -> dict[str, list[re.Pattern[str]]]:
     return {ref: [re.compile(p, re.IGNORECASE) for p in pats] for ref, pats in _RISK_DEFENSE_MARKERS.items()}
 
 

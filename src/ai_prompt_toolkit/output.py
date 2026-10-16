@@ -180,7 +180,7 @@ def print_flow_dag(flow_data: dict[str, Any]) -> None:
     console.print(tree)
 
 
-def _add_flow_children(branch: Any, parent: str, edges: list[dict], nodes: dict) -> None:
+def _add_flow_children(branch: Any, parent: str, edges: list[dict[str, Any]], nodes: dict[str, Any]) -> None:
     for edge in edges:
         if edge.get("source") == parent:
             target = edge.get("target", "")

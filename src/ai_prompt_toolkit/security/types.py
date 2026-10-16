@@ -8,6 +8,10 @@ from typing import Any, ClassVar
 
 from ai_prompt_toolkit.types import Finding, Severity
 
+# 显式再导出(R297/strict no_implicit_reexport): Finding/Severity 定义于顶层
+# ai_prompt_toolkit.types, 本模块是其安全域再导出面
+__all__ = ["Finding", "Severity"]
+
 
 class RiskLevel(Enum):
     NONE = "none"

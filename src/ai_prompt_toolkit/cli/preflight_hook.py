@@ -22,6 +22,10 @@ from __future__ import annotations
 import json
 import os
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ai_prompt_toolkit.types import Finding
 
 DEFAULT_FAIL_SEVERITY = "high"  # critical+high 阻断; medium/low 只提示
 
@@ -55,7 +59,7 @@ def run_preflight(prompt_text: str, fail_severity: str, nudge: bool) -> tuple[in
     """
     from ai_prompt_toolkit.linter import lint_template
 
-    def _sev(f) -> str:
+    def _sev(f: Finding) -> str:
         """Severity 枚举 → 值字符串(枚举值即 'critical'/'high'/... 小写)"""
         v = getattr(f.severity, "value", f.severity)
         return str(v).lower()

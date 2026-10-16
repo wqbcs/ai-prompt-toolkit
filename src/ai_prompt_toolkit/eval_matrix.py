@@ -239,7 +239,7 @@ def generate_eval_matrix_html(
     return html_content
 
 
-def _render_simple_html(report: MatrixReport, context: dict) -> str:
+def _render_simple_html(report: MatrixReport, context: dict[str, Any]) -> str:
     parts = [
         "<!DOCTYPE html><html lang='zh-CN'><head><meta charset='UTF-8'>",
         "<title>" + html.escape(report.title) + "</title>",

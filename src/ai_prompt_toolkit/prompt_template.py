@@ -92,7 +92,7 @@ def render_template(template_text: str, variables: dict[str, str] | None = None,
         if _UNSAFE_PATTERN.search(key) or _UNSAFE_PATTERN.search(str(value)):
             raise ValueError(f"Unsafe variable detected: {key}")
 
-    def _replace(match: re.Match) -> str:
+    def _replace(match: re.Match[str]) -> str:
         name = match.group(1)
         default = match.group(2) or ""
         if name in variables:
