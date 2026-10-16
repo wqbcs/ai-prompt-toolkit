@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.95] - 2026-10-16
+
+### Added（R307 四维评审自评 + R308 新自动化 dogfood 轮）
+
+**R307（四维评审自评，86ffb33）**
+- 规划集 15 号文档 `docs/planning/15_四维评审自评.md`：技术创新/场景落地/开源治理/长期发展四维，每维=可机器验证证据+诚实缺口+自评口径，附录答辩现场可跑证据命令清单
+
+**R308（用新装自动化完善项目：/board + Playground e2e + redline 扩展）**
+- `tests/test_r308_playground_api.py`（P3-18 新行）：playground server（FastAPI :8080，13 路由+限流中间件）HTTP 层零覆盖缺口填补——14 测试 TestClient hermetic e2e（meta/compile/lint/scan/evaluate/eval-matrix/traces 契约面）；限流 429 路径有意不单测（模块级 `_rl_clients` 共享预算灌满会污染同进程其他 TestClient 测试文件，留发布后 Playwright MCP 真实会话面承接）；注入检测夹具取 tests/test_r60_security.py:11 已证 TP 同源文本（golden 探针 expected 为 P### linter 规则 ID 属独立引擎面，不跨引擎借用——首跑失败根因即此混淆，已修）
+- `/board` 板漂移一键命令首跑：check_board_status 5 机器检查 0 红 0 警告 + 机器检查面外数字声称抽查 4/4 相符（P3-04 9 测试/P1-15b 25/P2-01 7/P1-18 相关 29，对盘真源逐一 collect-only 复验），零漂移——R306 曾抓 4 例的"测试数/行数声称 vs 真源"缺陷类日常化拦截
+- redline-guard 扩红线（本地 .atomcode 配置面，gitignored）：`mypy_strict_registry.json`（变更必须走 --update-strict）+ `golden_attacks.json`（变更必须走探针先行+双基线不回归）纳入拦截；扩展中实抓并修复 hook echo 内反引号的 bash 命令替换真 bug（实测触发 --update-strict 执行，git diff 确认注册表零变更，去反引号后复测干净）
+- 收口改走新 `round-close` skill 协议（首个 dogfood 轮）：门禁链+升版门禁序+CHANGELOG+板回写+00 交接+commit trailer 全链机械化
+
+### Changed
+
+- 测试 6675→6689（R308 +14 Playground HTTP e2e）
+- 板面：P3-17 行 R308 /board 首跑留痕；P3-18 新行（Playground Web UI HTTP e2e）
+- 版本 67.34.94→67.34.95（R307 纯文档轮未升版，并入本版本段——check_version_consistency 要求 CHANGELOG 最新条目=当前版本）
+
 ## [v67.34.94] - 2026-10-16
 
 ### Fixed（R306 上线前全面深度审查：四层子代理审查 + 全部声称读盘验证，高杠杆修复落地）
