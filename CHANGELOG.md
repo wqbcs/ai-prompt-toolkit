@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.81] - 2026-10-15
+
+### Added（R293 P2-29 全角字母 bypass 规则化：P268 新规则 + 互联网调查 4 独立真实 TP 取证）
+
+- 新规则 P268 全角字母注入bypass面（HIGH, encoding_evasion, OWASP LLM01 / ATLAS AML.T0015）：全角拉丁字母（U+FF21-FF5A）连续段 → NFKC 解码 → 6 注入动词有限集精确匹配（ignore/disregard/override/forget/bypass/jailbreak，全部实证出处：P260 sub2 ATR-2026-00001 L11 解码词表 + P163 越狱族）——行业共识对策（NFKC 归一化，openhuman/ClawGuard/AWS/paultendo 四源同型）的确定性静态实现
+- 取证 4 独立真实 TP（T1「≥2 独立真实 TP」条件解除，实超额）：tinyhumansai/openhuman PR #2067（2026-05 生产修复）/ ClawGuard 12 逃逸技术 #7（引 arXiv 2602.00750）/ arXiv 2504.11168（Full Width Text 对 6 家 guardrail 规避矩阵实测）/ arXiv 2508.14070（字符级对抗攻击面综述）
+- golden 2 条盲点观察探针翻转为 TP（r240_tn08_fullwidth en / r286_ja_obs_fullwidth_bypass ja，期望单元 +2）+ 新增 1 条良性全角拉丁 TN（r293_ja_tn_fullwidth_okng，日语 ＯＫ/ＮＧ 惯例）；探针 666→667，期望命中单元 377→379，漏检 0.00%（379/379）保持，FP 0.82% 持平
+- 08 需求痛点调研季度重搜（5 路：社区抱怨/中文专项/竞品动态/可复用组件/全角取证）：静态赛道新玩家 4 家（LLMArmor/agent-audit/llm-audit/PromptSentry）全部瞄准代码面、prompt 内容赛道仍空白；Semgrep 进 LLM 赛道（2026-03 Multimodal/2026-05 Guardian）；退出码 0/1/2+SARIF+确定性 CI 契约与四家收敛（楔子设计独立验证）；Homebrew poet 可复用组件落地 P1-21 参考——详见 `R293_改进方案与开源调研.md`
+
+### Changed
+
+- 02 总板 P2-29 → ✅ R293 落地；00 交接文档 R293 收口 + R294 建议（原 R293 建议之 P2-29 项已完成移除）
+- ATLAS 映射表 T0015 行 +P268、LLM01 覆盖强度行 +P268；README 规则数 8 处 267→268（徽章/首屏/表格/正文/mermaid）
+- 版本 67.34.80→67.34.81（pyproject/__init__/README 徽章）
+
 ## [v67.34.80] - 2026-10-14
 
 ### Added（R286 P2-11 ja 面探针扩容：ja 6→16，golden 653→663）

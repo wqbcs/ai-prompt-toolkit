@@ -108,7 +108,9 @@ class TestR214LangSchema:
         #       观察×2; 全角字母 bypass 缺口登记 02 总板) = 663
         # R288: +3 (P2-30 P178 逃生舱: ja 安全文档引用 FP + en advisory 引用
         #       FP + 「这是示例」型红线 TP pin) = 666
-        assert len(probes) == 666
+        # R293: +1 ja (P2-29 P268 全角字母规则化: r293_ja_tn_fullwidth_okng 良性
+        #       全角拉丁 TN; R240 tn08/R286 obs 两条盲点观察探针翻转 TP 不增数) = 667
+        assert len(probes) == 667
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -156,8 +158,10 @@ class TestR214LangSchema:
         #       = zh-Hans 544 | en 101 | ja 6 | zh-Hant 2
         # R286: +10 ja (P2-11 ja 面扩容: TP×4/TN×4/观察×2)
         #       = zh-Hans 544 | en 101 | ja 16 | zh-Hant 2
+        # R288: +1 ja (P2-30 TN) = zh-Hans 544 | en 103 | ja 17 | zh-Hant 2
+        # R293: +1 ja (P2-29 P268 良性全角拉丁 TN) = zh-Hans 544 | en 103 | ja 18 | zh-Hant 2
         assert sum(1 for v in langs.values() if v == "zh-Hans") == 544
-        assert sum(1 for v in langs.values() if v == "ja") == 17
+        assert sum(1 for v in langs.values() if v == "ja") == 18
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103
         assert sum(1 for v in langs.values() if v == "en") == 103

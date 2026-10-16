@@ -13807,6 +13807,102 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p268.py\u0000P268": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000全角字母注入bypass面": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000Prompt含全角拉丁字母(U+FF21-FF5A)连续段且NFKC解码后精确命中注入动词(ignore/disregard/override/forget/bypass/jailbreak) — 全角化=有意规避英文检测(行业共识对策=NFKC归一化, 本规则为该对策的确定性静态实现)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000移除全角字母伪装: 全角注入内容仍按注入处置(改回半角不改变攻击性质); 良性全角拉丁(如日语ＯＫ/ＮＧ)不受本规则影响": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000Prompt contains a run of fullwidth Latin letters (U+FF21-FF5A) that NFKC-decodes exactly to an injection verb (ignore/disregard/override/forget/bypass/jailbreak) — fullwidth substitution is deliberate evasion of English detection (the industry consensus countermeasure is NFKC normalization; this rule is its deterministic static implementation)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000Remove the fullwidth-letter disguise: a fullwidth injection payload is still an injection (converting it back to halfwidth does not change its nature); legitimate fullwidth Latin (e.g. Japanese OK/NG) is not affected by this rule": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000encoding_evasion": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000LLM01": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000[\\uFF21-\\uFF3A\\uFF41-\\uFF5A]+": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000ignore": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000disregard": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000override": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000forget": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000bypass": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p268.py\u0000jailbreak": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }
