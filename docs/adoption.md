@@ -44,7 +44,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ai-prompt-toolkit
-      # report-only: 不带 --gate, 退出码恒为0, 只产出SARIF进code scanning
+      # report-only: 不带 --gate, SARIF 进 code scanning
+      # 退出码仍走同一契约(见上表): 0=PASS / 1=WARN(medium) / 2=FAIL(high/critical) / 3=执行错误
+      # Day 0 若要"绝对不阻断": 命令末尾加 || true（团队选择）
       - run: prompt-cli lint -t ./prompts --format sarif -o prompt-lint.sarif
       - uses: github/codeql-action/upload-sarif@v4
         with:
@@ -255,7 +257,7 @@ ID 或通配符）。`unknown_rule` 不立即红：规则 ID 打错=该豁免没
 
 ## 多语言 / 多模型仓库
 
-- 语言自动识别（BCP-47 标签），zh-Hans/zh-Hant/en/ja/ko 均有独立规则与基线分语言口径
+- 语言自动识别（BCP-47 标签），zh-Hans/zh-Hant/en/ja 四语言均有独立规则与基线分语言口径（ko 仅为 i18n 消息回退，无独立规则/基线）
 - 特定模型/行业的条件编译模板：`prompt-cli compile -s tpl.md -c context.json`
 - 华为云/等保合规场景追加：`prompt-cli compliance -t ./prompts --format sarif`
 

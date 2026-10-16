@@ -11,6 +11,8 @@
 4. 收口一律 `python scripts/release_gate.py`, 禁手工拆步
 
 步骤序列(与 CI prompt-ci.yml 对齐 + 本地独有步):
+   步数与完整顺序以 build_steps() 为单一真源(本清单为 19 步历史示意, 不硬编码
+   计数 — R306 深审 m-10: 清单 19 步 vs 实态 29 步漂移, R248 不硬编码同纪律)
  1. pytest 全量(-k "not slow", 与 CI 一致, 产 coverage.xml)
  2. linter 覆盖率棘轮(check_linter_coverage.py, P3-09: linter 包行覆盖≥90%
     只收紧不放松; 依赖第 1 步 coverage.xml — CI test 作业同位置独立步,

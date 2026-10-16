@@ -3062,6 +3062,15 @@ def _tool_mcp_reload(args: dict[str, Any]) -> dict[str, Any]:
     )
     module_name = args.get("module", "ai_prompt_toolkit.linter.rules")
     try:
+        # R306 深审 M-1: 动态 import 无命名空间白名单=MCP 客户端(含 LLM agent,
+        # 工具参数为其可控输入)可触发任意已安装模块的模块级代码执行。硬闸:
+        # 仅允许 ai_prompt_toolkit. 命名空间内模块(本工具自身扩展面)。
+        if not module_name.startswith("ai_prompt_toolkit."):
+            return {
+                "status": "error",
+                "module": module_name,
+                "error": "module 必须在 ai_prompt_toolkit. 命名空间内(动态导入白名单, R306)",
+            }
         is_core = module_name in _CORE_IDENTITY_MODULES
         if not is_core:
             if module_name in sys.modules:

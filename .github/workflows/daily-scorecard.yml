@@ -21,8 +21,15 @@ jobs:
         run: |
           echo "=== 安全评分卡(5维度) ==="
           for f in $(find . -name '*.prompt' -o -name '*.md' | head -50); do
-            prompt-cli score --target "$f" --format json --output "scorecard-$(basename $f).json" || true
+            # R306 深审 M-3: score 命令无 --output 选项(仅 --target/--format),
+            # 原行被 || true 吞掉=死步, 主产物从未生成。改 stdout 重定向。
+            prompt-cli score --target "$f" --format json > "scorecard-$(basename $f).json" || true
           done
+          FOUND=$(find . -name '*.prompt' -o -name '*.md' | wc -l)
+          if [ "$FOUND" -gt 0 ] && ! ls scorecard-*.json >/dev/null 2>&1; then
+            echo "::error::scorecard 产物为空 — score 步全部失败(死步)"
+            exit 1
+          fi
       - name: Run Compliance on all prompts
         run: |
           echo "=== 华为云合规报告(7域) ==="

@@ -2,7 +2,7 @@
 
 > P1-19 工件：GitHub 之外 CI 平台的复制即用门禁片段。
 > 可移植性基础：SARIF 是 OASIS 标准（01 §9），CLI 退出码契约稳定
-> （01 §3 不变量 5：**0=通过 / 1=错误 / 2=门禁失败**，`--gate`/`--fail-on` 均走此契约）。
+> （01 §3 不变量 5：**0=通过 / 1=警告(WARN, medium) / 2=门禁失败(FAIL, high/critical) / 3=执行层错误**，`--gate`/`--fail-on` 均走此契约）。
 >
 > 边界声明：本文件是发布前文档工件（P1-04 前置）；片段中 `pip install
 > ai-prompt-toolkit` 需发布后可用。fork 仓冒烟（GitLab/Azure 各 1 次）

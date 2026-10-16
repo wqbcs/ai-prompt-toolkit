@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.93"
+version = "67.34.94"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -68,18 +68,17 @@ dev = [
     "hypothesis>=6.82",
 ]
 ab_test = [
+    # R306 深审: scipy/numpy 从 [ab_test]/[full] 剔除 — 全 src/ 零 import 的
+    # 死重依赖(.[full] 用户含 Docker 镜像白装数百 MB); ab_test 真实依赖仅 httpx
     "httpx>=0.24",
-    "scipy>=1.11",
-    "numpy>=1.24",
 ]
 lsp = [
     "pygls>=1.0",
     "lsprotocol>=2023.0",
 ]
 full = [
+    # R306 深审: scipy/numpy 剔除(同 [ab_test], 全 src/ 零 import)
     "httpx>=0.24",
-    "scipy>=1.11",
-    "numpy>=1.24",
     "fastapi>=0.100",
     "uvicorn>=0.23",
 ]
@@ -100,6 +99,7 @@ where = ["src"]
 # — pip用户 prompt-cli baseline 需包内自带样本才能自证漏检/误报基线
 # R249-P2-25: 过防御外部基准(NotInject)同纪律进包 — pip用户可自证过防御面
 ai_prompt_toolkit = [
+    "py.typed",
     "data/*.json",
     "data/clean_prompts/*.md",
     "data/clean_prompts/*.txt",

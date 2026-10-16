@@ -25,12 +25,20 @@ jobs:
             echo "Probing: $f"
             prompt-cli probe --target "$f" --output "probe-report-$(basename $f).json" || true
           done
-      - name: Run Prompt Security Scan (5-Layer Deep)
+      - name: Run Prompt Security Scan (5-Layer)
         run: |
-          echo "=== 5-Layer Security Scan (deep mode) ==="
+          echo "=== 5-Layer Security Scan (恒全层, 无 depth 选项) ==="
           for f in $(find . -name '*.prompt' | head -20); do
-            prompt-cli scan --target "$f" --depth deep --format sarif --output "scan-$(basename $f).sarif.json" || true
+            prompt-cli scan --target "$f" --format json --output "scan-$(basename $f).json" || true
           done
+          # R306 深审 M-2: 原 --depth deep --format sarif 均为不存在选项(click
+          # UsageError 被 || true 吞掉), SARIF 产物从未生成=死步。改有效选项
+          # +产物非空断言(有 *.prompt 源文件时必须出产物, 杜绝整步静默死亡)。
+          FOUND=$(find . -name '*.prompt' | wc -l)
+          if [ "$FOUND" -gt 0 ] && ! ls scan-*.json >/dev/null 2>&1; then
+            echo "::error::scan 产物为空 — scan 步全部失败(死步)"
+            exit 1
+          fi
       - name: Run Huawei Cloud Compliance Check
         run: |
           echo "=== 华为云安全合规报告 (7域评分) ==="
@@ -68,7 +76,7 @@ jobs:
           name: owasp-scan-reports
           path: |
             probe-report-*.json
-            scan-*.sarif.json
+            scan-*.json
             compliance-*.json
             lint-report-*.json
           retention-days: 30

@@ -5,15 +5,15 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.93-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6670%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.94-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6675%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40667probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-268-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
-[![CI Green Streak](badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
+[![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(667 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
@@ -25,12 +25,12 @@ prompt-cli baseline
 # 误报面  0.82%  |  干净样本 60 个 · checker 268 条
 ```
 
-> **Quick start (no install):** `pipx run ai-prompt-toolkit lint <file>` — first finding in seconds.
+> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
 
 **误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
 固定刻度 0–10%，曲线不随数据缩放）：
 
-[![Baseline Trend](badges/baseline-trend.svg)](docs/baseline_history.jsonl)
+[![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](docs/baseline_history.jsonl)
 
 **过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
 "含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
@@ -89,25 +89,25 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 |------|------|------|
 | **Lint规则** | 268 | P001-P268，196条可自动修复，含多模态/安全/供应链/Agent/可移植性等25大类专项规则 |
 | **评估维度** | 130 | D01-D130，8大类(structure/quality/security/performance/fairness/toolchain/harmonyos/compliance) |
-| **安全注入检测** | 30 | 15条英文+15条中文注入规则 |
+| **安全注入检测** | 37 | 19条英文(INJ-001~019)+18条中文(INJ-ZH-001~018)注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
 | **红队探针** | 23 | DAN/编码绕过/注入/泄露/XSS/包幻觉/坏字符/GCG/滚雪球/恶意软件/系统提示泄露/向量嵌入/Grandma/续写/DonotAnswer/Agent注入/工具滥用/权限提升/目标劫持/多Agent对抗/图像注入/音频注入/跨模态泄露 |
 | **红队检测器** | 11 | 越狱关键词/系统提示泄露/注入模式/编码异常/伦理对齐/偏见公平/误导/拒绝/Agent行为异常/多模态输出检测/链式攻击检测 |
 | **MCP工具** | 73 | 完整MCP Server，字典O(1)路由 |
 | **LLM Provider** | 25 | OpenAI/Claude/DeepSeek/通义千问/智谱/Moonshot/百度/MiniMax/华为/盘古/ModelArts/豆包/星火/百川/商汤等 |
 | **内置模板** | 18 | 华为云/鸿蒙/盘古5/通用QA等 |
-| **Prompt消毒** | 8层 | 注入/PII/Unicode/供应链/结构/编码/格式/语言 |
+| **Prompt消毒** | 11/13步 | 标准级11步/strict级13步检测管线（注入/PII/Unicode/供应链/结构/编码/格式/语言等） |
 
 ### 核心特性
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 268条Lint规则(P001-P268)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等25大类 |
-| **安全扫描** | `prompt-cli scan` | 5层深度检测(quick/standard/deep)，注入检测+PII+供应链+结构+消毒器 |
-| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级8项安全检查 + tool描述security族规则(8类) + TPA/FSP注入形态检测(MCP-111/112, inputSchema递归walk, OWASP MCP03) + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
+| **安全扫描** | `prompt-cli scan` | 5层恒全检测(无 depth 选项)，注入检测+PII+供应链+结构+消毒器 |
+| **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级12项安全检查(MCP-101~112) + tool描述security族规则(8类) + TPA/FSP注入形态检测(MCP-111/112, inputSchema递归walk, OWASP MCP03) + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
-| **红队对抗** | `prompt-cli redteam` | 23探针(15 Probe+8 Detector)+11内置检测器(全局注册表116)，OWASP LLM Top 10 2026映射，自动风险评分 |
-| **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针(15+8)+11内置检测器(全局注册表116)，OWASP合规报告 |
+| **红队对抗** | `prompt-cli redteam` | 23探针+11内置检测器(全局注册表116)，OWASP LLM Top 10 2026映射，自动风险评分 |
+| **Probe扫描** | `prompt-cli probe` | garak风格Probe Framework，23探针+11内置检测器(全局注册表116)，OWASP合规报告 |
 | **评估引擎** | `prompt-cli evaluate` | 130个评估维度(D01-D130)，快速/完整双模式，8大类评估 |
 | **华为云合规** | `prompt-cli compliance` | 7域加权评分(数据隐私/模型安全/访问控制/内容安全/运维安全/供应链安全/合规认证)，等保2.0映射，CRITICAL一票否决 |
 | **条件编译** | `prompt-cli compile` | 按模型/语言/行业条件编译提示词模板（类C预处理器语法） |
@@ -160,7 +160,7 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 | OWASP LLM Top 10 映射 | **2026 版（当前）+ ATLAS + 等保 2.0 三标准** | 无公开标准映射 | CVE/ATTACK 面 | 无 | 部分 |
 | 裁决确定性 | 逐字节可复现 + 双基线时间序列（漏检/误报可一条命令复现） | 确定性静态 | 依赖运行时/网络 feed | 部分 | 确定性静态 |
 | 增量门禁 | 双基线（FP 棘轮 + 存量锁定）+ 增量只拦 NEW | 无公开基线纪律 | 有 | 有 | 无 |
-| 中文规则/报告 | 15 条中文注入检测 + 中文规则族 + 人话报错 + **分语言检测基线表** | 无 | 无 | 无 | 部分 |
+| 中文规则/报告 | 18 条中文注入检测 + 中文规则族 + 人话报错 + **分语言检测基线表** | 无 | 无 | 无 | 部分 |
 
 > 定位澄清：本工具做 **CI 门禁层**（可复现裁决）；运行时防护（LLM Guard 类）、
 > LLM 评估（promptfoo 类）互补不互替。MCP 检测面见下方"适用边界"。
@@ -192,9 +192,9 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 - **OWASP LLM Top 10 2026**：23 Probe→LLM01-LLM10完整映射（2026 版 2025→2026 已迁移，R228），自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
-- **Prompt消毒器**：8层检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言)
-- **25种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/智谱/华为盘古等国内外模型（完整矩阵表 = `docs/provider-matrix.md`）
-- **中文优先**：15条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
+- **Prompt消毒器**：11步/strict 13步检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言等)
+- **25种LLM Provider**：支持OpenAI/Claude/DeepSeek/通义千问/华为盘古等国内外模型（完整矩阵表 = `docs/provider-matrix.md`）
+- **中文优先**：18条中文注入检测规则、中文标点/Token/冗余特有Lint、人话翻译报错
 - **MCP Server**：73个标准MCP工具，支持Claude Desktop等MCP客户端直接调用
 
 ### 为什么是确定性静态检测（CI 门禁场景）
@@ -251,14 +251,14 @@ prompt-cli lint -s my_prompt.md
 # Lint检查 + 每个finding下显示"下一步"修复提示(数据=规则自带 remediation)
 prompt-cli lint -s my_prompt.md --fix-hint
 
-# 安全扫描(5层深度)
-prompt-cli scan -s my_prompt.md --depth deep
+# 安全扫描(5层恒全, 无 depth 选项)
+prompt-cli scan -t my_prompt.md
 
 # 红队对抗(23 Probe + 11内置检测器, 全局注册表116)
-prompt-cli redteam -s my_prompt.md --probe dan,jailbreak
+prompt-cli redteam -t my_prompt.md --probes dan,jailbreak
 
-# Probe扫描(OWASP LLM Top 10 2026)
-prompt-cli probe -s my_prompt.md --probe all
+# Probe扫描(OWASP LLM Top 10 2026, 单文件目标, 默认全部探针)
+prompt-cli probe -t my_prompt.md
 
 # 评估(130维度)
 prompt-cli evaluate -s my_prompt.md --mode full
@@ -272,16 +272,16 @@ prompt-cli compile -s template.md -c context.json
 # A/B测试
 prompt-cli ab-test -c ab_config.yaml
 
-# 版本管理
-prompt-cli version diff my_prompt.md
-prompt-cli version rollback my_prompt.md --rev 3
+# 版本管理(--action: create/show/diff/rollback; diff 可用 --version-a/--version-b 指定对比版本)
+prompt-cli version --action diff --template my_prompt.md
+prompt-cli version --action rollback --template my_prompt.md --version 3
 
 # 语义Diff(安全策略变更=critical)
-prompt-cli prompt-diff old_prompt.md new_prompt.md --semantic
+prompt-cli prompt-diff --old old_prompt.md --new new_prompt.md
 
-# Prompt优化+断言验证
+# Prompt优化+断言验证(assert 需 --response 响应文件 + --config 断言YAML)
 prompt-cli optimize -s my_prompt.md
-prompt-cli assert -s my_prompt.md --assertion "contains:安全声明"
+prompt-cli assert --response response.txt --config assertions.yaml
 
 # MCP Server(73个工具)
 
@@ -299,21 +299,22 @@ prompt-cli assert -s my_prompt.md --assertion "contains:安全声明"
   }
 }
 ```
+# Playground 本地 Web UI(与 MCP 入口 prompt-cli mcp 分属两通道)
 prompt-cli serve
 
 # Watch模式(变更自动Lint+合规)
 prompt-cli watch -s ./prompts/ --compliance
 
-# 安全评分+Badge
+# 安全评分+Badge(SVG, -o 必填)
 prompt-cli score -t my_prompt.md
-prompt-cli badge -t my_prompt.md
+prompt-cli badge -t my_prompt.md -o badge.svg
 
-# Canary水印
-prompt-cli canary inject -s my_prompt.md
-prompt-cli canary check -s leaked_prompt.md
+# Canary水印(单命令: -p 注入 / -c 检测)
+prompt-cli canary -p my_prompt.md
+prompt-cli canary -c leaked_prompt.md
 
 # Token分析(多模型)
-prompt-cli token -s my_prompt.md
+prompt-cli token -t my_prompt.md
 
 # 健康检查
 prompt-cli doctor
@@ -400,9 +401,9 @@ src/ai_prompt_toolkit/
 ├── ab_test/                  # A/B测试引擎(25 Provider)
 ├── i18n/                     # 国际化引擎
 ├── market/                   # 模板市场(FastAPI)
-├── dataset/                  # 数据集管理
-├── flow/                     # Flow DAG引擎
-├── tracing/                  # 分布式追踪
+├── dataset.py                # 数据集管理
+├── flow_dag.py               # Flow DAG引擎
+├── tracing.py                # 分布式追踪
 ├── templates/                # 模板目录包
 └── onboarding/               # 交互式向导
 ```
@@ -422,10 +423,10 @@ graph LR
 
     B -->|268条规则| B1[196条可自动修复]
     B -->|25大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等]
-    C -->|5层深度| C1[quick/standard/deep]
-    C -->|8层消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言]
-    D -->|23探针(15+8)| D1[OWASP LLM Top 10 2026映射]
-    D -->|8检测器| D2[越狱/泄露/注入/编码/伦理/偏见/误导/拒绝]
+    C -->|5层恒全| C1[注入/PII/供应链/结构/消毒器]
+    C -->|11/13步消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言等]
+    D -->|23探针+11检测器| D1[OWASP LLM Top 10 2026映射]
+    D -->|11检测器| D2[越狱/泄露/注入/编码/伦理/偏见/误导/拒绝等]
     E -->|10攻击类| E1[DAN/注入/XSS/泄露等]
     F -->|130维度| F1[D01-D130 8大类评估]
     G -->|7域加权| G1[数据隐私/模型安全/访问控制/内容安全/运维/供应链/合规]
@@ -591,7 +592,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-15：总 666=zh-Hans 544/en 103/ja 17/zh-Hant 2，R288 +3，P2-30 P178 逃生舱探针）。
+（2026-10-16：总 667=zh-Hans 544/en 103/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN）。
 
 ## VSCode插件
 
@@ -604,7 +605,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 - Prompt语法高亮({{变量}}/{%标签%}/角色标签/系统指令)
 - 状态栏评分指示器
 - 保存时自动检查 + 打开文件自动Lint
-- 安全扫描集成(30条含中文注入)
+- 安全扫描集成(37条含中文注入)
 - PII隐私检测
 - Quality Gate检查
 - Front Matter验证
@@ -625,17 +626,17 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 - name: Prompt Lint (SARIF)
   run: prompt-cli lint -t ./prompts/ --format sarif --output results.sarif
 
-# 安全扫描(5层深度)
+# 安全扫描(5层恒全, 无 depth 选项)
 - name: Prompt Security Scan
-  run: prompt-cli scan -t ./prompts/ --depth deep
+  run: prompt-cli scan -t ./prompts/
 
 # 华为云合规检查
 - name: Huawei Cloud Compliance
   run: prompt-cli compliance -t ./prompts/ --format sarif
 
-# OWASP LLM Top 10 扫描
+# OWASP LLM Top 10 扫描(probe 目标为单文件; 目录需逐文件循环)
 - name: OWASP LLM Scan
-  run: prompt-cli probe -t ./prompts/ --probe all
+  run: prompt-cli probe -t ./prompts/my_prompt.md
 ```
 
 项目内置 GitHub Actions Workflow（7 个，与 `.github/workflows/` 盘面一致）：
@@ -662,7 +663,8 @@ pip install -e ".[dev]"
 pytest tests/ -v -k "not slow"
 
 # 收口门禁链(单入口, 独立退出码, 禁手工拆步/禁管道吞码)
-# 13步: pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
+# 步骤数以 scripts/release_gate.py build_steps() 为单一真源(不硬编码计数):
+# pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
 #       → 依赖清单一致性 → 环境一致性快照 → gen_rules_doc重生成 → sync_badges
 #       → sync_readme_metrics → 版本一致性 → SARIF合法性
 python scripts/release_gate.py

@@ -2,6 +2,42 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.94] - 2026-10-16
+
+### Fixed（R306 上线前全面深度审查：四层子代理审查 + 全部声称读盘验证，高杠杆修复落地）
+
+**BLOCK（发布前关键，全部实证）**
+- `release.yml` 零质量门禁 + 无 tag↔pyproject 版本断言（双独立真源无相等断言，PyPI 版本不可撤回）→ 新增 `release-gate` 作业（`release_gate.py --skip 1,2` 同 CI 形态 + tomllib 版本断言单源），门禁链=gate→build→pypi→docker
+- README 基本用法 9 处 + CI 示例 2 处失效示例命令（复制粘贴必失败=采用面致命伤）全修真源契约：scan（无 `-s`/无 `--depth`，5 层恒全）/ redteam（`-t`/`--probes`）/ probe（单文件目标）/ version（`--action`/`--template`/`--version`）/ prompt-diff（`--old`/`--new`，无 `--semantic`）/ assert（`--response`/`--config`）/ badge（`-o` 必填 SVG）/ canary（单命令 `-p`/`-c`）/ token（`-t`）
+- `ci-integration.md` 退出码契约错述"1=错误" → 0=通过/1=WARN(medium)/2=FAIL(high,critical)/3=执行层错误（真源 quality_gate VERDICT_EXIT_CODES）
+- `adoption.md` Day 0 "退出码恒为 0" 失实 → 真契约 + 不阻断旋钮（`|| true` 团队选择）
+
+**MAJOR（安全 + 死步）**
+- MCP `mcp_reload` 动态导入命名空间白名单（仅 `ai_prompt_toolkit.`）+3 测试——工具参数=agent 可控输入，任意模块导入=代码执行面
+- flow PYTHON 节点 `import_module` 命名空间白名单门控 +2 测试——"声明式流水线"心智模型会把共享 YAML 当数据信任
+- `owasp-llm-scan.yml` `scan --depth deep --format sarif` 死步（均为不存在选项，UsageError 被 `|| true` 吞，SARIF 产物从未生成）→ 有效选项 + 产物非空断言
+- `daily-scorecard.yml` `score --output` 死步（score 无 --output，主产物从未生成，摘要恒 0）→ stdout 重定向 + 产物非空断言
+- `prompt-pr-gate.yml` `scan --depth standard` 死选项（**无** `|| true` → PR 含 .prompt 文件时门禁必红）+ `.[all]` 不存在的 extra（静默降级 core）+ `2>/dev/null` 吞错
+- `Dockerfile` playground 阶段继承 `ENTRYPOINT ["prompt-cli"]`×`CMD uvicorn` → 裸 `docker run` 必坏 + HEALTHCHECK 恒 unhealthy（CI smoke 显式传参恰好绕开）→ `ENTRYPOINT []` + release.yml 增 `prompt-cli --help` smoke 回归护栏
+- README 注入检测 30=15en+15zh → 37=19en+18zh ×4 处（真源 injection_detector 19 + zh_injection_rules 18）
+- `mcp-setup.md` 267→268（R293 P268 后漏回写）
+- pyproject `[ab_test]`/`[full]` scipy/numpy 死重依赖剔除（全 src/ 零 import，`.[full]` 用户含 Docker 镜像白装数百 MB）
+
+**MINOR（一致性 + 打包）**
+- README：pipx 死行（`--spec` 形态）/ 8 层消毒→11/13 步 ×3 / 15+8 探针口径→23+11 ×3 / mcp-lint 8→12 项 / 666/ja17→667/ja18 / dataset·flow·tracing 目录误标→顶层 .py / 相对图片→绝对 raw URL（PyPI 渲染面，P0-03 公开后生效）/ 门禁"13 步"→`build_steps()` 单一真源
+- `release_gate.py` 头注释 19 步清单→补 `build_steps()` 单一真源指针（R248 不硬编码计数纪律）
+- `py.typed`（PEP 561 内联类型标记）+ package-data 同步
+- `.dockerignore` 落地（构建上下文减重，COPY 面仅 pyproject+src+README）
+- 板行漂移修正 ×4：P1-15b 26→25 / P2-01 8→7 / P3-04 7→9（与 CHANGELOG 自相矛盾）/ P1-18 行数字面标注 R239 快照
+- `adoption.md` ko 过声称 → 四语言独立规则/基线，ko 仅 i18n 消息回退
+
+**子代理声称验证台账**（声称=待证）：2 条不成立（action.yml fail-on 域含 none/low、Gate `*)` 静默通过——实际文件已正确）；`token --output` 真实存在（"token 只有 -t"称错误）；其余全部读盘坐实后落地。
+
+### Changed
+
+- 测试 6670→6675（+5 R306 加固：M-1 白名单 ×3 / M-3 门控 ×2，hermetic 零外部依赖）
+- 版本 67.34.93→67.34.94（pyproject/__init__/README 徽章）
+
 ## [v67.34.93] - 2026-10-15
 
 ### Added（R305 P3-17 每 10 轮板抽查：补 R303 窗口，6/6 相符零漂移）

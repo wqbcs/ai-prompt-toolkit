@@ -67,7 +67,7 @@ Python 3.10+。零 key、零网络依赖（server 本地 stdio，不回调任何
 
 ## 能力面速览（73 tools 分组）
 
-Lint/Scan（prompt_lint 267 规则、prompt_scan、prompt_judge、canary）·
+Lint/Scan（prompt_lint 268 规则、prompt_scan、prompt_judge、canary）·
 评估（prompt_evaluate 130 维度、scorecard、dataset）· 安全引擎（5 层融合、
 badge、token 分析）· 红队/Probe（probe_run/detect/list/owasp_report）·
 编译/优化（compile、gepa、auto_optimize、sanitize）· 版本/缓存 ·

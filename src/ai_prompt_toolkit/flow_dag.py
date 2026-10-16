@@ -435,7 +435,12 @@ class FlowExecutor:
                 import importlib
 
                 parts = func_name.rsplit(".", 1)
-                if len(parts) == 2:
+                # R306 深审 M-3: PYTHON 节点=代码执行面。"声明式流水线"心智模型
+                # 会让用户把共享仓库的 flow YAML 当数据信任, 而 config.function
+                # 语义是任意模块导入+调用。硬闸: 仅 ai_prompt_toolkit. 命名空间
+                # 内模块; 命名空间外=跳过(与既有 len(parts)!=2/无函数 的静默跳过
+                # 同口径, 不改变输出形状)。
+                if len(parts) == 2 and parts[0].startswith("ai_prompt_toolkit."):
                     module = importlib.import_module(parts[0])
                     func = getattr(module, parts[1], None)
                     if func:
