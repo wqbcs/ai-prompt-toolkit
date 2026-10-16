@@ -1,6 +1,6 @@
 # Operating Points — Severity-Cut Trade-off（公开数据页）
 
-> 版本 `67.34.95` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
+> 版本 `67.34.96` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
 > 每个数字都是一条可复现命令的输出 —— **measured, not vibes**。
 
 ## 数字

@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.96] - 2026-10-16
+
+### Fixed（R309 README 命令面实跑验收）
+
+- README 基本用法 `evaluate -s --mode full` 坏行 → `evaluate -t`（必填，文件/目录）+ `--quick`
+  （真源契约；R306 修选项面漏此行，R309 实跑验收抓出——19 命令临时工作区实跑 18 OK/1 BAD）
+- 验收方法留痕：BAD/OK 分类=click UsageError 签名（Usage:/No such option/Invalid value）；
+  非零 rc 带真实输出=按契约工作（probe rc=1=173 检出 WARN 面/doctor rc=1=检查报告面）；
+  状态变更类（version）/交互类（wizard）/长驻类（watch/serve）仅契约验证不实跑
+- 未实跑三命令契约核实：optimize（-s 真，实跑 rc=0）/assert（-r/-c 真）/ab-test（-c/-m/-d/-o 真）
+
+### Added（审查周期复盘）
+
+- 规划集 15 号文档 +§06 审查周期复盘（R306–R308）：方法实证（子代理声称=待证，22 条中 2 条证伪）
+  /协议偏差（R307 文档轮跳升版+CHANGELOG 致 R308 第 17 步首红→CHANGELOG 段须先行于门禁）/
+  真 bug×2（redline echo 反引号命令替换/跨引擎夹具混淆）/自动化价值实证（/board 零漂移、
+  Playground e2e、redline 新面）/残余风险诚实边界（CI 未观测/release-gate 未经真实 tag/
+  bus factor=1）
+
+### Changed
+
+- 版本 67.34.95→67.34.96
+
 ## [v67.34.95] - 2026-10-16
 
 ### Added（R307 四维评审自评 + R308 新自动化 dogfood 轮）
