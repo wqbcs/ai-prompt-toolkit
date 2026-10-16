@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.93] - 2026-10-15
+
+### Added（R305 P3-17 每 10 轮板抽查：补 R303 窗口，6/6 相符零漂移）
+
+- 抽 6 项 ✅ 行跑引用命令复验（机器复验，不凭记忆）：
+  - S1 R246 SARIF 确定性 e2e：10 passed（板行"10 测试"相符）
+  - S2 R232 属性测试：13 passed = 12 @given + 1 辅助（板行"12 @given"口径准确）
+  - S3 R244 性能断言：全文件达标，max 16.52ms（6.1× 余量，绝对预算 <100ms）
+  - S4 R302 --format summary：14 行 + SUMMARY_EXIT=2/DEFAULT_EXIT=2 同构
+  - S5 strict 棘轮：286/286（R295-R300 收口态保持）
+  - S6 P1-18 mcp 73 工具：29 测试 passed（含 `assert len(tools)==73` 断言）
+- **零新漂移**（6/6 相符）；02 板 P3-17 行 R305 抽查留痕
+
+### Changed
+
+- 00 交接文档 R305 收口状态 + R306 建议（**自主循环收敛声明**：自主候选全部走位，R306 起进入等待态——下一自主动作=R313 板抽查；真阻塞=用户 D1-D5 操作）
+- 版本 67.34.92→67.34.93（pyproject/__init__/README 徽章）
+
 ## [v67.34.92] - 2026-10-15
 
 ### Added（R304 P3-04 短 fuzz 落地第一片：fuzz 目标脚本 + seed 语料生成器）
