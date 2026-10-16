@@ -93,3 +93,4 @@
 {"ts": "2026-10-15T21:53:47", "version": "67.34.88", "rules": 268, "probes": 667, "tn_probes": 298, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 379, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-15T22:02:56", "version": "67.34.89", "rules": 268, "probes": 667, "tn_probes": 298, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 379, "template_baseline_findings": 629, "backfill": false}
 {"ts": "2026-10-15T22:16:51", "version": "67.34.90", "rules": 268, "probes": 667, "tn_probes": 298, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 379, "template_baseline_findings": 629, "backfill": false}
+{"ts": "2026-10-15T22:26:12", "version": "67.34.91", "rules": 268, "probes": 667, "tn_probes": 298, "fp_rate": 0.0082, "fp_samples": 60, "miss_rate": 0.0, "miss_expected_units": 379, "template_baseline_findings": 629, "backfill": false}

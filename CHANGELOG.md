@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.91] - 2026-10-15
+
+### Added（R303 P3-04 fuzz 可行性 spike：平台证据 + CI 短 fuzz 设计定稿）
+
+- PyPI 机器证据：Atheris 3.1.0 **无任何版本 Windows wheel**（历史文件全清单=仅 macosx+manylinux x86_64；最新版仅 cp312/313/314 manylinux）→ Windows 本地不可行（定性，非推断）
+- 预登记退出路径执行（R259 同纪律）：转 CI/Linux 侧（本项目 CI=ubuntu-latest，cp312 manylinux wheel 可用），**CI 短 fuzz 设计定稿**：
+  - fuzz 目标 = `lint_template(name, text)` 入口（板行原文）
+  - Atheris `FuzzedDataProvider`（ConsumeUnicode/ConsumeBytes）
+  - seed 语料 = 复用 golden 探针 667 条（首分钟高覆盖）
+  - CI 作业 = ubuntu-latest + `pip install atheris`（[dev] 工具链，零运行时新依赖）+ `max_total_time=300`（5min 墙钟）
+  - crash = 作业红；与楔子关系 = 红队输入验证（不在确定性门禁主链内，零 LLM）
+  - 72h 马拉松部分 = CI 不可行（Actions 6h 上限）→ 发布后长时环境项
+- 零代码变更（spike 先行落地后纪律；落地=下一轮或发布后）
+
+### Changed
+
+- 02 总板 P3-04 ⬜ 保留（验收未满足）+ R303 spike 注；00 交接文档 R303 收口状态 + R304 建议（含自主项收敛声明：30 条 ⬜ 行全部按原因排除）
+- 版本 67.34.90→67.34.91（pyproject/__init__/README 徽章）
+
 ## [v67.34.90] - 2026-10-15
 
 ### Added（R302 P5-03 板漂移勘误第四例 + digest 视图文档面）
