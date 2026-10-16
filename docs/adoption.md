@@ -1,15 +1,15 @@
-# 采用指南 — Day 0 到门禁上线
+# 采用指南 — Day 0 到长期运营
 
 确定性 Prompt 静态门禁的完整采用路径。设计原则：**先报告后拦截，先增量后存量**——
 任何采用者都能在 10 分钟内看到价值，且老仓库不会被存量 findings 打回。
 
 ## 退出码契约（CI 编写前先知道这个）
 
-| 退出码 | Verdict | 含义 |
+| 退出码 | Verdict | 含义（默认阈值，均可配置） |
 |---|---|---|
-| `0` | PASS | 无 critical/high findings，或仅 low/medium 且未超预算 |
-| `1` | WARN | 有 findings 但未达 FAIL 线（可配置预算内） |
-| `2` | FAIL | 有 critical/high findings 或超预算 —— **CI 应在此失败** |
+| `0` | PASS | 无 critical/high，medium ≤3，评分 ≥60 |
+| `1` | WARN | medium >3 或评分 <60 —— 可合并 |
+| `2` | FAIL | critical >0 或 high >0 —— **CI 应在此失败** |
 
 ---
 
@@ -22,7 +22,7 @@
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli lint -t ./prompts --format cli
-prompt-cli baseline   # 顺带自证工具自身双基线（漏检0.00%/误报0.91%）
+prompt-cli baseline   # 顺带自证工具自身双基线（漏检率/误报率现值由命令实时输出）
 ```
 
 ### 2. 放入 GitHub Actions（report-only）
@@ -87,7 +87,7 @@ repos:
 |---|---|---|
 | 1. 报告 | 无 `--gate`，SARIF 入 Code Scanning | Day 0，立即 |
 | 2. 硬拦截 critical | `--gate`（默认 critical/high 即 FAIL） | 存量清零或豁免后 |
-| 3. 预算收紧 | `--gate --max-warnings 10`（medium 超预算也 FAIL） | 稳定运行 2 周后 |
+| 3. 预算收紧 | `--gate --fail-on medium`（medium 新增也硬拦） | 稳定运行 2 周后 |
 
 ---
 
@@ -154,7 +154,58 @@ prompt-cli lint -t ./prompts --baseline prompts.base.json --incremental --gate
         # 漏检率>5% 或 误报率>1% 即 CI 失败 — 棘轮只收紧不放松
 ```
 
-样本（113 golden 探针 + 60 干净 prompt）随包分发，任何 runner 一条命令复现。
+样本（golden 探针 + 60 干净 prompt）随包分发，任何 runner 一条命令复现。
+
+---
+
+## Day 30：预算收紧 + waiver 审计 cron（纪律变零操心）
+
+稳定运行两周到一个月，目标：把"一次性配置"变成"自己跑"。
+
+**1. 拦截预算收紧到最严级**（真实机制=级别门禁 `--fail-on`——本工具没有
+`--max-warnings` 式预算参数，勿从别的工具抄）：
+
+严格度递进（单向收紧，棘轮只紧不松）：
+
+| 级别 | 配置 | FAIL 线 |
+|---|---|---|
+| 宽 | `--gate --fail-on critical` | 仅 critical 新增 |
+| 中 | `--gate`（默认，等价 `--fail-on high`） | critical/high 新增 |
+| 严 | `--gate --fail-on medium` | medium/high/critical 新增（最严） |
+
+按 Day 1 分阶段收紧表在中级稳定 2 周后收紧到严级。放松不默认允许：
+特殊时期需放松走显式 PR+限期，期满自动回严——waiver 审计 cron（下）
+会自然复核问责面。
+
+**2. waiver 审计 cron（每周，零操心）**：
+
+```yaml
+      - name: waiver 周审
+        run: |
+          prompt-cli audit-waivers -t ./prompts --fail-on no_owner  # 无 owner 豁免=问责不成立, 即红
+          prompt-cli audit-waivers -t ./prompts --fail-on expired   # 超过复核日期=过期, 即红
+          prompt-cli audit-waivers -t ./prompts --format json > waiver-weekly.json
+```
+
+建议由周度 `schedule` 作业跑（如 `cron: "0 2 * * 1"`）。状态语义：
+`ok`（有 owner+未过期）/ `no_owner` / `expired` / `unknown_rule`（未注册
+ID 或通配符）。`unknown_rule` 不立即红：规则 ID 打错=该豁免没生效在
+任何 finding 上（无害），通配符需人工判断——先 JSON 报告，再裁决。
+
+---
+
+## Day 90：债务基线化（基线=债务台账）
+
+运行 90 天，基线文件不再是技术工件，而是团队的**债务台账**：
+
+1. **基线只减不增**：每轮修复存量后 `--baseline-save` 重存让台账变小
+   （基线棘轮纪律见 Brownfield 节）。Day 90 基线与 Day 1 的 finding 数
+   相同="还债"没发生——这个数字机器可查（数基线文件里的 findings）。
+2. **钉住检测能力（强烈推荐）**：CI 上跑双基线棘轮（见上节）——规则引擎
+   升级后漏检/误报退化即红，"尺子本身"不能无感退化。
+3. **季度复核**：`prompt-cli audit-waivers -t ./prompts --format json`
+   全量 waiver 复核（过期撤、无 owner 补、unknown_rule 逐条裁决），
+   重存基线=独立 commit+理由。
 
 ---
 

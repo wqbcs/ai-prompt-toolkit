@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.84] - 2026-10-15
+
+### Added（R296 P1-09 采用清单 Day30/Day90 扩展：纪律变零操心）
+
+- adoption.md Day30 段：`--fail-on` 严格度递进表（宽=仅 critical / 中=gate 默认≈high / 严=medium，单向收紧；放松=显式 PR+限期期满回严）+ waiver 周审 cron 样例（no_owner/expired 双红 + unknown_rule JSON 人审不即红——规则 ID 打错=豁免未生效无害，通配符需人工判断）
+- adoption.md Day90 段：基线=债务台账（只减不增机器可查 / 双基线棘轮钉检测能力 / 季度 waiver 全量复核+重存基线独立 commit+理由）
+- 4 处文档漂移修正（04 落地证据链面：每个命令/数字对代码真源逐条核实）：
+  - 幽灵命令 `--max-warnings`（全仓不存在）→ 真机制 `--fail-on`
+  - 陈旧误报率 0.91% → 无漂移表述（命令实时输出）
+  - 陈旧探针数 113 → 无漂移表述
+  - 退出码表"超预算"模糊表述 → QualityGate.evaluate 真值（FAIL=critical>0/high>0，WARN=medium>3/score<60，默认阈值均可配置）
+
+### Changed
+
+- 02 总板 P1-09 → ✅ R296；00 交接文档 R296 收口状态 + R297 建议
+- 版本 67.34.83→67.34.84（pyproject/__init__/README 徽章）
+
 ## [v67.34.83] - 2026-10-15
 
 ### Added（R295 P3-08 mypy strict 模块级棘轮：新模块 --strict，旧模块只紧不松）
