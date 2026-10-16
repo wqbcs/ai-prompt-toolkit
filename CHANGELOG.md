@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.92] - 2026-10-15
+
+### Added（R304 P3-04 短 fuzz 落地第一片：fuzz 目标脚本 + seed 语料生成器）
+
+- `scripts/fuzz_lint.py`（R303 定稿设计落地）：
+  - fuzz 目标 = Atheris 懒导入 + `lint_text(name, text)` 内核对抗面入口（零 atheris 依赖，Windows 可测投影：Atheris ConsumeUnicode 产出即 str，语义等价）
+  - seed 语料生成器 = golden 探针 667 条逐条落盘（确定性双跑逐字节一致，不另造语料=奥卡姆）
+  - 入口 `max_total_time=300`（5min 墙钟定稿值）；用法 `--seed <dir>` / `--corpus <dir>`
+- 9 测试 `tests/test_r304_fuzz_target.py`（hermetic 零 atheris 依赖）：
+  - seed 语料 4 项（667 计数/逐字一致/双跑确定性/目录自创建）
+  - 内核对抗面 5 项（空串/16KB 超长/全 BMP 65K 码点边界/嵌套引号/随机码点 256）——真实内核不抛
+  - 套件时长降本 238s→8s（超长面 256KB→16KB，全量面归 CI Atheris 实跑；P2-16 预算敏感精神）
+- CI workflow 接线 + 72h 马拉松 = 发布后（不可观测风险留痕：CI 首跑需 GitHub 侧确认，与 P3-07 CodeQL 同形态）
+
+### Changed
+
+- 02 总板 P3-04 行 R304 落地第一片留痕；00 交接文档 R304 收口状态 + R305 建议
+- 版本 67.34.91→67.34.92（pyproject/__init__/README 徽章）
+
 ## [v67.34.91] - 2026-10-15
 
 ### Added（R303 P3-04 fuzz 可行性 spike：平台证据 + CI 短 fuzz 设计定稿）
