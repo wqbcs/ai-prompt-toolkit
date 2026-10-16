@@ -36,7 +36,7 @@ def _detect_template_type(text: str) -> str:
     return "prompt"
 
 
-def _generate_sarif(results: list, target: str) -> dict:
+def _generate_sarif(results: list[Any], target: str) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.rules import get_rule
     from ai_prompt_toolkit.sarif_report import REPO_URL
 

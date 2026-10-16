@@ -478,7 +478,7 @@ def friendly_fix_suggestion(rule_id: str, description: str) -> str:
     return _QUICK_FIXES.get(rule_id, f"💡 修复 {rule_id}: {description}")
 
 
-def print_rich_findings(results: list, console: Any = None) -> None:
+def print_rich_findings(results: list[Any], console: Any = None) -> None:
     try:
         from rich.console import Console as _Console
         from rich.panel import Panel as _Panel  # noqa: F401 — 可用性探测
@@ -552,7 +552,7 @@ def print_rich_lint_summary(
     console.print(_Panel("\n".join(lines), title="Lint完成", border_style=score_color))
 
 
-def print_rich_evaluate_summary(reports: list, threshold: float = 0.0, console: Any = None) -> None:
+def print_rich_evaluate_summary(reports: list[Any], threshold: float = 0.0, console: Any = None) -> None:
     try:
         from rich.console import Console as _Console
         from rich.table import Table as _Table

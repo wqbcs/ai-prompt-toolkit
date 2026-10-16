@@ -144,8 +144,10 @@ class PromptCache:
         except Exception:
             pass
 
-    def cached(self, fn: Callable | None = None, *, key_fn: Callable | None = None) -> Callable:
-        def decorator(func: Callable) -> Callable:
+    def cached(
+        self, fn: Callable[..., Any] | None = None, *, key_fn: Callable[..., Any] | None = None
+    ) -> Callable[..., Any]:
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 if key_fn:
                     cache_key = key_fn(*args, **kwargs)
@@ -178,7 +180,7 @@ def get_cache() -> PromptCache:
     return _global_cache
 
 
-def cached_prompt(fn: Callable | None = None, **kwargs: Any) -> Callable:
+def cached_prompt(fn: Callable[..., Any] | None = None, **kwargs: Any) -> Callable[..., Any]:
     return get_cache().cached(fn, **kwargs)
 
 

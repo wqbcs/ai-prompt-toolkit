@@ -2,6 +2,20 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.86] - 2026-10-15
+
+### Changed（R298 strict 棘轮次轮收紧：8 模块晋升，277/286 锁定 97%）
+
+- 晋升 8 个 ≤3 错误模块至 strict 锁定（269→277/286，94%→97%）：
+  - 类型参数补全（18 错误）：`dict[str, Any]`（html_report/project_config/playground/overdefense/stdio_server/cli_core）/ `list[Any]`（cli_helpers×2/cli_core）/ `list[dict[str, Any]]`（playground/overdefense）/ `Callable[..., Any]`（prompt_cache cached/decorator/cached_prompt 5 处）
+  - 4 文件补 `Any` 导入（html_report/playground/overdefense/stdio_server）
+- ruff 顺带：F401（project_config 函数内 `Any` 重复导入删除，模块级单真源）+ 格式漂移 1 处
+
+### Added
+
+- 02 总板 P3-08 状态列 R298 留痕；00 交接文档 R298 收口状态 + R299 建议
+- 版本 67.34.85→67.34.86（pyproject/__init__/README 徽章）
+
 ## [v67.34.85] - 2026-10-15
 
 ### Changed（R297 strict 棘轮首轮收紧：13 模块晋升，269/286 锁定 94%）

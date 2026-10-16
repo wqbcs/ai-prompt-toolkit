@@ -27,15 +27,16 @@ from __future__ import annotations
 
 import json
 import sys
+from typing import Any
 
 
-def _write_response(payload: dict) -> None:
+def _write_response(payload: dict[str, Any]) -> None:
     """单行 JSON + flush — 行边界是协议的唯一同步点, 绝不合并输出"""
     sys.stdout.write(json.dumps(payload, ensure_ascii=False) + "\n")
     sys.stdout.flush()
 
 
-def _handle_lint(req: dict, req_id: object) -> None:
+def _handle_lint(req: dict[str, Any], req_id: object) -> None:
     from ai_prompt_toolkit.cli_helpers import expand_rule_ids
     from ai_prompt_toolkit.linter import lint_template
 

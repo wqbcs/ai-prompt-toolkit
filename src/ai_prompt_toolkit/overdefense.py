@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from ai_prompt_toolkit.linter import lint_template
 from ai_prompt_toolkit.linter.rules import get_all_rules
@@ -73,7 +74,7 @@ def load_notinject() -> list[str]:
     return prompts
 
 
-def run_overdefense() -> dict:
+def run_overdefense() -> dict[str, Any]:
     """339 硬负样本全量 lint → 过防御率+明细+per-rule 命中计数（确定性）。
 
     纯函数: 无 IO 副作用（数据文件只读），同输入同输出。
@@ -81,7 +82,7 @@ def run_overdefense() -> dict:
     prompts = load_notinject()
     sec_rules = security_family_rules()
 
-    flagged: list[dict] = []
+    flagged: list[dict[str, Any]] = []
     per_rule: dict[str, int] = {}
     for i, text in enumerate(prompts):
         r = lint_template(f"notinject_{i}", text, apply_waivers=False)

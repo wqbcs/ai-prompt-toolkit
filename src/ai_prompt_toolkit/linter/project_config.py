@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ai_prompt_toolkit.linter.lint_config import LintConfig
 
@@ -50,7 +50,7 @@ _VALID_SEVERITIES = ("critical", "high", "medium", "low", "info")
 _KNOWN_KEYS = ("include_rules", "exclude_rules", "fail_on", "waivers", "severity_overrides", "gap")
 
 
-def _read_toml(path: Path) -> dict:
+def _read_toml(path: Path) -> dict[str, Any]:
     """读 TOML; 解析失败/缺依赖 → {} (fail-safe, 配置不该弄崩 lint)"""
     try:
         if sys.version_info >= (3, 11):
@@ -68,10 +68,10 @@ def _read_toml(path: Path) -> dict:
     return data if isinstance(data, dict) else {}
 
 
-def _promptlint_section(path: Path) -> dict:
+def _promptlint_section(path: Path) -> dict[str, Any]:
     """取配置段: pyproject 只认 [tool.promptlint]; promptlint.toml 三态兼容
     ([tool.promptlint] 表 / [promptlint] 表 / 顶层裸键)"""
-    from typing import Any, cast
+    from typing import cast
 
     data = _read_toml(path)
     if path.name == "pyproject.toml":

@@ -25,6 +25,7 @@ import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
@@ -40,7 +41,7 @@ INDEX_HTML = ROOT / "web" / "index.html"
 MAX_BODY_BYTES = 1_000_000  # 1MB 请求体上限：防无界读（localhost 纵深防御；真实 prompt 远小于此）
 
 
-def _jsonl_tail(path: Path, n: int) -> list[dict]:
+def _jsonl_tail(path: Path, n: int) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     lines = path.read_text(encoding="utf-8").strip().splitlines()
@@ -53,7 +54,7 @@ def _jsonl_tail(path: Path, n: int) -> list[dict]:
     return out
 
 
-def _baseline_payload() -> dict:
+def _baseline_payload() -> dict[str, Any]:
     b_list = _jsonl_tail(BASELINE_JSONL, 1)
     o_list = _jsonl_tail(OVERDEFENSE_JSONL, 1)
     if not b_list or not o_list:
@@ -85,7 +86,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _json(self, obj: dict, code: int = 200) -> None:
+    def _json(self, obj: dict[str, Any], code: int = 200) -> None:
         self._send(
             code,
             json.dumps(obj, ensure_ascii=False).encode("utf-8"),

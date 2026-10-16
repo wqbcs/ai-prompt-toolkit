@@ -13,12 +13,13 @@ from __future__ import annotations
 import html
 import time
 from pathlib import Path
+from typing import Any
 
 from ai_prompt_toolkit import __version__
 
 
 def generate_html_report(
-    results: list[dict],
+    results: list[dict[str, Any]],
     target: str,
     output_path: str | None = None,
 ) -> str:
@@ -29,7 +30,7 @@ def generate_html_report(
     low = sum(1 for r in results if r.get("severity") == "LOW")
     score = results[0].get("score", 0) if results else 0
 
-    categories: dict[str, list[dict]] = {}
+    categories: dict[str, list[dict[str, Any]]] = {}
     for r in results:
         cat = r.get("category", "other")
         categories.setdefault(cat, []).append(r)
