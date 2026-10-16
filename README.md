@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.96-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6689%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.97-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6697%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40667probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-268-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -372,7 +372,7 @@ src/ai_prompt_toolkit/
 │   ├── rules_p121_p130.py    # P121-P130
 │   ├── quality_gate.py       # Verdict Quality Gate
 │   ├── friendly_descriptions.py  # 人话翻译
-│   ├── fixer.py              # 自动修复(71条AUTO_FIXABLE)
+│   ├── fixer.py              # 自动修复(196条AUTO_FIXABLE)
 │   └── lsp_server.py         # LSP协议服务
 ├── security/                 # 安全扫描引擎
 │   ├── scanner.py            # 扫描编排器(5层)
@@ -475,13 +475,13 @@ graph TB
         R1[P001-P020 基础]
         R2[P021-P050 Agent/RAG/多模态/中文]
         R3[P051-P080 盘古/鸿蒙/华为云]
-        R4[P081-P130 高级]
-        FIXER[71条自动修复]
+        R4[P081-P268 高级]
+        FIXER[196条自动修复]
     end
 
     subgraph PROBES["Probe Framework (garak风格)"]
-        P_15[15个Probe]
-        D_8[8个Detector]
+        P_15[23个Probe]
+        D_8[11个Detector]
         OWASP_MAP[OWASP LLM01-LLM10]
         REMEDIATION[修复建议]
     end

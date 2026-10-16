@@ -2,6 +2,38 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.97] - 2026-10-16
+
+### Added（R310 wiki 全量重扫 + R311 契约面补齐）
+
+**R310（project_wiki 7 文件全量刷新, R213 2026-09-30 → R310 2026-10-16, 16 天约 30 轮变更）**
+- L0 画像: 依赖 5→7（scipy/numpy 剔除）/ 规模 285 文件 74,486 行 / 棘轮表 11 项 / 模块地图 13 层
+- L2_api: CLI 62→73 命令（--help 契约）+ 退出码补 3=执行错误 + MCP 73 工具按族全名 +
+  HTTP 9→37 端点（含前缀）+ Python API 逐函数核实
+- L2_data: 值对象 dataclasses 运行时内省 + 持久化面 8 项（SQLite×3/JSON×5）+ 生产者-消费者 8 链
+- L2_components: Playground SPA（768 行 vanilla JS, 13 fetch 消费面）+ 落地页 + 扩展 v0.6.0
+- L3_constraints: 棘轮表 5→10 项 + 收口纪律章（CHANGELOG 先行/禁吞退出码/mypy 缓存假绿）+
+  探针先行 T1 + Conventional Commits 取代旧消息格式 + 反清单权威位置
+- L3_unknown: R213-R217 开放项逐条重检（2 销/2 待复核/7 仍开放）+ 新增 10 项 + 显式非目标 5 项
+- 人看版 PROJECT_WIKI: 数字看板 + 迭代机制（round-close/CHANGELOG 先行）+ 重扫发现
+- 全部数字对盘真源（CLI --help / dataclasses 内省 / 装饰器 grep / 注册表实载）, 事实与推断分离
+
+**R311（漂移修复 + HTTP 契约面补齐）**
+- README 漂移修复 ×5（R310 发现 #1 + 同族 Mermaid 图 ×4）: fixer.py 注释 71→196
+  （真源 AUTO_FIXABLE_RULES）/ P081-P130→P268 / 71条→196条 / 15个Probe→23 / 8个Detector→11
+  — 教训: 数字漂移藏在非徽章面（目录树注释/Mermaid 图）, sync_readme_metrics 只覆盖徽章/表格面
+- `tests/test_r311_playground_api_gap.py`: 8 TestClient hermetic 测试（eval-compare 缺参契约 /
+  scorecard 空+成功 / engine 空+成功 / badge 空+svg·grade·decision / SPA 首页 200+HTML）
+  → Playground 16/17 API 路由 + SPA 首页 e2e 覆盖（R308 13 路由 + R311 5 端点）; /ws/compile
+  （R310 重扫补录的 WS 端点, SPA 实测消费 ×1）有意不入 hermetic 套件（[dev] 未声明 websockets,
+  R223 本地绿≠CI 绿纪律）, 真实会话留发布后 Playwright（P3-18 登记面）
+
+### Changed
+
+- 测试 6689→6697（+8）
+- project_wiki 7 文件全量刷新入版（双轨知识库首次全量重扫）
+- 版本 67.34.96→67.34.97（R310 纯文档轮未独立升版, 并入本版本 — 同 R307/R309 机制）
+
 ## [v67.34.96] - 2026-10-16
 
 ### Fixed（R309 README 命令面实跑验收）
