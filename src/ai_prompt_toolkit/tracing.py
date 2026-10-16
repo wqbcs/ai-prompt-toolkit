@@ -487,10 +487,10 @@ def observe(
     *,
     capture_input: bool = True,
     capture_output: bool = True,
-) -> Callable:
+) -> Callable[..., Any]:
     """@observe装饰器——参考Langfuse @observe模式, 自动追踪函数调用/耗时/输入输出"""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         span_name = name or func.__name__
 
         @functools.wraps(func)
@@ -525,10 +525,10 @@ def observe(
     return decorator
 
 
-def trace_workflow(name: str | None = None) -> Callable:
+def trace_workflow(name: str | None = None) -> Callable[..., Any]:
     """@trace_workflow装饰器——参考Traceloop, 标注顶层工作流(根Span)"""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         span_name = name or func.__name__
 
         @functools.wraps(func)
@@ -541,10 +541,10 @@ def trace_workflow(name: str | None = None) -> Callable:
     return decorator
 
 
-def trace_task(name: str | None = None) -> Callable:
+def trace_task(name: str | None = None) -> Callable[..., Any]:
     """@trace_task装饰器——参考Traceloop, 标注工作流内子任务(子Span)"""
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         span_name = name or func.__name__
 
         @functools.wraps(func)

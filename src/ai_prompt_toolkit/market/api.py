@@ -349,7 +349,7 @@ async def api_list_templates(
     sort: str = Query("updated_at", description="排序字段"),
     page: int = Query(1, ge=1, description="页码"),
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
-):
+) -> dict[str, Any]:
     db = _get_db()
     templates, total = db.search(q, category, tag, status, sort, page, page_size)
     return {
@@ -361,7 +361,7 @@ async def api_list_templates(
 
 
 @router.get("/templates/{template_id}")
-async def api_get_template(template_id: str):
+async def api_get_template(template_id: str) -> dict[str, Any]:
     db = _get_db()
     t = db.get_template(template_id)
     if not t:
@@ -370,7 +370,7 @@ async def api_get_template(template_id: str):
 
 
 @router.post("/templates")
-async def api_create_template(body: dict[str, Any]):
+async def api_create_template(body: dict[str, Any]) -> dict[str, Any]:
     db = _get_db()
     t = MarketTemplate(
         id=body.get("id", ""),
@@ -389,7 +389,7 @@ async def api_create_template(body: dict[str, Any]):
 
 
 @router.post("/templates/{template_id}/rate")
-async def api_rate_template(template_id: str, body: dict[str, Any]):
+async def api_rate_template(template_id: str, body: dict[str, Any]) -> dict[str, Any]:
     db = _get_db()
     if not db.get_template(template_id):
         raise HTTPException(status_code=404, detail="模板不存在")
@@ -403,7 +403,7 @@ async def api_rate_template(template_id: str, body: dict[str, Any]):
 
 
 @router.post("/templates/{template_id}/favorite")
-async def api_toggle_favorite(template_id: str, body: dict[str, Any]):
+async def api_toggle_favorite(template_id: str, body: dict[str, Any]) -> dict[str, Any]:
     db = _get_db()
     if not db.get_template(template_id):
         raise HTTPException(status_code=404, detail="模板不存在")
@@ -413,19 +413,19 @@ async def api_toggle_favorite(template_id: str, body: dict[str, Any]):
 
 
 @router.get("/categories")
-async def api_list_categories():
+async def api_list_categories() -> dict[str, Any]:
     db = _get_db()
     return {"categories": db.get_categories()}
 
 
 @router.get("/tags")
-async def api_list_tags():
+async def api_list_tags() -> dict[str, Any]:
     db = _get_db()
     return {"tags": db.get_tags()}
 
 
 @router.post("/templates/{template_id}/review")
-async def api_review_template(template_id: str, body: dict[str, Any]):
+async def api_review_template(template_id: str, body: dict[str, Any]) -> dict[str, Any]:
     db = _get_db()
     t = db.get_template(template_id)
     if not t:
@@ -457,7 +457,7 @@ async def api_review_template(template_id: str, body: dict[str, Any]):
 
 
 @router.post("/templates/{template_id}/deploy")
-async def api_deploy_template(template_id: str, body: dict[str, Any]):
+async def api_deploy_template(template_id: str, body: dict[str, Any]) -> dict[str, Any]:
     db = _get_db()
     t = db.get_template(template_id)
     if not t:

@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.87] - 2026-10-15
+
+### Changed（R299 strict 棘轮第三轮收紧：3 模块晋升，280/286 锁定 98%）
+
+- 晋升 3 模块至 strict 锁定（277→280/286，97%→98%，21 错误）：
+  - `tracing.py`：装饰器族 `Callable[..., Any]`×6（observe/trace_workflow/trace_task）
+  - `baselines.py`：6 处（`dict[str, Any]`/`list[dict[str, Any]]`/cast 目标/checker 参数 `Callable[[str], Any]`）
+  - `market/api.py`：9 个 FastAPI 端点 `dict[str, Any]` 返回注解
+- ruff 顺带：UP035（Callable→collections.abc）+ TC003（注解专用导入移 TYPE_CHECKING）
+- **勘误**：v67.34.86 段"rules_p026 19"误记——非 strict 模块真源集（注册表）不含 rules_p026；余 9 模块 66 错误两大单面实为 dataset_api 19+eval_commands 9
+
+### Added
+
+- 02 总板 P3-08 状态列 R299 留痕（+R298 注勘误）；00 交接文档 R299 收口状态 + R300 建议
+- 00 建议面勘误：R298 建议"转向 P3-03 变异测试"违反 P3-03 的 R259 显式"不抢跑"决策（三重理由+重启三条件，触发器未满足），P3-03 保持 hold
+- 版本 67.34.86→67.34.87（pyproject/__init__/README 徽章）
+
 ## [v67.34.86] - 2026-10-15
 
 ### Changed（R298 strict 棘轮次轮收紧：8 模块晋升，277/286 锁定 97%）

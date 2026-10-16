@@ -13,7 +13,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 from ai_prompt_toolkit.linter import lint_template
 from ai_prompt_toolkit.linter.rules import _CHECKERS_EXTENDED
@@ -49,7 +52,7 @@ def _load_clean_samples() -> list[tuple[str, str]]:
     return samples
 
 
-def _invoke(checker, text: str) -> int:
+def _invoke(checker: Callable[[str], Any], text: str) -> int:
     """checker返回 Finding|list[Finding]|None, 统一计数"""
     r = checker(text)
     if r is None:
@@ -59,7 +62,7 @@ def _invoke(checker, text: str) -> int:
     return 1
 
 
-def run_false_positives() -> dict:
+def run_false_positives() -> dict[str, Any]:
     """干净样本上不该报的报了吗 — 每规则误报数/率 + 全局误报率。"""
     samples = _load_clean_samples()
     checkers = [f for f in _CHECKERS_EXTENDED if f.__name__.startswith("check_p")]
@@ -95,14 +98,14 @@ def run_false_positives() -> dict:
 # ── 漏检面 ────────────────────────────────────────────
 
 
-def _load_golden_probes() -> list[dict]:
+def _load_golden_probes() -> list[dict[str, Any]]:
     if not GOLDEN_FILE.exists():
         raise SystemExit(f"golden攻击集不存在: {GOLDEN_FILE}")
     data = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
-    return cast("list[dict]", data["probes"])
+    return cast("list[dict[str, Any]]", data["probes"])
 
 
-def run_miss_rate(ignore_blindspots: bool = False) -> dict:
+def run_miss_rate(ignore_blindspots: bool = False) -> dict[str, Any]:
     """golden攻击集上该报的报了吗 — 每规则漏检数/率 + 全局漏检率 + 分语言面。"""
     probes = _load_golden_probes()
     per_rule: dict[str, dict[str, int]] = {}
@@ -111,7 +114,7 @@ def run_miss_rate(ignore_blindspots: bool = False) -> dict:
     blindspot_miss = 0
     zero_detect_rules: set[str] = set()
     rules_with_expected: set[str] = set()
-    per_probe_miss: list[dict] = []
+    per_probe_miss: list[dict[str, Any]] = []
     per_lang: dict[str, dict[str, int]] = {}
 
     for p in probes:
