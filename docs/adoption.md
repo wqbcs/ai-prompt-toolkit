@@ -89,6 +89,21 @@ repos:
 | 2. 硬拦截 critical | `--gate`（默认 critical/high 即 FAIL） | 存量清零或豁免后 |
 | 3. 预算收紧 | `--gate --fail-on medium`（medium 新增也硬拦） | 稳定运行 2 周后 |
 
+**多文件扫描：digest 视图（别淹在明细里）**：扫几十个模板的目录时，默认面每个 finding 一行（本仓 26 个模板=506 行）。只看"红绿+哪些规则占大头"时用 `--format summary`（同样输入 14 行；退出码裁决与默认面同构——同一裁决，不同报告面）：
+
+```bash
+prompt-cli lint -t ./prompts --format summary
+```
+
+```text
+**prompt-cli lint** — ❌ FAIL (exit 2) | 文件 26 | 问题 506 | 均分 92.7/100 | 1.27s
+✗ high 127 · ℹ low 117 · ⚠ medium 262
+| 规则 | 计数 | 说明 |
+| `P082` | 26 | `prompt-cli explain P082` |   ← top 5 规则
+```
+
+top 5 规则带 `explain` 指针（一条命令看规则语义与修复指引）。CI（GitHub Actions）下同一 digest 自动写入 job summary 页（`GITHUB_STEP_SUMMARY` env 存在时，零配置）。
+
 ---
 
 ## 豁免（waiver）机制

@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.90] - 2026-10-15
+
+### Added（R302 P5-03 板漂移勘误第四例 + digest 视图文档面）
+
+- 实跑核实：510 行冗长痛点属实（26 模板/510 行），能力已存在 = rich 进度条 + `--format summary` digest（P3-16，26 模板实测 14 行，EXIT=2 与默认面同构——summary 分支继续走正式 fail-on/gate 裁决）；真缺口=文档零暴露（README/adoption 均无提及）
+- adoption.md Day 1 段补"多文件扫描：digest 视图"小节：
+  - `--format summary` 用法 + 真实输出示例（首行三要素+分严重度计数+top5 规则）
+  - 契约留痕：退出码裁决与默认面同构（同一裁决，不同报告面）；GH Actions 下同一 digest 自动写入 job summary（`GITHUB_STEP_SUMMARY`，零配置）
+- 本轮零代码变更（默认面逐字节不变的最强形态）
+
+### Changed
+
+- 02 总板 P5-03 → ✅ R302（板漂移勘误第四例，带实跑证据）；00 交接文档 R302 收口状态 + R303 建议
+- 版本 67.34.89→67.34.90（pyproject/__init__/README 徽章）
+
 ## [v67.34.89] - 2026-10-15
 
 ### Added（R301 P5-04 --json-diff 文档化）
