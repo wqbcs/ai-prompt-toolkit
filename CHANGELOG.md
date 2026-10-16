@@ -2,6 +2,20 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.89] - 2026-10-15
+
+### Added（R301 P5-04 --json-diff 文档化）
+
+- adoption.md Brownfield 增量门禁段补"给 CI/CD 集成的结构化 diff（`--json-diff`）"小节：
+  - 用法（与 `--baseline` 配合，lint_commands.py:276 真源）+ 完整输出示例
+  - 字段真源 = `linter/structured_diff.py`：verdict 三态（PASS/FAIL/IMPROVED）/summary 六计数器/rule_level 五态 status（fixed/new/regression/improved/unchanged）/new_findings+fixed_findings+regressions
+  - 两条契约留痕：verdict 与 `--gate` 同构（同一 `compare_baseline` 真源，JSON 是裁决的报告面不是第二套裁决）；`timestamp`=墙钟时间（不在字节级确定性楔子内）
+
+### Changed
+
+- 02 总板 P5-04 → ✅ R301；00 交接文档 R301 收口状态 + R302 建议
+- 版本 67.34.88→67.34.89（pyproject/__init__/README 徽章）
+
 ## [v67.34.88] - 2026-10-15
 
 ### Changed（R300 strict 棘轮收口：286/286 全量 strict 锁定 100%，P3-08 子工作流收口）

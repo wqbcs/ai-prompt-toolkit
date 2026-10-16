@@ -139,6 +139,35 @@ prompt-cli lint -t ./prompts --baseline prompts.base.json --incremental --gate
 | PR 顺手修掉存量 | PASS，且"已修复: N"单列展示（鼓励还债） |
 | 规则引擎升级导致新 finding 涌现 | 会被当作 NEW 拦下 —— 用 `--baseline-save` 重存基线并在 PR 里说明（棘轮纪律见下） |
 
+**给 CI/CD 集成的结构化 diff（`--json-diff`）**：增量门禁的退出码是裁决真源；如果 CI 管线还需要机器可读的裁决载荷（自定义看板、verdict 历史归档、下游检查消费），加 `--json-diff`（与 `--baseline` 配合使用）：
+
+```bash
+# CI: 增量门禁 + 结构化 diff JSON
+prompt-cli lint -t ./prompts --baseline prompts.base.json --incremental --gate \
+  --json-diff reports/lint-diff.json
+```
+
+输出结构（字段真源 = `linter/structured_diff.py`）：
+
+```json
+{
+  "verdict": "FAIL",
+  "summary": {
+    "baseline_total": 42, "current_total": 44, "delta": 2,
+    "new_count": 3, "fixed_count": 1, "regression_count": 1, "unchanged_count": 41
+  },
+  "rule_level": [
+    {"rule_id": "P001", "baseline_count": 5, "current_count": 6, "delta": 1, "status": "regression"}
+  ],
+  "new_findings": [], "fixed_findings": [], "regressions": []
+}
+```
+
+两条契约：
+- `verdict` ∈ PASS（无回归且 delta≥0）/ FAIL（有回归）/ IMPROVED（delta<0），与 `--gate` 裁决**同构**——同一 `compare_baseline` 真源，JSON 是裁决的报告面，不是第二套裁决
+- `rule_level[].status` ∈ fixed/new/regression/improved/unchanged（按规则计数对比）
+- `timestamp` 字段为墙钟时间，属报告面信息（不在字节级确定性楔子内；裁决结构同输入同输出）
+
 **基线棘轮纪律**（防"基线重存 = 藏 bug"）：
 - 重存基线必须是独立 commit，消息说明理由（如"规则 v67.34.15 新增 P261，补基线"）
 - 修复存量后定期重存，让基线只减不增
