@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.98-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.99-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6717%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40672probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -40,6 +40,14 @@ prompt-cli baseline
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
 这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
 曲线只收紧不放松。
+
+**为什么不会静默腐化（anti-rot）**——行业最大失败模式不是"一开始就不灵"，而是
+"悄悄失灵"：2026-07 Protect AI 归档 LLM Guard（月下载 10 万的检测库），其检测模型
+冻结于 2025-05，新攻击类永不增补，保护在无任何告警信号下静默退化（社区 fork
+Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方检测模型，每个裁决
+都是"代码+探针集"的确定性逐字节可复现输出；抗腐化机制本身机器可查——双基线
+棘轮（只收紧不放松）+ 29 步门禁链 + 探针先行纪律，任何回归都会红 CI，不依赖
+任何模型的"保鲜"。
 
 **第三方佐证（埋入式注入 TN 纪律）**：误报面最难的一条边界是
 "安全文档引用攻击短语 = 良性，不是攻击"。2026 年学术 FP 审计

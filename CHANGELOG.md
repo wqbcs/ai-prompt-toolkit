@@ -2,6 +2,34 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.99] - 2026-10-16
+
+### Added（R313 顶配改进方案清单轮）
+
+**R313 顶配改进方案清单**（docs/planning/R313_顶配改进方案清单.md, 四轴 22 项×决策）
+- 功能增添 7 项: A1 agentic 面扫描（P0, 发布后, 设计先行）/ A2 OWASP MCP Top 10
+  映射扩展（P1, 既有映射面自然延伸）/ A3 外部攻击语料接入 golden（Garak/PINT 子集,
+  P1, 逐条 provenance 审查纪律）/ A4 PII Luhn 校验（P2, 证据驱动不预支）/
+  A5-A7 不做（多轮漂移/AI SBOM/LLM judge — 楔子互斥或面不相交）
+- 内容改进 7 项: B1 README 抗腐化叙事（**本轮已落**）/ B2 P1-07 English-first（发布后）/
+  B3 退出码契约实跑盘点（发布后, R309 实跑验收纪律）/ B4 Tier1 采用三件套（发布后）/
+  B5-B7 文档架构+ADR+归档（发布后）
+- 细节优化 4 项: C1 全仓 format 漂移面处置（下一轮, ruff 配置 exclude vs format 先核实
+  遗留文件性质）/ C2-C3 CI 不可观测与 bus factor（纪律已机械化, 维持无新动作）/
+  C4 过防御 P2-26 持续（11.50% 只收紧）
+- UX 改善 6 项: D1 `prompt-cli init` 脚手架（P1, 发布后, 对标 ruff/biome init）/
+  D2 CLI --watch（P2）/ D3 --statistics（P3）/ D4 首跑体验实跑盘点（P2）/
+  D5 npm/Web 端维持 ICP 门控（反清单纪律）/ D6 浏览器扩展不做
+- 定位反问增量: 顶配清单的真实风险=功能膨胀 → 裁定纪律: 功能增添只走辖区扩展
+  （agentic 面）与采用面（降接入摩擦）两方向; 低价值陷阱审计 5 个"不做"留痕
+
+### Changed
+
+- README 信任段新增「为什么不会静默腐化（anti-rot）」叙事: LLM Guard 2026-07
+  归档=行业失败模式实证（模型冻结静默退化, Gorget fork 接棒）, 本工具结构免疫
+  + 抗腐化机制机器可查（双基线棘轮/29 步门禁/探针先行）— 证据=R312 §2.1 当日核实事实
+- 版本 67.34.98→67.34.99
+
 ## [v67.34.98] - 2026-10-16
 
 ### Added（R312 开源调研轮：P269 tag 块 ASCII smuggling 规则 + 调研文档）
