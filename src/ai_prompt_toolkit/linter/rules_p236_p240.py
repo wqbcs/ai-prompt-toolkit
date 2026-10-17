@@ -112,6 +112,17 @@ _RATE_LIMIT_PATTERN = re.compile(
 _RESOURCE_PATTERN = re.compile(
     r"(?:max_tokens|max_length|max_request|资源监控|resource.monitor|GPU.monitor|timeout)", re.IGNORECASE
 )
+# R320: P239 抑制面中文对称 — 英文 "timeout" 经 _RESOURCE_PATTERN 可静默, 中文
+# "超时" 不可（非对称 FP 面: 含推理关键词 + 正向语境中文 "超时" 声明的干净 prompt
+# 被 DoS 误报）。只抑制正向语境 "超时" 声明: 配置动词在 "超时" 前 10 字窗内, 或
+# "超时+防护名词"; 否定形态（golden atk37 "没有超时控制" = 检测下限）不得静默,
+# 否则丢 TP 锚点。
+_TIMEOUT_GUARD_VERB_PATTERN = re.compile(
+    r"(?:设置|配置|声明|指定|启用|设定|定义|约束|限制|要求)[^，。；！？\n]{0,10}?超时"
+)
+_TIMEOUT_GUARD_NOUN_PATTERN = re.compile(r"超时(?:限制|机制|处理|策略|时间|重试|上限|控制|默认)")
+_TIMEOUT_NEGATION_CHARS = "没无未不别勿"
+_TIMEOUT_NEGATION_WORDS = ("没有", "无法")
 _WEIGHT_LOAD_PATTERN = re.compile(
     r"(?:load_model|from_pretrained|load_state_dict|加载权重|load_weights|safetensors|model.load)", re.IGNORECASE
 )
@@ -141,11 +152,24 @@ def check_p238(text: str) -> list[Finding]:
     return findings
 
 
+def _has_timeout_guard(text: str) -> bool:
+    """R320: 正向语境中文"超时"声明检查（英文 timeout 抑制面中文对称）。"""
+    for pattern in (_TIMEOUT_GUARD_VERB_PATTERN, _TIMEOUT_GUARD_NOUN_PATTERN):
+        for m in pattern.finditer(text):
+            pre = text[max(0, m.start() - 2) : m.start()]
+            # 否定形态不得视为防护声明: 紧邻单字符否定(没/无/未/不/别/勿)或
+            # 双字否定词(没有/无法, 否定字在窗口首位) — atk37 "没有超时控制" 锚点
+            if pre and (pre[-1] in _TIMEOUT_NEGATION_CHARS or pre in _TIMEOUT_NEGATION_WORDS):
+                continue
+            return True
+    return False
+
+
 def check_p239(text: str) -> list[Finding]:
     findings: list[Finding] = []
     if _REASONING_BEHAVIOR_PATTERN.search(text):
         return findings
-    if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text):
+    if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text) and not _has_timeout_guard(text):
         # 注: 不含裸"api" — "API文档"等非服务语境不应触发DoS告警
         has_infer = re.search(
             # R317-P2-26 批2: serve → \bserve\b — 裸子串误配 "Discord server"/

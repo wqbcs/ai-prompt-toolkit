@@ -113,8 +113,8 @@ class TestR214LangSchema:
         # R312: +5 (P269 tag块 ASCII smuggling: 4TP+旗帜TN, 全 en) = 672
         # R315: +8 (P2-26 过防御批 TN: P009×2/P164×2/P170×2/P008×2, en 4+zh-Hans 4) = 680
         # R317: +4 (P2-26 批2 TN: P169×2/P239×2, 全 en) = 684
-        # R319: +2 (深审探针: P269 混排 TP + P008 智 TN, 全 zh-Hans) = 686
-        assert len(probes) == 686
+        # R319: +2 (深审探针: P269 混排 TP + P008 智 TN) + R320: +1 (P239 超时对称 TN) = 687
+        assert len(probes) == 687
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -170,8 +170,8 @@ class TestR214LangSchema:
         #       = zh-Hans 548 | en 112 | ja 18 | zh-Hant 2
         # R317: +4 en (P2-26 批2: P169 社区公园/community运营 + P239 Discord/
         #       web server) = zh-Hans 548 | en 116 | ja 18 | zh-Hant 2
-        # R319: +2 zh-Hans (P269 混排 TP + P008 智 TN) = zh-Hans 550 | en 116 | ja 18 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 550
+        # R320: +1 zh-Hans (P239 超时对称 TN) = zh-Hans 551 | en 116 | ja 18 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 551
         assert sum(1 for v in langs.values() if v == "ja") == 18
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108; R315: +4 en (P2-26 TN) = 112; R317: +4 en (批2 TN) = 116

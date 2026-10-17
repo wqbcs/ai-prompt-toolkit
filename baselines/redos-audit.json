@@ -13975,6 +13975,24 @@
       "complexity": "unknown",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p236_p240.py\u0000(?:设置|配置|声明|指定|启用|设定|定义|约束|限制|要求)[^，。；！？\\n]{0,10}?超时": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p236_p240.py\u0000超时(?:限制|机制|处理|策略|时间|重试|上限|控制|默认)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p236_p240.py\u0000没无未不别勿": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }

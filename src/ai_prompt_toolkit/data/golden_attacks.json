@@ -6157,5 +6157,14 @@
         "text": "根据用户偏好智能推荐所有商品。",
         "expected": []
     }
+,
+    {
+        "name": "r320_p239_tn_timeout_guard_zh",
+        "category": "inference",
+        "lang": "zh-Hans",
+        "text": "为推理服务配置 60 秒超时，超时记录请求 ID 以便排查。",
+        "expected": [],
+        "note": "R320 P239 对称 FP 面取证 TN — 正向语境中文'超时'声明(配置+超时 10 字窗)应为抑制面(与英文 timeout 对称); 预修复 P239 实火(非对称 FP 面取证), 修复后沉默; atk37 否定形态(没有超时控制)保持实火=检测下限不变"
+    }
   ]
 }
