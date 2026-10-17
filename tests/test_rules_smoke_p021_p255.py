@@ -28,7 +28,7 @@ def _checkers() -> list:
 
 
 CHECKERS = _checkers()
-EXPECTED_TOTAL = 268  # 规则总数单锚点(R230-E): 加规则只改这一处。P001-P268全量checker均在扩展列表(基础20条+扩展248条; R212新增P256, R213新增P257, R215新增P258-P260, R217新增P261, R229新增P262-P264, R230新增P265, R240新增P266, R241新增P267, R293新增P268)
+EXPECTED_TOTAL = 269  # 规则总数单锚点(R230-E): 加规则只改这一处。P001-P269全量checker均在扩展列表(基础20条+扩展249条; R212新增P256, R213新增P257, R215新增P258-P260, R217新增P261, R229新增P262-P264, R230新增P265, R240新增P266, R241新增P267, R293新增P268, R312新增P269)
 
 
 def test_checker_inventory_complete():

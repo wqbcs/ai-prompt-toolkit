@@ -2,7 +2,7 @@
 
 锁死面:
 - 结构: schema_version/tool_version/rule_count/rules 全字段
-- 全数: 268 规则(单锚点 EXPECTED_TOTAL 同 R230-X1 纪律)
+- 全数: 269 规则(单锚点 EXPECTED_TOTAL 同 R230-X1 纪律)
 - 确定性: 同一树两次导出逐字节一致(无时间戳)
 - 语言面: zh/en/both 三态
 - fixable: 与 AUTO_FIXABLE_RULES 单一真源一致
@@ -31,7 +31,7 @@ from ai_prompt_toolkit.linter.rules import get_all_rules
 
 # 单锚点(与 test_rules_smoke_p021_p255 EXPECTED_TOTAL 同族纪律, R230-X1):
 # 新增规则时此处与 smoke 锚点同步 +1。
-EXPECTED_TOTAL = 268
+EXPECTED_TOTAL = 269
 
 REQUIRED_FIELDS = {
     "rule_id",

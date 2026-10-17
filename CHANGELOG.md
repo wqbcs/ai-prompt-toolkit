@@ -2,6 +2,40 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.98] - 2026-10-16
+
+### Added（R312 开源调研轮：P269 tag 块 ASCII smuggling 规则 + 调研文档）
+
+**P269 Unicode tag 块 ASCII smuggling 注入面**（R312 调研裁定高杠杆项, 探针先行）
+- 信源（独立真实案例 ≥4, 全部联网核实）: Cisco AI Security 2024-03（Riley Goodside
+  披露）/ AWS Security Blog 2025-09（Unicode character smuggling, 单遍清洗可绕过）/
+  Trend Micro 2025-01（ASR 87.5%→0%）/ CSA Research Note 2026（wunderwuzzi
+  2026-02 生产 agent 技能文件利用）/ arXiv 2607.05744（MCP 工具元数据投毒 T7）
+- 检测: 子1 tag 块字符总数 8+（阈值实证: 合法旗帜 emoji 上限 6 < 8 < 最小真实
+  payload ~10）; 子2 转义形态 2+（\\U000E00xx / \\uDB40\\uDCxx 正确代理对域）
+- details 含 count + decoded_preview（解码回 ASCII 前 40 字符, 审查者直接看到
+  隐藏内容）; HIGH, encoding_evasion, OWASP LLM01
+- 诚实残留: <8 tag 短 payload 漏检（同 P261 阈值同型）/ 代理对拆散跨边界漏检 /
+  变体选择符 U+FE00–FE0F 不覆盖（emoji 合法面 FP 未验证）
+
+**R312 调研文档**（docs/planning/R312_改进方案与开源调研.md, 5 路检索）
+- 生态事件: LLM Guard 2026-07 归档（模型冻结=静默腐化, 许可证地雷 CC-BY-NC
+  未披露）— "抗腐化门禁"楔子被反向强化
+- 静态赛道 2026 新增 ≥7 家（代码级拥挤/面不相交; prompt 内容面仅 prompt-armor
+  一家, recall 76.3% 不可验证 — 定位未被蚕食反被强化）
+- 定位反问 4 问 + 低价值陷阱审计 6 个"不做"（浏览器扩展/插件市场/多轮漂移/
+  SBOM/LLM judge/ML 层）全部留痕
+- agentic 面（MCP 清单/技能文件 IPI）= 2026 热点, 登记板行发布后执行
+
+### Changed
+
+- 规则 268→269（P269; 可自动修复 196 不变 — P260/P261 族不入 AUTO_FIXABLE 一致性）
+- golden 667→672（en +5: TP×4 + 旗帜 TN×1）, 期望命中单元 379→383
+- 测试: 本轮新增 +13（test_r312_p269_tag_block.py）; README 徽章 6717
+  （门禁 sync_readme_metrics 口径, 含 golden/规则面扩展的动态收集口径变化）
+- 双基线: 漏检 0.00%（383/383）/ 误报 0.82%@60 零新增
+- 版本 67.34.97→67.34.98
+
 ## [v67.34.97] - 2026-10-16
 
 ### Added（R310 wiki 全量重扫 + R311 契约面补齐）

@@ -13903,6 +13903,72 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p269.py\u0000P269": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Unicode tag块ASCII smuggling注入面": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Prompt含8+ Unicode tag块字符(U+E0000–E007F)或2+ tag块转义形态(\\U000E00xx / \\uDB40\\uDCxx代理对) — tag块ASCII smuggling=不可见隐藏载荷(LLM分词器解码为明文); 合法旗帜emoji(≤6个tag字符)不报": {
+      "vulnerable": false,
+      "complexity": "unknown",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000移除tag块字符及其转义形态(剥离U+E0000–E007F); 合法旗帜emoji(≤6个tag字符)不受影响": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Prompt contains 8+ Unicode tag-block chars (U+E0000–E007F) or 2+ escaped tag-block forms (\\U000E00xx / \\uDB40\\uDCxx surrogate pairs) — tag-block ASCII smuggling: invisible payload decoded as plaintext by LLM tokenizers; legitimate flag emoji (≤6 tag chars) are not reported": {
+      "vulnerable": false,
+      "complexity": "unknown",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Remove tag-block characters and their escaped forms (strip U+E0000–E007F); legitimate flag emoji (≤6 tag chars) are not affected": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000encoding_evasion": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000LLM01": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000[\\U000E0000-\\U000E007F]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000(?:\\\\uDB40\\\\uDC[0-7][0-9A-Fa-f]|\\\\U000E00[0-7][0-9A-Fa-f])": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }

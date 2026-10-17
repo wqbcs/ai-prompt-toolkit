@@ -5,24 +5,24 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.97-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6697%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40667probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![Version](https://img.shields.io/badge/Version-67.34.98-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6717%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40672probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
-[![Lint Rules](https://img.shields.io/badge/Lint_Rules-268-blue.svg)](src/ai_prompt_toolkit/linter/)
+[![Lint Rules](https://img.shields.io/badge/Lint_Rules-269-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(667 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(672 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 667 条 · 期望命中单元 379
-# 误报面  0.82%  |  干净样本 60 个 · checker 268 条
+# 漏检面  0.00%  |  探针 672 条 · 期望命中单元 383
+# 误报面  0.82%  |  干净样本 60 个 · checker 269 条
 ```
 
 > **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
@@ -77,7 +77,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 ---
 
 <details>
-<summary>📦 能力全貌（268 规则 / 130 维度 / 73 MCP / 23 探针，展开看）</summary>
+<summary>📦 能力全貌（269 规则 / 130 维度 / 73 MCP / 23 探针，展开看）</summary>
 
 ## 项目简介
 
@@ -87,7 +87,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 
 | 能力 | 数量 | 详情 |
 |------|------|------|
-| **Lint规则** | 268 | P001-P268，196条可自动修复，含多模态/安全/供应链/Agent/可移植性等25大类专项规则 |
+| **Lint规则** | 269 | P001-P269，196条可自动修复，含多模态/安全/供应链/Agent/可移植性等25大类专项规则 |
 | **评估维度** | 130 | D01-D130，8大类(structure/quality/security/performance/fairness/toolchain/harmonyos/compliance) |
 | **安全注入检测** | 37 | 19条英文(INJ-001~019)+18条中文(INJ-ZH-001~018)注入规则 |
 | **PII隐私检测** | 12 | 姓名/身份证/手机/邮箱/银行卡/地址等 |
@@ -102,7 +102,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 
 | 功能 | CLI命令 | 描述 |
 |------|---------|------|
-| **Prompt Linter** | `prompt-cli lint` | 268条Lint规则(P001-P268)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等25大类 |
+| **Prompt Linter** | `prompt-cli lint` | 269条Lint规则(P001-P269)，196条可自动修复，涵盖结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等25大类 |
 | **安全扫描** | `prompt-cli scan` | 5层恒全检测(无 depth 选项)，注入检测+PII+供应链+结构+消毒器 |
 | **MCP配置扫描** | `prompt-cli mcp-lint` | 配置级12项安全检查(MCP-101~112) + tool描述security族规则(8类) + TPA/FSP注入形态检测(MCP-111/112, inputSchema递归walk, OWASP MCP03) + rug pull检测(description已批准基线, `--baseline/--baseline-out`) + Risk Score(0-100四档) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI模式Verdict门禁(PASS/WARN/FAIL)，退出码0/1/2，SARIF输出 |
@@ -188,7 +188,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 ### 差异化优势
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Scan→Probe→RedTeam→Evaluate→Compliance→Version 全链路的Prompt工具
-- **零LLM调用Lint**：268条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
+- **零LLM调用Lint**：269条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
 - **OWASP LLM Top 10 2026**：23 Probe→LLM01-LLM10完整映射（2026 版 2025→2026 已迁移，R228），自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
@@ -219,7 +219,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：667条golden探针/379期望命中单元；
+**机制上限**——本工具的双基线（漏检 0.00%：672条golden探针/383期望命中单元；
 误报 0.82%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
@@ -245,7 +245,7 @@ pip install "ai-prompt-toolkit[ab_test]"
 ### 基本使用
 
 ```bash
-# Lint检查(268条规则)
+# Lint检查(269条规则)
 prompt-cli lint -s my_prompt.md
 
 # Lint检查 + 每个finding下显示"下一步"修复提示(数据=规则自带 remediation)
@@ -421,7 +421,7 @@ graph LR
     G --> H[版本管理]
     H --> I[部署上线]
 
-    B -->|268条规则| B1[196条可自动修复]
+    B -->|269条规则| B1[196条可自动修复]
     B -->|25大类| B2[结构/安全/性能/质量/Agent/RAG/多模态/i18n/中文/可移植性等]
     C -->|5层恒全| C1[注入/PII/供应链/结构/消毒器]
     C -->|11/13步消毒| C2[注入/PII/Unicode/供应链/结构/编码/格式/语言等]
@@ -475,7 +475,7 @@ graph TB
         R1[P001-P020 基础]
         R2[P021-P050 Agent/RAG/多模态/中文]
         R3[P051-P080 盘古/鸿蒙/华为云]
-        R4[P081-P268 高级]
+        R4[P081-P269 高级]
         FIXER[196条自动修复]
     end
 
@@ -584,7 +584,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
 | zh-Hans | 312 | 0 | 0.00% |
-| en | 50 | 0 | 0.00% |
+| en | 54 | 0 | 0.00% |
 | ja | 15 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
 
@@ -592,13 +592,13 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-16：总 667=zh-Hans 544/en 103/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN）。
+（2026-10-16：总 672=zh-Hans 544/en 108/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN）。
 
 ## VSCode插件
 
 项目包含VSCode扩展 `vscode-prompt-lint/` v0.6.0，提供：
 
-- 实时Lint诊断(268条规则) + 防抖300ms
+- 实时Lint诊断(269条规则) + 防抖300ms
 - **行级精确定位(R218)**: 诊断按内核 location 契约(L:<line>:C:<col>)锚定到真实行/列，
   注入/编码类规则(P260/P261)已落真实位置；文件级发现不猜行（0.5.0 的
   description 子串猜行已移除）
