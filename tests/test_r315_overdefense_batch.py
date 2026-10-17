@@ -24,13 +24,13 @@ class TestR315Anchor:
 
     时间序列: R249 33.92% → R250 20.94% → R251 13.27% → R253 11.50% → R315 7.67%。
     口径=run_overdefense() 单一真源。
+    R317-P2-26 批2: 精确锚点移交 test_r317(23/0.0678), 此处转棘轮(不得回到 26 之上)。
     """
 
     def test_anchor_26(self) -> None:
         r = overdefense.run_overdefense()
         assert r["prompt_count"] == 339
-        assert r["flagged_count"] == 26
-        assert r["overdefense_rate"] == 0.0767
+        assert r["flagged_count"] <= 26
 
     def test_below_10pct_threshold(self) -> None:
         # 破 <10% 二阶信号阈值（02 板 R253 留痕「<10% 二阶信号设计轮待排」）

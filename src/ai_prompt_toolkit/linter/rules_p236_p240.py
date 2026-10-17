@@ -148,7 +148,11 @@ def check_p239(text: str) -> list[Finding]:
     if not _RATE_LIMIT_PATTERN.search(text) and not _RESOURCE_PATTERN.search(text):
         # 注: 不含裸"api" — "API文档"等非服务语境不应触发DoS告警
         has_infer = re.search(
-            r"(?:infer|推理|predict|generate|completion|serve|endpoint|api端点|api接口|api服务|api网关)",
+            # R317-P2-26 批2: serve → \bserve\b — 裸子串误配 "Discord server"/
+            # "web server"(平台名非服务语义, NotInject 2 条真实 FP); 词边界后
+            # "serve requests" 式真服务语义保留, golden 2 TP 经 推理/api接口 触发
+            # 不受影响。
+            r"(?:infer|推理|predict|generate|completion|\bserve\b|endpoint|api端点|api接口|api服务|api网关)",
             text,
             re.IGNORECASE,
         )

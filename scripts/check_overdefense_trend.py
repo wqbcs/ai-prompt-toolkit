@@ -20,6 +20,12 @@ docs/overdefense_history.jsonl 判断"是否还在降/是否触底"——人肉�
   同值=触底 → 提示"继续下调需 T6 越狱调优独立轮(I/J 簇 36 条=棘轮锁定区,
   R253 定性)"。提示面价值=把"数字不再动了"从人脑判断变机器观察。
 - ODT-4 目标达成(提示不阻断): 最近一条 ≤ 0.10 → 提示"<10% 目标达成"。
+- ODT-5 地板面(R317, R316 设计 §2.3; 提示不阻断): floor_ratio = P163 地板
+  prompt 占比(=flagged 中 rules 恰为 {P163} 的 prompt 数 / flagged 总数)。
+  ≥0.8 → 提示"近地板(T1): P2-26 程序可声明终止"; <0.8 → 提示"可治理面余
+  N prompts"。输入=run_overdefense() flagged per-prompt rules 既有结构(零新
+  数据管道); check() 经 composition 参数注入(hermetic 可测), main() 惰性计算
+  (导入失败/ lint 异常 → 静默跳过, 趋势检查器在极简环境仍可用)。
 
 用法:
     python scripts/check_overdefense_trend.py          # 校验, 违规 exit 1
@@ -49,8 +55,12 @@ def load_points(path: Path) -> list[dict]:
     return points
 
 
-def check(points: list[dict]) -> dict:
-    """纯函数断言 → {real_points, issues, hints, status, ok}"""
+def check(points: list[dict], composition: dict | None = None) -> dict:
+    """纯函数断言 → {real_points, issues, hints, status, ok}
+
+    R317: composition 可选参数 = {"flagged": int, "floor_prompts": int}
+    （ODT-5 地板面输入, 注入式=hermetic 可测; None=跳过 ODT-5）。
+    """
     real = [p for p in points if not p.get("backfill", False)]
     rates = [p["overdefense_rate"] for p in real]
 
@@ -73,9 +83,11 @@ def check(points: list[dict]) -> dict:
 
     # ODT-3 收敛面(提示): 连续 2 点同值=触底
     if len(rates) >= 3 and rates[-1] == rates[-2] == rates[-3]:
+        # R317 勘误: "I/J 簇 36 条(R253 定性)" 为过时口径 — 现地板=P163 检测
+        # 下限(R257 定性: golden 4 TP 支撑, R316 §1 构成面登记)
         hints.append(
-            f"ODT-3 触底: 连续 3 点 {latest:.4f} 持平——I/J 簇 36 条=棘轮锁定区"
-            f"(R253 定性, 有 TP 支撑); 继续下调需 T6 越狱调优独立轮(探针扩充+OOD 背书)"
+            f"ODT-3 触底: 连续 3 点 {latest:.4f} 持平——P163 检测下限"
+            f"(R257 定性: golden 4 TP 支撑, R316 构成面登记); 继续下调需 T6 越狱调优独立轮(OOD 证据前置)"
         )
     elif len(rates) >= 3 and rates[-1] == rates[-2]:
         hints.append(f"ODT-3 减速: 最近 2 点持平 {latest:.4f}——观察面, 若下轮再持平=触底提示")
@@ -92,6 +104,23 @@ def check(points: list[dict]) -> dict:
             f"(P2-26 二阶信号设计轮入口已开, 02 板注记待排项可启动)"
         )
 
+    # ODT-5 地板面(R317, R316 设计 §2.3; 提示不阻断)
+    if composition:
+        flagged = composition.get("flagged", 0)
+        floor = composition.get("floor_prompts", 0)
+        if flagged > 0:
+            ratio = floor / flagged
+            if ratio >= 0.8:
+                hints.append(
+                    f"ODT-5 近地板(T1): P163 地板占比 {ratio:.0%} (≥80%)——"
+                    f"P2-26 程序可声明终止(R316 设计 §2.2), 余可治理 {flagged - floor} prompts"
+                )
+            else:
+                hints.append(
+                    f"ODT-5 可治理面: 余 {flagged - floor} prompts (P163 地板占比 "
+                    f"{ratio:.0%}, T1 阈值 80%; 批候选=规则命中数降序)"
+                )
+
     status = "red" if issues else ("bottomed" if len(rates) >= 3 and rates[-1] == rates[-2] else "converging")
     return {"real_points": real, "issues": issues, "hints": hints, "status": status, "ok": not issues}
 
@@ -104,6 +133,28 @@ def _display(path: Path) -> str:
         return str(path)
 
 
+def _compute_composition() -> dict | None:
+    """R317 ODT-5: 最新构成面（P163 地板 prompt 占比）。
+
+    调 run_overdefense() lint NotInject 339（约 1.5s, 门禁 step 28 成本增加
+    可接受 — 与 step 27 check_overdefense.py 同口径同成本）。导入失败/
+    lint 异常返回 None → ODT-5 静默跳过（提示面非阻断, 趋势检查器在
+    极简环境仍可用）。
+    """
+    try:
+        sys.path.insert(0, str(ROOT / "src"))
+        from ai_prompt_toolkit.overdefense import run_overdefense
+    except ImportError:
+        return None
+    try:
+        res = run_overdefense()
+    except Exception:
+        return None
+    flagged = res["flagged"]
+    floor = sum(1 for f in flagged if set(f["rules"]) == {"P163"})
+    return {"flagged": len(flagged), "floor_prompts": floor}
+
+
 def main() -> int:
     if not HISTORY.exists():
         print(f"✗ 过防御历史文件缺失: {_display(HISTORY)}(先跑 check_overdefense.py 追加基线)")
@@ -114,7 +165,7 @@ def main() -> int:
         print(f"✗ 过防御历史文件损坏: {e}")
         return 1
 
-    result = check(points)
+    result = check(points, _compute_composition())
     latest = result["real_points"][-1] if result["real_points"] else None
 
     if "--json" in sys.argv:

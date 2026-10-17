@@ -4622,12 +4622,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p166_p170.py\u0000(?:UGC|用户生成|评论|comment|社交|social|社区|community|论坛|forum|群聊|group\\s?chat|回复.*用户.*评论|user\\s+generated|社交.*内容|社交.*帖子)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "回复用户户户户户户户户户户户用户评论!",
-      "approved": true
-    },
     "linter/rules_p166_p170.py\u0000(?:毒性|toxic|仇恨|hatred|骚扰|harass|自残|self.?harm|暴力|violen|冒犯|offens|毒性.*过滤|toxic.*filter|禁止.*仇恨|no.*hate|内容.*审核|content.*moderat)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -8733,12 +8727,6 @@
       "approved": false
     },
     "linter/rules_p236_p240.py\u0000(?:checksum|校验|sha256|hash|签名|signature|verify|完整性|integrity|trusted.source|可信源)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p236_p240.py\u0000(?:infer|推理|predict|generate|completion|serve|endpoint|api端点|api接口|api服务|api网关)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13965,6 +13953,18 @@
       "approved": true
     },
     "linter/rules_p166_p170.py\u0000(?:综述|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\\s?source|\\bevidence\\b|\\bfact\\s?check\\w*|来源追溯|source\\s?trace)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p166_p170.py\u0000(?:UGC|用户生成|评论|comment|社交|social|论坛|forum|群聊|group\\s?chat|回复.*用户.*评论|user\\s+generated|社交.*内容|社交.*帖子)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "社交\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000帖子!",
+      "approved": true
+    },
+    "linter/rules_p236_p240.py\u0000(?:infer|推理|predict|generate|completion|\\bserve\\b|endpoint|api端点|api接口|api服务|api网关)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

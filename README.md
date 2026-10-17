@@ -5,24 +5,24 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.102-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6741%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40680probes-brightgreen.svg)](docs/规则漏检率基线.md)
-[![False-Positive](https://img.shields.io/badge/False--Positive-0.82%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
+[![Version](https://img.shields.io/badge/Version-67.34.103-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6758%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40684probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-269-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(680 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(684 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 680 条 · 期望命中单元 383
-# 误报面  0.82%  |  干净样本 60 个 · checker 269 条
+# 漏检面  0.00%  |  探针 684 条 · 期望命中单元 383
+# 误报面  0.81%  |  干净样本 60 个 · checker 269 条
 ```
 
 > **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
@@ -35,8 +35,8 @@ prompt-cli baseline
 **过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
 "含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
 用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
-实测：**安全族误杀率 7.67%**（91 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315
-逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67% 破 10% 阈值，见
+实测：**安全族误杀率 6.78%**（91 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315→R317
+逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
 这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
 曲线只收紧不放松。
@@ -227,8 +227,8 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：680条golden探针/383期望命中单元；
-误报 0.82%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
+**机制上限**——本工具的双基线（漏检 0.00%：684条golden探针/383期望命中单元；
+误报 0.81%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
 运行时防护（如 LLM Guard 类工具）。但**门禁只能建立在可复现的裁决上**：
@@ -600,7 +600,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-16：总 680=zh-Hans 548/en 112/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN）。
+（2026-10-16：总 684=zh-Hans 548/en 116/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN）。
 
 ## VSCode插件
 

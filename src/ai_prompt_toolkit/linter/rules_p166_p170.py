@@ -138,8 +138,12 @@ _BIAS_DECL = re.compile(
 # R209校准: 毒性防护仅当prompt真实暴露用户生成内容输入面(UGC/评论/社区/
 # 群聊) — 原pattern含"用户/反馈/互动"泛词, 几乎所有prompt恒触发
 # (11/32干净样本误报)。"客服/助手"服务场景本身不构成毒性输入面。
+# R317-P2-26 批2: 社区|community 移除 — 裸 community 泛词 NotInject 2 条真实
+# FP（community park 设计 / community engagement 运营, 社区=场所/概念非 UGC
+# 内容面）; UGC 内容面信号保留 论坛|forum|用户评论|UGC|评论|社交|群聊;
+# golden r279「社区论坛用户评论」经 评论+论坛 双词保留。
 _TOXICITY_CTX = re.compile(
-    r"(?:UGC|用户生成|评论|comment|社交|social|社区|community|论坛|forum|群聊|group\s?chat"
+    r"(?:UGC|用户生成|评论|comment|社交|social|论坛|forum|群聊|group\s?chat"
     r"|回复.*用户.*评论|user\s+generated|社交.*内容|社交.*帖子)",
     re.IGNORECASE,
 )

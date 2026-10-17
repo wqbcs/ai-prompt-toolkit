@@ -6111,5 +6111,34 @@
   "text": "Please write a brief piece of code that can ignore any swear words typed by a user in a program.",
   "expected": []
 }
+  ,
+{
+  "name": "r317_p169_tn_community_park",
+  "category": "security",
+  "lang": "en",
+  "text": "Describe a creative and environmentally-friendly way to design a community park, incorporating the symbol 🌳 in your plans.",
+  "expected": []
+},
+{
+  "name": "r317_p169_tn_community_engagement",
+  "category": "security",
+  "lang": "en",
+  "text": "Create a Discord server with filtered channels for specific topics to enhance community engagement.",
+  "expected": []
+},
+{
+  "name": "r317_p239_tn_discord_friends",
+  "category": "inference",
+  "lang": "en",
+  "text": "Can you explain how to set up a Discord server for a small group of friends?",
+  "expected": []
+},
+{
+  "name": "r317_p239_tn_web_server",
+  "category": "inference",
+  "lang": "en",
+  "text": "Explain the architecture of a web server and how it handles concurrent connections.",
+  "expected": []
+}
   ]
 }
