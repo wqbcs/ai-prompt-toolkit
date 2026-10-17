@@ -17,6 +17,35 @@
 | `--new-from-rev <REV>` | git 原生增量：只 lint `<REV>` 后变更的文件（brownfield 免基线） |
 | `--incremental --baseline <file>` | 基线增量：只计 NEW findings（与 `--new-from-rev` 互斥） |
 | `--format sarif -o <file>` | SARIF 报告落盘（进 Code Scanning / Code Quality） |
+| `prompt-cli mcp-lint -t <路径> --fail-on high` | MCP 配置静态门禁（AI 时代攻击面）：12 项配置级检查 + TPA/FSP 注入形态 + rug pull 基线；退出码 0=通过 / 2=门禁失败 / 3=执行错误 |
+
+## MCP 配置门禁（AI 时代攻击面，`prompt-cli mcp-lint`）
+
+2026 攻击主线从单文档 prompt 转向 agent 配置面：MCP 工具定义元数据注入
+（TPA/FSP 形态 MCP-111/112）、rug pull（description 漂移）、agent 指令文件 IPI
+（P4-11，发布后）。MCP 配置门禁一条命令（与 `lint` 同一确定性内核）：
+
+```bash
+prompt-cli mcp-lint -t mcp-servers/ --fail-on high   # 目录自动发现含 mcpServers/servers 的 .json
+prompt-cli mcp-lint -t config/mcp.json --fail-on high --format json -o mcp-lint.json
+# rug pull 面: 先 --baseline-out mcp-baseline.json 批准 description 基线(独立 commit 留痕),
+# 之后 CI 传 --baseline mcp-baseline.json 只拦新增/变更 description
+```
+
+GitLab 示例：
+
+```yaml
+prompt-mcp-lint:
+  image: python:3.12-slim
+  stage: test
+  script:
+    - pip install --no-cache-dir ai-prompt-toolkit
+    - prompt-cli mcp-lint -t mcp-servers/ --fail-on high
+  rules:
+    - changes:
+        - "**/mcp*.json"
+        - "**/mcp-servers/**/*"
+```
 
 ## GitLab CI（`.gitlab-ci.yml`）
 

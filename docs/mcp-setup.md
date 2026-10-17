@@ -6,7 +6,12 @@
 > 服务端事实（已验证，非规划）：
 > - 入口：`python -m ai_prompt_toolkit.mcp_server`（stdio JSON-RPC，零依赖手写实现）
 > - CLI 自检：`prompt-cli mcp --validate-only`（仅校验工具注册表与 tools_list 一致性，供 CI/冒烟）
-> - 73 个 tool 全是确定性内核包装（无 LLM 调用）
+> - 73 个 tool 分两面：**裁决面**（prompt_lint / prompt_scan / MCP 配置扫描等）
+>   全是确定性内核包装（零 LLM，与 CLI 同一内核，裁决逐字节一致）；**评估/优化面**
+>   （prompt_judge / gepa / auto_optimize）是 LLM-as-Judge/优化工具——未配置
+>   provider key 或 SIMULATED_MODE 时返回确定性模拟结果，配置 key 后发起真实
+>   外部模型调用（评估面在门禁路径外，非检测裁决；01 §3 不变量 #1 +
+>   check_layering L3 机器护栏，R321）
 > - 协议版本协商已实现（2025-06-18 / 2025-03-26 / 2024-11-05，R239 收口）
 >
 > 边界声明：registry 收录（mcp.so 等）与 ≥1 客户端实连冒烟为发布后动作，
@@ -19,7 +24,8 @@ pip install ai-prompt-toolkit   # 或 uv tool install ai-prompt-toolkit
 python -m ai_prompt_toolkit.mcp_server --help >/dev/null && echo OK
 ```
 
-Python 3.10+。零 key、零网络依赖（server 本地 stdio，不回调任何服务）。
+Python 3.10+。裁决面 tool 零 key、零网络（server 本地 stdio，不回调任何服务）；
+评估/优化面仅在配置 provider key（环境变量）后才有外部模型调用。
 
 ## 标准配置（三客户端通用 mcpServers 格式）
 
@@ -67,9 +73,10 @@ Python 3.10+。零 key、零网络依赖（server 本地 stdio，不回调任何
 
 ## 能力面速览（73 tools 分组）
 
-Lint/Scan（prompt_lint 268 规则、prompt_scan、prompt_judge、canary）·
-评估（prompt_evaluate 130 维度、scorecard、dataset）· 安全引擎（5 层融合、
-badge、token 分析）· 红队/Probe（probe_run/detect/list/owasp_report）·
-编译/优化（compile、gepa、auto_optimize、sanitize）· 版本/缓存 ·
+Lint/Scan（prompt_lint 269 规则、prompt_scan、canary）·
+评估（prompt_judge、prompt_evaluate 130 维度、scorecard、dataset）·
+安全引擎（5 层融合、badge、token 分析）· 红队/Probe（probe_run/detect/list/
+owasp_report）· 编译/优化（compile、gepa、auto_optimize、sanitize）· 版本/缓存 ·
 报告（junit、sarif、diff、merge）· 模板渲染/doctor/trace。
+（prompt_judge/gepa/auto_optimize 属评估/优化面：LLM 调用仅在配置 key 后发生。）
 完整工具清单以 `prompt-cli mcp --validate-only` 输出与运行时 `tools/list` 为准。

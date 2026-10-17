@@ -20,6 +20,14 @@ cli_helpers, 函数内延迟 import)——14 §3 违规边清单 7 条全是第�
   禁止 import 第一方模块中不在 kernel 清单的目标——**全第一方面**检查(含顶层
   暂混模块): 新顶层模块想进 kernel 依赖面必须显式登记豁免或入 14 §1 清单,
   防无声渗入。14 §2 G2"允许暂混"的既知边入豁免表留痕。
+- L3 裁决面 LLM 零接触(R321, 01 §3 不变量 #1 机器护栏: "核心检测路径零 LLM
+  依赖(永远)"): 裁决面(linter/**, security/**, quality_gate.py, sarif_report.py,
+  mcp_server.py)禁止 import 第一方 LLM 调用模块(机器派生: AST import LLM 调用
+  客户端 httpx/requests/SDK 为种子 + 第一方传递闭包, 零手工维护)与第三方 LLM
+  调用客户端。评估面(ab_test/judge = LLM-as-Judge, prompt-cli eval / MCP
+  prompt_judge)显式在检测路径外——既有唯一跨界边 mcp_server.py→ab_test 入
+  豁免表留痕(裁决工具如接 LLM 依赖 = 红, 不豁免)。机器面限制: 纯 stdlib
+  urllib 直连 LLM 的模块不在派生集(评审面)。
 
 不实现(正交面): L3 kernel 零第三方 = check_layer_deps.py 已覆盖(R254 §2.1
 选型: 不引 import-linter 依赖, 纯 stdlib 与既有 20+ check_*.py 同形态)。
@@ -82,6 +90,40 @@ KNOWN_CROSS_LAYER_EDGES: dict[tuple[str, str], str] = {
     # 顶层位置=暂混。处置=P4-07 抽 kernel/ 子包时随迁 + 同 commit 删豁免行。
     ("linter/owasp_mapping.py", "probe_framework"): (
         "L2(14 §2 G2 暂混: probe_framework 纯 stdlib 实为 kernel 级; P4-07 抽 kernel/ 子包随迁)"
+    ),
+}
+
+# ---------------------------------------------------------------- L3: 不变量 #1 机器护栏(R321)
+# 01 §3 不变量 #1"核心检测路径零 LLM 依赖(永远)"。裁决面 = 产出门禁裁决
+# (退出码 0/1/2/3 路径)的模块集; 评估面(prompt-cli eval / MCP prompt_judge)
+# 显式在检测路径外。第一方 LLM 调用模块集机器派生(种子=AST import LLM 调用
+# 客户端, 闭包=第一方传递 import 者), 仓库任何位置新增 LLM 客户端自动入禁面。
+VERDICT_SURFACE_TOP: tuple[str, ...] = ("quality_gate.py", "sarif_report.py", "mcp_server.py")
+# 第三方 LLM 调用客户端(根模块名): LLM SDK + HTTP 客户端(本仓 httpx/requests
+# 使用面 = 外部模型调用; 二者均不在 pyproject 声明依赖中, 仅 ab_test 面使用)
+LLM_CALL_CLIENTS: frozenset[str] = frozenset(
+    {
+        "openai", "anthropic", "litellm", "ollama", "langchain", "cohere",
+        "mistralai", "groq", "together", "huggingface_hub", "transformers",
+        "httpx", "requests",
+    }
+)
+# L3 豁免(与 L1 豁免同纪律: 带轮次留痕; 裁决工具接 LLM = 修复移评估面, 不新增豁免)
+LLM_EXEMPTIONS: dict[tuple[str, str], str] = {
+    ("mcp_server.py", "ab_test"): (
+        "L3 (R321: mcp_server prompt_judge = LLM-as-Judge 评估工具, 出门禁路径"
+        "(不变量 #1=检测路径)。裁决工具 prompt_lint/prompt_scan 接 LLM 依赖 = 红,"
+        " 修复=评估面移出裁决路径, 勿新增豁免)"
+    ),
+    ("mcp_server.py", "gepa"): (
+        "L3 (R321: MCP gepa GEPA 优化工具, LLM 链 gepa→ab_test"
+        "(gepa.py:602 延迟 import provider), 评估/优化面, 出门禁路径"
+        "(不变量 #1=检测路径)。裁决工具接 LLM 依赖 = 红, 勿新增豁免)"
+    ),
+    ("mcp_server.py", "flow_dag"): (
+        "L3 (R321: MCP flow 分析工具, LLM 链 flow_dag→gepa→ab_test 属"
+        " 评估/优化面, 出门禁路径(不变量 #1=检测路径)。裁决工具接 LLM 依赖 = 红,"
+        " 勿新增豁免)"
     ),
 }
 
@@ -165,6 +207,108 @@ def _target_key(mod: str) -> str:
     return sub.split(".")[0] if sub else ""
 
 
+def third_party_client_roots(path: Path) -> set[str]:
+    """文件 AST 第三方 import 的根模块名集(排除 stdlib 与第一方)。
+
+    代码示例字符串里的 `import requests`(f-string/docstring)非 AST import 节点,
+    天然排除(R321 实证: mcp_server.py 示例片段面)。
+    """
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    except (SyntaxError, UnicodeDecodeError):
+        return set()
+    out: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                root = a.name.split(".")[0]
+                if root != "ai_prompt_toolkit" and root not in sys.stdlib_module_names:
+                    out.add(root)
+        elif isinstance(node, ast.ImportFrom):
+            if node.level == 0 and node.module:
+                root = node.module.split(".")[0]
+                if root != "ai_prompt_toolkit" and root not in sys.stdlib_module_names:
+                    out.add(root)
+    return out
+
+
+def llm_calling_module_keys(src: Path) -> set[str]:
+    """机器派生第一方 LLM 调用模块集(_target_key 粒度, 传递闭包)。
+
+    种子: 模块 AST import LLM 调用客户端(LLM_CALL_CLIENTS, 含函数内延迟 import);
+    闭包: 第一方 import 集成员的模块入集(迭代至不动点)。零手工维护:
+    仓库任何位置新增 LLM 客户端 → 其第一方 importer 链自动入禁面。
+    """
+    mod_paths: dict[str, Path] = {}
+    for p in sorted(src.rglob("*.py")):
+        if "__pycache__" in p.parts:
+            continue
+        rel = p.relative_to(src).with_suffix("").as_posix()
+        if rel == "__init__":
+            continue
+        mod_paths["ai_prompt_toolkit." + rel.replace("/", ".")] = p
+
+    llm: set[str] = {m for m, p in mod_paths.items() if third_party_client_roots(p) & LLM_CALL_CLIENTS}
+    edges: dict[str, set[str]] = {m: set() for m in mod_paths}
+    for m, p in mod_paths.items():
+        for tgt in first_party_import_targets(p, src):
+            if tgt in mod_paths:
+                edges[m].add(tgt)
+            elif tgt + ".__init__" in mod_paths:
+                edges[m].add(tgt + ".__init__")
+    changed = True
+    while changed:
+        changed = False
+        for m, tgts in edges.items():
+            if m not in llm and tgts & llm:
+                llm.add(m)
+                changed = True
+    return {_target_key(m) for m in llm}
+
+
+def scan_llm_boundary(src: Path, exempt: dict[tuple[str, str], str] | None = None) -> dict:
+    """L3 裁决面 LLM 零接触(不变量 #1 机器护栏, R321)。
+
+    返回: {llm_modules, violations, exemptions_hit, unused_exemptions, ok}
+    """
+    if exempt is None:
+        exempt = LLM_EXEMPTIONS
+    llm_keys = llm_calling_module_keys(src)
+    surface: list[Path] = []
+    for d in ("linter", "security"):
+        dd = src / d
+        if dd.is_dir():
+            surface.extend(sorted(dd.rglob("*.py")))
+    for name in VERDICT_SURFACE_TOP:
+        p = src / name
+        if p.exists():
+            surface.append(p)
+    violations: list[dict[str, str]] = []
+    hit: set[tuple[str, str]] = set()
+    for py in surface:
+        rel = py.relative_to(src).as_posix()
+        for mod in sorted(first_party_import_targets(py, src)):
+            key = _target_key(mod)
+            if key and key in llm_keys:
+                edge = (rel, key)
+                if edge in exempt:
+                    hit.add(edge)
+                    continue
+                violations.append(
+                    {"file": rel, "target": key, "import": mod, "check": "L3a 裁决面→LLM调用模块"}
+                )
+        for root in sorted(third_party_client_roots(py) & LLM_CALL_CLIENTS):
+            violations.append({"file": rel, "target": root, "import": root, "check": "L3b 裁决面→LLM调用客户端"})
+    unused = [f"{s} → {t}" for (s, t) in sorted(exempt) if (s, t) not in hit]
+    return {
+        "llm_modules": sorted(llm_keys),
+        "violations": violations,
+        "exemptions_hit": sorted(f"{s} → {t}" for s, t in hit),
+        "unused_exemptions": unused,
+        "ok": not violations,
+    }
+
+
 def scan(src: Path, kernel: set[str], exempt: dict[tuple[str, str], str]) -> dict:
     """分层扫描纯函数。
 
@@ -230,10 +374,13 @@ def scan(src: Path, kernel: set[str], exempt: dict[tuple[str, str], str]) -> dic
 def main() -> int:
     kernel = {p.relative_to(SRC).as_posix() for p in kernel_files()}
     result = scan(SRC, kernel, KNOWN_CROSS_LAYER_EDGES)
+    llm = scan_llm_boundary(SRC)
 
     if "--json" in sys.argv:
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 0 if result["ok"] else 1
+        merged = {**result, "llm_boundary": llm}
+        merged["ok"] = result["ok"] and llm["ok"]
+        print(json.dumps(merged, ensure_ascii=False, indent=2))
+        return 0 if merged["ok"] else 1
 
     if result["missing_kernel_files"]:
         print("✗ kernel 清单文件缺失(清单与代码漂移, 同步 docs/planning/14 §1):")
@@ -253,6 +400,23 @@ def main() -> int:
         print("      KNOWN_CROSS_LAYER_EDGES(带 14 编号+处置轮次, 修复时同 commit 删)")
         return 1
     print("✓ 无未豁免跨层 import(L1/L2 全过; 既知暂混面已留痕豁免)")
+    if not result["ok"]:
+        return 1
+
+    # L3: 不变量 #1 机器护栏(裁决面 LLM 零接触)
+    print(
+        f"LLM 零接触验证: 裁决面 linter/**+security/**+quality_gate+sarif_report+mcp_server"
+        f"(派生 LLM 模块集={llm['llm_modules'] or '空'})"
+    )
+    for u in llm["unused_exemptions"]:
+        print(f"  (提示) L3 豁免未命中={u} — 对应边已消失, 同 commit 删豁免行(防永久豁免)")
+    if llm["violations"]:
+        print("✗ 裁决面 LLM 接触(01 §3 不变量 #1: 核心检测路径零 LLM 依赖):")
+        for v in llm["violations"]:
+            print(f"  ✗ [{v['check']}] {v['file']}: import {v['import']} (目标 {v['target']})")
+        print("修复: LLM 调用移评估面(ab_test 族, 出检测路径); 确属评估工具跨界 → 登记 LLM_EXEMPTIONS")
+        return 1
+    print("✓ 裁决面 LLM 零接触(L3 全过; prompt_judge 评估面已留痕豁免)")
     return 0
 
 

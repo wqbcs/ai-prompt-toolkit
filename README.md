@@ -5,9 +5,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.106-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6762%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40687probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![Version](https://img.shields.io/badge/Version-67.34.107-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6771%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40692probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-269-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -15,14 +15,14 @@
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(687 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(692 条 golden
 攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`
 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 687 条 · 期望命中单元 384
+# 漏检面  0.00%  |  探针 692 条 · 期望命中单元 385
 # 误报面  0.81%  |  干净样本 60 个 · checker 269 条
 ```
 
@@ -83,6 +83,14 @@ Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方
 **老仓库接入（存量不清零也能开门禁）**：`prompt-cli lint -t ./prompts --baseline
 base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW findings，
 存量 PRE-EXISTING 放行 —— 采用路径见 [docs/adoption.md](docs/adoption.md)。
+
+**AI 时代攻击面（agent 配置面）**：2026 攻击主线从单文档 prompt 转向 agent 配置面。
+本仓两道门禁：① `prompt-cli mcp-lint` —— MCP 配置静态门禁（12 项配置级检查 +
+TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批准，OWASP MCP
+映射）；② 指令文件 IPI（CLAUDE.md/AGENTS.md/SKILL.md 指令投毒）—— R321 取证：3 条
+真实攻击样本 × 现行管道安全 payload 0/3 命中（形态错实据，见
+[docs/planning/R321_指令文件IPI取证.md](docs/planning/R321_指令文件IPI取证.md)），5 条观察
+探针已入 golden，规则化（P270/P271 候选，T1 证据已齐）为下一轮决策项。
 
 ---
 
@@ -229,7 +237,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：687条golden探针/384期望命中单元；
+**机制上限**——本工具的双基线（漏检 0.00%：692条golden探针/385期望命中单元；
 误报 0.81%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
@@ -594,7 +602,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
 | zh-Hans | 313 | 0 | 0.00% |
-| en | 54 | 0 | 0.00% |
+| en | 55 | 0 | 0.00% |
 | ja | 15 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
 
@@ -602,7 +610,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-17：总 687=zh-Hans 551/en 116/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN，R319 +2 深审探针 P269 混排 TP + P008 智 TN，R320 +1 P239 超时对称 TN）。
+（2026-10-17：总 692=zh-Hans 551/en 121/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN，R319 +2 深审探针 P269 混排 TP + P008 智 TN，R320 +1 P239 超时对称 TN，R321 +5 指令文件 IPI 取证 ATR 源 3 盲点观察+2 TN）。
 
 ## VSCode插件
 

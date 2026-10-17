@@ -2,6 +2,46 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.107] - 2026-10-17
+
+### Added（R321 防漂移红线 + MCP 面提权 + 指令文件 IPI 取证）
+
+- **不变量 #1 机器护栏（check_layering L3）**: 裁决面 LLM 零接触检查进门禁——
+  裁决面（linter/**+security/**+quality_gate.py+sarif_report.py+mcp_server.py）
+  禁止 import 第一方 LLM 调用模块（机器派生: httpx/SDK import 种子+第一方传递
+  闭包, 零手工维护）与第三方 LLM 调用客户端（openai/anthropic/litellm/…+
+  httpx/requests 共 13 根表）。首跑界定评估面边界: mcp_server 3 条跨界边
+  （ab_test/judge=LLM-as-Judge prompt_judge 工具/gepa GEPA 优化器/flow_dag）
+  均在门禁路径外（不变量 #1=检测路径）, 入 LLM_EXEMPTIONS 带理由留痕——裁决
+  工具接 LLM=红, 不新增豁免。01 §3 不变量 #1 补机器护栏注记
+- **test_r321_llm_boundary.py**（9 测试: 真仓绿/--json 结构/L3a 红态〔security/
+  import LLM 模块〕/L3b 红态〔linter/ import SDK〕/豁免是绿因/豁免卫生/代码
+  示例字符串不误判/派生集透明面）
+- **指令文件 IPI 面取证**（P4-11 首轮, 只取证不动规则）: ATR（Agent-Threat-
+  Rule）真实样本 5 条（malicious 3: CLAUDE.md 投毒提权/base64 隐藏外传/Snyk
+  真实 curl 外传; benign 2: 真实 Sentry skill 文件/MCP shell 惯用法）× 现行
+  269 规则管道 = **安全 payload 0/3 命中**（与 R261 TPA 面同族形态错配: 仅声明
+  面巧合命中; benign 2/2 安全注入族全沉默=TN 护栏实证）→ 5 观察探针入 golden
+  （687→692, 全 en; adv-007 编码层锚 P021, 期望单元 384→385）, **P270/P271
+  T1 证据已齐（真实 TP 3≥2 / 真实 TN 2≥2）, 规则化=下一轮决策项**（T6 守
+  发布窗口, 不开新目标类型）; 取证文档 `docs/planning/R321_指令文件IPI取证.md`
+- **MCP 面提一等入口**（0 产品代码改动）: README AI 时代攻击面段（mcp-lint+
+  指令文件 IPI 双门禁）+ ci-integration.md MCP 配置门禁节（GitLab 片段+rug
+  pull 基线纪律; 命令实跑验证: 目录面 17 文件 21 findings rc=2, TN-subtle 命中
+  =P143/P162/P191 声明面, MCP-111/112 沉默保持）
+
+### Fixed（R321 文档假声明修复 + 数字面同步）
+
+- **mcp-setup.md 假声明修复**: 旧述"73 个 tool 全是确定性内核包装（无 LLM
+  调用）"为假——prompt_judge/gepa/auto_optimize 是评估/优化面工具, 配置
+  provider key 后才发起真实外部模型调用（无 key/SIMULATED_MODE=确定性模拟）。
+  改两面分述+"零 key 零网络"适用面修正+规则数 268→269+prompt_judge 分组勘误
+- 数字面同步: golden 687→692（en 116→121）/ 期望命中单元 384→385（en
+  54→55）——README 5 处+漏检基线文档 3 处+test_r214 钉; 文档族（rules.md+
+  269 每规则页+operating_curve v67.34.107）重生成
+
+- 版本 67.34.106→67.34.107
+
 ## [v67.34.106] - 2026-10-17
 
 ### Fixed（R320 P2-26 注册缺口关闭 — P239 超时抑制面中文对称）
