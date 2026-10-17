@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.103-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.104-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6758%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40684probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -39,7 +39,8 @@ prompt-cli baseline
 逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
 这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
-曲线只收紧不放松。
+曲线只收紧不放松（R318 裁定：程序转入证据累积监控制 — 复活触发器 =
+任一规则累积 ≥2 独立真实 FP 命中，机器可查）。
 
 **为什么不会静默腐化（anti-rot）**——行业最大失败模式不是"一开始就不灵"，而是
 "悄悄失灵"：2026-07 Protect AI 归档 LLM Guard（月下载 10 万的检测库），其检测模型
