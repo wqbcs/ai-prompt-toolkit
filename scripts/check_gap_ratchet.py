@@ -44,8 +44,8 @@ def main() -> int:
     from ai_prompt_toolkit.gap_report import aggregate
 
     report = aggregate(_load_files())
-    current_rate = report["summary"]["avg_gap_rate"]      # 存在性: 不得上升
-    current_quality = report["summary"]["avg_quality"]    # 质量: 不得下降
+    current_rate = report["summary"]["avg_gap_rate"]  # 存在性: 不得上升
+    current_quality = report["summary"]["avg_quality"]  # 质量: 不得下降
 
     if args.update:
         BASELINE.write_text(

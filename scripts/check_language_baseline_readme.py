@@ -41,12 +41,8 @@ SECTION_HEADER = "### 分语言检测基线"
 MISS_BADGE_RE = re.compile(r"Miss--Rate-([\d.]+)%25%40(\d+)probes")
 FP_BADGE_RE = re.compile(r"False--Positive-([\d.]+)%25%40(\d+)clean")
 SAMPLES_PROSE_RE = re.compile(r"样本\((\d+) 条 golden")
-MISS_PROSE_RE = re.compile(
-    r"# 漏检面\s+([\d.]+)%\s+\|\s+探针\s+(\d+)\s+条 · 期望命中单元\s+(\d+)"
-)
-FP_PROSE_RE = re.compile(
-    r"# 误报面\s+([\d.]+)%\s+\|\s+干净样本\s+(\d+)\s+个 · checker\s+(\d+)"
-)
+MISS_PROSE_RE = re.compile(r"# 漏检面\s+([\d.]+)%\s+\|\s+探针\s+(\d+)\s+条 · 期望命中单元\s+(\d+)")
+FP_PROSE_RE = re.compile(r"# 误报面\s+([\d.]+)%\s+\|\s+干净样本\s+(\d+)\s+个 · checker\s+(\d+)")
 HONEST_MISS_RE = re.compile(r"漏检 ([\d.]+)%[:：](\d+)条golden探针/(\d+)期望命中单元")
 HONEST_FP_RE = re.compile(r"误报 ([\d.]+)%[:：](\d+)条干净样本")
 

@@ -58,11 +58,8 @@ def check(points: list[dict]) -> dict:
     hints: list[str] = []
 
     if len(real) < 2:
-        issues.append(
-            f"ODT-2 最小样本: 非 backfill 条目 {len(real)}(<2), 时间序列不足以断言"
-        )
-        return {"real_points": real, "issues": issues, "hints": hints,
-                "status": "insufficient", "ok": False}
+        issues.append(f"ODT-2 最小样本: 非 backfill 条目 {len(real)}(<2), 时间序列不足以断言")
+        return {"real_points": real, "issues": issues, "hints": hints, "status": "insufficient", "ok": False}
 
     latest = rates[-1]
     # ODT-1 棘轮单调: 历史存在低于末点的条目 = 其后发生过回升(回退=红)。
@@ -81,17 +78,12 @@ def check(points: list[dict]) -> dict:
             f"(R253 定性, 有 TP 支撑); 继续下调需 T6 越狱调优独立轮(探针扩充+OOD 背书)"
         )
     elif len(rates) >= 3 and rates[-1] == rates[-2]:
-        hints.append(
-            f"ODT-3 减速: 最近 2 点持平 {latest:.4f}——观察面, 若下轮再持平=触底提示"
-        )
+        hints.append(f"ODT-3 减速: 最近 2 点持平 {latest:.4f}——观察面, 若下轮再持平=触底提示")
     elif len(rates) >= 3:
         last_delta = rates[-1] - rates[-2]
         avg_delta = (rates[-1] - rates[0]) / (len(rates) - 1)
         if last_delta < avg_delta - 1e-9:
-            hints.append(
-                f"ODT-3 收敛加速: 最近步长 {last_delta:+.4f} 优于全序列均值 "
-                f"{avg_delta:+.4f}"
-            )
+            hints.append(f"ODT-3 收敛加速: 最近步长 {last_delta:+.4f} 优于全序列均值 {avg_delta:+.4f}")
 
     # ODT-4 目标达成(提示)
     if latest <= TARGET_RATE:
@@ -100,10 +92,8 @@ def check(points: list[dict]) -> dict:
             f"(P2-26 二阶信号设计轮入口已开, 02 板注记待排项可启动)"
         )
 
-    status = "red" if issues else ("bottomed" if len(rates) >= 3 and rates[-1] == rates[-2]
-                                   else "converging")
-    return {"real_points": real, "issues": issues, "hints": hints,
-            "status": status, "ok": not issues}
+    status = "red" if issues else ("bottomed" if len(rates) >= 3 and rates[-1] == rates[-2] else "converging")
+    return {"real_points": real, "issues": issues, "hints": hints, "status": status, "ok": not issues}
 
 
 def _display(path: Path) -> str:
@@ -116,8 +106,7 @@ def _display(path: Path) -> str:
 
 def main() -> int:
     if not HISTORY.exists():
-        print(f"✗ 过防御历史文件缺失: {_display(HISTORY)}"
-              f"(先跑 check_overdefense.py 追加基线)")
+        print(f"✗ 过防御历史文件缺失: {_display(HISTORY)}(先跑 check_overdefense.py 追加基线)")
         return 1
     try:
         points = load_points(HISTORY)

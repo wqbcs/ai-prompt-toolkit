@@ -2,6 +2,34 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.100] - 2026-10-16
+
+### Added（R314: agentic 面扫描设计文档, 0 代码）
+
+- docs/planning/18_agentic面扫描_P4-11.md（板 P4-11 设计先行就位）: 3 目标类型
+  （MCP manifest JSON/SKILL.md/指令文件）× 3 探测轴（字节轴 P260-P269 复用 /
+  regex 轴注入族+P178 逃生舱复用 / 语义轴不预设）× 3 分期（Phase 1=纯目标扩展
+  0 新规则, DoD=真实 MCP 配置实跑+双基线零回归+确定性双跑）; 候选规则
+  P270（技能文件 shell 指令嵌入）/P271（MCP 描述指令覆盖）登记不预支
+  （各带 T1 证据门槛: ≥2 独立真实 TP + 良性 TN 取证 + 60 干净集零新增 FP）;
+  方法论: Whitney fixture+溯源（golden note 字段等价先例）/ ipi-check 三轴参照
+  （编号体系不双轨）/ A3 外部语料为探针来源
+
+### Changed（R314: C1 全仓 format 漂移面处置）
+
+- 全仓 `ruff format .` 红面 52 文件处置: 44 md + 2 py = R10 时代遗留参考/归档
+  内容（7 个顶层下划线目录 _compiler/_ab_tests/_evaluations_v5/_evaluations_v7/
+  _iterations/_knowledge_graph/_security + docs/archive, src 零引用 2026-10-16
+  实测核实）→ ruff extend-exclude（pyproject 留痕: 若遗留内容复活为活面须同
+  commit 移除对应排除）; 5 个活 scripts/*.py（check_gap_ratchet/
+  check_language_baseline_readme/check_layering/check_overdefense_trend/
+  gen_baseline_sparkline）format 修正
+- 全仓 format 陷阱解除: `ruff format --check .` 1179 文件全绿; 门禁口径
+  （src/ tests/ scripts/playground.py）633 绿不变
+- 留痕: 5 脚本面有 2 个存量 unsafe-fixes lint 提示（门禁 check 范围外, 存量非
+  本轮引入, 不动）
+- 版本 67.34.99→67.34.100
+
 ## [v67.34.99] - 2026-10-16
 
 ### Added（R313 顶配改进方案清单轮）

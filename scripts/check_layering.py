@@ -116,9 +116,7 @@ def first_party_import_targets(path: Path, src: Path) -> set[str]:
                     out.add(a.name)
         elif isinstance(node, ast.ImportFrom):
             if node.level == 0:
-                if node.module == "ai_prompt_toolkit" or (
-                    node.module and node.module.startswith("ai_prompt_toolkit.")
-                ):
+                if node.module == "ai_prompt_toolkit" or (node.module and node.module.startswith("ai_prompt_toolkit.")):
                     out.add(node.module)
                     # from ai_prompt_toolkit import name: name 可能是子模块
                     # (存在性过滤: __version__ 等符号名跳过)
@@ -243,10 +241,7 @@ def main() -> int:
             print(f"  ✗ {m}")
         return 1
 
-    print(
-        f"分层方向验证: L1 rules→io/adapters / L2 kernel 第一方纯度"
-        f"(留痕豁免 {len(result['exemptions_hit'])} 条命中)"
-    )
+    print(f"分层方向验证: L1 rules→io/adapters / L2 kernel 第一方纯度(留痕豁免 {len(result['exemptions_hit'])} 条命中)")
     for u in result["unused_exemptions"]:
         print(f"  (提示) 豁免未命中={u} — 对应边已消失, 同 commit 删豁免行(防永久豁免)")
     if result["violations"]:

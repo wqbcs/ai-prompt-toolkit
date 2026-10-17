@@ -100,7 +100,7 @@ def render_nav() -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" role="img" '
         f'aria-label="baseline trend: n/a">\n'
         f"<!-- source: docs/baseline_history.jsonl | points: 0 (n/a: need >= {MIN_POINTS}) -->\n"
-        f'<title>baseline trend: n/a</title>\n'
+        f"<title>baseline trend: n/a</title>\n"
         f'<rect width="100%" height="{H}" fill="#555"/>\n'
         f'<text x="{W / 2:.2f}" y="{H / 2 + 4:.2f}" font-family="{FONT}" font-size="14" '
         f'fill="#fff" text-anchor="middle">baseline trend: n/a (insufficient history)</text>\n'
@@ -126,7 +126,7 @@ def render(fp: list[float], miss: list[float], n_records: int) -> str:
         f"fp_points: {len(fp)} | miss_points: {len(miss)} -->"
     )
     lines.append(
-        f'<title>FP rate: {_pct_label(fp[0])} → {_pct_label(fp[-1])} '
+        f"<title>FP rate: {_pct_label(fp[0])} → {_pct_label(fp[-1])} "
         f"({len(fp)} rounds); miss rate: {_pct_label(miss[-1])}</title>"
     )
     lines.append(f'<rect width="100%" height="{H}" fill="#0d1117"/>')
@@ -134,10 +134,7 @@ def render(fp: list[float], miss: list[float], n_records: int) -> str:
     # 网格线: 0% / 5% / 10%（固定刻度, 不随数据缩放）
     for grid_pct in (0.10, 0.05, 0.0):
         gy = _y(grid_pct)
-        lines.append(
-            f'<line x1="{PAD_L}" y1="{gy}" x2="{W - PAD_R}" y2="{gy}" '
-            f'stroke="#30363d" stroke-width="1"/>'
-        )
+        lines.append(f'<line x1="{PAD_L}" y1="{gy}" x2="{W - PAD_R}" y2="{gy}" stroke="#30363d" stroke-width="1"/>')
         lines.append(
             f'<text x="{PAD_L - 6}" y="{gy}" font-family="{FONT}" font-size="10" '
             f'fill="#8b949e" text-anchor="end" dominant-baseline="middle">{grid_pct * 100:.0f}%</text>'
@@ -157,12 +154,8 @@ def render(fp: list[float], miss: list[float], n_records: int) -> str:
     # 端点标注: 起点/终点（数值标签=确定性格式）
     first_x, first_y = fp_pts[0]
     last_x, last_y = fp_pts[-1]
-    lines.append(
-        f'<circle cx="{first_x}" cy="{first_y}" r="3" fill="#22c55e"/>'
-    )
-    lines.append(
-        f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="#22c55e"/>'
-    )
+    lines.append(f'<circle cx="{first_x}" cy="{first_y}" r="3" fill="#22c55e"/>')
+    lines.append(f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="#22c55e"/>')
     lines.append(
         f'<text x="{first_x}" y="{PAD_T - 6}" font-family="{FONT}" font-size="11" '
         f'fill="#22c55e" text-anchor="start">{_pct_label(fp[0])}</text>'
@@ -175,8 +168,7 @@ def render(fp: list[float], miss: list[float], n_records: int) -> str:
     # 图例
     legend_y = H - 12
     lines.append(
-        f'<line x1="{PAD_L}" y1="{legend_y}" x2="{PAD_L + 24}" y2="{legend_y}" '
-        f'stroke="#22c55e" stroke-width="2.5"/>'
+        f'<line x1="{PAD_L}" y1="{legend_y}" x2="{PAD_L + 24}" y2="{legend_y}" stroke="#22c55e" stroke-width="2.5"/>'
     )
     lines.append(
         f'<text x="{PAD_L + 30}" y="{legend_y}" font-family="{FONT}" font-size="10" '

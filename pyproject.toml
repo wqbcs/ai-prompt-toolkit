@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.99"
+version = "67.34.100"
 description = "AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -142,6 +142,15 @@ exclude_lines = [
 target-version = "py310"
 line-length = 120
 src = ["src", "tests"]
+# R314-C1 留痕 (2026-10-16): 全仓 format 漂移面 52 文件中, 44 md + 2 py 位于
+# R10 时代遗留参考/归档内容 (7 个顶层下划线目录 + docs/archive), 非活代码
+# (src 零引用 2026-10-16 实测)。排除出 ruff 全仓面以解除"全仓命令红"陷阱;
+# 若遗留内容未来复活为活面, 须同 commit 移除对应排除。其余 24 个 R10 下划线
+# 目录同类, 漂移出现时同法处置。
+extend-exclude = [
+    "_compiler/", "_ab_tests/", "_evaluations_v5/", "_evaluations_v7/",
+    "_iterations/", "_knowledge_graph/", "_security/", "docs/archive/",
+]
 
 [tool.ruff.lint]
 select = [
