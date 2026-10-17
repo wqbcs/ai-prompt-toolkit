@@ -21,7 +21,8 @@ def test_lint_color_theme_option():
             os.chdir(tmpdir)
             result = runner.invoke(main, ["lint", "-t", str(test_file), "--color-theme", "monokai"])
             assert result.exit_code in (0, 1, 2)
-            assert os.environ.get("PROMPT_TOOLKIT_THEME") == "monokai" or True
+            # R319: 移除 `or True` 重言面 — 真实断言生效
+            assert os.environ.get("PROMPT_TOOLKIT_THEME") == "monokai"
         finally:
             os.chdir(original_cwd)
             os.environ.pop("PROMPT_TOOLKIT_THEME", None)

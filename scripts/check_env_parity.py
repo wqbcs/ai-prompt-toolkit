@@ -36,7 +36,9 @@ PYPROJECT = ROOT / "pyproject.toml"
 SNAPSHOT = ROOT / "ci" / "dep_snapshot.json"
 
 # dev 工具链钉死(与 pyproject [dev] 的 == 钉版同源) — 这些是门禁行为直接载体
-DEV_PINNED = ["ruff", "mypy"]
+# R319 深审: 补 redoctor — 门禁链第 19 步(ReDoS 审计)的行为载体, 原漏登记致
+# 其钉版漂移不被本门禁追踪
+DEV_PINNED = ["ruff", "mypy", "redoctor"]
 
 
 def declared_packages() -> list[tuple[str, str]]:

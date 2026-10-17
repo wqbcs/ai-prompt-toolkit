@@ -10,10 +10,6 @@ inputs:
     description: "拦截级别: 该级别及以上 findings 使 job 红 (critical/high/medium)"
     required: false
     default: "critical"
-  security-threshold:
-    description: "Minimum security score to pass (0-100)"
-    required: false
-    default: "80"
   run-security:
     description: "Whether to run security scan"
     required: false

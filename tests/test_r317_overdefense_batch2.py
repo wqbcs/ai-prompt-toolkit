@@ -41,7 +41,8 @@ class TestR317Anchor:
 
 
 def _fires(text: str, rule_id: str) -> bool:
-    return rule_id in {f.rule_id for f in PromptLinter().lint("t", text).findings}
+    # R319: apply_waivers=False 显式 — 与 run_overdefense() 漏检基线同口径（同 test_r315）
+    return rule_id in {f.rule_id for f in PromptLinter().lint("t", text, apply_waivers=False).findings}
 
 
 class TestP169CommunityNarrowing:

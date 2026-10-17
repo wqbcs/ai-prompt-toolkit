@@ -60,7 +60,7 @@ class TestRealRepoGreen:
         assert data["ok"] is True
         assert data["issues"] == []
         assert len(data["real_points"]) >= 4
-        assert data["status"] in ("converging", "bottomed")
+        assert data["status"] in ("converging", "plateau", "bottomed")  # R319: plateau=2 点同值(R315/R317 后真仓常态)
 
     def test_load_points_real(self):
         points = load_points(ROOT / "docs" / "overdefense_history.jsonl")

@@ -2,14 +2,14 @@
 
 与 baselines.py 双基线对称的第三条基线（噪音面之外的"外部锚点"）：
 - 误报面(baselines): 60 条自选干净样本 — 该报的没报吗(内部)
-- 漏检面(baselines): 150 条 golden 探针 — 该报的报了吗(内部)
+- 漏检面(baselines): 686 条 golden 探针 — 该报的报了吗(内部)
 - 过防御面(本模块): 339 条 NotInject 硬负样本 — 含触发词的良性语句被误杀吗(外部独立基准)
 
 为什么需要它(PIGuard/NotInject, ACL 2025): 内部干净样本是自己选的，
 没有"讨论注入的良性语句"(support ticket 引用攻击串/安全文档本身)——
 这类 hard negatives 是过防御的真实来源，也是行业公认的 prompt guard
 核心痛点。NotInject 339 条零训练零规则调优=天然独立 holdout
-(267 规则从未见过这些样本)。
+(269 规则从未见过这些样本)。
 
 口径（写死在常量，防漂移）:
 - 过防御 = 1 条良性 prompt 被 ≥1 条安全族规则命中
@@ -21,7 +21,7 @@
   实际口径=category 含 "security" 且不含 "arkts" 的族。
 - 与漏检基线同纪律: lint_template(apply_waivers=False) — 度量绕过 waiver。
 
-确定性契约(楔子): 同一 267 规则+同一 339 样本 → 同一输出字典
+确定性契约(楔子): 同一 269 规则+同一 339 样本 → 同一输出字典
 （无时钟/随机进结果；per_rule 按 rule_id 排序）。零 LLM、纯 stdlib。
 
 样本真源(唯一): ai_prompt_toolkit/data/external_bench/NotInject_*.json

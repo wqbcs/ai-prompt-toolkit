@@ -9,12 +9,38 @@ on:
       - 'v*'
 
 jobs:
+  # R319 深审 BLOCK-1: 发布链原零 pytest — release-gate 跑 --skip 1,2(第 1 步
+  # =pytest 全量+coverage 被跳过), tag 推送不触发 prompt-ci 的 test 作业 →
+  # PyPI 发布(不可逆)前的最后一道闸缺核心正确性门禁。独立 test 作业与 CI
+  # prompt-ci.yml test 作业 3.12 lane 逐字同命令(pytest 全量+覆盖率棘轮),
+  # release-gate needs: release-test — 恢复"测试绿→门禁"链(同 CI needs:test 形态)。
+  release-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install with dev deps
+        run: pip install -e ".[dev]"
+
+      # 与 CI prompt-ci.yml test 作业 3.12 lane 逐字对齐(命令单源, 两处同改)
+      - name: Run tests
+        run: pytest tests/ -x -q --tb=short -k "not slow" --cov=ai_prompt_toolkit --cov-report=xml
+
+      # 与 CI 覆盖率棘轮步同命令(数据=上一步 coverage.xml)
+      - name: "Linter coverage ratchet (≥90%)"
+        run: python scripts/check_linter_coverage.py
+
   # R306 深审 BLOCK-1: 发布管道原零质量门禁+无 tag↔pyproject 版本断言——
   # PyPI 版本来自 pyproject.toml, ghcr tag 来自 GITHUB_REF, 两独立真源无断言
   # 相等, 首次发布不可逆(PyPI 版本无法静默撤回)。门禁形态与 CI
   # prompt-quality-gate 同(--skip 1,2), 版本断言与 check_version_consistency
   # 同纪律(单源)。
   release-gate:
+    needs: release-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +61,11 @@ jobs:
             exit 1
           fi
           echo "version assertion passed: $TAG"
+
+      # R319 深审 MINOR: release_gate 第 10 步是"重生成"(恒绿), tag 推送不触发
+      # prompt-ci 的 --check 校验作业 → 发布路径 docs 漂移无门禁, 此处补校验态
+      - name: Docs drift check (rules doc sync with registry)
+        run: python scripts/gen_rules_doc.py --check
 
       - name: Release gate (同 CI 形态: --skip 1,2)
         run: python scripts/release_gate.py --skip 1,2
@@ -117,6 +148,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          # R319 深审 MAJOR: 不指定 target 默认取末阶段 playground(Web UI,
+          # ENTRYPOINT []) — 06 §4 验收 `docker run … baseline` 会执行不存在的
+          # baseline 二进制, 首发 smoke 必红(而 R306 prompt-cli --help smoke
+          # 显式传参恰好绕开=假信心)。产品形态=CLI(PyPI 包即 CLI), 发布 base
+          # 阶段; playground 阶段保留供本地开发(scripts/playground.py)。
+          target: base
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/ai-prompt-toolkit:latest
@@ -125,11 +162,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # 06 §4 验收: base 阶段 ENTRYPOINT ["prompt-cli"] → 实际执行
+      # `prompt-cli baseline`(真实子命令, 双基线自证)
       - name: "Smoke — 验收（06 §4: docker run baseline）"
         run: docker run --rm ghcr.io/${{ github.repository_owner }}/ai-prompt-toolkit:${{ steps.version.outputs.version }} baseline
 
-      # R306 深审 M-1 回归护栏: 裸 docker run 的 ENTRYPOINT/CMD 组合面
-      # (playground 阶段曾继承 prompt-cli ENTRYPOINT 致裸跑必坏, CI smoke
-      # 显式传参恰好绕开) — --help 验证 prompt-cli 入口在最终镜像可用
+      # R306 深审 M-1 回归护栏 + R319: base 阶段 ENTRYPOINT ["prompt-cli"],
+      # 裸 `docker run … --help` 实际执行 `prompt-cli --help` — 验证入口在
+      # 最终镜像可用(原显式传 prompt-cli 在 base 阶段下会变
+      # `prompt-cli prompt-cli --help` 必败, 随 target 切换修正)
       - name: "Smoke — prompt-cli 入口可用"
-        run: docker run --rm ghcr.io/${{ github.repository_owner }}/ai-prompt-toolkit:${{ steps.version.outputs.version }} prompt-cli --help
+        run: docker run --rm ghcr.io/${{ github.repository_owner }}/ai-prompt-toolkit:${{ steps.version.outputs.version }} --help

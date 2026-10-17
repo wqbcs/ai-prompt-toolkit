@@ -121,8 +121,9 @@ class TestR253Anchor:
     def test_anchor_39(self):
         # R315-P2-26: R253 锚点(39/339=11.50%) 是轮次快照 — R315 过防御批 4 规则
         # (P009/P164/P170/P008) 进一步收紧至 7.67%(26/339) 后此精确值不再成立。
-        # 转为棘轮断言: 不得回到 R253 点(39)之上, 防 pattern 回退。绝对锚点由
-        # R315 测试文件(test_r315_overdefense_batch)的 7.67% 接管。
+        # 转为棘轮断言: 不得回到 R253 点(39)之上, 防 pattern 回退。
+        # R317: 绝对锚点现由 test_r317_overdefense_batch2 持有(23/339=6.78%;
+        # R315 文件 7.67% 已转棘轮 ≤26, R315→R317 移交)。
         r = overdefense.run_overdefense()
         assert r["prompt_count"] == 339
         assert r["flagged_count"] <= 39

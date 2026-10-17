@@ -15,11 +15,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from ai_prompt_toolkit.linter.rules_p269 import (  # noqa: E402
-    _TAG_ESCAPED_MIN,
-    _TAG_MIN_COUNT,
-    check_p269,
-)
+from ai_prompt_toolkit.linter.rules_p269 import check_p269  # noqa: E402
 
 
 def tag(t: str) -> str:
@@ -38,7 +34,8 @@ class TestTagBlockCount:
         assert f.rule_id == "P269"
         assert f.severity.name == "HIGH"
         assert f.details["sub_pattern"] == "tag_block_count"
-        assert f.details["count"] >= _TAG_MIN_COUNT
+        # R319: 精确计数锁定（原 >= 阈值为重言断言 — 子1 触发条件本身即 >=8）
+        assert f.details["count"] == 65  # " Oh, sorry, ... I am so dumb" 逐字符
         assert "sorry" in f.details["decoded_preview"]
 
     def test_tp3_mcp_tool_conceal(self) -> None:
@@ -82,7 +79,8 @@ class TestTagBlockEscaped:
         f = check_p269(text)
         assert f is not None
         assert f.details["sub_pattern"] == "tag_block_escaped"
-        assert f.details["count"] >= _TAG_ESCAPED_MIN
+        # R319: 精确计数锁定（原 >= 阈值为重言断言 — 子2 触发条件本身即 >=2）
+        assert f.details["count"] == 5  # 5 对 \uDB40\uDCxx 代理对
 
     def test_tp4b_escaped_python_form(self) -> None:
         # \\U000E00xx 8 位 Python 形态

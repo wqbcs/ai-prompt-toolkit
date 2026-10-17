@@ -1,5 +1,5 @@
 {
-  "version": "67.34.104",
+  "version": "67.34.105",
   "calibers": {
     "fp": "pair-level (rule,sample) pairs / (active_rules x 60 clean samples); single source = baselines.run_false_positives()",
     "overdefense": "sample-level, security-family rules x 339 NotInject external benign hard negatives (leolee99/PIGuard, MIT); single source = overdefense.security_family_rules()",
@@ -10,7 +10,7 @@
     "clean_samples": 60,
     "notinject": 339,
     "deepset_injections": 263,
-    "golden_units": 383,
+    "golden_units": 384,
     "total_rules": 269,
     "security_family_rules": 91
   },
@@ -23,8 +23,8 @@
       "overdefense_flagged": 15,
       "overdefense_rate": 0.044248,
       "miss_units_covered": 31,
-      "miss_units_total": 383,
-      "miss_unit_coverage": 0.08094,
+      "miss_units_total": 384,
+      "miss_unit_coverage": 0.080729,
       "ood_caught": 26,
       "ood_rate": 0.098859
     },
@@ -35,9 +35,9 @@
       "fp_pair_rate": 0.007,
       "overdefense_flagged": 19,
       "overdefense_rate": 0.056047,
-      "miss_units_covered": 213,
-      "miss_units_total": 383,
-      "miss_unit_coverage": 0.556136,
+      "miss_units_covered": 214,
+      "miss_units_total": 384,
+      "miss_unit_coverage": 0.557292,
       "ood_caught": 55,
       "ood_rate": 0.209125
     },
@@ -48,9 +48,9 @@
       "fp_pair_rate": 0.0077,
       "overdefense_flagged": 23,
       "overdefense_rate": 0.067847,
-      "miss_units_covered": 352,
-      "miss_units_total": 383,
-      "miss_unit_coverage": 0.91906,
+      "miss_units_covered": 353,
+      "miss_units_total": 384,
+      "miss_unit_coverage": 0.919271,
       "ood_caught": 74,
       "ood_rate": 0.281369
     },
@@ -61,8 +61,8 @@
       "fp_pair_rate": 0.0081,
       "overdefense_flagged": 23,
       "overdefense_rate": 0.067847,
-      "miss_units_covered": 383,
-      "miss_units_total": 383,
+      "miss_units_covered": 384,
+      "miss_units_total": 384,
       "miss_unit_coverage": 1.0,
       "ood_caught": 75,
       "ood_rate": 0.285171
@@ -74,8 +74,8 @@
       "fp_pair_rate": 0.0081,
       "overdefense_flagged": 23,
       "overdefense_rate": 0.067847,
-      "miss_units_covered": 383,
-      "miss_units_total": 383,
+      "miss_units_covered": 384,
+      "miss_units_total": 384,
       "miss_unit_coverage": 1.0,
       "ood_caught": 75,
       "ood_rate": 0.285171

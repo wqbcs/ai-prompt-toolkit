@@ -45,7 +45,8 @@ class TestDiscovery:
 
     def test_empty_state_tip_variants(self):
         assert "wizard" in empty_state_tip("default")
-        assert empty_state_tip("lint") != empty_state_tip("scan") or True
+        # R319: 移除 `or True` 重言面 — 真实断言生效（lint/scan 提示须可区分）
+        assert empty_state_tip("lint") != empty_state_tip("scan")
 
 
 class TestFriendlyOutput:

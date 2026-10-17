@@ -2,6 +2,73 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.105] - 2026-10-17
+
+### Added（R319 上线前全方位深审 — 检测面, 五层并行审查）
+
+- **P269 子3 真字符+转义混排联合阈值**（7 真+1 转义=总量 8 攻击签名 —
+  子1/子2 独立阈值各差 1 联合盲区; 混排=单遍清洗规避的自然伪装面,
+  AWS 孤儿代理重组实证）+ 描述/文档同步
+- **golden 探针 684→686**: r319_p269_tp_mixed_7real_1escaped（TP）+
+  r319_p008_tn_zhineng_guard（TN, 能字护栏 智 成员锁定）; 期望命中
+  单元 383→384
+- **调度异常隔离**: run_all_checks/run_all_checks_profiled per-checker
+  物化 CRITICAL 内部 finding（fail-closed + CRITICAL 一票否决保持,
+  "哪条规则崩了"可定位; 原形态=单规则异常杀整批+退出码 1 撞 WARN 语义,
+  quality_gate.py:22 预留的 3=执行层异常槽首次获得真实来源）
+- test_r319_dispatch_isolation.py（4 测试: 隔离/profiled/gate FAIL 裁决/
+  规则 ID 推导）
+
+### Fixed（R319 深审 — 发布链/门禁基建/文档/测试卫生）
+
+**发布链（BLOCK, 首次发布前置）**:
+- release.yml 新增 release-test 作业（pytest 全量+覆盖率棘轮, 与 CI
+  prompt-ci test 作业 3.12 lane 逐字同命令）, release-gate
+  needs: release-test — 原发布链 --skip 1,2=零 pytest, tag 推送不触发
+  prompt-ci test 作业, PyPI 不可逆发布前最后一道闸缺核心正确性门禁
+- release.yml docker-publish target: base — 原取末阶段 playground
+  （ENTRYPOINT []）, 06 §4 验收 `docker run … baseline` 会执行不存在的
+  二进制, 首发 smoke 必红; 入口 smoke 同步修正
+- release.yml 新增 `gen_rules_doc.py --check` — 原发布路径 docs 漂移无门禁
+  （gate 第 10 步为重生成恒绿形态）
+
+**规则面**: P009 _DELETE_DATA_TARGET 移除 记录|日志 死分支（恒被审计
+关键词豁免正则自豁免, 可证零行为差异, golden TP 仍 fire + R315 全 TN
+沉默验证）; OWASP 2026 中央映射表补缺 26 条（P183/P185/P201/P202/P205/
+P206/P209/P210/P211-P217/P219/P229 + P257-P261/P266-P269 代际, 机器核对
+缺口集 — P269 等不再被覆盖率报告计为"未映射"）
+
+**门禁基建**: SARIF 步宽恕面收窄至裁决码（rc=3 执行错误+陈旧 sarif 残留
+的假绿窗口关闭）; check_env_parity DEV_PINNED 补 redoctor+快照刷新
+（9 包）; check_dep_manifest 豁免面文件级→(文件,模块) 粒度+3 条陈旧
+登记移除（R223 再入口关闭）; action.yml 死 input security-threshold
+移除; ODT-3 status 判据与提示面统一（3 点=bottomed/2 点=plateau）
+
+**文档/数字面**: README:59 误报 0.82%→0.81%（R317 同步漏面）;
+overdefense_history.jsonl R250 20.94%（71/339）点 backfill（原 67.34.43
+行被 R251 同版本幂等覆盖丢失, README 6 点序列引用与真源不符）;
+README"发布后（P0-04）"限定×2（PyPI 未发布, 命令不可复制粘贴, 采纳面
+假承诺关闭）; 两基线文档现行值注记; overdefense.py docstring 陈旧数字;
+wiki L0 R319 delta 注记+棘轮现行值; 板 4 行（P1-05 ⬜→🟡 盘上盘点
+v0.6.0/P3-04 ⬜→🟡 R304 回写/P5-12 261→269×2/P6-02 16→104）;
+ci-integration 镜像名 prompt-lint→ai-prompt-toolkit
+
+**测试卫生**: `or True` 重言移除×3 — test_r182 暴露真实契约漂移: init
+现行落盘 `.prompt-cli.toml`（yml→toml 命名演进）, 旧断言被重言掩盖,
+已按现行契约修复; test_r312 重言断言×2→精确计数（65/5）;
+test_r315/r317 _fires apply_waivers=False 显式（与过防御基线同口径）;
+conftest 死 fixture/常量×6 移除; test_r304 684 硬编码→动态派生
+（单维护纪律）; test_r251/r253 锚点移交注释链→R317; test_r255 status
+值域 +plateau
+
+**已知缺口（登记不修, T1 纪律: 无探针不改规则）**: P239 抑制面缺中文
+"超时"（对称 FP 面, 朴素修复会撞 atk37 否定形态, 需正向语境 pattern+
+新探针）; P138/P139/P140 video-game 根因待取证（1/2, R318 续）;
+ReDoS _TOXICITY_CTX O(n^4) 评级偏保守（实际近 O(n²), 方向安全, 留痕）;
+P1-05 VS Code 扩展=已实现待功能验收
+
+- 版本 67.34.104→67.34.105
+
 ## [v67.34.104] - 2026-10-16
 
 ### Changed（R318 P2-26 终止评估轮, 0 规则变更裁定轮）

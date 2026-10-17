@@ -16,9 +16,11 @@ docs/overdefense_history.jsonl 判断"是否还在降/是否触底"——人肉�
   注: 早期点**高于**末点是收敛的正常形态, 不是回退(初版实现方向写反已修)。
 - ODT-2 最小样本(红): 非 backfill 条目 ≥2; 1 点=序列不足无法断言(数据面
   损坏或新仓, 不放行)。
-- ODT-3 收敛面(提示不阻断): 最近 3 点斜率 vs 全序列平均斜率; 连续 2 点
-  同值=触底 → 提示"继续下调需 T6 越狱调优独立轮(I/J 簇 36 条=棘轮锁定区,
-  R253 定性)"。提示面价值=把"数字不再动了"从人脑判断变机器观察。
+- ODT-3 收敛面(提示不阻断): 最近 3 点斜率 vs 全序列平均斜率; 连续 3 点
+  同值=触底(bottomed), 连续 2 点同值=plateau(减速观察面) → 提示"继续下调
+  需 T6 越狱调优独立轮(P163 检测下限, R257 定性, R316 构成面登记)"。
+  R319: status 判据与提示面统一(原"2 点同值=触底"与提示面"减速"矛盾)。
+  提示面价值=把"数字不再动了"从人脑判断变机器观察。
 - ODT-4 目标达成(提示不阻断): 最近一条 ≤ 0.10 → 提示"<10% 目标达成"。
 - ODT-5 地板面(R317, R316 设计 §2.3; 提示不阻断): floor_ratio = P163 地板
   prompt 占比(=flagged 中 rules 恰为 {P163} 的 prompt 数 / flagged 总数)。
@@ -121,7 +123,18 @@ def check(points: list[dict], composition: dict | None = None) -> dict:
                     f"{ratio:.0%}, T1 阈值 80%; 批候选=规则命中数降序)"
                 )
 
-    status = "red" if issues else ("bottomed" if len(rates) >= 3 and rates[-1] == rates[-2] else "converging")
+    # R319 深审: status 判据与 ODT-3 提示面统一 — 连续 3 点同值=bottomed,
+    # 连续 2 点同值=plateau。原 status"2 点同值=bottomed"与提示面(2 点同值
+    # 打"减速")自相矛盾, 模块 docstring 同口径陈旧。
+    status = (
+        "red"
+        if issues
+        else "bottomed"
+        if len(rates) >= 3 and rates[-1] == rates[-2] == rates[-3]
+        else "plateau"
+        if len(rates) >= 3 and rates[-1] == rates[-2]
+        else "converging"
+    )
     return {"real_points": real, "issues": issues, "hints": hints, "status": status, "ok": not issues}
 
 

@@ -13880,21 +13880,9 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p269.py\u0000Prompt含8+ Unicode tag块字符(U+E0000–E007F)或2+ tag块转义形态(\\U000E00xx / \\uDB40\\uDCxx代理对) — tag块ASCII smuggling=不可见隐藏载荷(LLM分词器解码为明文); 合法旗帜emoji(≤6个tag字符)不报": {
-      "vulnerable": false,
-      "complexity": "unknown",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p269.py\u0000移除tag块字符及其转义形态(剥离U+E0000–E007F); 合法旗帜emoji(≤6个tag字符)不受影响": {
       "vulnerable": false,
       "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p269.py\u0000Prompt contains 8+ Unicode tag-block chars (U+E0000–E007F) or 2+ escaped tag-block forms (\\U000E00xx / \\uDB40\\uDCxx surrogate pairs) — tag-block ASCII smuggling: invisible payload decoded as plaintext by LLM tokenizers; legitimate flag emoji (≤6 tag chars) are not reported": {
-      "vulnerable": false,
-      "complexity": "unknown",
       "attack": null,
       "approved": false
     },
@@ -13934,12 +13922,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000(?:数据库|数据|data|记录|record|日志|table|备份|backup)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules.py\u0000(?:可以|(?<![才可未智本不])能(?![否性])|may|can|allowed)(?!\\s*(?:ignore|filter|block|skip|exclude|discard|reject)\\b)[^。！？\\n]{0,20}?(?:任何|任意|所有|\\banything\\b|\\beverything\\b|\\ball\\b|\\bany\\b)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -13969,11 +13951,30 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules.py\u0000(?:数据库|数据|data|record|table|备份|backup)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000check_p(\\d{3})$": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Prompt含8+ Unicode tag块字符(U+E0000–E007F)或2+ tag块转义形态(\\U000E00xx / \\uDB40\\uDCxx代理对)或真字符+转义形态合计8+ — tag块ASCII smuggling=不可见隐藏载荷(LLM分词器解码为明文); 合法旗帜emoji(≤6个tag字符)不报": {
+      "vulnerable": false,
+      "complexity": "unknown",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p269.py\u0000Prompt contains 8+ Unicode tag-block chars (U+E0000–E007F) or 2+ escaped tag-block forms (\\U000E00xx / \\uDB40\\uDCxx surrogate pairs), or a combined total of 8 real+escaped chars — tag-block ASCII smuggling: invisible payload decoded as plaintext by LLM tokenizers; legitimate flag emoji (≤6 tag chars) are not reported": {
+      "vulnerable": false,
+      "complexity": "unknown",
+      "attack": null,
+      "approved": false
     }
-  },
-  "metadata": {
-    "approved_at": "2026-10-03",
-    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
-    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

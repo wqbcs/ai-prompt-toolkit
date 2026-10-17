@@ -5,9 +5,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.104-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6758%20passed-brightgreen.svg)](tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40684probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![Version](https://img.shields.io/badge/Version-67.34.105-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6762%20passed-brightgreen.svg)](tests/)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40686probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-269-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -15,17 +15,18 @@
 [![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(684 条 golden
-攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install` 后一条命令自证：
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(686 条 golden
+攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`
+后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 684 条 · 期望命中单元 383
+# 漏检面  0.00%  |  探针 686 条 · 期望命中单元 384
 # 误报面  0.81%  |  干净样本 60 个 · checker 269 条
 ```
 
-> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
+> **Quick start (no install, post-release P0-04):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
 
 **误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
 固定刻度 0–10%，曲线不随数据缩放）：
@@ -56,7 +57,7 @@ Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方
 "其注入规则标记的 9 条良性 8 条是安全文档引用攻击短语"（规则通道
 匹配词汇而非意图）；Google Model Armor 日语实测（2026，zenn/Accenture）
 同型：良性文本逐字引用攻击短语 5 例中 1 例误判。golden 探针集按此
-边界构造（含埋入式引用形态 TN），误报面 0.82%（60 干净样本）是
+边界构造（含埋入式引用形态 TN），误报面 0.81%（60 干净样本）是
 `prompt-cli baseline` 一条命令在任何机器可复现的自证数字。
 
 **10 行接入 CI**（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
@@ -228,7 +229,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：684条golden探针/383期望命中单元；
+**机制上限**——本工具的双基线（漏检 0.00%：686条golden探针/384期望命中单元；
 误报 0.81%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
@@ -592,7 +593,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 
 | 语言 | 期望命中单元 | 漏检单元 | 漏检率 |
 |------|------|------|------|
-| zh-Hans | 312 | 0 | 0.00% |
+| zh-Hans | 313 | 0 | 0.00% |
 | en | 54 | 0 | 0.00% |
 | ja | 15 | 0 | 0.00% |
 | zh-Hant | 2 | 0 | 0.00% |
@@ -601,7 +602,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
 （R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
-（2026-10-16：总 684=zh-Hans 548/en 116/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN）。
+（2026-10-17：总 686=zh-Hans 550/en 116/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN，R319 +2 深审探针 P269 混排 TP + P008 智 TN）。
 
 ## VSCode插件
 

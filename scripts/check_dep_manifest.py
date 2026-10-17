@@ -36,25 +36,28 @@ PKG_IMPORT_MAP: dict[str, list[str]] = {
     "pyyaml": ["yaml"],
 }
 
-# 可选功能降级点: 这些文件里的 import 允许走 except ImportError 降级/惰性加载,
-# 未声明时不判违规。登记纪律: 每个文件必须写明降级行为, 且降级不得静默丢数据
-# (R223 jinja2 教训) — 新登记必须过 code review
-OPTIONAL_IMPORT_FILES = {
-    "linter/lsp_server.py",  # pygls/lsprotocol: [lsp] 可选组
-    "judge.py",  # scipy/numpy: [ab_test] 可选组
-    "statistics.py",  # scipy/numpy: [ab_test] 可选组
-    "market/api.py",  # fastapi: [full] 可选组
-    "huawei_cloud/iam.py",  # 华为云 SDK: 云端可选
-    # R225 初跑检出的 9 处, 逐一审定降级行为后登记:
-    "ab_test/provider.py",  # httpx: [ab_test] 组; 惰性import+缺依赖时抛ProviderError带pip提示
-    "ab_test/providers/ascend_npu.py",  # mindspore_lite: 昇腾设备专有SDK; 惰性+缺依赖时模拟推理fallback(显式标注)
-    "ab_test/providers/huawei_modelarts.py",  # httpx: [ab_test] 组; 惰性+ProviderError带pip提示
-    "cli/commands/template_commands.py",  # uvicorn: [full] 组(serve命令); 惰性+缺依赖时exit 2带pip提示
-    "dataset_api.py",  # fastapi: 仅被 playground/server 导入(即 serve 命令链路, [full] 组)
-    "playground/server.py",  # fastapi/starlette: [full] 组; serve 命令专用 Web 面
-    "linter/token_analyzer.py",  # tiktoken: 惰性+缺依赖时回退字符数估算(估算精度降, 不丢数据)
-    "multimodal_token_counter.py",  # tiktoken: 惰性+缺依赖时回退估算
-    "schema.py",  # pydantic: 模块级try, _HAS_PYDANTIC 标志+完整手写验证fallback
+# 可选功能降级点: (文件 → 允许未声明的模块集) 的 import 允许走
+# except ImportError 降级/惰性加载, 未声明时不判违规。
+# R319 深审: 文件级豁免 → (文件, 模块) 粒度 — 原文件级豁免意味着这些文件里
+# 任何新增未声明 import(即便无降级防护)都会漏过门禁, 恰是 R223"本地绿 CI 红"
+# 的再入口; 现在仅登记的模块豁免, 同文件新增其他未声明 import 照红, 强制重审。
+# 登记纪律: 每条必须写明降级行为, 且降级不得静默丢数据(R223 jinja2 教训) —
+# 新登记必须过 code review。
+# R319: judge.py/statistics.py(scipy/numpy) 与 huawei_cloud/iam.py(华为云 SDK)
+# 三行移除 — 盘上已无未声明第三方 import(scipy/numpy 导入 R306 已剔除, iam.py
+# 无 SDK import); 若未来重新引入, 须按 (文件, 模块) 粒度重新登记。
+OPTIONAL_IMPORT_FILES: dict[str, set[str]] = {
+    "linter/lsp_server.py": {"pygls", "lsprotocol"},  # [lsp] 可选组
+    "market/api.py": {"fastapi"},  # [full] 可选组
+    "ab_test/provider.py": {"httpx"},  # [ab_test] 组; 惰性import+缺依赖时抛ProviderError带pip提示
+    "ab_test/providers/ascend_npu.py": {"mindspore_lite"},  # 昇腾设备专有SDK; 惰性+缺依赖时模拟推理fallback(显式标注)
+    "ab_test/providers/huawei_modelarts.py": {"httpx"},  # [ab_test] 组; 惰性+ProviderError带pip提示
+    "cli/commands/template_commands.py": {"uvicorn"},  # [full] 组(serve命令); 惰性+缺依赖时exit 2带pip提示
+    "dataset_api.py": {"fastapi"},  # 仅被 playground/server 导入(即 serve 命令链路, [full] 组)
+    "playground/server.py": {"fastapi", "starlette"},  # [full] 组; serve 命令专用 Web 面
+    "linter/token_analyzer.py": {"tiktoken"},  # 惰性+缺依赖时回退字符数估算(估算精度降, 不丢数据)
+    "multimodal_token_counter.py": {"tiktoken"},  # 惰性+缺依赖时回退估算
+    "schema.py": {"pydantic"},  # 模块级try, _HAS_PYDANTIC 标志+完整手写验证fallback
 }
 
 # 已知合法的非 pyproject 包(系统级/构建期, 运行时不依赖)
@@ -114,9 +117,10 @@ def runtime_imports(path: Path) -> set[str]:
     return names
 
 
-def optional_file(path: Path) -> bool:
-    rel = path.relative_to(SRC).as_posix()
-    return rel in OPTIONAL_IMPORT_FILES
+def allowed_optional_import(rel: str, name: str) -> bool:
+    """(文件, 模块) 粒度豁免: 仅该文件登记的模块豁免(R319 深审)。"""
+    allowed = OPTIONAL_IMPORT_FILES.get(rel)
+    return allowed is not None and name in allowed
 
 
 def main() -> int:
@@ -132,7 +136,7 @@ def main() -> int:
         for name in runtime_imports(py):
             if name in stdlib or name in import_names or name in ALLOWED_UNDECLARED:
                 continue
-            if optional_file(py):
+            if allowed_optional_import(py.relative_to(SRC).as_posix(), name):
                 continue  # 可选功能降级点, 豁免(见 OPTIONAL_IMPORT_FILES 注释)
             violations.append(
                 {

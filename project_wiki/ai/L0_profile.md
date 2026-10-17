@@ -38,14 +38,19 @@
 | CI workflow | 11 | 7: prompt-ci / prompt-pr-gate / release (R306 +release-gate 作业) / owasp-llm-scan / codeql / daily-scorecard / ci-green-streak |
 | 版本 | v67.28.0 | v67.34.96 |
 
+> R319 delta (2026-10-17, R310 快照列不覆写): Lint 规则 268→269（P269 混排
+> 子模式）/ golden 探针 667→686（zh-Hans 550/en 116/ja 18/zh-Hant 2; 384 单元）/
+> 测试用例 6,689→6,762 / CI 7 作业（R319 新增 release-test: 发布链补 pytest）/
+> 误报实际 0.82%→0.81% / 版本 v67.34.96→v67.34.105。
+
 ## 质量门禁棘轮（只收紧不放松）
 
 | 棘轮 | 当前值 | 挂载 |
 |---|---|---|
 | mypy 基线 | 0 / 0 | release_gate + CI |
 | mypy strict 注册表 | 286/286 (100%, R300 收口) | check_mypy_ratchet S1-S4 + `--update-strict` 唯一变更路径 |
-| 误报率 | 阈值 0.01 (实际 0.82%, 60 样本) | check_false_positives --fail-above 0.01 |
-| 漏检率 | 阈值 0.05 (实际 0.00%, 379/379 单元) | check_miss_rate --fail-above 0.05 |
+| 误报率 | 阈值 0.01 (实际 0.81%, 60 样本) | check_false_positives --fail-above 0.01 |
+| 漏检率 | 阈值 0.05 (实际 0.00%, 384/384 单元) | check_miss_rate --fail-above 0.05 |
 | coverage | fail_under 75 (R216 实测 75.67% 锁定) | pyproject |
 | 版本一致性 | pyproject / __init__ / README 徽章 / CHANGELOG 最新条目 | check_version_consistency |
 | 环境一致性 | ruff 0.16.10 / mypy 2.1.0 / redoctor 0.1.5 钉版 | check_env_parity (漂移硬红) |

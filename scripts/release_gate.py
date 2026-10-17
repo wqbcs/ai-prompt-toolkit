@@ -208,8 +208,11 @@ def run_step(step: Step, index: int) -> StepResult:
     proc = subprocess.run(step.cmd, cwd=ROOT)  # 不捕获输出, 实时可见; 退出码即 proc.returncode(禁管道)
     duration = time.monotonic() - started
     rc = proc.returncode
-    if rc != 0 and step.verify == "sarif" and step.allow_lint_rc:
-        print(f"  (lint 退出码 {rc} = findings 判定, 非命令失败; 判绿标准=SARIF 合法性)")
+    # R319 深审: 宽恕面收窄至裁决码(1=WARN/2=FAIL, adoption.md 退出码契约) —
+    # 原"任意非零转绿"下 rc=3(执行错误)+上轮残留 sarif 文件 = verify 对陈旧
+    # 文件判绿的假绿窗口; 执行层错误必须保持红。
+    if rc in (1, 2) and step.verify == "sarif" and step.allow_lint_rc:
+        print(f"  (lint 退出码 {rc} = 裁决码(1=WARN/2=FAIL), 非命令失败; 判绿标准=SARIF 合法性)")
         rc = 0
     if rc == 0 and step.verify == "sarif":
         rc = verify_sarif(ROOT / "gate-sarif-check.sarif")

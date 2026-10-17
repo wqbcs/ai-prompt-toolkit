@@ -1,17 +1,17 @@
 # Operating Points — Severity-Cut Trade-off（公开数据页）
 
-> 版本 `67.34.104` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
+> 版本 `67.34.105` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
 > 每个数字都是一条可复现命令的输出 —— **measured, not vibes**。
 
 ## 数字
 
-| 运营点（severity 切面） | 活跃规则 | 误报 FP 对级率 | 过防御（外部良性 339） | 漏检单元覆盖（golden 383 单元） | OOD 召回（外部注入 263） |
+| 运营点（severity 切面） | 活跃规则 | 误报 FP 对级率 | 过防御（外部良性 339） | 漏检单元覆盖（golden 384 单元） | OOD 召回（外部注入 263） |
 |---|---|---|---|---|---|
-| >= CRITICAL | 12 | 0.97% | 15 (4.42%) | 31/383 (8.1%) | 26 (9.89%) |
-| >= HIGH | 119 | 0.70% | 19 (5.60%) | 213/383 (55.6%) | 55 (20.91%) |
-| >= MEDIUM | 240 | 0.77% | 23 (6.78%) | 352/383 (91.9%) | 74 (28.14%) |
-| >= LOW | 269 | 0.81% | 23 (6.78%) | 383/383 (100.0%) | 75 (28.52%) |
-| 全部规则（默认） | 269 | 0.81% | 23 (6.78%) | 383/383 (100.0%) | 75 (28.52%) |
+| >= CRITICAL | 12 | 0.97% | 15 (4.42%) | 31/384 (8.1%) | 26 (9.89%) |
+| >= HIGH | 119 | 0.70% | 19 (5.60%) | 214/384 (55.7%) | 55 (20.91%) |
+| >= MEDIUM | 240 | 0.77% | 23 (6.78%) | 353/384 (91.9%) | 74 (28.14%) |
+| >= LOW | 269 | 0.81% | 23 (6.78%) | 384/384 (100.0%) | 75 (28.52%) |
+| 全部规则（默认） | 269 | 0.81% | 23 (6.78%) | 384/384 (100.0%) | 75 (28.52%) |
 
 ## 每列口径（与已发布数字 100% 同口径，防自相矛盾）
 
@@ -20,7 +20,7 @@
 - **miss**：golden probe expected units (probe, rule); full-rule row = published 0-miss caliber
 - **ood**：sample-level, security-family rules x 263 deepset/prompt-injections external injections (HF, apache-2.0/cc-by-4.0)
 
-数据源：干净样本 60（自选）· NotInject 339（外部独立，零训练零调优）· deepset 263（外部独立 OOD）· golden 探针（内部，383 expected 单元）。外部数据许可见 `src/ai_prompt_toolkit/data/external_bench/LICENSE_NOTES.md`。
+数据源：干净样本 60（自选）· NotInject 339（外部独立，零训练零调优）· deepset 263（外部独立 OOD）· golden 探针（内部，384 expected 单元）。外部数据许可见 `src/ai_prompt_toolkit/data/external_bench/LICENSE_NOTES.md`。
 
 ## 怎么读
 

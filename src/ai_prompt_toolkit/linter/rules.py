@@ -598,9 +598,11 @@ _AUDIT_SENSITIVE_CTX = re.compile(
 # R315-P2-26: 数据目标再收窄至数据存储面（数据库/数据/记录/日志/表/备份）—
 # NotInject 7 条真实 FP 全为文件清理/代码行编辑/文档细节删除（"document...
 # DELETE details" 式全文本搜误配）; golden 两条 TP（records+table / 数据库旧
-# 版本文件）经 记录|record|table|数据库 全保留。
+# 版本文件）经 record|table|数据库 全保留。
+# R319 深审: 移除 记录|日志 死分支 — 含该两词的目标文本必被下方审计关键词
+# 豁免正则(日志|记录)自豁免, 两分支在任何输入下都不可达(零行为差异移除)。
 _DELETE_DATA_TARGET = re.compile(
-    r"(?:数据库|数据|data|记录|record|日志|table|备份|backup)",
+    r"(?:数据库|数据|data|record|table|备份|backup)",
     re.IGNORECASE,
 )
 # R207: 否定/描述语境 — "不生成DELETE语句"是安全约束声明,"被删除内容的去向"
@@ -1749,10 +1751,43 @@ def find_line(text: str, pattern: re.Pattern[str]) -> int:
     return 1
 
 
+_INTERNAL_ERROR_RE = re.compile(r"check_p(\d{3})$")
+
+
+def _checker_rule_id(checker: _CheckerFn) -> str:
+    """R319: 从 checker __name__ 推导规则号(functools.wraps 保留 check_pXXX 原名)。"""
+    name = getattr(checker, "__name__", "")
+    m = _INTERNAL_ERROR_RE.match(name)
+    return f"P{m.group(1)}" if m else (name or "unknown")
+
+
+def _internal_error_finding(checker: _CheckerFn, exc: Exception) -> Finding:
+    """R319 深审 MEDIUM-2: 单规则异常物化为 CRITICAL 内部 finding。
+
+    原形态: 调度无隔离 — 一条规则异常杀死整轮(该文件全部 269 条规则+CLI
+    批量面所有文件), 进程退出码 1 撞 WARN 裁决语义(quality_gate.py:22 预留
+    3=执行层异常, 但 lint 路径从不产生), gate 只靠裸 traceback 挡住且无
+    "哪条规则崩了"的结构化信号。物化后: fail-closed + CRITICAL 一票否决
+    保持, 诊断可定位。
+    """
+    rid = _checker_rule_id(checker)
+    return Finding(
+        rule_id=rid,
+        severity=Severity.CRITICAL,
+        description=f"规则 {rid} 执行时抛出异常(已隔离, 不影响其他规则): {type(exc).__name__}",
+        location="L:1:C:1",
+        remediation="工具内部错误(非 prompt 内容问题) — 请携带异常信息报告维护者",
+        details={"internal_error": True, "exception": f"{type(exc).__name__}: {exc}"},
+    )
+
+
 def run_all_checks(text: str) -> list[Finding]:
     findings: list[Finding] = []
     for checker in _CHECKERS_EXTENDED:
-        result = checker(text)
+        try:
+            result = checker(text)
+        except Exception as exc:  # R319: 单规则异常隔离(见 _internal_error_finding)
+            result = _internal_error_finding(checker, exc)
         if result is not None:
             if isinstance(result, list):
                 findings.extend(result)
@@ -1776,7 +1811,10 @@ def run_all_checks_profiled(text: str) -> tuple[list[Finding], list[dict[str, An
     for checker in _CHECKERS_EXTENDED:
         name = getattr(checker, "__name__", str(checker))
         t0 = time.perf_counter()
-        result = checker(text)
+        try:
+            result = checker(text)
+        except Exception as exc:  # R319: 与 run_all_checks 同款单规则异常隔离
+            result = _internal_error_finding(checker, exc)
         elapsed = time.perf_counter() - t0
         if result is not None:
             if isinstance(result, list):

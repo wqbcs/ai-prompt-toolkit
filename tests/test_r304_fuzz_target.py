@@ -1,7 +1,8 @@
 """R304-P3-04: fuzz 目标脚本面测试（hermetic: 零 atheris 依赖, 内核面直测）
 
 覆盖面（R303 定稿设计的机器验证）:
-- seed 语料生成: golden 探针 684 条逐条落盘, 确定性（双跑逐字节一致）
+- seed 语料生成: golden 探针逐条落盘（计数动态派生自 golden 真源, 单维护纪律）,
+  确定性（双跑逐字节一致）
 - 边界输入对抗面: 空串/超长/Unicode 边界/嵌套引号/随机码点 —
   lint_text（fuzz 面的 Windows 可测投影, Atheris 无 Windows wheel）
   打真实内核不抛（安全工具被 fuzz 挂掉=致命讽刺, 板行 P3-04）
@@ -30,8 +31,9 @@ def _golden_probe_count() -> int:
 class TestSeedCorpus:
     def test_export_count_matches_golden(self, tmp_path: Path) -> None:
         n = export_seed_corpus(tmp_path / "corpus")
-        assert n == _golden_probe_count() == 684
-        assert len(list((tmp_path / "corpus").iterdir())) == 684
+        # R319: 单维护纪律 — 绝对计数钉只留 test_r214, 此处动态派生自 golden 真源
+        assert n == _golden_probe_count()
+        assert len(list((tmp_path / "corpus").iterdir())) == _golden_probe_count()
 
     def test_export_text_verbatim(self, tmp_path: Path) -> None:
         export_seed_corpus(tmp_path / "corpus")
@@ -52,7 +54,7 @@ class TestSeedCorpus:
         assert not target.exists()
         n = export_seed_corpus(target)
         assert target.is_dir()
-        assert n == 684
+        assert n == _golden_probe_count()
 
 
 class TestKernelAdversarial:

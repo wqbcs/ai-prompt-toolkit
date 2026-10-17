@@ -23,6 +23,9 @@
     (UTF-16 代理对正确编码域 — 低代理 DC00–DC7F 才对应 E0000–E007F;
     AWS 样例中 DD20–DD7F 实属他区, 不采用其宽口径)。1+ 提及在 Unicode 科普
     文本中合法, 2+ 已是攻击签名(真实转义 payload 为长序列)。
+ 3. 真字符+转义混排联合 8+: 子1/子2 独立阈值对混排编码有联合盲区
+    (7 真字符+1 转义=总量 8, 两子阈值各差 1 皆不触发) — R319 深审发现并
+    修复; 混排是单遍清洗规避的自然伪装面(AWS 实证: 单遍清洗重组孤儿代理)。
 Severity: HIGH — 不可见隐蔽=刻意规避人工审查(2026 生产利用已实证)
 
 与零宽族辖区切分(码点域互斥, 零交叉): P260=已知注入载荷编码(base64/hex/
@@ -50,13 +53,15 @@ _RULES_P269 = [
         "security",
         Severity.HIGH,
         "Prompt含8+ Unicode tag块字符(U+E0000–E007F)或2+ tag块转义形态"
-        "(\\U000E00xx / \\uDB40\\uDCxx代理对) — tag块ASCII smuggling=不可见"
-        "隐藏载荷(LLM分词器解码为明文); 合法旗帜emoji(≤6个tag字符)不报",
+        "(\\U000E00xx / \\uDB40\\uDCxx代理对)或真字符+转义形态合计8+ — "
+        "tag块ASCII smuggling=不可见隐藏载荷(LLM分词器解码为明文); 合法旗帜"
+        "emoji(≤6个tag字符)不报",
         "移除tag块字符及其转义形态(剥离U+E0000–E007F); 合法旗帜emoji(≤6个tag字符)不受影响",
         description_en=(
             "Prompt contains 8+ Unicode tag-block chars (U+E0000–E007F) or 2+ "
             "escaped tag-block forms (\\U000E00xx / \\uDB40\\uDCxx surrogate "
-            "pairs) — tag-block ASCII smuggling: invisible payload decoded as "
+            "pairs), or a combined total of 8 real+escaped chars — "
+            "tag-block ASCII smuggling: invisible payload decoded as "
             "plaintext by LLM tokenizers; legitimate flag emoji (≤6 tag chars) "
             "are not reported"
         ),
@@ -132,6 +137,25 @@ def check_p269(text: str) -> Finding | None:
                 "sub_pattern": "tag_block_escaped",
                 "count": len(escaped),
                 "decoded_preview": "",
+            },
+        )
+
+    # 子3: 真字符+转义混排联合阈值(R319 深审 MEDIUM-1: 7 真+1 转义=总量 8
+    # 攻击签名 — 子1/子2 独立阈值对混排编码有联合盲区)。走到此分支必是
+    # raw<8 且 escaped<2(子1/子2 已先行返回), 即混排形态专属触发面。
+    total = len(tag_cps) + len(escaped)
+    if total >= _TAG_MIN_COUNT and first is not None and escaped:
+        anchor = first if first.start() <= escaped[0].start() else escaped[0]
+        return Finding(
+            rule_id=rule.rule_id,
+            severity=rule.severity,
+            description=rule.description,
+            location=loc_from_match(text, anchor),
+            remediation=rule.remediation,
+            details={
+                "sub_pattern": "tag_block_mixed",
+                "count": total,
+                "decoded_preview": _decode_tag_preview(tag_cps),
             },
         )
     return None

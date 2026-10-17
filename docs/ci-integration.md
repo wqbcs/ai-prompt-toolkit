@@ -74,7 +74,7 @@ prompt-lint:
 
 ```yaml
 prompt-lint:
-  image: ghcr.io/<owner>/prompt-lint:latest   # P1-03 落地后启用（06 §4 镜像命名/3-tag 策略）
+  image: ghcr.io/<owner>/ai-prompt-toolkit:latest   # P1-03 落地后启用（06 §4 镜像命名/3-tag 策略; R319: 镜像名口径=ai-prompt-toolkit, 旧名 prompt-lint 废弃）
   stage: test
   script:
     - prompt-cli lint -s prompts/ --gate

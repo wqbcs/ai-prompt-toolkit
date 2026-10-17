@@ -5,10 +5,8 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent
-SCENARIOS_DIR = PROJECT_ROOT / "_scenarios"
-SCHEMAS_DIR = PROJECT_ROOT / "_schemas"
-COMPILER_DIR = PROJECT_ROOT / "_compiler"
-SECURITY_DIR = PROJECT_ROOT / "_security"
+# R319: 移除死常量 SCENARIOS_DIR/SCHEMAS_DIR/COMPILER_DIR/SECURITY_DIR
+# （R10 遗留目录已入 ruff extend-exclude, 零引用 — 深审测试层清点）
 
 
 @pytest.fixture
@@ -37,16 +35,6 @@ def _isolate_rule_registry():
         del _CHECKERS[checkers_len:]
     if len(_CHECKERS_EXTENDED) > ext_len:
         del _CHECKERS_EXTENDED[ext_len:]
-
-
-@pytest.fixture
-def scenarios_dir() -> Path:
-    return SCENARIOS_DIR
-
-
-@pytest.fixture
-def schemas_dir() -> Path:
-    return SCHEMAS_DIR
 
 
 @pytest.fixture
