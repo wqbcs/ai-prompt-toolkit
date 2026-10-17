@@ -57,3 +57,4 @@
 {"ts": "2026-10-16T18:25:24", "version": "67.34.98", "rules": 91, "prompt_count": 339, "flagged_count": 39, "overdefense_rate": 0.115, "top_rule": ["P163", 15], "backfill": false}
 {"ts": "2026-10-16T18:41:05", "version": "67.34.99", "rules": 91, "prompt_count": 339, "flagged_count": 39, "overdefense_rate": 0.115, "top_rule": ["P163", 15], "backfill": false}
 {"ts": "2026-10-16T18:57:57", "version": "67.34.100", "rules": 91, "prompt_count": 339, "flagged_count": 39, "overdefense_rate": 0.115, "top_rule": ["P163", 15], "backfill": false}
+{"ts": "2026-10-16T19:47:42", "version": "67.34.101", "rules": 91, "prompt_count": 339, "flagged_count": 26, "overdefense_rate": 0.0767, "top_rule": ["P163", 15], "backfill": false}

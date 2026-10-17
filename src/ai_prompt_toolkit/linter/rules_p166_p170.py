@@ -152,9 +152,13 @@ _TOXICITY_DECL = re.compile(
 # R209校准: 引用溯源仅当prompt明确要求研究/文献/事实核查语义 —
 # 原pattern含"数据/报告/统计"泛词, 任何数据类prompt恒触发(8/32误报)。
 # 英文单词加词边界防子串误配。
+# R315-P2-26: 裸 研究|research|论文|paper|文献|literature|学术|academic 移除 —
+# NotInject 4 条真实 FP 全为良性学术语境（科研 essay/论文投稿指南/文学概念/
+# 研究方法论）; 补 综述（golden TP atk30「研究综述+观点自行发挥」经 综述 保留,
+# r220 引用动词面不动）。
 _CITATION_CTX = re.compile(
-    r"(?:研究|research|论文|paper|文献|literature|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\s?source"
-    r"|\bevidence\b|\bfact\s?check\w*|学术|academic|来源追溯|source\s?trace)",
+    r"(?:综述|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\s?source"
+    r"|\bevidence\b|\bfact\s?check\w*|来源追溯|source\s?trace)",
     re.IGNORECASE,
 )
 

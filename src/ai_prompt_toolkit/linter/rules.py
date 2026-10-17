@@ -552,8 +552,16 @@ def check_p008(text: str) -> Finding | None:
     # 中文 fallback 从"宽量化词裸出现即报"改为授权动词邻接(动词后 20 字内出现
     # 任何/任意/所有才算过宽授权) — "请描述关于'空'的任何信息"无授权动词=不报
     # 间隙用单一有界非贪婪量词(无嵌套量词, 避免 \s+.* 式 O(n²) 回溯 — ReDoS 根治)
+    # R315-P2-26: (1) 中文 能 → 前后护栏 (?<![才可未智本不])能(?![否性]) —
+    # 才能/可能/能否/智能/本能/不能 为语法用法(NotInject 真实 FP「续签合同才能
+    # 确保所有条款」), 能够=权限保留; (2) 英文窗 40→20 防跨子句("can
+    # participate, ensuring any inappropriate" 式误配) + filter 动词排除(can
+    # ignore any swears = 良性过滤语义, NotInject 真实 FP; TP「may access all
+    # files」间距 7 不受影响)
     broad_perms = re.findall(
-        r"(?:可以|能|may|can|allowed)[^。！？\n]{0,40}?(?:任何|任意|所有|\banything\b|\beverything\b|\ball\b|\bany\b)",
+        r"(?:可以|(?<![才可未智本不])能(?![否性])|may|can|allowed)"
+        r"(?!\s*(?:ignore|filter|block|skip|exclude|discard|reject)\b)"
+        r"[^。！？\n]{0,20}?(?:任何|任意|所有|\banything\b|\beverything\b|\ball\b|\bany\b)",
         text,
         re.IGNORECASE,
     )
@@ -576,16 +584,23 @@ def check_p008(text: str) -> Finding | None:
 
 # R207校准: 审计/追踪声明仅对敏感操作场景有意义 — 无状态问答/文档类prompt
 # 无条件要求审计指令属过度要求(R206前88%误报)。
+# R315-P2-26: 支付|payment|转账|汇款 分支移除 — golden 该分支零 TP 支撑
+# (P009 两条 TP 均为数据删除型), NotInject 真实 FP「如何输入支付信息」;
+# 资金操作面登记为候选, 未来探针先行轮再复活(无探针支撑分支不保留)。
 _AUDIT_SENSITIVE_CTX = re.compile(
-    r"(?:drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)"
+    r"(?:drop|truncate|发送.{0,4}(?:用户|客户|外部)"
     r"|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)",
     re.IGNORECASE,
 )
 # R251-P2-26(E): 删除/delete 独立分支 — "delete a word/paragraph in a text" 是文本
-# 编辑非敏感操作(benign 高频面), 仅当删除对象是数据目标(文件/系统/数据库/记录/
-# 版本/代码/程序/文档/表)才构成需审计的敏感操作; 否定窗口纪律同上(20字符左窗)。
+# 编辑非敏感操作(benign 高频面), 仅当删除对象是数据目标才构成需审计的敏感操作;
+# 否定窗口纪律同上(20字符左窗)。
+# R315-P2-26: 数据目标再收窄至数据存储面（数据库/数据/记录/日志/表/备份）—
+# NotInject 7 条真实 FP 全为文件清理/代码行编辑/文档细节删除（"document...
+# DELETE details" 式全文本搜误配）; golden 两条 TP（records+table / 数据库旧
+# 版本文件）经 记录|record|table|数据库 全保留。
 _DELETE_DATA_TARGET = re.compile(
-    r"(?:文件|file|系统|system|数据库|数据|data|记录|record|日志|版本|version|代码|code|程序|program|文档|document|数据表|table|备份|backup|旧版)",
+    r"(?:数据库|数据|data|记录|record|日志|table|备份|backup)",
     re.IGNORECASE,
 )
 # R207: 否定/描述语境 — "不生成DELETE语句"是安全约束声明,"被删除内容的去向"

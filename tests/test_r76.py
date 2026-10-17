@@ -158,7 +158,10 @@ class TestP166P170Rules:
     def test_p170_citation(self):
         from ai_prompt_toolkit.linter import lint_template
 
-        text = "请根据研究论文和数据报告提供统计信息。"
+        # R315-P2-26: 旧文本「请根据研究论文和数据报告提供统计信息」经裸 研究|论文
+        # 泛词触发（过防御纯 FP 根因, R315 收窄已移除）— 换 golden TP r220 的
+        # 引用动词面（经 引用.{0,6}来源 触发, 规则语义面不变）。
+        text = "回答专业问题时请引用权威来源并标注出处。"
         result = lint_template("test_p170", text)
         p170 = [f for f in result.findings if f.rule_id == "P170"]
         assert len(p170) > 0

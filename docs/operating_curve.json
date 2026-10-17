@@ -1,5 +1,5 @@
 {
-  "version": "67.34.100",
+  "version": "67.34.101",
   "calibers": {
     "fp": "pair-level (rule,sample) pairs / (active_rules x 60 clean samples); single source = baselines.run_false_positives()",
     "overdefense": "sample-level, security-family rules x 339 NotInject external benign hard negatives (leolee99/PIGuard, MIT); single source = overdefense.security_family_rules()",
@@ -46,39 +46,39 @@
       "active_rules": 240,
       "fp_pairs": 112,
       "fp_pair_rate": 0.0078,
-      "overdefense_flagged": 32,
-      "overdefense_rate": 0.094395,
+      "overdefense_flagged": 26,
+      "overdefense_rate": 0.076696,
       "miss_units_covered": 352,
       "miss_units_total": 383,
       "miss_unit_coverage": 0.91906,
-      "ood_caught": 76,
-      "ood_rate": 0.288973
+      "ood_caught": 74,
+      "ood_rate": 0.281369
     },
     {
       "cutoff": ">= LOW",
       "active_rules": 269,
       "fp_pairs": 132,
       "fp_pair_rate": 0.0082,
-      "overdefense_flagged": 39,
-      "overdefense_rate": 0.115044,
+      "overdefense_flagged": 26,
+      "overdefense_rate": 0.076696,
       "miss_units_covered": 383,
       "miss_units_total": 383,
       "miss_unit_coverage": 1.0,
-      "ood_caught": 77,
-      "ood_rate": 0.292776
+      "ood_caught": 75,
+      "ood_rate": 0.285171
     },
     {
       "cutoff": "full",
       "active_rules": 269,
       "fp_pairs": 132,
       "fp_pair_rate": 0.0082,
-      "overdefense_flagged": 39,
-      "overdefense_rate": 0.115044,
+      "overdefense_flagged": 26,
+      "overdefense_rate": 0.076696,
       "miss_units_covered": 383,
       "miss_units_total": 383,
       "miss_unit_coverage": 1.0,
-      "ood_caught": 77,
-      "ood_rate": 0.292776
+      "ood_caught": 75,
+      "ood_rate": 0.285171
     }
   ]
 }

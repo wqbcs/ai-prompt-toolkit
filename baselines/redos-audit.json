@@ -4568,12 +4568,6 @@
       "attack": "deny\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000list!",
       "approved": true
     },
-    "linter/rules_p161_p165.py\u0000(?:泄露|leak|泄露.*指令|复述.*指令|忽略.*指令|忽略.*系统提示|绕过.*指令|越狱|jailbreak|prompt.?injection|提示词注入|exfiltrat|dump.*instruction|extract.*instruction|extract.*prompt)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "extract\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000prompt!",
-      "approved": true
-    },
     "linter/rules_p161_p165.py\u0000(?:提取.*防护|extraction.*protect|指令.*不可见|instruct.*invisible|输出.*过滤|output.*filter|反提取|anti.?extract|禁止.*泄露|prohibit.*leak|指令.*保护|instruct.*protect|系统.*保护|system.*protect)": {
       "vulnerable": true,
       "complexity": "O(n^4)",
@@ -4635,12 +4629,6 @@
       "approved": true
     },
     "linter/rules_p166_p170.py\u0000(?:毒性|toxic|仇恨|hatred|骚扰|harass|自残|self.?harm|暴力|violen|冒犯|offens|毒性.*过滤|toxic.*filter|禁止.*仇恨|no.*hate|内容.*审核|content.*moderat)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p166_p170.py\u0000(?:研究|research|论文|paper|文献|literature|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\\s?source|\\bevidence\\b|\\bfact\\s?check\\w*|学术|academic|来源追溯|source\\s?trace)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13658,24 +13646,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000(?:可以|能|may|can|allowed)[^。！？\\n]{0,40}?(?:任何|任意|所有|\\banything\\b|\\beverything\\b|\\ball\\b|\\bany\\b)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000(?:drop|truncate|支付|payment|转账|汇款|发送.{0,4}(?:用户|客户|外部)|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000(?:文件|file|系统|system|数据库|数据|data|记录|record|日志|版本|version|代码|code|程序|program|文档|document|数据表|table|备份|backup|旧版)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules.py\u0000删除|delete": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -13969,6 +13939,41 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules.py\u0000(?:drop|truncate|发送.{0,4}(?:用户|客户|外部)|写入.{0,4}(?:库|数据库|表)|修改.{0,4}数据|执行.{0,4}(?:脚本|命令)|敏感操作)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000(?:数据库|数据|data|记录|record|日志|table|备份|backup)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000(?:可以|(?<![才可未智本不])能(?![否性])|may|can|allowed)(?!\\s*(?:ignore|filter|block|skip|exclude|discard|reject)\\b)[^。！？\\n]{0,20}?(?:任何|任意|所有|\\banything\\b|\\beverything\\b|\\ball\\b|\\bany\\b)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p161_p165.py\u0000(?:泄露|leak|泄露.*指令|复述.*指令|忽略.*指令|忽略.*系统提示|绕过.*指令|prompt.?injection|提示词注入|exfiltrat|dump.*instruction|extract.*instruction|extract.*prompt)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "extract\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000instruction!",
+      "approved": true
+    },
+    "linter/rules_p166_p170.py\u0000(?:综述|来源引用|文献引用|引用.{0,6}(?:来源|出处|文献)|cite|参考来源|reference\\s?source|\\bevidence\\b|\\bfact\\s?check\\w*|来源追溯|source\\s?trace)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
+  },
+  "metadata": {
+    "approved_at": "2026-10-03",
+    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
+    "rationale": "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). Approved without refactor: changing detection regex risks false-positive/miss-rate dual baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
   }
 }

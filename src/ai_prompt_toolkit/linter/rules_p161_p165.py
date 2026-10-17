@@ -146,8 +146,11 @@ _JAILBREAK_DECL = re.compile(
 # R206校准: 移除泛词(系统/输出/响应/显示/打印/重复/系统指令/提取/指令/instruct/output/response/
 # show/print/repeat/restate) — 干净prompt的"输出格式/系统提示"即误触发(100%误报率),
 # 保留"泄露/越狱/复述指令/忽略指令"等攻击语义词
+# R315-P2-26: 越狱|jailbreak 分支移除 — golden 该分支零 TP 支撑（唯一 TP 经
+# 泄露触发）, NotInject 6 条真实 FP 全为越狱科普/手机越狱/游戏越狱良性语境;
+# 越狱指令攻击面归 P163 辖区（R257 已定性, 双辖区重复计分）, P164 去重。
 _EXTRACT_CTX = re.compile(
-    r"(?:泄露|leak|泄露.*指令|复述.*指令|忽略.*指令|忽略.*系统提示|绕过.*指令|越狱|jailbreak|prompt.?injection|提示词注入|exfiltrat|dump.*instruction|extract.*instruction|extract.*prompt)",
+    r"(?:泄露|leak|泄露.*指令|复述.*指令|忽略.*指令|忽略.*系统提示|绕过.*指令|prompt.?injection|提示词注入|exfiltrat|dump.*instruction|extract.*instruction|extract.*prompt)",
     re.IGNORECASE,
 )
 

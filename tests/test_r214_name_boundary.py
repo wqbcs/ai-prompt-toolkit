@@ -111,7 +111,8 @@ class TestR214LangSchema:
         # R293: +1 ja (P2-29 P268 全角字母规则化: r293_ja_tn_fullwidth_okng 良性
         #       全角拉丁 TN; R240 tn08/R286 obs 两条盲点观察探针翻转 TP 不增数) = 667
         # R312: +5 (P269 tag块 ASCII smuggling: 4TP+旗帜TN, 全 en) = 672
-        assert len(probes) == 672
+        # R315: +8 (P2-26 过防御批 TN: P009×2/P164×2/P170×2/P008×2, en 4+zh-Hans 4) = 680
+        assert len(probes) == 680
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -162,11 +163,14 @@ class TestR214LangSchema:
         # R288: +1 ja (P2-30 TN) = zh-Hans 544 | en 103 | ja 17 | zh-Hant 2
         # R293: +1 ja (P2-29 P268 良性全角拉丁 TN) = zh-Hans 544 | en 103 | ja 18 | zh-Hant 2
         # R312: +5 en (P269 tag块探针 4TP+旗帜TN) = zh-Hans 544 | en 108 | ja 18 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 544
+        # R315: +4 zh-Hans (P009 支付/P164 越狱游戏/P170 方法论/P008 才能) + 4 en
+        #       (P009 文件清理/P164 越狱科普/P170 科研essay/P008 忽略脏话)
+        #       = zh-Hans 548 | en 112 | ja 18 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 548
         assert sum(1 for v in langs.values() if v == "ja") == 18
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108
-        assert sum(1 for v in langs.values() if v == "en") == 108
+        # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108; R315: +4 en (P2-26 TN) = 112
+        assert sum(1 for v in langs.values() if v == "en") == 112
 
 
 class TestR214PerLanguageReport:

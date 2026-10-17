@@ -248,10 +248,13 @@ class TestOverdefenseAnchor:
     """
 
     def test_rate_11_50(self):
+        # R315-P2-26: 此精确锚点(39/339=11.50%) 是轮次快照 — R315 过防御批 4 规则
+        # (P009/P164/P170/P008) 收紧至 7.67%(26/339) 后不再成立。转为棘轮: 不得
+        # 回到 R253 点(39)之上。绝对锚点由 R315 测试文件(test_r315_overdefense_batch)
+        # 的 7.67% 接管。
         r = overdefense.run_overdefense()
         assert r["prompt_count"] == 339
-        assert r["flagged_count"] == 39
-        assert r["overdefense_rate"] == 0.115
+        assert r["flagged_count"] <= 39
 
     def test_below_r250_baseline(self):
         # 严格优于 R250 锚点(20.94%) — 曲线只收紧
