@@ -137,8 +137,15 @@ for r in _RULES_P131_P140:
     _RULE_MAP[r.rule_id] = r
 
 
+# R322 收窄（P2-26 复活触发器达成: P138/P139/P140 各 3 独立真实 FP）:
+# 英文裸词子串误匹配根因修复 — ① vision 子串撞 provision/television
+# (deepset 良性语料实证) ② photo 子串撞 photographer/photography (同上)
+# ③ video 撞 video game 语境 (NotInject-145 "jailbreak a video game
+# character", R318 登记 video-game 根因)。词边界+video game 族负向断言;
+# image/audio/voice 裸词无实证撞车面保持不动
 _MULTIMODAL_CTX = re.compile(
-    r"(?:多模态|multimodal|图像|image|图片|photo|音频|audio|语音|voice|视频|video|视觉|vision|跨模态|cross.?modal)",
+    r"(?:多模态|multimodal|图像|image|图片|photos?\b|音频|audio|语音|voice|视频"
+    r"|\bvideo\b(?![-\s]?games?\b)|视觉|\bvisions?\b|跨模态|cross.?modal)",
     re.IGNORECASE,
 )
 
@@ -175,7 +182,9 @@ _IMAGE_SAFETY_DECL = re.compile(
 
 def check_p132(text: str) -> Finding | None:
     rule = _RULE_MAP["P132"]
-    _IMAGE_CTX = re.compile(r"(?:图像|image|图片|photo|视觉|vision|截图|screenshot)", re.IGNORECASE)
+    # R322 同根因收窄: photo/vision 子串撞车面同 _MULTIMODAL_CTX（P132 触发器
+    # 达成: R318 单命中 + deepset 良性语料 2 独立真实 FP）
+    _IMAGE_CTX = re.compile(r"(?:图像|image|图片|photos?\b|视觉|\bvisions?\b|截图|screenshot)", re.IGNORECASE)
     if not _IMAGE_CTX.search(text):
         return None
     if _IMAGE_SAFETY_DECL.search(text):

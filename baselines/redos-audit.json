@@ -4244,12 +4244,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p131_p140.py\u0000(?:多模态|multimodal|图像|image|图片|photo|音频|audio|语音|voice|视频|video|视觉|vision|跨模态|cross.?modal)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p131_p140.py\u0000(?:输入.*模态|input.*modality|接受.*图像|accept.*image|支持.*音频|support.*audio|输入.*格式|input.*format|模态.*类型|modality.*type)": {
       "vulnerable": true,
       "complexity": "O(n^4)",
@@ -4311,12 +4305,6 @@
       "approved": false
     },
     "linter/rules_p131_p140.py\u0000(?:图像|image|图片|photo|音频|audio|语音|voice|视频|video|视觉|vision)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p131_p140.py\u0000(?:图像|image|图片|photo|视觉|vision|截图|screenshot)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -13989,6 +13977,102 @@
       "approved": false
     },
     "linter/rules_p236_p240.py\u0000没无未不别勿": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000P270": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000指令文件提权/外传形态": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000Prompt/指令文件含 agent 提权或外传攻击形态（自动批准/不请求确认/永不拒绝命令；凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000移除提权/外传指令：自动批准与'永不拒绝'消除人工确认边界；凭据路径+外传=凭据外传攻击；curl 外传系统指纹=信息泄露。此类指令文件应按供应链投毒处置（隔离+审查来源）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000Prompt/instruction file contains agent privilege-escalation or exfiltration attack patterns (auto-approve / never-ask-for-confirmation / never-refuse instructions; credential path + exfil verb + external URL co-occurrence; curl exfiltrating system-fingerprint command output) — the typical IPI surface in agent instruction files (CLAUDE.md/AGENTS.md/SKILL.md poisoning)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000Remove the privilege-escalation/exfiltration instructions: auto-approve and never-refuse eliminate the human confirmation boundary; credential path + exfiltration is a credential-exfiltration attack; curl-based system-fingerprint exfiltration is data leakage. Treat such instruction files as supply-chain poisoning (isolate + review provenance)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000injection": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000LLM01": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000(dangerouslyDisableSandbox|autoApproveAll|pre-?approved|do not ask for user (to )?confirm|never refuse (a|any) (command|request|instruction|tool call))": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000~?/\\.env\\b|~?/\\.aws/|id_rsa|\\.ssh/|\\.netrc|\\.gnupg/": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000\\b(send|upload|transmit|post)\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000https?://": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000curl[^\\n]{0,120}?(--data|-d)\\b[^\\n]{0,100}?\\$\\((?:uname|whoami|hostname|pwd|id|env)\\b": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p131_p140.py\u0000(?:多模态|multimodal|图像|image|图片|photos?\\b|音频|audio|语音|voice|视频|\\bvideo\\b(?![-\\s]?games?\\b)|视觉|\\bvisions?\\b|跨模态|cross.?modal)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p131_p140.py\u0000(?:图像|image|图片|photos?\\b|视觉|\\bvisions?\\b|截图|screenshot)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

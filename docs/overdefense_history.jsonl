@@ -64,4 +64,5 @@
 {"ts": "2026-10-16T20:34:53", "version": "67.34.104", "rules": 91, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}
 {"ts": "2026-10-17T05:11:29", "version": "67.34.105", "rules": 91, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}
 {"ts": "2026-10-17T05:50:58", "version": "67.34.106", "rules": 91, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}
-{"ts": "2026-10-17T10:06:26", "version": "67.34.107", "rules": 91, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}
+{"ts": "2026-10-18T02:06:18", "version": "67.34.107", "rules": 92, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}
+{"ts": "2026-10-18T03:46:37", "version": "67.34.108", "rules": 92, "prompt_count": 339, "flagged_count": 23, "overdefense_rate": 0.0678, "top_rule": ["P163", 15], "backfill": false}

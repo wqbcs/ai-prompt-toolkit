@@ -1,17 +1,17 @@
 # Operating Points — Severity-Cut Trade-off（公开数据页）
 
-> 版本 `67.34.107` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
+> 版本 `67.34.108` · 生成器 `scripts/gen_operating_curve.py`（确定性：同一数据→同一字节）
 > 每个数字都是一条可复现命令的输出 —— **measured, not vibes**。
 
 ## 数字
 
-| 运营点（severity 切面） | 活跃规则 | 误报 FP 对级率 | 过防御（外部良性 339） | 漏检单元覆盖（golden 385 单元） | OOD 召回（外部注入 263） |
+| 运营点（severity 切面） | 活跃规则 | 误报 FP 对级率 | 过防御（外部良性 339） | 漏检单元覆盖（golden 389 单元） | OOD 召回（外部注入 263） |
 |---|---|---|---|---|---|
-| >= CRITICAL | 12 | 0.97% | 15 (4.42%) | 31/385 (8.1%) | 26 (9.89%) |
-| >= HIGH | 119 | 0.70% | 19 (5.60%) | 215/385 (55.8%) | 55 (20.91%) |
-| >= MEDIUM | 240 | 0.77% | 23 (6.78%) | 354/385 (91.9%) | 74 (28.14%) |
-| >= LOW | 269 | 0.81% | 23 (6.78%) | 385/385 (100.0%) | 75 (28.52%) |
-| 全部规则（默认） | 269 | 0.81% | 23 (6.78%) | 385/385 (100.0%) | 75 (28.52%) |
+| >= CRITICAL | 12 | 0.97% | 15 (4.42%) | 31/389 (8.0%) | 26 (9.89%) |
+| >= HIGH | 120 | 0.69% | 19 (5.60%) | 219/389 (56.3%) | 55 (20.91%) |
+| >= MEDIUM | 241 | 0.77% | 23 (6.78%) | 358/389 (92.0%) | 74 (28.14%) |
+| >= LOW | 270 | 0.81% | 23 (6.78%) | 389/389 (100.0%) | 75 (28.52%) |
+| 全部规则（默认） | 270 | 0.81% | 23 (6.78%) | 389/389 (100.0%) | 75 (28.52%) |
 
 ## 每列口径（与已发布数字 100% 同口径，防自相矛盾）
 
@@ -20,11 +20,11 @@
 - **miss**：golden probe expected units (probe, rule); full-rule row = published 0-miss caliber
 - **ood**：sample-level, security-family rules x 263 deepset/prompt-injections external injections (HF, apache-2.0/cc-by-4.0)
 
-数据源：干净样本 60（自选）· NotInject 339（外部独立，零训练零调优）· deepset 263（外部独立 OOD）· golden 探针（内部，385 expected 单元）。外部数据许可见 `src/ai_prompt_toolkit/data/external_bench/LICENSE_NOTES.md`。
+数据源：干净样本 60（自选）· NotInject 339（外部独立，零训练零调优）· deepset 263（外部独立 OOD）· golden 探针（内部，389 expected 单元）。外部数据许可见 `src/ai_prompt_toolkit/data/external_bench/LICENSE_NOTES.md`。
 
 ## 怎么读
 
-静态规则没有置信阈值（每条规则要么命中要么不命中），**severity 是唯一运营点维度**——切到 ≥X 级 = 只计 X 级及以上 finding，等价于 LLM 检测器把阈值切到 X。例：只看 CRITICAL+HIGH 时，误报对级率 0.97%→0.70%、外部良性过防御 4.42%、外部 OOD 召回 20.91% —— precision/召回的取舍在这一行就能看清。
+静态规则没有置信阈值（每条规则要么命中要么不命中），**severity 是唯一运营点维度**——切到 ≥X 级 = 只计 X 级及以上 finding，等价于 LLM 检测器把阈值切到 X。例：只看 CRITICAL+HIGH 时，误报对级率 0.97%→0.69%、外部良性过防御 4.42%、外部 OOD 召回 20.91% —— precision/召回的取舍在这一行就能看清。
 
 ## FP 预算坐标系对齐（与行业基准可比）
 

@@ -2,6 +2,65 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.108] - 2026-10-18
+
+### Added（R322 指令文件 IPI 规则化 P270）
+
+- **P270 指令文件提权/外传形态**（HIGH, security, OWASP LLM01, ATLAS
+  AML.T0051.001+AML.T0086, 第 270 条规则）: R321 取证登记的 P270 候选规则化
+  — 三子形态全部真实样本实证: ① a_priv 提权词面
+  （dangerouslyDisableSandbox/autoApproveAll/pre-approved/do not ask for
+  user confirm/never refuse a command, 5 分支全部出现于 adv-001 真实样本）
+  ② b_cred 凭据路径外传共现（~/.env|~/.aws/|id_rsa|.ssh/|.netrc|.gnupg/
+  + send/upload/transmit/post + http(s):// 三信号 AND — 单信号各自是常态
+  良性面, AND 门控 0 误报; 4 独立真实 TP: adv-004/adv-006/adv-009/adv-013）
+  ③ c_cmd curl 命令外传（curl --data + $(系统指纹命令闭集 uname/whoami/
+  hostname/pwd/id/env; snyk-004 Snyk 真实发现实证）。**T1 证据**: 6 独立
+  真实 TP（≥2 达标）+ 515 TN 面 0 误报（60 clean + 339 NotInject + 26
+  templates + 59 仓内语料 + 29 真实 benign skill 文件 + 2 golden benign）。
+  辖区切分: 与 P266/P267（凭据字面面）/P006（赋值意图面）正交 — P270 抓
+  "指令 agent 窃取/外传"（指令形态面）
+- **P271（base64 隐藏指令）维持观察区**: 当前仅 1 独立真实 TP（adv-007）<
+  T1≥2 未达标, 不预支立规; 候选模式已实证 0/515 TN 误报（HTML 注释 +
+  base64 块 + 解码指令语义层, P021 编码层锚点既有）; 晋升线索登记=ATR
+  其他语料（ninja-*/garak-benchmark/hackaprompt 面）
+- **golden 探针 692→696**（en 121→125; 期望命中单元 385→389, en 55→59）:
+  R321 盲点探针 2 条翻转实火（r321_ifipi_atk01/atk03 expected→P270）+
+  新增 4 条（atk04 凭据采集外传/atk05 SSH 密钥外传 2 TP + tn03 真实
+  bitwarden 安全评审 skill/tn04 真实凭据扫描器 skill 2 TN 护栏 — tn04 锁
+  三信号 AND 门控: 凭据路径重出现但无外传共现）
+- **test_r322_p270_instruction_file_ipi.py**（8 测试: 注册/4TP 实火/子形态
+  隔离/4TN 沉默/60 clean 零命中/机制残留守卫〔非 curl 外传形态沉默=防未来
+  扩标过吞语义面〕/裁决面确定性）
+- ATLAS 映射登记（T0051.001 指令文件面补强/T0086 指令文件面/LLM01 汇总行）;
+  mypy strict 注册表 287→288（rules_p270 strict 锁定）; 规则文档 P270 页
+  生成（270 页）
+
+### Fixed（R322 多模态语境词裸子串撞车根因, P2-26 触发器复活批）
+
+- **P2-26 复活触发器达成（deepset 独立语料 399 真实 benign 取证）**:
+  P138/P139/P140 各累积 3 独立真实 FP（NotInject-145 "video game" 复合词
+  〔R318 登记根因〕+ deepset "provision" 撞 vision 子串 + deepset
+  "photographer" 撞 photo 子串）, P132 同根因达标（deepset 2 条）
+- **`_MULTIMODAL_CTX`/P132 `_IMAGE_CTX` 裸子串根因收窄**: 词边界
+  `photos?\b`/`\bvisions?\b` + video game 族负向断言
+  `\bvideo\b(?![-\s]?games?\b)`；image/audio/voice 裸词无实证撞车面不动；
+  3 TN 探针入 golden（696→699, en +3, 期望单元 389 不变）+
+  test_r322_multimodal_ctx_fp_fix.py 6 测试（沉默面/召回面/边界守卫/TP锚点）
+- **已知残留（精度优先取舍, 诚实声明）**: "video game + 生成任务"复合语境
+  （如 video game trailer poster）无其他模态词共现时不报 — 介质复合词非
+  模态引用, 静态面不可判意图, 与 R318 裁定同向；过防御 6.78%（23/339）不变
+  （ni145 仍有 P034/P038/P040/P163 他族命中 = 下一治理批, 根因消除≠数字
+  追逐 T4 纪律）
+
+### Fixed（R322 数字面同步）
+
+- README 数字面同步: 规则 269→270（9 处）/ 探针 692→699（3 处）/ 期望单元
+  385→389（2 处）/ 分语言期望命中表 en 55→59 / 分语言探针计数行 en
+  121→128 / Miss-Rate 徽章 699probes
+- 双基线不回归: 漏检 0.00%（389/389）/ 误报 0.81%（60 clean）/ 过防御
+  6.78%（23/339, P270 入安全族动态分母后 0 新增命中）
+
 ## [v67.34.107] - 2026-10-17
 
 ### Added（R321 防漂移红线 + MCP 面提权 + 指令文件 IPI 取证）

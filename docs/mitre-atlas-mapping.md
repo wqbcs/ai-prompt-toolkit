@@ -10,7 +10,7 @@
 | ATLAS 技术 | OWASP LLM 2025 | 本项目规则 / 探针 | 覆盖判定 |
 |---|---|---|---|
 | AML.T0051.000 Direct Prompt Injection | LLM01 | P161 模板注入 / P022 注入标记 / P029 变量未转义 / P021 编码混淆 / P177 Base64混淆注入 / **P258 伪系统标签（R215-B2）** / golden攻击集68探针 / mcp-lint description层 | 覆盖（静态面） |
-| AML.T0051.001 Indirect Prompt Injection | LLM01 | P035/P036/P037 RAG检索族 / P038-P040 多模态族 / **P257（R213-B5 新增）** | 部分→R213补强 |
+| AML.T0051.001 Indirect Prompt Injection | LLM01 | P035/P036/P037 RAG检索族 / P038-P040 多模态族 / **P257（R213-B5 新增）** / **P270 指令文件提权/外传形态（R322, 三子形态: 提权词面/凭据外传共现/curl命令外传, ATR真实样本6TP, OWASP LLM01）** | 部分→R213补强→R322指令文件面补强 |
 | AML.T0051.002 Triggered Injection | LLM01 | P163 越狱防护 + redteam jailbreak 探针 | 部分（触发式需运行时） |
 | AML.T0053 AI Agent Tool Invocation（2026.07 由 LLM Plugin Compromise 更名） | LLM06 | P031 工具约束 / P033 上下文边界 / P034 审批机制 / MCP-104 免审批 / MCP-107 链式路由 | 覆盖（配置面） |
 | AML.T0054 LLM Jailbreak | LLM01 | P163 / **P259 人格切换复合面（R215-B2）** + redteam 越狱探针 | 覆盖（静态面） |
@@ -21,7 +21,7 @@
 | AML.T0062 Discover LLM Hallucinations | LLM09 | （无静态规则 — 幻觉验证是运行时能力） | **缺口（记录, 不实现）** |
 | AML.T0066 Retrieval Content Crafting | LLM08 | P035 检索源验证 / P037 引用标注 | 覆盖（静态面） |
 | AML.T0085 Data from AI Services | LLM08 | P035-P037 RAG族 | 部分 |
-| AML.T0086 Exfiltration via AI Agent Tool Invocation | LLM02/LLM06 | P031/P034 / MCP-105 凭据透传 / MCP-107 | 覆盖（配置面） |
+| AML.T0086 Exfiltration via AI Agent Tool Invocation | LLM02/LLM06 | P031/P034 / MCP-105 凭据透传 / MCP-107 / **P270（R322, b_cred/c_cmd子形态=凭据/系统指纹外传指令面, Snyk真实发现snyk-004实证）** | 覆盖（配置面+指令文件面） |
 | AML.T0088 Generate Deepfakes | LLM05 | P038-P040 多模态声明族 / P131 多模态输入声明 | 部分 |
 | AML.T0010 ML Supply Chain Compromise（.002 Data / .003 Model） | LLM03 | P221 模型来源 / P222 依赖审计 / P224 版本锁定 / P225 签名 / MCP-106 未固定版本 | 覆盖 |
 | AML.T0020 Training Data Poisoning（2026.08 由 Publish Poisoned Datasets 更名） | LLM04 | P223 数据溯源 | 部分 |
@@ -37,7 +37,7 @@
 
 | OWASP | 覆盖状态 |
 |---|---|
-| LLM01 Prompt Injection | 强（多层: 规则/探针/mcp-lint/P257/P258/P259/P260/P261/P268） |
+| LLM01 Prompt Injection | 强（多层: 规则/探针/mcp-lint/P257/P258/P259/P260/P261/P268/P270） |
 | LLM02 Sensitive Information Disclosure | 强 |
 | LLM03 Supply Chain | 强 |
 | LLM04 Data & Model Poisoning | 中（静态面覆盖, 数据管道运行时面声明为范围外） |
