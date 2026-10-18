@@ -2756,12 +2756,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p031_p040.py\u0000(?:图片|图像|音频|视频|照片|\\bimage\\b|\\baudio\\b|\\bvideo\\b|\\bphoto\\b|\\bpicture\\b|\\bmedia\\b)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p031_p040.py\u0000(?:上传|附件|upload|attachment)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -14073,6 +14067,78 @@
       "approved": false
     },
     "linter/rules_p131_p140.py\u0000(?:图像|image|图片|photos?\\b|视觉|\\bvisions?\\b|截图|screenshot)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p031_p040.py\u0000(?:图片|图像|音频|视频|照片|\\bimage\\b|\\baudio\\b|\\bvideo\\b(?![-\\s]?games?\\b)|\\bphoto\\b|\\bpicture\\b)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000P271": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000指令文件编码隐藏指令（base64隐藏形态）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000security": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000Prompt/指令文件含 base64 隐藏指令: HTML 注释内 base64 块（24+字符）或 data:text/* URI 内 base64 文本载荷 — 指令文件 IPI 典型隐藏载体（解码=采集/外传指令+'不告知用户'掩饰; data:image/* 内嵌图片为良性不报）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000审查注释/data URI 中的 base64 内容: 解码检查是否含采集/外传类隐藏指令; 合法文档场景无注释内长 base64 或 data:text/* 载荷用途。此类文件应按供应链投毒处置（隔离+审查来源）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000Prompt/instruction file contains base64-encoded hidden instructions: a base64 block (24+ chars) inside an HTML comment, or a base64 text payload in a data:text/* URI — the typical hidden-instruction carrier in agent IPI (decodes to harvest/exfil instructions with concealment phrases; data:image/* embedded images are benign and not flagged)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000Audit base64 content in comments/data URIs: decode and check for hidden harvest/exfiltration instructions; legitimate documentation has no use for long base64 in comments or data:text/* payloads. Treat such files as supply-chain poisoning (isolate + review provenance)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000injection": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000LLM01": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000data:text/[a-z0-9+.-]*;base64,\\s*[A-Za-z0-9+/]{16,}={0,2}": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p271.py\u0000<!--[^>]{0,200}?\\b[A-Za-z0-9+/]{24,}={0,2}": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

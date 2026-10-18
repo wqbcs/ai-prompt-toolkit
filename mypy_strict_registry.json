@@ -189,6 +189,7 @@
     "src/ai_prompt_toolkit/linter/rules_p268.py": true,
     "src/ai_prompt_toolkit/linter/rules_p269.py": true,
     "src/ai_prompt_toolkit/linter/rules_p270.py": true,
+    "src/ai_prompt_toolkit/linter/rules_p271.py": true,
     "src/ai_prompt_toolkit/linter/structured_diff.py": true,
     "src/ai_prompt_toolkit/linter/suggest.py": true,
     "src/ai_prompt_toolkit/linter/target_model.py": true,

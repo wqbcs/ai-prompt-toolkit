@@ -31,7 +31,8 @@ from ai_prompt_toolkit.linter.rules import get_all_rules
 
 # 单锚点(与 test_rules_smoke_p021_p255 EXPECTED_TOTAL 同族纪律, R230-X1):
 # 新增规则时此处与 smoke 锚点同步 +1。
-EXPECTED_TOTAL = 270
+# R323: +1 (P271 指令文件编码隐藏指令) = 271
+EXPECTED_TOTAL = 271
 
 REQUIRED_FIELDS = {
     "rule_id",

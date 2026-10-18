@@ -205,8 +205,14 @@ _RAG_CTX_GATE = re.compile(
 _MULTIMODAL_INPUT_PATTERNS = [
     # R212-6: 英文媒体词加词边界 — "imageUrl"/"filename"等标识符子串不是
     # 多模态输入(clean52 React组件误报根因); 中文词无边界问题保持原样。
+    # R323: 移除裸 \bmedia\b — "social media" 为常态良性面（deepset 独立语料
+    # 4 独立真实 FP: 26/171/358/384, 含 Social-Media-Marketing 连字符形态）;
+    # 真多模态输入=图片/视频/音频/照片/picture 或显式上传/附件语境（与
+    # R212-6 移除裸 文件/attach 同判据, R253 H 簇裸词撞车移除先例）。
+    # \bvideo\b 加 video game 族负向断言（ni-145, 与 R322 _MULTIMODAL_CTX
+    # 修复同根因, 本模式集为兄弟面）
     re.compile(
-        r"(?:图片|图像|音频|视频|照片|\bimage\b|\baudio\b|\bvideo\b|\bphoto\b|\bpicture\b|\bmedia\b)",
+        r"(?:图片|图像|音频|视频|照片|\bimage\b|\baudio\b|\bvideo\b(?![-\s]?games?\b)|\bphoto\b|\bpicture\b)",
         re.IGNORECASE,
     ),
     # R212-6: 移除裸"文件/file/attach" — 代码审查/配置类prompt的"diff文件"

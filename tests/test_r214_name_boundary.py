@@ -117,7 +117,9 @@ class TestR214LangSchema:
         # + R321: +5 (指令文件 IPI 取证 ATR 源: 3 盲点观察 + 2 TN) = 692
         # R322: +4 (指令文件 IPI 规则化 P270: 2TP+2TN, 全 en) = 696
         # R322: +3 (多模态裸子串撞车根因修复 TN: provision/photographer/video game, 全 en) = 699
-        assert len(probes) == 699
+        # R323: +1 (多模态输入门 social media 根因 TN, en) = 700
+        # R323: +3 (P271 规则化: 1TP+2TN, 全 en) = 703
+        assert len(probes) == 703
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
@@ -177,11 +179,13 @@ class TestR214LangSchema:
         # = zh-Hans 551 | en 121 | ja 18 | zh-Hant 2
         # R322: +4 en (P270 规则化: 2TP+2TN) = zh-Hans 551 | en 125 | ja 18 | zh-Hant 2
         # R322: +3 en (多模态根因修复 TN) = zh-Hans 551 | en 128 | ja 18 | zh-Hant 2
+        # R323: +1 en (多模态输入门 social media TN) = zh-Hans 551 | en 129 | ja 18 | zh-Hant 2
+        # R323: +3 en (P271 规则化 1TP+2TN) = zh-Hans 551 | en 132 | ja 18 | zh-Hant 2
         assert sum(1 for v in langs.values() if v == "zh-Hans") == 551
         assert sum(1 for v in langs.values() if v == "ja") == 18
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
-        # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108; R315: +4 en (P2-26 TN) = 112; R317: +4 en (批2 TN) = 116; R321: +5 en (指令文件 IPI 取证) = 121; R322: +4 en (P270 规则化 2TP+2TN) = 125; R322: +3 en (多模态根因修复 TN) = 128
-        assert sum(1 for v in langs.values() if v == "en") == 128
+        # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108; R315: +4 en (P2-26 TN) = 112; R317: +4 en (批2 TN) = 116; R321: +5 en (指令文件 IPI 取证) = 121; R322: +4 en (P270 规则化 2TP+2TN) = 125; R322: +3 en (多模态根因修复 TN) = 128; R323: +1 en (多模态输入门 TN) = 129; R323: +3 en (P271 规则化 1TP+2TN) = 132
+        assert sum(1 for v in langs.values() if v == "en") == 132
 
 
 class TestR214PerLanguageReport:
