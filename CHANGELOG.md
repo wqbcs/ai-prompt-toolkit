@@ -2,6 +2,37 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.114] - 2026-10-19
+
+### Added（R328 MCP agentic 面深化：73 工具 per-tool 执行覆盖 — 最大裁决面单体的可审计性）
+
+- **MCP per-tool 执行测试 `tests/test_r328_mcp_tool_coverage.py`（37 用例，覆盖 20 个高优先工具）**：
+  `mcp_server.py`（3117 行 / 73 工具）是最大裁决面单体，此前仅 ~10 工具（canary/token/compile/
+  huaweicloud 族）有执行测试，core 裁决面与整个 probe 红队面均无执行测试。本轮补执行覆盖：
+  - **core 裁决面**：prompt_lint（findings 结构 + gate 裁决 + 缺文件错误 + 确定性）/ prompt_scan
+    （注入检出 INJ-001 + 不安全裁决 + 确定性）/ prompt_sarif_report（lint/scan 类型 + 非法 JSON
+    错误 + 落盘 + SARIF 2.1.0 结构）/ prompt_engine（多层融合裁决 + 必填模板）/ prompt_scorecard
+    （评分/等级/维度/严重度计数 + 必填模板）
+  - **probe 红队面**：prompt_probe_run（聚合 + 必填）/ prompt_probe_list（非空 + agent_inject
+    探针）/ prompt_probe_detect（逐 detector）/ prompt_probe_owasp_report（OWASP LLM Top 10 2026
+    框架）/ prompt_probe_owasp_summary（风险分档 + 合规率）/ prompt_probe_detector_run（合规分 +
+    未知 detector 错误）
+  - **安全审计**：prompt_attack_vault_learn + prompt_attack_vault_check（learn→check 全流程：
+    学习的攻击必被检出 + matched_attack_type 回指）
+  - **分析/状态**：prompt_semantic_diff（哈希分歧 + 必填 + 确定性）/ multimodal_token_estimate
+    （token 预算 + 用量率）/ prompt_cache_stats + prompt_cache_lookup / config_hot_reload_status /
+    weight_preset_list / fg_template_list
+- **楔子收口——agentic 面整体可复现契约**：`TestMcpDeterminismSweep` 对 15 个确定性工具同输入
+  两次调用，剥离墙钟字段（`*_ms`/latency）后逐字段一致——最大裁决面单体的可审计性机器证明，与
+  `test_stdio_protocol.py`（stdio 协议字节一致）+ e2e CLI（字节级可复现）三处共同构成完整的
+  确定性可复现证明（楔子的三个面：CLI / stdio 协议 / MCP 工具）
+
+### 备注
+
+- 纯测试轮次，工具行为零变更；升版 67.34.113 → 67.34.114，271 规则文档 + operating curve 随升版
+  重生成，双基线（FP 0.81%@60 / miss 0.00%@703 / 过防御 6.78%@339）+ 29 步门禁链均不变；测试数
+  6827 → 6864（+37）
+
 ## [v67.34.113] - 2026-10-18
 
 ### Added（R327 公开面细化：真实"实战示例"区块 + RFC 9116 机器可读安全入口）
