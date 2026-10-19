@@ -17,7 +17,7 @@ jobs:
   release-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v7
         with:
@@ -43,9 +43,9 @@ jobs:
     needs: release-test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
@@ -67,7 +67,7 @@ jobs:
       - name: Docs drift check (rules doc sync with registry)
         run: python scripts/gen_rules_doc.py --check
 
-      - name: Release gate (同 CI 形态: --skip 1,2)
+      - name: "Release gate (同 CI 形态: --skip 1,2)"
         run: python scripts/release_gate.py --skip 1,2
 
   release-build:
@@ -76,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
