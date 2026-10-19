@@ -2,6 +2,29 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.112] - 2026-10-18
+
+### Added（R326 公开就绪：多语言自述 + 品牌标识 + PyPI 发布元数据顶配）
+
+- **多语言 README（3 语互通）**：`README.md`（中文, 主, 门禁口径）+ `en/README.md`（英文,
+  由占位索引升级为完整镜像：可信度叙事 / 竞品结构性对比 / 确定性楔子 / 完整命令面 / 架构 /
+  维度 / 合规 / MCP）+ `ja/README.md`（日文, 完整, 强差异化——同类 prompt 工具极少有日文
+  README）。三语顶部语言切换徽章互通, 确定性楔子（零 LLM · 可复现 · <100ms · SARIF/CI 原生）打头。
+- **品牌标识**：新增 `assets/logo.svg`（盾 + 对勾, 确定性门禁意象, 纯矢量单一真源）+
+  `assets/favicon.svg`；三语 README 头图改居中块（logo + 标题 + 徽章）, Probes 徽章去警红色
+  （保留门禁口径 116）。
+- **PyPI 发布元数据顶配**：`pyproject.toml` 新增 `[project.urls]`（Homepage / Repository /
+  Documentation / Changelog / Issues / Bug Tracker, PyPI 项目页链接面此前为空）；`keywords`
+  6→20（精准覆盖 prompt-security / owasp-llm / mcp / quality-gate / deterministic 等定位/赛道）；
+  `classifiers` 12→19（补 Natural Language ×3 / Scientific::AI / IT 受众 / Python::Only）。
+
+### Fixed
+
+- `pyproject.toml` `[project.urls]` 表头初版误置于 `classifiers` 与 `dependencies` 之间, TOML
+  语义将 `dependencies` 吞入 `project.urls` 子表（会静默丢弃全部运行时依赖）→ 移到
+  `dependencies` 数组之后；经真实可编辑重建 + `importlib.metadata` 读取（= PyPI 视角）复验
+  通过（urls 恰 6 链接, Requires-Dist 7 core + 全部 extras 完整）。
+
 ## [v67.34.111] - 2026-10-18
 
 ### Changed（R325 全方位多层宽域审查 → 落地优化）

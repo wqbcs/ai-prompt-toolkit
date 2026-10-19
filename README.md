@@ -1,19 +1,25 @@
+<div align="center">
+<img src="https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/assets/logo.svg" width="128" alt="AI Prompt Toolkit" />
+
 # AI Prompt Toolkit
 
 > **确定性的 Prompt 静态门禁** — 零 LLM · 可复现 · <100ms · SARIF/CI 原生。
 > 一次 CI fail 后重跑 pass 的门禁等于没有门禁。我们的门禁每次裁决逐字节一致。
 
+📖 **语言 / Language / 言語**: 中文 · [English](en/README.md) · [日本語](ja/README.md)
+
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.111-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.112-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6827%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40703probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
-[![Probes](https://img.shields.io/badge/Probes-116-red.svg)](src/ai_prompt_toolkit/probe_framework.py)
+[![Probes](https://img.shields.io/badge/Probes-116-7c3aed.svg)](src/ai_prompt_toolkit/probe_framework.py)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
+</div>
 
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(703 条 golden
 攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`

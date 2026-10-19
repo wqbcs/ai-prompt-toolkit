@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AI Prompt Toolkit">
+  <defs>
+    <linearGradient id="apat-fav" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="55%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#0d9488"/>
+    </linearGradient>
+  </defs>
+  <path d="M96 88 H416 V272 C416 366 348 436 256 464 C164 436 96 366 96 272 Z" fill="url(#apat-fav)"/>
+  <path d="M156 264 L224 332 L356 196" fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
