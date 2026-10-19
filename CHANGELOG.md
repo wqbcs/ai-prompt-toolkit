@@ -2,6 +2,35 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.115] - 2026-10-19
+
+### Added（R329 三语 README 数字漂移护栏 — R328 下一轮建议②收口）
+
+- **`sync_readme_metrics.py` 护栏扩展至三语 README 数字面**（门禁第 12 步，命令不变 → 零 CI 改动）：
+  - en/ja 镜像：8 数字徽章（Version/Tests/Miss-Rate/FP/Lint Rules/Eval Dims/MCP Tools/Probes）
+    + 核心表 4 行 + credibility 正文 8 处口径（能力概览行/基线漏检行/基线误报行/quickstart 规则数/
+    维度数/redteam 全局注册/Provider 数/门禁链步数，全部出现处）—— 镜像此前手工维护，升版/
+    加测试轮必漂移（与 R260 徽章漂移/R236 板漂移同族静态面）
+  - 主 README 两处新护栏：Tests 徽章（此前 sync_badges 写但无人验证=盲区）+「N 步门禁链」步数
+    （README 自声明"步数以 build_steps() 为单一真源, 不硬编码计数"而正文硬编码 29）
+  - 单一真源：运行时注册表 + pytest --collect-only + baselines 双基线 + build_steps() +
+    providers/_PROVIDER_TYPE_MAP（静态解析, 同 check_readme_metrics_drift 形态）；形态缺失=
+    响亮红（"面已变更, 需更新本脚本正则"）不静默放过
+- **`sync_badges.py` 三语写入**（门禁第 11 步）：en/ja 镜像 8 徽章同真源同脚本写入（URL 与主
+  同构, 仅链接目标差 ../ 前缀）；Miss-Rate/False-Positive 徽章入同步面（主+镜像, 此前双基线
+  棘轮检查红=手工改徽章 URL, 现与 check_language_baseline_readme 同一真源）；写入器纯函数化
+  （apply_badges/apply_core_table：同步时幂等字节不变/陈旧修复/缺面硬红 SystemExit）
+- **`tests/test_r329_readme_mirror_drift.py` 21 用例**（红绿两态：真实文件×真实源真相全绿锚定
+  正则面；每处护栏面定点变异必带标签红；写入器幂等/陈旧修复/缺面硬红）
+
+### 备注
+
+- 与既有护栏的辖区切分：sync_readme_metrics=三语数字口径核对（本步）；sync_badges=数字写入
+  （第 11 步, 写者在前检查者在后=门禁自愈面）；check_language_baseline_readme=分语言表+双基线
+  徽章正文（主 README）；check_readme_metrics_drift=README 组件统计三组；operating_curve.md=
+  生成器 --check 字节一致（第 26 步）
+- 本地=CI：第 11/12 步命令面未变，verify_local_ci_parity 命令集齐备性不受影响
+
 ## [v67.34.114] - 2026-10-19
 
 ### Added（R328 MCP agentic 面深化：73 工具 per-tool 执行覆盖 — 最大裁决面单体的可审计性）
