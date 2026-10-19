@@ -159,7 +159,7 @@ jobs:
         # 同 action 在 R230 success/R231 failure = 服务端 flake, 且会连带 cancel 3.10/
         # 3.11 矩阵 + skip prompt-lint/quality-gate(needs:test), 把一个观测步抖动放大
         # 成整链红。质量门禁(tests/ruff/mypy/双基线/docs)各自独立判绿, 不依赖此步。
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           file: coverage.xml
 
