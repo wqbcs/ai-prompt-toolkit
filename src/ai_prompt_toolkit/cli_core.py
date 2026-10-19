@@ -234,112 +234,10 @@ def _install_exception_handler() -> None:
 _install_exception_handler()
 
 
-_TEMPLATE_FILES: dict[str, dict[str, str]] = {
-    "general": {
-        "prompts/general-assistant.prompt.md": "---\ntemplate_type: prompt\nname: 通用助手\nmodel_compatibility: [gpt-4o, claude-3.5, qwen]\n---\n你是一个有帮助的AI助手。请根据用户的问题提供准确、有用的回答。",
-    },
-    "harmonyos": {
-        "prompts/harmonyos-dev.prompt.md": "---\ntemplate_type: prompt\nname: 鸿蒙开发助手\nmodel_compatibility: [qwen, pangu]\nindustry: 华为云\n---\n你是一个专业的HarmonyOS NEXT ArkTS开发专家。请按照以下步骤执行：\n1. 分析开发需求\n2. 提供ArkTS代码\n3. 确保符合HarmonyOS NEXT 5.0+规范",
-    },
-    "security": {
-        "prompts/security-auditor.prompt.md": "---\ntemplate_type: prompt\nname: 安全审计助手\n---\n你是一个AI安全审计专家。请检查Prompt中的安全风险：\n1. 注入攻击检测\n2. PII隐私信息泄露\n3. 供应链安全",
-    },
-    "rag": {
-        "prompts/rag-assistant.prompt.md": "---\ntemplate_type: prompt\nname: RAG检索增强助手\n---\n你是一个基于检索增强生成的AI助手。请根据提供的上下文回答问题：\n\n上下文：{{context}}\n\n问题：{{question}}",
-    },
-    "code-review": {
-        "prompts/code-reviewer.prompt.md": "---\ntemplate_type: prompt\nname: 代码审查助手\n---\n你是一个专业的代码审查专家。请审查以下代码，关注：\n1. 安全漏洞\n2. 性能问题\n3. 代码规范\n4. 可维护性",
-    },
-}
-
-
-def _apply_template(target: str, template_name: str) -> None:
-    templates = _TEMPLATE_FILES.get(template_name, {})
-    if not templates:
-        click.echo(f"未知模板: {template_name}", err=True)
-        return
-    project_dir = Path(target).resolve()
-    created = 0
-    for rel_path, content in templates.items():
-        file_path = project_dir / rel_path
-        if file_path.exists():
-            click.echo(f"  跳过(已存在): {rel_path}")
-            continue
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(content, encoding="utf-8")
-        click.echo(f"  创建: {rel_path}")
-        created += 1
-    click.echo(f"模板 '{template_name}' 应用完成 | 创建 {created} 个文件")
-
-
-def _generate_ci_config(target: str) -> None:
-    from pathlib import Path as _Path
-
-    project_dir = _Path(target).resolve()
-
-    github_dir = project_dir / ".github" / "workflows"
-    github_dir.mkdir(parents=True, exist_ok=True)
-
-    lint_action = """name: Prompt Lint & Scan
-
-on:
-  push:
-    paths: ['**/*.md', '_scenarios/**']
-  pull_request:
-    paths: ['**/*.md', '_scenarios/**']
-
-jobs:
-  prompt-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: pip install -e ".[dev]"
-      - run: prompt-cli lint -t ./_scenarios
-      - run: prompt-cli scan -t ./_scenarios
-      - run: prompt-cli evaluate -t ./_scenarios --quick
-"""
-    (github_dir / "prompt-lint.yml").write_text(lint_action, encoding="utf-8")
-    click.echo(f"  ✓ GitHub Action: {github_dir / 'prompt-lint.yml'}")
-
-    pre_commit = """repos:
-  - repo: local
-    hooks:
-      - id: prompt-lint
-        name: Prompt Lint
-        entry: prompt-cli lint -t
-        language: system
-        files: '\\.md$'
-      - id: prompt-scan
-        name: Prompt Security Scan
-        entry: prompt-cli scan -t
-        language: system
-        files: '\\.md$'
-"""
-    (project_dir / ".pre-commit-config.yaml").write_text(pre_commit, encoding="utf-8")
-    click.echo(f"  ✓ pre-commit hook: {project_dir / '.pre-commit-config.yaml'}")
-
-    dockerfile = """FROM python:3.12-slim
-WORKDIR /app
-COPY . .
-RUN pip install --no-cache-dir ".[full]"
-ENTRYPOINT ["prompt-cli"]
-"""
-    (project_dir / "Dockerfile").write_text(dockerfile, encoding="utf-8")
-    click.echo(f"  ✓ Dockerfile: {project_dir / 'Dockerfile'}")
-
-    click.echo("\nCI/CD配置生成完成! 下一步:")
-    click.echo("  1. git add .github/ .pre-commit-config.yaml Dockerfile")
-    click.echo("  2. pre-commit install")
-    click.echo("  3. docker build -t ai-prompt-toolkit .")
-
-
 @main.command(name="doctor")
 @click.option("--provider", "-p", help="仅检查指定Provider(如openai,anthropic)")
 @click.option("--json", "as_json", is_flag=True, help="JSON格式输出")
-@click.option("--init", "init_config", is_flag=True, help="首次运行: 自动生成.prompt-toolkit.yml配置模板")
+@click.option("--init", "init_config", is_flag=True, help="首次运行: 自动生成 promptlint.toml lint 配置模板")
 @click.option(
     "--gate",
     "gate_mode",
@@ -354,34 +252,38 @@ def doctor_cmd(provider: str | None, as_json: bool, init_config: bool, gate_mode
     if init_config:
         from pathlib import Path as _ConfigPath
 
-        config_path = _ConfigPath(".prompt-toolkit.yml")
-        if config_path.exists():
-            click.echo(f"配置文件已存在: {config_path}")
+        from ai_prompt_toolkit.linter.project_config import write_default_config
+
+        # R325: 与 init 共用 write_default_config 单一真源, 生成 lint 首选 promptlint.toml
+        # (P2-03 完整 schema: fail_on/waivers/severity_overrides/gap)。此前 doctor --init
+        # 独写 .prompt-toolkit.yml(YAML 子集, severity_threshold=low, 仅 cwd 发现)与 init 的
+        # promptlint.toml 双源 → 两文件并存时 lint 只读 promptlint.toml, 后者被静默忽略
+        # (同族断点, R324 只修了 init 腿)。.prompt-toolkit.yml 仍被 lint YAML rc 回退发现
+        # (存量向后兼容), 但不再由任何命令生成。
+        config_path, wrote = write_default_config(_ConfigPath("."))
+        if wrote:
+            click.echo(f"lint 配置已生成: {config_path.name} (lint 自动发现读取)")
         else:
-            # R186: 生成lint自动发现链可消费的YAML schema(键对齐lint_config.LintConfig)
-            config_content = """# ai-prompt-toolkit Lint配置(自动发现: .lint-rc.yml/.prompt-toolkit.yml)
-severity_threshold: low
-exclude_categories: []
-include_categories: []
-exclude_rules: []
-include_rules: []
-"""
-            config_path.write_text(config_content, encoding="utf-8")
-            click.echo(f"配置模板已生成: {config_path}")
+            click.echo(f"lint 配置已存在(未覆盖): {config_path.name}")
         return
 
-    from pathlib import Path as _ConfigPath
+    # R325: 用 P2-03 首选发现判"是否已有 lint 配置"(promptlint.toml/pyproject); 规则/维度
+    # 数动态计算(防 255/130 硬编码漂移, 与 _component_stats 同口径); 提示指向新真源
+    from ai_prompt_toolkit.evaluator import get_all_dimensions
+    from ai_prompt_toolkit.linter.project_config import find_project_config
+    from ai_prompt_toolkit.linter.rules import get_all_rules
 
-    _config_path = _ConfigPath(".prompt-toolkit.yml") if _ConfigPath(".prompt-toolkit.yml").exists() else None
-    if not _config_path and not as_json:
+    if find_project_config() is None and not as_json:
+        _rule_n = len(get_all_rules())
+        _dim_n = len(get_all_dimensions())
         # U3: 首次运行引导 — 快速入门+配置模板生成提示
         click.echo(
-            "提示: 未找到配置文件, 运行 prompt-cli doctor --init 生成 .prompt-toolkit.yml 模板\n"
+            "提示: 未找到 lint 配置, 运行 prompt-cli doctor --init 生成 promptlint.toml 模板\n"
             "\n快速入门:\n"
-            "  prompt-cli lint -t ./prompt.md            静态质量检查(255条规则, 零Token)\n"
+            f"  prompt-cli lint -t ./prompt.md            静态质量检查({_rule_n}条规则, 零Token)\n"
             "  prompt-cli lint -t ./prompts --gate       CI门禁模式(verdict退出码)\n"
             "  prompt-cli scan -t ./prompt.md            安全纵深扫描(注入/PII/供应链)\n"
-            "  prompt-cli eval -t ./prompt.md            130维质量评估\n"
+            f"  prompt-cli eval -t ./prompt.md            {_dim_n}维质量评估\n"
             "  prompt-cli redteam -t ./prompt.md         红队对抗探测(OWASP映射)\n"
         )
     from ai_prompt_toolkit.ab_test.provider import run_health_check

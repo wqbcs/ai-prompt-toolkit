@@ -36,7 +36,8 @@ class TestWorkflowE2E:
         """init生成配置 → lint自动发现链真实消费(配置闭环守护)"""
         result = _run("doctor", "--init")
         assert result.exit_code == 0
-        assert (project / ".prompt-toolkit.yml").exists()
+        # R325: doctor --init 现产出单一真源 promptlint.toml(lint 首选发现, P2-03 完整 schema)
+        assert (project / "promptlint.toml").exists()
         # lint运行时无"配置未发现"类异常, 且走通
         result = _run("lint", "-t", "prompts/good.md")
         assert "Lint完成" in result.output

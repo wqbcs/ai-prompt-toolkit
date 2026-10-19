@@ -45,12 +45,10 @@ class TestR94EvalPresetAndFormat:
             os.chdir(td)
             try:
                 result = runner.invoke(main, ["doctor", "--init"])
-                config_path = Path(td) / ".prompt-toolkit.yml"
+                config_path = Path(td) / "promptlint.toml"
                 assert config_path.exists()
                 content = config_path.read_text(encoding="utf-8")
-                assert (
-                    "severity_threshold" in content
-                )  # R186: init schema对齐lint_config(weight_preset待eval-config接线)
+                assert "fail_on" in content  # R325: init schema对齐P2-03单一真源(weight_preset待eval-config接线)
             finally:
                 os.chdir(old_cwd)
 

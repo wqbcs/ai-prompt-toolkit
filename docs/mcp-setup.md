@@ -73,7 +73,7 @@ Python 3.10+。裁决面 tool 零 key、零网络（server 本地 stdio，不回
 
 ## 能力面速览（73 tools 分组）
 
-Lint/Scan（prompt_lint 269 规则、prompt_scan、canary）·
+Lint/Scan（prompt_lint 271 规则、prompt_scan、canary）·
 评估（prompt_judge、prompt_evaluate 130 维度、scorecard、dataset）·
 安全引擎（5 层融合、badge、token 分析）· 红队/Probe（probe_run/detect/list/
 owasp_report）· 编译/优化（compile、gepa、auto_optimize、sanitize）· 版本/缓存 ·

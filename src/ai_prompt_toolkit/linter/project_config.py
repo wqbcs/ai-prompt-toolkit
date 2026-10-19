@@ -242,12 +242,12 @@ def load_project_config(path: Path | None) -> LintConfig:
     )
 
 
-# R324: init / doctor --init 生成配置的单一真源。
-# 收敛既有三命名漂移: init 曾落 .prompt-cli.toml(config.py 运行时 schema, lint 不读),
-# doctor --init 曾落 .prompt-toolkit.yml(YAML 子集), 而 lint 首选发现(P2-03)只认
-# promptlint.toml / pyproject [tool.promptlint] —— 致 "init 产物被 lint 静默忽略"
-# (test_e2e_workflow R186 同名断点)。单一真源=本常量 + write_default_config,
-# init 与 doctor --init 共用, 闭合 init→lint 配置环。
+# R324/R325: init 与 doctor --init 生成 lint 配置的单一真源。
+# R324: init 从 .prompt-cli.toml(config.py 运行时 schema, lint 不读) 收敛到本真源;
+# R325: doctor --init 从独写 .prompt-toolkit.yml(YAML 子集, severity_threshold=low,
+# 仅 cwd 发现) 收敛到本真源 —— 闭合 init→lint / doctor→lint 配置环(此前同族断点
+# 只修了 init 腿, doctor 腿双源致 .prompt-toolkit.yml 被 lint 静默忽略)。
+# .prompt-toolkit.yml 仍被 lint YAML rc 回退发现(存量向后兼容), 但不再由命令生成。
 # 确定性: 固定字符串, 无时间戳 / 无规则计数(防 R230-X1 漂移面)。
 DEFAULT_PROMPTLINT_TOML: str = """\
 # promptlint.toml — ai-prompt-toolkit 项目级 lint 配置

@@ -57,7 +57,7 @@ class TestR103GradeAndDecision:
             os.chdir(td)
             try:
                 result = runner.invoke(main, ["doctor", "--init"])
-                config_path = Path(td) / ".prompt-toolkit.yml"
+                config_path = Path(td) / "promptlint.toml"
                 assert config_path.exists()
             finally:
                 os.chdir(old_cwd)

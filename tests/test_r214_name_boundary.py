@@ -47,7 +47,6 @@ class TestR214LangSchema:
 
     def test_all_probes_have_valid_lang(self):
         probes = self._probes()
-        # R220: 113 | R230: +4(P265 TP×2/TN×2) +8(TN扩容) = 125 | R231: +6(OWASP 2026子面 TP×4/TN×2) = 131
         # R234: +12(P2-23 buried-injections 基准语料 TP×4/TN×8) = 143
         # R235: +7(P2-11 TN 侧 buried-injections 剩余面: json数组/终端/邮件/sql结果/yaml/base64日志/心跳) = 150
         # R238: +7(P2-11 TN 侧 buried-injections 剩余面: http日志/markdown报告/notebook/xml feed/git log/package.json/中文工单) = 157
@@ -119,10 +118,17 @@ class TestR214LangSchema:
         # R322: +3 (多模态裸子串撞车根因修复 TN: provision/photographer/video game, 全 en) = 699
         # R323: +1 (多模态输入门 social media 根因 TN, en) = 700
         # R323: +3 (P271 规则化: 1TP+2TN, 全 en) = 703
-        assert len(probes) == 703
+        # R325: 探针总数断言改为动态读真源(上方台账为历史留痕, 防每轮 +N 手工漏改致红)
+        assert len(probes) == self._source_probe_count()
         for p in probes:
             assert "lang" in p, f"{p['name']} 缺 lang 标签"
             assert _BCP47_RE.match(p["lang"]), f"{p['name']} lang 非 BCP-47: {p['lang']}"
+
+    @staticmethod
+    def _source_probe_count() -> int:
+        # R325: 探针总数唯一真源 = data/golden_attacks.json(GOLDEN_FILE)["probes"], 动态计数防漂移
+        g = json.loads(GOLDEN_FILE.read_text(encoding="utf-8"))
+        return len(g["probes"])
 
     def test_current_language_distribution(self):
         probes = self._probes()

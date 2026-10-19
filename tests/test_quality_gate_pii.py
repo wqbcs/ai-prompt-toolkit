@@ -55,6 +55,50 @@ class TestQualityGate:
         assert d["verdict"] == "pass"
         assert d["score"] == 100.0
 
+    def test_warn_rule_ids(self):
+        # R325: 补 warn_rule_ids 分支(此前 0 覆盖) — 命中告警规则 ID → WARN
+        gate = QualityGate({"fail_on_critical": False, "fail_on_high": False, "warn_rule_ids": ["P999"]})
+        findings = [Finding(rule_id="P999", severity=Severity.MEDIUM, description="x")]
+        result = gate.evaluate(findings)
+        assert result.verdict == Verdict.WARN
+
+    def test_fail_on_high_count_threshold(self):
+        # R325: 补 fail_on_high_count 自定义阈值 — high 数 <= 阈值 PASS, > 阈值 FAIL
+        gate = QualityGate({"fail_on_high_count": 2})
+        assert (
+            gate.evaluate([Finding(rule_id="T", severity=Severity.HIGH, description="x") for _ in range(2)]).verdict
+            == Verdict.PASS
+        )
+        assert (
+            gate.evaluate([Finding(rule_id="T", severity=Severity.HIGH, description="x") for _ in range(3)]).verdict
+            == Verdict.FAIL
+        )
+
+    def test_min_score_boundary(self):
+        # R325: 补 min_score 边界 — score==min_score 不 WARN(仅严格小于触发), 低于 WARN
+        gate = QualityGate({"fail_on_critical": False, "fail_on_high": False, "warn_on_medium": False})
+        assert gate.evaluate([], score=60.0).verdict == Verdict.PASS
+        assert gate.evaluate([], score=59.9).verdict == Verdict.WARN
+
+    def test_warn_on_medium_count_boundary(self):
+        # R325: 补 warn_on_medium_count 边界 — medium 数 == 阈值不 WARN, > 阈值 WARN
+        gate = QualityGate({"fail_on_high": False})
+        assert (
+            gate.evaluate([Finding(rule_id="T", severity=Severity.MEDIUM, description="x") for _ in range(3)]).verdict
+            == Verdict.PASS
+        )
+        assert (
+            gate.evaluate([Finding(rule_id="T", severity=Severity.MEDIUM, description="x") for _ in range(4)]).verdict
+            == Verdict.WARN
+        )
+
+    def test_info_count_reported(self):
+        # R325: 补 info_count 上报 + INFO 不影响裁决
+        gate = QualityGate()
+        result = gate.evaluate([Finding(rule_id="T", severity=Severity.INFO, description="x")])
+        assert result.info_count == 1
+        assert result.verdict == Verdict.PASS
+
 
 class TestPIIDetector:
     def test_detect_email(self):

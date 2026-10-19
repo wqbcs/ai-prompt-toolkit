@@ -2,6 +2,59 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.111] - 2026-10-18
+
+### Changed（R325 全方位多层宽域审查 → 落地优化）
+
+- **`doctor --init` 收敛到 lint 配置单一真源**（P1 断点闭合, R324 只修了 init 腿）:
+  此前 `doctor --init` 独写内联 `.prompt-toolkit.yml`（YAML 子集, `severity_threshold=low`,
+  仅 cwd 发现）与 `init` 的 `promptlint.toml` 双源 → 两文件并存时 `lint` 只读
+  `promptlint.toml`, 后者被静默忽略（同族"init 产物被 lint 静默忽略"断点, R324 只修了
+  init 腿）。R325 使 `doctor --init` 经同一 `write_default_config` / `DEFAULT_PROMPTLINT_TOML`
+  产出 `promptlint.toml`（P2-03 完整 schema: fail_on/waivers/severity_overrides/gap）, 闭合
+  init→lint / doctor→lint 配置环。`.prompt-toolkit.yml` 仍被 lint YAML-rc 回退链发现（存量
+  向后兼容, test_r162/test_r324 守护）, 但不再由任何命令生成。同步修正 `project_config.py`
+  单一真源注释（R324 声称的"doctor 收敛"在 R325 才真正实现）+ 7 测试
+  （test_r85×5 / test_r94 / test_r103）+ 1 e2e（test_e2e_workflow）改指新契约。
+- **doctor 快速入门提示**: 规则/维度数改动态计算（`len(get_all_rules())` /
+  `len(get_all_dimensions())`, 与 `_component_stats` 同口径, 修陈旧"255 条规则"）; 配置探测
+  改用 P2-03 首选发现 `find_project_config()`（不再只查 `.prompt-toolkit.yml`）; 提示指向新真源。
+
+### Removed
+
+- `cli_core.py` 三个死函数（`_TEMPLATE_FILES` / `_apply_template` / `_generate_ci_config`）
+  —— 命令拆分到 `cli/commands/` 前遗留, 零引用, 且与 `template_commands.py` 的 live 版本已
+  发散（python 3.12 + 写 prompt-lint.yml/Dockerfile/pre-commit vs live 版 3.11 只写 prompt-ci.yml）。
+  删 ~100 行, 消除一处"同名不同行为"陷阱。
+
+### Fixed（README / 可信度文档 事实漂移）
+
+- README quickstart `watch` 幽灵 flag（`-s` / `--compliance` 不存在, 照抄即报错）→
+  `prompt-cli watch -t ./prompts/`; 能力表 watch 行删"合规"语义（watch 无 compliance 模式）。
+- README 死链 `_glossary.md` / `_adaptation_matrix.md`（文件不存在）→ 指向实际存在的
+  `docs/adoption.md` / `docs/mcp-setup.md`。
+- 陈旧数字: 过防御安全族 `91→93` 规则（P270/P271 后真值, operating_curve 分母）; mcp-setup
+  `269→271`; 架构树 `injection 15→19` / `zh_injection 15→18` / `sanitizer 8 层→11/13 步`
+  （standard/strict 实证步数, 且 sanitizer 实际在包根非 security/ 子树）。
+- 可信度文档"现行"块: `docs/规则漏检率基线.md` R321(692/385)→R323(703/391) 与 README 徽章同口径;
+  `docs/规则误报率基线.md` `269→271` checker。
+
+### Added（测试质量: 裁决函数分支补全 + 防漂移锚点）
+
+- `QualityGate.evaluate()` 补 5 条分支测试（CI 红/绿裁决函数, 此前 `warn_rule_ids` 0 覆盖）:
+  warn_rule_ids / fail_on_high_count 自定义阈值 / min_score 边界(== 不触发) /
+  warn_on_medium_count 边界(== 不触发) / INFO 计数上报。
+- `test_r214` 探针总数断言改为动态读真源 `golden_attacks.json["probes"]`（上方人工台账降为
+  历史留痕）, 消除"每轮 +N 手工漏改致红"的漂移面（同 test_r258 版本戳一类）。
+
+### 数字终态
+
+- 测试 6822→6827（+5 QualityGate 分支）; 规则 271 / 探针 703（本轮不变）; 误报 0.81%@60 /
+  漏检 0.00%@703 / 过防御 6.78%@339（双基线不回归）; 门禁 29 步 GATE PASS（--skip 1,2）;
+  版本 67.34.110→67.34.111。**CI 未观测**（本机无 GitHub 凭据; 本地=CI 验证为可机器验证最强替代）。
+
+---
+
 ## [v67.34.110] - 2026-10-18
 
 ### Changed（R324 init 双配置产出，闭合 init→lint 首选发现环）

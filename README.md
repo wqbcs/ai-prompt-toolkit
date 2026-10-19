@@ -5,8 +5,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.110-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-6822%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.111-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-6827%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40703probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -36,7 +36,7 @@ prompt-cli baseline
 **过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
 "含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
 用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
-实测：**安全族误杀率 6.78%**（91 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315→R317
+实测：**安全族误杀率 6.78%**（93 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315→R317
 逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
 这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
@@ -139,7 +139,7 @@ TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批�
 | **Token分析** | `prompt-cli token` | 多模型Token统计(GPT-4/Claude/盘古等) |
 | **Canary水印** | `prompt-cli canary` | 注入/检测Canary Token，泄露追踪 |
 | **模板市场** | `prompt-cli market` | REST API(FastAPI)，发布/评审/灰度部署 |
-| **Watch模式** | `prompt-cli watch` | 文件变更自动Lint+合规检查 |
+| **Watch模式** | `prompt-cli watch` | 文件变更自动重跑 Lint/Scan/评估 |
 | **健康检查** | `prompt-cli doctor` | 环境依赖+配置完整性检查 |
 | **国际化** | `prompt-cli i18n` | LLM翻译+术语表+回退策略 |
 | **评估对比** | `prompt-cli eval-compare` | 多版本评估结果对比 |
@@ -320,8 +320,8 @@ prompt-cli assert --response response.txt --config assertions.yaml
 # Playground 本地 Web UI(与 MCP 入口 prompt-cli mcp 分属两通道)
 prompt-cli serve
 
-# Watch模式(变更自动Lint+合规)
-prompt-cli watch -s ./prompts/ --compliance
+# Watch模式(文件变更自动重跑, --command 选 lint|scan|evaluate)
+prompt-cli watch -t ./prompts/
 
 # 安全评分+Badge(SVG, -o 必填)
 prompt-cli score -t my_prompt.md
@@ -394,13 +394,13 @@ src/ai_prompt_toolkit/
 │   └── lsp_server.py         # LSP协议服务
 ├── security/                 # 安全扫描引擎
 │   ├── scanner.py            # 扫描编排器(5层)
-│   ├── injection_detector.py # 注入检测(15条)
-│   ├── zh_injection_rules.py # 中文注入(15条)
+│   ├── injection_detector.py # 注入检测(19条)
+│   ├── zh_injection_rules.py # 中文注入(18条)
 │   ├── pii_detector.py       # PII隐私检测(12种)
 │   ├── supply_chain_detector.py  # 供应链检测(含AI工具链)
 │   ├── huaweicloud_compliance.py # 华为云7域合规
 │   ├── prompt_scorecard.py   # 5维度评分卡
-│   ├── prompt_sanitizer.py   # 8层Prompt消毒器
+│   ├── prompt_sanitizer.py   # Prompt消毒器(包根, 11/13步 standard/strict)
 │   ├── structural_analyzer.py    # 结构/边界/操控/熵分析
 │   ├── scorer.py             # CVSS-like安全评分
 │   └── inheritance_auditor.py    # 继承审计
@@ -700,5 +700,5 @@ MIT License
 ## 链接
 
 - [变更日志](CHANGELOG.md)
-- [术语表](_glossary.md)
-- [适配矩阵](_adaptation_matrix.md)
+- [采用路径](docs/adoption.md)
+- [MCP 接入](docs/mcp-setup.md)
