@@ -30,6 +30,9 @@
    （私有渠道，不公开，不通知仓库 owner 之外的任何人）
 2. 备选：`gwc0218@qq.com`（GPG 公钥待补——报告敏感内容请优先 advisory 渠道）
 
+> 机器可读入口（RFC 9116）：[`.well-known/security.txt`](.well-known/security.txt)
+> —— 供安全扫描 / 自动化工具发现报告渠道（本文是其人类可读的政策页）。
+
 ### SLA
 
 | 严重度 | 首次响应 | 修复/缓解方案 |

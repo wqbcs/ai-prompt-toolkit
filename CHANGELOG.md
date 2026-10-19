@@ -2,6 +2,33 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.113] - 2026-10-18
+
+### Added（R327 公开面细化：真实"实战示例"区块 + RFC 9116 机器可读安全入口）
+
+- **三语 README「实战示例 / See it in action / 実演」区块**：`README.md` + `en/README.md` +
+  `ja/README.md` 可信度叙事之后新增真实输出区块——对一段埋雷 agent prompt 跑 `prompt-cli lint`
+  的**逐字节真实输出**（14 findings：5 ✗ critical / 8 ⚠ warning / 1 • info，每条指向具体规则 +
+  行号）+ `--gate` 的 `Quality Gate: ❌ FAIL` 裁决（exit 2 阻断 CI 合并）；可复现命令随区块给出
+  （`pip install -e . && prompt-cli lint -s agent_prompt.md`）——claim → evidence 叙事，最有力的
+  公开产物（非编造，逐字节可复现）；EN/JA 区块标注规则消息为本项目第一语言 zh-Hans
+- **RFC 9116 机器可读安全入口** `.well-known/security.txt`：安全扫描/自动化工具可发现报告渠道
+  （GitHub Security Advisories 首选 + email 备选）+ 政策页指针 + `Expires` + `Preferred-Languages`
+  （zh-Hans, en）——安全工具示范安全响应流程的机器可读面
+- **`SECURITY.md` 报告渠道节增强**：新增 RFC 9116 机器可读入口回指（与 `.well-known/security.txt`
+  互相印证）
+
+### Fixed
+
+- **三语 README 死链**：`en/README.md` + `ja/README.md` 子目录内 `promptfoo-coexistence.md`
+  相对链接补 `../` 前缀（子目录相对路径缺失致死链）
+
+### 备注
+
+- 纯公开面/文档轮次，工具行为零变更；升版 67.34.112 → 67.34.113，271 规则文档 + operating curve
+  随升版重生成，双基线（FP 0.81%@60 / miss 0.00%@703 / 过防御 6.78%@339）+ 测试数（6827）+
+  29 步门禁链均不变
+
 ## [v67.34.112] - 2026-10-18
 
 ### Added（R326 公开就绪：多语言自述 + 品牌标识 + PyPI 发布元数据顶配）

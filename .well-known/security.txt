@@ -1,0 +1,5 @@
+Contact: https://github.com/wqbcs/ai-prompt-toolkit/security/advisories/new
+Contact: mailto:gwc0218@qq.com
+Policy: https://github.com/wqbcs/ai-prompt-toolkit/blob/main/SECURITY.md
+Expires: 2027-10-18T00:00:00.000Z
+Preferred-Languages: zh-Hans, en
