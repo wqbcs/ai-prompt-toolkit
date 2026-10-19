@@ -3,7 +3,7 @@
 验收（02 行87）：`prompt-cli init --snippet` 出 toml+pre-commit+CI 三段。
 设计约束：
 - 零副作用：不创建目录/不写文件（供已有项目按需粘贴）
-- 单一真源：toml 片段==CONFIG_TEMPLATE_TOML；CI 片段==--ci 落盘内容
+- 单一真源：toml 片段==DEFAULT_PROMPTLINT_TOML；CI 片段==--ci 落盘内容
   （--snippet 打印与 --ci 落盘同常量，防两处硬编码漂移）
 """
 
@@ -18,7 +18,7 @@ from ai_prompt_toolkit.cli.commands.template_commands import (
     _CI_SNIPPET,
     _PRECOMMIT_SNIPPET,
 )
-from ai_prompt_toolkit.config import CONFIG_TEMPLATE_TOML
+from ai_prompt_toolkit.linter.project_config import DEFAULT_PROMPTLINT_TOML
 
 if TYPE_CHECKING:  # 仅类型标注用（from __future__ import annotations 下安全）
     from pathlib import Path
@@ -38,14 +38,14 @@ def _invoke(args: list[str], target: Path | None = None) -> str:
 class TestSnippetMode:
     def test_outputs_three_fragments(self, tmp_path):
         out = _invoke(["--snippet"], target=tmp_path)
-        assert "配置片段 1/3: .prompt-cli.toml" in out
+        assert "配置片段 1/3: promptlint.toml" in out
         assert "配置片段 2/3: .pre-commit-config.yaml" in out
         assert "配置片段 3/3: .github/workflows/prompt-ci.yml" in out
 
     def test_toml_fragment_matches_single_source(self, tmp_path):
-        # toml 片段必须== generate_config 的真源模板（单一真源契约）
+        # toml 片段必须== 生成配置的真源模板（单一真源契约）
         out = _invoke(["--snippet"], target=tmp_path)
-        assert CONFIG_TEMPLATE_TOML.strip() in out
+        assert DEFAULT_PROMPTLINT_TOML.strip() in out
 
     def test_ci_fragment_matches_ci_snippet_constant(self, tmp_path):
         out = _invoke(["--snippet"], target=tmp_path)
@@ -91,7 +91,9 @@ class TestInitRegression:
         _invoke([], target=proj)
         for d in ("prompts", "tests", "configs"):
             assert (proj / d).is_dir(), f"缺目录 {d}"
+        # R324: init 双配置产出(运行时 .prompt-cli.toml + 门禁 promptlint.toml)
         assert (proj / ".prompt-cli.toml").exists()
+        assert (proj / "promptlint.toml").exists()
 
     def test_template_flag_still_works(self, tmp_path):
         proj = tmp_path / "proj"

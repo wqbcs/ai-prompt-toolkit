@@ -108,10 +108,10 @@ class TestTemplateCommands:
         monkeypatch.chdir(tmp_path)
         result = runner.invoke(main, ["init"])
         assert result.exit_code == 0
-        # R319: 移除 `or True` 重言面 — 真实断言生效并修复陈旧契约:
-        # init 现行落盘 .prompt-cli.toml（yml→toml 命名演进, 旧名
-        # .prompt-toolkit.yml 已废弃, CLI 输出自证 "配置文件已生成: …\.prompt-cli.toml"）
+        # R324: init 双配置产出 — 运行时配置(原行为) + lint 门禁配置 promptlint.toml
+        # (lint 首选发现实际读取, 闭合 init→lint 环; 详见 test_r324_config_loop)
         assert (tmp_path / ".prompt-cli.toml").exists()
+        assert (tmp_path / "promptlint.toml").exists()
 
 
 class TestTemplateCommandExtras:

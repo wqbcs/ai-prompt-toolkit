@@ -2,6 +2,52 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.110] - 2026-10-18
+
+### Changed（R324 init 双配置产出，闭合 init→lint 首选发现环）
+
+- **`prompt-cli init` 一次性产出双配置**（采用摩擦/首发现验，对标 ruff/biome
+  `init` 脚手架能力面）: 此前 `init` 只产出**运行时**配置 `.prompt-cli.toml`
+  （config.py schema, 供 eval/ab_test/compliance），而 lint 首选发现（P2-03）
+  只认 `promptlint.toml` / `pyproject [tool.promptlint]` —— 门禁配置需另跑
+  `doctor --init`。R324 使 `init` 同时产出**运行时**（`.prompt-cli.toml`, 原
+  行为保留）+ **lint 门禁**（`promptlint.toml`, 经新单一真源
+  `project_config.write_default_config` / `DEFAULT_PROMPTLINT_TOML`, 确定性无
+  时间戳/无规则计数防 R230-X1 漂移面）。`init --snippet` 的 toml 片段同切该
+  真源（门禁接入面, print==write 一致）。**闭环**: `init` 产物现被真实 `lint`
+  命令 P2-03 首选发现命中并加载（`test_r324_config_loop` 守护 "项目配置" echo）。
+  **向后兼容**: `doctor --init`（R186 契约 `.prompt-toolkit.yml`, lint YAML rc
+  回退链）行为不变；存量 `.prompt-cli.toml`/`.prompt-toolkit.yml` 用户 lint 行为
+  不回归。
+- **运营点公开数据页版本戳重生成**（可信度基建, 预存漂移修复）: R323 升版
+  67.34.108→109 漏跑 `gen_operating_curve.py`（与 gen_rules_doc 同族的「升版后
+  必重生成」纪律）致 operating_curve.json/md 内嵌版本戳陈旧, test_r258 `--check`
+  红（本轮全量 pytest 抓到; git stash 实证 = HEAD 预存漂移, 非本轮回归）。重生成
+  后版本戳=67.34.110, 数据面本就同步（diff 仅版本行）。
+
+### Added
+
+- **R324 顶配改进方案与开源调研**（`docs/planning/R324_改进方案与开源调研.md`,
+  本轮 3 路联网调研 2026-10 赛道真貌）: 核心判断 =「确定性静态 prompt/agent
+  扫描」已成赛道 table stakes（promptlint / prompt-guard / SkillSpector≈20k★
+  等）, 进攻叙事锚点应从「271 规则」转向「字节级双基线可信度 + 多语言 + agentic
+  面」；四问反思（定位/核心价值/方向/低价值陷阱）+ 四轴清单（A 功能 / B 叙事 /
+  C 细节 / D UX, 决策受发布窗口纪律 + ICP 门控约束）。明确拒绝「每端最优技术栈」
+  字面铺端 = T7 低价值陷阱。
+- **tests/test_r324_config_loop.py**（8 测试: 单一真源确定性 / init→lint 首选发现
+  闭环 / init 双配置 / schema 可解析 / 幂等不覆盖 / 向后兼容）。
+
+### 验证
+
+- 目标测试 85/85 全绿（r324/r182/r229/e2e/r234/r85/r94/r103/r258）；全量 pytest
+  6822 全绿单独实跑（测试 6814→6822 = +8 test_r324_config_loop；门禁 29 步
+  `--skip 1,2` 形态: step1 全量 pytest 本地实跑, step2 覆盖率棘轮交 CI test 作业
+  同命令判定）
+- 版本一致性 `check_version_consistency`: 0 漂移；`gen_rules_doc` 271 页重生成
+  67.34.110；`sync_readme_metrics` 指标与真实值一致
+- **CI 未观测**（本机无 GitHub 凭据: gh 未登录 + 私有仓 api 404; 本地=CI 验证为
+  可机器验证最强替代, 需 GitHub 侧确认双绿）
+
 ## [v67.34.109] - 2026-10-18
 
 ### Added（R323 指令文件 IPI 规则化 P271 + 多模态输入门修复）

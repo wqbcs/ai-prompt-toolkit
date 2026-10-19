@@ -146,16 +146,17 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
     help="R229-P2-22: 轻量片段模式 — 只打印 toml+pre-commit+CI 三段配置片段(不创建目录/不写文件), 供已有项目按需粘贴",
 )
 def init_project(target: str, non_interactive: bool, ci: bool, template: str | None, snippet_mode: bool) -> None:
-    """初始化项目：创建项目结构和配置文件"""
-    from ai_prompt_toolkit.config import CONFIG_TEMPLATE_TOML, generate_config
+    """初始化项目：创建项目结构 + 运行时配置 + lint 门禁配置"""
+    from ai_prompt_toolkit.config import generate_config
+    from ai_prompt_toolkit.linter.project_config import DEFAULT_PROMPTLINT_TOML, write_default_config
     from ai_prompt_toolkit.output import success
 
     if snippet_mode:
         # 轻量片段模式：零副作用（不建目录/不写文件），只打印三段配置。
-        # toml 片段与 generate_config 同一真源（CONFIG_TEMPLATE_TOML），
+        # toml 片段与 init / doctor --init 落盘同一真源（DEFAULT_PROMPTLINT_TOML），
         # pre-commit/CI 片段与 --ci 落盘内容同常量 —— 打印即所见即所得。
-        click.echo("── 配置片段 1/3: .prompt-cli.toml ──")
-        click.echo(CONFIG_TEMPLATE_TOML.rstrip())
+        click.echo("── 配置片段 1/3: promptlint.toml ──")
+        click.echo(DEFAULT_PROMPTLINT_TOML.rstrip())
         click.echo("")
         click.echo("── 配置片段 2/3: .pre-commit-config.yaml (本地钩子) ──")
         click.echo(_PRECOMMIT_SNIPPET.rstrip())
@@ -173,12 +174,21 @@ def init_project(target: str, non_interactive: bool, ci: bool, template: str | N
     for d in dirs:
         (target_path / d).mkdir(exist_ok=True)
 
-    config_file = target_path / ".prompt-cli.toml"
-    if not config_file.exists():
-        generate_config(config_file)
-        click.echo(f"  配置文件已生成: {config_file}")
+    # 运行时配置(Provider/缓存/安全阈值 — eval/ab_test/compliance 消费) 原行为保留
+    runtime_cfg = target_path / ".prompt-cli.toml"
+    if not runtime_cfg.exists():
+        generate_config(runtime_cfg)
+        click.echo(f"  运行时配置已生成: {runtime_cfg.name}")
     else:
-        click.echo(f"  配置文件已存在: {config_file}")
+        click.echo(f"  运行时配置已存在: {runtime_cfg.name}")
+
+    # R324: lint 门禁配置 promptlint.toml(lint 首选发现实际读取) — 使 init 一次性
+    # 完成门禁+运行时双配置(此前 init 只出运行时配置, 门禁需另跑 doctor --init)
+    lint_cfg, wrote = write_default_config(target_path)
+    if wrote:
+        click.echo(f"  lint 配置已生成: {lint_cfg.name} (lint 自动发现读取)")
+    else:
+        click.echo(f"  lint 配置已存在(未覆盖): {lint_cfg.name}")
 
     if template:
         _apply_template(target, template)

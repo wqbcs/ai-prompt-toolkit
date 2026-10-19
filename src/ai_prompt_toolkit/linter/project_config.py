@@ -240,3 +240,49 @@ def load_project_config(path: Path | None) -> LintConfig:
         gap_max_rate=gap_max_rate,
         extra={k: v for k, v in section.items() if k not in _KNOWN_KEYS},
     )
+
+
+# R324: init / doctor --init 生成配置的单一真源。
+# 收敛既有三命名漂移: init 曾落 .prompt-cli.toml(config.py 运行时 schema, lint 不读),
+# doctor --init 曾落 .prompt-toolkit.yml(YAML 子集), 而 lint 首选发现(P2-03)只认
+# promptlint.toml / pyproject [tool.promptlint] —— 致 "init 产物被 lint 静默忽略"
+# (test_e2e_workflow R186 同名断点)。单一真源=本常量 + write_default_config,
+# init 与 doctor --init 共用, 闭合 init→lint 配置环。
+# 确定性: 固定字符串, 无时间戳 / 无规则计数(防 R230-X1 漂移面)。
+DEFAULT_PROMPTLINT_TOML: str = """\
+# promptlint.toml — ai-prompt-toolkit 项目级 lint 配置
+# 发现: 从 cwd 向上查找(就近优先, git 根锚定); 兼容 pyproject.toml [tool.promptlint]
+# 采用路径: docs/adoption.md   规则语义 / 修复指引: prompt-cli explain Pxxx
+# 变更纪律: 放宽 fail_on / 增 waiver / 降 gap 阈值 = 显式 PR + 理由(棘轮只收紧)
+
+# 门禁级别: critical / high / medium (默认 high; CLI --fail-on 优先)
+fail_on = "high"
+
+# 启用 / 禁用规则(支持前缀, 如 "P1" = 所有 P1xx; 与 CLI --rules / --exclude 同语义)
+# include_rules = ["P1"]
+# exclude_rules = ["P048"]
+
+# 全局豁免(等价文件内 promptlint:ignore; git 史为审计留痕)
+# waivers = ["P119"]
+
+# 单规则严重度覆盖(改裁决级, 参与 gate / fail-on / has_errors)
+# [severity_overrides]
+# P012 = "low"
+
+# gap-report 门禁: 平均缺口率超阈值退出码 1(取值 0-1)
+# [gap]
+# max_rate = 0.86
+"""
+
+
+def write_default_config(target_dir: Path, overwrite: bool = False) -> tuple[Path, bool]:
+    """R324: 在 target_dir 生成默认 promptlint.toml(lint 首选配置的单一真源)。
+
+    返回 (路径, 是否实际写入)。已存在且 overwrite=False → 不覆盖(幂等, 防误伤存量配置)。
+    确定性: 同一输入逐字节一致(固定模板, 无时间戳 / 计数)。
+    """
+    path = Path(target_dir) / "promptlint.toml"
+    if path.exists() and not overwrite:
+        return path, False
+    path.write_text(DEFAULT_PROMPTLINT_TOML, encoding="utf-8")
+    return path, True
