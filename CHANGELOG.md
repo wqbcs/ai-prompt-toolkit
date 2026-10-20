@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.119] - 2026-10-20
+
+### Fixed（R333 P3-21 相邻面：非增量 --fail-on 判定面覆写）
+
+- 非增量 `--fail-on critical`（及任意级别）判定面 PASS 被末尾全量退出路径按 has_errors
+  （含更低级）重裁覆写为 exit 2，违背 R203 契约（"--fail-on <level> = level+ 有 finding
+  才 exit 2"）。R331 只锁增量面；R333 将 `_failon_pass` 裁决锁扩展到非增量面（更常用
+  契约面）。red-green 2 测试锁（test_r203_fail_on_fp.py）。
+
+### Added（R333 开源调研与改进方案）
+
+- docs/planning/R333_开源调研与改进方案.md：外部新鲜信号（devsecops 2026 市场"star≠采用"、
+  arXiv 2509.22241"65.4% 注入规避靠编码变形"、agentguard.dev"84% agent 配置允许任意网络
+  抓取"）+ 定位反问 + 按杠杆排序改进清单 + 陷阱清单。
+
 ## [v67.34.118] - 2026-10-20
 
 ### Added（R332 LSP 接入指南 + 服务端 stdio e2e 钉死）

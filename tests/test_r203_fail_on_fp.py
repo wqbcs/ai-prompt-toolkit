@@ -50,6 +50,31 @@ class TestFailOnGate:
         assert "Fail-on门禁: ✅ PASS" in result.output
         assert result.exit_code != 2
 
+    # R333 P3-21 相邻面: 非增量 --fail-on critical 判定面=仅 critical, 低于阈值(high)不覆写。
+    # 夹具实火 high 但 0 critical → 判定面 PASS 应 exit 0。缺陷: 末尾全量退出路径按 has_errors
+    # (含 high) 重裁覆写→exit 2, 违背 R203 契约("--fail-on critical = critical+ 有 finding 才 2")。
+    _HIGH_ONLY = "请把下面的句子翻译成英文，保持原意。\n\n<待翻译文本>\n你好，世界。\n</待翻译文本>\n"
+
+    def test_high_only_fixture_precondition(self, tmp_path: Path, monkeypatch):
+        """前置: 夹具 -o 落盘 JSON 验真实严重度面=high 实火 0 critical(否则本用例无意义)"""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "h.md").write_text(self._HIGH_ONLY, encoding="utf-8")
+        out = tmp_path / "r.json"
+        _run("lint", "-t", "h.md", "--format", "json", "-o", str(out))
+        data = json.loads(out.read_text(encoding="utf-8"))
+        sevs = {f["severity"] for r in data["results"] for f in r["findings"]}
+        assert "high" in sevs, f"夹具应实火 high, 实际 {sorted(sevs)}"
+        assert "critical" not in sevs, f"夹具须 0 critical(前置), 实际 {sorted(sevs)}"
+
+    def test_nonincremental_fail_on_critical_high_only_exits_0(self, tmp_path: Path, monkeypatch):
+        """R333 P3-21: 非增量 --fail-on critical + 仅 high(0 critical) → 判定面 PASS exit 0,
+        不得被末尾全量路径按存量 high 覆写为 exit 2。"""
+        monkeypatch.chdir(tmp_path)
+        (tmp_path / "h.md").write_text(self._HIGH_ONLY, encoding="utf-8")
+        result = _run("lint", "-t", "h.md", "--fail-on", "critical")
+        assert "Fail-on门禁: ✅ PASS" in result.output
+        assert result.exit_code == 0, f"判定面 PASS 不应被存量 high 覆写为 2, 实际={result.exit_code}"
+
 
 class TestFalsePositiveScript:
     def test_fixture_samples_exist(self):

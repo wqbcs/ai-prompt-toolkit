@@ -1151,11 +1151,12 @@ def lint(
         elif _bv["status"] == "corrupt":
             click.echo(f"  ⚠️ 基线完整性: 基线文件 JSON 非法 {_bp}", err=True)
 
-    # R331: 增量 --fail-on PASS 裁决锁 — 判定面=仅 NEW findings, 存量放行
-    # (R224 规格: 老仓库接入不被存量打回)。函数末尾的全量退出路径会按存量
-    # HIGH 重裁覆写该 PASS(exit 2), 违背增量契约 — 此处记录裁决, 报告落盘
-    # 完成后直接 exit 0(非增量 / --gate 面不触碰, 行为零变更)。
-    _incremental_failon_pass = False
+    # R331+R333: --fail-on PASS 裁决锁 — 判定面=该级别及以上 findings(增量面=仅 NEW), 低于阈值
+    # 的 finding 不覆写。判定面 PASS 时, 函数末尾的全量退出路径会按 has_errors(含更低级) 重裁
+    # 覆写该 PASS(exit 2), 违背 R203 契约(--fail-on <level> = level+ 有 finding 才 exit 2)。
+    # 此处记录裁决, 报告落盘完成后直接 exit 0。--gate 面自裁(上方已 exit) 不触碰。
+    # R331 只锁增量面; R333 扩展到非增量面(P3-21 相邻面, 更常用契约面)。
+    _failon_pass = False
     # P2-03: 配置级 fail-on 兜底 — CLI 显式 --fail-on 优先, 未指定时用
     # promptlint.toml 的 fail_on(默认 high), 避免 CI 命令行长参数漂移
     if not fail_on and lint_cfg is not None:
@@ -1181,8 +1182,8 @@ def lint(
             sys.exit(2)
         if fmt != "summary":
             click.echo(f"Fail-on门禁: ✅ PASS | {fail_on}及以上 0 处")
-        if incremental and not gate:
-            _incremental_failon_pass = True
+        if not gate:
+            _failon_pass = True
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate
@@ -1286,7 +1287,7 @@ def lint(
                 break
         sys.exit(0)
 
-    if _incremental_failon_pass:
+    if _failon_pass:
         sys.exit(0)
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
 
