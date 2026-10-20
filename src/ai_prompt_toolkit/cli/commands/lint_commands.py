@@ -17,6 +17,7 @@ import click
 from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, main
 
 if TYPE_CHECKING:
+    from ai_prompt_toolkit.linter.baseline import BaselineSnapshot
     from ai_prompt_toolkit.linter.linter import LintResult
     from ai_prompt_toolkit.types import Finding
 
@@ -266,6 +267,13 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     metavar="REV",
     help="P2-17 git原生增量: 只lint <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
 )
+@click.option(
+    "--baseline-from",
+    "baseline_from_ref",
+    default=None,
+    metavar="REF",
+    help="P3-20基线防伪造: 与--incremental合用时, 从git <REF>读--baseline文件内容 (REF由operator/CI提供, PR作者无法篡改base分支基线; path可仓库根相对或CWD相对, 自动解析)",
+)
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option(
     "--fix-hint",
@@ -331,6 +339,7 @@ def lint(
     baseline_save: bool,
     incremental: bool,
     new_from_rev: str | None,
+    baseline_from_ref: str | None,
     suggest_mode: bool,
     json_diff_path: str | None,
     explain_mode: bool,
@@ -466,6 +475,10 @@ def lint(
             f"  rev: {new_from_rev} | git 变更模板: {len(_changed_tpls)} | "
             f"门禁面 = {len(templates)}/{_total_before} 个(仅 rev 后变更, 未变更/未跟踪文件跳过)"
         )
+    # P3-20: --baseline-from 语义绑定增量门禁面(防伪造只对 --incremental 的裁决有意义)
+    if baseline_from_ref and not incremental:
+        click.echo("错误: --baseline-from 需配合 --incremental 使用(防伪造语义绑定增量门禁面)", err=True)
+        sys.exit(2)
     if not templates:
         if new_from_rev:
             click.echo(f"--new-from-rev {new_from_rev}: 无变更的 prompt 模板 — 门禁面为空, PASS")
@@ -865,6 +878,40 @@ def lint(
 
     if baseline_save and not baseline_path:
         baseline_path = ".baseline.json"  # R186: 单独--baseline-save用默认路径(修复静默无效)
+    # P3-20: 基线防伪造 — ref 基线提前加载: 对比展示面(下方)与增量裁决面(更下方)
+    # 同一真源(单次 git 调用 + 单次解析 + 单次分歧告警); 工作树文件仅用于分歧
+    # 告警(检测面, 不改裁决); ref 模式下损坏的工作树基线不影响本次运行
+    _ref_baseline: BaselineSnapshot | None = None
+    if baseline_from_ref and incremental and baseline_path:
+        from ai_prompt_toolkit.cli_helpers import git_show_at_ref
+        from ai_prompt_toolkit.linter.baseline import load_baseline_text
+
+        _ref_baseline_text = git_show_at_ref(baseline_from_ref, str(Path(baseline_path)))
+        if _ref_baseline_text is None:
+            click.echo(
+                f"错误: 无法从 git ref 读取基线 — git show {baseline_from_ref}:{baseline_path} "
+                "(非 git 仓库 / ref 不存在 / 该 ref 上无此路径 / 路径在仓库外)",
+                err=True,
+            )
+            sys.exit(2)
+        try:
+            _ref_baseline = load_baseline_text(_ref_baseline_text)
+        except (json.JSONDecodeError, TypeError, ValueError, KeyError) as _e:
+            click.echo(f"错误: git ref 上的基线 JSON 非法 ({baseline_from_ref}:{baseline_path}): {_e}", err=True)
+            sys.exit(2)
+        _bp_ref = Path(baseline_path)
+        if _bp_ref.exists():
+            try:
+                _wt_text = _bp_ref.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                _wt_text = None
+            if _wt_text is not None and _wt_text != _ref_baseline_text:
+                click.echo(
+                    f"  ⚠️ 基线防伪造: 工作树基线 {_bp_ref} 与 {baseline_from_ref} 不一致 — "
+                    f"本次裁决使用 {baseline_from_ref} 版本 (PR 内改动基线不影响本门禁; "
+                    "基线重存需独立 commit+理由)",
+                    err=True,
+                )
     if baseline_path:
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline, save_baseline
 
@@ -885,8 +932,22 @@ def lint(
             )
         else:
             bp = Path(baseline_path)
-            if bp.exists():
-                baseline = load_baseline(baseline_path)
+            if baseline_from_ref:
+                # P3-20: ref 模式对比展示面与裁决面同一真源(工作树文件不参与对比;
+                # 分歧告警已在预加载点发出)
+                baseline = _ref_baseline
+            elif bp.exists():
+                try:
+                    baseline = load_baseline(baseline_path)
+                except (json.JSONDecodeError, TypeError, ValueError, KeyError) as _e:
+                    click.echo(
+                        f"错误: 基线 JSON 非法 ({bp}): {_e} (基线损坏, 需 --baseline-save 重存)",
+                        err=True,
+                    )
+                    sys.exit(2)
+            else:
+                baseline = None
+            if baseline is not None:
                 diff = compare_baseline(all_findings_for_baseline, baseline)
                 click.echo("\n── 基线对比 ──")
                 click.echo(
@@ -916,7 +977,17 @@ def lint(
 
         bp = Path(baseline_path)
         if bp.exists():
-            baseline_obj = load_baseline(baseline_path)
+            if baseline_from_ref and _ref_baseline is not None:
+                baseline_obj = _ref_baseline  # P3-20: 与裁决面同一真源
+            else:
+                try:
+                    baseline_obj = load_baseline(baseline_path)
+                except (json.JSONDecodeError, TypeError, ValueError, KeyError) as _e:
+                    click.echo(
+                        f"错误: 基线 JSON 非法 ({bp}): {_e} (基线损坏, 需 --baseline-save 重存)",
+                        err=True,
+                    )
+                    sys.exit(2)
             all_f_for_diff = []
             # R196: 循环变量改名 — 避免与上方dict循环变量r同名被mypy沿用推断
             for lint_res in all_results:
@@ -1027,10 +1098,25 @@ def lint(
         from ai_prompt_toolkit.linter.baseline import compare_baseline, load_baseline
 
         _bp = Path(baseline_path)
-        if not _bp.exists():
-            click.echo(f"错误: 基线文件不存在 {_bp} (先 --baseline-save 保存)", err=True)
-            sys.exit(2)
-        _base = load_baseline(baseline_path)
+        if baseline_from_ref:
+            # P3-20: 基线防伪造 — ref 内容已在预加载点加载解析(与对比展示面同一
+            # 真源, 单次 git 调用; 分歧告警已在预加载点发出, 工作树文件不参与裁决)
+            if _ref_baseline is None:
+                click.echo("错误: 基线加载失败(内部状态异常)", err=True)
+                sys.exit(2)
+            _base = _ref_baseline
+        else:
+            if not _bp.exists():
+                click.echo(f"错误: 基线文件不存在 {_bp} (先 --baseline-save 保存)", err=True)
+                sys.exit(2)
+            try:
+                _base = load_baseline(baseline_path)
+            except (json.JSONDecodeError, TypeError, ValueError, KeyError) as _e:
+                click.echo(
+                    f"错误: 基线 JSON 非法 ({_bp}): {_e} (基线损坏, 需 --baseline-save 重存)",
+                    err=True,
+                )
+                sys.exit(2)
         _all_f: list[dict[str, str]] = []
         for lint_res in all_results:
             for f in lint_res.findings:
@@ -1065,6 +1151,11 @@ def lint(
         elif _bv["status"] == "corrupt":
             click.echo(f"  ⚠️ 基线完整性: 基线文件 JSON 非法 {_bp}", err=True)
 
+    # R331: 增量 --fail-on PASS 裁决锁 — 判定面=仅 NEW findings, 存量放行
+    # (R224 规格: 老仓库接入不被存量打回)。函数末尾的全量退出路径会按存量
+    # HIGH 重裁覆写该 PASS(exit 2), 违背增量契约 — 此处记录裁决, 报告落盘
+    # 完成后直接 exit 0(非增量 / --gate 面不触碰, 行为零变更)。
+    _incremental_failon_pass = False
     # P2-03: 配置级 fail-on 兜底 — CLI 显式 --fail-on 优先, 未指定时用
     # promptlint.toml 的 fail_on(默认 high), 避免 CI 命令行长参数漂移
     if not fail_on and lint_cfg is not None:
@@ -1090,6 +1181,8 @@ def lint(
             sys.exit(2)
         if fmt != "summary":
             click.echo(f"Fail-on门禁: ✅ PASS | {fail_on}及以上 0 处")
+        if incremental and not gate:
+            _incremental_failon_pass = True
 
     if gate:
         from ai_prompt_toolkit.linter.quality_gate import QualityGate
@@ -1193,6 +1286,8 @@ def lint(
                 break
         sys.exit(0)
 
+    if _incremental_failon_pass:
+        sys.exit(0)
     sys.exit(determine_exit_code(has_findings=total_findings > 0, error_severity="high" if has_errors else None))
 
 

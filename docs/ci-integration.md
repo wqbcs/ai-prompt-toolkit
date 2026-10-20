@@ -16,6 +16,7 @@
 | `--fail-on critical\|high\|medium` | 显式级别门禁：该级别及以上 findings>0 → 退出码 2 |
 | `--new-from-rev <REV>` | git 原生增量：只 lint `<REV>` 后变更的文件（brownfield 免基线） |
 | `--incremental --baseline <file>` | 基线增量：只计 NEW findings（与 `--new-from-rev` 互斥） |
+| `--baseline-from <REF>` | 基线防伪造（P3-20）：与 `--incremental` 合用时从 git REF 读基线文件内容（operator/CI 提供，PR 作者无法篡改 base 分支基线；path 可仓库根相对或 CWD 相对，自动解析） |
 | `--format sarif -o <file>` | SARIF 报告落盘（进 Code Scanning / Code Quality） |
 | `prompt-cli mcp-lint -t <路径> --fail-on high` | MCP 配置静态门禁（AI 时代攻击面）：12 项配置级检查 + TPA/FSP 注入形态 + rug pull 基线；退出码 0=通过 / 2=门禁失败 / 3=执行错误 |
 
@@ -46,6 +47,53 @@ prompt-mcp-lint:
         - "**/mcp*.json"
         - "**/mcp-servers/**/*"
 ```
+
+## 基线防伪造：--baseline-from（P3-20, 2026-10）
+
+**风险**：`--incremental --baseline <file>` 默认读**工作树**基线——PR/MR 上下文中，
+作者可在 PR 内修改基线文件（把新 findings 塞进基线"重存"）来抑制 NEW findings（门禁自废）。
+
+**机制**：`--baseline-from <REF>` 从 git REF 读基线文件内容（REF 由 operator/CI 提供，
+PR 作者无法篡改该 ref）；工作树与 REF 不一致 → stderr 告警（检测面，不改退出码契约）：
+```bash
+prompt-cli lint -t prompts/ --incremental --baseline baselines/baseline.json \
+  --baseline-from origin/main --gate
+```
+
+**GitHub Actions**（PR job；`github.base_ref` 由平台事件提供，防伪造；事件字段经
+env: 传入而非直接插值进 shell 正文——模板注入加固）：
+```yaml
+      - name: Fetch base ref
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF" --depth 1
+
+      - name: Incremental gate (baseline from base)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          EXTRA_REF=""
+          if [ "$EVENT_NAME" = "pull_request" ]; then EXTRA_REF="--baseline-from origin/$BASE_REF"; fi
+          prompt-cli lint -t prompts/ --incremental --baseline baselines/baseline.json --gate $EXTRA_REF
+```
+
+**GitLab CI**（MR 增量；target 分支由平台提供）：
+```yaml
+prompt-incremental-gate:
+  image: python:3.12-slim
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - pip install --no-cache-dir ai-prompt-toolkit
+    - git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME" --depth 1
+    - prompt-cli lint -t prompts/ --incremental --baseline baselines/baseline.json --baseline-from FETCH_HEAD --gate
+```
+
+Azure DevOps 同构映射：REF = PR 的 target 分支（CI 内 `git fetch origin <target>`）。
+原则一致：**基线来源由平台/operator 提供，而非 PR 作者的工作树**。
 
 ## GitLab CI（`.gitlab-ci.yml`）
 

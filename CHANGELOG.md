@@ -2,6 +2,58 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.117] - 2026-10-19
+
+### Added（R331 基线防伪造 + watch 审计 + 增量退出码修复）
+
+- **P3-20 `--baseline-from <ref>` 基线防伪造（CI 门禁完整性）**：`--incremental --baseline` 默认读
+  PR head 工作树基线 = PR 作者可在 PR 内把新 findings 塞进基线"重存"来抑制 NEW findings（门禁自废,
+  成本=一个普通 commit）。本轮 `--baseline-from <REF>`：基线内容从 git REF 经 `git show ref:path`
+  加载（REF 由平台/operator 提供, 如 `github.base_ref`, PR 作者不可篡改）+ 工作树≠REF → stderr 分歧
+  告警（检测面, 不改 0/1/2/3 退出码契约, 与 P3-15 content_sha256 篡改检测面互补）；
+  `load_baseline_text` 解析单一真源（文件/ref/未来远端三来源同解析函数, 无双源漂移）；
+  `git_show_at_ref` 原语（与 P2-17 `git_changed_since_rev` 同形态：零新依赖 + timeout + None 失败语义,
+  Windows 反斜杠路径归一化——`git show rev:path` 语法要求正斜杠, Windows 独有坑实测抓出）
+- **CI 接线（prompt-ci.yml quality-gate 作业）**：PR 上下文 `git fetch origin $BASE_REF --depth 1` +
+  `--baseline-from origin/$BASE_REF`；push 上下文工作树=canonical 分支本身（CODEOWNERS 保护）不传 ref
+  （行为零变更）；事件字段经 `env:` 注入而非插值进 shell 正文（模板注入加固, 业界 PR 加固模式）；
+  `docs/ci-integration.md` + 命令面速查行 + "基线防伪造"节（GitHub Actions / GitLab CI 复制即用
+  snippet + Azure 同构映射说明）
+- **P1-22 watch 审计收口（能力存在性漂移纠正）**：R330 调研"watch=无"为漂移——`prompt-cli watch`
+  （轮询 + md5 哈希比对 + debounce + lint/scan/evaluate 三命令 + 初始扫描）与 `lint --watch`
+  双实现早已存在且 README 两处暴露；真实缺口=检测面 `rglob("*.md")`（初始+循环两处）≠ lint 面
+  `discover_templates`（*.md/*.prompt/*.prompt.md + 依赖树排除）→ **.prompt/.prompt.md 文件变更
+  永不触发重 lint** → 根因修（两处换单一真源, 扩展名/排除规则永不漂移）+ `slow` e2e 真子进程钉
+  （CI `-k "not slow"` 排除, 本地全量实跑）；非决策留痕：双实现并存不合并（T6 窗口, 语义分工不同
+  且已文档化）/ watchdog 依赖不引入（奥卡姆：1s 轮询对 <100ms/文件静态门禁场景足够）
+- **发现修复（P3-21 登记）：`--incremental --fail-on` PASS 被全量退出路径覆写**：NEW 面 PASS 后,
+  函数末尾 `determine_exit_code` 按全量 has_errors（存量 HIGH 及以上）重裁 → exit 2, 违背 R224 自规格
+  "存量放行, 老仓库接入不被存量打回"（brownfield 仓库增量门禁永不通过）；生产 CI 走 `--gate`（gate 块内
+  sys.exit）不受影响 = 从未被测试钉住的潜在 bug。修复 = `_incremental_failon_pass` 标志 + 报告落盘后
+  短路 exit 0（不触碰 --gate 路径/报告 SARIF 落盘/非增量面, 零回归面）；相邻未修留痕：非增量
+  `--fail-on critical` 存量 high 同族覆写（更常用非增量契约面, T6 窗口不做, 登记下轮独立验证面）
+- **R331 深度检查修复组（全面深度多层次验证）**：
+  - 损坏基线 JSON（ref 面 + 工作树面 + json_diff 面）原为未捕获 `JSONDecodeError` → traceback
+    （RC=1），现干净 exit 2 + 明确错误（与"基线文件不存在"契约同形态；工作树面=既有面同族顺手修）
+  - `compare_baseline` new/fixed/unchanged 列表序 = set 差集迭代序（进程 hash-seed 随机,
+    **实证同命令两跑展示序不同**）→ 改 key 字典序（元素/计数零变更, 仅展示序规范化,
+    裁决面本就用 set 不受影响）——确定性楔子"逐字节一致"承诺落到展示面
+  - `--baseline` 参照系统一（code_review P3）：worktree 读=CWD 相对, `git show`=仓库根相对,
+    子目录+相对路径 → git 侧解析失败误报错（安全失败, CI 不受影响）→ `git_show_at_ref` 原语内
+    解析绝对路径 → `git rev-parse --show-toplevel` 转仓库根相对（任意子目录可用, 仓库外路径=不存在）
+  - ref 预加载单一真源：对比展示面前单次 git 调用 + 单次解析 + 单次分歧告警, 三表面
+    （对比展示 / json_diff / 增量裁决）共用同一真源; ref 模式下损坏的工作树基线不影响运行
+
+### 备注
+
+- 本地=CI：门禁命令面零变更（仅 CI 接线 PR 上下文加 ref 面, push 上下文行为零变更）；
+  全量 pytest 6903 passed（+18）/ 门禁 29 步 GATE PASS（--skip 1,2）/ mypy 0 错 /
+  ruff 全仓+门禁双口径绿
+- 防伪造红绿证明对（核心断言）：篡改工作树基线 + 无 ref → 新 finding 被抑制 exit 0（门禁自废态）vs
+  同一篡改工作树 + `--baseline-from main` → 拦截 exit 2 + 分歧告警；两态唯一变量=基线来源
+- 版本 67.34.116→67.34.117；271 规则文档 + operating curve 随升版重生成；
+  设计/审计/决策细节 = `docs/planning/R331_基线防伪造与watch审计.md`
+
 ## [v67.34.116] - 2026-10-19
 
 ### Added（R330 开发工具链升版轮 — ruff 0.17.0 + mypy 2.4.0 + GitHub PR 处理 8 项 + 改进方案调研）

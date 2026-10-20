@@ -263,10 +263,23 @@ jobs:
 
       # 增量门禁: 基线锁存量(183 high 在 R178 部署语境豁免集), 只拦 NEW findings
       # 基线更新纪律: 基线重存必须独立 commit+理由(见 adoption.md)
+      # P3-20 基线防伪造: PR 上下文基线取自 base 分支(github.base_ref 平台提供,
+      # PR 作者无法篡改); push 上下文工作树=canonical 分支本身(CODEOWNERS 保护), 无需 ref
+      - name: "Fetch base ref (baseline anti-tamper, PR only)"
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: git fetch origin "$BASE_REF" --depth 1
+
       - name: "Incremental Gate (NEW findings only)"
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
+          EXTRA_REF=""
+          if [ "$EVENT_NAME" = "pull_request" ]; then EXTRA_REF="--baseline-from origin/$BASE_REF"; fi
           prompt-cli lint -t ./src/ai_prompt_toolkit/templates \
-            --incremental --baseline baselines/templates-baseline.json --gate
+            --incremental --baseline baselines/templates-baseline.json --gate $EXTRA_REF
 
       # 收口门禁链全链(跳过 pytest+覆盖率棘轮, 两者数据在 test 作业):
       # ruff/format/mypy棘轮/双基线/依赖一致性/环境快照/gen_rules_doc/

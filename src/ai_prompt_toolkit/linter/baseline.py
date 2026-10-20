@@ -116,9 +116,18 @@ def save_baseline(
     Path(path).write_text(json.dumps(snapshot.to_dict(), ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def load_baseline(path: str | Path) -> BaselineSnapshot:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+def load_baseline_text(text: str) -> BaselineSnapshot:
+    """P3-20: 从 JSON 字符串解析基线快照(解析单一真源)。
+
+    三个来源走同一解析函数: load_baseline(文件路径) / --baseline-from
+    (git ref 内容) / 未来远端源 — 无双源漂移。
+    """
+    data = json.loads(text)
     return BaselineSnapshot.from_dict(data)
+
+
+def load_baseline(path: str | Path) -> BaselineSnapshot:
+    return load_baseline_text(Path(path).read_text(encoding="utf-8"))
 
 
 def verify_baseline(path: str | Path) -> dict[str, Any]:
@@ -185,10 +194,13 @@ def compare_baseline(current_findings: list[dict[str, Any]], baseline: BaselineS
                     "delta": count - baseline_count,
                 }
             )
+    # R331 深度检查: 列表序 = key 字典序 — set 差集迭代序受进程 hash-seed 影响
+    # (实证: 同命令两跑展示序不同), 违反确定性楔子展示面; sorted() 跨进程/跨机器
+    # 字节一致。元素与计数零变更(仅展示序规范化), 裁决面本就用 set 不受影响。
     diff = BaselineDiff(
-        new_findings=[current_map[k] for k in new_keys],
-        fixed_findings=[baseline_map[k] for k in fixed_keys],
-        unchanged_findings=[current_map[k] for k in unchanged_keys],
+        new_findings=[current_map[k] for k in sorted(new_keys)],
+        fixed_findings=[baseline_map[k] for k in sorted(fixed_keys)],
+        unchanged_findings=[current_map[k] for k in sorted(unchanged_keys)],
         regressions=regressions,
         baseline_total=baseline.total_findings,
         current_total=len(current_findings),

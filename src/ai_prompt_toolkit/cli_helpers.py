@@ -122,6 +122,51 @@ def git_changed_since_rev(rev: str, cwd: Path | None = None, base_dir: str = "."
     return [p for p in files if p.exists()]
 
 
+def git_show_at_ref(ref: str, path: str, cwd: Path | None = None) -> str | None:
+    """P3-20: 基线防伪造 — 读 git <ref> 上 <path> 的内容 (git show ref:path)。
+
+    安全语义: ref 由 operator/CI 提供(平台事件给出的 base 分支或 base sha),
+    PR 作者无法篡改该 ref 上的基线文件 — 堵住 "--incremental --baseline 读
+    PR head 工作树基线 = 门禁自废" 的自抑制伪造缺口。
+    参照系: path 可仓库根相对(CI 标准形态)或 CWD 相对(任意子目录) — 内部
+    解析为绝对路径后经 git rev-parse --show-toplevel 转仓库根相对, 与
+    worktree 读取面同一参照系(R331 code_review P3: 双参照致子目录运行误导
+    报错); 仓库外路径=不存在。
+    非 git 仓库 / ref 不存在 / 该 ref 上路径不存在 / 仓库外路径 → 返回 None
+    (调用方给清晰错误, 安全失败)。
+    与 git_changed_since_rev 同形态(零新依赖, git 是仓库固有前提)。
+    """
+    import subprocess
+
+    base = Path.cwd() if cwd is None else Path(cwd)
+    p = Path(path)
+    p = p if p.is_absolute() else base / p
+    try:
+        root_proc = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, cwd=base, timeout=30
+        )
+    except (OSError, FileNotFoundError, subprocess.SubprocessError):
+        return None
+    if root_proc.returncode != 0:
+        return None
+    try:
+        # resolve(两侧)对齐符号链接面; strict=False 默认 — ref 上存在而工作树
+        # 不存在的文件也能解析
+        rel = p.resolve().relative_to(Path(root_proc.stdout.strip()).resolve())
+    except (ValueError, OSError):
+        return None  # 仓库外路径(或不可解析) — 安全失败
+    # git rev:path 语法要求正斜杠(仓库根相对); Windows 的 Path str 为反斜杠
+    # (baselines\baseline.json) → as_posix 归一, 否则 git show 找不到路径
+    # (Windows 独有坑实测抓出)
+    posix_path = rel.as_posix()
+    cmd = ["git", "show", f"{ref}:{posix_path}"]
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=base, timeout=30)
+    except (OSError, FileNotFoundError, subprocess.SubprocessError):
+        return None
+    return proc.stdout if proc.returncode == 0 else None
+
+
 def load_promptignore(directory: Path) -> list[str]:
     """加载 .promptignore 模式。P4-04: 发现走 project_config 单一真源
     (向上查找, git 根锚定, 就近优先) — 此前只查 directory 一层,

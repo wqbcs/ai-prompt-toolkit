@@ -195,14 +195,18 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
         click.echo(f"错误: 目标不存在 — {target_path}", err=True)
         sys.exit(2)
 
+    # R331: 检测面 = lint 面（discover_templates 单一真源: *.md/*.prompt/*.prompt.md
+    # + 依赖树排除）— 原 rglob("*.md") 硬编码漏 .prompt/.prompt.md 变更检测=改后不重lint
+    from ai_prompt_toolkit.cli_helpers import discover_templates
+
     files_to_watch: list[Path] = []
     if target_path.is_file():
         files_to_watch = [target_path]
     else:
-        files_to_watch = sorted(target_path.rglob("*.md"))
+        files_to_watch = discover_templates(target_path)
 
     if not files_to_watch:
-        click.echo("未发现.md文件，正在监视目录...")
+        click.echo("未发现 prompt 文件，正在监视目录...")
     else:
         click.echo(f"监视 {len(files_to_watch)} 个文件 (命令: {command}, 间隔: {interval}s)")
 
@@ -265,7 +269,7 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
             if target_path.is_file():
                 current_files = [target_path]
             else:
-                current_files = sorted(target_path.rglob("*.md"))
+                current_files = discover_templates(target_path)
 
             changed = False
             for f in current_files:
