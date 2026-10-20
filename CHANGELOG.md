@@ -2,6 +2,32 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.118] - 2026-10-20
+
+### Added（R332 LSP 接入指南 + 服务端 stdio e2e 钉死）
+
+- **P5-16 LSP 接入指南**（`docs/lsp-setup.md`）：编辑器直连实时 lint 接入面（此前零文档，MCP 面有
+  mcp-setup.md 对照）。Neovim/Emacs 零扩展首选（内置 LSP/eglot）+ VS Code generic-lsp-proxy 配置驱动；
+  服务端事实实跑锚定（capabilities/diagnostic 契约/code/severity/source）+ 前置自检 3 命令 + stdio/tcp
+  双模式实跑附录 A/B
+- **tests/test_r332_lsp_e2e.py 2 slow e2e**（真子进程 + reader-thread 有界等待 10s 上限，CI
+  `-k "not slow"` 排除，本地/`pytest -m slow` 全量跑；importorskip pygls/lsprotocol 使 core-only venv
+  跳过）：stdio 往返（initialize caps+serverInfo / didOpen→publishDiagnostics code∈{P###,MCP-###}
+  sev∈{1,2,3,4} / prompt/score 通知 / shutdown RC0）+ stdout 协议纯净（首字节=Content-Length + 横幅走
+  stderr）——"命令实跑验证"CI 常设化
+- README 文档索引 +1 行 LSP 接入链接
+
+### Fixed（R332 执行首跑即抓出：LSP 4 处真缺陷，能力存在性漂移实证，同 P1-18 族）
+
+- **[lsp] extra 无上界致 pygls 2.x 静默断裂（根因）**：`pygls>=1.0` 拉入 2.x，2.x 移除 1.x `LanguageServer`
+  API，被模块级 `except ImportError` 静默降级（`_HAS_LSP=False`）→ LSP 看似在仓（板行标 R197 起）实则
+  起不来。钉 `pygls>=1.3,<2.0` + `lsprotocol>=2023.0.1,<2024.0.0`（实测 1.3.1+2023.0.1 stdio 真工作）+
+  错误信息准确化（未装 vs 2.x 不兼容分别提示，非误导"请安装"）
+- **启动横幅污染 stdio 协议通道**：`click.echo` 走 stdout，客户端按 Content-Length 解析首字节须为
+  Content-Length，横幅在前=解析失败 → 改 stderr（P1-05a stdio 协议纯净同纪律）
+- **prompt/score 通知静默不发**：用 lsprotocol 无的 `NOTIFICATION_CUSTOM` 旧常量 → 每次 lint 抛
+  AttributeError 被裸 `except Exception: pass` 吞掉 → 改按方法名发 + except 可见化（降级不得静默）
+
 ## [v67.34.117] - 2026-10-19
 
 ### Added（R331 基线防伪造 + watch 审计 + 增量退出码修复）

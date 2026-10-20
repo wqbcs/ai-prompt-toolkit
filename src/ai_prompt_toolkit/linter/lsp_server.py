@@ -12,15 +12,20 @@ P2-01: 编辑Prompt时实时Lint+评分，debounce 300ms
 from __future__ import annotations
 
 import asyncio
+import sys
 from typing import Any
 
+_HAS_LSP = False
+_LSP_IMPORT_ERROR: str | None = None
 try:
     from lsprotocol import types as lsp
     from pygls.server import LanguageServer
 
     _HAS_LSP = True
-except ImportError:
-    _HAS_LSP = False
+except ImportError as _e:
+    # R332: 记录真实导入错误——"未装 pygls" 与 "装了 pygls 2.x(无 1.x LanguageServer API)"
+    # 是两回事, create_lsp_server 据此给准确提示, 不静默降级为误导性"请安装"(降级不得静默)
+    _LSP_IMPORT_ERROR = str(_e)
 
 
 _DEBOUNCE_MS = 300
@@ -101,7 +106,7 @@ def _compute_score(text: str) -> dict[str, Any]:
 
 if _HAS_LSP:
 
-    class PromptLanguageServer(LanguageServer):  # type: ignore[misc]  # pygls 无类型存根(Any 基类)
+    class PromptLanguageServer(LanguageServer):  # R332: [lsp] 钉 pygls 1.x(自带类型存根), 无需 type:ignore
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             super().__init__(*args, **kwargs)
             self._debounce_timers: dict[str, asyncio.TimerHandle] = {}
@@ -140,20 +145,22 @@ if _HAS_LSP:
                 )
 
                 score = _compute_score(text)
-                self.send_notification(lsp.NOTIFICATION_CUSTOM, {"method": "prompt/score", "params": score})
-            except Exception:
-                pass
+                # R332: lsprotocol 2023 无 NOTIFICATION_CUSTOM 常量（旧 API 残留），自定义通知直接按
+                # 方法名发；原写法在该常量缺失时对每次 lint 抛 AttributeError 被 except 吞掉=score 静默不发
+                self.send_notification("prompt/score", score)
+            except Exception as exc:  # best-effort lint 不崩 server；R332 静默→可见（降级不得静默）
+                print(f"[prompt-lsp] lint 异常(不中断): {exc!r}", file=sys.stderr)
 
     server = PromptLanguageServer("prompt-lsp", "v1.0.0")
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)  # type: ignore[untyped-decorator]  # pygls 无存根
+    @server.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
     def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
         uri = params.text_document.uri
         text = params.text_document.text
         server._documents[uri] = text
         server._schedule_lint(uri, text)
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)  # type: ignore[untyped-decorator]  # pygls 无存根
+    @server.feature(lsp.TEXT_DOCUMENT_DID_CHANGE)
     def did_change(params: lsp.DidChangeTextDocumentParams) -> None:
         uri = params.text_document.uri
         text = ""
@@ -162,7 +169,7 @@ if _HAS_LSP:
         server._documents[uri] = text
         server._schedule_lint(uri, text)
 
-    @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)  # type: ignore[untyped-decorator]  # pygls 无存根
+    @server.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
     def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
         uri = params.text_document.uri
         server._documents.pop(uri, None)
@@ -171,7 +178,7 @@ if _HAS_LSP:
             del server._debounce_timers[uri]
         server.publish_diagnostics(uri, [])
 
-    @server.feature(lsp.TEXT_DOCUMENT_HOVER)  # type: ignore[untyped-decorator]  # pygls 无存根
+    @server.feature(lsp.TEXT_DOCUMENT_HOVER)
     def hover(params: lsp.HoverParams) -> lsp.Hover | None:
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
@@ -193,7 +200,7 @@ if _HAS_LSP:
                     return lsp.Hover(contents=lsp.MarkupContent(kind=lsp.MarkupKind.Markdown, value=content))
         return None
 
-    @server.feature(lsp.TEXT_DOCUMENT_CODE_ACTION)  # type: ignore[untyped-decorator]  # pygls 无存根
+    @server.feature(lsp.TEXT_DOCUMENT_CODE_ACTION)
     def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction] | None:
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
         from ai_prompt_toolkit.linter.rules import _RULE_MAP
@@ -224,7 +231,10 @@ if _HAS_LSP:
 
 def create_lsp_server() -> Any:
     if not _HAS_LSP:
-        raise ImportError("LSP功能需要安装pygls: pip install pygls lsprotocol")
+        hint = "LSP 功能需要 pygls 1.x：pip install 'ai-prompt-toolkit[lsp]'"
+        if _LSP_IMPORT_ERROR:
+            hint += f"（当前导入失败：{_LSP_IMPORT_ERROR}）"
+        raise ImportError(hint)
     return server
 
 

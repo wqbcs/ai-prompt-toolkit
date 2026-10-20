@@ -325,7 +325,9 @@ def lsp_cmd(mode: str, host: str, port: int) -> None:
         click.echo("错误: LSP功能需要安装pygls: pip install pygls lsprotocol", err=True)
         sys.exit(1)
 
-    click.echo(f"启动Prompt LSP服务({mode}模式)...")
+    # R332 协议纯净: stdio 模式下 stdout 必须是纯 JSON-RPC 帧(LSP 客户端按 Content-Length 解析),
+    # 启动横幅走 stderr(与 P1-05a stdio 协议纯净同纪律), 否则污染协议通道致客户端解析失败
+    click.echo(f"启动Prompt LSP服务({mode}模式)...", err=True)
     if mode == "tcp":
         click.echo(f"监听: {host}:{port}")
         run_lsp_tcp(host, port)
