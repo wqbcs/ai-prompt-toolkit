@@ -229,7 +229,7 @@ def generate_eval_matrix_html(
     }
 
     if template:
-        html_content = template.render(**context)
+        html_content: str = template.render(**context)
     else:
         html_content = _render_simple_html(report, context)
 

@@ -103,9 +103,19 @@ VERDICT_SURFACE_TOP: tuple[str, ...] = ("quality_gate.py", "sarif_report.py", "m
 # 使用面 = 外部模型调用; 二者均不在 pyproject 声明依赖中, 仅 ab_test 面使用)
 LLM_CALL_CLIENTS: frozenset[str] = frozenset(
     {
-        "openai", "anthropic", "litellm", "ollama", "langchain", "cohere",
-        "mistralai", "groq", "together", "huggingface_hub", "transformers",
-        "httpx", "requests",
+        "openai",
+        "anthropic",
+        "litellm",
+        "ollama",
+        "langchain",
+        "cohere",
+        "mistralai",
+        "groq",
+        "together",
+        "huggingface_hub",
+        "transformers",
+        "httpx",
+        "requests",
     }
 )
 # L3 豁免(与 L1 豁免同纪律: 带轮次留痕; 裁决工具接 LLM = 修复移评估面, 不新增豁免)
@@ -172,14 +182,14 @@ def first_party_import_targets(path: Path, src: Path) -> set[str]:
                 if up > 0:
                     parts = parts[:-up] if up <= len(parts) else []
                 if node.module:
-                    out.add("ai_prompt_toolkit." + ".".join(parts + [node.module]))
+                    out.add("ai_prompt_toolkit." + ".".join([*parts, node.module]))
                 else:
                     # from . import x / from .. import x: x 可能是子模块
                     # (存在性过滤, 相对 base 目录)
                     base_dir = src / Path(*parts) if parts else src
                     for a in node.names:
                         if _name_is_module(base_dir, a.name):
-                            out.add("ai_prompt_toolkit." + ".".join(parts + [a.name]))
+                            out.add("ai_prompt_toolkit." + ".".join([*parts, a.name]))
     return out
 
 
@@ -294,9 +304,7 @@ def scan_llm_boundary(src: Path, exempt: dict[tuple[str, str], str] | None = Non
                 if edge in exempt:
                     hit.add(edge)
                     continue
-                violations.append(
-                    {"file": rel, "target": key, "import": mod, "check": "L3a 裁决面→LLM调用模块"}
-                )
+                violations.append({"file": rel, "target": key, "import": mod, "check": "L3a 裁决面→LLM调用模块"})
         for root in sorted(third_party_client_roots(py) & LLM_CALL_CLIENTS):
             violations.append({"file": rel, "target": root, "import": root, "check": "L3b 裁决面→LLM调用客户端"})
     unused = [f"{s} → {t}" for (s, t) in sorted(exempt) if (s, t) not in hit]

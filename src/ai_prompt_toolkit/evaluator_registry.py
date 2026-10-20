@@ -363,7 +363,7 @@ class RedTeamEvaluator(BaseEvaluator):
         for probe_cls in probe_instances:
             try:
                 # 抽象中间子类在此抛TypeError被except捕获 — 仅具体子类可实例化
-                probe = probe_cls()  # type: ignore[call-arg,abstract]
+                probe = probe_cls()  # type: ignore[call-arg]
                 inputs = probe.generate_inputs()
                 for inp in inputs:
                     if any(kw in text for kw in _extract_keywords(inp.text)):

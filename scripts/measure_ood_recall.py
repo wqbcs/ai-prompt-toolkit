@@ -92,7 +92,6 @@ def measure() -> dict:
 
     notinject = load_notinject()
     overlaps = dedup_against_notinject(benign, notinject)
-    overlap_norm = {_norm(t) for t in overlaps}
     # 去重纪律: 注入面若与 NotInject 重叠(理论不可能=NotInject 全良性, 保险查)
     inj_overlaps = [t for t in injections if _norm(t) in {_norm(n) for n in notinject}]
 

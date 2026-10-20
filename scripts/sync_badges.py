@@ -94,30 +94,42 @@ def apply_badges(text: str, counts: dict[str, int | str], link_prefix: str = "")
     任一徽章形态缺失/多处=SystemExit(面已变更=硬红, 不静默放过)。
     """
     specs: list[tuple[str, str, str]] = [
-        ("Version徽章",
-         rf"(\[!\[Version\]\(https://img\.shields\.io/badge/Version-)[\w.]+(-orange\.svg\)\]\({re.escape(link_prefix)}CHANGELOG\.md\))",
-         rf"\g<1>{counts['version']}\g<2>"),
-        ("Tests徽章",
-         r"(\[!\[Tests\]\(https://img\.shields\.io/badge/Tests-)\d+(%20passed)",
-         rf"\g<1>{counts['tests']}\g<2>"),
-        ("Miss-Rate徽章",
-         r"(Miss--Rate-)[\d.]+(%25%40)\d+(probes)",
-         rf"\g<1>{counts['miss_rate']}\g<2>{counts['probe_count']}\g<3>"),
-        ("False-Positive徽章",
-         r"(False--Positive-)[\d.]+(%25%40)\d+(clean)",
-         rf"\g<1>{counts['fp_rate']}\g<2>{counts['clean_samples']}\g<3>"),
-        ("Lint Rules徽章",
-         r"(\[!\[Lint Rules\]\(https://img\.shields\.io/badge/Lint_Rules-)\d+",
-         rf"\g<1>{counts['rules']}"),
-        ("Eval Dims徽章",
-         r"(\[!\[Eval Dims\]\(https://img\.shields\.io/badge/Eval_Dimensions-)\d+",
-         rf"\g<1>{counts['eval_dims']}"),
-        ("MCP Tools徽章",
-         r"(\[!\[MCP Tools\]\(https://img\.shields\.io/badge/MCP_Tools-)\d+",
-         rf"\g<1>{counts['mcp_tools']}"),
-        ("Probes徽章",
-         r"(\[!\[Probes\]\(https://img\.shields\.io/badge/Probes-)\d+",
-         rf"\g<1>{counts['probes']}"),
+        (
+            "Version徽章",
+            rf"(\[!\[Version\]\(https://img\.shields\.io/badge/Version-)[\w.]+(-orange\.svg\)\]\({re.escape(link_prefix)}CHANGELOG\.md\))",
+            rf"\g<1>{counts['version']}\g<2>",
+        ),
+        (
+            "Tests徽章",
+            r"(\[!\[Tests\]\(https://img\.shields\.io/badge/Tests-)\d+(%20passed)",
+            rf"\g<1>{counts['tests']}\g<2>",
+        ),
+        (
+            "Miss-Rate徽章",
+            r"(Miss--Rate-)[\d.]+(%25%40)\d+(probes)",
+            rf"\g<1>{counts['miss_rate']}\g<2>{counts['probe_count']}\g<3>",
+        ),
+        (
+            "False-Positive徽章",
+            r"(False--Positive-)[\d.]+(%25%40)\d+(clean)",
+            rf"\g<1>{counts['fp_rate']}\g<2>{counts['clean_samples']}\g<3>",
+        ),
+        (
+            "Lint Rules徽章",
+            r"(\[!\[Lint Rules\]\(https://img\.shields\.io/badge/Lint_Rules-)\d+",
+            rf"\g<1>{counts['rules']}",
+        ),
+        (
+            "Eval Dims徽章",
+            r"(\[!\[Eval Dims\]\(https://img\.shields\.io/badge/Eval_Dimensions-)\d+",
+            rf"\g<1>{counts['eval_dims']}",
+        ),
+        (
+            "MCP Tools徽章",
+            r"(\[!\[MCP Tools\]\(https://img\.shields\.io/badge/MCP_Tools-)\d+",
+            rf"\g<1>{counts['mcp_tools']}",
+        ),
+        ("Probes徽章", r"(\[!\[Probes\]\(https://img\.shields\.io/badge/Probes-)\d+", rf"\g<1>{counts['probes']}"),
     ]
     for label, pattern, repl in specs:
         tag = label if link_prefix == "" else f"{label}({link_prefix})"

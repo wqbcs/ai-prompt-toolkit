@@ -31,9 +31,10 @@ class TestPinnedPins:
         finally:
             sys.path.pop(0)
         pins = v.pinned_pins()
-        # R225-P0-05 钉死纪律: ruff/mypy 必须钉(门禁行为载体)
-        assert pins.get("ruff") == "0.16.10"
-        assert pins.get("mypy") == "2.1.0"
+        # R225-P0-05 钉死纪律: ruff/mypy 必须钉(门禁行为载体); R330 升版
+        # ruff 0.16.10→0.17.0 / mypy 2.1.0→2.4.0(本地全链验证后 PR#7/#5 落钉)
+        assert pins.get("ruff") == "0.17.0"
+        assert pins.get("mypy") == "2.4.0"
         assert pins.get("redoctor") == "0.1.5"
 
 
@@ -124,7 +125,7 @@ class TestMainFlow:
         r = _run_script("--json")
         assert r.returncode == 0
         data = json.loads(r.stdout)
-        assert data["pinned"]["ruff"] == "0.16.10"
+        assert data["pinned"]["ruff"] == "0.17.0"
         assert data["errors"] == []
         assert len(data["ci_steps"]) >= 15
 

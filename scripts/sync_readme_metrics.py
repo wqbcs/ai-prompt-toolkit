@@ -166,12 +166,16 @@ def _mirror_badge_issues(text: str, facts: dict[str, object], lang: str) -> list
     specs: list[tuple[str, str, tuple[str, ...]]] = [
         ("Version徽章", r"Version-([\w.]+)-orange\.svg", (str(facts["version"]),)),
         ("Tests徽章", r"Tests-(\d+)%20passed", (str(facts["tests"]),)),
-        ("Miss-Rate徽章",
-         r"Miss--Rate-([\d.]+)%25%40(\d+)probes",
-         (str(facts["miss_rate"]), str(facts["probe_count"]))),
-        ("False-Positive徽章",
-         r"False--Positive-([\d.]+)%25%40(\d+)clean",
-         (str(facts["fp_rate"]), str(facts["clean_samples"]))),
+        (
+            "Miss-Rate徽章",
+            r"Miss--Rate-([\d.]+)%25%40(\d+)probes",
+            (str(facts["miss_rate"]), str(facts["probe_count"])),
+        ),
+        (
+            "False-Positive徽章",
+            r"False--Positive-([\d.]+)%25%40(\d+)clean",
+            (str(facts["fp_rate"]), str(facts["clean_samples"])),
+        ),
         ("Lint Rules徽章", r"Lint_Rules-(\d+)-", (str(facts["lint_rules"]),)),
         ("Eval Dims徽章", r"Eval_Dimensions-(\d+)-", (str(facts["eval_dimensions"]),)),
         ("MCP Tools徽章", r"MCP_Tools-(\d+)-", (str(facts["mcp_tools"]),)),
@@ -226,15 +230,21 @@ def _mirror_table_issues(text: str, facts: dict[str, object], lang: str) -> list
 # (同 R213 正文口径检查形态: 不过拟合措辞以外的合法变体, 形态变更=响亮红)
 _MIRROR_PROSE: dict[str, list[tuple[str, str, tuple[str, ...]]]] = {
     "en": [
-        ("能力概览行",
-         r"capability map \((\d+) rules / (\d+) dimensions / (\d+) MCP tools / (\d+) probes",
-         ("lint_rules", "eval_dimensions", "mcp_tools", "probes_global")),
-        ("基线漏检行",
-         r"# miss-rate\s+([\d.]+)%\s*\|\s*(\d+) golden probes\s+·\s*(\d+) expected-hit units",
-         ("miss_rate", "probe_count", "expected_total")),
-        ("基线误报行",
-         r"# false-positive\s+([\d.]+)%\s*\|\s*(\d+) clean samples\s+·\s*(\d+) rules",
-         ("fp_rate", "clean_samples", "lint_rules")),
+        (
+            "能力概览行",
+            r"capability map \((\d+) rules / (\d+) dimensions / (\d+) MCP tools / (\d+) probes",
+            ("lint_rules", "eval_dimensions", "mcp_tools", "probes_global"),
+        ),
+        (
+            "基线漏检行",
+            r"# miss-rate\s+([\d.]+)%\s*\|\s*(\d+) golden probes\s+·\s*(\d+) expected-hit units",
+            ("miss_rate", "probe_count", "expected_total"),
+        ),
+        (
+            "基线误报行",
+            r"# false-positive\s+([\d.]+)%\s*\|\s*(\d+) clean samples\s+·\s*(\d+) rules",
+            ("fp_rate", "clean_samples", "lint_rules"),
+        ),
         ("quickstart规则数", r"# Lint check \((\d+) rules\)", ("lint_rules",)),
         ("quickstart维度数", r"# Evaluate \((\d+) dimensions", ("eval_dimensions",)),
         ("redteam全局注册", r"global registry (\d+)", ("probes_global",)),
@@ -242,15 +252,21 @@ _MIRROR_PROSE: dict[str, list[tuple[str, str, tuple[str, ...]]]] = {
         ("门禁链步数", r"(\d+)-step\s+gate chain", ("gate_steps",)),
     ],
     "ja": [
-        ("能力概览行",
-         r"能力の全体像（(\d+) ルール / (\d+) 次元 / (\d+) MCP ツール / (\d+) プロブ",
-         ("lint_rules", "eval_dimensions", "mcp_tools", "probes_global")),
-        ("基线漏检行",
-         r"# 検出漏れ率\s+([\d.]+)%\s*\|\s*ゴールデンプロブ (\d+) 件\s+·\s*期待命中ユニット (\d+)",
-         ("miss_rate", "probe_count", "expected_total")),
-        ("基线误报行",
-         r"# 誤検出率\s+([\d.]+)%\s*\|\s*クリーンサンプル (\d+) 件\s+·\s*ルール (\d+) 件",
-         ("fp_rate", "clean_samples", "lint_rules")),
+        (
+            "能力概览行",
+            r"能力の全体像（(\d+) ルール / (\d+) 次元 / (\d+) MCP ツール / (\d+) プロブ",
+            ("lint_rules", "eval_dimensions", "mcp_tools", "probes_global"),
+        ),
+        (
+            "基线漏检行",
+            r"# 検出漏れ率\s+([\d.]+)%\s*\|\s*ゴールデンプロブ (\d+) 件\s+·\s*期待命中ユニット (\d+)",
+            ("miss_rate", "probe_count", "expected_total"),
+        ),
+        (
+            "基线误报行",
+            r"# 誤検出率\s+([\d.]+)%\s*\|\s*クリーンサンプル (\d+) 件\s+·\s*ルール (\d+) 件",
+            ("fp_rate", "clean_samples", "lint_rules"),
+        ),
         ("quickstart规则数", r"# Lint チェック（(\d+) ルール）", ("lint_rules",)),
         ("quickstart维度数", r"# 評価（(\d+) 次元", ("eval_dimensions",)),
         ("redteam全局注册", r"グローバル登録 (\d+)", ("probes_global",)),
@@ -329,7 +345,11 @@ def main() -> int:
         issues.extend(_mirror_issues(path.read_text(encoding="utf-8"), facts, lang))
 
     if args.json:
-        print(json.dumps({"real": facts, "readme": readme, "drift": drift, "issues": issues}, ensure_ascii=False, indent=2))
+        print(
+            json.dumps(
+                {"real": facts, "readme": readme, "drift": drift, "issues": issues}, ensure_ascii=False, indent=2
+            )
+        )
         return 1 if (drift or issues) else 0
 
     print(

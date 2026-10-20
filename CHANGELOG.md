@@ -2,6 +2,44 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.116] - 2026-10-19
+
+### Added（R330 开发工具链升版轮 — ruff 0.17.0 + mypy 2.4.0 + GitHub PR 处理 8 项 + 改进方案调研）
+
+- **工具链升版（PR#5 mypy 2.1.0→2.4.0 / PR#7 ruff 0.16.10→0.17.0，本地全链验证后合并）**：
+  - ruff 0.17.0：门禁口径（src/tests/scripts/playground.py）check/format 全过；**全仓口径 3 处 scripts/ 残留根因修**（RUF005×2 列表拼接表达式 + F841×1 死变量，
+    0.16.10→0.17.0 format 行为变化面另 3 文件重排——均不在门禁口径内，CI 不受影响，本轮一并收口全仓口径绿，
+    避免 R314 型"全仓命令红"陷阱累积）
+  - mypy 2.4.0：严格推断抓出 5 存量类型错误 + 1 strict 面 unused-ignore，全部根因修（棘轮基线不抬）——
+    probe_framework 两检测器 `_COMPILED` 类属性补类型注解（`list[re.Pattern[str]] | None`）/
+    eval_matrix `html_content: str` 注解（jinja2 未声明依赖面 Any 返回）/
+    evaluator_registry ignore 码收窄（2.4.0 已能推断 abstract 段，unused-ignore）
+  - ci/dep_snapshot.json 环境一致性快照刷新至新钉版（`--update`，本轮钉版变更为理由留痕）
+  - test_r237 钉版一致性期望同步更新（ruff 0.17.0 / mypy 2.4.0）
+- **GitHub PR 处理（8 项，前一轮已推 8220a65 线）**：#2/#3/#4/#6/#8 actions 维护合并
+  （checkout v4→v7 / setup-python v5→v7 / codecov v4→v7 / download-artifact v4→v8 / codeql v3→v4，
+  v3 已官方弃用 2026-12 停更）+ #3/#4 陈旧基线面收口（release.yml 残留 4 行升齐 v7）+
+  R306 存量 YAML 缺陷修复（step name 未加引号冒号，release 流下次发版必炸）；#5/#7=本轮升版；
+  #1 此前已合并。破坏性变更核查：checkout v7 pwn-request 防护仅作用 pull_request_target/
+  workflow_run（本仓 7 workflow 均无此触发器）；setup-python v7 移除 pip-install 输入（本仓未用）
+- **R330 改进方案与开源调研**（`docs/planning/R330_改进方案与开源调研.md`）：定位反思
+  （第一性原理：确定性楔子=产品本体，规则数=table stakes 非进攻锚点）+ 2026-10 竞争格局
+  （LLM Guard 2026-07 归档=自托管开源面窗口期；MCP 成 linter 新入口=ESLint 官方 MCP/SonarQube
+  MCP/prodlint 单行接入）+ 四轴改进清单（A 功能/B 叙事/C 细节/D UX，逐项带开源参考+验收+
+  陷阱标记）+ 对抗性审查留痕（5 问：定位/方向陷阱/低价值打磨/顶配与纪律调和/架构 5 年演进）
+  + **§2.4 联网二查刷新面**（malskanner 仓库级隐藏 payload CLI+MCP+GH Action / agent-audit
+  OWASP Agentic 2026 映射 172★ / whitney Semgrep 策展层 / watchdog 事实标准+最佳实践清单 /
+  golangci-lint --new-from-merge-base PR 标准形态 / wardline --new-since）；清单 4 项新任务
+  已登记 02 总板（P1-22 watch / P3-20 --baseline-from / P5-15 UX 对标 / P5-16 LSP 指南，
+  引用前登记纪律）
+
+### 备注
+
+- 本地=CI：门禁命令面零变更；全量 pytest 6885 passed / 门禁 29 步 GATE PASS（--skip 1,2）/
+  mypy 287 文件 0 错 / ruff 全仓+门禁双口径绿 / CI 未观测（推送已触发, 本地=CI 验证为会话内最强替代）
+- 钉版变更=独立决策留痕：CLAUDE.md "不要改它们的钉版" 指不得为放行漂移改 check_env_parity；
+  升版本身是独立轮任务（本地 venv 先行 + 全链验证 + 快照刷新 + 期望同步），本轮即其实例
+
 ## [v67.34.115] - 2026-10-19
 
 ### Added（R329 三语 README 数字漂移护栏 — R328 下一轮建议②收口）

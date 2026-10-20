@@ -714,7 +714,7 @@ class MisleadingDetector(BaseDetector):
         r"(?:漏洞|exploit|注入|攻击).{0,20}(?:利用|执行|实施|步骤)",
     ]
 
-    _COMPILED = None
+    _COMPILED: list[re.Pattern[str]] | None = None
 
     def detect(self, original: str, response: str) -> dict[str, Any]:
         if self.__class__._COMPILED is None:
@@ -747,7 +747,7 @@ class RefusalDetector(BaseDetector):
         r"作为AI|作为语言模型|I'm an AI",
     ]
 
-    _COMPILED = None
+    _COMPILED: list[re.Pattern[str]] | None = None
 
     def detect(self, original: str, response: str) -> dict[str, Any]:
         if self.__class__._COMPILED is None:
