@@ -163,22 +163,22 @@
     <div id="cards"></div>
     <div class="empty" id="empty">
       <div class="big">✓ 无安全/质量发现</div>
-      该 Prompt 通过 267 条规则的静态门禁
+      该 Prompt 通过 271 条规则的静态门禁
     </div>
-    <div class="hint">说明：结果由本机 <code>prompt-cli</code> 内核（<code>lint_template</code>）直接产生 —— 与 CI 门禁、MCP Server、PyPI 包共用同一代码路径；同一输入逐字节一致。分析耗时含 267 条规则全量执行，&lt;100ms/文件 性能楔子由门禁第 15 步机器断言。</div>
+    <div class="hint">说明：结果由本机 <code>prompt-cli</code> 内核（<code>lint_template</code>）直接产生 —— 与 CI 门禁、MCP Server、PyPI 包共用同一代码路径；同一输入逐字节一致。分析耗时含 271 条规则全量执行，&lt;100ms/文件 性能楔子由门禁第 15 步机器断言。</div>
   </section>
 
   <section class="panel" id="p-baseline">
     <div class="bgrid">
       <div class="bcard"><h3>漏检面（攻击召回）</h3><div class="big" id="b-miss">…</div>
         <div class="sub" id="b-miss-sub"></div>
-        <p>golden 攻击探针随包分发——任何机器 <code>pip install</code> 后一条 <code>prompt-cli baseline</code> 可复现。分母 = 每条探针期望命中的规则单元（267 规则 100% 探针覆盖推进中）。</p></div>
+        <p>golden 攻击探针随包分发——任何机器 <code>pip install</code> 后一条 <code>prompt-cli baseline</code> 可复现。分母 = 每条探针期望命中的规则单元（271 规则 100% 探针覆盖推进中）。</p></div>
       <div class="bcard"><h3>误报面（干净精度）</h3><div class="big" id="b-fp">…</div>
         <div class="sub" id="b-fp-sub"></div>
-        <p>60 个干净 prompt × 267 checker。干净样本是自选面——外部独立基准见右侧过防御卡。</p></div>
+        <p>60 个干净 prompt × 271 checker。干净样本是自选面——外部独立基准见右侧过防御卡。</p></div>
       <div class="bcard"><h3>过防御面（NotInject 独立基准）</h3><div class="big" id="b-od">…</div>
         <div class="sub" id="b-od-sub"></div>
-        <p>PIGuard NotInject（ACL 2025，339 条良性触发词语句）零训练零调优直接跑。规则系公开最佳 3.8%，我们 11.50%——如实不藏，治理清单逐条推进（33.92%→11.50%，漏检恒 0）。</p></div>
+        <p>PIGuard NotInject（ACL 2025，339 条良性触发词语句）零训练零调优直接跑。规则系公开最佳 3.8%，我们 6.78%——如实不藏，治理清单逐条推进（33.92%→6.78% 破 10% 阈值，漏检恒 0）。</p></div>
     </div>
     <div class="bcard" style="margin-top:12px"><h3>双基线时间序列（append-only 历史，机器核对）</h3>
       <div id="b-series"></div></div>
@@ -195,19 +195,19 @@
     <div class="tablewrap"><table class="rules">
       <thead><tr><th>规则</th><th>严重级</th><th>类别</th><th>描述</th></tr></thead>
       <tbody id="rtbody"></tbody></table></div>
-    <div class="hint">每条规则有独立文档页（docs/rules/Pxxx.md）+ OWASP/OWASP-LLM Top10 映射 + 逐条探针覆盖锚定（267/267 推进中）。</div>
+    <div class="hint">每条规则有独立文档页（docs/rules/Pxxx.md）+ OWASP/OWASP-LLM Top10 映射 + 逐条探针覆盖锚定（271/271 推进中）。</div>
   </section>
 
   <section class="panel" id="p-about">
     <div class="wedge">
       <div class="wcard"><div class="ico">🔒</div><h3>逐字节一致</h3><p>同一输入、同一版本，任何机器上裁决逐字节相同——ML 分类器给不了的审计性质。SARIF/JSON 输出时钟可注入 + 确定性序列化，机器护栏测试锁定。</p></div>
-      <div class="wcard"><div class="ico">⚡</div><h3>零 LLM 成本 · &lt;100ms</h3><p>267 条规则全量静态执行，无模型调用、无网络。可挂 pre-commit / pre-merge 门禁，CI 秒级出结果。</p></div>
+      <div class="wcard"><div class="ico">⚡</div><h3>零 LLM 成本 · &lt;100ms</h3><p>271 条规则全量静态执行，无模型调用、无网络。可挂 pre-commit / pre-merge 门禁，CI 秒级出结果。</p></div>
       <div class="wcard"><div class="ico">🌐</div><h3>离线可跑</h3><p>核心纯 stdlib，探针与干净样本随包分发。air-gap / 政企内网环境可用——这是中文 AI 合规场景的硬需求。</p></div>
       <div class="wcard"><div class="ico">📐</div><h3>鸿蒙生态唯一</h3><p>ArkTS / ArkUI / 华为云 / 盘古 生态规则面全球唯一（arkts_security、harmonyos_v16、federated_security 等专属类别）。</p></div>
     </div>
     <div class="prose">
       <h3>它是什么</h3>
-      <p><b>AI Prompt Toolkit</b>（<code>prompt-cli</code>）是确定性 LLM 提示词静态门禁——prompt 的 ESLint。267 条规则覆盖注入攻击、编码混淆、不可见字符、结构缺陷、合规声明（EU AI Act / GDPR / 国内监管，映射 OWASP LLM Top10）、平台生态面（鸿蒙 / 华为云）。</p>
+      <p><b>AI Prompt Toolkit</b>（<code>prompt-cli</code>）是确定性 LLM 提示词静态门禁——prompt 的 ESLint。271 条规则覆盖注入攻击、编码混淆、不可见字符、结构缺陷、合规声明（EU AI Act / GDPR / 国内监管，映射 OWASP LLM Top10）、平台生态面（鸿蒙 / 华为云）。</p>
       <h3>怎么用</h3>
       <pre>pip install ai-prompt-toolkit
 prompt-cli lint prompt.md          # 单文件门禁（exit 0/1/2 三态契约）
@@ -274,7 +274,7 @@ async function runLint() {
   const total = r.findings.length;
   $('#summary').innerHTML = total
     ? `<span>共 <b>${total}</b> 条发现</span><span class="crit"><b>${counts.crit}</b> critical</span><span class="high"><b>${counts.high}</b> high</span><span class="med"><b>${counts.med}</b> medium</span><span class="low"><b>${counts.low}</b> low</span>`
-    : `<span class="pass">✓ PASS — 267 条规则零发现</span>`;
+    : `<span class="pass">✓ PASS — 271 条规则零发现</span>`;
   $('#empty').style.display = total ? 'none' : 'block';
   $('#cards').innerHTML = r.findings.map(f => {
     const c = sevCls(f.severity);
