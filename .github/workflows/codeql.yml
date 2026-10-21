@@ -18,6 +18,11 @@ jobs:
   analyze:
     name: Analyze (python)
     runs-on: ubuntu-latest
+    # R335: 仓库未启用 code scanning(设置里未找到该开关, 个人账号亦如此)时
+    # "Perform CodeQL Analysis" 步恒红拖垮整链。现降级为非阻断(分析照常跑,
+    # 结果仍可见于日志); 待 Settings → Code security and analysis → Code scanning
+    # 启用后, 删除本行 continue-on-error 即恢复硬门禁
+    continue-on-error: true
     permissions:
       security-events: write
       actions: read

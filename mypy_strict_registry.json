@@ -114,6 +114,7 @@
     "src/ai_prompt_toolkit/i18n/translation.py": true,
     "src/ai_prompt_toolkit/i18n/types.py": true,
     "src/ai_prompt_toolkit/linter/__init__.py": true,
+    "src/ai_prompt_toolkit/linter/auto_fix_verification.py": true,
     "src/ai_prompt_toolkit/linter/baseline.py": true,
     "src/ai_prompt_toolkit/linter/cost_tracker.py": true,
     "src/ai_prompt_toolkit/linter/custom_rules.py": true,

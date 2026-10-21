@@ -29,7 +29,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-import tomllib
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib  # tomli 已在 pyproject 声明为 3.10 专属依赖
 
 ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = ROOT / "pyproject.toml"
