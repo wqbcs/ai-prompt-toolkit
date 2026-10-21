@@ -36,7 +36,14 @@ jobs:
       matrix:
         python-version: ['3.10', '3.11', '3.12']
     steps:
+      # R335: fetch-depth: 0(全量历史)— 默认浅克隆(depth=1)下 check_board_status
+      # check 1(sha 存在性)查不到历史 sha → 误红"sha 腐烂"(R335 CI 3.10/3.12 lane
+      # 红实证: 本地全历史全绿/CI 浅克隆红, WSL 真浅克隆复现 test_true_board_clean
+      # ..F 与 CI 日志逐字一致)。全量历史=本地/CI 同环境(板测试+Board status
+      # check 依赖 git 历史); 对浅仓的守卫在 check_board_status.py(fail-closed)
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v7
@@ -246,7 +253,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
+      # R335: 同 test 作业 — release_gate 全链含板状态核对(sha 存在性检查),
+      # 需全量历史(浅克隆下同样误红; "Fetch base ref" 的 --depth 1 实测不会
+      # 把全量仓重新变浅, 无需改动)
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v7

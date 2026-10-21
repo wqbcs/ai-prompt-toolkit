@@ -107,12 +107,31 @@ def sha_exists(sha: str, repo: Path) -> bool:
     )
 
 
+def is_shallow_repo(repo: Path) -> bool:
+    """R335: 浅克隆检测 — 浅仓下 check 1 (sha 存在性) 无法裁决: 历史 sha 缺失
+    会被误判"sha 腐烂"(R335 CI 实证根因: 本地全历史全绿/CI 浅克隆红)。
+    CI 需 actions/checkout fetch-depth: 0; 守卫 fail-closed 把"环境错配"
+    从模糊误红变明确诊断, 不得静默放行。非 git 目录/命令失败 → False
+    (退回逐 sha 检查的既有行为, 不新增失败面)。"""
+    r = subprocess.run(
+        ["git", "rev-parse", "--is-shallow-repository"],
+        cwd=repo,
+        capture_output=True,
+        text=True,
+    )
+    return r.returncode == 0 and r.stdout.strip() == "true"
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--board", type=Path, default=BOARD)
     ap.add_argument("--changelog", type=Path, default=CHANGELOG)
     ap.add_argument("--repo", type=Path, default=ROOT)
     args = ap.parse_args(argv)
+
+    if is_shallow_repo(args.repo):
+        print("✗ 仓库为浅克隆: check 1 (sha 存在性) 无法裁决——CI 需 actions/checkout fetch-depth: 0")
+        return 1
 
     board = args.board.read_text(encoding="utf-8")
     changelog = args.changelog.read_text(encoding="utf-8")

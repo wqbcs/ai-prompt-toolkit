@@ -61,9 +61,12 @@ def changelog(tmp_path: Path) -> Path:
     return p
 
 
-def run_check(board: Path, changelog: Path) -> tuple[int, str]:
+def run_check(board: Path, changelog: Path, repo: Path | None = None) -> tuple[int, str]:
+    cmd = [sys.executable, str(SCRIPT), "--board", str(board), "--changelog", str(changelog)]
+    if repo is not None:
+        cmd += ["--repo", str(repo)]
     r = subprocess.run(
-        [sys.executable, str(SCRIPT), "--board", str(board), "--changelog", str(changelog)],
+        cmd,
         capture_output=True,
         text=True,
         cwd=ROOT,
@@ -127,3 +130,33 @@ def test_true_board_e2e_clean() -> None:
     rc, out = run_check(TRUE_BOARD, TRUE_CHANGELOG)
     assert rc == 0, out
     assert "✓ 板状态与 CHANGELOG/sha 一致" in out
+
+
+def test_shallow_repo_fails_closed(tmp_path: Path, board: Path, changelog: Path) -> None:
+    """R335: 浅克隆下 check 1 (sha 存在性) 无法裁决 → fail-closed 红 + 明确诊断
+    (CI 浅克隆实证: 本地全历史全绿/CI 红, 误报面="sha 腐烂"而非环境错配)。"""
+    src = tmp_path / "src_repo"
+    src.mkdir()
+
+    def git(*args: str, cwd: Path) -> None:
+        subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True)
+
+    git("init", "-q", cwd=src)
+    git("config", "user.email", "test@test", cwd=src)
+    git("config", "user.name", "test", cwd=src)
+    (src / "f.txt").write_text("1\n", encoding="utf-8")
+    git("add", ".", cwd=src)
+    git("commit", "-q", "-m", "c1", cwd=src)
+    # 真浅克隆: --no-local 强制 pack 传输(本地路径默认 hardlink 会把全对象带过去,
+    # 那造不出浅仓 — R335 复现实证)
+    shallow = tmp_path / "shallow"
+    subprocess.run(
+        ["git", "clone", "-q", "--depth", "1", "--no-local", str(src), str(shallow)],
+        check=True,
+        capture_output=True,
+    )
+    rc, out = run_check(board, changelog, repo=shallow)
+    assert rc == 1
+    assert "浅克隆" in out
+    # 守卫先于 sha 检查触发: 不得出现"sha 腐烂"误报(R335 CI 误红面)
+    assert "sha 腐烂" not in out
