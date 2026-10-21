@@ -91,7 +91,7 @@ dev = [
     # 下 mypy --strict 报 misc(子类化 Any)/untyped-decorator, 与本地 pygls 环境不一致(双环境漂移,
     # 实跑双环境验证: pygls1.3.1=0错 / no-pygls=6错 → 唯一一致解=让 CI 也有 pygls)
     "pygls>=1.3,<2.0",
-    "lsprotocol>=2023.0.1,<2024.0.0",
+    "lsprotocol>=2023.0.1,<2026.0.0",
 ]
 ab_test = [
     # R306 深审: scipy/numpy 从 [ab_test]/[full] 剔除 — 全 src/ 零 import 的
@@ -104,7 +104,7 @@ lsp = [
     # (实测 pygls 1.3.1 + lsprotocol 2023.0.1 stdio 真工作), 与 ruff/mypy 钉版同纪律,
     # 防依赖漂移致 LSP 静默断裂(能力存在性漂移, 同 P1-18 族)
     "pygls>=1.3,<2.0",
-    "lsprotocol>=2023.0.1,<2024.0.0",
+    "lsprotocol>=2023.0.1,<2026.0.0",
 ]
 full = [
     # R306 深审: scipy/numpy 剔除(同 [ab_test], 全 src/ 零 import)
