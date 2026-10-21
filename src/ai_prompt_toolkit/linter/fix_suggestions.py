@@ -119,9 +119,15 @@ def get_fix_suggestions(
 
         preview = ""
         if fix_action:
-            preview = f"'{fix_action.original[:40]}' → '{fix_action.replacement[:40]}'"
-            if len(fix_action.original) > 40 or len(fix_action.replacement) > 40:
-                preview += "..."
+            if fix_action.append:
+                # R335：追加语义没有替换锚点，预览展示待追加内容而不是空源文本
+                preview = f"追加到末尾: '{fix_action.replacement[:40]}'"
+                if len(fix_action.replacement) > 40:
+                    preview += "..."
+            else:
+                preview = f"'{fix_action.original[:40]}' → '{fix_action.replacement[:40]}'"
+                if len(fix_action.original) > 40 or len(fix_action.replacement) > 40:
+                    preview += "..."
 
         suggestions.append(
             FixSuggestion(

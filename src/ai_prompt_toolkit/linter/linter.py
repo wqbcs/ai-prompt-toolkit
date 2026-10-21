@@ -87,10 +87,39 @@ class LintResult:
 
 @dataclass
 class FixAction:
+    """单条修复动作。
+
+    `append=True` 表示追加语义：`replacement` 是待追加后缀，`original` 不参与匹配。
+    `append=False` 表示替换语义：`original` 是锚点，替换其第一处出现。
+
+    R335-P0-AV02：追加型修复曾被表达成"`original=text[-30:]` + `replacement=text+后缀`"
+    的替换，执行后得到 `text[:-30] + text + 后缀`，原文被复制且逐条翻倍。
+    """
+
     rule_id: str
     original: str
     replacement: str
     description: str
+    append: bool = False
+
+
+def apply_fix_action(text: str, action: FixAction) -> str:
+    """执行单个修复动作，返回新文本。
+
+    无法安全执行时返回原文，由调用方决定是否记为"已修复"——不得伪装成功。
+
+    追加语义带幂等保护：文本中已存在该后缀则不再追加，避免重复执行产生重复声明。
+    用"包含"而非"结尾"判定——多条追加规则的后缀可能堆叠，先追加的后缀不在末尾。
+    替换语义要求锚点非空且存在；只替换第一处，保持既有 51 条替换规则的行为不变。
+    """
+    if action.append:
+        suffix = action.replacement
+        if not suffix or suffix in text:
+            return text
+        return text + suffix
+    if not action.original or action.original not in text:
+        return text
+    return text.replace(action.original, action.replacement, 1)
 
 
 class PromptLinter:
@@ -239,7 +268,11 @@ class PromptLinter:
             action = self._get_fix_action(finding, current)
             if action is None:
                 continue
-            current = current.replace(action.original, action.replacement, 1)
+            updated = apply_fix_action(current, action)
+            if updated == current:
+                # 动作未产生任何文本变化（锚点缺失/后缀已存在）：不得记为已修复
+                continue
+            current = updated
             fixed.append(finding)
 
         return current, fixed
@@ -250,9 +283,10 @@ class PromptLinter:
         if rule_id == "P005" and len(text) < 50:
             return FixAction(
                 rule_id=rule_id,
-                original=text[:30],
-                replacement=text + "\n\n请按照以上要求进行回答。",
+                original="",
+                replacement="\n\n请按照以上要求进行回答。",
                 description="补充最低内容要求",
+                append=True,
             )
 
         if rule_id == "P016":
@@ -294,25 +328,28 @@ class PromptLinter:
         if rule_id == "P025":
             return FixAction(
                 rule_id=rule_id,
-                original=text[-30:] if len(text) > 30 else text,
-                replacement=text + "\n\n请将回答控制在500字以内。",
+                original="",
+                replacement="\n\n请将回答控制在500字以内。",
                 description="追加输出长度建议",
+                append=True,
             )
 
         if rule_id == "P026":
             return FixAction(
                 rule_id=rule_id,
-                original=text[-30:] if len(text) > 30 else text,
-                replacement=text + "\n\n如果无法确定，请回复'信息不足，无法判断'而不编造。",
+                original="",
+                replacement="\n\n如果无法确定，请回复'信息不足，无法判断'而不编造。",
                 description="追加错误恢复指引",
+                append=True,
             )
 
         if rule_id == "P029":
             return FixAction(
                 rule_id=rule_id,
-                original=text[-30:] if len(text) > 30 else text,
-                replacement=text + "\n\n（请对输入进行校验）",
+                original="",
+                replacement="\n\n（请对输入进行校验）",
                 description="追加输入校验声明",
+                append=True,
             )
 
         _AUTO_APPEND = {
@@ -365,9 +402,10 @@ class PromptLinter:
         if rule_id in _AUTO_APPEND:
             return FixAction(
                 rule_id=rule_id,
-                original=text[-30:] if len(text) > 30 else text,
-                replacement=text + _AUTO_APPEND[rule_id],
+                original="",
+                replacement=_AUTO_APPEND[rule_id],
                 description=f"追加{rule_id}声明",
+                append=True,
             )
 
         return None
