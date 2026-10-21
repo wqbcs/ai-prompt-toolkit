@@ -2,7 +2,7 @@
 
 > 本文件由 `scripts/gen_rules_doc.py` 从规则注册表自动生成, 请勿手工编辑
 >
-> 版本: v67.34.119 | 总规则: 271 | 可自动修复: 196
+> 版本: v67.34.120 | 总规则: 271 | 可自动修复: 196
 
 ## 图例
 
@@ -741,5 +741,5 @@
 | [P267](rules/P267.md) | AWS凭据ID字面暴露 | critical |  | LLM02 | Prompt中含AWS Access Key ID字面(AKIA/ASIA/ABIA/ACCA前缀+16位大写, 共20位) — key ID是凭据对的一半, 出现即高置信度真实凭据对正在被处理(secret常伴生, 对话记录/日志/模型输出面均可复现); 与P051(命名赋值面)互补, 本规则管云厂商凭据标识符字面形态 | 凭据移出prompt: 环境变量/KMS/IAM Role引用, prompt内不保留key ID; 已暴露的key ID立即轮换(key ID暴露即使secret未暴露也需轮换, 凭据对任一半泄露即失效) |
 | [P268](rules/P268.md) | 全角字母注入bypass面 | high |  | LLM01 | Prompt含全角拉丁字母(U+FF21-FF5A)连续段且NFKC解码后精确命中注入动词(ignore/disregard/override/forget/bypass/jailbreak) — 全角化=有意规避英文检测(行业共识对策=NFKC归一化, 本规则为该对策的确定性静态实现) | 移除全角字母伪装: 全角注入内容仍按注入处置(改回半角不改变攻击性质); 良性全角拉丁(如日语ＯＫ/ＮＧ)不受本规则影响 |
 | [P269](rules/P269.md) | Unicode tag块ASCII smuggling注入面 | high |  | LLM01 | Prompt含8+ Unicode tag块字符(U+E0000–E007F)或2+ tag块转义形态(\U000E00xx / \uDB40\uDCxx代理对)或真字符+转义形态合计8+ — tag块ASCII smuggling=不可见隐藏载荷(LLM分词器解码为明文); 合法旗帜emoji(≤6个tag字符)不报 | 移除tag块字符及其转义形态(剥离U+E0000–E007F); 合法旗帜emoji(≤6个tag字符)不受影响 |
-| [P270](rules/P270.md) | 指令文件提权/外传形态 | high |  | LLM01 | Prompt/指令文件含 agent 提权或外传攻击形态（自动批准/不请求确认/永不拒绝命令；凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒） | 移除提权/外传指令：自动批准与'永不拒绝'消除人工确认边界；凭据路径+外传=凭据外传攻击；curl 外传系统指纹=信息泄露。此类指令文件应按供应链投毒处置（隔离+审查来源） |
+| [P270](rules/P270.md) | 指令文件提权/外传形态 | high |  | LLM01 | Prompt/指令文件含 agent 提权或外传攻击形态（中英文: 自动批准/不请求确认/永不拒绝命令；凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒） | 移除提权/外传指令：自动批准与'永不拒绝'消除人工确认边界；凭据路径+外传=凭据外传攻击；curl 外传系统指纹=信息泄露。此类指令文件应按供应链投毒处置（隔离+审查来源） |
 | [P271](rules/P271.md) | 指令文件编码隐藏指令（base64隐藏形态） | high |  | LLM01 | Prompt/指令文件含 base64 隐藏指令: HTML 注释内 base64 块（24+字符）或 data:text/* URI 内 base64 文本载荷 — 指令文件 IPI 典型隐藏载体（解码=采集/外传指令+'不告知用户'掩饰; data:image/* 内嵌图片为良性不报） | 审查注释/data URI 中的 base64 内容: 解码检查是否含采集/外传类隐藏指令; 合法文档场景无注释内长 base64 或 data:text/* 载荷用途。此类文件应按供应链投毒处置（隔离+审查来源） |

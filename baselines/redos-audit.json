@@ -13994,12 +13994,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p270.py\u0000Prompt/指令文件含 agent 提权或外传攻击形态（自动批准/不请求确认/永不拒绝命令；凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒）": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p270.py\u0000移除提权/外传指令：自动批准与'永不拒绝'消除人工确认边界；凭据路径+外传=凭据外传攻击；curl 外传系统指纹=信息泄露。此类指令文件应按供应链投毒处置（隔离+审查来源）": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -14030,19 +14024,7 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p270.py\u0000(dangerouslyDisableSandbox|autoApproveAll|pre-?approved|do not ask for user (to )?confirm|never refuse (a|any) (command|request|instruction|tool call))": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p270.py\u0000~?/\\.env\\b|~?/\\.aws/|id_rsa|\\.ssh/|\\.netrc|\\.gnupg/": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p270.py\u0000\\b(send|upload|transmit|post)\\b": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -14139,6 +14121,24 @@
       "approved": false
     },
     "linter/rules_p271.py\u0000<!--[^>]{0,200}?\\b[A-Za-z0-9+/]{24,}={0,2}": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000Prompt/指令文件含 agent 提权或外传攻击形态（中英文: 自动批准/不请求确认/永不拒绝命令；凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒）": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000(dangerouslyDisableSandbox|autoApproveAll|pre-?approved|do not ask for user (to )?confirm|never refuse (a|any) (command|request|instruction|tool call)|永不拒绝|永远不拒绝|不要拒绝任何|不要拒绝所有|自动批准所有|自动批准全部|自动执行所有操作|无需请求用户确认|不要请求用户确认|无需用户确认|跳过用户确认|始终允许所有|无需人工确认|无需再确认)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p270.py\u0000\\b(send|upload|transmit|post)\\b|发送|上传|传输|提交|回传|外传|发到": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

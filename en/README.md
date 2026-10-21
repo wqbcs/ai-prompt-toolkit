@@ -11,9 +11,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.119-orange.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.120-orange.svg)](../CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6907%20passed-brightgreen.svg)](../tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40703probes-brightgreen.svg)](../docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](../src/ai_prompt_toolkit/evaluator.py)
@@ -23,13 +23,13 @@
 </div>
 
 **Why trust this tool?** The two-baseline credibility claim isn't marketing copy — it's a single
-command. The samples (703 golden attack probes + 60 clean prompts) ship *inside the package*; after
+command. The samples (706 golden attack probes + 60 clean prompts) ship *inside the package*; after
 `pip install` on any machine, one command reproduces the numbers:
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# miss-rate   0.00%  |  703 golden probes · 391 expected-hit units
+# miss-rate   0.00%  |  706 golden probes · 393 expected-hit units
 # false-positive 0.81%  |  60 clean samples · 271 rules
 ```
 
@@ -258,7 +258,7 @@ believe that architecture has a *structural* conflict with the CI-gate scenario:
 **Boundary of the competitor's numbers (honest, not disparaging):** the hybrid F1 0.94 is a one-shot
 offline eval snapshot. Semantic-layer attacks (creative jailbreaks / indirect injection / adversarial
 rewrites) really are the **mechanism ceiling** of pure static detection. What this tool's dual-baseline
-guarantees is the **statically-detectable surface** — miss 0.00% (703 golden probes / 391 expected-hit
+guarantees is the **statically-detectable surface** — miss 0.00% (706 golden probes / 393 expected-hit
 units) and FP 0.81% (60 clean samples); denominators and per-rule detail in
 `docs/规则漏检率基线.md` and `docs/规则误报率基线.md`.
 

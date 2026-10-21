@@ -2,6 +2,15 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.120] - 2026-10-20
+
+### Enhanced（R334 P270 中文 agent 配置注入面扩展 + 能力存在性核验）
+
+- **P270 中文扩展**：指令文件 IPI 检测（agent 提权/外传形态，CLAUDE.md/AGENTS.md/SKILL.md 投毒面）从 R322 英文词表扩到中文同形态面——a_priv 中文提权词（自动批准所有/无需请求用户确认/永不拒绝/始终允许所有/无需人工确认 等，带「所有/全部/任何」限定 + agent 语境，原型 4TP/0FP 验证）+ b_cred 中文外传动词（发送/上传/传输/提交/回传/外传/发到，仍「凭据路径+外传动词+外部URL」三信号 AND 门控）。OWASP LLM01 不变
+- **探针 +3 zh-Hans**：a_priv TP + b_cred TP + 良性 TN（防中文外传/提权词误报）进 golden_attacks.json；分语言分布 zh-Hans 551→554
+- **能力存在性核验**（防 P1-18 族板漂移）：02 R242-X2 原登记「agent-config 检测面未覆盖」为板漂移——linter 已扫 .md（discover_templates: `.md`/`.prompt`），核心 IPI 面早被 P270 英文覆盖；R334 补中文语言覆盖（真缺口）；裸 `sk-`/`AIza` 厂商 key 字面为窄缺口（P006 命名赋值/P267 AWS 裸字面已覆盖主体），按低边际价值登记不抢跑
+- **双基线不回归**（FP 0.81% 阈值 1% / 漏检 0.00% 阈值 5%，706 探针全抓）+ 全量验证 + 升版 67.34.119→120
+
 ## [v67.34.119] - 2026-10-20
 
 ### Fixed（R333 P3-21 相邻面：非增量 --fail-on 判定面覆写）

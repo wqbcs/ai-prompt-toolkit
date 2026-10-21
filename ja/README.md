@@ -11,9 +11,9 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.119-orange.svg)](../CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.120-orange.svg)](../CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-6907%20passed-brightgreen.svg)](../tests/)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40703probes-brightgreen.svg)](../docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](../src/ai_prompt_toolkit/evaluator.py)
@@ -23,13 +23,13 @@
 </div>
 
 **なぜこのツールを信頼できるのか？** 二重ベースラインという信頼性の主張はマーケティング文言ではなく、
-1 行のコマンドです。サンプル（703 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
+1 行のコマンドです。サンプル（706 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
 に同梱されており、どのマシンでも `pip install` 後に 1 コマンドで数値を再現できます：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 検出漏れ率   0.00%  |  ゴールデンプロブ 703 件 · 期待命中ユニット 391
+# 検出漏れ率   0.00%  |  ゴールデンプロブ 706 件 · 期待命中ユニット 393
 # 誤検出率     0.81%  |  クリーンサンプル 60 件 · ルール 271 件
 ```
 
@@ -238,7 +238,7 @@ eval では全緑を通過し、本番のエッジケースが事故に変える
 
 **競合数値の適用境界（正直に、貶めず）：** hybrid F1 0.94 は一度限りのオフライン評価スナップショットです。
 意味論レイヤの攻撃（創造的ジェイルブレイク / 間接インジェクション / 敵対的改写）は、純粋静的検出の
-**機構上限**です。本ツールの二重ベースライン（検出漏れ 0.00%：703 件ゴールデンプロブ / 391 期待命中
+**機構上限**です。本ツールの二重ベースライン（検出漏れ 0.00%：706 件ゴールデンプロブ / 393 期待命中
 ユニット。誤検出 0.81%：60 件クリーンサンプル）が保証するのは**静的に検出可能な面**であり、
 分母とルール別明細は `docs/规则漏检率基线.md` と `docs/规则误报率基线.md` を参照。
 

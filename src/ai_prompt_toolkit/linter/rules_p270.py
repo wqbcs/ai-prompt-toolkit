@@ -40,6 +40,12 @@ OWASP: LLM01 Prompt Injection（IPI 形态, 与同族 P268/P269 一致）
 ATLAS: AML.T0051.001 Indirect Prompt Injection（机制面）+ AML.T0086
 Exfiltration via AI Agent Tool Invocation（影响面）,
 docs/mitre-atlas-mapping.md
+
+R334: 扩中文 agent 配置注入同形态面（a_priv 中文提权词 + b_cred 中文外传动词, 与 R322
+英文词表同族, 非新规则=扩 P270 既有模式）。原型 4TP/0FP 验证（26 模板 + CLAUDE.md +
+8 合成合法中文 TN 0 误报）。能力存在性核验（防 P1-18 族板漂移）: 02 R242-X2 原登记
+"agent-config 检测面未覆盖"为板漂移 — 核心早被 P270 英文覆盖, 真缺口=中文语言覆盖
+（R334 补）; 裸 sk-/AIza 凭据字面为窄缺口（P006/P051/P267 已覆盖主体, 低边际价值不抢跑）。
 """
 
 from __future__ import annotations
@@ -55,7 +61,7 @@ _RULES_P270 = [
         "指令文件提权/外传形态",
         "security",
         Severity.HIGH,
-        "Prompt/指令文件含 agent 提权或外传攻击形态（自动批准/不请求确认/永不拒绝命令；"
+        "Prompt/指令文件含 agent 提权或外传攻击形态（中英文: 自动批准/不请求确认/永不拒绝命令；"
         "凭据路径+外传动词+外部URL三信号共现；curl 外传系统指纹命令输出）— 指令文件 "
         "IPI 典型面（CLAUDE.md/AGENTS.md/SKILL.md 投毒）",
         "移除提权/外传指令：自动批准与'永不拒绝'消除人工确认边界；凭据路径+外传=凭据"
@@ -88,14 +94,23 @@ _PRIV_ESCALATION_RE = re.compile(
     r"(dangerouslyDisableSandbox|autoApproveAll|"
     r"pre-?approved|"
     r"do not ask for user (to )?confirm|"
-    r"never refuse (a|any) (command|request|instruction|tool call))",
+    r"never refuse (a|any) (command|request|instruction|tool call)|"
+    # R334: 中文 agent 配置注入同形态面（原型 4TP/0FP 验证, R322 英文词表的中文扩展）。
+    # 全部带「所有/全部/任何」限定或「用户确认/命令」agent 语境, 避开「自动批准某具体任务」
+    # 常态良性面（原型 TN: 26 模板 + CLAUDE.md + 8 合成合法中文 0 误报）
+    r"永不拒绝|永远不拒绝|不要拒绝任何|不要拒绝所有|"
+    r"自动批准所有|自动批准全部|自动执行所有操作|"
+    r"无需请求用户确认|不要请求用户确认|无需用户确认|跳过用户确认|"
+    r"始终允许所有|无需人工确认|无需再确认)",
     re.I,
 )
 
 # 子形态 b_cred: 凭据路径外传共现 — 三信号 AND（单信号各自是常态良性面）:
 # ① 凭据路径 ② 外传动词 ③ 外部 URL
 _CRED_PATH_RE = re.compile(r"~?/\.env\b|~?/\.aws/|id_rsa|\.ssh/|\.netrc|\.gnupg/")
-_EXFIL_VERB_RE = re.compile(r"\b(send|upload|transmit|post)\b", re.I)
+_EXFIL_VERB_RE = re.compile(
+    r"\b(send|upload|transmit|post)\b|发送|上传|传输|提交|回传|外传|发到", re.I
+)  # R334: +中文外传动词（b_cred 仍三信号 AND 门控, 单动词各自良性面不触发）
 _EXTERNAL_URL_RE = re.compile(r"https?://")
 
 # 子形态 c_cmd: curl 命令外传 — --data 载荷含系统指纹命令替换
