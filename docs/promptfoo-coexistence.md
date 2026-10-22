@@ -53,7 +53,7 @@ jobs:
             --gate
       # SARIF 进 Code Scanning（可选）
       - run: prompt-cli lint prompts/ --format sarif -o pr-sarif.sarif
-      - uses: github/codeql-action/upload-sarif@v3
+      - uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: pr-sarif.sarif

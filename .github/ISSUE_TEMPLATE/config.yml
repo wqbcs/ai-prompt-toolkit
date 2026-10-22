@@ -1,0 +1,8 @@
+# 顶配公开面惯例（golangci-lint 系）：模板外的入口指引。
+# blank_issues 保持默认（小项目保留直接提问通道）；安全报告必须走私有渠道。
+contact_links:
+  - name: Report a security vulnerability (private channel)
+    url: https://github.com/wqbcs/ai-prompt-toolkit/security/advisories/new
+    about: |
+      安全漏洞请勿用公开 issue 报告 — 走 GitHub Security Advisories 私有渠道
+      （SLA 见 SECURITY.md）。

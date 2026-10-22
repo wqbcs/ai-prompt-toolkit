@@ -1,0 +1,4 @@
+# 批量格式化/机械化提交的 SHA 清单（git blame --ignore-revs 消费）
+# 顶配公开面惯例（ruff/promptfoo 系）：整文件重排类提交不应污染 blame 历史。
+# 用法: git blame --ignore-revs-file .git-blame-ignore-revs
+# 当前为空（尚无此类提交）

@@ -762,3 +762,12 @@ MIT License
 - [MITRE ATLAS 映射](docs/mitre-atlas-mapping.md)
 - [运营点数据页（漏检/误报时间序列）](docs/operating_curve.md)
 - [展示页](web/index.html)（本地浏览器打开查看）
+
+<div align="center">
+  <p>
+    <a href="CONTRIBUTING.md">参与贡献</a> 
+    <a href="CODE_OF_CONDUCT.md">行为准则</a> 
+    <a href="SECURITY.md">安全响应</a> 
+    <a href="CHANGELOG.md">变更日志</a>
+  </p>
+</div>

@@ -1,0 +1,16 @@
+# 顶配公开面惯例（ruff 系）：编辑器层行尾/缩进纪律，与 ruff format 同向
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{md,yml,yaml,json,toml,cff,html,css,js,ts}]
+indent_style = space
+indent_size = 2
+
+[*.{py,ini}]
+indent_style = space
+indent_size = 4

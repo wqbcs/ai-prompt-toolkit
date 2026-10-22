@@ -1,6 +1,9 @@
 name: "AI Prompt Toolkit Scan"
 description: "Run AI Prompt Toolkit lint, security scan, and quality gate on prompt templates; uploads SARIF to GitHub Code Scanning (enable: add permissions: security-events: write to the consuming job)"
 author: "AI Prompt Toolkit"
+branding:
+  icon: shield-check
+  color: purple
 
 inputs:
   target:

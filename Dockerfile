@@ -2,6 +2,10 @@ FROM python:3.12-slim AS base
 
 LABEL org.opencontainers.image.title="ai-prompt-toolkit"
 LABEL org.opencontainers.image.description="AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter"
+LABEL org.opencontainers.image.url="https://github.com/wqbcs/ai-prompt-toolkit"
+LABEL org.opencontainers.image.source="https://github.com/wqbcs/ai-prompt-toolkit"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.vendor="wqbcs"
 
 WORKDIR /app
 

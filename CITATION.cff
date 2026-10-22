@@ -1,0 +1,21 @@
+# 学术引用元数据（顶配公开面惯例，promptfoo 系）— 论文/报告引用本工具用。
+# 刻意不含 version/date-released：避免升版漂移（本仓数字漂移是机器护栏盯死的一类缺陷）
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+authors:
+  - family-names: "Guowenchao"
+    email: "gwc0218@qq.com"
+title: "AI Prompt Toolkit"
+type: software
+url: "https://github.com/wqbcs/ai-prompt-toolkit"
+repository-code: "https://github.com/wqbcs/ai-prompt-toolkit"
+license: MIT
+keywords:
+  - prompt
+  - prompt-security
+  - prompt-injection
+  - static-analysis
+  - ci-gate
+  - owasp-llm
+  - sarif
+  - deterministic

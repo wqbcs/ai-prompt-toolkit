@@ -1,0 +1,12 @@
+# 顶配公开面惯例（ruff/golangci-lint/semgrep 系）：行尾纪律单一真源
+# （Windows 开发机历史上频繁出现 CRLF warning；本文件使 LF 成为检出/入库规范，
+#  存量文件在被再次提交时逐文件归一，不做一次性全仓重排）
+* text=auto
+
+# 二进制禁转
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.docx binary
+*.db binary
