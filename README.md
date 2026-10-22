@@ -408,9 +408,9 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 
 | 条目 | 内容 | 发布前置依赖 | 状态 |
 |------|------|------|------|
-| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） | ⬜ 待授权（单步，~1 分钟） |
-| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 | 🟡 仓库侧就绪（release.yml 双通道作业：PyPI+ghcr，R289）；待 D1-D5 操作 |
-| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（action.yml + e2e 两态验证，R287 修复）；公开后 marketplace 发布 |
+| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） | ✅ 已公开（R335，机器核验 `private: false` + CI/API 面双验） |
+| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 | 🟡 仓库侧就绪（release.yml 双通道作业：PyPI+ghcr，R289）；待 3 个一次性账号动作（建项目/trusted publisher/pypi environment）+ tag 推送（R336 审计：仓库侧发布链全绿） |
+| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（根 action.yml + e2e 两态验证，R287 修复；R336 补 SARIF→Code Scanning 步）；第三方用法 `uses: wqbcs/ai-prompt-toolkit@action/v1`（随发布 tag 同推） |
 | P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） | 🟡 清单修复（R252） |
 | P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 | ⬜ |
 | P1-07 | 英文首屏（README i18n 双语切换） | 无 | ⬜ |
