@@ -1,5 +1,5 @@
 name: "AI Prompt Toolkit Scan"
-description: "Run AI Prompt Toolkit lint, security scan, and quality gate on prompt templates"
+description: "Run AI Prompt Toolkit lint, security scan, and quality gate on prompt templates; uploads SARIF to GitHub Code Scanning (enable: add permissions: security-events: write to the consuming job)"
 author: "AI Prompt Toolkit"
 
 inputs:
@@ -93,6 +93,25 @@ runs:
         prompt-cli token -t "${{ inputs.target }}" --output token-report.json || true
         echo "::notice::Token analysis completed"
 
+    - name: Generate SARIF
+      # R336 移植(原孤儿 action/action.yml): SARIF 真源=lint --format sarif
+      # (孤儿 scan --sarif 为幽灵命令, 当前 CLI 无此选项, 实跑验证)
+      if: always()
+      shell: bash
+      run: |
+        set +e
+        prompt-cli lint -t "${{ inputs.target }}" --format sarif --output sarif-report.sarif
+
+    - name: Upload SARIF to GitHub Code Scanning
+      # 消费方 job 需 permissions: security-events: write 方能上传;
+      # 无权限第三方仓库 continue-on-error 优雅降级(gate 裁决=主契约, 不受影响)
+      if: always() && hashFiles('sarif-report.sarif') != ''
+      continue-on-error: true
+      uses: github/codeql-action/upload-sarif@v4
+      with:
+        sarif_file: sarif-report.sarif
+        category: prompt-security
+
     - name: Upload Reports
       if: always()
       uses: actions/upload-artifact@v7
@@ -103,6 +122,7 @@ runs:
           scan-report.json
           redteam-report.json
           token-report.json
+          sarif-report.sarif
 
 branding:
   icon: "shield"
