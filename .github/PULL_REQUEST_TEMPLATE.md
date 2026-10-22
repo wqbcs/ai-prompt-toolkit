@@ -14,7 +14,7 @@
 ```bash
 # 本地已运行并确认通过:
 prompt-cli lint -t <changed-prompt-path>        # 0 CRITICAL/HIGH
-prompt-cli scan -t <changed-prompt-path> --depth standard   # 无 CRITICAL 漏洞
+prompt-cli scan -t <changed-prompt-path>                   # 无 CRITICAL 漏洞（5层恒全, 无 depth 选项）
 prompt-cli evaluate -t <changed-prompt-path>     # 均分不低于变更前
 ```
 

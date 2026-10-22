@@ -15,11 +15,11 @@
 
 **Critical（先报告，后公开）**：
 
-- 规则引擎可被恶意 prompt 文本 DoS（如灾难性回溯 ReDoS 触发 261 条规则
+- 规则引擎可被恶意 prompt 文本 DoS（如灾难性回溯 ReDoS 触发全量
   挂起——尺子本身被尺子量到的对象打挂，最高优先）
 - SARIF/JSON 输出注入（恶意文本逃逸为可执行内容）
 - 基线文件篡改可静默绕过增量门禁
-- 探针集（`data/golden_attacks.json`）投毒使双基线数字造假
+- 探针集（`src/ai_prompt_toolkit/data/golden_attacks.json`）投毒使双基线数字造假
 
 **High**：waiver 机制绕过、SARIF region 定位伪造、依赖供应链风险。
 

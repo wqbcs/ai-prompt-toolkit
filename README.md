@@ -142,7 +142,7 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 （exit 2 —— 阻断 CI 合并）
 ```
 
-14 条 finding（5 ✗ 严重 / 8 ⚠ 警告 / 1 • 信息），每条指向具体规则 + 行号；零 LLM
+14 条 finding（5 ✗ 错误 / 8 ⚠ 警告 / 1 • 信息，其中 1 条 Critical 级触发 gate FAIL），每条指向具体规则 + 行号；零 LLM
 调用、<100ms 完成；`--gate` 在 CI 里给出 `FAIL` 裁决并 `exit 2` 阻断合并。
 
 ---
@@ -401,10 +401,10 @@ docker build -t prompt-cli .
 docker run --rm prompt-cli lint -s /app/my_prompt.md
 ```
 
-## Roadmap（发布面待授权清单）
+## Roadmap（发布面清单）
 
-以下条目已设计/验证完毕，**仅待项目负责人授权**即可落地（均为公开/分发
-动作，不改变现有确定性门禁行为）。授权后单轮落地：
+以下条目为公开/分发动作面（不改变现有确定性门禁行为），发布时序随维护者
+发布计划推进：
 
 | 条目 | 内容 | 发布前置依赖 | 状态 |
 |------|------|------|------|
@@ -457,7 +457,7 @@ src/ai_prompt_toolkit/
 │   ├── structural_analyzer.py    # 结构/边界/操控/熵分析
 │   ├── scorer.py             # CVSS-like安全评分
 │   └── inheritance_auditor.py    # 继承审计
-├── probe_framework.py        # garak风格Probe Framework(23探针: 15探针+8检测器, 全局注册表116)
+├── probe_framework.py        # garak风格Probe Framework(23探针+11检测器, 全局注册表116)
 ├── evaluator.py              # 评估引擎(130维度,8大类)
 ├── prompt_optimizer.py       # Prompt优化+verify_assertions(7种)
 ├── prompt_diff.py            # 语义Diff+合并+哈希
@@ -531,14 +531,14 @@ graph TB
         MCP_DIFF[prompt_semantic_diff]
         MCP_SANITIZE[prompt_sanitize]
         MCP_OPTIMIZE[prompt_auto_optimize]
-        MCP_MORE[...45 more]
+        MCP_MORE[...65 more]
     end
 
     subgraph SECURITY["安全引擎"]
-        INJ[注入检测 30条]
+        INJ[注入检测 37条]
         PII[PII检测 12种]
         SUPPLY[供应链检测]
-        SANITIZE[8层消毒器]
+        SANITIZE[11/13步消毒器]
         SCORECARD[5维评分卡]
     end
 
@@ -753,6 +753,12 @@ MIT License
 ## 链接
 
 - [变更日志](CHANGELOG.md)
-- [采用路径](docs/adoption.md)
+- [采用路径（Day0→Day90）](docs/adoption.md)
 - [MCP 接入](docs/mcp-setup.md)
 - [LSP 接入（编辑器实时 lint）](docs/lsp-setup.md)
+- [规则文档（逐条）](docs/rules.md)
+- [CI 门禁示例](docs/CI门禁示例.md)
+- [Provider 矩阵](docs/provider-matrix.md)
+- [MITRE ATLAS 映射](docs/mitre-atlas-mapping.md)
+- [运营点数据页（漏检/误报时间序列）](docs/operating_curve.md)
+- [展示页](web/index.html)（本地浏览器打开查看）

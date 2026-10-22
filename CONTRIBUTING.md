@@ -62,7 +62,7 @@ test: 简短描述
 
 这是本仓库最核心的贡献路径，顺序不可颠倒：
 
-1. **先写探针**（`data/golden_attacks.json` + 干净样本集）
+1. **先写探针**（`src/ai_prompt_toolkit/data/golden_attacks.json` + 干净样本集）
    - 每条新规则 ≥2 TP（攻击形态命中）+ ≥2 TN（干净样本不误报，
      优先结构复杂样本：嵌套 JSON/多轮对话/代码混排——FP 痛点实证见
      docs/planning/12 §1.7）
@@ -141,9 +141,9 @@ test: 简短描述
 README 徽章。升版后的固定顺序（漏跑曾两次致 CI 红）：
 
 ```
-版本3处 → python scripts/gen_rules_doc.py（非--check）
-→ python scripts/sync_badges.py → python scripts/sync_readme_metrics.py
-→ python scripts/check_version_consistency.py → commit
+版本3处 + README 徽章 → python scripts/gen_rules_doc.py（非--check）
+→ python scripts/sync_readme_metrics.py → python scripts/gen_operating_curve.py（非--check）
+→ python scripts/sync_badges.py → python scripts/check_version_consistency.py → commit
 ```
 
 语义化版本策略：规则新增=minor / bugfix=patch / 行为变更=major。
@@ -157,7 +157,7 @@ README 徽章。升版后的固定顺序（漏跑曾两次致 CI 红）：
 - **门禁自身变更必须自测**：`.github/workflows/ scripts/ baselines/ ci/`
   的变更在 CI paths 过滤内，push 后必须轮询确认 run 出现且绿
   （16a57a5 无 run 教训）
-- 探针集（`data/golden_*`）/ 规则文件 / workflow / 基线 = 尺子面，
+- 探针集（`src/ai_prompt_toolkit/data/golden_*`）/ 规则文件 / workflow / 基线 = 尺子面，
   变更需双人 review（`.github/CODEOWNERS`，R242-P3-13 已落；分支保护
   启用=仓库管理员操作，见 00 交接文档 §4）
 

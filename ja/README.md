@@ -41,7 +41,7 @@ prompt-cli baseline
 シグナルもなにもなく保護が静かに劣化しました（コミュニティフォークの *Gorget* が引き継ぐ）。本ツール
 はこの失敗モードに*構造的に免疫*を持っています：LLM ゼロ、サードパーティ検出モデルゼロ、各判定は
 「コード + プロブ集合」の決定論的・バイト再現可能な関数です。anti-rot 機構自体も機械的に検証可能 —
-二重ベースラインのラチェット（ tightening のみ）+ 29 段階のゲートチェーン + プロブ先行の規律。
+二重ベースラインのラチェット（締め付けのみ）+ 29 段階のゲートチェーン + プロブ先行の規律。
 いかなる回帰も CI を赤くします。いかなるモデルの「鮮度」にも依存しません。
 
 ### 実演（実際の出 lực · 再現可能 · 捏造ではない）
@@ -224,12 +224,12 @@ description 乖離）、隠しチャネル（ゼロ幅 / 制御文字）を遮�
 eval では全緑を通過し、本番のエッジケースが事故に変えるまで顕在化しません。lint レイヤはミリ秒級で、
 各 prompt 変更時に、モデル呼び出しなしでこれらを遮断します。
 
-**「regex 簡易スクリーニング + LLM 二次審査」のハイブリッド架构を取らないのはなぜ？** 2026 年の複数の
-競合が该路線（regex 決定論レイヤ + LLM-as-judge 意味論レイヤ + スコア融合）を取り、オフライン評価
+**「regex 簡易スクリーニング + LLM 二次審査」のハイブリッドアーキテクチャを取らないのはなぜ？** 2026 年の複数の
+競合が当該路線（regex 決定論レイヤ + LLM-as-judge 意味論レイヤ + スコア融合）を取り、オフライン評価
 数値を公開しています（例：某ツール 500+500 サンプルで hybrid F1 0.94 vs regex-only F1 0.79）。我々は
-该架构が **CI ゲート**シーンと構造的に矛盾すると考えます：
+当該アーキテクチャが **CI ゲート**シーンと構造的に矛盾すると考えます：
 
-| ゲートの要件 | ハイブリッド架构 | 本ツール（純決定論） |
+| ゲートの要件 | ハイブリッドアーキテクチャ | 本ツール（純決定論） |
 |---|---|---|
 | 再現性（同入力同判定） | LLM 二次審査にサンプリング分散、再実行で判定が反転しうる | 100% 決定論、再実行でバイト単位一致 |
 | CI ホットパス遅延 | LLM レイヤは数百 ms〜秒 | <100ms、pre-commit に組み込める |
@@ -330,6 +330,26 @@ prompt-cli wizard
 docker build -t prompt-cli .
 docker run --rm prompt-cli lint -s /app/my_prompt.md
 ```
+
+### CI 統合
+
+あらゆるパイプラインに決定論的ゲートを追加 — LLM 呼び出しゼロ、API キー不要、
+<100ms/ファイル：
+
+```yaml
+# .github/workflows/prompt-ci.yml
+- run: pip install ai-prompt-toolkit
+- run: prompt-cli lint -t ./prompts --format sarif -o lint.sarif --gate
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: lint.sarif
+```
+
+`--gate` は PASS/WARN/FAIL 判定を出力（exit 0/1/2）。ブロッキング閾値は
+`--fail-on` で調整。brownfield リポジトリは既存 findings を
+`--baseline base.json --baseline-save` で固定し、CI では `--incremental --gate`
+で NEW findings のみゲート。Day0→Day90 の導入パス：
+[docs/adoption.md](../docs/adoption.md)。
 
 ## アーキテクチャ
 

@@ -69,8 +69,13 @@ repos:
         name: prompt-lint
         entry: prompt-cli lint -s {0} --gate
         language: system
-        files: \.(md|txt)$
+        files: '\.prompt(\.md)?$'
 ```
+
+> 发布后亦可接入官方托管钩子（`.pre-commit-hooks.yaml` 声明
+> `promptkit-lint` / `promptkit-security` / `promptkit-probe`）：
+> `repo: https://github.com/<owner>/ai-prompt-toolkit` + `rev: <发布 tag>`，
+> 版本随 tag 钉死。
 
 ---
 

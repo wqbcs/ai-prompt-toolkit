@@ -90,7 +90,7 @@ def gap_report_cmd(target: str, output: str | None) -> None:
 def baseline_cmd(as_json: bool, fail_above_miss: float | None, fail_above_fp: float | None) -> None:
     """一条命令自证双基线 — 漏检(检测能力面) + 误报(噪音面)。
 
-    样本(60干净prompt + 150 golden攻击探针)随包分发, 任何机器 pip install
+    样本(60干净prompt + 706 golden攻击探针)随包分发, 任何机器 pip install
     后即可复现, 无需克隆仓库。确定性度量: 零LLM, 每次运行结果一致。
     """
     import json
@@ -124,7 +124,9 @@ def baseline_cmd(as_json: bool, fail_above_miss: float | None, fail_above_fp: fl
         else:
             click.echo("        无高误报规则(>10%样本命中)")
         click.echo("")
-        click.echo("样本数据随包分发: data/clean_prompts + data/golden_attacks.json")
+        click.echo(
+            "样本数据随包分发: ai_prompt_toolkit/data/clean_prompts + ai_prompt_toolkit/data/golden_attacks.json"
+        )
 
     if fail_above_miss is not None and miss["global_rate"] > fail_above_miss:
         click.echo(f"FAIL: 漏检率 {miss['global_rate']:.2%} > 阈值 {fail_above_miss:.2%}", err=True)

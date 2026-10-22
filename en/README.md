@@ -351,6 +351,26 @@ docker build -t prompt-cli .
 docker run --rm prompt-cli lint -s /app/my_prompt.md
 ```
 
+### CI integration
+
+Add a deterministic gate to any pipeline — zero LLM calls, no API keys,
+<100ms/file:
+
+```yaml
+# .github/workflows/prompt-ci.yml
+- run: pip install ai-prompt-toolkit
+- run: prompt-cli lint -t ./prompts --format sarif -o lint.sarif --gate
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: lint.sarif
+```
+
+`--gate` emits a PASS/WARN/FAIL verdict (exit 0/1/2); tune the blocking
+threshold with `--fail-on`. Brownfield repos: freeze existing findings with
+`--baseline base.json --baseline-save`, then gate only NEW findings in CI via
+`--incremental --gate`. Day0→Day90 adoption path:
+[docs/adoption.md](../docs/adoption.md).
+
 ## Architecture
 
 Layered, decoupled design — the kernel (lint / security / probe / eval verdicts) is pure,
