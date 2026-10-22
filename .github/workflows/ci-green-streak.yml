@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read  # R336: gh api 查 actions runs 需 actions:read——permissions 上下文显式声明后
+      # 未列 scope 不再继承仓库默认, 此前 10/10 连红根因(徽章自 R245 起从未刷新)
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7

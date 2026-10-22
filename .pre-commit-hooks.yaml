@@ -11,7 +11,7 @@
 # 声明文件（README/文档 md 非 prompt 语料，扫它=FP）。
 - id: promptkit-lint
   name: Prompt Lint
-  description: Lint prompt 文件（267 规则，确定性静态门禁，零 LLM）
+  description: Lint prompt 文件（271 规则，确定性静态门禁，零 LLM）
   entry: prompt-cli lint --fail-on high
   language: python
   additional_dependencies: [ai-prompt-toolkit]
