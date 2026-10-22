@@ -1,7 +1,9 @@
 """R237 P3-06: 依赖审计自动化 — 测试
 
 验收面:
-1. dependabot.yml 合法 YAML + version=2 + pip/github-actions 双生态
+1. dependabot 通道已关闭且缺席受钉(R335: 开源项目 PR 面不收机器人 PR —
+   周更机器人 PR 过不了钉版门禁面; 依赖变更由维护者按需手动批量处理并走
+   完整门禁链) — 恢复文件即红, 强制重新决策
 2. CI workflow 含 dependency-audit 作业且 pip-audit 命令在位
 3. 新作业不与主链联动(独立 job, 无 needs: — 抖动不放大, R231 纪律)
 """
@@ -18,20 +20,39 @@ WORKFLOW = ROOT / ".github" / "workflows" / "prompt-ci.yml"
 
 
 class TestDependabotConfig:
-    def test_valid_yaml(self):
-        data = yaml.safe_load(DEPENDABOT.read_text(encoding="utf-8"))
-        assert data is not None
+    """R335 决策钉: dependabot 缺席是决策, 不是缺失 — 恢复即红。
 
-    def test_version_and_ecosystems(self):
-        data = yaml.safe_load(DEPENDABOT.read_text(encoding="utf-8"))
-        assert data["version"] == 2
-        ecosystems = {u["package-ecosystem"] for u in data["updates"]}
-        assert ecosystems == {"pip", "github-actions"}
+    理由(决策留痕): 依赖变更受项目钉版纪律约束(check_env_parity dev 工具链
+    硬红; [lsp] pygls/lsprotocol 双处同改 + mypy strict 注册表核验) — 周更
+    机器人 PR 过不了这套门禁面; 供应链审计面由 dependency-audit 作业(pip-audit)
+    独立承担, 不依赖 dependabot。
+    """
 
-    def test_weekly_schedule(self):
-        data = yaml.safe_load(DEPENDABOT.read_text(encoding="utf-8"))
-        for u in data["updates"]:
-            assert u["schedule"]["interval"] == "weekly"
+    def test_dependabot_file_absent(self):
+        assert not DEPENDABOT.exists(), (
+            "dependabot.yml 已按 R335 决策删除(开源 PR 面不收机器人 PR); 如需恢复, 先更新本测试并留决策记录"
+        )
+
+    def test_no_dependabot_reference_in_workflows(self):
+        workflows_dir = ROOT / ".github" / "workflows"
+        for wf in workflows_dir.glob("*.yml"):
+            text = wf.read_text(encoding="utf-8")
+            assert "dependabot" not in text.lower(), f"{wf.name} 引用已关闭的 dependabot"
+
+    def test_removal_decision_recorded_in_git(self):
+        import subprocess
+
+        result = subprocess.run(
+            ["git", "log", "--oneline", "-i", "--grep=dependabot"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0
+        assert any("删除" in ln or "关闭" in ln for ln in result.stdout.splitlines()), (
+            "git log 未见 dependabot 关闭决策留痕"
+        )
 
 
 class TestCiAuditJob:

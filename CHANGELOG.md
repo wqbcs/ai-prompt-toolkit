@@ -2,6 +2,34 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.121] - 2026-10-21
+
+### Added（R335 autofix 验证层 AutoFixVerifier v0.1）
+
+- `linter/auto_fix_verification.py`（377 行）：五态 NOT_APPLIED/VERIFIED/INCOMPLETE/REGRESSION/ERROR——"文本变化+原问题全消+无新增"判 VERIFIED，幂等性单列 idempotent 字段；匹配不确定性保留 matching_uncertain 不宣称已解决；零 LLM/零联网/零新增依赖；只做验证不改修复引擎（frozen dataclass+tuple 不改入参）
+- **FixAction 增加 append 语义 + apply_fix_action 统一执行**（根因修）：5 处追加型分支（P005/P025/P026/P029/_AUTO_APPEND）原表达为替换"original=text[-30:]/replacement=text+后缀"，执行后原文被复制逐条翻倍——26 模板 40,157 字符膨胀至 3,258,492（最高 1024×）、重复模板 25/26；修复后 26 模板合计 44,029 字符、重复 25→0；锚点缺失或后缀已存在不再计"已修复"（旧实现静默报成功）
+- 121 测试（27 验证层 + 94 追加回归，其中 62 先红后绿）；替换型 51 条规则行为不变；未接入 CLI/MCP/CI 默认路径（lint --fix 仍不写回磁盘——与反清单"in-place auto-fix 大面"边界=本层只验证不改写）
+
+### Fixed（R335 公开仓 CI lane 收绿 + 收口红灯根因修）
+
+- **3.10 lane 长期红**：check_dep_manifest.py / check_env_parity.py 裸 import tomllib（3.11+ 标准库）→ 3.10 收集期 ModuleNotFoundError 阻断全量 pytest；按项目既有 version_info 模式 backport 到 tomli（pyproject 已声明 `tomli>=2.0,<3; python_version < "3.11"` 3.10 专属依赖）
+- **板 sha 存在性误红"sha 腐烂"**：actions/checkout 默认 fetch-depth=1 浅克隆致 check_board_status check 1 查不到历史 sha（本地全历史全绿/CI 红）→ prompt-ci.yml test/prompt-quality-gate + release.yml release-test/release-gate 加 fetch-depth: 0（PR base ref 步 --depth 1 实测不会把全量仓重新变浅）+ check_board_status 浅克隆 fail-closed 守卫（环境错配=明确诊断）+ test_r243 守卫测试（--no-local 造真浅克隆；本地路径默认 hardlink 带全对象）+ run_check 支持 --repo
+- **mypy strict 注册表缺口**：auto_fix_verification.py 新增未入注册表（S1 覆盖缺口 3.12 lane 红）→ --update-strict 补登（该模块 --strict 零错误）
+- **CodeQL 恒红**：仓库未启用 code scanning（设置无该开关，个人账号同）→ job 级 continue-on-error 降级非阻断（分析照常跑、结果仍可见），待启用 code scanning 后删该行恢复硬门禁
+- **三语 Tests 徽章漂移**：7026→7028→7029（collect-only 真值，sync_badges 单真源）
+- **dependabot 测试收口红灯根因修（收口轮实证）**：cf9fcc6 删 dependabot.yml 后 test_r237 TestDependabotConfig 3 测试仍断言文件存在=首跑 3 红；重钉为"缺席即决策"3 测试（文件缺席 + workflow 零引用 + git log 决策留痕，恢复文件即红强制重新决策）；prompt-ci.yml 过期注释（引用已删 dependabot）同步收口
+
+### Changed（R335 关闭 dependabot + 展示页刷新）
+
+- **关闭 dependabot**：删 `.github/dependabot.yml`（pip+github_actions 周更双生态）——开源项目 PR 面不收机器人 PR；存量 5 个 dependabot PR（#9-#13）无独立合入价值（共同失败面 CI 浅克隆已根治；依赖变更受钉版纪律约束：check_env_parity 硬红 + [lsp] pygls/lsprotocol 双处同改 + mypy strict 注册表核验——周更机器人 PR 过不了这套门禁面），由维护者按需手动批量处理并走完整门禁链；供应链审计面不受影响（dependency-audit 作业 pip-audit 独立运行）
+- **展示页 web/index.html 数字漂移收口**：规则数 267→271（9 处：Lint 空态/说明、双基线卡分母、规则目录 hint、核心楔子卡、PASS 文案）+ 过防御叙事 11.50%→6.78%（v67.34.120 真值：93 规则 @ NotInject 339 样本，33.92%→6.78% 破 10% 阈值；口径与 README 过防御段一致）；动态数据（stats/基线/规则表）经 /api/* 实时取真值无需改；包内 playground 静态页经 grep 确认无同族陈旧数字
+- **P0-03 仓库转公开机器核验**：api.github.com 实查 private=false（R335 收口轮复核，02 板行回写）
+
+### 验证
+
+- 全量 pytest 7029 passed（非 slow 口径外的完整套件，exit 0，本地 343s）/ 门禁 27/27 GATE PASS（--skip 1,2：step1 全量 pytest 单独实跑 + step2 覆盖率棘轮交 CI test 作业同命令判定）/ 双基线不回归（FP 0.81%@60 阈值 1% / 漏检 0.00%@393 单元 阈值 5%）/ 过防御 6.78%@339 / mypy 0 错（棘轮绿+strict 注册表补登）/ ruff 全仓+门禁双口径绿 / 版本一致性 0 漂移（v67.34.121）
+- CI 未观测（推送触发后需 GitHub 侧确认；本地=CI 验证为会话内可机器验证最强替代）
+
 ## [v67.34.120] - 2026-10-20
 
 ### Enhanced（R334 P270 中文 agent 配置注入面扩展 + 能力存在性核验）

@@ -217,8 +217,9 @@ jobs:
   # R237 调研 §2.3)。独立作业不与 test 矩阵联动: pip-audit 需网络查 PyPI
   # advisory DB, 抖动不该放大成整链红(同 R231 codecov 解耦纪律)。
   # 首 2 版观察期: continue-on-error 收集基线数据; 稳定后去掉该标记转硬门禁。
-  # 与 .github/dependabot.yml 周更 PR 互补: dependabot 管"版本新鲜",
-  # pip-audit 管"已装版本是否有已知 CVE"。
+  # 版本新鲜度通道: 机器人周更 PR 面 R335 已关闭(开源 PR 面不收机器人 PR,
+  # cf9fcc6), 依赖变更由维护者按需手动批量处理并走完整门禁链;
+  # pip-audit 独立承担"已装版本是否有已知 CVE"的供应链审计。
   dependency-audit:
     runs-on: ubuntu-latest
     continue-on-error: true  # 观察期(首 2 版), R239 评审转硬门禁

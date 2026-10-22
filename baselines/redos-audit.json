@@ -14143,6 +14143,36 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/auto_fix_verification.py\u0000not_applied": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/auto_fix_verification.py\u0000verified": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/auto_fix_verification.py\u0000incomplete": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/auto_fix_verification.py\u0000regression": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/auto_fix_verification.py\u0000error": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   }
 }
