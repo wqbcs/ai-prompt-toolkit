@@ -14,7 +14,10 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install ai-prompt-toolkit
-        run: pip install -e .
+        # R336: 必须装 [dev] — 漂移检查 _collect_test_count 用 pytest --collect-only
+        # 统计测试数（R329 起与 sync_badges 同口径）, 裸 -e . 无 pytest → 作业恒红
+        # （2700d62 引入后 10-20 起连红; 同 prompt-ci test / release-test 安装形态）
+        run: pip install -e ".[dev]"
       - name: Check README metrics drift (R207-6)
         run: python3 scripts/sync_readme_metrics.py
       - name: Run Scorecard on all prompts

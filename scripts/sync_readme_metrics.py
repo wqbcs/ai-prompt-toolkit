@@ -104,6 +104,15 @@ def _collect_test_count() -> int:
         encoding="utf-8",
         errors="replace",
     )
+    if result.returncode != 0:
+        # R336: 区分"pytest 不可用/收集失败"与"输出异常"——此前两者同报
+        # "输出异常", CI 缺 pytest 时误导排查方向
+        stderr_tail = (result.stderr or "").strip()[:300]
+        raise SystemExit(
+            "无法统计测试数: pytest 不可用或收集失败 (exit="
+            f"{result.returncode}; 运行本脚本的作业需装 pytest, 如 pip install -e '.[dev]')\n"
+            f"{stderr_tail}"
+        )
     match = re.search(r"(\d+) tests? collected", result.stdout)
     if not match:
         raise SystemExit("无法统计测试数: pytest --collect-only 输出异常")
