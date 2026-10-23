@@ -22,6 +22,8 @@
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 </div>
 
+[**ルール文書**](../docs/rules.md)  [**導入ガイド**](../docs/adoption.md)  [**MCP 接続**](../docs/mcp-setup.md)  [**CI 例**](../docs/CI门禁示例.md)  [**ローカル体験**](../web/index.html)
+
 **なぜこのツールを信頼できるのか？** 二重ベースラインという信頼性の主張はマーケティング文言ではなく、
 1 行のコマンドです。サンプル（706 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
 に同梱されており、どのマシンでも `pip install` 後に 1 コマンドで数値を再現できます：

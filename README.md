@@ -21,6 +21,8 @@
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 </div>
 
+[**规则文档**](docs/rules.md)  [**采用路径**](docs/adoption.md)  [**MCP 接入**](docs/mcp-setup.md)  [**CI 门禁示例**](docs/CI门禁示例.md)  [**本地体验**](web/index.html)
+
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(706 条 golden
 攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`
 后一条命令自证：
@@ -34,71 +36,7 @@ prompt-cli baseline
 
 > **Quick start (no install, post-release P0-04):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
 
-**误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
-固定刻度 0–10%，曲线不随数据缩放）：
-
-[![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](docs/baseline_history.jsonl)
-
-**过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
-"含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
-用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
-实测：**安全族误杀率 6.78%**（93 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315→R317
-逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
-[`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
-这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
-曲线只收紧不放松（R318 裁定：程序转入证据累积监控制 — 复活触发器 =
-任一规则累积 ≥2 独立真实 FP 命中，机器可查）。
-
-**为什么不会静默腐化（anti-rot）**——行业最大失败模式不是"一开始就不灵"，而是
-"悄悄失灵"：2026-07 Protect AI 归档 LLM Guard（月下载 10 万的检测库），其检测模型
-冻结于 2025-05，新攻击类永不增补，保护在无任何告警信号下静默退化（社区 fork
-Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方检测模型，每个裁决
-都是"代码+探针集"的确定性逐字节可复现输出；抗腐化机制本身机器可查——双基线
-棘轮（只收紧不放松）+ 29 步门禁链 + 探针先行纪律，任何回归都会红 CI，不依赖
-任何模型的"保鲜"。
-
-**第三方佐证（埋入式注入 TN 纪律）**：误报面最难的一条边界是
-"安全文档引用攻击短语 = 良性，不是攻击"。2026 年学术 FP 审计
-（rezaduty/prompt-detector-channel-audit，7 检测器规则通道审计）发现
-"其注入规则标记的 9 条良性 8 条是安全文档引用攻击短语"（规则通道
-匹配词汇而非意图）；Google Model Armor 日语实测（2026，zenn/Accenture）
-同型：良性文本逐字引用攻击短语 5 例中 1 例误判。golden 探针集按此
-边界构造（含埋入式引用形态 TN），误报面 0.81%（60 干净样本）是
-`prompt-cli baseline` 一条命令在任何机器可复现的自证数字。
-
-**10 行接入 CI**（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
-
-```yaml
-# .github/workflows/prompt-ci.yml
-- run: pip install ai-prompt-toolkit
-- run: prompt-cli lint -t ./prompts --format sarif -o lint.sarif --gate
-- uses: github/codeql-action/upload-sarif@v4
-  with:
-    sarif_file: lint.sarif
-```
-
-**缺口体检（OWASP LLM Top 10 防御声明面）**：`prompt-cli gap-report -t ./prompts`
-对每个文件×每个风险度量**双口径**：存在性（是否声明了防御意图）+ 质量（命中多少防御面），
-产出可复现的缺口占比。对本仓库 26 个内置模板的自体检：存在性缺口率 24.6%（R284 补强后，
-原 86%）；平均声明质量 33%（质量缺口 67%——薄声明，R284 口径升级暴露的真实面）。残留缺口
-（LLM09 向量 25 / LLM06 无约束消耗 17 / LLM04 供应链 12 / LLM03 越权 10）多为模板真实不
-涉及的攻击面 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
-口径诚实声明：双口径均为静态文本面，非防御实际有效性；存在性可被"凑一个词"刷低，
-质量分要求覆盖面，更诚实（R235 关切，R284 落地）。
-
-**老仓库接入（存量不清零也能开门禁）**：`prompt-cli lint -t ./prompts --baseline
-base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW findings，
-存量 PRE-EXISTING 放行 —— 采用路径见 [docs/adoption.md](docs/adoption.md)。
-
-**AI 时代攻击面（agent 配置面）**：2026 攻击主线从单文档 prompt 转向 agent 配置面。
-本仓两道门禁：① `prompt-cli mcp-lint` —— MCP 配置静态门禁（12 项配置级检查 +
-TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批准，OWASP MCP
-映射）；② 指令文件 IPI（CLAUDE.md/AGENTS.md/SKILL.md 指令投毒）—— R321 取证：3 条
-真实攻击样本 × 现行管道安全 payload 0/3 命中（形态错实据，见
-[docs/planning/R321_指令文件IPI取证.md](docs/planning/R321_指令文件IPI取证.md)），5 条观察
-探针已入 golden，规则化已完成：P270（R322 三子形态）+ P271（R323 双子形态, T1 达标晋升）。
-
-### 实战示例（真实输出 · 可复现 · 非编造）
+## 实战示例（真实输出 · 可复现 · 非编造）
 
 对一段埋了雷的 agent prompt 跑 `prompt-cli lint`——下面是**真实输出**（本地复现：
 `pip install -e . && prompt-cli lint -s agent_prompt.md`）：
@@ -145,7 +83,235 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 14 条 finding（5 ✗ 错误 / 8 ⚠ 警告 / 1 • 信息，其中 1 条 Critical 级触发 gate FAIL），每条指向具体规则 + 行号；零 LLM
 调用、<100ms 完成；`--gate` 在 CI 里给出 `FAIL` 裁决并 `exit 2` 阻断合并。
 
+## 特性
+
+- ⚡️ **<100ms/文件 · 零 LLM 成本** — 271 条规则全量静态执行，无模型调用、无网络依赖，可挂 pre-commit，CI 秒级裁决
+- 🎯 **逐字节一致** — 同一输入、同一版本，任何机器重跑裁决相同；SARIF/JSON 确定性序列化，门禁只认可复现的裁决
+- 📐 **OWASP LLM Top 10 (2026) 映射** — 探针→LLM01-LLM10 完整映射 + MITRE ATLAS + 等保 2.0，自动生成合规报告
+- 🧪 **双基线自证** — 706 条 golden 探针 + 60 个干净样本随包分发，`prompt-cli baseline` 一条命令任意机器复现
+- 📦 **全生命周期** — lint/scan/probe/redteam/evaluate/compliance/version 全链路，完整能力见[能力全貌](#项目简介)
+- 🔌 **MCP Server** — 73 个标准 MCP 工具（stdio JSON-RPC），[接入 Claude Desktop/Cursor](docs/mcp-setup.md)
+- 🌏 **中文优先** — 18 条中文注入检测 + 分语言检测基线 + 人话报错，面向中文 prompt 语料
+- ☁️ **鸿蒙/华为云生态面** — 7 域合规加权 + 等保 2.0 映射 + ArkTS 专属规则（[合规引擎](#华为云合规引擎)）
+
+## 快速开始
+
+### 安装
+
+```bash
+# 基础安装
+pip install ai-prompt-toolkit
+
+# 或 pipx（独立环境，不污染项目依赖）
+pipx install ai-prompt-toolkit
+
+# 完整安装（含A/B测试+模板市场）
+pip install "ai-prompt-toolkit[full]"
+
+# 仅A/B测试
+pip install "ai-prompt-toolkit[ab_test]"
+```
+
+### 基本使用
+
+```bash
+# Lint检查(271条规则)
+prompt-cli lint -s my_prompt.md
+
+# Lint检查 + 每个finding下显示"下一步"修复提示(数据=规则自带 remediation)
+prompt-cli lint -s my_prompt.md --fix-hint
+
+# 安全扫描(5层恒全, 无 depth 选项)
+prompt-cli scan -t my_prompt.md
+
+# 红队对抗(23 Probe + 11内置检测器, 全局注册表116)
+prompt-cli redteam -t my_prompt.md --probes dan,jailbreak
+
+# Probe扫描(OWASP LLM Top 10 2026, 单文件目标, 默认全部探针)
+prompt-cli probe -t my_prompt.md
+
+# 评估(130维度; --quick=仅TOP10核心维度)
+prompt-cli evaluate -t my_prompt.md
+
+# 华为云合规检查
+prompt-cli compliance -t my_prompt.md --format cli
+
+# 条件编译
+prompt-cli compile -s template.md -c context.json
+
+# A/B测试
+prompt-cli ab-test -c ab_config.yaml
+
+# 版本管理(--action: create/show/diff/rollback; diff 可用 --version-a/--version-b 指定对比版本)
+prompt-cli version --action diff --template my_prompt.md
+prompt-cli version --action rollback --template my_prompt.md --version 3
+
+# 语义Diff(安全策略变更=critical)
+prompt-cli prompt-diff --old old_prompt.md --new new_prompt.md
+
+# Prompt优化+断言验证(assert 需 --response 响应文件 + --config 断言YAML)
+prompt-cli optimize -s my_prompt.md
+prompt-cli assert --response response.txt --config assertions.yaml
+
+# MCP Server(73个工具, 标准 stdio JSON-RPC)
+prompt-cli mcp
+
+# Playground 本地 Web UI(与 MCP 入口 prompt-cli mcp 分属两通道)
+prompt-cli serve
+
+# Watch模式(文件变更自动重跑, --command 选 lint|scan|evaluate)
+prompt-cli watch -t ./prompts/
+
+# 安全评分+Badge(SVG, -o 必填)
+prompt-cli score -t my_prompt.md
+prompt-cli badge -t my_prompt.md -o badge.svg
+
+# Canary水印(单命令: -p 注入 / -c 检测)
+prompt-cli canary -p my_prompt.md
+prompt-cli canary -c leaked_prompt.md
+
+# Token分析(多模型)
+prompt-cli token -t my_prompt.md
+
+# 健康检查
+prompt-cli doctor
+
+# 交互式向导
+prompt-cli wizard
+```
+
+### 接入 MCP 客户端（如 Claude Desktop / Cursor 等）
+
+在 MCP 客户端配置文件（如 `.mcp.json`）中添加：
+
+```json
+{
+  "mcpServers": {
+    "ai-prompt-toolkit": {
+      "command": "prompt-cli",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+完整接入指南（含 Claude Desktop / Cursor 配置与工具清单）：[docs/mcp-setup.md](docs/mcp-setup.md)
+
+### Docker
+
+```bash
+docker build -t prompt-cli .
+docker run --rm prompt-cli lint -s /app/my_prompt.md
+```
+
+## CI 接入
+
+10 行接入 CI（完整 Day0/Day1 采用清单见 [docs/adoption.md](docs/adoption.md)）：
+
+```yaml
+# .github/workflows/prompt-ci.yml
+- run: pip install ai-prompt-toolkit
+- run: prompt-cli lint -t ./prompts --format sarif -o lint.sarif --gate
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: lint.sarif
+```
+
+## Roadmap（发布面清单）
+
+以下条目为公开/分发动作面（不改变现有确定性门禁行为），发布时序随维护者
+发布计划推进：
+
+| 条目 | 内容 | 发布前置依赖 | 状态 |
+|------|------|------|------|
+| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） | ✅ 已公开（R335，机器核验 `private: false` + CI/API 面双验） |
+| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 | 🟡 仓库侧就绪（release.yml 双通道作业：PyPI+ghcr，R289）；待 3 个一次性账号动作（建项目/trusted publisher/pypi environment）+ tag 推送（R336 审计：仓库侧发布链全绿） |
+| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（根 action.yml + e2e 两态验证，R287 修复；R336 补 SARIF→Code Scanning 步）；第三方用法 `uses: wqbcs/ai-prompt-toolkit@action/v1`（随发布 tag 同推） |
+| P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） | 🟡 清单修复（R252） |
+| P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 | ⬜ |
+| P1-07 | 英文首屏（README i18n 双语切换） | 无 | ⬜ |
+| P5-11 | 误报/漏检曲线公开数据页（precision 时间序列，获客面） | P0-03（数据页随公开仓库发布） | 🟡 数据页已进门禁链（运营点数据页，每次收口重生成）；公开=转公开后 |
+| P1-18 | MCP 发布面（README MCP 接入片段+工具清单页；73 tools 已就绪） | P0-03 | ✅ README MCP 接入节 + `docs/mcp-setup.md`（R287） |
+
+> 状态口径：本表是唯一真源（与 `docs/planning/02_任务总板.md` P0/P1 区同步）；
+> 授权任一子集即可单独推进，条目间除标注依赖外互不阻塞。
+
+## 目录
+
+- [实战示例](#实战示例)
+- [特性](#特性)
+- [快速开始](#快速开始)
+- [CI 接入](#ci-接入)
+- [Roadmap（发布面清单）](#roadmap发布面清单)
+- [为什么可信](#为什么可信)
+- [定位与适用边界](#定位与适用边界)
+- [能力全貌](#项目简介)
+- [项目架构](#项目架构)
+- [评估维度](#评估维度-130个)
+- [内置模板](#内置模板)
+- [华为云合规引擎](#华为云合规引擎)
+- [Probe Framework](#probe-framework-owasp-llm-top-10-2026)
+- [VSCode插件](#vscode插件)
+- [CI/CD集成](#cicd集成)
+- [开发](#开发)
+- [许可证](#许可证)
+
 ---
+
+## 为什么可信
+
+**误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
+固定刻度 0–10%，曲线不随数据缩放）：
+
+[![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](docs/baseline_history.jsonl)
+
+**过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
+"含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
+用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
+实测：**安全族误杀率 6.78%**（93 规则 @ 339 样本，首点 33.92%，R250→R251→R253→R315→R317
+逐批探针先行修复后 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
+[`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
+这个数字如实公开，治理清单（P2-26）按命中数降序逐条探针先行修复，
+曲线只收紧不放松（R318 裁定：程序转入证据累积监控制 — 复活触发器 =
+任一规则累积 ≥2 独立真实 FP 命中，机器可查）。
+
+**为什么不会静默腐化（anti-rot）**——行业最大失败模式不是"一开始就不灵"，而是
+"悄悄失灵"：2026-07 Protect AI 归档 LLM Guard（月下载 10 万的检测库），其检测模型
+冻结于 2025-05，新攻击类永不增补，保护在无任何告警信号下静默退化（社区 fork
+Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方检测模型，每个裁决
+都是"代码+探针集"的确定性逐字节可复现输出；抗腐化机制本身机器可查——双基线
+棘轮（只收紧不放松）+ 29 步门禁链 + 探针先行纪律，任何回归都会红 CI，不依赖
+任何模型的"保鲜"。
+
+**第三方佐证（埋入式注入 TN 纪律）**：误报面最难的一条边界是
+"安全文档引用攻击短语 = 良性，不是攻击"。2026 年学术 FP 审计
+（rezaduty/prompt-detector-channel-audit，7 检测器规则通道审计）发现
+"其注入规则标记的 9 条良性 8 条是安全文档引用攻击短语"（规则通道
+匹配词汇而非意图）；Google Model Armor 日语实测（2026，zenn/Accenture）
+同型：良性文本逐字引用攻击短语 5 例中 1 例误判。golden 探针集按此
+边界构造（含埋入式引用形态 TN），误报面 0.81%（60 干净样本）是
+`prompt-cli baseline` 一条命令在任何机器可复现的自证数字。
+
+**缺口体检（OWASP LLM Top 10 防御声明面）**：`prompt-cli gap-report -t ./prompts`
+对每个文件×每个风险度量**双口径**：存在性（是否声明了防御意图）+ 质量（命中多少防御面），
+产出可复现的缺口占比。对本仓库 26 个内置模板的自体检：存在性缺口率 24.6%（R284 补强后，
+原 86%）；平均声明质量 33%（质量缺口 67%——薄声明，R284 口径升级暴露的真实面）。残留缺口
+（LLM09 向量 25 / LLM06 无约束消耗 17 / LLM04 供应链 12 / LLM03 越权 10）多为模板真实不
+涉及的攻击面 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
+口径诚实声明：双口径均为静态文本面，非防御实际有效性；存在性可被"凑一个词"刷低，
+质量分要求覆盖面，更诚实（R235 关切，R284 落地）。
+
+**老仓库接入（存量不清零也能开门禁）**：`prompt-cli lint -t ./prompts --baseline
+base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW findings，
+存量 PRE-EXISTING 放行 —— 采用路径见 [docs/adoption.md](docs/adoption.md)。
+
+**AI 时代攻击面（agent 配置面）**：2026 攻击主线从单文档 prompt 转向 agent 配置面。
+本仓两道门禁：① `prompt-cli mcp-lint` —— MCP 配置静态门禁（12 项配置级检查 +
+TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批准，OWASP MCP
+映射）；② 指令文件 IPI（CLAUDE.md/AGENTS.md/SKILL.md 指令投毒）—— R321 取证：3 条
+真实攻击样本 × 现行管道安全 payload 0/3 命中（形态错实据，见
+[docs/planning/R321_指令文件IPI取证.md](docs/planning/R321_指令文件IPI取证.md)），5 条观察
+探针已入 golden，规则化已完成：P270（R322 三子形态）+ P271（R323 双子形态, T1 达标晋升）。
 
 <details>
 <summary>📦 能力全貌（271 规则 / 130 维度 / 73 MCP / 23 探针，展开看）</summary>
@@ -204,6 +370,8 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 | **门禁自检** | `prompt-cli doctor --gate` | 版本/规则数/基线/双基线/依赖/waiver面一站式自检，排查"为什么CI没跑" |
 
 </details>
+
+## 定位与适用边界
 
 ### 与 LLM 系竞品的结构性差异
 
@@ -297,128 +465,6 @@ docs/规则误报率基线.md）保证范围是**静态可检测面**
 运行时防护（如 LLM Guard 类工具）。但**门禁只能建立在可复现的裁决上**：
 一次 CI fail 后重跑 pass 的门禁，等于没有门禁。适用域划分而非互相替代，
 是 2026 年 Prompt 安全工具栈的正确分工。
-
-## 快速开始
-
-### 安装
-
-```bash
-# 基础安装
-pip install ai-prompt-toolkit
-
-# 完整安装（含A/B测试+模板市场）
-pip install "ai-prompt-toolkit[full]"
-
-# 仅A/B测试
-pip install "ai-prompt-toolkit[ab_test]"
-```
-
-### 基本使用
-
-```bash
-# Lint检查(271条规则)
-prompt-cli lint -s my_prompt.md
-
-# Lint检查 + 每个finding下显示"下一步"修复提示(数据=规则自带 remediation)
-prompt-cli lint -s my_prompt.md --fix-hint
-
-# 安全扫描(5层恒全, 无 depth 选项)
-prompt-cli scan -t my_prompt.md
-
-# 红队对抗(23 Probe + 11内置检测器, 全局注册表116)
-prompt-cli redteam -t my_prompt.md --probes dan,jailbreak
-
-# Probe扫描(OWASP LLM Top 10 2026, 单文件目标, 默认全部探针)
-prompt-cli probe -t my_prompt.md
-
-# 评估(130维度; --quick=仅TOP10核心维度)
-prompt-cli evaluate -t my_prompt.md
-
-# 华为云合规检查
-prompt-cli compliance -t my_prompt.md --format cli
-
-# 条件编译
-prompt-cli compile -s template.md -c context.json
-
-# A/B测试
-prompt-cli ab-test -c ab_config.yaml
-
-# 版本管理(--action: create/show/diff/rollback; diff 可用 --version-a/--version-b 指定对比版本)
-prompt-cli version --action diff --template my_prompt.md
-prompt-cli version --action rollback --template my_prompt.md --version 3
-
-# 语义Diff(安全策略变更=critical)
-prompt-cli prompt-diff --old old_prompt.md --new new_prompt.md
-
-# Prompt优化+断言验证(assert 需 --response 响应文件 + --config 断言YAML)
-prompt-cli optimize -s my_prompt.md
-prompt-cli assert --response response.txt --config assertions.yaml
-
-# MCP Server(73个工具)
-
-## 接入MCP客户端(如Claude Desktop/Cursor等)
-
-在MCP客户端配置文件(如 `.mcp.json`)中添加:
-
-```json
-{
-  "mcpServers": {
-    "ai-prompt-toolkit": {
-      "command": "prompt-cli",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-# Playground 本地 Web UI(与 MCP 入口 prompt-cli mcp 分属两通道)
-prompt-cli serve
-
-# Watch模式(文件变更自动重跑, --command 选 lint|scan|evaluate)
-prompt-cli watch -t ./prompts/
-
-# 安全评分+Badge(SVG, -o 必填)
-prompt-cli score -t my_prompt.md
-prompt-cli badge -t my_prompt.md -o badge.svg
-
-# Canary水印(单命令: -p 注入 / -c 检测)
-prompt-cli canary -p my_prompt.md
-prompt-cli canary -c leaked_prompt.md
-
-# Token分析(多模型)
-prompt-cli token -t my_prompt.md
-
-# 健康检查
-prompt-cli doctor
-
-# 交互式向导
-prompt-cli wizard
-```
-
-### Docker
-
-```bash
-docker build -t prompt-cli .
-docker run --rm prompt-cli lint -s /app/my_prompt.md
-```
-
-## Roadmap（发布面清单）
-
-以下条目为公开/分发动作面（不改变现有确定性门禁行为），发布时序随维护者
-发布计划推进：
-
-| 条目 | 内容 | 发布前置依赖 | 状态 |
-|------|------|------|------|
-| P0-03 | 仓库转公开（GitHub public） | 无（其余全部分发条目的总前置） | ✅ 已公开（R335，机器核验 `private: false` + CI/API 面双验） |
-| P0-04 | PyPI 发布（`ai-prompt-toolkit`） | P0-03 + PyPI 账号 | 🟡 仓库侧就绪（release.yml 双通道作业：PyPI+ghcr，R289）；待 3 个一次性账号动作（建项目/trusted publisher/pypi environment）+ tag 推送（R336 审计：仓库侧发布链全绿） |
-| P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（根 action.yml + e2e 两态验证，R287 修复；R336 补 SARIF→Code Scanning 步）；第三方用法 `uses: wqbcs/ai-prompt-toolkit@action/v1`（随发布 tag 同推） |
-| P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） | 🟡 清单修复（R252） |
-| P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 | ⬜ |
-| P1-07 | 英文首屏（README i18n 双语切换） | 无 | ⬜ |
-| P5-11 | 误报/漏检曲线公开数据页（precision 时间序列，获客面） | P0-03（数据页随公开仓库发布） | 🟡 数据页已进门禁链（运营点数据页，每次收口重生成）；公开=转公开后 |
-| P1-18 | MCP 发布面（README MCP 接入片段+工具清单页；73 tools 已就绪） | P0-03 | ✅ README MCP 接入节 + `docs/mcp-setup.md`（R287） |
-
-> 状态口径：本表是唯一真源（与 `docs/planning/02_任务总板.md` P0/P1 区同步）；
-> 授权任一子集即可单独推进，条目间除标注依赖外互不阻塞。
 
 ## 项目架构
 
@@ -576,7 +622,7 @@ graph TB
 | **harmonyos** | 1 | D96鸿蒙分布式一致性 |
 | **compliance** | 3 | D100赛事评分契合度/D122合规框架覆盖/D130鸿蒙NEXT适配 |
 
-## 内置模板 (18个)
+## 内置模板
 
 | 模板 | 用途 |
 |------|------|

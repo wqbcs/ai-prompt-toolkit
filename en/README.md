@@ -22,6 +22,8 @@
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 </div>
 
+[**Rules**](../docs/rules.md)  [**Adoption path**](../docs/adoption.md)  [**MCP setup**](../docs/mcp-setup.md)  [**CI examples**](../docs/CI门禁示例.md)  [**Local demo**](../web/index.html)
+
 **Why trust this tool?** The two-baseline credibility claim isn't marketing copy — it's a single
 command. The samples (706 golden attack probes + 60 clean prompts) ship *inside the package*; after
 `pip install` on any machine, one command reproduces the numbers:
