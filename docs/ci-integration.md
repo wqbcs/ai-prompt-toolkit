@@ -18,7 +18,7 @@
 | `--incremental --baseline <file>` | 基线增量：只计 NEW findings（与 `--new-from-rev` 互斥） |
 | `--baseline-from <REF>` | 基线防伪造（P3-20）：与 `--incremental` 合用时从 git REF 读基线文件内容（operator/CI 提供，PR 作者无法篡改 base 分支基线；path 可仓库根相对或 CWD 相对，自动解析） |
 | `--format sarif -o <file>` | SARIF 报告落盘（进 Code Scanning / Code Quality） |
-| `prompt-cli mcp-lint -t <路径> --fail-on high` | MCP 配置静态门禁（AI 时代攻击面）：12 项配置级检查 + TPA/FSP 注入形态 + rug pull 基线；退出码 0=通过 / 2=门禁失败 / 3=执行错误 |
+| `prompt-cli mcp-lint -t <路径> --fail-on high` | MCP 配置静态门禁（AI 时代攻击面）：8 项配置级检查 + tool description security 族规则 + TPA/FSP 注入形态 + rug pull 基线；退出码 0=通过 / 2=门禁失败 / 3=执行错误 |
 
 ## MCP 配置门禁（AI 时代攻击面，`prompt-cli mcp-lint`）
 

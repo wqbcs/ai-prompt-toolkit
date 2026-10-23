@@ -10,6 +10,7 @@
 | `0` | PASS | 无 critical/high，medium ≤3，评分 ≥60 |
 | `1` | WARN | medium >3 或评分 <60 —— 可合并 |
 | `2` | FAIL | critical >0 或 high >0 —— **CI 应在此失败** |
+| `3` | — | 执行错误（配置/路径/解析失败，非门禁结论） |
 
 ---
 
@@ -39,8 +40,8 @@ jobs:
   prompt-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: pip install ai-prompt-toolkit
@@ -74,7 +75,7 @@ repos:
 
 > 发布后亦可接入官方托管钩子（`.pre-commit-hooks.yaml` 声明
 > `promptkit-lint` / `promptkit-security` / `promptkit-probe`）：
-> `repo: https://github.com/<owner>/ai-prompt-toolkit` + `rev: <发布 tag>`，
+> `repo: https://github.com/wqbcs/ai-prompt-toolkit` + `rev: <发布 tag>`，
 > 版本随 tag 钉死。
 
 ---
@@ -103,8 +104,8 @@ prompt-cli lint -t ./prompts --format summary
 ```
 
 ```text
-**prompt-cli lint** — ❌ FAIL (exit 2) | 文件 26 | 问题 506 | 均分 92.7/100 | 1.27s
-✗ high 127 · ℹ low 117 · ⚠ medium 262
+**prompt-cli lint** — ❌ FAIL (exit 2) | 文件 26 | 问题 629 | 均分 90.7/100
+✗ high 183 · ⚠ medium 331 · ℹ low 115
 | 规则 | 计数 | 说明 |
 | `P082` | 26 | `prompt-cli explain P082` |   ← top 5 规则
 ```

@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7029%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](../tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
@@ -101,8 +101,9 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 (exit 2 — blocks CI merge)
 ```
 
-14 findings (5 ✗ critical / 8 ⚠ warning / 1 • info), each pointing to a specific rule
-+ line; zero LLM calls, <100ms; `--gate` returns the `FAIL` verdict and `exit 2` in CI.
+14 findings (5 ✗ errors / 8 ⚠ warnings / 1 • info; 1 critical-level finding trips the gate
+FAIL), each pointing to a specific rule + line; zero LLM calls, <100ms; `--gate` returns
+the `FAIL` verdict and `exit 2` in CI.
 (Rule messages are in the project's primary language, zh-Hans.)
 
 ---

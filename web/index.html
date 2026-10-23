@@ -174,7 +174,7 @@
     <div class="bgrid">
       <div class="bcard"><h3>漏检面（攻击召回）</h3><div class="big" id="b-miss">…</div>
         <div class="sub" id="b-miss-sub"></div>
-        <p>golden 攻击探针随包分发——任何机器 <code>pip install</code> 后一条 <code>prompt-cli baseline</code> 可复现。分母 = 每条探针期望命中的规则单元（271 规则 100% 探针覆盖推进中）。</p></div>
+        <p>golden 攻击探针随包分发（发布后, P0-04）——安装后一条 <code>prompt-cli baseline</code> 可复现。分母 = 每条探针期望命中的规则单元（探针覆盖推进中，分母明细见 docs/规则漏检率基线.md）。</p></div>
       <div class="bcard"><h3>误报面（干净精度）</h3><div class="big" id="b-fp">…</div>
         <div class="sub" id="b-fp-sub"></div>
         <p>60 个干净 prompt × 271 checker。干净样本是自选面——外部独立基准见右侧过防御卡。</p></div>
@@ -211,7 +211,7 @@
       <h3>它是什么</h3>
       <p><b>AI Prompt Toolkit</b>（<code>prompt-cli</code>）是确定性 LLM 提示词静态门禁——prompt 的 ESLint。271 条规则覆盖注入攻击、编码混淆、不可见字符、结构缺陷、合规声明（EU AI Act / GDPR / 国内监管，映射 OWASP LLM Top10）、平台生态面（鸿蒙 / 华为云）。</p>
       <h3>怎么用</h3>
-      <pre>pip install ai-prompt-toolkit
+      <pre>pip install ai-prompt-toolkit     # PyPI 发布后（P0-04）; 发布前用 git clone + pip install -e .
 prompt-cli lint prompt.md          # 单文件门禁（exit 0/1/2 三态契约）
 prompt-cli baseline                # 一条命令自证双基线
 prompt-cli scan --format sarif .   # CI 集成（SARIF 2.1.0 标准）</pre>
@@ -333,7 +333,7 @@ function renderRules() {
     (!q || r.rule_id.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)) &&
     (!sev || r.severity === sev) && (!cat || r.category === cat));
   $('#rtbody').innerHTML = list.map(r => {
-    const cls = SEVCLS[r.severity] || 'low';
+    const cls = sevCls(r.severity);
     return `<tr><td class="ridcell">${r.rule_id}</td><td><span class="sev ${cls}">${r.severity}</span></td><td class="cat">${esc(r.category)}</td><td>${esc(r.description)}</td></tr>`;
   }).join('');
   $('#rmatch').textContent = list.length + ' / ' + RULES.length;

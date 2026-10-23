@@ -9,6 +9,8 @@
 4. **反清单**（docs/planning/02 总板"不做什么"）：不往门禁路径加 LLM 调用、
    不批量给模板塞声明骗规则、不为凑数加规则/维度/Provider
 
+行为准则见 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。
+
 ## 快速开始
 
 ```bash
@@ -44,7 +46,7 @@ python scripts/release_gate.py
 - **类型注解**：所有公开 API 必须有类型注解（mypy 棘轮基线=0，禁抬）
 - **文档字符串**：所有公开函数/类必须有 docstring
 - **测试覆盖**：新增功能必须包含测试
-- **代码格式**：`ruff format` + `ruff check`（版本 0.16.10 钉死，勿升级）
+- **代码格式**：`ruff format` + `ruff check`（版本 0.17.0 钉死，勿升级）
 - **提交信息**：遵循 [Conventional Commits](https://www.conventionalcommits.org/)
 
 ```
@@ -55,7 +57,7 @@ refactor: 简短描述
 test: 简短描述
 ```
 
-工具链版本钉死（ruff 0.16.10 / mypy 2.1.0）——门禁行为随上游发版漂移
+工具链版本钉死（ruff 0.17.0 / mypy 2.4.0，真源=pyproject.toml [dev] + ci/dep_snapshot.json）——门禁行为随上游发版漂移
 是本项目 R223 四连红的根因，升级需独立 PR 论证。
 
 ## 新增 Lint 规则（探针先行流程）
@@ -67,7 +69,7 @@ test: 简短描述
      优先结构复杂样本：嵌套 JSON/多轮对话/代码混排——FP 痛点实证见
      docs/planning/12 §1.7）
    - 探针 = 尺子。探针错，规则就是自嗨
-2. **再写规则**（`src/ai_prompt_toolkit/linter/rules_pXXX.py`）
+2. **再写规则**（`src/ai_prompt_toolkit/linter/rules_pXXX_pYYY.py`）
    - 必须有 OWASP LLM Top 10 或内部类别映射
    - severity 分级有据：critical=直接可利用 / high=显著风险 /
      medium=最佳实践 / low=风格
@@ -110,12 +112,15 @@ test: 简短描述
 | harmonyos_v15 | P186-P190 | 鸿蒙 NEXT API 15 规则（ArkUI/NAPI/沙箱 2.0/HSP/元服务） |
 | agent_security | P191-P195 | AI Agent 安全规则（权限/工具约束/CoT 隔离/协调/记忆） |
 
+> P196–P271 后续规则族（如 P269 混排 / P270 中文 agent 配置注入 / P271 多模态输入门）
+> 见 [docs/rules.md](docs/rules.md) 全量清单。
+
 ### 其他扩展点
 
 - **添加 Probe**：`redteam/probes/` 创建模块，继承 `BaseProbe` 实现
   `generate_inputs()`，自动发现机制（`_discover_probes`）自动注册
 - **添加 Provider**：`ab_test/providers/` 创建模块，继承 `BaseProvider`
-  实现 `generate()` 和 `parse_response()`，自动发现机制自动注册
+  实现 `invoke()`（async）和 `validate()`，自动发现机制自动注册
 - **添加评估维度**：`evaluator.py` 的 `_DIMENSIONS` 列表添加维度字典，
   更新测试断言中的维度数量。权重预设 7 个（default/security-heavy/
   quality-balanced/performance-first/harmonyos-strict/redteam-ready/

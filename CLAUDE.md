@@ -23,7 +23,7 @@ commit + 理由。
 ## 新增 Lint 规则（探针先行）
 
 1. 探针 TP+TN 各 ≥2 进 `data/golden_attacks.json`
-2. 规则进 `linter/rules_pXXX.py`，必须带 OWASP 映射
+2. 规则进 `linter/rules_pXXX_pYYY.py`，必须带 OWASP 映射
 3. 双基线不回归：`scripts/check_false_positives.py --fail-above 0.01`、
    `scripts/check_miss_rate.py --fail-above 0.05`
 
@@ -40,6 +40,6 @@ commit + 理由。
 
 ## 代码风格
 
-- Python 3.10+，ruff check + ruff format（CI 版本 0.16.10 钉死）
+- Python 3.10+，ruff check + ruff format（CI 版本 0.17.0 钉死）
 - mypy 棘轮：新模块零错误
 - 中文注释合法且被保留；新代码标识符用英文

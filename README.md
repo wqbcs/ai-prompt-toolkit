@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7029%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -21,7 +21,7 @@
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 </div>
 
-[**规则文档**](docs/rules.md)  [**采用路径**](docs/adoption.md)  [**MCP 接入**](docs/mcp-setup.md)  [**CI 门禁示例**](docs/CI门禁示例.md)  [**本地体验**](web/index.html)
+[**规则文档**](docs/rules.md)  [**采用路径**](docs/adoption.md)  [**MCP 接入**](docs/mcp-setup.md)  [**CI 门禁示例**](docs/CI门禁示例.md)  [**本地体验**（先跑 `python scripts/playground.py`）](web/index.html)
 
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(706 条 golden
 攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`
@@ -124,8 +124,8 @@ prompt-cli lint -s my_prompt.md --fix-hint
 # 安全扫描(5层恒全, 无 depth 选项)
 prompt-cli scan -t my_prompt.md
 
-# 红队对抗(23 Probe + 11内置检测器, 全局注册表116)
-prompt-cli redteam -t my_prompt.md --probes dan,jailbreak
+# 红队对抗(5 探针 + 3 检测器; 23 Probe 全量见下方 probe 命令)
+prompt-cli redteam -t my_prompt.md --probes jailbreak,encoding_bypass
 
 # Probe扫描(OWASP LLM Top 10 2026, 单文件目标, 默认全部探针)
 prompt-cli probe -t my_prompt.md
@@ -229,7 +229,7 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 | P1-01 | GitHub Action（`prompt-cli lint --gate` 进 CI，含 SARIF upload 进 Code Scanning） | P0-03 | 🟡 仓库侧已落（根 action.yml + e2e 两态验证，R287 修复；R336 补 SARIF→Code Scanning 步）；第三方用法 `uses: wqbcs/ai-prompt-toolkit@action/v1`（随发布 tag 同推） |
 | P1-02 | pre-commit 钩子配置 | 无（纯文档+配置片段） | 🟡 清单修复（R252） |
 | P1-08 | quickstart 引导（`prompt-cli init` 模板包） | P0-04 | ⬜ |
-| P1-07 | 英文首屏（README i18n 双语切换） | 无 | ⬜ |
+| P1-07 | 英文/日文首屏（README i18n 镜像） | 无 | ✅ en/README.md + ja/README.md 已上线 |
 | P5-11 | 误报/漏检曲线公开数据页（precision 时间序列，获客面） | P0-03（数据页随公开仓库发布） | 🟡 数据页已进门禁链（运营点数据页，每次收口重生成）；公开=转公开后 |
 | P1-18 | MCP 发布面（README MCP 接入片段+工具清单页；73 tools 已就绪） | P0-03 | ✅ README MCP 接入节 + `docs/mcp-setup.md`（R287） |
 
@@ -238,7 +238,7 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 
 ## 目录
 
-- [实战示例](#实战示例)
+- [实战示例](#实战示例真实输出--可复现--非编造)
 - [特性](#特性)
 - [快速开始](#快速开始)
 - [CI 接入](#ci-接入)
@@ -294,7 +294,7 @@ Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方
 
 **缺口体检（OWASP LLM Top 10 防御声明面）**：`prompt-cli gap-report -t ./prompts`
 对每个文件×每个风险度量**双口径**：存在性（是否声明了防御意图）+ 质量（命中多少防御面），
-产出可复现的缺口占比。对本仓库 26 个内置模板的自体检：存在性缺口率 24.6%（R284 补强后，
+产出可复现的缺口占比。对本仓库模板库 26 个模板文件的自体检（代码内置模板注册表 18 个，见核心数据表）：存在性缺口率 24.6%（R284 补强后，
 原 86%）；平均声明质量 33%（质量缺口 67%——薄声明，R284 口径升级暴露的真实面）。残留缺口
 （LLM09 向量 25 / LLM06 无约束消耗 17 / LLM04 供应链 12 / LLM03 越权 10）多为模板真实不
 涉及的攻击面 —— 完整报告见 [docs/gap_report.md](docs/gap_report.md)。
@@ -428,7 +428,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 - **全生命周期覆盖**：唯一覆盖 Lint→Scan→Probe→RedTeam→Evaluate→Compliance→Version 全链路的Prompt工具
 - **零LLM调用Lint**：271条静态分析规则(196条可自动修复)，无需消耗Token即可检测Prompt质量
-- **OWASP LLM Top 10 2026**：23 Probe→LLM01-LLM10完整映射（2026 版 2025→2026 已迁移，R228），自动生成合规报告+修复建议
+- **OWASP LLM Top 10 2026**：21 探针→LLM01-LLM10 映射（23 注册探针中 badchars/malwaregen 未单列 OWASP 项；2026 版 2025→2026 已迁移，R228），自动生成合规报告+修复建议
 - **华为云合规引擎**：7域加权评分+等保2.0映射+CRITICAL一票否决+SARIF输出
 - **语义Diff**：安全策略变更=critical级告警，角色/约束变更=high级
 - **Prompt消毒器**：11步/strict 13步检测管线(注入/PII/Unicode/供应链/结构/编码/格式/语言等)
@@ -708,7 +708,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 口径：期望命中单元/漏检单元=`run_miss_rate()` 的 per_language 单一真源
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对，手写漂移=门禁红
-（R242-P2-12）。分语言探针计数真源在 `data/golden_attacks.json` 本身
+（R242-P2-12）。分语言探针计数真源在 `src/ai_prompt_toolkit/data/golden_attacks.json` 本身
 （2026-10-20：总 706=zh-Hans 554/en 132/ja 18/zh-Hant 2，R288 +3 P178 逃生舱探针，R293 +1 全角 TN，R312 +5 tag块探针 4TP+旗帜TN，R315 +8 P2-26 过防御批 TN，R317 +4 P2-26 批2 TN，R319 +2 深审探针 P269 混排 TP + P008 智 TN，R320 +1 P239 超时对称 TN，R321 +5 指令文件 IPI 取证 ATR 源 3 盲点观察+2 TN，R322 +7 指令文件 IPI 规则化 2TP+2TN〔P270 实火锚定+真实benign护栏〕+多模态裸子串撞车根因修复 3TN，R323 +4 多模态输入门 social media 根因 TN+1〔P271 规则化 1TP+2TN〕，R334 +3 P270 中文扩展 2TP+1TN）。
 
 ## VSCode插件
@@ -781,7 +781,7 @@ pytest tests/ -v -k "not slow"
 
 # 收口门禁链(单入口, 独立退出码, 禁手工拆步/禁管道吞码)
 # 步骤数以 scripts/release_gate.py build_steps() 为单一真源(不硬编码计数):
-# pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报0.01%/漏检0.05%棘轮)
+# pytest全量 → ruff check/format → mypy棘轮 → 双基线(误报1%/漏检5%棘轮; 脚本参数 0.01/0.05=比例)
 #       → 依赖清单一致性 → 环境一致性快照 → gen_rules_doc重生成 → sync_badges
 #       → sync_readme_metrics → 版本一致性 → SARIF合法性
 python scripts/release_gate.py

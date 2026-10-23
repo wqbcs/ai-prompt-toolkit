@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7029%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](../tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
@@ -46,10 +46,9 @@ prompt-cli baseline
 二重ベースラインのラチェット（締め付けのみ）+ 29 段階のゲートチェーン + プロブ先行の規律。
 いかなる回帰も CI を赤くします。いかなるモデルの「鮮度」にも依存しません。
 
-### 実演（実際の出 lực · 再現可能 · 捏造ではない）
+### 実演（実際の出力 · 再現可能 · 捏造ではない）
 
-地雷が埋められた agent prompt に対して `prompt-cli lint` を実行——以下は**実際の出
-力**（ローカル再現：`pip install -e . && prompt-cli lint -s agent_prompt.md`）：
+地雷が埋められた agent prompt に対して `prompt-cli lint` を実行——以下は**実際の出力**（ローカル再現：`pip install -e . && prompt-cli lint -s agent_prompt.md`）：
 
 **入力 `agent_prompt.md`：**
 
@@ -103,7 +102,7 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 
 **ai-prompt-toolkit** は AI プロンプトエンジニアリング向けのフルライフサイクル・ツールチェーンであり、
 記述・品質 Lint・セキュリティスキャン・レッドチーム対抗・コンプライアンス評価・バージョン管理を
-網羅します。ESLint が JavaScript であるように、`prompt-cli` はプロンプトエンジニアリングのものです。
+網羅します。ESLint が JavaScript にとってそうであるように、`prompt-cli` はプロンプトエンジニアリングにとっての ESLint です。
 
 ### 主要指標
 
@@ -113,8 +112,8 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 | **評価次元** | 130 | D01–D130。8 カテゴリ（structure / quality / security / performance / fairness / toolchain / harmonyos / compliance） |
 | **インジェクション検出** | 37 | 英語 19 件（INJ-001~019）+ 中国語 18 件（INJ-ZH-001~018） |
 | **PII 検出** | 12 | 氏名 / 身分証 / 携帯 / メール / 銀行カード / 住所 等 |
-| **レッドチームプロブ** | 23 | DAN / 符号化バイパス / インジェクション / 漏洩 / XSS / パッケージ幻覚 / 悪性文字 / GCG / スノーボール / マルウェア / システムプロンプト漏洩 / 埋め込み / Grandma / 続き書き / DonotAnswer / エージェントインジェクション / ツール乱用 / 権限昇格 / ゴールハイジャック / マルチエージェント / 画像インジェクション / 音声インジェクション / 跨モーダリティ漏洩 |
-| **レッドチーム検出器** | 11 | ジェイルブレイク語 / システムプロンプト漏洩 / インジェクションパターン / 符号化異常 / 倫理アライメント / 偏り・公平性 / 誤情報 / 拒否 / エージェント行動異常 / マルチモーダル出力 / チェーン攻撃 |
+| **レッドチームプロブ** | 23 | DAN / 符号化バイパス / インジェクション / 漏洩 / XSS / パッケージ幻覚 / 悪性文字 / GCG / スノーボール / マルウェア / システムプロンプト漏洩 / 埋め込み / Grandma / 続き書き / DonotAnswer / エージェントインジェクション / ツール乱用 / 権限昇格 / ゴールハイジャック / マルチエージェント / 画像インジェクション / 音声インジェクション / クロスモーダル漏洩 |
+| **レッドチーム検出器** | 11 | ジェイルブレイク語句 / システムプロンプト漏洩 / インジェクションパターン / 符号化異常 / 倫理アライメント / 偏り・公平性 / 誤情報 / 拒否 / エージェント行動異常 / マルチモーダル出力 / チェーン攻撃 |
 | **MCP ツール** | 73 | 完全な MCP Server、辞書 O(1) ディスパッチ |
 | **LLM Provider** | 25 | OpenAI / Claude / DeepSeek / Qwen / GLM / Moonshot / Baidu / MiniMax / Huawei / Pangu / ModelArts / Doubao / Spark / Baichuan / SenseTime 等 |
 | **内蔵テンプレート** | 18 | Huawei Cloud / HarmonyOS / Pangu5 / 汎用 QA 等 |
@@ -164,12 +163,12 @@ promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線�
 |---|---|---|
 | 再実行の一致 | サンプリング分散 — promptfoo 公式ドキュメントも eval 出力は非決定論的と明記し、`repeat:3` + `repeat-min-pass:2` の複数サンプリングでヘッジ | バイト単位一致、1000 回再実行しても判定は同一 |
 | 統計ノイズ | garak のゲート実践：バージョン固定 + 固定シードでも、ベースラインとの**片側 Fisher 検定**が必要。著者の実測では 2 行 diff の no-op PR の誤検出率が約 54% | サンプリングなし → Fisher なし → 統計的誤検出なし。ルール変更時のみ判定が変化し、監査可能 |
-| API キー / ベンダー | `PROMPTFOO_API_KEY` や LLM endpoint が必要 — CI にキー管理 + ベンダー可用性依存の一层追加 | キーゼロ、オフライン動作、air-gap 環境で利用可 |
+| API キー / ベンダー | `PROMPTFOO_API_KEY` や LLM endpoint が必要 — CI にキー管理 + ベンダー可用性依存の一層追加 | キーゼロ、オフライン動作、air-gap 環境で利用可 |
 | ゲート遅延 | LLM 呼び出しはサンプルあたり数百 ms〜秒 | <100ms/ファイル、pre-commit フックに組み込める |
 | コストモデル | token 課金、PR 数 × サンプル数で線形増加 | 呼び出しゼロ、CI コストは使用量と無関係 |
 
 これは LLM 路線を貶めるものではなく — 意味論レイヤの攻撃（創造的ジェイルブレイク / 間接インジェクションの
-敵対的改写）は、純粋静的検出の機構上限であり、ランタイム防護（LLM Guard 系）と組み合わせて使うべきです。
+敵対的書き換え）は、純粋静的検出の機構上限であり、ランタイム防護（LLM Guard 系）と組み合わせて使うべきです。
 **分担**：本ツールは CI ゲート（再現可能判定レイヤ）、LLM 系ツールは意味論評価とレッドチーム探索。
 補完的であり、置き換え関係ではありません。
 
@@ -182,7 +181,7 @@ promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線�
 | OWASP LLM Top 10 対応 | **2026 版（現行）+ ATLAS + 等保 2.0 の三標準** | 公開標準対応なし | CVE/ATTACK 面 | なし | 一部 |
 | 判定の決定論 | バイト再現可能 + 二重ベースライン時系列（1 コマンドで再現） | 決定論的静的 | ランタイム / ネットワーク feed 依存 | 一部 | 決定論的静的 |
 | 増分ゲート | 二重ベースライン（FP ラチェット + 既存ロック）+ 増分は NEW のみ遮断 | 公開ベースライン規律なし | ある | ある | なし |
-| 中国語ルール / レポート | 中国語インジェクション検出 18 件 + 中国語ルール系統 + 人話エラー + **言語別検出ベースライン表** | なし | なし | なし | 一部 |
+| 中国語ルール / レポート | 中国語インジェクション検出 18 件 + 中国語ルール系統 + 平易な表現のエラー + **言語別検出ベースライン表** | なし | なし | なし | 一部 |
 
 > 位置づけの明確化：本ツールは **CI ゲートレイヤ**（再現可能判定）。ランタイム防護（LLM Guard 系）と
 > LLM 評価（promptfoo 系）は補完的。MCP 検出面は下記「境界」を参照。
@@ -198,7 +197,7 @@ token ゼロ）。promptfoo eval は **PR 後 / nightly** の行動評価（サ�
 
 ### MCP 検出の適用境界（正直な宣言）
 
-`mcp-lint` は **config/description 静的面**の検出です：顕式汚染（悪性指示 / `ignore previous` 系）、
+`mcp-lint` は **config/description 静的面**の検出です：明示的な汚染（悪性指示 / `ignore previous` 系）、
 **TPA/FSP ツール定義インジェクション**（MCP-111 トップレベル description / MCP-112 inputSchema
 再帰 walk、OWASP MCP Top 10 MCP03、実 payload プロブ先行）、rug pull（承認済みベースラインの
 description 乖離）、隠しチャネル（ゼロ幅 / 制御文字）を遮断します。**検出できない**のは MCP-ITP 系の
@@ -215,7 +214,7 @@ description 乖離）、隠しチャネル（ゼロ幅 / 制御文字）を遮�
 - **意味論 Diff** — セキュリティポリシー変更 = critical アラート、役割 / 制約変更 = high
 - **Prompt 消毒器** — 11 段 / strict 13 段のパイプライン（インジェクション / PII / Unicode / サプライチェーン / 構造 / 符号化 / 書式 / 言語）
 - **25 種 LLM Provider** — OpenAI / Claude / DeepSeek / Qwen / Huawei Pangu 等の国内外モデル
-- **中国語ファースト** — 中国語インジェクション検出 18 件、中国語特有の句読点 / Token / 冗長 Lint、人話翻訳エラー
+- **中国語ファースト** — 中国語インジェクション検出 18 件、中国語特有の句読点 / Token / 冗長 Lint、平易な表現のエラーメッセージ
 - **MCP Server** — 標準 MCP ツール 73 件、Claude Desktop 等の MCP クライアントから直接呼び出し可能
 
 ### なぜ決定論的静的検出なのか（CI ゲートシーン）
@@ -239,7 +238,7 @@ eval では全緑を通過し、本番のエッジケースが事故に変える
 | 誤検出 / 漏れの監査性 | 意味論レイヤの判定は追跡不可 | 各 finding が具体的なパターンと行番号を指す |
 
 **競合数値の適用境界（正直に、貶めず）：** hybrid F1 0.94 は一度限りのオフライン評価スナップショットです。
-意味論レイヤの攻撃（創造的ジェイルブレイク / 間接インジェクション / 敵対的改写）は、純粋静的検出の
+意味論レイヤの攻撃（創造的ジェイルブレイク / 間接インジェクション / 敵対的書き換え）は、純粋静的検出の
 **機構上限**です。本ツールの二重ベースライン（検出漏れ 0.00%：706 件ゴールデンプロブ / 393 期待命中
 ユニット。誤検出 0.81%：60 件クリーンサンプル）が保証するのは**静的に検出可能な面**であり、
 分母とルール別明細は `docs/规则漏检率基线.md` と `docs/规则误报率基线.md` を参照。
@@ -373,7 +372,7 @@ Provider / MCP / CLI はその周りのプラグイン可能な端です。
 | オンボーディング | `onboarding/` | 対話ウィザード |
 
 > フルライフサイクルの流れ + システムアーキテクチャ（mermaid）とモジュール別詳細は
-> [中文 README](../README.md) と `docs/` を参照。
+> [中国語版 README](../README.md) と `docs/` を参照。
 
 ## 評価次元（130）
 

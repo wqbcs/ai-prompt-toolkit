@@ -28,7 +28,7 @@
 1. **首选**：GitHub Security Advisories —
    `https://github.com/wqbcs/ai-prompt-toolkit/security/advisories/new`
    （私有渠道，不公开，不通知仓库 owner 之外的任何人）
-2. 备选：`gwc0218@qq.com`（GPG 公钥待补——报告敏感内容请优先 advisory 渠道）
+2. 备选：`gwc0218@qq.com`（报告敏感内容请优先 advisory 渠道）
 
 > 机器可读入口（RFC 9116）：[`.well-known/security.txt`](.well-known/security.txt)
 > —— 供安全扫描 / 自动化工具发现报告渠道（本文是其人类可读的政策页）。
@@ -50,10 +50,10 @@
 
 | # | 威胁 | 现行缓解 |
 |---|---|---|
-| TH1 | 探针集（尺子）投毒 | CODEOWNERS 双人 review（P3-13 建设中） |
-| TH2 | 基线文件篡改绕过门禁 | 基线重存独立 commit 纪律 + hash 告警（P3-15） |
-| TH4 | 规则投毒（假阴性） | 规则变更需带探针（探针先行流程） |
+| TH1 | 规则投毒（假阴性） | 规则变更需带探针（探针先行流程）+ CODEOWNERS 双人 review（P3-13 已落 R242） |
+| TH2 | 探针集（尺子）投毒 | CODEOWNERS 双人 review（P3-13 已落 R242） |
 | TH6 | SARIF 输出注入 | JSON 序列化转义 + 回归测试（P3-14） |
+| TH7 | 基线文件篡改绕过门禁 | 基线重存独立 commit 纪律 + hash 告警（P3-15） |
 
 ## 安全相关的已知边界（非漏洞，诚实声明）
 

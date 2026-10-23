@@ -21,7 +21,7 @@
 
 ```bash
 pip install ai-prompt-toolkit   # 或 uv tool install ai-prompt-toolkit
-python -m ai_prompt_toolkit.mcp_server --help >/dev/null && echo OK
+python -c "import ai_prompt_toolkit.mcp_server; print('OK')"  # 直连运行是 stdio server 会挂起, 自检用 import
 ```
 
 Python 3.10+。裁决面 tool 零 key、零网络（server 本地 stdio，不回调任何服务）；
