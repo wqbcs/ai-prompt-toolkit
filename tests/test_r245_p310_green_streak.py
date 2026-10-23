@@ -17,6 +17,8 @@ scripts/check_ci_green_streak.py 的 10 面覆盖（computeStreak 纯函数语�
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -125,3 +127,53 @@ class TestMainWriteBadge:
         assert mod.main(["--streak-na", "--write-badge"]) == 0
         assert "n/a" in badge.read_text(encoding="utf-8")
         assert "streak=None" in capsys.readouterr().out
+
+
+class TestParseSlug:
+    """R336 追加修复: 旧 rsplit(':') 对 HTTPS remote 产出 '//github.com/...' slug,
+    gh api 404 → exit 2 —— CI 连红第二根因(R336 权限修后仍红)。"""
+
+    def test_https(self, mod):
+        # CI actions/checkout 形态
+        assert mod._parse_slug("https://github.com/wqbcs/ai-prompt-toolkit.git") == "wqbcs/ai-prompt-toolkit"
+
+    def test_https_no_git_suffix(self, mod):
+        assert mod._parse_slug("https://github.com/wqbcs/ai-prompt-toolkit") == "wqbcs/ai-prompt-toolkit"
+
+    def test_ssh_scp_form(self, mod):
+        # 本机开发形态
+        assert mod._parse_slug("git@github.com:wqbcs/ai-prompt-toolkit.git") == "wqbcs/ai-prompt-toolkit"
+
+    def test_ssh_url_form(self, mod):
+        assert mod._parse_slug("ssh://git@github.com/wqbcs/ai-prompt-toolkit.git") == "wqbcs/ai-prompt-toolkit"
+
+    def test_no_host_prefix_fallback(self, mod):
+        assert mod._parse_slug("host:owner/name.git") == "owner/name"
+
+    def test_plain_slug_passthrough(self, mod):
+        assert mod._parse_slug("wqbcs/ai-prompt-toolkit") == "wqbcs/ai-prompt-toolkit"
+
+
+class TestFetchRunsSlug:
+    def test_https_remote_builds_valid_api_path(self, mod, monkeypatch):
+        # 端到端复现 CI 场景: HTTPS remote → gh api path 必须是 owner/name 形态
+        calls = []
+
+        def fake_run(cmd, **_kwargs):
+            calls.append(list(cmd))
+            if cmd[0] == "git":
+                return subprocess.CompletedProcess(
+                    cmd, 0, stdout="https://github.com/wqbcs/ai-prompt-toolkit.git\n", stderr=""
+                )
+            payload = {
+                "workflow_runs": [
+                    {"created_at": "2026-10-22T00:00:00Z", "status": "completed", "conclusion": "success"}
+                ]
+            }
+            return subprocess.CompletedProcess(cmd, 0, stdout=json.dumps(payload), stderr="")
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        runs = mod.fetch_runs("prompt-ci.yml")
+        assert runs == [{"created_at": "2026-10-22T00:00:00Z", "status": "completed", "conclusion": "success"}]
+        gh_cmd = next(c for c in calls if c[0] == "gh")
+        assert "repos/wqbcs/ai-prompt-toolkit/actions/workflows/prompt-ci.yml" in gh_cmd[2]

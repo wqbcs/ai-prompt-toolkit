@@ -89,6 +89,15 @@ def render_badge_svg(streak: int | None) -> str:
     )
 
 
+def _parse_slug(repo_url: str) -> str:
+    """从 remote url 提取 owner/name（CI checkout 用 HTTPS, 本地多为 SSH）。"""
+    raw = repo_url.strip().removesuffix(".git")
+    for prefix in ("https://github.com/", "http://github.com/", "ssh://git@github.com/", "git@github.com:"):
+        if raw.startswith(prefix):
+            return raw[len(prefix) :]
+    return raw.rsplit(":", 1)[-1]  # SSH 无主机名前缀形态兜底
+
+
 def fetch_runs(workflow: str, per_page: int = SLICE_CAP) -> list[dict]:
     """gh api 拉本仓 workflow 最近运行（CI 内 GITHUB_TOKEN 可用）。"""
     try:
@@ -99,10 +108,7 @@ def fetch_runs(workflow: str, per_page: int = SLICE_CAP) -> list[dict]:
             check=True,
             cwd=ROOT,
         ).stdout.strip()
-        # git@github.com:owner/name.git 或 https://github.com/owner/name(.git)
-        slug = repo.rsplit(":", 1)[-1].replace(".git", "").strip()
-        if "/" not in slug:
-            slug = repo.rstrip("/").removeprefix("https://github.com/").removesuffix(".git")
+        slug = _parse_slug(repo)
     except (subprocess.CalledProcessError, FileNotFoundError):
         slug = "wqbcs/ai-prompt-toolkit"
 
