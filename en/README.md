@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](../tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
@@ -23,6 +23,27 @@
 </div>
 
 [**Rules**](../docs/rules.md)  [**Adoption path**](../docs/adoption.md)  [**MCP setup**](../docs/mcp-setup.md)  [**CI examples**](../docs/CI门禁示例.md)  [**Local demo**](../web/index.html)
+
+## Contents
+
+- [Why you can trust it](#why-you-can-trust-it)
+- [Overview](#overview)
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Roadmap (distribution checklist)](#roadmap-distribution-checklist)
+- [Architecture](#architecture)
+- [Evaluation dimensions (130)](#evaluation-dimensions-130)
+- [Built-in templates (18)](#built-in-templates-18)
+- [Compliance engine](#compliance-engine)
+- [Probe Framework (OWASP LLM Top 10 2026)](#probe-framework-owasp-llm-top-10-2026)
+- [VSCode extension](#vscode-extension)
+- [MCP Server](#mcp-server)
+- [CI/CD integration](#cicd-integration)
+- [Development](#development)
+- [License](#license)
+- [Links](#links)
+
+## Why you can trust it
 
 **Why trust this tool?** The two-baseline credibility claim isn't marketing copy — it's a single
 command. The samples (706 golden attack probes + 60 clean prompts) ship *inside the package*; after
@@ -56,6 +77,57 @@ zenn/Accenture) showed the same class: in 5 benign texts that quote attack phras
 misjudged. The golden probe set is built to this boundary (including embedded-quote TN forms); the
 0.81% false-positive rate (60 clean samples) is a number reproducible by `prompt-cli baseline` on any
 machine.
+
+**False-positive tightening history** (deterministically regenerated from
+`docs/baseline_history.jsonl` every round, byte-identical; fixed 0–10% scale, the
+curve does not rescale with the data):
+
+[![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](../docs/baseline_history.jsonl)
+
+**Over-defense (over-kill) external anchor** — the internal 60 samples are a
+self-selected surface; the real litmus test is "do benign sentences containing
+trigger words get killed" (a support ticket quoting an attack string, the security
+document itself). Measured on PIGuard NotInject's 339 hard negatives (ACL 2025,
+independent holdout, the rules were never tuned against it): **security-family
+false-kill rate 6.78%** (93 rules @ 339 samples; first point 33.92%, then
+R250→R251→R253→R315→R317 probe-first batch fixes took it
+33.92%→20.94%→13.27%→11.50%→7.67%→6.78%, breaking the 10% threshold; time series in
+[`docs/overdefense_history.jsonl`](../docs/overdefense_history.jsonl)). This number is
+published as-is; the governance list (P2-26) is fixed probe-first in descending hit
+count, and the curve only tightens, never loosens (R318 ruling: the program moves to
+evidence-accumulation monitoring — revival trigger = any rule accumulates ≥2
+independent real FP hits, machine-checkable).
+
+**Gap check-up (OWASP LLM Top 10 defense-declaration surface)**:
+`prompt-cli gap-report -t ./prompts` runs a **dual metric** per file × per risk —
+existence (does it declare defense intent) + quality (how many defense surfaces it
+hits) — producing a reproducible gap ratio. Self-check against this repo's 26
+template-library files (the code built-in template registry is 18, see the core
+metrics table): existence gap rate 24.6% (after R284 hardening, originally 86%);
+mean declaration quality 33% (quality gap 67% — thin declarations, the real surface
+exposed by R284's metric upgrade). Residual gaps (LLM09 vectors 25 / LLM06
+unrestricted consumption 17 / LLM04 supply chain 12 / LLM03 privilege 10) are mostly
+attack surfaces the templates genuinely don't touch — full report in
+[docs/gap_report.md](../docs/gap_report.md). Honest metric note: both metrics are
+static text surfaces, not actual defense effectiveness; existence can be gamed by
+"dropping in one word", the quality score requires coverage and is more honest
+(R235 concern, landed in R284).
+
+**Brownfield onboarding (gate without zeroing existing debt)**:
+`prompt-cli lint -t ./prompts --baseline base.json --baseline-save` locks existing
+findings; CI uses `--incremental --gate` to block only NEW findings, letting
+pre-existing ones pass — adoption path in [docs/adoption.md](../docs/adoption.md).
+
+**AI-era attack surface (agent config surface)**: the 2026 attack mainline has
+shifted from single-document prompts to the agent config surface. This repo has two
+gates: ① `prompt-cli mcp-lint` — MCP config static gate (8 config-level checks +
+TPA/FSP injection forms MCP-111/112, recursive inputSchema walk, rug-pull
+baseline approval, OWASP MCP mapping); ② instruction-file IPI (CLAUDE.md /
+AGENTS.md / SKILL.md instruction poisoning) — R321 forensics: 3 real attack samples
+× current pipeline safe-payload 0/3 hits (evidence of a form mismatch, see
+[docs/planning/R321_指令文件IPI取证.md](../docs/planning/R321_指令文件IPI取证.md)), 5
+observation probes added to golden, rule-ization complete: P270 (R322 three
+sub-forms) + P271 (R323 two sub-forms, promoted at T1).
 
 ### See it in action (real output · reproducible · not fabricated)
 
@@ -138,7 +210,7 @@ control. As ESLint is to JavaScript, `prompt-cli` is to prompt engineering.
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 271 rules (P001–P271), 196 auto-fixable; 25+ families across structure / security / performance / quality / agent / RAG / multimodal / i18n / Chinese / portability |
 | **Security scan** | `prompt-cli scan` | 5-layer always-on (no `depth` option): injection + PII + supply-chain + structure + sanitizer |
-| **MCP config scan** | `prompt-cli mcp-lint` | 12 config-level checks (MCP-101~112) + tool-description security rules + TPA/FSP injection detection (MCP-111/112, recursive inputSchema walk, OWASP MCP03) + rug-pull (approved-baseline description drift) + Risk Score (0–100) |
+| **MCP config scan** | `prompt-cli mcp-lint` | 8 config-level checks (MCP-101~110) + tool-description security rules (incl. TPA/FSP injection MCP-111/112, recursive inputSchema walk, OWASP MCP03) + rug-pull (approved-baseline description drift) + Risk Score (0–100) |
 | **Quality Gate** | `prompt-cli lint --gate` | CI-mode verdict (PASS/WARN/FAIL), exit codes 0/1/2, SARIF output |
 | **Red-team** | `prompt-cli redteam` | 23 probes + 11 built-in detectors (global registry 116), OWASP LLM Top 10 2026 mapping, automatic risk scoring |
 | **Probe scan** | `prompt-cli probe` | garak-style probe framework, OWASP compliance report |
@@ -265,6 +337,17 @@ guarantees is the **statically-detectable surface** — miss 0.00% (706 golden p
 units) and FP 0.81% (60 clean samples); denominators and per-rule detail in
 `docs/规则漏检率基线.md` and `docs/规则误报率基线.md`.
 
+## Features
+
+- ⚡️ **<100ms/file · zero LLM cost** — all 271 rules run statically, no model calls, no network dependency; pre-commit friendly, CI verdicts in seconds
+- 🎯 **Byte-for-byte identical** — same input, same version, identical verdict on any machine; deterministic SARIF/JSON serialization, the gate only accepts reproducible verdicts
+- 📐 **OWASP LLM Top 10 (2026) mapping** — full probe→LLM01–LLM10 mapping + MITRE ATLAS + MLPS 2.0, auto-generated compliance reports
+- 🧪 **Dual-baseline self-proof** — 706 golden probes + 60 clean samples ship in-package; one `prompt-cli baseline` command reproduces the numbers on any machine
+- 📦 **Full lifecycle** — lint/scan/probe/redteam/evaluate/compliance/version end-to-end; full capability map in the [Overview](#overview)
+- 🔌 **MCP Server** — 73 standard MCP tools (stdio JSON-RPC), [connects to Claude Desktop/Cursor](../docs/mcp-setup.md)
+- 🌏 **Chinese-first** — 18 Chinese injection-detection rules + per-language detection baseline + plain-language errors, built for Chinese prompt corpora
+- ☁️ **HarmonyOS / Huawei Cloud surface** — 7-domain compliance weighting + MLPS 2.0 mapping + ArkTS-specific rules (see [compliance engine](#compliance-engine))
+
 ## Quick start
 
 ### Install
@@ -374,6 +457,26 @@ threshold with `--fail-on`. Brownfield repos: freeze existing findings with
 `--incremental --gate`. Day0→Day90 adoption path:
 [docs/adoption.md](../docs/adoption.md).
 
+## Roadmap (distribution checklist)
+
+The items below are public/distribution actions (they do not change the existing
+deterministic gate behavior); release sequencing follows the maintainer's release plan:
+
+| Item | Content | Release prerequisite | Status |
+|------|---------|----------------------|--------|
+| P0-03 | Make the repo public (GitHub public) | None (master prerequisite for all other distribution items) | ✅ Public (R335, machine-verified `private: false` + dual CI/API verification) |
+| P0-04 | PyPI release (`ai-prompt-toolkit`) | P0-03 + PyPI account | 🟡 Repo side ready (release.yml dual-channel job: PyPI + ghcr, R289); awaiting 3 one-time account actions (create project / trusted publisher / pypi environment) + tag push (R336 audit: repo-side release chain all green) |
+| P1-01 | GitHub Action (`prompt-cli lint --gate` into CI, incl. SARIF upload to Code Scanning) | P0-03 | 🟡 Repo side landed (root action.yml + two-state e2e verification, R287 fix; R336 added the SARIF→Code Scanning step); third-party usage `uses: wqbcs/ai-prompt-toolkit@action/v1` (pushed with the release tag) |
+| P1-02 | pre-commit hook config | None (pure docs + config snippet) | 🟡 Checklist fix (R252) |
+| P1-08 | quickstart onboarding (`prompt-cli init` template pack) | P0-04 | ⬜ |
+| P1-07 | English/Japanese first screen (README i18n mirrors) | None | ✅ en/README.md + ja/README.md live |
+| P5-11 | FP/miss curve public data page (precision time series, acquisition surface) | P0-03 (the data page ships with the public repo) | 🟡 Data page is in the gate chain (ops-point data page, regenerated at each close-out); public = after going public |
+| P1-18 | MCP distribution surface (README MCP snippet + tool list page; 73 tools ready) | P0-03 | ✅ README MCP section + `docs/mcp-setup.md` (R287) |
+
+> Status note: this table is the single source of truth (synced with the P0/P1 area of
+> `docs/planning/02_任务总板.md`); any subset can be advanced independently, and items do not
+> block each other except for the noted dependencies.
+
 ## Architecture
 
 Layered, decoupled design — the kernel (lint / security / probe / eval verdicts) is pure,
@@ -393,7 +496,91 @@ deterministic, and free of LLM calls; providers, MCP, and the CLI are pluggable 
 | Templates | `templates/` | 18 built-in templates |
 | Onboarding | `onboarding/` | interactive wizard |
 
-> Full lifecycle flow + system architecture (mermaid) and per-module deep dives live in the
+### Full lifecycle flow
+
+```mermaid
+graph LR
+    A[Author Prompt] --> B[Lint check]
+    B --> C[Security scan]
+    C --> D[Probe scan]
+    D --> E[Red-team adversarial]
+    E --> F[Evaluation engine]
+    F --> G[Compliance check]
+    G --> H[Version control]
+    H --> I[Deploy / release]
+
+    B -->|271 rules| B1[196 auto-fixable]
+    B -->|25+ families| B2[structure/security/performance/quality/Agent/RAG/multimodal/i18n/Chinese/portability, etc.]
+    C -->|5 layers always-on| C1[injection/PII/supply-chain/structure/sanitizer]
+    C -->|11/13-step sanitize| C2[injection/PII/Unicode/supply-chain/structure/encoding/format/language, etc.]
+    D -->|23 probes + 11 detectors| D1[OWASP LLM Top 10 2026 mapping]
+    D -->|11 detectors| D2[jailbreak/leak/injection/encoding/ethics/bias/misinfo/refusal, etc.]
+    E -->|10 attack classes| E1[DAN/injection/XSS/leak, etc.]
+    F -->|130 dimensions| F1[D01-D130, 8-category evaluation]
+    G -->|7-domain weighting| G1[data privacy/model security/access control/content security/ops/supply-chain/compliance]
+    G -->|CRITICAL one-vote veto| G2[MLPS 2.0 mapping + SARIF]
+    H -->|semantic diff| H1[security change = critical / role = high]
+```
+
+### System architecture
+
+```mermaid
+graph TB
+    subgraph CLI["prompt-cli command line (30+ commands)"]
+        LINT[lint] --> GATE[Quality Gate]
+        SCAN[scan] --> DEPTH[5-layer deep detection]
+        PROBE[probe] --> OWASP[OWASP Top 10]
+        REDTEAM[redteam] --> ATTACK[10 attack classes]
+        EVAL[evaluate] --> DIMS[130 dimensions]
+        COMPLIANCE[compliance] --> HC[Huawei Cloud 7-domain]
+        COMPILE[compile] --> CMP[Conditional compile]
+        AB[ab-test] --> BAYES[Bayesian statistics]
+        VERSION[version] --> SDIFF[Semantic diff]
+        OPTIMIZE[optimize] --> ASSERT[Assertion validation]
+    end
+
+    subgraph MCP["MCP Server (73 tools)"]
+        MCP_LINT[prompt_lint]
+        MCP_SCAN[prompt_scan]
+        MCP_EVAL[prompt_evaluate]
+        MCP_PROBE[probe_run/owasp_report]
+        MCP_COMPLIANCE[huaweicloud_compliance]
+        MCP_DIFF[prompt_semantic_diff]
+        MCP_SANITIZE[prompt_sanitize]
+        MCP_OPTIMIZE[prompt_auto_optimize]
+        MCP_MORE[...65 more]
+    end
+
+    subgraph SECURITY["Security engine"]
+        INJ[Injection detection, 37 rules]
+        PII[PII detection, 12 types]
+        SUPPLY[Supply-chain detection]
+        SANITIZE[11/13-step sanitizer]
+        SCORECARD[5-dimension scorecard]
+    end
+
+    subgraph RULES["Lint rule system"]
+        R1[P001-P020 basics]
+        R2[P021-P050 Agent/RAG/multimodal/Chinese]
+        R3[P051-P080 Pangu/HarmonyOS/Huawei Cloud]
+        R4[P081-P271 advanced]
+        FIXER[196 auto-fixes]
+    end
+
+    subgraph PROBES["Probe Framework (garak-style)"]
+        P_15[23 Probes]
+        D_8[11 Detectors]
+        OWASP_MAP[OWASP LLM01-LLM10]
+        REMEDIATION[Remediation advice]
+    end
+
+    CLI --> MCP
+    CLI --> SECURITY
+    CLI --> RULES
+    CLI --> PROBES
+```
+
+> The per-module source tree layout and deep dives live in the
 > [中文 README](../README.md) and `docs/`.
 
 ## Evaluation dimensions (130)
@@ -419,6 +606,76 @@ prompt-cli compliance -t my_prompt.md --format cli    # human-readable
 prompt-cli compliance -t my_prompt.md --format sarif  # GitHub Code Scanning
 ```
 
+## Probe Framework (OWASP LLM Top 10 2026)
+
+> R228: mapping upgraded to the OWASP LLM Top 10 **2026** edition (released 2026-08-03,
+> 8 items reordered + LLM07 System Prompt Leakage renamed to LLM08 Hidden Context
+> Exposure). 2025→2026 rekey: LLM03→04, 04→05, 05→10, 06→03, 07→08, 08→09, 09→07, 10→06.
+
+| OWASP ID (2026) | Risk | Probes |
+|----------|------|--------|
+| LLM01 | Prompt Injection | dan, prompt_inject, encoding_bypass, grandma, image_inject, audio_inject |
+| LLM02 | Sensitive Information Disclosure | leak_replay, system_prompt_leak, cross_modal_leak |
+| LLM03 | Excessive Agency | dan, donot_answer, agent_inject, tool_abuse, priv_escalation, goal_hijack, multi_agent_adversary |
+| LLM04 | Supply Chain | package_hallucination |
+| LLM05 | Data and Model Poisoning | snowball, vector_embedding |
+| LLM06 | Unrestricted Consumption | gcg_suffix |
+| LLM07 | Incorrect Information / Hallucination | snowball, continuation |
+| LLM08 | Hidden Context Exposure | system_prompt_leak, leak_replay |
+| LLM09 | Vector and Embedding Weaknesses | vector_embedding |
+| LLM10 | Insecure Output Handling | xss_inject |
+
+### Per-language detection baseline
+
+The golden probe set's miss surface is baselined per language (multi-language
+per-baseline = one of the unique combination surfaces in this track, verified
+2026-10-07; `prompt-cli baseline` reproduces the same numbers on any machine with one
+command, zero-LLM deterministic):
+
+| Language | Expected-hit units | Missed units | Miss rate |
+|----------|--------------------|--------------|-----------|
+| zh-Hans | 315 | 0 | 0.00% |
+| en | 61 | 0 | 0.00% |
+| ja | 15 | 0 | 0.00% |
+| zh-Hant | 2 | 0 | 0.00% |
+
+Metric: expected-hit units / missed units = `run_miss_rate()`'s per_language single
+source of truth (blindspot observation probes do not count toward the miss rate, same
+metric as the global miss rate); the numbers in this table are machine-checked by
+`scripts/check_language_baseline_readme.py`, manual drift = gate red (R242-P2-12). The
+per-language probe-count source of truth is
+`src/ai_prompt_toolkit/data/golden_attacks.json` itself (2026-10-20: total 706 =
+zh-Hans 554 / en 132 / ja 18 / zh-Hant 2; R288 +3 P178 escape-hatch probes, R293 +1
+full-width TN, R312 +5 tag-block probes 4TP + flag TN, R315 +8 P2-26 over-defense
+batch TN, R317 +4 P2-26 batch-2 TN, R319 +2 deep-audit probes P269 mixed TP + P008
+smart TN, R320 +1 P239 timeout-symmetric TN, R321 +5 instruction-file IPI forensics ATR
+source 3 blindspot observation + 2 TN, R322 +7 instruction-file IPI rule-ization 2TP +
+2TN [P270 live-fire anchor + real benign guardrail] + multimodal bare-substring
+collision root-cause fix 3TN, R323 +4 multimodal input-gate social-media root-cause
+TN + 1 [P271 rule-ization 1TP + 2TN], R334 +3 P270 Chinese extension 2TP + 1TN).
+
+## VSCode extension
+
+The project includes the VSCode extension `vscode-prompt-lint/` v0.6.0, providing:
+
+- Real-time Lint diagnostics (271 rules) + 300ms debounce
+- **Line-accurate location (R218)**: diagnostics anchor to real line/column per the
+  kernel's location contract (L:<line>:C:<col>); injection/encoding rules (P260/P261)
+  carry real positions; file-level findings don't guess lines (the 0.5.0
+  description-substring line-guessing was removed)
+- Prompt syntax highlighting ({{variables}} / {%tags%} / role labels / system instructions)
+- Status-bar score indicator
+- Auto-check on save + auto-lint on file open
+- Security scan integration (37 including Chinese injection)
+- PII privacy detection
+- Quality Gate check
+- Front Matter validation
+- Severity-level override config
+- Quick-fix Code Actions
+- CodeLens score + Quality Gate entry
+
+See [vscode-prompt-lint/README.md](../vscode-prompt-lint/README.md)
+
 ## MCP Server
 
 73 standard MCP tools over stdio JSON-RPC with O(1) dictionary dispatch. Connect from an MCP client
@@ -435,9 +692,80 @@ prompt-cli compliance -t my_prompt.md --format sarif  # GitHub Code Scanning
 }
 ```
 
+## CI/CD integration
+
+```yaml
+# GitHub Actions example - Quality Gate
+- name: Prompt Lint with Quality Gate
+  run: prompt-cli lint -t ./prompts/ --gate
+
+# SARIF output - GitHub Code Scanning
+- name: Prompt Lint (SARIF)
+  run: prompt-cli lint -t ./prompts/ --format sarif --output results.sarif
+
+# Security scan (5 layers always-on, no depth option)
+- name: Prompt Security Scan
+  run: prompt-cli scan -t ./prompts/
+
+# Huawei Cloud compliance check
+- name: Huawei Cloud Compliance
+  run: prompt-cli compliance -t ./prompts/ --format sarif
+
+# OWASP LLM Top 10 scan (probe target is a single file; loop per file for directories)
+- name: OWASP LLM Scan
+  run: prompt-cli probe -t ./prompts/my_prompt.md
+```
+
+The project ships GitHub Actions Workflows (7, matching the `.github/workflows/`
+surface):
+- `prompt-ci.yml` — full CI (test matrix + ruff/mypy ratchet + dual baseline + gate chain)
+- `prompt-pr-gate.yml` — PR incremental gate (triggered only on prompt-file changes: lint + scan + evaluate)
+- `release.yml` — tag-triggered PyPI + ghcr dual-channel release (mirror publish lockstep after pypi-publish, CI built-in mirror acceptance smoke)
+- `owasp-llm-scan.yml` — OWASP deep scan + Compliance Gate block
+- `codeql.yml` — CodeQL security scan
+- `daily-scorecard.yml` — daily security scorecard
+- `ci-green-streak.yml` — CI green-streak badge (M1 acceptance metric: 14 consecutive days double-green)
+
+**PR-level gate (what a Prompt change must pass)**: when a PR contains `.prompt` /
+`.prompt.md` changes, `prompt-pr-gate.yml` triggers automatically — changed files each
+run `lint` (0 CRITICAL/HIGH) + `scan` (no CRITICAL vuln) + `evaluate` (score report);
+a gate failure blocks the merge. The companion `.github/PULL_REQUEST_TEMPLATE.md`
+requires a before/after quality-metric comparison and a rollback plan.
+
+## Development
+
+```bash
+# Dev environment
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/ -v -k "not slow"
+
+# Close-out gate chain (single entry, independent exit codes, no manual step-splitting / no pipe code-swallowing)
+# Step count source of truth = scripts/release_gate.py build_steps() (no hardcoded count):
+# pytest full → ruff check/format → mypy ratchet → dual baseline (FP 1% / miss 5% ratchet; script args 0.01/0.05 = ratio)
+#       → dependency manifest consistency → environment consistency snapshot → gen_rules_doc regen → sync_badges
+#       → sync_readme_metrics → version consistency → SARIF validity
+python scripts/release_gate.py
+# Common: --skip 1 skip pytest | --step N rerun a single step | --no-fail-fast run all then summarize
+```
+
 ## License
 
 MIT — see [LICENSE](../LICENSE).
+
+## Links
+
+- [Changelog](../CHANGELOG.md)
+- [Adoption path (Day0→Day90)](../docs/adoption.md)
+- [MCP setup](../docs/mcp-setup.md)
+- [LSP setup (real-time editor lint)](../docs/lsp-setup.md)
+- [Rule docs (per rule)](../docs/rules.md)
+- [CI gate examples](../docs/CI门禁示例.md)
+- [Provider matrix](../docs/provider-matrix.md)
+- [MITRE ATLAS mapping](../docs/mitre-atlas-mapping.md)
+- [Ops-point data page (miss/FP time series)](../docs/operating_curve.md)
+- [Demo page](../web/index.html) (open in a local browser)
 
 <div align="center">
   <p>

@@ -102,6 +102,17 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, INDEX_HTML.read_bytes(), "text/html; charset=utf-8")
         elif path == "/api/baseline":
             self._json(_baseline_payload())
+        elif path.startswith("/assets/"):
+            # 静态资源（favicon/logo 等）：体验页 <link rel="icon"> 引用
+            # 路径穿越防护: is_relative_to 精确判目录归属（startswith 会被 assets_x 前缀绕过）
+            rel = path[len("/assets/") :]
+            base = (ROOT / "assets").resolve()
+            fp = (base / rel).resolve()
+            if fp.is_file() and fp.is_relative_to(base):
+                ctype = "image/svg+xml" if fp.suffix == ".svg" else "application/octet-stream"
+                self._send(200, fp.read_bytes(), ctype)
+            else:
+                self._json({"error": "not found"}, 404)
         elif path == "/api/history":
             self._json(
                 {

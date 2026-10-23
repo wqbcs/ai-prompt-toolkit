@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](../tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
@@ -23,6 +23,27 @@
 </div>
 
 [**ルール文書**](../docs/rules.md)  [**導入ガイド**](../docs/adoption.md)  [**MCP 接続**](../docs/mcp-setup.md)  [**CI 例**](../docs/CI门禁示例.md)  [**ローカル体験**](../web/index.html)
+
+## 目次
+
+- [なぜ信頼できるか](#なぜ信頼できるか)
+- [概要](#概要)
+- [特徴](#特徴)
+- [クイックスタート](#クイックスタート)
+- [Roadmap（公開フェース一覧）](#roadmap公開フェース一覧)
+- [アーキテクチャ](#アーキテクチャ)
+- [評価次元（130）](#評価次元130)
+- [内蔵テンプレート（18）](#内蔵テンプレート18)
+- [準拠エンジン](#準拠エンジン)
+- [Probe Framework (OWASP LLM Top 10 2026)](#probe-framework-owasp-llm-top-10-2026)
+- [VSCode 拡張](#vscode-拡張)
+- [MCP Server](#mcp-server)
+- [CI/CD 統合](#cicd-統合)
+- [開発](#開発)
+- [ライセンス](#ライセンス)
+- [リンク](#リンク)
+
+## なぜ信頼できるか
 
 **なぜこのツールを信頼できるのか？** 二重ベースラインという信頼性の主張はマーケティング文言ではなく、
 1 行のコマンドです。サンプル（706 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
@@ -45,6 +66,59 @@ prompt-cli baseline
 「コード + プロブ集合」の決定論的・バイト再現可能な関数です。anti-rot 機構自体も機械的に検証可能 —
 二重ベースラインのラチェット（締め付けのみ）+ 29 段階のゲートチェーン + プロブ先行の規律。
 いかなる回帰も CI を赤くします。いかなるモデルの「鮮度」にも依存しません。
+
+**誤検出率の絞り込みの歴史**（各ラウンドで `docs/baseline_history.jsonl` から決定論的に再生成、
+バイト単位一致。固定スケール 0–10%、曲線はデータに追従して縮放しない）：
+
+[![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](../docs/baseline_history.jsonl)
+
+**過防御（over-defense）外部アンカー** — 内部 60 サンプルは自選面であり、真の試金石は
+「トリガー語を含む無害文が誤殺されないか」（攻撃文字列を引用したサポートチケット /
+セキュリティ文書そのもの）です。PIGuard NotInject の 339 件のハードネガティブ（ACL 2025、
+独立 holdout、ルールはこれに対して一切チューニングしていない）で実測：**セキュリティ系
+誤殺率 6.78%**（93 ルール @ 339 サンプル。初回 33.92%、R250→R251→R253→R315→R317 の
+プロブ先行バッチ修正で 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% と 10% 閾値を突破。
+時系列は [`docs/overdefense_history.jsonl`](../docs/overdefense_history.jsonl)）。この数値は
+そのまま公開し、ガバナンスリスト（P2-26）はヒット数降順でプロブ先行修正、曲線は締め付けのみ・
+緩めない（R318 裁定：プログラムは証拠蓄積監視に移行 — 復活トリガー = いずれかのルールが
+独立した実 FP ヒットを ≥2 件累積、機械的に照会可能）。
+
+**第三者裏付け（埋め込み引用 TN 規律）** — 誤検出面で最も難しい境界は「攻撃フレーズを引用する
+セキュリティ文書は無害であり、攻撃ではない」ことです。2026 年の学術 FP 監査
+（`rezaduty/prompt-detector-channel-audit`、7 検出器のルールチャネル監査）は「その
+インジェクションルールがフラグした 9 件の無害文字列のうち 8 件は攻撃フレーズを引用する
+セキュリティ文書」（ルールチャネルは*意図*ではなく*語彙*にマッチ）を発見。Google Model
+Armor の日本語実測（2026、zenn/Accenture）も同型：攻撃フレーズを逐字引用する 5 件の無害
+テキストのうち 1 件を誤判定。ゴールデンプロブ集合はこの境界に沿って構築されており
+（埋め込み引用 TN 形態を含む）、誤検出率 0.81%（60 クリーンサンプル）は
+`prompt-cli baseline` で任意のマシンで再現できる自証数値です。
+
+**ギャップ診断（OWASP LLM Top 10 防御宣言面）**：`prompt-cli gap-report -t ./prompts` は
+ファイル × リスクごとに**二重計量**（存在性 = 防御意図を宣言しているか + 品質 = いくつの
+防御面にヒットしたか）で、再現可能なギャップ率を生成します。本リポジトリの 26 件の
+テンプレートライブラリファイルに対する自己診断（コード内蔵テンプレート登録は 18 件、
+主要指標表参照）：存在性ギャップ率 24.6%（R284 補強後、当初 86%）。平均宣言品質 33%
+（品質ギャップ 67% — 薄い宣言、R284 の計量引き上げで露呈した実面）。残存ギャップ
+（LLM09 ベクトル 25 / LLM06 無制限消費 17 / LLM04 サプライチェーン 12 / LLM03 権限越界 10）の
+多くはテンプレートが実際に扱わない攻撃面 — フルレポートは
+[docs/gap_report.md](../docs/gap_report.md)。計量の正直な声明：二重計量ともども静的テキスト面
+であり、防御の実効性ではない。存在性は「1 語を足す」で下げることを狙えるが、品質スコアは
+カバー範囲を要求するためより正直（R235 懸念、R284 で実現）。
+
+**既存リポジトリ導入（既存負債をゼロにせずにゲート開放）**：
+`prompt-cli lint -t ./prompts --baseline base.json --baseline-save` で既存 findings を
+固定。CI は `--incremental --gate` で NEW findings のみ遮断、既存 PRE-EXISTING は通過 —
+導入パスは [docs/adoption.md](../docs/adoption.md)。
+
+**AI 時代の攻撃面（agent 設定面）**：2026 年の攻撃の主戦線は単一ドキュメント prompt から
+agent 設定面へ移行。本リポジトリには 2 つのゲート：① `prompt-cli mcp-lint` — MCP
+設定静的ゲート（設定レベル 8 項目チェック + TPA/FSP インジェクション形態 MCP-111/112、
+inputSchema 再帰 walk、rug pull ベースライン承認、OWASP MCP 対応）。② 指示ファイル IPI
+（CLAUDE.md / AGENTS.md / SKILL.md の指示汚染）— R321 法医学：実攻撃サンプル 3 件 ×
+現行パイプライン安全 payload のヒット 0/3（形態不一致の実証、
+[docs/planning/R321_指令文件IPI取证.md](../docs/planning/R321_指令文件IPI取证.md) 参照）、
+観察プロブ 5 件が golden に追加、ルール化完了：P270（R322 三サブ形態）+ P271
+（R323 二サブ形態、T1 達成で昇格）。
 
 ### 実演（実際の出力 · 再現可能 · 捏造ではない）
 
@@ -125,7 +199,7 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 |------|---------|------|
 | **Prompt Linter** | `prompt-cli lint` | 271 ルール（P001–P271）、196 件自動修正可。構造 / セキュリティ / 性能 / 品質 / エージェント / RAG / マルチモーダル / i18n / 中国語 / 移植性など 25+ 系統 |
 | **セキュリティスキャン** | `prompt-cli scan` | 5 層常時（`depth` オプションなし）：インジェクション + PII + サプライチェーン + 構造 + 消毒器 |
-| **MCP 設定スキャン** | `prompt-cli mcp-lint` | 設定レベル 12 項目チェック（MCP-101~112）+ ツール説明セキュリティルール + TPA/FSP インジェクション（MCP-111/112、inputSchema 再帰 walk、OWASP MCP03）+ rug pull + Risk Score（0–100） |
+| **MCP 設定スキャン** | `prompt-cli mcp-lint` | 設定レベル 8 項目チェック（MCP-101~110）+ ツール説明セキュリティルール（TPA/FSP インジェクション MCP-111/112 含む、inputSchema 再帰 walk、OWASP MCP03）+ rug pull + Risk Score（0–100） |
 | **Quality Gate** | `prompt-cli lint --gate` | CI モードの判定（PASS/WARN/FAIL）、終了コード 0/1/2、SARIF 出力 |
 | **レッドチーム対抗** | `prompt-cli redteam` | 23 プロブ + 内蔵検出器 11（グローバル登録 116）、OWASP LLM Top 10 2026 対応、自動リスク採点 |
 | **Probe スキャン** | `prompt-cli probe` | garak 風プロブフレームワーク、OWASP 準拠レポート |
@@ -243,6 +317,17 @@ eval では全緑を通過し、本番のエッジケースが事故に変える
 ユニット。誤検出 0.81%：60 件クリーンサンプル）が保証するのは**静的に検出可能な面**であり、
 分母とルール別明細は `docs/规则漏检率基线.md` と `docs/规则误报率基线.md` を参照。
 
+## 特徴
+
+- ⚡️ **<100ms/ファイル · LLM コストゼロ** — 271 ルールを全量静的実行、モデル呼び出しなし・ネットワーク依存なし。pre-commit に組込可能、CI 秒級で裁量
+- 🎯 **バイト単位一致** — 同入力・同バージョン、どのマシンでも再実行時の判定が同一。SARIF/JSON の決定論的シリアライズ、ゲートは再現可能な判定のみ承認
+- 📐 **OWASP LLM Top 10 (2026) 対応** — プロブ→LLM01–LLM10 の完全対応 + MITRE ATLAS + 等保 2.0、準拠レポートを自動生成
+- 🧪 **二重ベースライン自証** — ゴールデンプロブ 706 件 + クリーンサンプル 60 件をパッケージ同梱、`prompt-cli baseline` 1 コマンドで任意のマシンで再現
+- 📦 **フルライフサイクル** — lint/scan/probe/redteam/evaluate/compliance/version 全チェーン、能力の全体像は [概要](#概要)
+- 🔌 **MCP Server** — 標準 MCP ツール 73 件（stdio JSON-RPC）、[Claude Desktop/Cursor に接続](../docs/mcp-setup.md)
+- 🌏 **中国語ファースト** — 中国語インジェクション検出 18 件 + 言語別検出ベースライン + 平易な表現のエラー、中国語 prompt コーパス向け
+- ☁️ **鴻蒙 / Huawei Cloud エコ系面** — 7 ドメイン準拠加重 + 等保 2.0 対応 + ArkTS 専用ルール（[準拠エンジン](#準拠エンジン) 参照）
+
 ## クイックスタート
 
 ### インストール
@@ -352,6 +437,25 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 で NEW findings のみゲート。Day0→Day90 の導入パス：
 [docs/adoption.md](../docs/adoption.md)。
 
+## Roadmap（公開フェース一覧）
+
+以下の項目は公開 / 配布アクション面（既存の決定論的ゲート挙動は変更しない）。
+公開の順序はメンテナの公開計画に従って進行：
+
+| 項目 | 内容 | 公開の前提依存 | 状態 |
+|------|------|------|------|
+| P0-03 | リポジトリを公開化（GitHub public） | なし（他全配布項目の総前提） | ✅ 公開済み（R335、機械検証 `private: false` + CI/API 面二重検証） |
+| P0-04 | PyPI 公開（`ai-prompt-toolkit`） | P0-03 + PyPI アカウント | 🟡 リポジトリ側準備完了（release.yml ダブルチャネルジョブ：PyPI+ghcr、R289）。3 つの一回限りのアカウント操作（プロジェクト作成 / trusted publisher / pypi environment）+ tag push が待ち（R336 監査：リポジトリ側公開チェーン全緑） |
+| P1-01 | GitHub Action（`prompt-cli lint --gate` を CI 化、SARIF upload を Code Scanning へ） | P0-03 | 🟡 リポジトリ側着地（ルート action.yml + e2e 二状態検証、R287 修正。R336 で SARIF→Code Scanning ステップを追加）。サードパーティ利用は `uses: wqbcs/ai-prompt-toolkit@action/v1`（公開 tag と同時に push） |
+| P1-02 | pre-commit フック設定 | なし（純ドキュメント + 設定スニペット） | 🟡 チェックリスト修正（R252） |
+| P1-08 | quickstart ガイダンス（`prompt-cli init` テンプレートパック） | P0-04 | ⬜ |
+| P1-07 | 英語 / 日本語のファーストビュー（README i18n ミラー） | なし | ✅ en/README.md + ja/README.md 公開済み |
+| P5-11 | 誤検出 / 検出漏れ曲線の公開データページ（precision 時系列、顧客獲得面） | P0-03（データページは公開リポジトリと同時公開） | 🟡 データページはゲートチェーンに組み込み済み（運用点データページ、各クローズアウトで再生成）。公開 = 公開化後 |
+| P1-18 | MCP 公開面（README MCP 接続スニペット + ツール一覧ページ。73 tools 準備完了） | P0-03 | ✅ README MCP 接続節 + `docs/mcp-setup.md`（R287） |
+
+> 状態の口径：本表が唯一の真源（`docs/planning/02_任务总板.md` の P0/P1 区と同期）。
+> いずれかの部分集合のみを承認して個別に推進可能、項目間は注記された依存を除き相互にブロックしない。
+
 ## アーキテクチャ
 
 階層的・疎結合の設計 — コア（lint / security / probe / eval 判定）は純粋・決定論的・LLM 呼び出しゼロ。
@@ -371,7 +475,91 @@ Provider / MCP / CLI はその周りのプラグイン可能な端です。
 | テンプレート | `templates/` | 18 の内蔵テンプレート |
 | オンボーディング | `onboarding/` | 対話ウィザード |
 
-> フルライフサイクルの流れ + システムアーキテクチャ（mermaid）とモジュール別詳細は
+### フルライフサイクルの流れ
+
+```mermaid
+graph LR
+    A[Prompt 記述] --> B[Lint チェック]
+    B --> C[セキュリティスキャン]
+    C --> D[Probe スキャン]
+    D --> E[レッドチーム対抗]
+    E --> F[評価エンジン]
+    F --> G[準拠チェック]
+    G --> H[バージョン管理]
+    H --> I[デプロイ / 公開]
+
+    B -->|271 ルール| B1[196 件自動修正可]
+    B -->|25+ 系統| B2[構造/セキュリティ/性能/品質/エージェント/RAG/マルチモーダル/i18n/中国語/移植性 等]
+    C -->|5 層常時| C1[インジェクション/PII/サプライチェーン/構造/消毒器]
+    C -->|11/13 段消毒| C2[インジェクション/PII/Unicode/サプライチェーン/構造/符号化/書式/言語 等]
+    D -->|23 プロブ + 11 検出器| D1[OWASP LLM Top 10 2026 対応]
+    D -->|11 検出器| D2[ジェイルブレイク/漏洩/インジェクション/符号化/倫理/偏り/誤情報/拒否 等]
+    E -->|10 攻撃クラス| E1[DAN/インジェクション/XSS/漏洩 等]
+    F -->|130 次元| F1[D01-D130 8 カテゴリ評価]
+    G -->|7 ドメイン加重| G1[データプライバシー/モデルセキュリティ/アクセス制御/コンテンツセキュリティ/運用/サプライチェーン/準拠]
+    G -->|CRITICAL 一票否決| G2[等保 2.0 対応 + SARIF]
+    H -->|意味論 Diff| H1[セキュリティ変更 = critical / 役割 = high]
+```
+
+### システムアーキテクチャ
+
+```mermaid
+graph TB
+    subgraph CLI["prompt-cli コマンドライン（30+ コマンド）"]
+        LINT[lint] --> GATE[Quality Gate]
+        SCAN[scan] --> DEPTH[5 層深層検出]
+        PROBE[probe] --> OWASP[OWASP Top 10]
+        REDTEAM[redteam] --> ATTACK[10 攻撃クラス]
+        EVAL[evaluate] --> DIMS[130 次元]
+        COMPLIANCE[compliance] --> HC[Huawei Cloud 7 ドメイン]
+        COMPILE[compile] --> CMP[条件付きコンパイル]
+        AB[ab-test] --> BAYES[ベイズ統計]
+        VERSION[version] --> SDIFF[意味論 Diff]
+        OPTIMIZE[optimize] --> ASSERT[アサーション検証]
+    end
+
+    subgraph MCP["MCP Server（73 ツール）"]
+        MCP_LINT[prompt_lint]
+        MCP_SCAN[prompt_scan]
+        MCP_EVAL[prompt_evaluate]
+        MCP_PROBE[probe_run/owasp_report]
+        MCP_COMPLIANCE[huaweicloud_compliance]
+        MCP_DIFF[prompt_semantic_diff]
+        MCP_SANITIZE[prompt_sanitize]
+        MCP_OPTIMIZE[prompt_auto_optimize]
+        MCP_MORE[...残り 65]
+    end
+
+    subgraph SECURITY["セキュリティエンジン"]
+        INJ[インジェクション検出 37 件]
+        PII[PII 検出 12 種]
+        SUPPLY[サプライチェーン検出]
+        SANITIZE[11/13 段消毒器]
+        SCORECARD[5 次元スコアカード]
+    end
+
+    subgraph RULES["Lint ルール体系"]
+        R1[P001-P020 基礎]
+        R2[P021-P050 エージェント/RAG/マルチモーダル/中国語]
+        R3[P051-P080 盤古/鴻蒙/Huawei Cloud]
+        R4[P081-P271 高度]
+        FIXER[196 件自動修正]
+    end
+
+    subgraph PROBES["Probe Framework（garak 風）"]
+        P_15[23 の Probe]
+        D_8[11 の Detector]
+        OWASP_MAP[OWASP LLM01-LLM10]
+        REMEDIATION[修正提案]
+    end
+
+    CLI --> MCP
+    CLI --> SECURITY
+    CLI --> RULES
+    CLI --> PROBES
+```
+
+> モジュール別のソースツリー配置と詳細は
 > [中国語版 README](../README.md) と `docs/` を参照。
 
 ## 評価次元（130）
@@ -396,6 +584,73 @@ prompt-cli compliance -t my_prompt.md --format cli    # 人間可読
 prompt-cli compliance -t my_prompt.md --format sarif  # GitHub Code Scanning
 ```
 
+## Probe Framework (OWASP LLM Top 10 2026)
+
+> R228：対応を OWASP LLM Top 10 **2026** 版にアップグレード（2026-08-03 公開、8 項目の位置入れ替え +
+> LLM07 System Prompt Leakage → LLM08 Hidden Context Exposure へ改名）。
+> 2025→2026 のリキー：LLM03→04, 04→05, 05→10, 06→03, 07→08, 08→09, 09→07, 10→06。
+
+| OWASP ID (2026) | リスク | プロブ |
+|----------|------|-------|
+| LLM01 | プロンプトインジェクション | dan, prompt_inject, encoding_bypass, grandma, image_inject, audio_inject |
+| LLM02 | 機密情報漏洩 | leak_replay, system_prompt_leak, cross_modal_leak |
+| LLM03 | 過剰なエージェント権限 | dan, donot_answer, agent_inject, tool_abuse, priv_escalation, goal_hijack, multi_agent_adversary |
+| LLM04 | サプライチェーン | package_hallucination |
+| LLM05 | データとモデルの汚染 | snowball, vector_embedding |
+| LLM06 | 無制限消費 | gcg_suffix |
+| LLM07 | 誤情報 / ハルシネーション | snowball, continuation |
+| LLM08 | 隠しコンテキスト露出 | system_prompt_leak, leak_replay |
+| LLM09 | ベクトルと埋め込みの脆弱性 | vector_embedding |
+| LLM10 | 安全でない出力処理 | xss_inject |
+
+### 言語別検出ベースライン
+
+ゴールデンプロブ集合の検出漏れ面は言語別にベースライン化（多言語別ベースライン =
+同トラック固有の組み合わせ面の 1 つ、2026-10-07 実査。`prompt-cli baseline`
+1 コマンドで任意のマシンで同一数値を再現、LLM ゼロの決定論）：
+
+| 言語 | 期待命中ユニット | 漏れユニット | 検出漏れ率 |
+|------|------|------|------|
+| zh-Hans | 315 | 0 | 0.00% |
+| en | 61 | 0 | 0.00% |
+| ja | 15 | 0 | 0.00% |
+| zh-Hant | 2 | 0 | 0.00% |
+
+口径：期待命中ユニット / 漏れユニット = `run_miss_rate()` の per_language 唯一の真源
+（blindspot 観察プロブは検出漏れ率に計上しない、全体検出漏れ率と同一口径）。本表の数値は
+`scripts/check_language_baseline_readme.py` が機械照合、手動ドリフト = ゲート赤
+（R242-P2-12）。言語別プロブ数の真源は
+`src/ai_prompt_toolkit/data/golden_attacks.json` 自身
+（2026-10-20：合計 706 = zh-Hans 554 / en 132 / ja 18 / zh-Hant 2。R288 +3 P178 エスケープハッチプロブ、
+R293 +1 全角 TN、R312 +5 tag ブロックプロブ 4TP+旗印 TN、R315 +8 P2-26 過防御バッチ TN、
+R317 +4 P2-26 バッチ 2 TN、R319 +2 深層監査プロブ P269 混在 TP + P008 智 TN、
+R320 +1 P239 超時対称 TN、R321 +5 指示ファイル IPI 法医学 ATR ソース 3 盲点観察+2 TN、
+R322 +7 指示ファイル IPI ルール化 2TP+2TN〔P270 実火アンカー+実データ benign ガードレール〕+
+マルチモーダル裸部分文字列衝突根本修正 3TN、R323 +4 マルチモーダル入力ゲート social
+media 根本 TN+1〔P271 ルール化 1TP+2TN〕、R334 +3 P270 中国語拡張 2TP+1TN）。
+
+## VSCode 拡張
+
+プロジェクトには VSCode 拡張 `vscode-prompt-lint/` v0.6.0 を同梱：
+
+- リアルタイム Lint 診断（271 ルール）+ 300ms デバウンス
+- **行単位の精密定位（R218）**：診断はカーネルの location 契約（L:<line>:C:<col>）で
+  実際の行 / 列にアンカー。インジェクション / 符号化系ルール（P260/P261）は実位置を保持。
+  ファイル単位の finding は行を推測しない（0.5.0 の description 部分文字列による行推測は
+  削除済み）
+- Prompt 構文ハイライト（{{変数}} / {%タグ%} / 役割ラベル / システム指示）
+- ステータスバーのスコアインジケータ
+- 保存時自動チェック + ファイル開き時自動 Lint
+- セキュリティスキャン統合（中国語インジェクション含む 37 件）
+- PII プライバシー検出
+- Quality Gate チェック
+- Front Matter 検証
+- 深刻度レベルの上書き設定
+- クイック修正 Code Actions
+- CodeLens スコア + Quality Gate エントリ
+
+詳細は [vscode-prompt-lint/README.md](../vscode-prompt-lint/README.md)
+
 ## MCP Server
 
 標準 MCP ツール 73 件、stdio JSON-RPC、辞書 O(1) ディスパッチ。MCP クライアント
@@ -412,9 +667,79 @@ prompt-cli compliance -t my_prompt.md --format sarif  # GitHub Code Scanning
 }
 ```
 
+## CI/CD 統合
+
+```yaml
+# GitHub Actions 例 - Quality Gate
+- name: Prompt Lint with Quality Gate
+  run: prompt-cli lint -t ./prompts/ --gate
+
+# SARIF 出力 - GitHub Code Scanning
+- name: Prompt Lint (SARIF)
+  run: prompt-cli lint -t ./prompts/ --format sarif --output results.sarif
+
+# セキュリティスキャン（5 層常時、depth オプションなし）
+- name: Prompt Security Scan
+  run: prompt-cli scan -t ./prompts/
+
+# Huawei Cloud 準拠チェック
+- name: Huawei Cloud Compliance
+  run: prompt-cli compliance -t ./prompts/ --format sarif
+
+# OWASP LLM Top 10 スキャン（probe の対象は単一ファイル。ディレクトリはファイルごとにループ）
+- name: OWASP LLM Scan
+  run: prompt-cli probe -t ./prompts/my_prompt.md
+```
+
+プロジェクトには GitHub Actions Workflow（7 つ、`.github/workflows/` 面と一致）を内蔵：
+- `prompt-ci.yml` - 全量 CI（テストマトリクス + ruff/mypy ラチェット + 二重ベースライン + ゲートチェーン）
+- `prompt-pr-gate.yml` - PR 増分ゲート（prompt ファイル変更時のみトリガー：lint+scan+evaluate）
+- `release.yml` - tag トリガーで PyPI + ghcr ダブルチャネル公開（pypi-publish 後に lockstep でミラー公開、CI 内蔵ミラー受入 smoke）
+- `owasp-llm-scan.yml` - OWASP 深層スキャン + Compliance Gate ブロック
+- `codeql.yml` - CodeQL セキュリティスキャン
+- `daily-scorecard.yml` - 毎日セキュリティスコアカード
+- `ci-green-streak.yml` - CI 緑史バッジ（M1 受入口径：14 日連続の二重緑）
+
+**PR 級ゲート（Prompt 変更が何を通過すべきか）**：PR に `.prompt` / `.prompt.md` の
+変更がある場合、`prompt-pr-gate.yml` が自動トリガー — 変更ファイルを 1 つずつ `lint`
+（CRITICAL/HIGH 0 件）+ `scan`（CRITICAL 脆弱性なし）+ `evaluate`（スコアレポート）を
+実行、ゲート失敗でマージをブロック。付属の `.github/PULL_REQUEST_TEMPLATE.md` は
+変更前後の品質指標比較とロールバック計画の記入を要求。
+
+## 開発
+
+```bash
+# 開発環境
+pip install -e ".[dev]"
+
+# テスト実行
+pytest tests/ -v -k "not slow"
+
+# クローズアウトゲートチェーン（単一エントリ、独立した終了コード、手動ステップ分割禁止 / パイプによるコード吞噬禁止）
+# ステップ数の真源 = scripts/release_gate.py build_steps()（ハードコードしたカウントなし）:
+# pytest 全量 → ruff check/format → mypy ラチェット → 二重ベースライン（誤検出 1% / 検出漏れ 5% ラチェット。スクリプト引数 0.01/0.05 = 割合）
+#       → 依存リストの整合性 → 環境一致性スナップショット → gen_rules_doc 再生成 → sync_badges
+#       → sync_readme_metrics → バージョン整合性 → SARIF 妥当性
+python scripts/release_gate.py
+# 常用：--skip 1 で pytest スキップ | --step N で単一ステップ再実行 | --no-fail-fast で全実行後に集約
+```
+
 ## ライセンス
 
 MIT — [LICENSE](../LICENSE) を参照。
+
+## リンク
+
+- [変更ログ](../CHANGELOG.md)
+- [導入パス（Day0→Day90）](../docs/adoption.md)
+- [MCP 接続](../docs/mcp-setup.md)
+- [LSP 接続（エディタのリアルタイム lint）](../docs/lsp-setup.md)
+- [ルール文書（個別）](../docs/rules.md)
+- [CI ゲート例](../docs/CI门禁示例.md)
+- [Provider マトリクス](../docs/provider-matrix.md)
+- [MITRE ATLAS 対応](../docs/mitre-atlas-mapping.md)
+- [運用点データページ（検出漏れ / 誤検出時系列）](../docs/operating_curve.md)
+- [体験ページ](../web/index.html)（ローカルブラウザで開いて確認）
 
 <div align="center">
   <p>

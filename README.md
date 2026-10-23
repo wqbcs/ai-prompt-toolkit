@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7036%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](tests/)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
@@ -306,7 +306,7 @@ base.json --baseline-save` 锁存量，CI 用 `--incremental --gate` 只拦 NEW 
 存量 PRE-EXISTING 放行 —— 采用路径见 [docs/adoption.md](docs/adoption.md)。
 
 **AI 时代攻击面（agent 配置面）**：2026 攻击主线从单文档 prompt 转向 agent 配置面。
-本仓两道门禁：① `prompt-cli mcp-lint` —— MCP 配置静态门禁（12 项配置级检查 +
+本仓两道门禁：① `prompt-cli mcp-lint` —— MCP 配置静态门禁（8 项配置级检查 +
 TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批准，OWASP MCP
 映射）；② 指令文件 IPI（CLAUDE.md/AGENTS.md/SKILL.md 指令投毒）—— R321 取证：3 条
 真实攻击样本 × 现行管道安全 payload 0/3 命中（形态错实据，见
