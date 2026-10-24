@@ -13,13 +13,13 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](../tests/)
+[![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](../src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](../src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-7c3aed.svg)](../src/ai_prompt_toolkit/probe_framework.py)
-[![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 </div>
 
 [**ルール文書**](../docs/rules.md)  [**導入ガイド**](../docs/adoption.md)  [**MCP 接続**](../docs/mcp-setup.md)  [**CI 例**](../docs/CI门禁示例.md)  [**ローカル体験**](../web/index.html)
@@ -56,7 +56,7 @@ prompt-cli baseline
 # 誤検出率     0.81%  |  クリーンサンプル 60 件 · ルール 271 件
 ```
 
-> **クイックスタート（インストール不要）:** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — 数秒で最初の finding。
+> **クイックスタート（インストール不要・リリース後 P0-04）:** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — 数秒で最初の finding。
 
 **なぜ静かに腐敗しないのか（anti-rot）。** 業界最大の失敗モードは「最初から壊れている」ではなく
 「静かに検出不能になる」ことです。2026-07、Protect AI が LLM Guard（月間約 10 万 DL の検出ライブラリ）

@@ -85,6 +85,13 @@ P0-02 剩余项（API 403 需管理员侧）：仓库 **Settings → Rulesets �
 > **Homepage**（About 页可选字段）：先留空或填仓库 URL；若未来上 MkDocs 文档站
 > （P5-12）再改指站点。
 
+### 步骤 7：上传社交预览图（分享面封面）
+
+聊天软件（Slack/Discord/微信）/ 浏览器粘贴仓库链接时的 unfurl 封面——
+此前分享面是裸的（无 social preview）。图片已生成：**`assets/social_preview.png`**
+（1280×640，品牌盾+对勾 motif，仅不变量文案、无计数数字 = 防漂移）。
+上传：仓库 **Settings → General → About → Social preview**，选该文件。
+
 ---
 
 ## C. 命名映射表（P5-13 · 单一真源）

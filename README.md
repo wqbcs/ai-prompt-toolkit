@@ -12,16 +12,36 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](tests/)
+[![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
 [![MCP Tools](https://img.shields.io/badge/MCP_Tools-73-teal.svg)](src/ai_prompt_toolkit/mcp_server.py)
 [![Probes](https://img.shields.io/badge/Probes-116-7c3aed.svg)](src/ai_prompt_toolkit/probe_framework.py)
-[![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 </div>
 
 [**规则文档**](docs/rules.md)  [**采用路径**](docs/adoption.md)  [**MCP 接入**](docs/mcp-setup.md)  [**CI 门禁示例**](docs/CI门禁示例.md)  [**本地体验**（先跑 `python scripts/playground.py`）](web/index.html)
+
+## 目录
+
+- [实战示例](#实战示例真实输出--可复现--非编造)
+- [特性](#特性)
+- [快速开始](#快速开始)
+- [CI 接入](#ci-接入)
+- [Roadmap（发布面清单）](#roadmap发布面清单)
+- [为什么可信](#为什么可信)
+- [定位与适用边界](#定位与适用边界)
+- [能力全貌](#项目简介)
+- [项目架构](#项目架构)
+- [评估维度](#评估维度-130个)
+- [内置模板](#内置模板)
+- [华为云合规引擎](#华为云合规引擎)
+- [Probe Framework](#probe-framework-owasp-llm-top-10-2026)
+- [VSCode插件](#vscode插件)
+- [CI/CD集成](#cicd集成)
+- [开发](#开发)
+- [许可证](#许可证)
 
 **为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(706 条 golden
 攻击探针 + 60 个干净 prompt)随包分发（发布后, P0-04），任何机器 `pip install`
@@ -235,28 +255,6 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 
 > 状态口径：本表是唯一真源（与 `docs/planning/02_任务总板.md` P0/P1 区同步）；
 > 授权任一子集即可单独推进，条目间除标注依赖外互不阻塞。
-
-## 目录
-
-- [实战示例](#实战示例真实输出--可复现--非编造)
-- [特性](#特性)
-- [快速开始](#快速开始)
-- [CI 接入](#ci-接入)
-- [Roadmap（发布面清单）](#roadmap发布面清单)
-- [为什么可信](#为什么可信)
-- [定位与适用边界](#定位与适用边界)
-- [能力全貌](#项目简介)
-- [项目架构](#项目架构)
-- [评估维度](#评估维度-130个)
-- [内置模板](#内置模板)
-- [华为云合规引擎](#华为云合规引擎)
-- [Probe Framework](#probe-framework-owasp-llm-top-10-2026)
-- [VSCode插件](#vscode插件)
-- [CI/CD集成](#cicd集成)
-- [开发](#开发)
-- [许可证](#许可证)
-
----
 
 ## 为什么可信
 
