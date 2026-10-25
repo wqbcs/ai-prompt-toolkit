@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.122] - 2026-10-25
+
+### Fixed（R341 深测轮 F-2: 显式目标扩展名无关 + 读取面健壮性）
+
+- **F-2 根因修**：`cli_helpers.discover_templates` 显式文件目标原仅认 `.md`/`.prompt`/`.prompt.md`——`.txt` 等**真实存在**的文件被静默丢弃 → "✨ 你的Prompt很干净！"假通过 + rc=0 + `-o` 不写文件（安全工具对 0 个文件宣称干净 = 契约破损）。修复为存在即 lint 目标（目录 glob 面不变，仍只扫模板扩展名）；深测黑盒电池实证（同内容 .txt 被丢弃 vs .prompt 出 5 findings）
+- **读取面统一加固**：新增 `cli_helpers.read_prompt_text`（UTF-8 严格）——扩展名无关后二进制/非 UTF-8 目标会真实进入 lint 循环，裸 `read_text` 将 Traceback；统一转 ValidationError（顶层捕获 → 人话报错 + rc=2，与"目标不存在"同退出码）。9 处读取点接入：lint 主循环（rich/非 rich/并行预计算）/lint watch/scan/token/audit-waivers + dev watch（lint/scan/evaluate）；i18n 解码面（GBK 回退）按反清单不做
+- 7 探针测试（`test_r341_explicit_target_extensions.py`，真子进程 e2e，先红后绿 5 红 2 绿验证）：.txt 被 lint 且与 .prompt 裁决一致 / `-o` 落盘契约 / 二进制 rc=2 无 Traceback / GBK rc=2 无 Traceback / 缺失目标仍 rc=2 / 目录 glob 不变 / BOM 不回归
+- 黑盒电池复测：.txt 目标真实 lint（jb 样本 5 问题 rc=2）/ binary+gbk 干净报错 rc=2 无 Traceback 无假"干净" / BOM 正常 lint
+- 同轮深测面：bandit 94 发现全分诊（6 HIGH 全为 B324 非安全用途 MD5 误报；B608 四处 3 误报+1 低危留痕 eval_store.get_trace_stats f-string 插值=内部调用面；B310×4 url scheme 低危留痕）/ pyflakes 6 处低危留痕 / 慢测 4/4 / MCP e2e 73 工具跨面一致
+
+### 验证
+
+- 全量 pytest（-k "not slow"）7050 passed / 4 slow deselected（264s）——含 F-2 契约翻转的存量测试 `test_cli_helpers::test_non_md_file`（旧断言钉死被修复的缺陷行为，翻转为钉新契约"显式 .txt 被返回"后定向复跑 32 passed 全绿）；4 slow 真子进程 e2e 4/4（12.6s）
+- 门禁 28/28 GATE PASS（--skip 1,2，145s：step1 全量 pytest 单独实跑 + step2 覆盖率棘轮交 CI test 作业同命令判定）
+- 双基线不回归（FP 0.81%@60 阈值 1% / 漏检 0.00%@393 单元 阈值 5%）/ 过防御 6.78%@339 / mypy 0 错（棘轮绿）/ ruff check+format 全仓绿 / 版本一致性 0 漂移（v67.34.122）
+- 黑盒电池复测：.txt 目标真实 lint（越狱样本 5 问题 rc=2，不再假"干净"）/ binary+GBK 干净报错 rc=2 无 Traceback / BOM 正常 lint / MCP e2e 73 工具跨面一致（prompt_lint 与 CLI 同数字）
+- 同轮深测面（不升版项登记 02 板）：bandit 94 发现全分诊 / pyflakes 6 处低危 / 慢测 4/4 / 公开面+远端实查全绿
+- CI 待观测（push 后 GitHub 侧确认）
+
 ## [v67.34.121] - 2026-10-21
 
 ### Added（R335 autofix 验证层 AutoFixVerifier v0.1）

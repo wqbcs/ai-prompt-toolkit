@@ -98,10 +98,13 @@ class TestDiscoverTemplates:
         assert len(result) == 2
 
     def test_non_md_file(self, tmp_path):
+        # R341-F-2: 显式文件目标扩展名无关 — 真实存在的 .txt 必须被返回
+        # (旧行为丢弃=假"干净" rc=0 契约破损, 已修)。目录 glob 面不受影响
+        # (test_directory 独立锁定 .txt 不进目录扫描)。
         f = tmp_path / "test.txt"
         f.write_text("hello")
         result = discover_templates(str(f))
-        assert len(result) == 0
+        assert len(result) == 1
 
     def test_nonexistent(self):
         with pytest.raises(ValidationError) as exc_info:

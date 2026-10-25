@@ -107,7 +107,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     import json as _json
     from datetime import date
 
-    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
     from ai_prompt_toolkit.linter.waivers import parse_waiver_declarations
 
     files = discover_templates(target)
@@ -118,7 +118,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     today = date.today().isoformat()
     all_decls: list[dict[str, str]] = []
     for f in files:
-        text = f.read_text(encoding="utf-8")
+        text = read_prompt_text(f)
         for d in parse_waiver_declarations(text, today=today):
             d["file"] = str(f)
             all_decls.append(d)
@@ -391,6 +391,7 @@ def lint(
         empty_state_tip,
         git_changed_since_rev,
         load_promptignore,
+        read_prompt_text,
         write_report,
     )
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -578,7 +579,7 @@ def lint(
         from concurrent.futures import ThreadPoolExecutor
 
         def _lint_one(tpl: Path) -> LintResult:
-            _t = tpl.read_text(encoding="utf-8")
+            _t = read_prompt_text(tpl)
             return linter.lint(
                 tpl.name,
                 _t,
@@ -602,7 +603,7 @@ def lint(
         ) as progress:
             task = progress.add_task("Lint检查中...", total=len(templates))
             for i, tpl_path in enumerate(templates, 1):
-                text = tpl_path.read_text(encoding="utf-8")
+                text = read_prompt_text(tpl_path)
                 template_type = _detect_template_type(text)
                 # R199: 改名防与else分支result重定义
                 lint_res = linter.lint(
@@ -631,7 +632,7 @@ def lint(
                 progress.advance(task)
     else:
         for tpl_path in templates:
-            text = tpl_path.read_text(encoding="utf-8")
+            text = read_prompt_text(tpl_path)
             template_type = _detect_template_type(text)
             _pre = parallel_results.get(str(tpl_path)) if parallel_results else None
             # R197: 并行分支_pre类型与lint()返回一致(LintResult), 三元后统一
@@ -1266,7 +1267,7 @@ def lint(
                 if _changed:
                     click.echo(f"\n--- [{_time.strftime('%H:%M:%S')}] 文件变更, 重新lint ---")
                     for _tp in _current_templates:
-                        _text = _tp.read_text(encoding="utf-8")
+                        _text = read_prompt_text(_tp)
                         _res = _watch_linter.lint(
                             _tp.name,
                             _text,
@@ -1330,6 +1331,7 @@ def scan(
         discover_templates,
         empty_state_tip,
         git_changed_since_rev,
+        read_prompt_text,
         write_report,
     )
     from ai_prompt_toolkit.security import scan_template
@@ -1397,7 +1399,7 @@ def scan(
     total_findings = 0
 
     for tpl_path in templates:
-        text = tpl_path.read_text(encoding="utf-8")
+        text = read_prompt_text(tpl_path)
         result = scan_template(tpl_path.name, text, prov, incremental=incremental)
         all_results.append(result)
         total_findings += len(result.all_findings)
@@ -1453,7 +1455,7 @@ def scan(
 @click.option("--output", "-o", help="报告输出路径")
 def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | None) -> None:
     """Token分析：估算Token消耗、成本和优化建议"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates
+    from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
     from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, compare_models
 
     templates = discover_templates(target)
@@ -1462,7 +1464,7 @@ def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | No
         sys.exit(0)
 
     for tpl_path in templates:
-        text = tpl_path.read_text(encoding="utf-8")
+        text = read_prompt_text(tpl_path)
 
         if compare:
             comp = compare_models(text)

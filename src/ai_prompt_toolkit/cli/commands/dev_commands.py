@@ -223,38 +223,38 @@ def watch_cmd(target: str, command: str, interval: float, debounce: float, gate:
 
     def run_command_on_target(t: str) -> None:
         if command == "lint":
-            from ai_prompt_toolkit.cli_helpers import discover_templates
+            from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
             from ai_prompt_toolkit.linter.linter import PromptLinter
 
             templates = discover_templates(t)
             linter = PromptLinter()
             total_findings = 0
             for tpl in templates:
-                text = tpl.read_text(encoding="utf-8")
+                text = read_prompt_text(tpl)
                 result = linter.lint(tpl.name, text)
                 total_findings += result.failed_count
             click.echo(f"[lint] {len(templates)} 文件 | {total_findings} 问题")
             if gate and total_findings > 0:
                 click.echo("[gate] WARN: 发现Lint问题")
         elif command == "scan":
-            from ai_prompt_toolkit.cli_helpers import discover_templates
+            from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
             from ai_prompt_toolkit.security.injection_detector import InjectionDetector
 
             templates = discover_templates(t)
             detector = InjectionDetector()
             total_findings = 0
             for tpl in templates:
-                text = tpl.read_text(encoding="utf-8")
+                text = read_prompt_text(tpl)
                 findings = detector.detect(text)
                 total_findings += len(findings)
             click.echo(f"[scan] {len(templates)} 文件 | {total_findings} 风险")
         elif command == "evaluate":
-            from ai_prompt_toolkit.cli_helpers import resolve_path
+            from ai_prompt_toolkit.cli_helpers import read_prompt_text, resolve_path
             from ai_prompt_toolkit.evaluator import evaluate_template
 
             tp = resolve_path(t, must_exist=False)
             if tp.is_file():
-                text = tp.read_text(encoding="utf-8")
+                text = read_prompt_text(tp)
                 report = evaluate_template(str(tp), text)
                 scores = report.scores
                 avg = sum(s.score for s in scores) / len(scores) if scores else 0

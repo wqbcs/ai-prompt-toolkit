@@ -84,7 +84,10 @@ def _in_default_excluded(path: Path, base: Path) -> bool:
 def discover_templates(target: str | Path) -> list[Path]:
     p = Path(target) if not isinstance(target, Path) else target
     if p.is_file():
-        return [p] if p.suffix in (".md", ".prompt") or p.name.endswith(".prompt.md") else []
+        # R341-F-2: 显式文件目标扩展名无关 — 存在即 lint 目标。
+        # 原仅认 .md/.prompt: .txt 等真实存在的文件被静默丢弃 → 假"很干净" rc=0
+        # (对 0 个文件宣称干净 = 安全工具契约破损; 目录 glob 面不受影响)
+        return [p]
     if p.is_dir():
         results: list[Path] = []
         for pattern in ("*.md", "*.prompt", "*.prompt.md"):
@@ -92,6 +95,20 @@ def discover_templates(target: str | Path) -> list[Path]:
         # R252-I-2: 剔除依赖树/构建产物/缓存下的文件（FP 削减，单一真源）
         return sorted({r for r in results if not _in_default_excluded(r, p)})
     raise ValidationError(f"目标不存在 — {p}", field="target")
+
+
+def read_prompt_text(path: Path) -> str:
+    """R341-F-2: prompt 文件统一读取面 — UTF-8 严格。
+
+    显式目标扩展名无关后, 二进制/非 UTF-8 目标会真实进入 lint 循环 —
+    裸 read_text 抛 UnicodeDecodeError → 顶层 Traceback。此处统一转
+    ValidationError(顶层捕获 → 人话报错 + rc=2, 与"目标不存在"同退出码)。
+    i18n 解码面不在范围(反清单约束: 不做 GBK 等回退)。
+    """
+    try:
+        return path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        raise ValidationError(f"文件非有效 UTF-8, 无法解码 — {path}", field="target") from e
 
 
 def git_changed_since_rev(rev: str, cwd: Path | None = None, base_dir: str = ".") -> list[Path] | None:
