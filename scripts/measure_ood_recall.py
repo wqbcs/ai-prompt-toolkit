@@ -97,6 +97,7 @@ def measure() -> dict:
 
     sec_rules = security_family_rules()
     caught: list[dict] = []
+    missed: list[dict] = []
     per_rule: dict[str, int] = {}
     for i, text in enumerate(injections):
         r = lint_template(f"deepset_{i}", text, apply_waivers=False)
@@ -105,6 +106,8 @@ def measure() -> dict:
             for rid in hits:
                 per_rule[rid] = per_rule.get(rid, 0) + 1
             caught.append({"index": i, "rules": hits, "excerpt": text[:80]})
+        else:
+            missed.append({"index": i, "excerpt": text[:80]})
 
     n = len(injections)
     return {
@@ -122,6 +125,7 @@ def measure() -> dict:
         "per_rule_hits": {rid: per_rule[rid] for rid in sorted(per_rule)},
         "top_rules": sorted(((rid, k) for rid, k in per_rule.items()), key=lambda x: (-x[1], x[0]))[:15],
         "caught": caught,
+        "misses": missed,
     }
 
 

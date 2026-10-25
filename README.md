@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-7047%20passed-brightgreen.svg)](tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -273,12 +273,17 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 曲线只收紧不放松（R318 裁定：程序转入证据累积监控制 — 复活触发器 =
 任一规则累积 ≥2 独立真实 FP 命中，机器可查）。
 
+**已知漏检台账（Known Misses）**——外部独立基准的漏检面也如实公开：deepset
+独立 holdout 上当前规则面的召回与"已知抓不到"的攻击完整清单在
+[`docs/known_misses.md`](docs/known_misses.md)（机器生成 + 门禁防漂移，一条命令
+复现）——诚实边界是可机器验证的公开承诺，不是文声明。
+
 **为什么不会静默腐化（anti-rot）**——行业最大失败模式不是"一开始就不灵"，而是
 "悄悄失灵"：2026-07 Protect AI 归档 LLM Guard（月下载 10 万的检测库），其检测模型
 冻结于 2025-05，新攻击类永不增补，保护在无任何告警信号下静默退化（社区 fork
 Gorget 接棒）。本工具对该失败模式结构免疫：0 LLM、0 第三方检测模型，每个裁决
 都是"代码+探针集"的确定性逐字节可复现输出；抗腐化机制本身机器可查——双基线
-棘轮（只收紧不放松）+ 29 步门禁链 + 探针先行纪律，任何回归都会红 CI，不依赖
+棘轮（只收紧不放松）+ 30 步门禁链 + 探针先行纪律，任何回归都会红 CI，不依赖
 任何模型的"保鲜"。
 
 **第三方佐证（埋入式注入 TN 纪律）**：误报面最难的一条边界是
@@ -805,6 +810,7 @@ MIT License
 - [Provider 矩阵](docs/provider-matrix.md)
 - [MITRE ATLAS 映射](docs/mitre-atlas-mapping.md)
 - [运营点数据页（漏检/误报时间序列）](docs/operating_curve.md)
+- [已知漏检台账（Known Misses）](docs/known_misses.md)
 - [展示页](web/index.html)（本地浏览器打开查看）
 
 <div align="center">

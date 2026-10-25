@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7047%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -64,7 +64,7 @@ prompt-cli baseline
 シグナルもなにもなく保護が静かに劣化しました（コミュニティフォークの *Gorget* が引き継ぐ）。本ツール
 はこの失敗モードに*構造的に免疫*を持っています：LLM ゼロ、サードパーティ検出モデルゼロ、各判定は
 「コード + プロブ集合」の決定論的・バイト再現可能な関数です。anti-rot 機構自体も機械的に検証可能 —
-二重ベースラインのラチェット（締め付けのみ）+ 29 段階のゲートチェーン + プロブ先行の規律。
+二重ベースラインのラチェット（締め付けのみ）+ 30 段階のゲートチェーン + プロブ先行の規律。
 いかなる回帰も CI を赤くします。いかなるモデルの「鮮度」にも依存しません。
 
 **誤検出率の絞り込みの歴史**（各ラウンドで `docs/baseline_history.jsonl` から決定論的に再生成、
@@ -82,6 +82,12 @@ prompt-cli baseline
 そのまま公開し、ガバナンスリスト（P2-26）はヒット数降順でプロブ先行修正、曲線は締め付けのみ・
 緩めない（R318 裁定：プログラムは証拠蓄積監視に移行 — 復活トリガー = いずれかのルールが
 独立した実 FP ヒットを ≥2 件累積、機械的に照会可能）。
+
+**既知の検出漏れ台帳（Known Misses）** — 外部独立ベンチマークの検出漏れ面も
+そのまま公開します：deepset 独立 holdout 上の現ルール面の召回率と「既知で捕捉できない」
+攻撃の完全なリストは [`docs/known_misses.md`](../docs/known_misses.md)
+（機械生成 + ゲートによるドリフト防止、1 コマンドで再現可能）——誠実な境界は
+機械検証可能な公開コミットであり、文章上の主張ではありません。
 
 **第三者裏付け（埋め込み引用 TN 規律）** — 誤検出面で最も難しい境界は「攻撃フレーズを引用する
 セキュリティ文書は無害であり、攻撃ではない」ことです。2026 年の学術 FP 監査
@@ -739,6 +745,7 @@ MIT — [LICENSE](../LICENSE) を参照。
 - [Provider マトリクス](../docs/provider-matrix.md)
 - [MITRE ATLAS 対応](../docs/mitre-atlas-mapping.md)
 - [運用点データページ（検出漏れ / 誤検出時系列）](../docs/operating_curve.md)
+- [既知の検出漏れ台帳（Known Misses）](../docs/known_misses.md)
 - [体験ページ](../web/index.html)（ローカルブラウザで開いて確認）
 
 <div align="center">

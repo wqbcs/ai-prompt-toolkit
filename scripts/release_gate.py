@@ -185,6 +185,10 @@ def build_steps() -> list[Step]:
         # R237-P3-11: 本地=CI 验证(钉死包版本断言 + CI workflow 命令面可达;
         # 收口前确认"本地跑的就是 CI 跑的命令", R223 四连红根因的机器护栏)
         Step("本地=CI 验证", [PY, "scripts/verify_local_ci_parity.py"]),
+        # R340-E1: 已知漏检台账一致性(azt misses-ledger 机制参考, R340 调研 §4 A1:
+        # 外部独立基准漏检面如实公开 + CI 防静默漂移; 数据源 = measure_ood_recall
+        # 单一真源; 无棘轮无阻断, 研究测量纪律同 R256 行注记)
+        Step("已知漏检台账一致性", [PY, "scripts/gen_known_misses.py", "--check"]),
     ]
 
 

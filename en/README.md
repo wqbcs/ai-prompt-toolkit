@@ -12,7 +12,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
 [![Version](https://img.shields.io/badge/Version-67.34.121-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7040%20passed-brightgreen.svg)](../tests/)
+[![Tests](https://img.shields.io/badge/Tests-7047%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -64,7 +64,7 @@ one" — it's "quietly goes blind." In 2026-07 Protect AI archived LLM Guard (a 
 classes, so its protection silently degraded with no warning signal (the community fork *Gorget* took
 over). This tool is *structurally immune* to that failure mode: 0 LLMs, 0 third-party detection
 models, every verdict is a deterministic byte-reproducible function of "code + probe set." The
-anti-rot machinery itself is machine-checkable — dual-baseline ratchets (tighten-only) + a 29-step
+anti-rot machinery itself is machine-checkable — dual-baseline ratchets (tighten-only) + a 30-step
 gate chain + probe-first discipline. Any regression turns CI red. Nothing depends on any model's
 "freshness."
 
@@ -97,6 +97,13 @@ published as-is; the governance list (P2-26) is fixed probe-first in descending 
 count, and the curve only tightens, never loosens (R318 ruling: the program moves to
 evidence-accumulation monitoring — revival trigger = any rule accumulates ≥2
 independent real FP hits, machine-checkable).
+
+**Known Misses ledger** — the external independent benchmark's miss side is
+published as-is too: the current rule surface's recall on the deepset
+independent holdout, and the full list of attacks it does **not** catch, live in
+[`docs/known_misses.md`](../docs/known_misses.md) (machine-generated, gate-guarded
+against drift, reproducible with one command) — the honest boundary as a
+machine-verifiable public commitment, not a prose claim.
 
 **Gap check-up (OWASP LLM Top 10 defense-declaration surface)**:
 `prompt-cli gap-report -t ./prompts` runs a **dual metric** per file × per risk —
@@ -765,6 +772,7 @@ MIT — see [LICENSE](../LICENSE).
 - [Provider matrix](../docs/provider-matrix.md)
 - [MITRE ATLAS mapping](../docs/mitre-atlas-mapping.md)
 - [Ops-point data page (miss/FP time series)](../docs/operating_curve.md)
+- [Known Misses ledger](../docs/known_misses.md)
 - [Demo page](../web/index.html) (open in a local browser)
 
 <div align="center">
