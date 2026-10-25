@@ -75,8 +75,22 @@ def ab_test(config: str, models: str | None, dataset: str | None, output: str | 
     results = asyncio.run(engine.run())
     summary = engine.get_summary()
 
+    # R341b-2: 无 API key 时 provider 层生成确定性模拟结果（response 带 simulated 标记）,
+    # 报告面必须披露——此前"成功: 1/1"零披露=假成功（用户会误读为真实模型对比）
+    no_key_models = sorted(
+        {
+            f"{r.model_result.model_config.provider.value}:{r.model_result.model_config.model_name}"
+            for r in results
+            if "simulated" in r.model_result.response
+        }
+    )
+
     if fmt == "json":
-        report_data = {"summary": summary, "results": [r.model_result.to_dict() for r in results]}
+        report_data = {
+            "summary": summary,
+            "simulated_no_api_key": no_key_models,
+            "results": [r.model_result.to_dict() for r in results],
+        }
         if output:
             write_report(report_data, output, fmt="json")
             click.echo(f"报告已保存: {output}")
@@ -89,6 +103,11 @@ def ab_test(config: str, models: str | None, dataset: str | None, output: str | 
             click.echo(f"    平均延迟: {stats['avg_latency_ms']:.1f}ms")
             click.echo(f"    总费用: ${stats['total_cost']:.4f}")
             click.echo(f"    平均Token: {stats['avg_token_count']:.0f}")
+        if no_key_models:
+            click.echo(
+                "\n⚠️ 未配置 API key, 以上结果为确定性模拟输出, 非真实模型响应"
+                f"（真实对比需配置对应 key）| {', '.join(no_key_models)}"
+            )
 
     from ai_prompt_toolkit.ab_test.provider import get_cost_tracker
 

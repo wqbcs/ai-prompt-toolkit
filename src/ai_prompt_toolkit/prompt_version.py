@@ -110,6 +110,8 @@ class PromptVersionStore:
 
     def _init_db(self) -> None:
         conn = self._get_conn()
+        # 表定义与索引分两段: 老 schema 库的表无 prompt_name 列, 索引若与建表
+        # 同段执行会在迁移前炸 "no such column"——必须先迁移再建索引（R341b-1）
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS prompt_versions (
                 version_id TEXT PRIMARY KEY,
@@ -122,9 +124,6 @@ class PromptVersionStore:
                 metadata TEXT DEFAULT '{}',
                 created_at TEXT NOT NULL
             );
-            CREATE INDEX IF NOT EXISTS idx_pv_name ON prompt_versions(prompt_name);
-            CREATE INDEX IF NOT EXISTS idx_pv_parent ON prompt_versions(parent_version_id);
-            CREATE INDEX IF NOT EXISTS idx_pv_score ON prompt_versions(score);
             CREATE TABLE IF NOT EXISTS version_tags (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 prompt_name TEXT NOT NULL,
@@ -133,7 +132,6 @@ class PromptVersionStore:
                 created_at TEXT NOT NULL,
                 UNIQUE(prompt_name, tag, version_id)
             );
-            CREATE INDEX IF NOT EXISTS idx_vt_name_tag ON version_tags(prompt_name, tag);
             CREATE TABLE IF NOT EXISTS version_branches (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 prompt_name TEXT NOT NULL,
@@ -142,9 +140,72 @@ class PromptVersionStore:
                 created_at TEXT NOT NULL,
                 UNIQUE(prompt_name, branch_name)
             );
+        """)
+        self._migrate_legacy_schema(conn)
+        conn.executescript("""
+            CREATE INDEX IF NOT EXISTS idx_pv_name ON prompt_versions(prompt_name);
+            CREATE INDEX IF NOT EXISTS idx_pv_parent ON prompt_versions(parent_version_id);
+            CREATE INDEX IF NOT EXISTS idx_pv_score ON prompt_versions(score);
+            CREATE INDEX IF NOT EXISTS idx_vt_name_tag ON version_tags(prompt_name, tag);
             CREATE INDEX IF NOT EXISTS idx_vb_name ON version_branches(prompt_name);
         """)
         conn.commit()
+
+    def _migrate_legacy_schema(self, conn: sqlite3.Connection) -> None:
+        """R341b-1: 老版库 schema 迁移（零迁移逻辑致存量用户版本工具全线崩溃）。
+
+        老 schema（早期版本）: version_id INTEGER + template_id 命名, 无
+        prompt_name 列; ``CREATE TABLE IF NOT EXISTS`` 对已存在的老表静默
+        no-op → 代码引用 prompt_name 全线 ``no such column`` 裸 SQLite 报错。
+        迁移=重命名保数据 + 按列映射灌入新表（version_id 为 TEXT hash, 与
+        老 INTEGER 主键不冲突）。未知形态 → ValidationError 人话报错。
+        """
+        rows = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='prompt_versions'").fetchall()
+        if not rows:
+            return
+        cols = [r[1] for r in conn.execute("PRAGMA table_info(prompt_versions)")]
+        if "prompt_name" in cols:
+            return  # 新 schema, 无需迁移
+        if "template_id" not in cols:
+            from ai_prompt_toolkit.errors import ValidationError
+
+            raise ValidationError(
+                f"版本库 {self._db_path} 的表结构无法识别（列: {', '.join(cols)}），"
+                "既非当前 schema 也非已知老版 schema。"
+                "请备份后删除该文件重新开始（~/.ai-prompt-toolkit/prompt_versions.db）。"
+            )
+        count = conn.execute("SELECT COUNT(*) FROM prompt_versions").fetchone()[0]
+        conn.execute("ALTER TABLE prompt_versions RENAME TO prompt_versions_legacy_v1")
+        # 重命名后旧表不再命中 CREATE TABLE IF NOT EXISTS, 重建新表
+        conn.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS prompt_versions (
+                version_id TEXT PRIMARY KEY,
+                prompt_name TEXT NOT NULL,
+                content TEXT NOT NULL,
+                parent_version_id TEXT DEFAULT '',
+                score REAL DEFAULT 0.0,
+                source TEXT DEFAULT '',
+                tags TEXT DEFAULT '[]',
+                metadata TEXT DEFAULT '{}',
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        conn.execute(
+            """INSERT OR IGNORE INTO prompt_versions
+               (version_id, prompt_name, content, parent_version_id, score,
+                source, tags, metadata, created_at)
+               SELECT CAST(version_id AS TEXT), template_id, content, '',
+                      COALESCE(score, 0), '', tags, metadata,
+                      CASE WHEN created_at IS '' THEN '1970-01-01T00:00:00Z'
+                           ELSE created_at END
+               FROM prompt_versions_legacy_v1"""
+        )
+        logger.info(
+            "prompt_versions 老版 schema 迁移完成: %d 条数据保留 (旧表保留为 prompt_versions_legacy_v1)",
+            count,
+        )
 
     def save(
         self,

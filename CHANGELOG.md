@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.123] - 2026-10-25
+
+### Fixed（R341b 深测轮: 老库 schema 迁移 + ab-test 无 key 模拟披露）
+
+- **R341b-1: prompt 版本管理老库 schema 迁移**（MCP 73 工具矩阵抓到）：schema 真源已改（`template_id`→`prompt_name`）但零迁移逻辑——`CREATE TABLE IF NOT EXISTS` 对存量老库静默 no-op → 版本工具（save/list 全族）对老库用户全线裸报 `no such column: prompt_name`（新用户正常，真子进程 e2e 双向实证）。修复=初始化时检测老 schema → 重命名保数据（旧表保留为 `prompt_versions_legacy_v1`）+ 列映射灌新表（version_id INTEGER→TEXT / template_id→prompt_name / created_at 空串兜底）+ **表→迁移→索引**重排（老表先建索引同炸）+ 未知形态 → ValidationError 人话报错（备份指引）。5 探针测试（含原始复现面真子进程 e2e）
+- **R341b-2: ab-test 无 API key 模拟披露**（黑盒电池抓到）：无 key 时 provider 层生成确定性模拟结果（response 带 simulated 标记），CLI 却报"成功: 1/1, 0.0ms, $0.0000"零披露 = 假成功（与 F-2 同族），且与 `doctor --json` 如实显示 no_api_key 的跨面不一致。修复=CLI 面披露行（⚠️ 未配置 API key…非真实模型响应）+ JSON 面 `simulated_no_api_key` 字段（机器/agent 面可消费）。2 探针测试
+- 既有回归 148 全绿（test_version_store/test_ab_test/gepa）
+
+### 验证
+
+- 全量 pytest（-k "not slow"）**7057 passed** / 4 slow deselected（271s，exit 0）；7 修复探针全绿（含 R341b-1 原始复现面真子进程 e2e：老库上 MCP version save/list 恢复可用）
+- 门禁 28/28 GATE PASS（--skip 1,2，128s）
+- 双基线不回归（FP 0.81%@60 / 漏检 0.00%@393）/ 过防御 6.78%@339 / mypy 0 错（棘轮绿）/ ruff check+format 全仓绿 / 版本一致性 0 漂移（v67.34.123）
+- 黑盒复测：ab-test 无 key 现披露"⚠️ 未配置 API key…非真实模型响应"（CLI+JSON 双面）
+- CI 待观测（push 后实查）
+
 ## [v67.34.122] - 2026-10-25
 
 ### Fixed（R341 深测轮 F-2: 显式目标扩展名无关 + 读取面健壮性）
