@@ -2,6 +2,30 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.124] - 2026-10-25
+
+### Fixed（R341c 用户验收轮: R341c-1 双版本系统 DB 文件分离 + R341c-2 coverage DataError 根治）
+
+- **R341c-1: 双版本系统 DB 文件分离**（真实用户视角验收挖出）：`prompt-cli version`（CLI）走老体系 `version_store.VersionStore`（template_id + INTEGER 版本号），MCP 版本工具/gepa/eval 走新体系 `prompt_version.PromptVersionStore`（prompt_name + TEXT hash）——**两系统曾共用同一 `~/.ai-prompt-toolkit/prompt_versions.db`**，R341b-1 的 schema 迁移一旦在新体系侧触发，会把老体系 CLI version 命令全族打炸（裸 `no such column: template_id`，修一个面炸另一个面）。修复=新体系默认文件独立为 `prompt_versions_v2.db`（老体系文件保持 `prompt_versions.db` 不动）+ 老体系人话护栏（库若已被迁移为新 schema → ValidationError 附恢复路径，降级不得静默）
+- 3 探针测试（路径分离不变量 / 老体系对已迁移库护栏 / 双系统同 home 共存核心回归）+ 关联回归 30 全绿（含 R341b 7 探针）
+- 真实机器双系统同 home 验收：CLI `version -a list` 老库 3 行可用（文件字节级未动）+ MCP version save/list 新库可用，互不干扰
+- **R341c-2: coverage DataError 根治（`.coveragerc` 单一真源）**（全面自检轮根因链）：`.coveragerc` 缺失时 pytest-cov 6.x `set_env()` 写哨兵 `";"` 传播 `COV_CORE_CONFIG` → 本机 r242 e2e 子进程（`python -m ai_prompt_toolkit` + `PYTHONPATH=src` 前置）以 statement-only 模式采集，`combine` 时与主进程 `branch=true` 数据混格 → DataError "Can't combine statement coverage data with branch data"（R341b P5-20③"环境面不修"留痕被根因修取代）。修复=新建 `.coveragerc`（原 pyproject 段完整镜像：source/branch/fail_under=75/omit/exclude_lines，头注带根因链+R216/R176 历史）+ pyproject 移除 `[tool.coverage.*]`（留指针注释防双源）+ wiki L0/L3 两处 coverage 棘轮真源引用修正。最小复现 r242 17 passed 零 INTERNALERROR；门禁链原样 30/30 本机绿（此前同命令本机必 INTERNALERROR、仅 CI 绿）
+
+### Changed（R341c 全面自检: 26 模板×3 命令 + scan 侧误报治理登记）
+
+- **全面自检 26 模板×3 命令（lint/scan/compliance）机器证据**：1 CRITICAL（INJ-ZH-012 @ rag-assistant：匹配自 frontmatter L3 "RAG**检索**增强生成助手"起，五组 `re.DOTALL` 长程链跨 frontmatter+正文，同文件 compliance 给 A 98 pass=跨口径不一致）+ 26 INJ-ZH-011（自指命中：模板自身防御性声明命中泄露检测器——三组 `.*` 长程链跨行，报告行号=匹配起始行）+ 23 PII001（cn_name=字面 `(?:姓名|名字|称呼|name)：`+2-4 汉字模板示例字段，非真实 PII）+ 126 lint high（全部存量基线锁定，无新增面）
+- **结构性盲区发现**：scan 侧规则（`INJ-*`/`PII*`/`DEF-*`/`SC*`）完全不在过防御测量面（P2-25 口径=lint 安全族；`check_overdefense --json` per_rule_hits 全 P### 零 INJ/PII）——scan 侧无独立过防御基线
+- **02 板 P2-31 行登记（⬜ 后续轮裁决）**：3 规则裁决路径（收窄/waive/保留）+ T1 探针先行纪律（本轮 26 模板命中面=现成 TN 证据源，零新语料成本）+ P2-30 逃生舱评估法；本轮不动规则本体
+
+### 验证
+
+- 全量 pytest（`-k "not slow"`）**7060 passed** / 4 slow deselected（571s，exit 0）
+- 门禁链 **30/30 GATE PASS**（`release_gate.py` 原样无 skip，658s；含 step1 全量 pytest + step2 覆盖率棘轮——本机 coverage 棘轮验证不再外包 CI）
+- r242 最小复现：17 passed 零 INTERNALERROR（R341c-2 修复证据；修复前同命令必 INTERNALERROR）
+- 双基线不回归（FP 0.81%@60 / 漏检 0.00%@393）/ 过防御 6.78%@339（棘轮单调不升）/ mypy 0 错（棘轮绿）/ ruff check+format 全仓绿 / 版本一致性 0 漂移（v67.34.124）
+- 板状态 134 行 0 红（P2-31 新行机器核对通过）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.123] - 2026-10-25
 
 ### Fixed（R341b 深测轮: 老库 schema 迁移 + ab-test 无 key 模拟披露）

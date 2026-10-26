@@ -25,7 +25,7 @@
 | mypy strict 注册表 | 286/286 (100%, R300 收口) | check_mypy_ratchet S1-S4; 注册表变更唯一路径 `--update-strict`（红线钩子拦截直改） |
 | 误报率 | 阈值 0.01（实际 0.82%, 60 样本） | check_false_positives --fail-above 0.01 |
 | 漏检率 | 阈值 0.05（实际 0.00%, 379/379 单元） | check_miss_rate --fail-above 0.05 |
-| coverage | fail_under 75（R216 实测 75.67% 锁定, 不刷数） | pyproject |
+| coverage | fail_under 75（R216 实测 75.67% 锁定, 不刷数） | .coveragerc |
 | 版本一致性 | pyproject / __init__ / README 徽章 / CHANGELOG 最新条目 四处一致 | check_version_consistency（门禁第 17 步, fail-fast） |
 | 环境一致性 | ruff 0.16.10 / mypy 2.1.0 / redoctor 0.1.5 钉版（漂移硬红, 不要改钉版） | check_env_parity |
 | 板 vs 代码 | 5 机器检查（sha 可解析/⬜行 CHANGELOG 声称/✅行规则引用 vs 活注册表/⬜行自相矛盾） | check_board_status（R243 脚本化, R294 check 4/5; /board 命令加声称抽查层） |

@@ -22,7 +22,10 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-_DEFAULT_DB_PATH = Path.home() / ".ai-prompt-toolkit" / "prompt_versions.db"
+# R341c-1: 与老版本系统 version_store.VersionStore 文件分离——两系统曾共用
+# prompt_versions.db, 任一侧 schema 迁移都会打炸另一侧全线（CLI version 命令族
+# 裸报 no such column: template_id）。新体系独立文件, 互不干扰。
+_DEFAULT_DB_PATH = Path.home() / ".ai-prompt-toolkit" / "prompt_versions_v2.db"
 
 
 @dataclass

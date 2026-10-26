@@ -1,0 +1,29 @@
+# coverage 配置单一真源（2026-10-26: 自 pyproject.toml [tool.coverage.*] 迁移）。
+# 动因: pytest-cov 6.x set_env 仅在默认 --cov-config(.coveragerc) 路径存在时向子进程
+# 传播真实配置路径, 缺失时写哨兵 ";" 传播 — 本机(Windows)上 r242 e2e 子进程
+# (python -m ai_prompt_toolkit + PYTHONPATH 前置 src) 遂以 statement-only 模式采集,
+# 与主进程 branch=true 数据在 combine 时混格 → DataError → pytest exit 3
+# (环境面 R341b P5-20③ 曾留痕"非代码缺陷不修"; 本文件存在 → 真实配置路径
+# 传播到全部子进程 → 统一 branch 模式, 根治)。
+# 搜索序: .coveragerc > pyproject.toml > tox.ini > setup.cfg — 本文件为真源,
+# pyproject 侧 [tool.coverage.*] 已移除, 勿双源。
+# 历史: R216 fail_under 68→75（实测 75.67%, 棘轮锁收益不刷数）;
+#       R176 基线 68.49%（此前从未真实达标, CI 曾虚标 80）
+
+[run]
+source = ai_prompt_toolkit
+branch = True
+omit =
+    tests/*
+    */__pycache__/*
+    */playground/*
+
+[report]
+fail_under = 75
+show_missing = True
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    pass

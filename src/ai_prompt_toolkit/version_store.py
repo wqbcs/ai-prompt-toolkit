@@ -94,6 +94,25 @@ class VersionStore:
 
     def _ensure_schema(self) -> None:
         conn = self._connect()
+        # R341c-1: 人话护栏——库若已被新版体系 PromptVersionStore 迁移过
+        # （v67.34.123 窗口期, 迁移会把本表改造成 prompt_name schema）, 本系统
+        # 全部查询会裸炸 "no such column: template_id"。降级不得静默: 人话报错
+        # 并给出恢复路径。
+        existing = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='prompt_versions'"
+        ).fetchall()
+        if existing:
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(prompt_versions)")]
+            if "prompt_name" in cols and "template_id" not in cols:
+                from ai_prompt_toolkit.errors import ValidationError
+
+                raise ValidationError(
+                    "版本库 prompt_versions.db 当前为新版体系 schema"
+                    "（v67.34.123 窗口期被 PromptVersionStore 迁移）。"
+                    "原始数据保留在同库 prompt_versions_legacy_v1 表: "
+                    "备份该文件后将其重命名回 prompt_versions 可恢复旧版本 CLI; "
+                    "新版体系（MCP 版本工具）已改用 prompt_versions_v2.db, 不再互相影响。"
+                )
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS prompt_versions (
                 version_id INTEGER PRIMARY KEY AUTOINCREMENT,
