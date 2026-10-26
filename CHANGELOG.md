@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.125] - 2026-10-26
+
+### Fixed（R342 上线前自检轮: P0-04 清单机制修正 + probe 冲突启动噪音）
+
+- **R342-1: P0-04 上线前清单 §A 机制修正**（用户官网实查 + 官方文档 + 2026-04 真实事故三方坐实）：个人账号**官网无「创建项目」入口**——旧「先建项目占名、再配 trusted publisher」两步流程在官网已不存在（仅组织账号可在 org 后台建空项目），且原步骤 2 的项目后台 URL 在项目不存在时是死链 → 改写为官方 **pending trusted publisher** 流程（账号级 Publishing 页配置 + 项目名字段，首次 OIDC 发布自动创建项目并自动转正式 publisher；docs.pypi.org/trusted-publishers/creating-a-project-through-oidc + pypi.org/manage/account/publishing/ 实查 303→登录页）。B 节步骤 3-7 重编号 2-6，F 坑表 +2 专项行（名称与元数据不一致 = 首发布 400 "Non-user identities cannot create new projects" / 名称先被占用 = pending 失效；官方 Important 条款：首次发布前不预留名称）
+- **R342-2: P0-04 清单 §D「全量 pytest」措辞修正**：release-test 命令实际带 `-k "not slow"`（release.yml:34 = prompt-ci.yml:72 两侧逐字一致实证），措辞改「全量 pytest（−slow 面）+ linter 覆盖率棘轮 ≥90%」
+- **R342-3: probe/detector 注册表启动命名冲突警告 warning→debug**：CLI 启动组件统计（cli_core.py:111）触发统一视图构建，R207 冲突警告（encoding_bypass 两套体系同名）每进程一次 = 终端用户每次启动可见噪音；降级 debug（排查能力保留：debug logging / pytest caplog 均可捕获），影子化语义（probe_framework 优先）与探针数（706）不变；影子化问题 02 板 R342-X1 登记（T1 晋升路径: ≥2 独立真实 TP + TN 护栏后改名/合并）
+- **02 板 P0-04 行同步**：机制描述 + 状态格修正为 pending publisher 口径（6 项 = 必填 5 + 可选 1，全部复制即用）
+
+### 验证
+
+- 全量 pytest（`-k "not slow"`）**7060 passed** / 4 slow deselected（574s，exit 0）
+- 门禁链 **30/30 GATE PASS**（`release_gate.py` 原样无 skip，655s；含 step1 全量 pytest + 30 步机器核对）
+- 定向回归：registry 相关 3 文件 75 passed（test_r207/test_r71/test_r77）
+- CLI 启动面：`prompt-cli --help`/`--version` 不再出现 "Probe命名冲突" 警告（R342-3 修复证据）+ 版本面 67.34.125（组件统计 271 规则/130 维度/73 MCP/116 Probes 不变）
+- 双基线不回归（FP 0.81%@60 / 漏检 0.00%@393）/ 过防御 6.78%@339（棘轮单调不升）/ mypy 0 错（棘轮绿）/ ruff check+format 全仓绿 / 版本一致性 0 漂移（v67.34.125，三语 README 124 零残留）
+- 板状态 135 行 0 红（R342-X1 新行机器核对通过；P0-04 行改写）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.124] - 2026-10-25
 
 ### Fixed（R341c 用户验收轮: R341c-1 双版本系统 DB 文件分离 + R341c-2 coverage DataError 根治）

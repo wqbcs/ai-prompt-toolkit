@@ -10,7 +10,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.124-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-67.34.125-orange.svg)](CHANGELOG.md)
 [![Tests](https://img.shields.io/badge/Tests-7064%20passed-brightgreen.svg)](tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)

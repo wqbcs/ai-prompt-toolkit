@@ -10,7 +10,7 @@
 - 本模块职责:
   1. 统一查询视图: get_global_probe_registry()合并两处(带缓存, id稳定), 按来源标记
   2. 统一注册入口: register_probe()/register_detector()装饰器 — 新增Probe一处注册
-  3. 命名冲突检测: 两套体系同名时记录warning, 视图以probe_framework优先
+  3. 命名冲突检测: 两套体系同名时记录debug日志(R342: 原warning, 降级消除终端用户启动噪音), 视图以probe_framework优先
 
 参考: garak统一registry模式
 """
@@ -48,8 +48,11 @@ def _build_probe_registry() -> dict[str, dict[str, Any]]:
 
         for rt_name, rt_cls in RT_PROBES.items():  # R197: 改名防cls跨体系循环复用
             if rt_name in merged:
-                # R207: 命名冲突不再静默忽略 — 记录warning便于排查
-                logger.warning(
+                # R207: 命名冲突不再静默忽略 — 记录日志便于排查(视图以probe_framework优先)
+                # R342: warning→debug — 统一视图构建随CLI启动触发(cli_core 组件统计),
+                # 每进程一次=终端用户每次启动可见噪音; debug级保留排查能力
+                # (debug logging/pytest caplog 均可捕获)。影子化语义不变, 见02板 R342-X1
+                logger.debug(
                     "Probe命名冲突: %s 同时存在于probe_framework与redteam两套体系, 统一视图以probe_framework优先",
                     rt_name,
                 )
@@ -77,7 +80,8 @@ def _build_detector_registry() -> dict[str, dict[str, Any]]:
 
         for rt_name, rt_det in RT_DETECTORS.items():  # R197: 改名防cls跨体系循环复用
             if rt_name in merged:
-                logger.warning(
+                # R342: warning→debug（与Probe冲突同族: 终端用户启动噪音, 排查能力保留）
+                logger.debug(
                     "Detector命名冲突: %s 同时存在于两套体系, 统一视图以probe_framework优先",
                     rt_name,
                 )
