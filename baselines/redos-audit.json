@@ -3926,12 +3926,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p101_p110.py\u0000[\\u4e00-\\u9fff].*[a-zA-Z]|[a-zA-Z].*[\\u4e00-\\u9fff]": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "A\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000A!",
-      "approved": true
-    },
     "linter/rules_p101_p110.py\u0000([\\u4e00-\\u9fff]{2,8})\\s*\\(([a-zA-Z]{2,20})\\)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -14169,6 +14163,18 @@
       "approved": false
     },
     "linter/auto_fix_verification.py\u0000error": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000[\\u4e00-\\u9fff]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000[a-zA-Z]": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,

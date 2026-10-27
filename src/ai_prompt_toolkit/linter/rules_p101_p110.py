@@ -392,14 +392,27 @@ def check_p107(text: str) -> Finding | None:
     )
 
 
-_ZH_EN_MIX = re.compile(r"[\u4e00-\u9fff].*[a-zA-Z]|[a-zA-Z].*[\u4e00-\u9fff]")
+_CJK_CHAR = re.compile(r"[\u4e00-\u9fff]")
+_ASCII_LETTER = re.compile(r"[a-zA-Z]")
 _ZH_TERM = re.compile(r"([\u4e00-\u9fff]{2,8})\s*\(([a-zA-Z]{2,20})\)")
 _EN_TERM = re.compile(r"([a-zA-Z]{2,20})\s*[\(（]([\u4e00-\u9fff]{2,8})[\)）]")
 
 
+def _has_zh_en_mix(text: str) -> bool:
+    """R343-RE-1: 中英混合判定 — 原 _ZH_EN_MIX 正则的线性等价实现 O(2n)。
+
+    原模式 `[\u4e00-\u9fff].*[a-zA-Z]|[a-zA-Z].*[\u4e00-\u9fff]` 对长单行非混合文本
+    回溯 O(n²): 1.8MB 单行英文实测挂起分钟级(C 层 re 持 GIL, 线程护栏亦失效)。
+    该面是 CI lint 门禁的 DoS 攻击面(恶意 PR 塞超长单行 .md 即可挂死门禁)。
+    单字符类 search 无回溯; 逐行 AND(每行至多两次线性扫描)与原子模式两分支
+    语义等价(两分支均要求同一行内 CJK 与 ASCII 字母同时出现, 顺序无要求)。
+    """
+    return any(_CJK_CHAR.search(line) and _ASCII_LETTER.search(line) for line in text.split("\n"))
+
+
 def check_p108(text: str) -> Finding | None:
     rule = _RULE_MAP["P108"]
-    if not _ZH_EN_MIX.search(text):
+    if not _has_zh_en_mix(text):
         return None
     zh_terms = _ZH_TERM.findall(text)
     en_terms = _EN_TERM.findall(text)

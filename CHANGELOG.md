@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.126] - 2026-10-27
+
+### Fixed（R343 上线前全类型测试轮：错误面扩面 + probe 护栏 + P108 ReDoS 根治）
+
+- **R343-F-2: compliance/gap-report/probe 读面 F-2 扩面**（R341-F-2 范围缺口，本轮黑盒电池 6 命令 × 11 边界目标实证）：非 UTF-8（二进制/GBK）目标 → 原裸 UnicodeDecodeError Traceback rc=1（安全工具裸 Traceback=契约破损），现统一 `cli_helpers.read_prompt_text` 人话报错 rc=2；probe 目录目标 → 原 Windows 裸 PermissionError Traceback，现 is_file 护栏 ValidationError（probe 单文件契约）
+- **R343-PF-1: probe 大目标长度护栏**：每个 probe payload 内嵌完整目标文本，检测器成本随长度线性（1.8MB 单行全量扫描实测 >40s，破 `--quick` 30s 文档承诺）；CLI 面 >64KB 截取 + 明确披露（[INFO] 仅扫描前 65536 字符，不静默）
+- **R343-RE-1: P108 _ZH_EN_MIX O(n²) 回溯根治（ReDoS）**：`[\u4e00-\u9fff].*[a-zA-Z]|[a-zA-Z].*[\u4e00-\u9fff]` 对长单行非混合文本回溯 O(n²)（1.8MB 单行英文 → lint 进程级挂起，C 层 re 持 GIL 线程护栏亦失效）——该面是 CI lint 门禁的 DoS 攻击面（恶意 PR 塞超长单行 .md 即挂死门禁）；271 checker 子进程隔离二分锁定唯一元凶；修复=线性等价实现（逐行 CJK/ASCII 单字符类 AND，与原子模式两分支语义等价），P108 @1.8MB 0.005s（修复前挂起），行为等价六面 + 既有 test_r68 P108 行为面不变
+
+### 验证
+
+- 全量 pytest（`-k "not slow"`）**7067 passed** / 5 slow deselected（509s，exit 0）— 含 R343 新增 8 探针测试（tests/test_r343_error_surface.py）
+- 门禁链 **30/30 GATE PASS**（`release_gate.py` 原样无 skip；step1 含全量 pytest；双基线 FP 0.81%@60 / 漏检 0.00%@393 不回归，过防御 6.78%@339 棘轮单调）
+- P108（R343-RE-1）：1.8MB 单行 0.005s（修复前进程级挂起）；271 checker 子进程隔离二分=唯一元凶；既有 test_r68 P108 行为面不变
+- 黑盒 CLI 电池复测：F-2 7 负例人话 rc=2 零 Traceback / 3 正例功能不回归；lint 8 旗标矩阵 0 崩溃；probe 护栏后 --quick ≈3s（修复前 1.8MB 实测 >40s）
+- mypy 0 错（棘轮绿）/ ruff check+format 全仓绿（658 files）/ linter 覆盖 93.32%（≥90%）/ 版本一致性 0 漂移（v67.34.126）/ 板状态 0 红（P3-28/29/30 新行）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.125] - 2026-10-26
 
 ### Fixed（R342 上线前自检轮: P0-04 清单机制修正 + probe 冲突启动噪音）

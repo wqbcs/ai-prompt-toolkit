@@ -34,13 +34,15 @@ def gap_report_cmd(target: str, output: str | None) -> None:
     if not root.exists():
         click.echo(f"错误: 目标不存在 — {target}", err=True)
         sys.exit(2)
+    from ai_prompt_toolkit.cli_helpers import read_prompt_text  # R343-F-2: 统一读取面
+
     files: dict[str, str] = {}
     if root.is_file():
-        files[root.name] = root.read_text(encoding="utf-8")
+        files[root.name] = read_prompt_text(root)
     else:
         for p in sorted(root.rglob("*.md")) + sorted(root.rglob("*.txt")):
             rel = p.relative_to(root).as_posix()
-            files[rel] = p.read_text(encoding="utf-8")
+            files[rel] = read_prompt_text(p)
     if not files:
         click.echo(f"错误: 目标下无 .md/.txt 文件 — {target}", err=True)
         sys.exit(2)

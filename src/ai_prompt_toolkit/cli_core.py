@@ -547,7 +547,8 @@ def _doctor_gate(as_json: bool) -> None:
 @click.option("--quick", is_flag=True, help="快速模式: 仅运行TOP5高危Probe, 30秒内返回")
 def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_payloads: int, quick: bool) -> None:
     """Red Team Probe扫描: garak风格探针类别自动检测Prompt安全漏洞"""
-    from ai_prompt_toolkit.cli_helpers import resolve_path
+    from ai_prompt_toolkit.cli_helpers import read_prompt_text, resolve_path
+    from ai_prompt_toolkit.errors import ValidationError
     from ai_prompt_toolkit.probe_framework import ProbeRunner, list_probes
     from ai_prompt_toolkit.probe_framework import list_detectors as list_det
 
@@ -563,11 +564,24 @@ def probe_cmd(target: str, probes: str, detectors: str, output: str | None, max_
         return
 
     target_path = resolve_path(target)
-    if not target_path.exists():
-        click.echo(f"错误: 文件不存在: {target}")
-        sys.exit(1)
+    if not target_path.is_file():
+        # R343-F-2: 目录目标人话报错（Windows 对目录 read_text=PermissionError 裸 Traceback;
+        # probe 单文件契约 — 目录 glob 非本命令范围）
+        raise ValidationError(f"目标必须为文件 — {target}（probe 不支持目录输入）", field="target")
 
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)  # R343-F-2: 非 UTF-8 → 人话报错 rc=2
+
+    # R343-PF-1: 目标文本长度护栏 — 每个探针 payload 内嵌完整目标文本, 检测器成本随
+    # 文本长度线性增长: 1.8MB 目标全量扫描实测 >40s(破 --quick "30秒内返回" 承诺,
+    # 用户面零反馈)。prompt 场景是小文本, 超限截取前 64KB 并明确披露(不静默)。
+    _PROBE_MAX_TEXT = 64 * 1024
+    if len(text) > _PROBE_MAX_TEXT:
+        click.echo(
+            f"[INFO] 目标文本 {len(text)} 字符, 超过 {_PROBE_MAX_TEXT} — 仅扫描前 {_PROBE_MAX_TEXT} 字符"
+            f"（探针 payload 内嵌完整文本, 成本随长度线性增长）",
+            err=True,
+        )
+        text = text[:_PROBE_MAX_TEXT]
 
     _QUICK_PROBES = ["dan", "prompt_inject", "system_prompt_leak", "encoding_bypass", "package_hallucination"]
     if quick:
@@ -657,7 +671,7 @@ def plugin_group() -> None:
 @click.option("--owasp-pct", "owasp_pct", type=float, default=0.0, help="OWASP LLM Top 10合规百分比(0-100)")
 def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) -> None:
     """华为云安全合规报告: 7域加权评分+OWASP映射+等保2.0"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, empty_state_tip
+    from ai_prompt_toolkit.cli_helpers import discover_templates, empty_state_tip, read_prompt_text
     from ai_prompt_toolkit.security.huaweicloud_compliance import compute_huaweicloud_compliance
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
     from ai_prompt_toolkit.security.pii_detector import PIIDetector
@@ -676,7 +690,7 @@ def compliance_cmd(target: str, fmt: str, output: str | None, owasp_pct: float) 
     supply_chain_detector = SupplyChainDetector()
 
     for tpl_path in templates:
-        text = tpl_path.read_text(encoding="utf-8")
+        text = read_prompt_text(tpl_path)  # R343-F-2: 统一读取面（非 UTF-8 → 人话报错 rc=2）
         all_findings.extend(injection_detector.detect(text))
         pii_f = pii_detector.check(text)
         if pii_f:
