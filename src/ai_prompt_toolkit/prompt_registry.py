@@ -24,6 +24,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 logger = logging.getLogger(__name__)
 
 _DEFAULT_DB_PATH = Path.home() / ".ai-prompt-toolkit" / "prompt_registry.db"
@@ -274,7 +276,7 @@ class PromptRegistry:
 
     def import_json(self, input_path: str | Path, *, overwrite: bool = False) -> int:
         path = Path(input_path)
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(read_prompt_text(path))
         entries_data = data.get("entries", [])
 
         imported = 0

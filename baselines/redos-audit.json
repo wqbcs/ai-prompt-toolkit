@@ -1370,42 +1370,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/fixer.py\u0000简短.*?详细": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/fixer.py\u0000详细.*?简短": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/fixer.py\u0000简洁.*?全面": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/fixer.py\u0000全面.*?简洁": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/fixer.py\u0000严格.*?灵活": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/fixer.py\u0000灵活.*?严格": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/fixer.py\u0000(\\d+)\\s*(?:字|词|words?)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2288,37 +2252,13 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000\\{\\{.*?user.*?\\}\\}": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "{{user}}}}}}}}}}}}!",
-      "approved": true
-    },
     "linter/rules.py\u0000\\{user_input\\}": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
       "approved": false
     },
-    "linter/rules.py\u0000<user_input>.*?</user_input>": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000\\$\\{.*?\\}": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules.py\u0000(?:不生成|禁止|不要|不得|不允许|被删除|don'?t|do\\s+not|no\\s+(?:delete|drop))": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000(?:外部(?:服务|工具|依赖|接口|API)|SaaS|调用.*API|API.*调用|网络请求|第三方服务|第三方API|external|third.?party|network.?request)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -2367,12 +2307,6 @@
       "approved": false
     },
     "linter/rules.py\u0000审计|audit|日志|log|记录|trace|追踪": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules.py\u0000如果.*(?:失败|出错|错误|异常|无法)|if.*(?:fail|error|exception|unable)|otherwise|否则|回退|fallback": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -2468,30 +2402,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p021_p030.py\u0000\\{\\{[^#/}].*?\\}\\}": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p021_p030.py\u0000\\$\\{[^}]+\\}": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p021_p030.py\u0000<%.*?%>": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p021_p030.py\u0000\\{%.*?%\\}": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p021_p030.py\u0000(?:import|include|require)\\s+\\{": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2516,25 +2426,7 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p021_p030.py\u0000(?:字数|字符|[Tt]oken|段落|篇幅|长度|words?|characters?|tokens?|paragraphs?|length).*?(?:\\d+|限制|范围|以内|不超过|至少)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "字数00000000000!",
-      "approved": true
-    },
-    "linter/rules_p021_p030.py\u0000(?:不超过|最多|至少|最少|min\\s+\\d+|max\\s+\\d+|no\\s+more\\s+than\\s+\\d+|at\\s+least\\s+\\d+).*(?:字|词|[Tt]oken|段落|word|token|paragraph|character)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "at\tleast\t000000000000字!",
-      "approved": true
-    },
     "linter/rules_p021_p030.py\u0000(?:\\d+)\\s*(?:字|词|words?|characters?|tokens?|paragraphs?)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p021_p030.py\u0000如果.*(?:失败|出错|错误|异常|无法|不确定|不清楚)|if.*(?:fail|error|exception|unable|uncertain)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -2564,35 +2456,17 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p021_p030.py\u0000(?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2|首先.*然后|first.*then)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "step\t\t\t\t\t\t\t\t\t\t\t!",
-      "approved": true
-    },
     "linter/rules_p021_p030.py\u0000(?:分析|推理|比较|评估|判断|规划|设计|analyze|reason|compare|evaluate|judge|plan|design)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
       "approved": false
     },
-    "linter/rules_p021_p030.py\u0000\\{\\{.*?user.*?\\}\\}": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "{{user}}}}}}}}}}}}!",
-      "approved": true
-    },
     "linter/rules_p021_p030.py\u0000\\{user_input\\}": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
       "approved": false
-    },
-    "linter/rules_p021_p030.py\u0000\\$\\{.*?input.*?\\}": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "${inputinnnnnnnnnnnput}!",
-      "approved": true
     },
     "linter/rules_p021_p030.py\u0000(?:转义|escape|sanitize|校验|验证|validate|过滤|filter|清洗|clean)": {
       "vulnerable": false,
@@ -2708,12 +2582,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p031_p040.py\u0000(?:删除|支付|发送|转账|delete|payment|send|transfer)\\s*.*(?:需|必须|require|must)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "删除\t\t\t\t\t\t\t\t\t\t\t需!",
-      "approved": true
-    },
     "linter/rules_p031_p040.py\u0000(?:来源|出处|引用|source|citation|reference|origin)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -2731,12 +2599,6 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
-    },
-    "linter/rules_p031_p040.py\u0000(?:如果.*不包含|如果.*未找到|if.*not\\s+(?:found|contain|include))": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "ifnot\t\t\t\t\t\t\t\t\t\t\t!",
-      "approved": true
     },
     "linter/rules_p031_p040.py\u0000(?:未覆盖|没有相关信息|无相关|资料中没有|not\\s+cover|no\\s+information|does\\s+not\\s+cover)": {
       "vulnerable": false,
@@ -2833,12 +2695,6 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
-    },
-    "linter/rules_p041_p050.py\u0000(?:当|如果|when|if)\\s*.*(?:发生|出现|遇到|occur|happen|encounter|无结果|不可用|失败|fail|unavailable|empty)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "当\t\t\t\t\t\t\t\t\t\t\t发生!",
-      "approved": true
     },
     "linter/rules_p041_p050.py\u0000(?:边界|限制|约束|条件|boundary|limit|constraint|condition)": {
       "vulnerable": false,
@@ -2988,12 +2844,6 @@
       "vulnerable": true,
       "complexity": "O(n^4)",
       "attack": "作为\t\t\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000!",
-      "approved": true
-    },
-    "linter/rules_p041_p050.py\u0000(?:同时|兼具|既是.*又是|both.*and|not\\s+only.*but\\s+also)": {
-      "vulnerable": true,
-      "complexity": "O(n^4)",
-      "attack": "not\tonlybutttttttttt!",
       "approved": true
     },
     "linter/rules_p041_p050.py\u0000[，。！？；：''（）【】《》]": {
@@ -3356,31 +3206,13 @@
       "attack": "step\t\t\t\t\t\t\t\t\t\t\t!",
       "approved": true
     },
-    "linter/rules_p063_p070.py\u0000(?:如果.*失败|失败则|出错则|if.*fail|fallback|降级|跳过|skip)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p063_p070.py\u0000(?:多轮|对话历史|上下文|会话|conversation|multi.?turn|context|session)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
       "approved": false
     },
-    "linter/rules_p063_p070.py\u0000(?:最近.*轮|仅参考|截断|摘要|summar|truncat|last\\s+\\d+\\s+turn)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p063_p070.py\u0000(?:事实|统计|年份|知识|\\bfact\\w*|\\bstatistic\\w*)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p063_p070.py\u0000(?:截止|截至|cutoff|knowledge\\s+cut|截至.*月|更新至|as\\s+of|仅依据|仅基于|only\\s+based\\s+on)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -3770,97 +3602,7 @@
       "attack": "ModelArts\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000审核!",
       "approved": true
     },
-    "linter/rules_p101_p110.py\u0000必须/禁止矛盾": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000always/never矛盾": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000必须/不要矛盾": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000必须.*?禁止|禁止.*?必须": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000always.*?never|never.*?always": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p101_p110.py\u0000必须.{0,20}(?:不要|禁止|不能)|不要.{0,20}必须": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简短/详细冲突": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简洁/全面冲突": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简短/完整冲突": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000严格/灵活冲突": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000concise/detailed conflict": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简短.*?详细|详细.*?简短": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简洁.*?全面|全面.*?简洁": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000简短.*?完整|完整.*?简短": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000严格.*?灵活|灵活.*?严格": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000(?:concise|brief).*?(?:detailed|comprehensive)|(?:detailed|comprehensive).*?(?:concise|brief)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -3945,18 +3687,6 @@
       "approved": false
     },
     "linter/rules_p101_p110.py\u0000(?:信息不足|来源.*标注|置信度|引用|citation|cite\\b|confidence|source.*annotat|retriev.*augment)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000(?:首先.*然后|依次|pipeline|chain|workflow|多步骤|multi.?step)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
-    "linter/rules_p101_p110.py\u0000(?:步骤|流程|先.*后|step)": {
       "vulnerable": false,
       "complexity": "O(n)",
       "attack": null,
@@ -14179,6 +13909,239 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules.py\u0000(?:外部(?:服务|工具|依赖|接口|API)|SaaS|网络请求|第三方服务|第三方API|external|third.?party|network.?request)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000otherwise|否则|回退|fallback": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000如果": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000失败|出错|错误|异常|无法": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000if": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules.py\u0000fail|error|exception|unable": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000\\d+|限制|范围|以内|不超过|至少": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000(?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "step\t\t\t\t\t\t\t\t\t\t\t!",
+      "approved": true
+    },
+    "linter/rules_p021_p030.py\u0000first": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000then": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000如果": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000失败|出错|错误|异常|无法|不确定|不清楚": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000if": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p021_p030.py\u0000fail|error|exception|unable|uncertain": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p031_p040.py\u0000如果": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p031_p040.py\u0000不包含|未找到": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000同时|兼具": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000既是": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000又是": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000both": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000and": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000not\\s+only": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p041_p050.py\u0000but\\s+also": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000失败则|出错则|fallback|降级|跳过|skip": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000fail": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000仅参考|截断|摘要|summar|truncat|last\\s+\\d+\\s+turn": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000(?:截止|截至|cutoff|knowledge\\s+cut|更新至|as\\s+of|仅依据|仅基于|only\\s+based\\s+on)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000如果": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000失败": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000if": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000最近": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p063_p070.py\u0000轮": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000(?:依次|pipeline|chain|workflow|多步骤|multi.?step)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000(?:步骤|流程|step)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000首先": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000然后": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000先": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/rules_p101_p110.py\u0000后": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
+  },
+  "metadata": {
+    "approved_at": "2026-10-27",
+    "approver": "R344 audit (AtomCode), supersedes R229",
+    "rationale": "94 vulnerable patterns all polynomial (O(n^4) x94), zero exponential. R344 addition: _P028_SAFE (?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2) flagged O(n^4) by redoctor static heuristic (step\\s+[12] single-anchor whitespace-backtrack shape) — measured strictly linear: 10^7-whitespace adversarial run 0.208s with exact 10x-per-10x scaling (2ms@10^5, 21ms@10^6, 208ms@10^7); multi-segment and CJK-interleaved adversarial forms ~0.02s @10^6. Pure literal alternation, no quantifier nesting — nothing to refactor. Pre-existing 93 approvals (R227 101-item evidence + R229 P264 vendor-hash) retained with their original measurements (all <100ms @2000-char envelope; >20K adversarial vector registered in 07 risk register)."
   }
 }

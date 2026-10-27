@@ -12,6 +12,7 @@ from typing import Any, cast
 import click
 
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.command(name="canary")
@@ -32,7 +33,7 @@ def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | 
     if check:
         check_path = Path(check)
         if check_path.exists():
-            output_text = check_path.read_text(encoding="utf-8")
+            output_text = read_prompt_text(check_path)
         else:
             output_text = check
 
@@ -68,7 +69,7 @@ def canary_cmd(prompt: str | None, check: str | None, count: int, output: str | 
     elif prompt:
         prompt_path = Path(prompt)
         if prompt_path.exists():
-            prompt_text = prompt_path.read_text(encoding="utf-8")
+            prompt_text = read_prompt_text(prompt_path)
         else:
             prompt_text = prompt
 
@@ -107,7 +108,7 @@ def score_cmd(target: str, fmt: str) -> None:
         click.echo(f"文件不存在: {target}", err=True)
         sys.exit(3)
 
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
 
     from ai_prompt_toolkit.linter.linter import PromptLinter
     from ai_prompt_toolkit.security.injection_detector import InjectionDetector
@@ -200,7 +201,7 @@ def engine_cmd(target: str, fmt: str, session: str, no_inflammation: bool) -> No
         click.echo(f"文件不存在: {target}", err=True)
         sys.exit(3)
 
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
     engine = FusionEngine(enable_inflammation=not no_inflammation)
     result = engine.analyze(text, session_id=session)
 
@@ -259,7 +260,7 @@ def badge_cmd(target: str, output: str, compact: bool, theme: str) -> None:
         click.echo(f"文件不存在: {target}", err=True)
         sys.exit(3)
 
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
 
     linter = PromptLinter()
     lint_result = linter.lint(target_path.name, text)

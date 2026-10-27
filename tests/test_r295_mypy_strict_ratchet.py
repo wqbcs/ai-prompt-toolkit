@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -210,7 +211,9 @@ class TestUpdateStrict:
         data = json.loads(reg.read_text(encoding="utf-8"))
         assert data["modules"][dirty] is False
         assert all(data["modules"][m] is True for m in real_modules if m != dirty)
-        assert "1 模块" not in out  # 防占位, 真断言在下面
+        # 防占位（边界感知 R344: 模块数尾数为 1 时 "291 模块" 含子串 "1 模块" 曾误红;
+        # 前置非数字才判占位 — "1/1 模块" 占位形态仍被抓住）, 真断言在下面
+        assert not re.search(r"(?<!\d)1 模块", out)
         assert f"{len(real_modules) - 1}/{len(real_modules)}" in out
 
     def test_relaxation_refused_without_force(

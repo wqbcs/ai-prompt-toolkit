@@ -2,6 +2,23 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.127] - 2026-10-27
+
+### Fixed（R344 上线前全面自检：规则层 ReDoS 全面根治 + 读面全仓扩面 + redteam 护栏）
+
+- **R344-RE-1b（P3-31）linter 规则层 19 处无界 `.*` 模式线性化** — R343-RE-1 只修了 P108；本轮深审 + 8s 护栏实测暴露规则层另有 19 处无界 `A.*?B`/`A.*B` 模式对「锚点重复、目标缺失」长单行输入挂死/超线性（13 挂死 + 6 超线性：P102×2 / P103×5（含 fixer 孪生）/ P110×2 / rules.py 用户输入占位×3 + 回退语境 / p021 模板变量×4 + 长度约束×2 + 回退 + 多步 / p031 审批 + RAG 兜底 / p041 H2 + H7 / p063 链式 + 轮数 + cutoff）——与 P108 同一 DoS 攻击面（恶意 PR 塞超长单行 .md 挂死 CI lint 门禁）。修复 = 新建 `linter/linear_scan.py` 线性原语模块（行内共现/序对/span 锚链/`\s*`·`\s+`·`\s+\d+` 链 3 个跨行原语, 全 O(n) 附证明, `LinearSearch` 接口兼容 re.Pattern 含 finditer）+ kernel 清单登记（linear_scan/errors, 14 文档同步）。**A/B 铁锚定**（原正则字面量保留在测试内作参照, 30 对 × 结构用例 + 300 种子 fuzz 全等价）在实现过程中抓到并修复 4 类真实语义差（`[^#/}]`/`[^}]+` 跨行锚、`not\s+X` 紧邻语义、分支 B 集交叉积、`${}` 形态最左否决）→ 行为零漂移；finditer 等价 + 消费点（check_p022/p029/p007）行为不变；200k 复合最坏单行全量 lint 子进程 <45s（修复前挂死 = 红, **非 slow — 门禁实跑**, 堵住 R343 主 DoS 回归被 slow 标记排除出门禁的缺口）
+- **R344-RT-1（P3-32）redteam 大目标长度护栏** — 量级问题（非正则问题）：94 探针 × 296 输入 × 3 检测器 × 1.8MB 目标 ≈ 178s 实测（线性无回溯）——与 probe PF-1 同一 DoS 结构（门禁超时）→ CLI 面 65536 字符截取 + 明确披露（与 PF-1 同构; 披露单位 = 码点非字节, 深审措辞修正落地）
+- **R344-F-2X（P3-33）读面全仓扩面** — R343-F-2 只扩了 3 命令；本轮全仓审计发现 ~50 处用户可控路径裸 `read_text`（20+ 文件：eval/security/template/lint/compile/dataset/redteam 命令 + prompt_template/registry/onboarding/eval_config/failure_cases/flow_dag/data_reader/eval_baseline/custom_rules/lint_config/baseline/repo_check/cli_core/inline_prompt）→ 统一 `read_prompt_text`（非 UTF-8 目标 = 人话报错 rc=2, 零 Traceback）；副作用 = linter 层（裁决层）4 文件违例导入 cli_helpers（分层纪律 L1/L2 铁律）→ 改本地等价解码护栏（ValidationError 同语义）, 分层测试 14/14
+- **R344-r295 mypy strict 注册表防占位断言误报修复** — 模块数 290→291（新模块）后诚实输出 "291 模块" 含子串 "1 模块" 误红 → 边界感知断言 `(?<!\d)1 模块`（"1/1 模块" 占位形态仍被抓, 防占位意图不变）
+- **R344-audit _P028_SAFE ReDoS 静态误报批准** — 门禁第 19 步 ReDoS 增量审计对 `rules_p021_p030.py:112` `(?:首先|然后|接着|最后|第一步|第二步|step\s+1|step\s+2)` 报新 O(n^4) 项：redoctor `step\s+[12]` 单锚点空白回溯启发式误判（纯字面量交替, 无嵌套量词）→ 实测严格线性（10⁵/10⁶/10⁷ 空白 run = 2ms/21ms/208ms 严格 10x 缩放; 多段/CJK 交错对抗形态 ≈0.02s@10⁶）→ 证据批准不重构（APPROVE_METADATA R344 留痕 supersedes R229; 审计终态 = 脆弱项 94 条全批准 / NEW 0）
+
+### 验证
+- 探针测试先红后绿：tests/test_r344_redos_equivalence.py 42 + tests/test_r344_error_surface.py 6 = **48 全绿**
+- 分层测试 14/14 / ruff 变更面全绿 / 测试 **7067→7115 passed**（not slow, +48 新增）+ 5 slow deselected
+- 规则 271 / 探针 706（单元 393）/ 全局注册表 116 不变；双基线不回归（FP 0.81%@60 / 漏检 0.00%@706 / 过防御棘轮单调）
+- 门禁链 30/30 GATE PASS / 板状态 0 红 0 警告 / 版本一致性 0 漂移（v67.34.127）
+- CI 未观测（push 后 GitHub 侧实查）
+
 ## [v67.34.126] - 2026-10-27
 
 ### Fixed（R343 上线前全类型测试轮：错误面扩面 + probe 护栏 + P108 ReDoS 根治）

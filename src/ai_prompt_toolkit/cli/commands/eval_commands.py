@@ -13,6 +13,7 @@ from typing import Any
 import click
 
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.command("eval-multi")
@@ -40,7 +41,7 @@ def eval_multi(targets: str, quick: bool, presets: str | None) -> None:
         if not p.exists():
             click.echo(f"文件不存在: {tf}")
             continue
-        text = p.read_text(encoding="utf-8")
+        text = read_prompt_text(p)
         report = evaluate_template(p.name, text)
         avg = sum(s.score for s in report.scores) / len(report.scores) if report.scores else 0
         results.append({"name": p.name, "avg": avg, "scores": report.scores, "total": len(report.scores)})
@@ -93,7 +94,7 @@ def _run_preset_matrix(target_files: list[str], presets: str) -> None:
         if not p.exists():
             click.echo(f"文件不存在: {tf}", err=True)
             sys.exit(2)
-        text = p.read_text(encoding="utf-8")
+        text = read_prompt_text(p)
         for pn in preset_names:
             wp = WEIGHT_PRESETS[pn]
             wo = wp._overrides if pn != "default" else None
@@ -147,7 +148,7 @@ def capture_failure(
     if not p.exists():
         click.echo(f"文件不存在: {target}", err=True)
         sys.exit(2)
-    text = p.read_text(encoding="utf-8")
+    text = read_prompt_text(p)
     dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
     wp = get_weight_preset(preset)
     wo = wp._overrides if (wp is not None and preset != "default") else None
@@ -296,14 +297,14 @@ def evaluate(
             task = progress.add_task("评估中...", total=len(files))
             reports = []
             for f in files:
-                text = f.read_text(encoding="utf-8")
+                text = read_prompt_text(f)
                 report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
                 reports.append(report)
                 progress.advance(task)
     else:
         reports = []
         for f in files:
-            text = f.read_text(encoding="utf-8")
+            text = read_prompt_text(f)
             report = evaluate_template(str(f), text, dimensions=dim_list, categories=cat_list, weight_overrides=_wo)
             reports.append(report)
 
@@ -475,7 +476,7 @@ def assert_cmd(response: str, config: str, fmt: str) -> None:
     from ai_prompt_toolkit.cli_helpers import load_config, resolve_path
 
     resp_path = resolve_path(response)
-    resp_text = resp_path.read_text(encoding="utf-8")
+    resp_text = read_prompt_text(resp_path)
     cfg = load_config(config)
 
     assertions_cfg = cfg.get("assertions", [])
@@ -564,12 +565,12 @@ def judge_cmd(
     resp_text = response
     resp_path = Path(response)
     if resp_path.exists() and resp_path.is_file():
-        resp_text = resp_path.read_text(encoding="utf-8")
+        resp_text = read_prompt_text(resp_path)
 
     resp_b_text: str | None = None
     if response_b:
         rb_path = Path(response_b)
-        resp_b_text = rb_path.read_text(encoding="utf-8") if rb_path.exists() else response_b
+        resp_b_text = read_prompt_text(rb_path) if rb_path.exists() else response_b
 
     dim_list = [d.strip() for d in dimensions.split(",")] if dimensions else None
 
@@ -678,7 +679,7 @@ def version_cmd(
             if source:
                 from ai_prompt_toolkit.cli_helpers import resolve_path
 
-                content = resolve_path(source).read_text(encoding="utf-8")
+                content = read_prompt_text(resolve_path(source))
             else:
                 # 用sys.stdin替代click.get_text_stream — 后者在click 8.5.0
                 # 返回类型标注为object, 致mypy棘轮跨click版本漂移
@@ -890,7 +891,7 @@ def optimize_cmd(source: str, max_iterations: int, min_improvement: float, outpu
     from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
 
     path = resolve_path(source)
-    text = path.read_text(encoding="utf-8")
+    text = read_prompt_text(path)
 
     click.echo(f"优化Prompt: {path.name} (最大{max_iterations}轮)")
     result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
@@ -939,7 +940,7 @@ def stats_cmd(target: str | None, fmt: str) -> None:
 
     for f in prompt_files:
         try:
-            text = f.read_text(encoding="utf-8")
+            text = read_prompt_text(f)
             total_chars += len(text)
             total_lines += text.count("\n") + 1
             zh_chars = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
@@ -1137,7 +1138,7 @@ def eval_registry_cmd(
 
     all_results = []
     for f in files:
-        text = f.read_text(encoding="utf-8")
+        text = read_prompt_text(f)
         result = registry.evaluate(
             str(f),
             text,
@@ -1190,7 +1191,7 @@ def data_generate_cmd(
     template_text = ""
     if template:
         tpath = resolve_path(template)
-        template_text = tpath.read_text(encoding="utf-8")
+        template_text = read_prompt_text(tpath)
 
     ds = gen.generate_dataset(
         name="auto_generated",
@@ -1232,7 +1233,7 @@ def prompt_optimize_cmd(
     from ai_prompt_toolkit.prompt_optimizer import optimize_prompt
 
     target_path = resolve_path(target)
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
 
     result = optimize_prompt(text, max_iterations=max_iterations, min_improvement=min_improvement)
 
@@ -1303,14 +1304,14 @@ def gepa_optimize_cmd(
     from ai_prompt_toolkit.gepa import gepa_optimize
 
     target_path = resolve_path(target)
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
 
     predictor_names = [p.strip() for p in predictors.split(",")] if predictors else ["main"]
 
     train_data = None
     if trainset:
         train_path = resolve_path(trainset)
-        train_data = _json.loads(train_path.read_text(encoding="utf-8"))
+        train_data = _json.loads(read_prompt_text(train_path))
 
     reflection_lm = None
     if reflection_model and not dry_run:
@@ -1424,7 +1425,7 @@ def prompt_version_cmd(
                 sys.exit(2)
             content = ""
             if source:
-                content = resolve_path(source).read_text(encoding="utf-8")
+                content = read_prompt_text(resolve_path(source))
             else:
                 if not sys.stdin.isatty():
                     content = sys.stdin.read()
@@ -1537,7 +1538,7 @@ def eval_matrix_cmd(target: str, evaluators: str | None, output: str) -> None:
     from ai_prompt_toolkit.eval_matrix import build_matrix_from_evaluator_results, generate_eval_matrix_html
 
     target_path = resolve_path(target)
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
     ev_list = [e.strip() for e in evaluators.split(",")] if evaluators else None
 
     report = build_matrix_from_evaluator_results(str(target_path), text, evaluator_names=ev_list)
@@ -1566,7 +1567,7 @@ def contest_eval_cmd(target: str, fmt: str) -> None:
     from ai_prompt_toolkit.huawei_eval import evaluate_contest_readiness
 
     target_path = resolve_path(target)
-    text = target_path.read_text(encoding="utf-8")
+    text = read_prompt_text(target_path)
     result = evaluate_contest_readiness(text)
 
     if fmt == "json":
@@ -1613,7 +1614,7 @@ def flow_run_cmd(flow: str, input_text: str | None, input_file: str | None, fmt:
     if input_text:
         text = input_text
     elif input_file:
-        text = resolve_path(input_file).read_text(encoding="utf-8")
+        text = read_prompt_text(resolve_path(input_file))
     else:
         click.echo("错误: 请指定--input-text或--input-file", err=True)
         sys.exit(2)
@@ -1814,7 +1815,7 @@ def registry_push_cmd(name: str, template: str, description: str, category: str,
     template_text = template
     p = Path(template)
     if p.exists() and p.is_file():
-        template_text = p.read_text(encoding="utf-8")
+        template_text = read_prompt_text(p)
 
     tag_list = [t.strip() for t in tags.split(",") if t.strip()] if tags else []
 
@@ -1905,8 +1906,8 @@ def prompt_diff_cmd(old_path: str, new_path: str, fmt: str) -> None:
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.prompt_diff import prompt_diff, prompt_hash
 
-    old_text = resolve_path(old_path).read_text(encoding="utf-8")
-    new_text = resolve_path(new_path).read_text(encoding="utf-8")
+    old_text = read_prompt_text(resolve_path(old_path))
+    new_text = read_prompt_text(resolve_path(new_path))
 
     report = prompt_diff(old_text, new_text)
 
@@ -1950,8 +1951,8 @@ def prompt_merge_cmd(ours: str, theirs: str, strategy: str, output: str | None) 
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.prompt_diff import prompt_hash, prompt_merge
 
-    ours_text = resolve_path(ours).read_text(encoding="utf-8")
-    theirs_text = resolve_path(theirs).read_text(encoding="utf-8")
+    ours_text = read_prompt_text(resolve_path(ours))
+    theirs_text = read_prompt_text(resolve_path(theirs))
 
     merged = prompt_merge("", ours_text, theirs_text, strategy=strategy)
 
@@ -2046,7 +2047,7 @@ def prompt_template_cmd(
     elif template:
         from ai_prompt_toolkit.cli_helpers import resolve_path
 
-        text = resolve_path(template).read_text(encoding="utf-8")
+        text = read_prompt_text(resolve_path(template))
         pt = PromptTemplate(name=Path(template).stem, template=text)
     else:
         click.echo("错误: 请指定--name或--template", err=True)
@@ -2095,7 +2096,7 @@ def prompt_doctor_cmd(target: str, fmt: str) -> None:
     from ai_prompt_toolkit.cli_helpers import resolve_path
     from ai_prompt_toolkit.prompt_doctor import run_doctor
 
-    text = resolve_path(target).read_text(encoding="utf-8")
+    text = read_prompt_text(resolve_path(target))
     report = run_doctor(text, name=Path(target).stem)
 
     if fmt == "json":
@@ -2183,7 +2184,7 @@ def _render_trace_file(path: str, fmt: str) -> None:
         click.echo(f"错误: trace文件不存在 — {trace_path}", err=True)
         sys.exit(3)
     try:
-        data = _json.loads(trace_path.read_text(encoding="utf-8"))
+        data = _json.loads(read_prompt_text(trace_path))
     except _json.JSONDecodeError as e:
         click.echo(f"错误: trace文件不是有效JSON — {e}", err=True)
         sys.exit(3)

@@ -8,6 +8,14 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
+from ai_prompt_toolkit.linter.linear_scan import (
+    LinearSearch,
+    line_a_before_b,
+    line_alt_cooccur,
+    linear_bool,
+    linear_span_between,
+    linear_span_triple,
+)
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -449,11 +457,14 @@ _CONSTRAINT_PATTERNS = [
     re.compile(r"^\s*#{1,6}\s*(?:制約|制限)\s*$", re.MULTILINE),
 ]
 
-_USER_INPUT_PATTERNS = [
-    re.compile(r"\{\{.*?user.*?\}\}", re.IGNORECASE),
+_USER_INPUT_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `\{\{.*?user.*?\}\}` 线性等价（行内三锚点, ci; finditer 兼容）
+    linear_span_triple("{{", "user", "}}", ci=True),
     re.compile(r"\{user_input\}", re.IGNORECASE),
-    re.compile(r"<user_input>.*?</user_input>", re.IGNORECASE | re.DOTALL),
-    re.compile(r"\$\{.*?\}", re.IGNORECASE),
+    # R344-RE-1b: `<user_input>.*?</user_input>` 线性等价（原模式 DOTALL → 全文, ci; finditer 兼容）
+    linear_span_between("<user_input>", "</user_input>", ci=True, dotall=True),
+    # R344-RE-1b: `\$\{.*?\}` 线性等价（行内 ${ … }, ci; finditer 兼容）
+    linear_span_between("${", "}", ci=True),
 ]
 
 
@@ -643,9 +654,13 @@ def check_p009(text: str) -> Finding | None:
 # 避免"API函数签名"等文档类表述误触发
 # R210: 去掉裸"外部" — "不引入外部系统状态假设"等约束性表述(R210 clean55暴露)
 # 不构成回退需求语境, 保留与调用/服务/工具组合的外部信号
-_FALLBACK_CTX = re.compile(
-    r"(?:外部(?:服务|工具|依赖|接口|API)|SaaS|调用.*API|API.*调用|网络请求|第三方服务|第三方API|external|third.?party|network.?request)",
+_FALLBACK_CTX_SAFE = re.compile(
+    r"(?:外部(?:服务|工具|依赖|接口|API)|SaaS|网络请求|第三方服务|第三方API|external|third.?party|network.?request)",
     re.IGNORECASE,
+)
+# R344-RE-1b: `调用.*API|API.*调用` 线性等价（行内共现双向, ci）— 原模式锚点重复长单行 O(n²) 回溯
+_FALLBACK_CTX = linear_bool(
+    lambda t: bool(_FALLBACK_CTX_SAFE.search(t)) or line_alt_cooccur(t, ("调用",), ("api",), ci=True)
 )
 
 
@@ -653,10 +668,19 @@ def check_p010(text: str) -> Finding | None:
     rule = _RULE_MAP["P010"]
     if not _FALLBACK_CTX.search(text):
         return None
-    if re.search(
-        r"如果.*(?:失败|出错|错误|异常|无法)|if.*(?:fail|error|exception|unable)|otherwise|否则|回退|fallback",
-        text,
-        re.IGNORECASE,
+    # R344-RE-1b: `如果.*B_zh|if.*B_en` 线性等价（行内 A 在 B 前; 两支 B 集独立 — 禁交叉积）+ 有界字面量支
+    if (
+        re.search(r"otherwise|否则|回退|fallback", text, re.IGNORECASE)
+        or line_a_before_b(
+            text,
+            re.compile("如果", re.IGNORECASE),
+            re.compile(r"失败|出错|错误|异常|无法", re.IGNORECASE),
+        )
+        or line_a_before_b(
+            text,
+            re.compile("if", re.IGNORECASE),
+            re.compile(r"fail|error|exception|unable", re.IGNORECASE),
+        )
     ):
         return None
     return Finding(

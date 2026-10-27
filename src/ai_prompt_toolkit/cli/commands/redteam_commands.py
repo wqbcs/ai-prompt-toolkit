@@ -10,6 +10,7 @@ import sys
 import click
 
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.command(name="redteam")
@@ -104,7 +105,16 @@ def redteam_cmd(
         from ai_prompt_toolkit.cli_helpers import resolve_path
 
         path = resolve_path(target)
-        text = path.read_text(encoding="utf-8")
+        text = read_prompt_text(path)
+        # R344-RT-1: 长度护栏 — 94 探针 × 296 输入 × 3 检测器全量扫描目标文本,
+        # 成本随长度线性(1.8MB ≈ 178s, 无正则回溯, 纯量级)。与 probe PF-1 护栏
+        # 同构: 截取 65536 字符 + 披露(按码点计非字节; 真实 prompt 远小于此, 安全属性不因长度改变)
+        if len(text) > 65536:
+            click.echo(
+                f"[INFO] 目标文本 {len(text)} 字符, 超过 65536 — 仅扫描前 65536 字符"
+                "（红队全探针×检测器扫描完整文本, 成本随长度线性增长）",
+            )
+            text = text[:65536]
         report = orchestrator.run_offline(text)
     else:
         click.echo("错误: 请指定--target(离线)或--provider(在线)", err=True)

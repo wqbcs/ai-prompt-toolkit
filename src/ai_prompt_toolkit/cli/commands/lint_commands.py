@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 import click
 
 from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 if TYPE_CHECKING:
     from ai_prompt_toolkit.linter.baseline import BaselineSnapshot
@@ -107,7 +108,7 @@ def audit_waivers_cmd(target: str, fmt: str, fail_on: str | None) -> None:
     import json as _json
     from datetime import date
 
-    from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
+    from ai_prompt_toolkit.cli_helpers import discover_templates
     from ai_prompt_toolkit.linter.waivers import parse_waiver_declarations
 
     files = discover_templates(target)
@@ -391,7 +392,6 @@ def lint(
         empty_state_tip,
         git_changed_since_rev,
         load_promptignore,
-        read_prompt_text,
         write_report,
     )
     from ai_prompt_toolkit.linter.linter import PromptLinter
@@ -673,7 +673,7 @@ def lint(
         from ai_prompt_toolkit.linter.multimodal import check_multimodal_prompt
 
         for i, tpl_path in enumerate(templates):
-            text = tpl_path.read_text(encoding="utf-8")
+            text = read_prompt_text(tpl_path)
             mm_findings = check_multimodal_prompt(text)
             if mm_findings:
                 mm_findings_total.extend(mm_findings)
@@ -1331,7 +1331,6 @@ def scan(
         discover_templates,
         empty_state_tip,
         git_changed_since_rev,
-        read_prompt_text,
         write_report,
     )
     from ai_prompt_toolkit.security import scan_template
@@ -1392,7 +1391,7 @@ def scan(
 
         from ai_prompt_toolkit.security.inheritance_auditor import DictTemplateProvider
 
-        prov_data = _yaml.safe_load(Path(provider).read_text(encoding="utf-8"))
+        prov_data = _yaml.safe_load(read_prompt_text(Path(provider)))
         prov = DictTemplateProvider(prov_data or {})
 
     all_results = []
@@ -1455,7 +1454,7 @@ def scan(
 @click.option("--output", "-o", help="报告输出路径")
 def token_cmd(target: str, model: str, compare: bool, fmt: str, output: str | None) -> None:
     """Token分析：估算Token消耗、成本和优化建议"""
-    from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
+    from ai_prompt_toolkit.cli_helpers import discover_templates
     from ai_prompt_toolkit.linter.token_analyzer import analyze_prompt_tokens, compare_models
 
     templates = discover_templates(target)

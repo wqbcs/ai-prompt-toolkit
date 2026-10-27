@@ -52,15 +52,18 @@ TARGET_DIRS = ("linter", "security")
 # 与存量 101 条同一 DoS 处置档(登记 07 风险登记册, 不重构检测 regex)。
 # 批准=不重构(重构风险=误报率/漏检率双基线漂移, 属低价值打磨陷阱)。
 APPROVE_METADATA = {
-    "approved_at": "2026-10-03",
-    "approver": "R229-P3-05 audit (AtomCode), supersedes R227",
+    "approved_at": "2026-10-27",
+    "approver": "R344 audit (AtomCode), supersedes R229",
     "rationale": (
-        "103 vulnerable patterns all polynomial (O(n^4) x101 + 2 R229 P264 vendor-hash formats), "
-        "zero exponential. Measured at 2000-char envelope (P004 threshold) with PoC attack strings: "
-        "all <100ms (R227 worst 7.1ms; R229 additions 0.0ms @2KB, 4.4ms @50KB, 22ms @500KB). "
-        "Approved without refactor: changing detection regex risks false-positive/miss-rate dual "
-        "baselines (low-value polishing trap). Adversarial >20K single-line DoS vector (worst 1.8s @36MB "
-        "all-head-no-tail) registered in 07 risk register, same disposition as pre-existing 101."
+        "94 vulnerable patterns all polynomial (O(n^4) x94), zero exponential. R344 addition: "
+        "_P028_SAFE (?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2) flagged O(n^4) by redoctor "
+        "static heuristic (step\\s+[12] single-anchor whitespace-backtrack shape) — measured strictly "
+        "linear: 10^7-whitespace adversarial run 0.208s with exact 10x-per-10x scaling "
+        "(2ms@10^5, 21ms@10^6, 208ms@10^7); multi-segment and CJK-interleaved adversarial forms "
+        "~0.02s @10^6. Pure literal alternation, no quantifier nesting — nothing to refactor. "
+        "Pre-existing 93 approvals (R227 101-item evidence + R229 P264 vendor-hash) retained with "
+        "their original measurements (all <100ms @2000-char envelope; >20K adversarial vector "
+        "registered in 07 risk register)."
     ),
 }
 

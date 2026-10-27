@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 
+from ai_prompt_toolkit.linter.linear_scan import LinearSearch, ab_ws_a, line_a_before_b, linear_bool
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -26,10 +27,28 @@ _H1_VAGUE_DESC_PATTERNS = [
     ),
 ]
 
-_H2_CONSTRAINT_SCAFFOLD_PATTERNS = [
-    re.compile(
-        r"(?:当|如果|when|if)\s*.*(?:发生|出现|遇到|occur|happen|encounter|无结果|不可用|失败|fail|unavailable|empty)",
-        re.IGNORECASE,
+_H2_CONSTRAINT_SCAFFOLD_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `A\s*.*B` 线性等价 — \s* 可跨行（空白段含 \n）, B 在空白段后同行
+    linear_bool(
+        lambda t: ab_ws_a(
+            t,
+            ("当", "如果", "when", "if"),
+            (
+                "发生",
+                "出现",
+                "遇到",
+                "occur",
+                "happen",
+                "encounter",
+                "无结果",
+                "不可用",
+                "失败",
+                "fail",
+                "unavailable",
+                "empty",
+            ),
+            ci=True,
+        )
     ),
     re.compile(r"(?:边界|限制|约束|条件|boundary|limit|constraint|condition)", re.IGNORECASE),
     re.compile(r"(?:否则|else|otherwise|如果不|if not)", re.IGNORECASE),
@@ -92,8 +111,16 @@ _H7_ROLE_PATTERNS = [
     re.compile(r"(?:作为|act\s+as|you\s+are)\s+.{2,}", re.IGNORECASE),
 ]
 
-_H7_MULTI_ROLE_CONFLICT_PATTERNS = [
-    re.compile(r"(?:同时|兼具|既是.*又是|both.*and|not\s+only.*but\s+also)", re.IGNORECASE),
+_H7_MULTI_ROLE_CONFLICT_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `既是.*又是|both.*and|not\s+only.*but\s+also` 线性等价（行内 A 在 B 前）+ 字面量支
+    linear_bool(
+        lambda t: (
+            bool(re.search(r"同时|兼具", t))
+            or line_a_before_b(t, re.compile("既是", re.IGNORECASE), re.compile("又是", re.IGNORECASE))
+            or line_a_before_b(t, re.compile("both", re.IGNORECASE), re.compile("and", re.IGNORECASE))
+            or line_a_before_b(t, re.compile(r"not\s+only", re.IGNORECASE), re.compile(r"but\s+also", re.IGNORECASE))
+        )
+    ),
 ]
 
 _ZH_CN_PUNCTUATION_PATTERNS = [

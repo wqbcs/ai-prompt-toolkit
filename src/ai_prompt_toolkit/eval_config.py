@@ -52,6 +52,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 
 @dataclass
 class EvalTarget:
@@ -239,7 +241,7 @@ def run_eval_config(config: EvalConfig, base_dir: str | Path | None = None) -> d
             results["summary"]["failed"] += 1
             continue
 
-        text = target_path.read_text(encoding="utf-8")
+        text = read_prompt_text(target_path)
         target_result: dict[str, Any] = {
             "path": target.path,
             "provider": target.provider,

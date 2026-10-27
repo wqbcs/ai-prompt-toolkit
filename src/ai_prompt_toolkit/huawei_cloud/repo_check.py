@@ -14,6 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 
 @dataclass
 class RepoCheckResult:
@@ -56,7 +58,7 @@ def _check_pipeline(root: Path) -> RepoCheckResult:
     try:
         import yaml
 
-        data = yaml.safe_load(pipeline_path.read_text(encoding="utf-8")) or {}
+        data = yaml.safe_load(read_prompt_text(pipeline_path)) or {}
         missing = _CODEARTS_PIPELINE_REQUIRED_KEYS - set(data.keys())
         if missing:
             return RepoCheckResult(

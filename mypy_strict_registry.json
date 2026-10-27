@@ -125,6 +125,7 @@
     "src/ai_prompt_toolkit/linter/harmonyos_templates.py": true,
     "src/ai_prompt_toolkit/linter/inline_prompt.py": true,
     "src/ai_prompt_toolkit/linter/lcov_export.py": true,
+    "src/ai_prompt_toolkit/linter/linear_scan.py": false,
     "src/ai_prompt_toolkit/linter/lint_config.py": true,
     "src/ai_prompt_toolkit/linter/linter.py": true,
     "src/ai_prompt_toolkit/linter/lsp_server.py": true,

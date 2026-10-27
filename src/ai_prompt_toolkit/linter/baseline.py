@@ -127,7 +127,14 @@ def load_baseline_text(text: str) -> BaselineSnapshot:
 
 
 def load_baseline(path: str | Path) -> BaselineSnapshot:
-    return load_baseline_text(Path(path).read_text(encoding="utf-8"))
+    from ai_prompt_toolkit.errors import ValidationError
+
+    try:
+        text = Path(path).read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        # R344-F-2X: 人话报错契约（与 read_prompt_text 同语义; 裁决层禁导入 cli_helpers → 本地等价实现）
+        raise ValidationError(f"文件非有效 UTF-8, 无法解码 — {path}", field="target") from e
+    return load_baseline_text(text)
 
 
 def verify_baseline(path: str | Path) -> dict[str, Any]:
@@ -149,7 +156,7 @@ def verify_baseline(path: str | Path) -> dict[str, Any]:
         return {"status": "missing", "path": str(p)}
     try:
         data = json.loads(p.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError):
         return {"status": "corrupt", "path": str(p)}
     stored = str(data.get("content_sha256", ""))
     findings = data.get("findings", [])

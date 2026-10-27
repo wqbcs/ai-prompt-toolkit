@@ -18,6 +18,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 # drift判定默认阈值: 维度分数(0-10)变化超过此值才报drift(降噪)
 DEFAULT_DRIFT_THRESHOLD = 1.5
 # 整体百分比变化阈值
@@ -129,7 +131,7 @@ def save_eval_baseline(
 
 
 def load_eval_baseline(path: str | Path) -> EvalBaselineSnapshot:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    data = json.loads(read_prompt_text(Path(path)))
     return EvalBaselineSnapshot.from_dict(data)
 
 

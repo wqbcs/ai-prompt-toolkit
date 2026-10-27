@@ -168,7 +168,10 @@ async def api_templates() -> list[dict[str, Any]]:
         return []
     templates = []
     for p in sorted(base.rglob("*.md")):
-        text = p.read_text(encoding="utf-8")
+        try:
+            text = p.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue  # R344-F-2X: 不可解码文件跳过（体验页不因单个坏文件整体挂掉）
         fm, _ = parse_front_matter(text)
         if fm:
             templates.append(

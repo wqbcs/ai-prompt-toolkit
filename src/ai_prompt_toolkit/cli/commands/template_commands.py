@@ -12,6 +12,7 @@ import click
 
 from ai_prompt_toolkit import __version__
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.command()
@@ -41,7 +42,7 @@ def i18n(
 
     translated = 0
     for tpl_file in sorted(templates_dir.glob("*.md")):
-        text = tpl_file.read_text(encoding="utf-8")
+        text = read_prompt_text(tpl_file)
         result = translate_template(text, source_locale, target_locale, use_llm=llm, provider=provider)
         out_file = output_dir / tpl_file.name
         out_file.write_text(result.translated_text, encoding="utf-8")
@@ -116,7 +117,7 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
 
     upgraded = 0
     for f in files:
-        text = f.read_text(encoding="utf-8")
+        text = read_prompt_text(f)
         result = upgrade_template(text, default_locale=locale)
         if result.was_upgraded:
             if not dry_run:
@@ -386,7 +387,7 @@ def rules_yaml_cmd(init_path: str | None, load_path: str | None, target: str | N
                 if not target_path.exists():
                     error(f"目标文件不存在: {target}")
                     return
-                text = target_path.read_text(encoding="utf-8")
+                text = read_prompt_text(target_path)
                 findings = check_custom_rules(text, rules)
                 if findings:
                     console.print(f"\n[bold yellow]发现 {len(findings)} 个问题:[/bold yellow]")

@@ -17,6 +17,13 @@ from __future__ import annotations
 
 import re
 
+from ai_prompt_toolkit.linter.linear_scan import (
+    LinearSearch,
+    line_a_before_b,
+    line_alt_cooccur,
+    line_cooccur,
+    linear_bool,
+)
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -226,10 +233,12 @@ def check_p101(text: str) -> Finding | None:
     )
 
 
-_CONTRADICTION_PATTERNS = [
-    (re.compile(r"必须.*?禁止|禁止.*?必须", re.IGNORECASE), "必须/禁止矛盾"),
+_CONTRADICTION_PATTERNS: list[tuple[re.Pattern[str] | LinearSearch, str]] = [
+    # R344-RE-1b: `必须.*?禁止|禁止.*?必须` 线性等价（行内共现双向）— 原模式对锚点重复长单行 O(n²) 回溯
+    (linear_bool(lambda t: line_cooccur(t, "必须", "禁止")), "必须/禁止矛盾"),
     # R180: 移除"请/不要矛盾" — "请做X, 不要Y"是正常指令形态, 此pattern大量误报
-    (re.compile(r"always.*?never|never.*?always", re.IGNORECASE), "always/never矛盾"),
+    # R344-RE-1b: `always.*?never|never.*?always` 线性等价（行内共现双向, ci）
+    (linear_bool(lambda t: line_cooccur(t, "always", "never", ci=True)), "always/never矛盾"),
     (re.compile(r"必须.{0,20}(?:不要|禁止|不能)|不要.{0,20}必须", re.IGNORECASE), "必须/不要矛盾"),
 ]
 
@@ -248,16 +257,14 @@ def check_p102(text: str) -> Finding | None:
     return None
 
 
-_CONFLICT_PATTERNS = [
-    (re.compile(r"简短.*?详细|详细.*?简短", re.IGNORECASE), "简短/详细冲突"),
-    (re.compile(r"简洁.*?全面|全面.*?简洁", re.IGNORECASE), "简洁/全面冲突"),
-    (re.compile(r"简短.*?完整|完整.*?简短", re.IGNORECASE), "简短/完整冲突"),
-    (re.compile(r"严格.*?灵活|灵活.*?严格", re.IGNORECASE), "严格/灵活冲突"),
+_CONFLICT_PATTERNS: list[tuple[re.Pattern[str] | LinearSearch, str]] = [
+    # R344-RE-1b: 各双向 `A.*?B|B.*?A` 统一线性等价（行内共现, 方向无关）
+    (linear_bool(lambda t: line_cooccur(t, "简短", "详细")), "简短/详细冲突"),
+    (linear_bool(lambda t: line_cooccur(t, "简洁", "全面")), "简洁/全面冲突"),
+    (linear_bool(lambda t: line_cooccur(t, "简短", "完整")), "简短/完整冲突"),
+    (linear_bool(lambda t: line_cooccur(t, "严格", "灵活")), "严格/灵活冲突"),
     (
-        re.compile(
-            r"(?:concise|brief).*?(?:detailed|comprehensive)|(?:detailed|comprehensive).*?(?:concise|brief)",
-            re.IGNORECASE,
-        ),
+        linear_bool(lambda t: line_alt_cooccur(t, ("concise", "brief"), ("detailed", "comprehensive"), ci=True)),
         "concise/detailed conflict",
     ),
 ]
@@ -470,8 +477,21 @@ def check_p109(text: str) -> Finding | None:
 # workflow)直指多步工具调用; 弱信号(步骤/流程/step)在数据分析/迁移/日志/
 # 写作类prompt中是通用流程词(6样本零工具词误报), 须与工具语境组合才构成
 # 工具链缺恢复的面。
-_TOOL_CHAIN_STRONG = re.compile(r"(?:首先.*然后|依次|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE)
-_TOOL_CHAIN_WEAK = re.compile(r"(?:步骤|流程|先.*后|step)", re.IGNORECASE)
+_TOOL_CHAIN_STRONG_ALT = re.compile(r"(?:依次|pipeline|chain|workflow|多步骤|multi.?step)", re.IGNORECASE)
+_TOOL_CHAIN_WEAK_ALT = re.compile(r"(?:步骤|流程|step)", re.IGNORECASE)
+# R344-RE-1b: `首先.*然后` / `先.*后` 线性等价（行内 A 在 B 前）+ 有界字面量支保留原正则
+_TOOL_CHAIN_STRONG = linear_bool(
+    lambda t: (
+        line_a_before_b(t, re.compile("首先", re.IGNORECASE), re.compile("然后", re.IGNORECASE))
+        or bool(_TOOL_CHAIN_STRONG_ALT.search(t))
+    )
+)
+_TOOL_CHAIN_WEAK = linear_bool(
+    lambda t: (
+        line_a_before_b(t, re.compile("先", re.IGNORECASE), re.compile("后", re.IGNORECASE))
+        or bool(_TOOL_CHAIN_WEAK_ALT.search(t))
+    )
+)
 # 工具语境: 显式工具/函数/API/MCP调用面(区别于通用流程词)
 _TOOL_CTX = re.compile(
     r"(?:工具|函数|API|接口|插件|tool|function|plugin|MCP|调用.{0,4}(?:工具|API|函数|接口))", re.IGNORECASE

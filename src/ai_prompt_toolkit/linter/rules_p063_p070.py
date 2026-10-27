@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import re
 
+from ai_prompt_toolkit.linter.linear_scan import line_a_before_b, linear_bool
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -114,18 +115,33 @@ _ANTI_LEAK_PATTERN = re.compile(r"(?:禁止重复|不得泄露|do not repeat|nev
 _LEGACY_FRONTMATTER = re.compile(r"^---\s*\n(?!.*version)", re.MULTILINE)
 
 _CHAIN_PATTERN = re.compile(r"(?:首先|第一步|step\s*1|然后|接着|第二步|step\s*2|最后|第三步|step\s*3)", re.IGNORECASE)
-_CHAIN_ERROR_ISOLATION = re.compile(r"(?:如果.*失败|失败则|出错则|if.*fail|fallback|降级|跳过|skip)", re.IGNORECASE)
+# R344-RE-1b: `如果.*失败|if.*fail` 线性等价（行内 A 在 B 前）+ 有界字面量支保留原正则
+_CHAIN_ERROR_ISOLATION = linear_bool(
+    lambda t: (
+        bool(re.search(r"失败则|出错则|fallback|降级|跳过|skip", t, re.IGNORECASE))
+        or line_a_before_b(t, re.compile("如果", re.IGNORECASE), re.compile("失败", re.IGNORECASE))
+        or line_a_before_b(t, re.compile("if", re.IGNORECASE), re.compile("fail", re.IGNORECASE))
+    )
+)
 
 _MULTI_TURN_PATTERN = re.compile(
     r"(?:多轮|对话历史|上下文|会话|conversation|multi.?turn|context|session)", re.IGNORECASE
 )
-_CONTEXT_LIMIT = re.compile(r"(?:最近.*轮|仅参考|截断|摘要|summar|truncat|last\s+\d+\s+turn)", re.IGNORECASE)
+# R344-RE-1b: `最近.*轮` 线性等价（行内 A 在 B 前）+ 有界支保留原正则
+_CONTEXT_LIMIT = linear_bool(
+    lambda t: (
+        bool(re.search(r"仅参考|截断|摘要|summar|truncat|last\s+\d+\s+turn", t, re.IGNORECASE))
+        or line_a_before_b(t, re.compile("最近", re.IGNORECASE), re.compile("轮", re.IGNORECASE))
+    )
+)
 
 # R208校准: 事实性判定收紧 — 原pattern含"数据"泛词, 任何数据处理prompt
 # 恒触发(8/32干净样本误报); "fact"子串误配"refactor"(无词边界)。
 _FACTUAL_PATTERN = re.compile(r"(?:事实|统计|年份|知识|\bfact\w*|\bstatistic\w*)", re.IGNORECASE)
+# R344-RE-1b: `截至.*月` 支被字面量 `截至` 吞并（匹配它的文本必含 截至 → 子集, A/B fuzz 实证）
+# → 删无界支后纯安全正则即可
 _CUTOFF_PATTERN = re.compile(
-    r"(?:截止|截至|cutoff|knowledge\s+cut|截至.*月|更新至|as\s+of|仅依据|仅基于|only\s+based\s+on)", re.IGNORECASE
+    r"(?:截止|截至|cutoff|knowledge\s+cut|更新至|as\s+of|仅依据|仅基于|only\s+based\s+on)", re.IGNORECASE
 )
 
 # R208校准: 防编造约束仅对真实幻觉风险面(引用/来源/事实性)有意义 —

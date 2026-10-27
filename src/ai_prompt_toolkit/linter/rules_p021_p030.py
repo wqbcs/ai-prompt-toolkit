@@ -5,6 +5,16 @@ from __future__ import annotations
 import re
 from collections.abc import Callable
 
+from ai_prompt_toolkit.linter.linear_scan import (
+    LinearSearch,
+    ab_a_wsnum,
+    line_a_before_b,
+    line_alt_a_before_b,
+    linear_bool,
+    linear_double_brace_var,
+    linear_span_between,
+    linear_span_triple,
+)
 from ai_prompt_toolkit.types import Finding, Severity, loc_from_match
 
 _P021_PATTERNS = [
@@ -16,11 +26,15 @@ _P021_PATTERNS = [
     re.compile(r"(?:atob|fromCharCode|unhex)|\bdecode\b", re.IGNORECASE),
 ]
 
-_P022_PATTERNS = [
-    re.compile(r"\{\{[^#/}].*?\}\}"),
-    re.compile(r"\$\{[^}]+\}"),
-    re.compile(r"<%.*?%>"),
-    re.compile(r"\{%.*?%\}"),
+_P022_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `\{\{[^#/}].*?\}\}` 线性等价（行内最左合法 {{X 右侧有 }}; finditer 兼容）
+    linear_double_brace_var(),
+    # R344-RE-1b: `\$\{[^}]+\}` 线性等价（[^}]+ 可跨行 — 不同于 `.`; 中间至少 1 字符; finditer 兼容）
+    linear_span_between("${", "}", gap=1, dotall=True),
+    # R344-RE-1b: `<%.*?%>` 线性等价（行内; finditer 兼容）
+    linear_span_between("<%", "%>"),
+    # R344-RE-1b: `\{%.*?%\}` 线性等价（行内; finditer 兼容）— 注意开锚是单 `{`+`%`（Jinja 形态）
+    linear_span_between("{%", "%}"),
     re.compile(r"(?:import|include|require)\s+\{", re.IGNORECASE),
 ]
 
@@ -40,14 +54,26 @@ _P025_LONGFORM_CTX = re.compile(
     re.IGNORECASE,
 )
 
-_P025_LENGTH_PATTERNS = [
-    re.compile(
-        r"(?:字数|字符|[Tt]oken|段落|篇幅|长度|words?|characters?|tokens?|paragraphs?|length).*?(?:\d+|限制|范围|以内|不超过|至少)",
-        re.IGNORECASE,
+_P025_B = re.compile(r"\d+|限制|范围|以内|不超过|至少", re.IGNORECASE)
+_P025_LENGTH_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `A.*?B` 线性等价（行内 A 组任一在 B 前; 子串语义: word⊆words 等）
+    linear_bool(
+        lambda t: line_alt_a_before_b(
+            t,
+            ("字数", "字符", "token", "段落", "篇幅", "长度", "word", "character", "paragraph", "length"),
+            _P025_B,
+            ci=True,
+        )
     ),
-    re.compile(
-        r"(?:不超过|最多|至少|最少|min\s+\d+|max\s+\d+|no\s+more\s+than\s+\d+|at\s+least\s+\d+).*(?:字|词|[Tt]oken|段落|word|token|paragraph|character)",
-        re.IGNORECASE,
+    # R344-RE-1b: `A.*B` 线性等价 — A = 纯字面量 ∪ (字面量 \s+ 间隔、末段 \d+ 链); \s+ 可跨行
+    linear_bool(
+        lambda t: ab_a_wsnum(
+            t,
+            ("不超过", "最多", "至少", "最少"),
+            (("min", "num"), ("max", "num"), ("no", "more", "than", "num"), ("at", "least", "num")),
+            ("字", "词", "token", "段落", "word", "paragraph", "character"),
+            ci=True,
+        )
     ),
     re.compile(
         r"(?:\d+)\s*(?:字|词|words?|characters?|tokens?|paragraphs?)",
@@ -55,9 +81,19 @@ _P025_LENGTH_PATTERNS = [
     ),
 ]
 
-_P026_FALLBACK_PATTERNS = [
-    re.compile(
-        r"如果.*(?:失败|出错|错误|异常|无法|不确定|不清楚)|if.*(?:fail|error|exception|unable|uncertain)", re.IGNORECASE
+_P026_FALLBACK_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `如果.*B_zh|if.*B_en` 线性等价（行内 A 在 B 前; 两支 B 集独立 — 禁交叉积）
+    linear_bool(
+        lambda t: (
+            line_a_before_b(
+                t,
+                re.compile("如果", re.IGNORECASE),
+                re.compile(r"失败|出错|错误|异常|无法|不确定|不清楚", re.IGNORECASE),
+            )
+            or line_a_before_b(
+                t, re.compile("if", re.IGNORECASE), re.compile(r"fail|error|exception|unable|uncertain", re.IGNORECASE)
+            )
+        )
     ),
     re.compile(r"(?:回退|fallback|否则|otherwise|备选|替代|降级)", re.IGNORECASE),
     # R207: RAG/检索类回退表达 — "上下文未覆盖时明确说资料中没有相关信息"
@@ -73,19 +109,25 @@ _P027_SENSITIVE_CULTURAL = [
     re.compile(r"(?:黑人|白人|黄种人|Negro|Oriental)", re.IGNORECASE),
 ]
 
-_P028_MULTI_STEP = re.compile(
-    r"(?:首先|然后|接着|最后|第一步|第二步|step\s+1|step\s+2|首先.*然后|first.*then)",
-    re.IGNORECASE,
+_P028_SAFE = re.compile(r"(?:首先|然后|接着|最后|第一步|第二步|step\s+1|step\s+2)", re.IGNORECASE)
+# R344-RE-1b: `first.*then` 线性等价（行内 A 在 B 前）; `首先.*然后` 支被 首先/然后 字面量吞并（子集）
+_P028_MULTI_STEP = linear_bool(
+    lambda t: (
+        bool(_P028_SAFE.search(t))
+        or line_a_before_b(t, re.compile("first", re.IGNORECASE), re.compile("then", re.IGNORECASE))
+    )
 )
 _P028_TASK_COMPLEXITY = re.compile(
     r"(?:分析|推理|比较|评估|判断|规划|设计|analyze|reason|compare|evaluate|judge|plan|design)",
     re.IGNORECASE,
 )
 
-_P029_USER_INPUT = [
-    re.compile(r"\{\{.*?user.*?\}\}", re.IGNORECASE),
+_P029_USER_INPUT: list[re.Pattern[str] | LinearSearch] = [
+    # R344-RE-1b: `\{\{.*?user.*?\}\}` 线性等价（行内三锚点; finditer 兼容）
+    linear_span_triple("{{", "user", "}}", ci=True),
     re.compile(r"\{user_input\}", re.IGNORECASE),
-    re.compile(r"\$\{.*?input.*?\}", re.IGNORECASE),
+    # R344-RE-1b: `\$\{.*?input.*?\}` 线性等价（行内三锚点; finditer 兼容）
+    linear_span_triple("${", "input", "}", ci=True),
 ]
 _P029_ESCAPE_PATTERNS = re.compile(
     r"(?:转义|escape|sanitize|校验|验证|validate|过滤|filter|清洗|clean)",

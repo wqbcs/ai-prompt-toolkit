@@ -703,15 +703,13 @@ def _fix_p102_contradiction(text: str) -> str:
 
 
 def _fix_p103_conflict(text: str) -> str:
-    import re
+    from ai_prompt_toolkit.linter.linear_scan import line_cooccur, linear_bool
 
+    # R344-RE-1b: 各双向 `A.*?B|B.*?A` 统一线性等价（行内共现）— 原模式锚点重复长单行 O(n²) 回溯
     conflicts = [
-        (re.compile(r"简短.*?详细", re.IGNORECASE), "详细"),
-        (re.compile(r"详细.*?简短", re.IGNORECASE), "详细"),
-        (re.compile(r"简洁.*?全面", re.IGNORECASE), "全面"),
-        (re.compile(r"全面.*?简洁", re.IGNORECASE), "全面"),
-        (re.compile(r"严格.*?灵活", re.IGNORECASE), "适度灵活但保持核心严格"),
-        (re.compile(r"灵活.*?严格", re.IGNORECASE), "适度灵活但保持核心严格"),
+        (linear_bool(lambda t: line_cooccur(t, "简短", "详细")), "详细"),
+        (linear_bool(lambda t: line_cooccur(t, "简洁", "全面")), "全面"),
+        (linear_bool(lambda t: line_cooccur(t, "严格", "灵活")), "适度灵活但保持核心严格"),
     ]
     for pattern, replacement in conflicts:
         if pattern.search(text):

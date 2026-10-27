@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 logger = logging.getLogger(__name__)
 
 
@@ -295,7 +297,7 @@ class FlowDAG:
 
         import yaml
 
-        content = Path(yaml_path).read_text(encoding="utf-8")
+        content = read_prompt_text(Path(yaml_path))
         data = yaml.safe_load(content)
         return cls.from_dict(data)
 

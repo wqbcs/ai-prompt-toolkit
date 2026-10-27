@@ -488,7 +488,7 @@ def _doctor_gate(as_json: bool) -> None:
 
     # 6. waiver 面
     try:
-        from ai_prompt_toolkit.cli_helpers import discover_templates
+        from ai_prompt_toolkit.cli_helpers import discover_templates, read_prompt_text
         from ai_prompt_toolkit.linter.waivers import parse_waivers
 
         tpl_dir = _repo("src/ai_prompt_toolkit/templates")
@@ -496,7 +496,7 @@ def _doctor_gate(as_json: bool) -> None:
             files = discover_templates(str(tpl_dir))
             waived_total = 0
             for f in files:
-                text = f.read_text(encoding="utf-8")
+                text = read_prompt_text(f)
                 waived_total += len(parse_waivers(text))
             add(
                 "waiver 面",

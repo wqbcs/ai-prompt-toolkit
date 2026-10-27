@@ -18,6 +18,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -102,9 +104,9 @@ class FileSystemReader(BaseReader):
                         json.dumps(data, ensure_ascii=False, indent=2) if isinstance(data, (dict, list)) else str(data)
                     )
             except ImportError:
-                text = path.read_text(encoding="utf-8")
+                text = read_prompt_text(path)
         else:
-            text = path.read_text(encoding="utf-8")
+            text = read_prompt_text(path)
 
         return Document(
             text=text,

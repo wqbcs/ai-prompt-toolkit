@@ -665,7 +665,8 @@ def extract_inline_prompts_from_file(path: str | Path) -> InlineExtraction:
     p = Path(path)
     try:
         text = p.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
+        # R344-F-2X: 非 UTF-8 → parse_error 报告（不再裸抛; 裁决层禁导入 cli_helpers）
         return InlineExtraction(source=str(p), parse_error=f"read error: {e}")
     return extract_inline_prompts(text, str(p))
 

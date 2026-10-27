@@ -53,15 +53,22 @@ class CustomRuleDef:
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
+    from ai_prompt_toolkit.errors import ValidationError
+
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        # R344-F-2X: 人话报错契约（裁决层禁导入 cli_helpers → 本地等价实现）
+        raise ValidationError(f"文件非有效 UTF-8, 无法解码 — {path}", field="target") from e
     try:
         import yaml
 
-        return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return yaml.safe_load(text) or {}
     except ImportError:
         import json
 
         if path.suffix == ".json":
-            rules: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+            rules: dict[str, Any] = json.loads(text)
             return rules
         raise ImportError("自定义规则需要PyYAML: pip install pyyaml") from None
 

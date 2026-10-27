@@ -23,6 +23,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 logger = logging.getLogger(__name__)
 
 _VAR_PATTERN = re.compile(r"\{\{\s*(\w+)(?:\s*\|\s*default\(['\"]([^'\"]*)['\"]\))?\s*\}\}")
@@ -286,7 +288,7 @@ class PromptTemplate:
     @classmethod
     def from_file(cls, path: str | Path, name: str = "", description: str = "") -> PromptTemplate:
         p = Path(path)
-        template_text = p.read_text(encoding="utf-8")
+        template_text = read_prompt_text(p)
         return cls(
             name=name or p.stem,
             template=template_text,

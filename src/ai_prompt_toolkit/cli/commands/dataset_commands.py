@@ -10,6 +10,7 @@ from pathlib import Path
 import click
 
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.group(name="dataset")
@@ -92,7 +93,7 @@ def dataset_import(dataset: str, file: str) -> None:
     if not p.exists():
         click.echo(f"文件不存在: {file}", err=True)
         sys.exit(2)
-    content = p.read_text(encoding="utf-8")
+    content = read_prompt_text(p)
     if p.suffix == ".json":
         import json
 

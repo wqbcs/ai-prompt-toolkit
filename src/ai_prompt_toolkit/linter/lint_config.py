@@ -54,7 +54,13 @@ def load_lint_config(path: str | Path) -> LintConfig:
     p = Path(path)
     if not p.exists():
         return LintConfig()
-    content = p.read_text(encoding="utf-8")
+    from ai_prompt_toolkit.errors import ValidationError
+
+    try:
+        content = p.read_text(encoding="utf-8")
+    except UnicodeDecodeError as e:
+        # R344-F-2X: 人话报错契约（裁决层禁导入 cli_helpers → 本地等价实现）
+        raise ValidationError(f"文件非有效 UTF-8, 无法解码 — {p}", field="target") from e
     if p.suffix in (".yaml", ".yml"):
         import yaml
 

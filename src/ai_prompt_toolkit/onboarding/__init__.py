@@ -21,6 +21,8 @@ from typing import Any
 
 import yaml
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 _PROJECT_FILES = {
     "README.md": """# AI提示词项目
 
@@ -187,7 +189,7 @@ def _compile_hello(base: Path) -> str:
     if not template_path.exists():
         return ""
 
-    text = template_path.read_text(encoding="utf-8")
+    text = read_prompt_text(template_path)
     ctx = CompileContext(model="gpt-4o", language="zh-CN")
     result = compile_template(text, ctx, use_cache=False)
     return result.compiled_text
@@ -201,7 +203,7 @@ def _run_checks(base: Path) -> tuple[int, int]:
     if not template_path.exists():
         return (0, 0)
 
-    text = template_path.read_text(encoding="utf-8")
+    text = read_prompt_text(template_path)
 
     linter = PromptLinter()
     lint_result = linter.lint("hello.md", text)

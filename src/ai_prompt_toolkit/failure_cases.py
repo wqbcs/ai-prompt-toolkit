@@ -14,6 +14,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 if TYPE_CHECKING:
     from ai_prompt_toolkit.evaluator import EvaluationReport
 
@@ -34,7 +36,7 @@ def capture_failure_case(
     """从评估失败生成yaml回归用例, 返回(路径, case字典)"""
     import yaml as _yaml
 
-    text = Path(source_path).read_text(encoding="utf-8")
+    text = read_prompt_text(Path(source_path))
     case_id = f"fail_{datetime.now():%Y%m%d_%H%M%S}_{Path(source_path).stem}"
     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
     baseline_scores = {s.dimension_id: round(s.score, 4) for s in report.scores}
@@ -61,7 +63,7 @@ def capture_failure_case(
 def load_failure_case(path: str | Path) -> dict[str, Any]:
     import yaml as _yaml
 
-    data = _yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    data = _yaml.safe_load(read_prompt_text(Path(path)))
     if not isinstance(data, dict) or "input" not in data:
         raise ValueError(f"非有效失败用例文件: {path}")
     return data

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import re
 
+from ai_prompt_toolkit.linter.linear_scan import LinearSearch, ab_b_ws, ab_ws_a, line_a_before_b, linear_bool
 from ai_prompt_toolkit.linter.rules import _RULE_MAP, LintRule
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -154,9 +155,17 @@ _AGENT_CONTEXT_PATTERNS = [
     ),
 ]
 
-_AGENT_APPROVAL_PATTERNS = [
+_AGENT_APPROVAL_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
     re.compile(r"(?:审批|确认|授权|approve|confirm|authorize|human\s+in\s+the\s+loop)", re.IGNORECASE),
-    re.compile(r"(?:删除|支付|发送|转账|delete|payment|send|transfer)\s*.*(?:需|必须|require|must)", re.IGNORECASE),
+    # R344-RE-1b: `A\s*.*B` 线性等价 — \s* 可跨行（空白段含 \n）, B 在空白段后同行
+    linear_bool(
+        lambda t: ab_ws_a(
+            t,
+            ("删除", "支付", "发送", "转账", "delete", "payment", "send", "transfer"),
+            ("需", "必须", "require", "must"),
+            ci=True,
+        )
+    ),
 ]
 
 _RAG_SOURCE_PATTERNS = [
@@ -164,12 +173,19 @@ _RAG_SOURCE_PATTERNS = [
     re.compile(r"(?:可信|验证|核实|trusted|verified|validate|authentic)", re.IGNORECASE),
 ]
 
-_RAG_HALLUCINATION_PATTERNS = [
+_RAG_HALLUCINATION_PATTERNS: list[re.Pattern[str] | LinearSearch] = [
     re.compile(
         r"(?:不知|不确定|无法确定|找不到|未包含|I don't know|not sure|cannot determine|not found|not contain)",
         re.IGNORECASE,
     ),
-    re.compile(r"(?:如果.*不包含|如果.*未找到|if.*not\s+(?:found|contain|include))", re.IGNORECASE),
+    # R344-RE-1b: `如果.*不包含|如果.*未找到|if.*not\s+X` 线性等价 —
+    # 前两支行内 A 在 B 前; `not\s+X` 支 \s+ 可跨行（空白段含 \n）, X 在空白段后同行
+    linear_bool(
+        lambda t: (
+            line_a_before_b(t, re.compile("如果", re.IGNORECASE), re.compile("不包含|未找到", re.IGNORECASE))
+            or ab_b_ws(t, ("if",), "not", ("found", "contain", "include"), ci=True)
+        )
+    ),
     # R212-6: 真RAG样本的"资料缺失声明"措辞(clean32「资料中没有相关信息」/
     # clean38「if the context does not cover」) — 未覆盖/没有相关信息即幻觉兜底
     re.compile(

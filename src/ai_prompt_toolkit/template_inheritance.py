@@ -18,6 +18,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
+
 
 @dataclass
 class TemplateBlock:
@@ -64,7 +66,7 @@ class TemplateInheritance:
         ]
         for path in candidates:
             if path.exists():
-                content = path.read_text(encoding="utf-8")
+                content = read_prompt_text(path)
                 self._cache[template_id] = content
                 return content
         raise FileNotFoundError(f"模板不存在: {template_id} (搜索目录: {self._template_dir})")

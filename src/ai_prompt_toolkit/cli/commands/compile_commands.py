@@ -11,6 +11,7 @@ from pathlib import Path
 import click
 
 from ai_prompt_toolkit.cli_core import main
+from ai_prompt_toolkit.cli_helpers import read_prompt_text
 
 
 @main.command()
@@ -25,7 +26,7 @@ def compile(source: str, context: str | None, config: str | None, output: str | 
     from ai_prompt_toolkit.compiler import CompileContext, compile_template
 
     src_path = resolve_path(source)
-    template_text = src_path.read_text(encoding="utf-8")
+    template_text = read_prompt_text(src_path)
     ctx_data = load_context(context) if context else {}
 
     try:
