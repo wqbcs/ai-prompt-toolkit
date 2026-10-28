@@ -119,6 +119,30 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
+  # R346: npm 渠道（P1-04 薄包装器, 06 §4 裁定「最小职责=参数/退出码透传」）—
+  # needs: pypi-publish lockstep（包装器 pin 同版本 Python 包, 必须先上 PyPI,
+  # 否则包装器首跑 404）。npm provenance（OIDC, 零长期凭据）: 用户侧需在 npm
+  # 账号为本仓库开启 Provenance（docs/pypi-trusted-publishing.md §H）, CI 无 token。
+  npm-publish:
+    runs-on: ubuntu-latest
+    needs: pypi-publish
+    permissions:
+      id-token: write  # npm provenance (OIDC)
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Publish to npm (provenance)
+        working-directory: npm
+        run: npm publish --access public --provenance
+
   # R289: Docker 双通道（06 §4 "一次发版=PyPI+镜像双通道"）— needs: pypi-publish
   # lockstep（PyPI 成功后才发镜像，避免通道间版本漂移）。ghcr 3 tag 策略=
   # latest+全版本+主版本（air-gap 用户按主版本锁，06 §4）。GITHUB_TOKEN 推

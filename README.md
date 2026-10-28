@@ -55,6 +55,8 @@ prompt-cli baseline
 ```
 
 > **Quick start (no install, post-release P0-04):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
+>
+> **其他渠道（R346）:** `uvx --from ai-prompt-toolkit prompt-cli lint <file>`（uv/uvx）· `pipx install ai-prompt-toolkit`（pipx）· `npx ai-prompt-toolkit lint <file>`（npm, 首跑自动装 Python 包）· `docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md`（容器）
 
 ## 实战示例（真实输出 · 可复现 · 非编造）
 

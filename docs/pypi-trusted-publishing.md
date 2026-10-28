@@ -109,7 +109,8 @@ P0-02 剩余项（API 403 需管理员侧）：仓库 **Settings → Rulesets �
 | Docker 镜像 | `ghcr.io/wqbcs/ai-prompt-toolkit`（3 tag：latest/全版本/主版本） | `release.yml` docker-publish 作业 |
 | MCP 入口 | `prompt-cli mcp`（73 工具） | console scripts（P1-18） |
 | LSP 入口 | `prompt-cli lsp`（`[lsp]` extra） | `lsp_server.py`（P5-16） |
-| npm 包装器 | 未发布（P1-04，依赖 P0-04） | — |
+| npm 包装器 | `ai-prompt-toolkit`（npm/package.json, 版本 1:1 镜像 PyPI, 首跑 pin 装同版本 Python 包） | `npm/`（薄包装, 零 npm 依赖, R346） |
+| Homebrew | `ai-prompt-toolkit`（tap formula, 版本锁步 bump） | `distribution/homebrew/ai-prompt-toolkit.rb`（R346；tap 仓库激活, 见 §H） |
 
 > 品牌/logo：`assets/logo.svg` + `assets/favicon.svg`（纯矢量单真源，P5-13 R326 落）；
 > 四处 logo diff=0 与 PyPI 页面截图存档 = 发布后动作（P5-13 剩余）。
@@ -173,10 +174,35 @@ release-test      全量 pytest（−slow 面，与 CI 3.12 lane 逐字同命令
 
 ---
 
-## G. 状态（R342 · 2026-10-26 修正）
+## G. 状态（R346 · 2026-10-28 更新）
 
-- 仓库侧：✅ 就位（release.yml 全链 + P5-13 发布元数据顶配 + 06 §4 双通道设计 + 命名映射表 §C）
-- 用户侧：⬜ A 节 1 步（pending publisher）+ B 节 3 项必填（步骤 5 可选）+ 步骤 6 社交预览图待执行——全部复制即用
-- R342 修正：旧 A 节「创建 PyPI 项目（占名）」步骤失效——官网实证个人账号无创建项目入口，
-  机制改 pending publisher（官方文档 + 2026-10-26 实查）
-- 完成后：agent 侧 §E 五步收口 P0-04 → S1 可信阶段成立
+- 仓库侧：✅ 就位（release.yml 全链 + P5-13 发布元数据顶配 + 06 §9 通道矩阵 + 命名映射表 §C + R346 npm/brew 渠道工件）
+- 用户侧 P0-04（A+B 节）：✅ 2026-10-28 完成（R345 发布轮：pending publisher 五元组 + pypi env + Description + 社交预览图机器复核通过；Topics 11 项实查 ✓；v67.34.128 已上线 PyPI+ghcr，四项验收全过）
+- 用户侧 R346 新增：⬜ §H（npm provenance + Homebrew tap）——完成后**下次发版** npm 通道自动上线
+- S1「可信」阶段：✅ 已于 R345 达成（P0-01~P0-06 全清）
+
+---
+
+## H. R346 新渠道用户侧动作（npm / Homebrew）
+
+> agent 侧工件已就位（`npm/` 包装器 + release.yml `npm-publish` 作业 + `distribution/homebrew/` formula）。
+> 下列用户侧动作完成后，**下次推 v* tag 即自动发 npm**（与 PyPI 锁步）；brew 为手工激活。
+> 上线序纪律：§H 完成前**不推新 tag**（否则 npm-publish 红 = PyPI 版本被消耗而 npm 404，通道漂移）。
+
+### H.1 npm provenance（OIDC, 零长期凭据）—— 约 5 分钟
+1. 有 npmjs.com 账号（无则注册 + 邮箱验证）
+2. 网页：npm 账号设置 → **Provenance** 页 → 连接 GitHub 账号
+3. 为仓库 `wqbcs/ai-prompt-toolkit` 开启 provenance（允许 `npm publish --provenance` 的 OIDC 流）
+4. 完成标志：回 agent「npm provenance 已开」→ 下次发版 CI `npm-publish` 作业全绿 + `npx ai-prompt-toolkit --version` 可跑
+   （机制同 PyPI pending publisher：CI 内无 token, OIDC 换临时凭据）
+
+### H.2 Homebrew tap（brew 机制要求独立仓库）—— 约 10 分钟
+1. GitHub 新建公开仓库 `homebrew-wqbcs`（或 `homebrew-tap`）
+2. 把本仓库 `distribution/homebrew/ai-prompt-toolkit.rb` 放入该仓库 `Formula/` 目录
+3. 验收：`brew tap wqbcs/tap https://github.com/wqbcs/homebrew-wqbcs.git && brew install ai-prompt-toolkit`
+4. 发版纪律：每次 PyPI 发版同步 bump formula 的 `version`（06 §9 通道矩阵；
+   npm 侧由 check_version_consistency #5 机器强制, brew 侧靠发版 SOP 第 2 步人工）
+
+### H.3 scoop / winget（登记, 暂不做）
+- Windows 面已被 pipx/npm/uvx 覆盖（R346 实测）；scoop 无 pip 原生安装路径（需捆绑 python embeddable, 维护成本 > 价值）
+- winget = 向 winget-pkgs 提 PR（用户侧, 待真实需求信号）

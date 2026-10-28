@@ -1,0 +1,40 @@
+{
+  "name": "ai-prompt-toolkit",
+  "version": "67.34.128",
+  "description": "AI prompt lint / security scan / quality gate — deterministic, zero-LLM. npm wrapper for the Python package (PyPI: ai-prompt-toolkit); all detection logic lives in the Python package (single source of truth), version 1:1 mirrored.",
+  "keywords": [
+    "prompt",
+    "prompt-linting",
+    "prompt-security",
+    "prompt-injection",
+    "prompt-injection-defense",
+    "llm",
+    "ai-safety",
+    "ci",
+    "ci-gate",
+    "static-analysis",
+    "linter",
+    "sarif",
+    "owasp-llm"
+  ],
+  "license": "MIT",
+  "author": "wqbcs",
+  "homepage": "https://github.com/wqbcs/ai-prompt-toolkit",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wqbcs/ai-prompt-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wqbcs/ai-prompt-toolkit/issues"
+  },
+  "bin": {
+    "ai-prompt-toolkit": "bin/ai-prompt-toolkit.js"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

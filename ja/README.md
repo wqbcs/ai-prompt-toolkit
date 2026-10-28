@@ -57,6 +57,8 @@ prompt-cli baseline
 ```
 
 > **クイックスタート（インストール不要・リリース後 P0-04）:** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — 数秒で最初の finding。
+>
+> **その他のチャネル（R346）:** `uvx --from ai-prompt-toolkit prompt-cli lint <file>`（uv/uvx）・`pipx install ai-prompt-toolkit`（pipx）・`npx ai-prompt-toolkit lint <file>`（npm、初回実行時に Python パッケージを自動インストール）・`docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md`（コンテナ）
 
 **なぜ静かに腐敗しないのか（anti-rot）。** 業界最大の失敗モードは「最初から壊れている」ではなく
 「静かに検出不能になる」ことです。2026-07、Protect AI が LLM Guard（月間約 10 万 DL の検出ライブラリ）

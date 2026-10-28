@@ -10,6 +10,7 @@
 - **S1「可信」阶段（P0-01~P0-06 全清, 验收全过后成立）** — P0-04 = 上线唯一真 blocker（R341c/R342/R343/R344 建议延续至此）；验收通过后解锁 P5-13 剩余（四处 logo diff=0 / PyPI 页面截图存档）+ P1-08 60 秒 Quickstart + P1-04 npm 包装器 + R242-X3 uvx 实测
 - **R345-G1 门禁楔子环境波动加固** — 发布轮首跑门禁链假红 1 项：凌晨 3x 整体降速机器窗口（全量 pytest 节奏 0.22s/条 vs 基线 0.07s）RE-1b 200k 复合最坏单行楔子（固定 60s 护栏）子进程超时——同代码直测 22s@快机坐实**有界非回归**（同代码 R344 <45s + CI 4/4）→ 楔子预算改机器速度缩放 `max(60s, 40×≈10k 参照 lint 耗时)`（快机=原 60s 语义, 慢机随机器速度缩放, 线性期望 ≈22×t_ref → 1.8x 余量, 灾难性回溯指数级远超任何线性缩放 → 检测力不变, 单测 19.6s 绿）；伴生 `scripts/check_layer_deps.py` ruff format 漂移修
 - 分发面收口：GitHub Topics 11 项已设置（R345 收口后用户侧完成, API 实查 ✓；`prompt-injection-defense` 替换规划的 `prompt-injection` = 自动补全所致 + 用户拍板保持；同步口径 = 后续随 pyproject keywords 变更同改）
+- **R346 多渠道分发（无 PyPI 包版本变更）** — 用户指令「像 PyPI 一样发布到各平台, 多渠道可用」：① 快赢实测 uvx（`uvx --from ai-prompt-toolkit prompt-cli` 绿, 零改动形态 `uvx prompt-cli` 红=注册表无 prompt-cli 包）+ pipx（安装绿, 双入口）+ Action `action/v1` tag 补推（映射表悬空 ref 修复, tag 触发面审计不误触发发布链）；② npm 渠道落地（P1-04）：名 `ai-prompt-toolkit` 占用检查空闲（`prompt-cli` 名已被占→npm 名必须同 PyPI 名）→ `npm/` 薄包装器（零 npm 依赖, 版本 1:1 镜像 + pin 同版本 Python 包 + ~/.cache 隔离安装 + 人话报错, 真测首跑/1s 缓存/rc 透传零 Traceback/npm pack 四绿）+ release.yml `npm-publish` 作业（provenance OIDC, needs pypi-publish 锁步）+ check_version_consistency #5 版本锁步入链（**升版本地 3 处→4 处: +npm/package.json**）；③ Homebrew formula（`distribution/homebrew/`, 用户侧 tap 仓库激活）；scoop/winget=登记（Windows 面已被 pipx/npm/uvx 覆盖, 不为全端而全端）；④ 06 §9 通道矩阵 10 通道实测定状态 + README 三语渠道行 + 发布文档 §H 用户侧动作（npm provenance 5 分钟 / brew tap 10 分钟）；**上线序纪律: 用户侧 §H 完成前不推新 tag**（防 PyPI 版本消耗而 npm 404 通道漂移）
 
 ### 验证
 

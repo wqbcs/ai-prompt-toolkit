@@ -7,6 +7,7 @@
 2. pyproject.toml [project].version == ai_prompt_toolkit.__version__
 3. CHANGELOG最新条目版本 == __version__ (允许条目号==发布号)
 4. README Tests徽章 <= 最近一次真实收集数+2% (仅当存在缓存的收集数时)
+5. npm/package.json version == __version__ (npm 镜像版本锁步, R346 P1-04)
 
 用法:
     python scripts/check_version_consistency.py        # 校验, 漂移则exit 1
@@ -22,6 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 PYPROJECT = ROOT / "pyproject.toml"
 CHANGELOG = ROOT / "CHANGELOG.md"
+NPM_PKG = ROOT / "npm" / "package.json"
 
 
 def get_pkg_version() -> str:
@@ -66,16 +68,36 @@ def check_changelog(pkg_version: str) -> list[str]:
     return errors
 
 
+def check_npm(pkg_version: str) -> list[str]:
+    """npm 包装器 package.json 版本 == __version__（P1-04 镜像版本锁步, R346）"""
+    errors = []
+    if not NPM_PKG.exists():
+        errors.append("npm/package.json 缺失（npm 渠道包装器）")
+        return errors
+    text = NPM_PKG.read_text(encoding="utf-8")
+    m = re.search(r'"version"\s*:\s*"([\w.]+)"', text)
+    if not m:
+        errors.append("npm/package.json 缺少 version 字段")
+    elif m.group(1) != pkg_version:
+        errors.append(f"npm version={m.group(1)} != __version__={pkg_version} (npm 镜像版本需锁步升版)")
+    return errors
+
+
 def main() -> int:
     pkg_version = get_pkg_version()
-    errors = check_readme_badge(pkg_version) + check_pyproject(pkg_version) + check_changelog(pkg_version)
+    errors = (
+        check_readme_badge(pkg_version)
+        + check_pyproject(pkg_version)
+        + check_changelog(pkg_version)
+        + check_npm(pkg_version)
+    )
     if errors:
         print(f"✗ 版本口径漂移 ({pkg_version}):")
         for e in errors:
             print(f"  - {e}")
         print("修复: 统一升版后跑 `python scripts/sync_badges.py` 刷新README徽章")
         return 1
-    print(f"✓ 版本口径一致 (v{pkg_version}: README徽章/pyproject/CHANGELOG)")
+    print(f"✓ 版本口径一致 (v{pkg_version}: README徽章/pyproject/CHANGELOG/npm)")
     return 0
 
 

@@ -57,6 +57,8 @@ prompt-cli baseline
 ```
 
 > **Quick start (no install, post-release P0-04):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
+>
+> **Other channels (R346):** `uvx --from ai-prompt-toolkit prompt-cli lint <file>` (uv/uvx) · `pipx install ai-prompt-toolkit` (pipx) · `npx ai-prompt-toolkit lint <file>` (npm, auto-installs the Python package on first run) · `docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md` (container)
 
 **Why it won't silently rot (anti-rot).** The industry's biggest failure mode isn't "broken from day
 one" — it's "quietly goes blind." In 2026-07 Protect AI archived LLM Guard (a detection library with
