@@ -74,11 +74,11 @@ Deterministic LLM prompt security & quality gate (prompt's ESLint): zero LLM cos
 仓库 **Settings → General → About** → Topics（空格分隔，11 个）：
 
 ```
-prompt-security llm prompt-engineering prompt-injection static-analysis linter ci-gate owasp-llm sarif mcp ai-safety
+prompt-security llm prompt-engineering prompt-injection-defense static-analysis linter ci-gate owasp-llm sarif mcp ai-safety
 ```
 
-> 与 `pyproject.toml` `[project] keywords` 同源（PyPI 搜索面/GitHub 搜索面一致）；
-> 增删 keyword 时两处同改。
+> 与 `pyproject.toml` `[project] keywords` 同源（10/11；`prompt-injection-defense` = GitHub 侧精准面补充，非 keyword——2026-10-28 自动补全替换了规划的 `prompt-injection`，用户拍板保持）；
+> 增删 keyword 时两处同改。✅ 2026-10-28 已设置（R345 收口后，API 实查 11/11）。
 
 ### 步骤 5（可选）：Branch Protection Ruleset
 
