@@ -126,7 +126,3 @@ runs:
           redteam-report.json
           token-report.json
           sarif-report.sarif
-
-branding:
-  icon: "shield"
-  color: "blue"
