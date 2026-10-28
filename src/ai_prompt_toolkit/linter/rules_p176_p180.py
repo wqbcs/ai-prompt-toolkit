@@ -184,7 +184,7 @@ def check_p178(text: str) -> list[Finding]:
                     Finding(
                         "P178",
                         Severity.MEDIUM,
-                        "检测到影子指令短语但缺少防护声明(卫生信号, R287b P2-30 由HIGH降级)",
+                        "检测到影子指令短语但缺少防护声明(卫生信号)",
                         location=loc_from_match(text, shadow),
                     )
                 )

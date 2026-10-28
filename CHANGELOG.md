@@ -12,6 +12,15 @@
 - 分发面收口：GitHub Topics 11 项已设置（R345 收口后用户侧完成, API 实查 ✓；`prompt-injection-defense` 替换规划的 `prompt-injection` = 自动补全所致 + 用户拍板保持；同步口径 = 后续随 pyproject keywords 变更同改）
 - **R346 多渠道分发（无 PyPI 包版本变更）** — 用户指令「像 PyPI 一样发布到各平台, 多渠道可用」：① 快赢实测 uvx（`uvx --from ai-prompt-toolkit prompt-cli` 绿, 零改动形态 `uvx prompt-cli` 红=注册表无 prompt-cli 包）+ pipx（安装绿, 双入口）+ Action `action/v1` tag 补推（映射表悬空 ref 修复, tag 触发面审计不误触发发布链）；② npm 渠道落地（P1-04）：名 `ai-prompt-toolkit` 占用检查空闲（`prompt-cli` 名已被占→npm 名必须同 PyPI 名）→ `npm/` 薄包装器（零 npm 依赖, 版本 1:1 镜像 + pin 同版本 Python 包 + ~/.cache 隔离安装 + 人话报错, 真测首跑/1s 缓存/rc 透传零 Traceback/npm pack 四绿）+ release.yml `npm-publish` 作业（provenance OIDC, needs pypi-publish 锁步）+ check_version_consistency #5 版本锁步入链（**升版本地 3 处→4 处: +npm/package.json**）；③ Homebrew formula（`distribution/homebrew/`, 用户侧 tap 仓库激活）；scoop/winget=登记（Windows 面已被 pipx/npm/uvx 覆盖, 不为全端而全端）；④ 06 §9 通道矩阵 10 通道实测定状态 + README 三语渠道行 + 发布文档 §H 用户侧动作（npm provenance 5 分钟 / brew tap 10 分钟）；**上线序纪律: 用户侧 §H 完成前不推新 tag**（防 PyPI 版本消耗而 npm 404 通道漂移）
 
+### 展示文档优化（R347: README 三语剪裁 + 用户可见文案卫生, 无 PyPI 包版本变更）
+
+- **R347-① 过时面 10 项** — Roadmap 状态列「仓库侧就绪/待账号动作/清单修复」→ 实测真态 ✅（P0-04 已发布 v67.34.128 / P1-01 已发布 @action/v1 + 真跑自验证哨兵 / P5-11 已发布 operating_curve.md / P1-02 可用指向 adoption.md）；三语「post-release P0-04」过时标记；workflow 清单 7→8（+action-selftest）+ release.yml 双通道→三通道口径；ci-green-streak「M1 验收口径」内部措辞
+- **R347-② 废话/内部黑话面 11 项** — 探针增长史 R288→R334 九轮流水账、过防御 R250→R317 轮次链 + R318 裁定术语、缺口自检 R284/R235、指令文件 IPI 段 R321/R322/R323、R242-P2-12、R218 + 0.5.0 版本史、R228 + 2025→2026 重键映射表、R346 渠道行、「本表是唯一真源」内部同步口径注、门禁链 R223/R224 事故叙述段——对外文档只留事实与数字, 内部轮次/事故史归 planning 文档
+- **R347-③ 不利面 2 项（对用户不利=不专业/承诺断裂）** — ① P178 用户可见规则消息含内部编号「R287b P2-30 由HIGH降级」→ 改「(卫生信号)」（零测试引用面, P178 相关 9 测试绿, 三语输出块按真实输出逐字节重同步）；② 实战示例「真实输出·可复现」承诺的 `agent_prompt.md` 不在仓库（复现命令断裂=可信品牌自伤）→ 补 `examples/agent_prompt.md` + 三语复现行改 `examples/agent_prompt.md`
+- **保留决策（诚实数字是可信品牌组成, 不剪）** — 过防御外部锚点 6.78%@339 + 33.92%→6.78% 收紧史 / garak 54% 误红对比 / known_misses 台账 / 缺口 24.6%·33% / LLM Guard 归档案例——只改叙述, 不动数字
+- **附带发现（未动, 登记）** — CLI `lint --help` 文案含内部编号（R224/P2-17/P3-20）, 属代码面非展示文档面, 留后续轮
+- **验证** — 全量 pytest **7120 passed**（288s, exit 0, 与 R346 终态持平=纯文档+消息面变更零测试增减）/ 门禁链 **28/28 GATE PASS**（`release_gate.py --skip 1,2`, 其中 step 10/11/12 = gen_rules_doc/sync_badges/sync_readme_metrics 门禁内复绿）/ 护栏四脚本绿（sync_badges 零徽章漂移 / sync_readme_metrics 三语一致 / 分语言基线 / 指标漂移）/ 板状态 0 红 / 版本一致性 0 漂移（v67.34.128 四处）/ 三语 R 编号终扫清零（仅取证文件名 1 处残留）/ P178 相关测试 9 绿 / CI 待观测（push 后 GitHub 侧实查）
+
 ### 验证
 
 - 升版门禁序 5 脚本全绿（gen_rules_doc / sync_readme_metrics / gen_operating_curve / sync_badges / check_version_consistency；en/ja 徽章漂移被 sync_readme_metrics 先期抓住 = 「版本 3 处」实为 N 处, 三语徽章由 sync_badges 单源同步）
