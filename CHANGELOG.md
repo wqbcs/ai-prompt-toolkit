@@ -2,6 +2,21 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.128] - 2026-10-28
+
+### Release（R345 发布轮：首次 PyPI + ghcr 双通道发布, P0-04 收口轮）
+
+- **P0-04 PyPI 发布（trusted publishing, 零长期凭据）** — 用户侧一次性配置完成（PyPI 账号级 pending trusted publisher 五元组 `ai-prompt-toolkit`/`wqbcs`/`ai-prompt-toolkit`/`release.yml`/`pypi` + GH `pypi` 环境 + 仓库 Description + 社交预览图 `assets/social_preview.png`），机器复核通过（pypi env 200 / Description 在线 / PyPI 名称发布前 404）；agent 侧 = 升版门禁序（版本 3 处 + 5 脚本）→ commit/push → 推 tag `v67.34.128` 触发 release.yml 全链（release-test 全量 pytest + linter 覆盖率棘轮 → release-gate tag↔pyproject 硬断言 + docs drift + 30 步门禁链 → release-build sdist/wheel + twine check → pypi-publish OIDC（首发布自动建项目）→ docker-publish ghcr 3 tag 锁步 + 双 smoke）
+- **S1「可信」阶段（P0-01~P0-06 全清, 验收全过后成立）** — P0-04 = 上线唯一真 blocker（R341c/R342/R343/R344 建议延续至此）；验收通过后解锁 P5-13 剩余（四处 logo diff=0 / PyPI 页面截图存档）+ P1-08 60 秒 Quickstart + P1-04 npm 包装器 + R242-X3 uvx 实测
+- **R345-G1 门禁楔子环境波动加固** — 发布轮首跑门禁链假红 1 项：凌晨 3x 整体降速机器窗口（全量 pytest 节奏 0.22s/条 vs 基线 0.07s）RE-1b 200k 复合最坏单行楔子（固定 60s 护栏）子进程超时——同代码直测 22s@快机坐实**有界非回归**（同代码 R344 <45s + CI 4/4）→ 楔子预算改机器速度缩放 `max(60s, 40×≈10k 参照 lint 耗时)`（快机=原 60s 语义, 慢机随机器速度缩放, 线性期望 ≈22×t_ref → 1.8x 余量, 灾难性回溯指数级远超任何线性缩放 → 检测力不变, 单测 19.6s 绿）；伴生 `scripts/check_layer_deps.py` ruff format 漂移修
+- 剩余分发面项：GitHub Topics 未设置（非阻塞 1 分钟项, 00 交接登记）
+
+### 验证
+
+- 升版门禁序 5 脚本全绿（gen_rules_doc / sync_readme_metrics / gen_operating_curve / sync_badges / check_version_consistency；en/ja 徽章漂移被 sync_readme_metrics 先期抓住 = 「版本 3 处」实为 N 处, 三语徽章由 sync_badges 单源同步）
+- 门禁链 30/30 GATE PASS（含全量 pytest 7115 passed + 5 slow deselected）/ 板状态 0 红 / 版本一致性 0 漂移（v67.34.128）
+- 发布链 5 作业 + P0-04 四项验收（`pip download` / PyPI 页面 / 干净 venv 冒烟(PyPI 真源) / ghcr 3 tag）：实查结果见验收后收口报告（00 交接 R345 段）
+
 ## [v67.34.127] - 2026-10-27
 
 ### Fixed（R344 上线前全面自检：规则层 ReDoS 全面根治 + 读面全仓扩面 + redteam 护栏）

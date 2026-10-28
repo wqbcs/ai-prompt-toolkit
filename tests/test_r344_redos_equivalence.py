@@ -470,9 +470,34 @@ def test_re1b_rules_user_input_fallback_bounded() -> None:
 
 
 def test_re1b_full_lint_200k_single_line_bounded(tmp_path: Path) -> None:
-    """门禁面 DoS 楔子: 全量 271 规则 × 200k 复合最坏单行, 子进程 60s 护栏内完成
-    （修复前 P102/P103/… 灾难性回溯 → 子进程超时 = 红; 非 slow → 门禁实跑）"""
-    worst = "必须 简短 严格 首先 先 字数 如果 当 既是 最近 截至 delete if both only first concise always {{x ${ " * 4000
+    """门禁面 DoS 楔子: 全量 271 规则 × 复合最坏单行, 机器速度缩放预算内完成
+    （修复前 P102/P103/… 灾难性回溯 → 子进程超时 = 红; 非 slow → 门禁实跑）。
+    R345 环境波动加固（实证事故: 凌晨 3x 整体降速机器上原 60s 固定护栏假红,
+    同代码直测 22s@快机, 全量 pytest 节奏 0.22s/条 vs 基线 0.07s/条）:
+    先测 ≈10k 参照 lint 耗时 t_ref, 预算 = max(60s, 40×t_ref)——快机 = 原语义
+    (60s), 慢机随机器速度缩放; 线性期望 ≈22×t_ref → 预算 ≈1.8x 线性余量;
+    灾难性回溯面（指数级, 千倍以上）远超任何线性缩放 → 检测力不变。"""
+    base = "必须 简短 严格 首先 先 字数 如果 当 既是 最近 截至 delete if both only first concise always {{x ${ "
+    env = {**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")}
+
+    # ≈10k 参照: 测量机器实际速度（吸收环境波动: 冷启动/后台负载/杀软扫描）
+    ref_f = tmp_path / "ref10k.prompt.md"
+    ref_f.write_text(base * 125, encoding="utf-8")
+    t0 = time.perf_counter()
+    p_ref = subprocess.run(
+        [sys.executable, "-m", "ai_prompt_toolkit", "lint", "-t", str(ref_f)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=REPO_ROOT,
+        env=env,
+    )
+    t_ref = time.perf_counter() - t0
+    ref_out = p_ref.stdout + p_ref.stderr
+    assert "Traceback" not in ref_out, ref_out[-500:]
+
+    budget = max(60.0, 40.0 * t_ref)
+    worst = base * 4000
     assert len(worst) > 150_000
     f = tmp_path / "worst.prompt.md"
     f.write_text(worst, encoding="utf-8")
@@ -481,14 +506,14 @@ def test_re1b_full_lint_200k_single_line_bounded(tmp_path: Path) -> None:
         [sys.executable, "-m", "ai_prompt_toolkit", "lint", "-t", str(f)],
         capture_output=True,
         text=True,
-        timeout=60,
+        timeout=budget,
         cwd=REPO_ROOT,
-        env={**os.environ, "PYTHONPATH": str(REPO_ROOT / "src")},
+        env=env,
     )
     dt = time.perf_counter() - t0
     out = p.stdout + p.stderr
     assert "Traceback" not in out, out[-500:]
-    assert dt < 45, f"lint 200k 复合最坏耗时 {dt:.1f}s（修复前挂死）"
+    assert dt < budget, f"lint 复合最坏单行耗时 {dt:.1f}s（预算 {budget:.0f}s, 修复前挂死）"
 
 
 def test_re1b_rule_entries_linear_wrapped() -> None:

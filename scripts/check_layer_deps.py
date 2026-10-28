@@ -44,7 +44,8 @@ def kernel_files() -> list[Path]:
     """
     files: list[Path] = [
         SRC / "types.py",
-        SRC / "errors.py",  # R344-RE-1b: 异常层次(纯 stdlib, 与 types 同叶模块性质; baseline 解码护栏需 ValidationError)
+        SRC
+        / "errors.py",  # R344-RE-1b: 异常层次(纯 stdlib, 与 types 同叶模块性质; baseline 解码护栏需 ValidationError)
         SRC / "linter" / "linter.py",
         SRC / "linter" / "rules.py",
         SRC / "linter" / "linear_scan.py",  # R344-RE-1b: 线性扫描原语(纯 stdlib, 无界 .* 模式的线性等价重写)
