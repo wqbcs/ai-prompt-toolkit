@@ -15,7 +15,8 @@
 
 - 升版门禁序 5 脚本全绿（gen_rules_doc / sync_readme_metrics / gen_operating_curve / sync_badges / check_version_consistency；en/ja 徽章漂移被 sync_readme_metrics 先期抓住 = 「版本 3 处」实为 N 处, 三语徽章由 sync_badges 单源同步）
 - 门禁链 30/30 GATE PASS（含全量 pytest 7115 passed + 5 slow deselected）/ 板状态 0 红 / 版本一致性 0 漂移（v67.34.128）
-- 发布链 5 作业 + P0-04 四项验收（`pip download` / PyPI 页面 / 干净 venv 冒烟(PyPI 真源) / ghcr 3 tag）：实查结果见验收后收口报告（00 交接 R345 段）
+- 发布链 **5/5 作业全绿**（run 40680012719：release-test / release-gate / release-build / pypi-publish / docker-publish 全 success；pending publisher 首发布自动建项目成功）
+- P0-04 四项验收全过（全真源实测）：官方 PyPI `pip download` → `ai_prompt_toolkit-67.34.128-py3-none-any.whl` ✓ / PyPI 页 HTTP 200 + JSON（version 67.34.128, requires_python >=3.10）✓ / 干净 venv 三命令冒烟（PyPI 真源安装：`--version`=67.34.128, baseline 包内数据自证, lint 99.3/100 零 Traceback）✓ / ghcr 3 tag = `["latest","67.34.128","67"]`（匿名 pull 可用 = 镜像公开）✓ → **S1「可信」阶段成立**（P0-01~P0-06 全清）
 
 ## [v67.34.127] - 2026-10-27
 
