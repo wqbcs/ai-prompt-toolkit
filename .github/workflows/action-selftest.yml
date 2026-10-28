@@ -1,0 +1,30 @@
+# R346b: GitHub Action 渠道真跑自验证（用户问"前六个真的能用吗"的 Action 面收口）。
+#
+# 语义：每次 push main 用**已发布 ref**（@action/v1, 非 main 进行中状态）真跑一次
+# composite action —— 验证 ① action/v1 的 YAML 步骤可执行 ② action 步骤用法与
+# PyPI 最新包 CLI 兼容（action 内 `pip install ai-prompt-toolkit` 装的是 PyPI 最新,
+# 本 workflow 因此是 action×package 集成漂移的持续哨兵）。
+#
+# 已知干净 fixture（tests/fixtures/selftest_clean.prompt.md, 本地 lint fail-on
+# critical exit 0 验证过）→ 期望恒绿；变红 = action 面或 PyPI 包回归, 立即定位。
+# SARIF 上传步无 security-events: write 权限时 continue-on-error 优雅降级
+# （action.yml 设计, 消费方仓库加权限即生效）。
+name: action-selftest
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Run published action (self-test, clean fixture)
+        uses: wqbcs/ai-prompt-toolkit@action/v1
+        with:
+          target: tests/fixtures/selftest_clean.prompt.md
+          fail-on: critical

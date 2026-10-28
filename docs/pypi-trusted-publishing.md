@@ -178,7 +178,7 @@ release-test      全量 pytest（−slow 面，与 CI 3.12 lane 逐字同命令
 
 - 仓库侧：✅ 就位（release.yml 全链 + P5-13 发布元数据顶配 + 06 §9 通道矩阵 + 命名映射表 §C + R346 npm/brew 渠道工件）
 - 用户侧 P0-04（A+B 节）：✅ 2026-10-28 完成（R345 发布轮：pending publisher 五元组 + pypi env + Description + 社交预览图机器复核通过；Topics 11 项实查 ✓；v67.34.128 已上线 PyPI+ghcr，四项验收全过）
-- 用户侧 R346 新增：⬜ §H（npm provenance + Homebrew tap）——完成后**下次发版** npm 通道自动上线
+- 用户侧 R346 新增：⬜ §H.1（npm provenance, **仅 1 步**；Homebrew 已降级登记 §H.2）——完成后**下次发版** npm 通道自动上线
 - S1「可信」阶段：✅ 已于 R345 达成（P0-01~P0-06 全清）
 
 ---
@@ -186,7 +186,7 @@ release-test      全量 pytest（−slow 面，与 CI 3.12 lane 逐字同命令
 ## H. R346 新渠道用户侧动作（npm / Homebrew）
 
 > agent 侧工件已就位（`npm/` 包装器 + release.yml `npm-publish` 作业 + `distribution/homebrew/` formula）。
-> 下列用户侧动作完成后，**下次推 v* tag 即自动发 npm**（与 PyPI 锁步）；brew 为手工激活。
+> 下列用户侧动作完成后，**下次推 v* tag 即自动发 npm**（与 PyPI 锁步）。Homebrew 已降级登记（§H.2, 默认不做）。
 > 上线序纪律：§H 完成前**不推新 tag**（否则 npm-publish 红 = PyPI 版本被消耗而 npm 404，通道漂移）。
 
 ### H.1 npm provenance（OIDC, 零长期凭据）—— 约 5 分钟
@@ -196,12 +196,11 @@ release-test      全量 pytest（−slow 面，与 CI 3.12 lane 逐字同命令
 4. 完成标志：回 agent「npm provenance 已开」→ 下次发版 CI `npm-publish` 作业全绿 + `npx ai-prompt-toolkit --version` 可跑
    （机制同 PyPI pending publisher：CI 内无 token, OIDC 换临时凭据）
 
-### H.2 Homebrew tap（brew 机制要求独立仓库）—— 约 10 分钟
-1. GitHub 新建公开仓库 `homebrew-wqbcs`（或 `homebrew-tap`）
-2. 把本仓库 `distribution/homebrew/ai-prompt-toolkit.rb` 放入该仓库 `Formula/` 目录
-3. 验收：`brew tap wqbcs/tap https://github.com/wqbcs/homebrew-wqbcs.git && brew install ai-prompt-toolkit`
-4. 发版纪律：每次 PyPI 发版同步 bump formula 的 `version`（06 §9 通道矩阵；
-   npm 侧由 check_version_consistency #5 机器强制, brew 侧靠发版 SOP 第 2 步人工）
+### H.2 Homebrew tap（R346b 降级=登记, 默认不做）
+- 降级理由（2026-10-28 用户问「有必要做吗」）：macOS/Linux 一键安装面已被 uvx/pipx/pip 覆盖,
+  brew 额外成本=每轮版本 bump 人工步 + tap 仓库维护, 收益=brew 搜索发现率（低, 该 lane 非 brew 生态主渠道）
+- formula 留 `distribution/homebrew/ai-prompt-toolkit.rb`（零成本）；复活条件=真实 brew 用户信号（"how do I install with brew" 类提问）
+- 复活步骤：建 `homebrew-wqbcs` 公开仓库 → formula 入 `Formula/` → `brew tap wqbcs/tap <url> && brew install ai-prompt-toolkit` → 发版 SOP 加 brew bump 步
 
 ### H.3 scoop / winget（登记, 暂不做）
 - Windows 面已被 pipx/npm/uvx 覆盖（R346 实测）；scoop 无 pip 原生安装路径（需捆绑 python embeddable, 维护成本 > 价值）
