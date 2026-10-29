@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Any
 import click
 
 from ai_prompt_toolkit.cli_core import _detect_template_type, _generate_sarif, main
-from ai_prompt_toolkit.cli_helpers import read_prompt_text
+from ai_prompt_toolkit.cli_helpers import read_prompt_text, report_result_dicts
 
 if TYPE_CHECKING:
     from ai_prompt_toolkit.linter.baseline import BaselineSnapshot
@@ -740,7 +740,8 @@ def lint(
             if result.findings:
                 for f in result.findings:
                     sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
-                    marker = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
+                    # R348: critical 不得落回 '•'(最不起眼) — 与 summary/scan 面一致(🔴)
+                    marker = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(sev, "•")
                     prefix = "[MM] " if f.rule_id.startswith("MM-") else ""
                     # R218: 统一走 location 契约（"" = 文件级 → 不显示行号）
                     line1, col1 = parse_location(str(f.location or ""))
@@ -1069,7 +1070,7 @@ def lint(
             "total_files": len(templates),
             "average_score": round(avg_score, 1),
             "total_findings": total_findings,
-            "results": [r.to_dict() for r in all_results],
+            "results": report_result_dicts(all_results),
         }
         write_report(report_data, output, fmt=fmt)
         click.echo(f"报告: {output}")
@@ -1210,7 +1211,21 @@ def lint(
         sys.exit(verdict_to_exit_code(gate_result.verdict))
 
     if fmt == "sarif" and output:
-        sarif_data = _generate_sarif(all_results, target)
+        # R348: SARIF uri 需目录前缀(PR 标注映射到文件) — template_id 是 basename,
+        # 建 basename→CWD 相对路径映射(posix 形态); 目标在 CWD 外时回落原路径
+        _sarif_path_map: dict[str, str] = {}
+        for _tp in templates:
+            _tp_path = _tp if isinstance(_tp, Path) else getattr(_tp, "source", None)
+            if not _tp_path:
+                continue
+            try:
+                _rel = Path(_tp_path).resolve().relative_to(Path.cwd().resolve())
+            except ValueError:
+                _rel = Path(_tp_path)
+            _key = getattr(_tp, "name", None)
+            if _key:
+                _sarif_path_map.setdefault(_key, _rel.as_posix())
+        sarif_data = _generate_sarif(all_results, target, _sarif_path_map)
         import json as _json
 
         Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -1242,7 +1257,7 @@ def lint(
                 "total_files": len(templates),
                 "average_score": round(avg_score, 1),
                 "total_findings": total_findings,
-                "results": [r.to_dict() for r in all_results],
+                "results": report_result_dicts(all_results),
             }
             write_report(report_data, output, fmt=fmt)
             click.echo(f"报告: {output}")
@@ -1278,7 +1293,7 @@ def lint(
                         if _res.findings:
                             for _f in _res.findings:
                                 _sv = _f.severity.value if hasattr(_f.severity, "value") else str(_f.severity)
-                                _mk = {"high": "✗", "medium": "⚠", "low": "ℹ"}.get(_sv, "•")
+                                _mk = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"}.get(_sv, "•")
                                 click.echo(f"  {_mk} [{_tp.name}] {_f.rule_id}: {_f.description}")
                         else:
                             click.echo(f"  ✓ [{_tp.name}] 通过")
@@ -1437,7 +1452,7 @@ def scan(
             "scan_target": target,
             "total_files": len(templates),
             "total_findings": total_findings,
-            "results": [r.to_dict() for r in all_results],
+            "results": report_result_dicts(all_results),
         }
         write_report(report_data, output, fmt=fmt)
         click.echo(f"报告: {output}")

@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.129] - 2026-10-28
+
+### Fixed（R348 用户报告缺陷轮：4 项用户报告缺陷——JSON 报告确定性 / P213 误报 / CLI critical 符号 / SARIF 标注面）
+
+- **R348-① JSON 报告重跑逐字节一致**（用户报告：两次运行仅 `lint_time_ms` 不同，但 README 声明「SARIF/JSON 确定性序列化」）— 根因 = `LintResult.to_dict()` 含墙钟字段，3 处落盘报告写入点（lint×2 + scan）直接序列化进工件（SARIF 无时间戳字段天然一致 = 视频只能哈希 SARIF 的原因）；修复 = 新增 `cli_helpers.report_result_dicts()`（剥离墙钟字段 lint_time_ms/scan_time_ms，与 test_stdio_protocol 既有「裁决面剥墙钟」同口径），3 处落盘报告点全改走；内存 to_dict/stdio/LSP 面不变（协议契约不变）
+- **R348-② P213 'ffi' ASCII 词边界修复**（用户报告误报：无害句 `Share official opening hours and traffic tips.` 让 `--gate` 误红）— 根因 = `_NAPI_PATTERN` 交替项 `ffi` 无词边界（official/traffic 均含 ffi 子串）；修复 = `(?<![A-Za-z])ffi(?![A-Za-z])`（断言排除 ASCII 字母；CJK 不入断言，「调用ffi」中文紧邻场景仍命中）；+1 golden TN 探针 r348_p213_tn_ffi_substring_en（706→707, en 132→133, test_r214 语言分布钉死值同步）；TP（原生 ffi 调用）仍实火，双基线不回归（FP 0.81%@60 / 漏检 0.00%@707）
+- **R348-③ CLI critical 符号修复**（用户报告：Critical 在 CLI 显示成最不起眼的 `•`）— 根因 = 2 处 CLI 显示路径（lint 主显示 + watch）marker 映射表缺 critical 键落回 '•'（summary/scan 面已有 🔴，仅此两处漏）；修复 = 两处补 "critical": "🔴"
+- **R348-④ SARIF 标注面补全**（用户报告：SARIF 无行号区域、路径缺目录前缀，PR「标注到具体行」出不来）— 根因 = `cli_core._generate_sarif` 完全不消费 `Finding.location`（R218 契约已定义但 SARIF 侧无消费端）+ uri 为裸 template_id（basename）；修复 = ① location 统一走 `parse_location` → 非空写 region{startLine,startColumn}（文件级不写 region，与 CLI 不猜行号同契约）② 新增 `path_map` 参数：lint 命令建 basename→CWD 相对路径（posix）映射，uri 解析链 = path_map → 单文件 target → basename（向后兼容既有调用方/测试）；SARIF 离线结构校验 504 results OK + e2e 子目录文件 uri=`sub/a.md`
+- 诚实标注：用户示例句为 47 字符片段，修复后仍有合法 P001（角色未定义, high）finding——该句 `--gate` 仍红，但裁决已为合法 finding 而非 P213 误报
+
+### 验证
+
+- R348 探针测试先红后绿：tests/test_r348_user_reported_fixes.py 10 项（JSON 逐字节×2 真子进程 e2e / P213 TN+TP / critical 符号 e2e / SARIF region 3 形态 + uri 2 回落形态 + 子目录 e2e）
+- 全量 pytest **7130 passed**（287s, exit 0, 7120→7130 +10 新增）/ 双基线不回归（FP 0.81%@60 / 漏检 0.00%@707 期望命中单元 393）/ 过防御棘轮单调
+- ruff check+format 变更面绿 / mypy 0 错（棘轮）/ SARIF 结构校验 504 results OK / README 三语数字核验 3 脚本绿（探针数 706→707 三语面同步, 含守卫外 bullet/分布注记）
+- 门禁链 **28/28 GATE PASS**（`release_gate.py --skip 1,2`, 71s）/ 板状态 141 行 0 红 0 警告（P3-34 新行）/ 版本一致性 0 漂移（v67.34.129, 4 处含 npm 锁步）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.128] - 2026-10-28
 
 ### Release（R345 发布轮：首次 PyPI + ghcr 双通道发布, P0-04 收口轮）

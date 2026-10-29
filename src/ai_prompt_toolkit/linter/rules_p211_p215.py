@@ -87,7 +87,11 @@ _FOREACH_PATTERN = re.compile(r"(?:ForEach|foreach|列表渲染|list.render)", r
 _LAZY_PATTERN = re.compile(r"(?:LazyForEach|lazy.foreach|懒加载|lazy.load)", re.IGNORECASE)
 _OBSERVED_V2_PATTERN = re.compile(r"(?:@ObservedV2|ObservedV2|observed.v2)", re.IGNORECASE)
 _TRACE_PATTERN = re.compile(r"(?:@Trace|Trace装饰|trace.decorator)", re.IGNORECASE)
-_NAPI_PATTERN = re.compile(r"(?:napi_|NAPI|node_api|ffi|dlopen|原生调用|native.call)", re.IGNORECASE)
+# R348: ffi 需 ASCII 词边界 — 裸 'ffi' 误杀 official/traffic 子串(用户报告误报, --gate 误红);
+# 边界断言不含 CJK, 故 "调用ffi" 等中文紧邻场景仍命中
+_NAPI_PATTERN = re.compile(
+    r"(?:napi_|NAPI|node_api|(?<![A-Za-z])ffi(?![A-Za-z])|dlopen|原生调用|native.call)", re.IGNORECASE
+)
 _NAPI_CHECK_PATTERN = re.compile(r"(?:napi_typeof|napi_is_|typeof|类型检查|type.check|null.check)", re.IGNORECASE)
 _PERMISSION_PATTERN = re.compile(r"(?:ohos\.permission|requestPermission|权限声明)", re.IGNORECASE)
 _PERMISSION_ALL_PATTERN = re.compile(r"(?:ohos\.permission\.ALL|permission\.ANY|\*权限|全权限)", re.IGNORECASE)

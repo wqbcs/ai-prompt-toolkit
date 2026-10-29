@@ -11,10 +11,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.128-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7120%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.129-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7130%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40707probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](../src/ai_prompt_toolkit/evaluator.py)
@@ -46,13 +46,13 @@
 ## Why you can trust it
 
 **Why trust this tool?** The two-baseline credibility claim isn't marketing copy — it's a single
-command. The samples (706 golden attack probes + 60 clean prompts) ship *inside the package*; after
+command. The samples (707 golden attack probes + 60 clean prompts) ship *inside the package*; after
 `pip install` on any machine, one command reproduces the numbers:
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# miss-rate   0.00%  |  706 golden probes · 393 expected-hit units
+# miss-rate   0.00%  |  707 golden probes · 393 expected-hit units
 # false-positive 0.81%  |  60 clean samples · 271 rules
 ```
 
@@ -338,7 +338,7 @@ believe that architecture has a *structural* conflict with the CI-gate scenario:
 **Boundary of the competitor's numbers (honest, not disparaging):** the hybrid F1 0.94 is a one-shot
 offline eval snapshot. Semantic-layer attacks (creative jailbreaks / indirect injection / adversarial
 rewrites) really are the **mechanism ceiling** of pure static detection. What this tool's dual-baseline
-guarantees is the **statically-detectable surface** — miss 0.00% (706 golden probes / 393 expected-hit
+guarantees is the **statically-detectable surface** — miss 0.00% (707 golden probes / 393 expected-hit
 units) and FP 0.81% (60 clean samples); denominators and per-rule detail in
 `docs/规则漏检率基线.md` and `docs/规则误报率基线.md`.
 
@@ -347,7 +347,7 @@ units) and FP 0.81% (60 clean samples); denominators and per-rule detail in
 - ⚡️ **<100ms/file · zero LLM cost** — all 271 rules run statically, no model calls, no network dependency; pre-commit friendly, CI verdicts in seconds
 - 🎯 **Byte-for-byte identical** — same input, same version, identical verdict on any machine; deterministic SARIF/JSON serialization, the gate only accepts reproducible verdicts
 - 📐 **OWASP LLM Top 10 (2026) mapping** — full probe→LLM01–LLM10 mapping + MITRE ATLAS + MLPS 2.0, auto-generated compliance reports
-- 🧪 **Dual-baseline self-proof** — 706 golden probes + 60 clean samples ship in-package; one `prompt-cli baseline` command reproduces the numbers on any machine
+- 🧪 **Dual-baseline self-proof** — 707 golden probes + 60 clean samples ship in-package; one `prompt-cli baseline` command reproduces the numbers on any machine
 - 📦 **Full lifecycle** — lint/scan/probe/redteam/evaluate/compliance/version end-to-end; full capability map in the [Overview](#overview)
 - 🔌 **MCP Server** — 73 standard MCP tools (stdio JSON-RPC), [connects to Claude Desktop/Cursor](../docs/mcp-setup.md)
 - 🌏 **Chinese-first** — 18 Chinese injection-detection rules + per-language detection baseline + plain-language errors, built for Chinese prompt corpora
@@ -645,8 +645,8 @@ source of truth (blindspot observation probes do not count toward the miss rate,
 metric as the global miss rate); the numbers in this table are machine-checked by
 `scripts/check_language_baseline_readme.py` (anti-hand-edit drift). The
 per-language probe-count source of truth is
-`src/ai_prompt_toolkit/data/golden_attacks.json` itself (2026-10-20: total 706 =
-zh-Hans 554 / en 132 / ja 18 / zh-Hant 2).
+`src/ai_prompt_toolkit/data/golden_attacks.json` itself (2026-10-28: total 707 =
+zh-Hans 554 / en 133 / ja 18 / zh-Hant 2).
 
 ## VSCode extension
 

@@ -36,9 +36,14 @@ def _detect_template_type(text: str) -> str:
     return "prompt"
 
 
-def _generate_sarif(results: list[Any], target: str) -> dict[str, Any]:
+def _generate_sarif(
+    results: list[Any],
+    target: str,
+    path_map: dict[str, str] | None = None,
+) -> dict[str, Any]:
     from ai_prompt_toolkit.linter.rules import get_rule
     from ai_prompt_toolkit.sarif_report import REPO_URL
+    from ai_prompt_toolkit.types import parse_location
 
     # R201: 显式dict标注 — 嵌套字典字面量推断为dict[str,Collection[str]], 下标报错
     sarif: dict[str, Any] = {
@@ -59,7 +64,13 @@ def _generate_sarif(results: list[Any], target: str) -> dict[str, Any]:
         ],
     }
     rules_seen = set()
+    path_map = path_map or {}
+    # R348: uri 需目录前缀(PR 标注映射到文件) — path_map(CWD 相对)优先,
+    # 单文件 target 回落 target, 最后 basename(兼容既有调用方)
+    _target_is_file = Path(target).is_file()
     for result in results:
+        _tid = result.template_id
+        _uri = path_map.get(_tid) or (target if _target_is_file else _tid)
         for f in result.findings:
             if f.rule_id not in rules_seen:
                 rules_seen.add(f.rule_id)
@@ -82,12 +93,20 @@ def _generate_sarif(results: list[Any], target: str) -> dict[str, Any]:
                 sarif["runs"][0]["tool"]["driver"]["rules"].append(rule_entry)
             sev_map = {"critical": "error", "high": "error", "medium": "warning", "low": "note", "info": "note"}
             sev = f.severity.value if hasattr(f.severity, "value") else str(f.severity)
+            # R218 location 契约: "" = 文件级 → 不写 region; "L:n[:C:c]" → region(1-based)
+            _line, _col = parse_location(str(getattr(f, "location", "") or ""))
+            _physical: dict[str, Any] = {"artifactLocation": {"uri": _uri}}
+            if _line is not None:
+                _region: dict[str, Any] = {"startLine": _line}
+                if _col is not None:
+                    _region["startColumn"] = _col
+                _physical["region"] = _region
             sarif["runs"][0]["results"].append(
                 {
                     "ruleId": f.rule_id,
                     "level": sev_map.get(sev, "warning"),
                     "message": {"text": f.description},
-                    "locations": [{"physicalLocation": {"artifactLocation": {"uri": result.template_id}}}],
+                    "locations": [{"physicalLocation": _physical}],
                 }
             )
     return sarif

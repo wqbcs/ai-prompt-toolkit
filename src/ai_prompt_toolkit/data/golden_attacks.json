@@ -3130,6 +3130,14 @@
       "note": "R266 P2-27 探针覆盖 — P213 护栏 TN；场景=NAPI/ffi 面+napi_typeof/类型检查/null 检查声明；交叉核验 P213 不火(param check 声明护栏成立)"
     },
     {
+      "name": "r348_p213_tn_ffi_substring_en",
+      "category": "structure",
+      "lang": "en",
+      "text": "Share official opening hours and traffic tips.",
+      "expected": [],
+      "note": "R348 P213 误报修复探针 — 'ffi' 无词边界误杀 official/traffic 子串(用户报告误报, --gate 误红); 词边界护栏 TN"
+    },
+    {
       "name": "r266_p215_tp_dist_no_encrypt",
       "category": "security",
       "lang": "zh-Hans",

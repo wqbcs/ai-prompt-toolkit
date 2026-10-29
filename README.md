@@ -10,10 +10,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.128-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7120%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.129-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7130%20passed-brightgreen.svg)](tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40707probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](src/ai_prompt_toolkit/evaluator.py)
@@ -43,14 +43,14 @@
 - [开发](#开发)
 - [许可证](#许可证)
 
-**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(706 条 golden
+**为什么该信这个工具？** 双基线不写在嘴边上，写在一行命令里 —— 样本(707 条 golden
 攻击探针 + 60 个干净 prompt)随包分发，任何机器 `pip install`
 后一条命令自证：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 漏检面  0.00%  |  探针 706 条 · 期望命中单元 393
+# 漏检面  0.00%  |  探针 707 条 · 期望命中单元 393
 # 误报面  0.81%  |  干净样本 60 个 · checker 271 条
 ```
 
@@ -110,7 +110,7 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 - ⚡️ **<100ms/文件 · 零 LLM 成本** — 271 条规则全量静态执行，无模型调用、无网络依赖，可挂 pre-commit，CI 秒级裁决
 - 🎯 **逐字节一致** — 同一输入、同一版本，任何机器重跑裁决相同；SARIF/JSON 确定性序列化，门禁只认可复现的裁决
 - 📐 **OWASP LLM Top 10 (2026) 映射** — 探针→LLM01-LLM10 完整映射 + MITRE ATLAS + 等保 2.0，自动生成合规报告
-- 🧪 **双基线自证** — 706 条 golden 探针 + 60 个干净样本随包分发，`prompt-cli baseline` 一条命令任意机器复现
+- 🧪 **双基线自证** — 707 条 golden 探针 + 60 个干净样本随包分发，`prompt-cli baseline` 一条命令任意机器复现
 - 📦 **全生命周期** — lint/scan/probe/redteam/evaluate/compliance/version 全链路，完整能力见[能力全貌](#项目简介)
 - 🔌 **MCP Server** — 73 个标准 MCP 工具（stdio JSON-RPC），[接入 Claude Desktop/Cursor](docs/mcp-setup.md)
 - 🌏 **中文优先** — 18 条中文注入检测 + 分语言检测基线 + 人话报错，面向中文 prompt 语料
@@ -457,7 +457,7 @@ OWASP MCP Top 10 MCP03，真实 payload 探针先行）、rug pull（description
 
 **对手数字的适用边界（诚实声明，不贬低）**：hybrid F1 0.94 是一次性离线
 评测快照，语义层攻击（创意越狱/间接注入/对抗性改写）确实是纯静态检测的
-**机制上限**——本工具的双基线（漏检 0.00%：706条golden探针/393期望命中单元；
+**机制上限**——本工具的双基线（漏检 0.00%：707条golden探针/393期望命中单元；
 误报 0.81%：60条干净样本 — 分母与逐规则明细见 docs/规则漏检率基线.md 与
 docs/规则误报率基线.md）保证范围是**静态可检测面**
 （注入标记/编码混淆/不可见字符/结构/合规声明），对语义层攻击应组合使用
@@ -706,7 +706,7 @@ golden 探针集的漏检面按语言分基线（多语言分基线=赛道唯一
 口径：期望命中单元/漏检单元=`run_miss_rate()` 的 per_language 单一真源
 （blindspot 观察探针不参与漏检率，与全局漏检率同口径）；本表数字由
 `scripts/check_language_baseline_readme.py` 机器核对（防手写漂移）。分语言探针计数真源在 `src/ai_prompt_toolkit/data/golden_attacks.json` 本身
-（2026-10-20：总 706=zh-Hans 554/en 132/ja 18/zh-Hant 2）。
+（2026-10-28：总 707=zh-Hans 554/en 133/ja 18/zh-Hant 2）。
 
 ## VSCode插件
 

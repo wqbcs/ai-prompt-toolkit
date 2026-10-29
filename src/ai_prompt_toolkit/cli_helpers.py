@@ -254,6 +254,17 @@ def auto_discover_targets(target: str | None = None) -> list[Path]:
     return sorted(set(results))[:50]
 
 
+# R348: 报告面墙钟字段 — 确定性楔子契约覆盖裁决面(findings/score/verdict),
+# 墙钟在契约外(与 test_stdio_protocol.py 剥离 lint_time_ms 同口径)。
+# 落盘报告工件必须同输入重跑逐字节一致(README『SARIF/JSON 确定性序列化』声明)。
+_WALLCLOCK_KEYS = frozenset({"lint_time_ms", "scan_time_ms"})
+
+
+def report_result_dicts(results: list[Any]) -> list[dict[str, Any]]:
+    """报告 results 行: to_dict 去墙钟字段 — 确定性裁决面工件(供落盘报告)。"""
+    return [{k: v for k, v in r.to_dict().items() if k not in _WALLCLOCK_KEYS} for r in results]
+
+
 def write_report(data: dict[str, Any], path: str | Path, fmt: str = "json") -> None:
     p = Path(path) if not isinstance(path, Path) else path
     p.parent.mkdir(parents=True, exist_ok=True)

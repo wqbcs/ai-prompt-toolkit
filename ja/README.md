@@ -11,10 +11,10 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.128-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7120%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.129-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7130%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
-[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40706probes-brightgreen.svg)](../docs/规则漏检率基线.md)
+[![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40707probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
 [![Lint Rules](https://img.shields.io/badge/Lint_Rules-271-blue.svg)](../src/ai_prompt_toolkit/linter/)
 [![Eval Dims](https://img.shields.io/badge/Eval_Dimensions-130-purple.svg)](../src/ai_prompt_toolkit/evaluator.py)
@@ -46,13 +46,13 @@
 ## なぜ信頼できるか
 
 **なぜこのツールを信頼できるのか？** 二重ベースラインという信頼性の主張はマーケティング文言ではなく、
-1 行のコマンドです。サンプル（706 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
+1 行のコマンドです。サンプル（707 件のゴールデン攻撃プロブ + 60 件のクリーンな prompt）は*パッケージ内*
 に同梱されており、どのマシンでも `pip install` 後に 1 コマンドで数値を再現できます：
 
 ```bash
 pip install ai-prompt-toolkit
 prompt-cli baseline
-# 検出漏れ率   0.00%  |  ゴールデンプロブ 706 件 · 期待命中ユニット 393
+# 検出漏れ率   0.00%  |  ゴールデンプロブ 707 件 · 期待命中ユニット 393
 # 誤検出率     0.81%  |  クリーンサンプル 60 件 · ルール 271 件
 ```
 
@@ -318,7 +318,7 @@ eval では全緑を通過し、本番のエッジケースが事故に変える
 
 **競合数値の適用境界（正直に、貶めず）：** hybrid F1 0.94 は一度限りのオフライン評価スナップショットです。
 意味論レイヤの攻撃（創造的ジェイルブレイク / 間接インジェクション / 敵対的書き換え）は、純粋静的検出の
-**機構上限**です。本ツールの二重ベースライン（検出漏れ 0.00%：706 件ゴールデンプロブ / 393 期待命中
+**機構上限**です。本ツールの二重ベースライン（検出漏れ 0.00%：707 件ゴールデンプロブ / 393 期待命中
 ユニット。誤検出 0.81%：60 件クリーンサンプル）が保証するのは**静的に検出可能な面**であり、
 分母とルール別明細は `docs/规则漏检率基线.md` と `docs/规则误报率基线.md` を参照。
 
@@ -327,7 +327,7 @@ eval では全緑を通過し、本番のエッジケースが事故に変える
 - ⚡️ **<100ms/ファイル · LLM コストゼロ** — 271 ルールを全量静的実行、モデル呼び出しなし・ネットワーク依存なし。pre-commit に組込可能、CI 秒級で裁量
 - 🎯 **バイト単位一致** — 同入力・同バージョン、どのマシンでも再実行時の判定が同一。SARIF/JSON の決定論的シリアライズ、ゲートは再現可能な判定のみ承認
 - 📐 **OWASP LLM Top 10 (2026) 対応** — プロブ→LLM01–LLM10 の完全対応 + MITRE ATLAS + 等保 2.0、準拠レポートを自動生成
-- 🧪 **二重ベースライン自証** — ゴールデンプロブ 706 件 + クリーンサンプル 60 件をパッケージ同梱、`prompt-cli baseline` 1 コマンドで任意のマシンで再現
+- 🧪 **二重ベースライン自証** — ゴールデンプロブ 707 件 + クリーンサンプル 60 件をパッケージ同梱、`prompt-cli baseline` 1 コマンドで任意のマシンで再現
 - 📦 **フルライフサイクル** — lint/scan/probe/redteam/evaluate/compliance/version 全チェーン、能力の全体像は [概要](#概要)
 - 🔌 **MCP Server** — 標準 MCP ツール 73 件（stdio JSON-RPC）、[Claude Desktop/Cursor に接続](../docs/mcp-setup.md)
 - 🌏 **中国語ファースト** — 中国語インジェクション検出 18 件 + 言語別検出ベースライン + 平易な表現のエラー、中国語 prompt コーパス向け
@@ -621,7 +621,7 @@ prompt-cli compliance -t my_prompt.md --format sarif  # GitHub Code Scanning
 （blindspot 観察プロブは検出漏れ率に計上しない、全体検出漏れ率と同一口径）。本表の数値は
 `scripts/check_language_baseline_readme.py` が機械照合（手書きドリフト防止）。
 言語別プロブ数の真源は `src/ai_prompt_toolkit/data/golden_attacks.json` 自身
-（2026-10-20：合計 706 = zh-Hans 554 / en 132 / ja 18 / zh-Hant 2）。
+（2026-10-28：合計 707 = zh-Hans 554 / en 133 / ja 18 / zh-Hant 2）。
 
 ## VSCode 拡張
 

@@ -6926,12 +6926,6 @@
       "attack": null,
       "approved": false
     },
-    "linter/rules_p211_p215.py\u0000(?:napi_|NAPI|node_api|ffi|dlopen|原生调用|native.call)": {
-      "vulnerable": false,
-      "complexity": "O(n)",
-      "attack": null,
-      "approved": false
-    },
     "linter/rules_p211_p215.py\u0000(?:napi_typeof|napi_is_|typeof|类型检查|type.check|null.check)": {
       "vulnerable": false,
       "complexity": "O(n)",
@@ -14137,11 +14131,12 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/rules_p211_p215.py\u0000(?:napi_|NAPI|node_api|(?<![A-Za-z])ffi(?![A-Za-z])|dlopen|原生调用|native.call)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
-  },
-  "metadata": {
-    "approved_at": "2026-10-27",
-    "approver": "R344 audit (AtomCode), supersedes R229",
-    "rationale": "94 vulnerable patterns all polynomial (O(n^4) x94), zero exponential. R344 addition: _P028_SAFE (?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2) flagged O(n^4) by redoctor static heuristic (step\\s+[12] single-anchor whitespace-backtrack shape) — measured strictly linear: 10^7-whitespace adversarial run 0.208s with exact 10x-per-10x scaling (2ms@10^5, 21ms@10^6, 208ms@10^7); multi-segment and CJK-interleaved adversarial forms ~0.02s @10^6. Pure literal alternation, no quantifier nesting — nothing to refactor. Pre-existing 93 approvals (R227 101-item evidence + R229 P264 vendor-hash) retained with their original measurements (all <100ms @2000-char envelope; >20K adversarial vector registered in 07 risk register)."
   }
 }
