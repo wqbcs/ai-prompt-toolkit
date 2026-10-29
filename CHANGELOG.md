@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.130] - 2026-10-29
+
+### Fixed（R349 R348 提交全面深审：3 发现——SARIF path_map 同名冲突 / P213 cffi·libffi 漏检 / ReDoS 审计批准留痕丢失）
+
+- **R349-① SARIF path_map basename 冲突修复**（深审发现 P2，3 个维度独立命中）— 根因 = R348-④ 的 `path_map` 以 basename 为键 + `setdefault` 先写者胜，而 `template_id` 也是 basename：目录 lint 下不同目录同名文件（`prompts/alpha/a.md` × `prompts/beta/a.md`）时后者的 findings 被标上前者的 uri——把 R348 前「含糊但一致」的裸 basename 变成「确定性指错文件」（R348 自身引入的回归，新 e2e 只测单文件未覆盖）；修复 = 建 map 时收集 basename→[path]，同名 ≥2 的键不入 map → 回落裸 basename（R348 前行为），唯一键保留 CWD 相对 posix 路径（R348 改进不变）；e2e 双形态钉死：冲突场景两文件 uri=`a.md` / 唯一场景 `prompts/alpha/a.md`+`prompts/b.md`
+- **R349-② P213 cffi/libffi 检测面显式补回**（深审发现 P2）— 根因 = R348-② 的 `(?<![A-Za-z])ffi(?![A-Za-z])` ASCII 词边界正确消除 official/traffic 误报，但 `cffi`/`libffi`（无歧义 FFI 标识符，规则语义面「NAPI/FFI 调用」之内、见 P213 规则描述）从命中变漏检——0.00%@707 漏检基线无法暴露（分母无此类探针）；修复 = `(?<![A-Za-z])(?:cffi|libffi|ffi)(?![A-Za-z])` 显式替代项（标识符本身无歧义，不重引 official/traffic 误报）+ golden TP 探针 r349_p213_tp_cffi_zh（707→708, zh-Hans 554→555, 单元 393→394, test_r214 钉死值同步）；双基线不回归：漏检 0.00%@708 / FP 0.81%@60
+- **R349-③ ReDoS 审计批准留痕（metadata）恢复 + 根治**（深审发现 P3）— 根因 = `scripts/audit_redos.py` 增量保存（无 `--approve`）每次整体重写文件，而 metadata 块只在 `--approve` 时写入 → R348 增量审计保存把 R344 批准留痕（approved_at/approver/rationale，94 脆弱项审计溯源）整体抹掉；修复 = ① 确定性恢复 `baselines/redos-audit.json` metadata 块（git diff 对照原样）② 脚本根治：增量保存读回并保留磁盘已有 metadata，批准留痕仅 `--approve` 可覆写；行为测试：增量保存后 metadata 保留 + 陈旧条目清理
+- 诚实标注：深审（4/4 维度，294 变更文件）同时确认无发现面 = JSON lint_time_ms 剥离 / critical 符号两处 map / SARIF region 1-based 语义 / stdio·LSP 协议面 / 三语 README 数字同步 / 探针分布钉死值
+
+### 验证
+
+- R349 回归测试 7 项全绿：tests/test_r349_deep_review_fixes.py（SARIF 同名冲突 e2e×2 / P213 cffi+libffi+探针登记×3 / redos metadata 提交态+增量保存行为×2）
+- 全量 pytest **7137 passed**（+7 新增, exit 0）/ 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708 期望命中单元 394）
+- 三语 README 数字核验 4 脚本绿（探针 707→708 / 单元 393→394 / zh-Hans 554→555 / 分语言基线表 zh-Hans 315→316，含日期戳）
+- ReDoS 增量审计 RC=0：2356 条已判定 / 脆弱项 94 条全批准（NEW 0, metadata 生效）/ 陈旧 P213 旧形态条目自动清理
+- 门禁链 **28/28 GATE PASS**（`release_gate.py --skip 1,2`）/ 板状态 0 红（P3-35 新行）/ 版本一致性 0 漂移（v67.34.130, 4 处含 npm 锁步）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.129] - 2026-10-28
 
 ### Fixed（R348 用户报告缺陷轮：4 项用户报告缺陷——JSON 报告确定性 / P213 误报 / CLI critical 符号 / SARIF 标注面）

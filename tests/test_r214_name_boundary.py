@@ -190,7 +190,9 @@ class TestR214LangSchema:
         # R334: +3 zh-Hans (P270 中文扩展 a_priv/b_cred 2TP+1TN) = zh-Hans 554 | en 132 | ja 18 | zh-Hant 2
         # R348: +1 en (P213 误报修复 TN r348_p213_tn_ffi_substring_en)
         #       = zh-Hans 554 | en 133 | ja 18 | zh-Hant 2
-        assert sum(1 for v in langs.values() if v == "zh-Hans") == 554
+        # R349: +1 zh-Hans (P213 语义边界 TP r349_p213_tp_cffi_zh: cffi/libffi 显式补回)
+        #       = zh-Hans 555 | en 133 | ja 18 | zh-Hant 2
+        assert sum(1 for v in langs.values() if v == "zh-Hans") == 555
         assert sum(1 for v in langs.values() if v == "ja") == 18
         assert sum(1 for v in langs.values() if v == "zh-Hant") == 2
         # R264: +2 en (P179 探针) = 101; R288: +2 en (P2-30 探针) = 103; R312: +5 en (P269) = 108; R315: +4 en (P2-26 TN) = 112; R317: +4 en (批2 TN) = 116; R321: +5 en (指令文件 IPI 取证) = 121; R322: +4 en (P270 规则化 2TP+2TN) = 125; R322: +3 en (多模态根因修复 TN) = 128; R323: +1 en (多模态输入门 TN) = 129; R323: +3 en (P271 规则化 1TP+2TN) = 132; R348: +1 en (P213 误报修复 TN) = 133

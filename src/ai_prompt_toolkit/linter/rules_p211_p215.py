@@ -89,8 +89,11 @@ _OBSERVED_V2_PATTERN = re.compile(r"(?:@ObservedV2|ObservedV2|observed.v2)", re.
 _TRACE_PATTERN = re.compile(r"(?:@Trace|Trace装饰|trace.decorator)", re.IGNORECASE)
 # R348: ffi 需 ASCII 词边界 — 裸 'ffi' 误杀 official/traffic 子串(用户报告误报, --gate 误红);
 # 边界断言不含 CJK, 故 "调用ffi" 等中文紧邻场景仍命中
+# R349: 显式补 cffi/libffi 替代项 — 二者是无歧义 FFI 标识符(规则语义面=NAPI/FFI 调用,
+# 见规则描述), 非英文普通子串, 补回不重引 official/traffic 误报(深审 R348 发现: 词边界
+# 收紧后 cffi/libffi 漏检)
 _NAPI_PATTERN = re.compile(
-    r"(?:napi_|NAPI|node_api|(?<![A-Za-z])ffi(?![A-Za-z])|dlopen|原生调用|native.call)", re.IGNORECASE
+    r"(?:napi_|NAPI|node_api|(?<![A-Za-z])(?:cffi|libffi|ffi)(?![A-Za-z])|dlopen|原生调用|native.call)", re.IGNORECASE
 )
 _NAPI_CHECK_PATTERN = re.compile(r"(?:napi_typeof|napi_is_|typeof|类型检查|type.check|null.check)", re.IGNORECASE)
 _PERMISSION_PATTERN = re.compile(r"(?:ohos\.permission|requestPermission|权限声明)", re.IGNORECASE)

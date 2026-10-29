@@ -246,6 +246,16 @@ def main() -> int:
         meta = {"schema": "redos-audit-cache-v1", "engine": "redoctor", "entries": cache}
         if args.approve:
             meta["metadata"] = APPROVE_METADATA
+        else:
+            # R349: 增量保存(无 --approve)保留磁盘上已有的批准留痕 — 旧版每次保存都
+            # 整体丢弃 metadata 块(R348 实证: R344 人工复核留痕被增量保存抹掉, 审计
+            # 溯源丢失); 批准留痕只有 --approve 可覆写, 增量步不得触碰
+            try:
+                _existing = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                _existing = {}
+            if isinstance(_existing.get("metadata"), dict):
+                meta["metadata"] = _existing["metadata"]
         CACHE_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     # 汇总报告(以缓存为准, 覆盖全量已知 pattern)

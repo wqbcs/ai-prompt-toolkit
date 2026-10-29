@@ -1213,7 +1213,9 @@ def lint(
     if fmt == "sarif" and output:
         # R348: SARIF uri 需目录前缀(PR 标注映射到文件) — template_id 是 basename,
         # 建 basename→CWD 相对路径映射(posix 形态); 目标在 CWD 外时回落原路径
-        _sarif_path_map: dict[str, str] = {}
+        # R349: 不同目录同名文件时 template_id(basename) 无法唯一反推 → 冲突键不入
+        # map, 回落裸 basename(R348 前行为), 避免 setdefault 先写者胜确定性指错文件
+        _sarif_name_to_paths: dict[str, list[str]] = {}
         for _tp in templates:
             _tp_path = _tp if isinstance(_tp, Path) else getattr(_tp, "source", None)
             if not _tp_path:
@@ -1224,7 +1226,8 @@ def lint(
                 _rel = Path(_tp_path)
             _key = getattr(_tp, "name", None)
             if _key:
-                _sarif_path_map.setdefault(_key, _rel.as_posix())
+                _sarif_name_to_paths.setdefault(_key, []).append(_rel.as_posix())
+        _sarif_path_map = {k: v[0] for k, v in _sarif_name_to_paths.items() if len(v) == 1}
         sarif_data = _generate_sarif(all_results, target, _sarif_path_map)
         import json as _json
 
