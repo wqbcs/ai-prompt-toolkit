@@ -149,16 +149,25 @@ def _map_flags(node: ast.expr | None) -> int:
     return ev(node) or 0
 
 
-def _load_cache() -> dict[str, dict]:
-    """读判定缓存: {file + '\\x00' + pattern: {vulnerable, complexity, approved}}"""
+def _load_cache() -> tuple[dict[str, dict], dict | None]:
+    """读判定缓存: 返回 (entries, metadata) — entries={file + '\\x00' + pattern:
+    {vulnerable, complexity, approved}}, metadata=批准留痕(顶层键, 缺失为 None)。
+    R350: metadata 一并返回(深审发现: R349 增量保存分支重读磁盘整体解析 1.4 万行
+    缓存, 与 main() 顶部同一 run 内二次全量 I/O) — 增量保存直接复用, 零重复读取。"""
     if not CACHE_PATH.exists():
-        return {}
+        return {}, None
     try:
         data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return {}
+        return {}, None
     cache = data.get("entries", {})
-    return {k: v for k, v in cache.items() if isinstance(v, dict)}
+    if not isinstance(cache, dict):
+        cache = {}
+    meta = data.get("metadata")
+    return (
+        {k: v for k, v in cache.items() if isinstance(v, dict)},
+        meta if isinstance(meta, dict) else None,
+    )
 
 
 def _cache_key(it: dict) -> str:
@@ -208,7 +217,7 @@ def main() -> int:
     for it in items:
         uniq.setdefault((it["file"], it["pattern"]), it)
 
-    cache = _load_cache()
+    cache, saved_metadata = _load_cache()
     # 待判定 = --full 全量, 否则仅未入缓存的 pattern(增量秒级)
     pending = [it for k, it in uniq.items() if (args.full or _cache_key(it) not in cache)]
     if args.limit is not None:
@@ -250,12 +259,10 @@ def main() -> int:
             # R349: 增量保存(无 --approve)保留磁盘上已有的批准留痕 — 旧版每次保存都
             # 整体丢弃 metadata 块(R348 实证: R344 人工复核留痕被增量保存抹掉, 审计
             # 溯源丢失); 批准留痕只有 --approve 可覆写, 增量步不得触碰
-            try:
-                _existing = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                _existing = {}
-            if isinstance(_existing.get("metadata"), dict):
-                meta["metadata"] = _existing["metadata"]
+            # R350: 复用 _load_cache 已解析的 metadata(深审发现: R349 版此处重读磁盘
+            # = 同一 run 内二次全量读+解析 1.4 万行缓存; 低频脚本, 卫生问题)
+            if saved_metadata is not None:
+                meta["metadata"] = saved_metadata
         CACHE_PATH.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     # 汇总报告(以缓存为准, 覆盖全量已知 pattern)

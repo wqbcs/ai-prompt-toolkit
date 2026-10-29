@@ -27,6 +27,31 @@ _SEV_MARKERS = {"critical": "🔴", "high": "✗", "medium": "⚠", "low": "ℹ"
 _RANK = {"critical": 0, "high": 1, "medium": 2}
 
 
+def _build_sarif_path_map(templates: list[Any]) -> dict[str, str]:
+    """R348: SARIF uri 需目录前缀(PR 标注映射到文件) — template_id 是 basename,
+    建 basename→CWD 相对路径(posix 形态)映射; 目标在 CWD 外时回落原路径。
+
+    R349: 不同目录同名文件时 template_id(basename) 无法唯一反推 → 同名 ≥2 的键
+    不入 map, 回落裸 basename(R348 前行为), 避免 setdefault 先写者胜确定性指错文件。
+    R350: 唯一性语义 = 去重路径数(深审发现) — 同一路径出现 ≥2 次(如单文件抽多条
+    prompt)不是「冲突」; R349 版按出现次数判定, len≥2 误降裸 basename(相对 R348
+    setdefault 的小幅回归)。纯函数, 便于单测。
+    """
+    name_to_paths: dict[str, list[str]] = {}
+    for _tp in templates:
+        _tp_path = _tp if isinstance(_tp, Path) else getattr(_tp, "source", None)
+        if not _tp_path:
+            continue
+        try:
+            _rel = Path(_tp_path).resolve().relative_to(Path.cwd().resolve())
+        except ValueError:
+            _rel = Path(_tp_path)
+        _key = getattr(_tp, "name", None)
+        if _key:
+            name_to_paths.setdefault(_key, []).append(_rel.as_posix())
+    return {k: v[0] for k, v in name_to_paths.items() if len(set(v)) == 1}
+
+
 def _build_summary_markdown(
     *,
     templates: list[Path],
@@ -1211,24 +1236,8 @@ def lint(
         sys.exit(verdict_to_exit_code(gate_result.verdict))
 
     if fmt == "sarif" and output:
-        # R348: SARIF uri 需目录前缀(PR 标注映射到文件) — template_id 是 basename,
-        # 建 basename→CWD 相对路径映射(posix 形态); 目标在 CWD 外时回落原路径
-        # R349: 不同目录同名文件时 template_id(basename) 无法唯一反推 → 冲突键不入
-        # map, 回落裸 basename(R348 前行为), 避免 setdefault 先写者胜确定性指错文件
-        _sarif_name_to_paths: dict[str, list[str]] = {}
-        for _tp in templates:
-            _tp_path = _tp if isinstance(_tp, Path) else getattr(_tp, "source", None)
-            if not _tp_path:
-                continue
-            try:
-                _rel = Path(_tp_path).resolve().relative_to(Path.cwd().resolve())
-            except ValueError:
-                _rel = Path(_tp_path)
-            _key = getattr(_tp, "name", None)
-            if _key:
-                _sarif_name_to_paths.setdefault(_key, []).append(_rel.as_posix())
-        _sarif_path_map = {k: v[0] for k, v in _sarif_name_to_paths.items() if len(v) == 1}
-        sarif_data = _generate_sarif(all_results, target, _sarif_path_map)
+        # R348: SARIF uri 需目录前缀(PR 标注映射到文件) — 见 _build_sarif_path_map
+        sarif_data = _generate_sarif(all_results, target, _build_sarif_path_map(templates))
         import json as _json
 
         Path(output).write_text(_json.dumps(sarif_data, ensure_ascii=False, indent=2), encoding="utf-8")

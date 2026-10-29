@@ -2,6 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.131] - 2026-10-29
+
+### Fixed（R350 R349 提交全面深审：无 P0–P2，2 条 P3——path_map 唯一性判定口径 / audit_redos 重复 I/O）
+
+- **R350-① SARIF path_map 唯一性口径修复**（深审发现 P3, conf 0.45）— 根因 = R349 的 `len(v) == 1` 按「出现次数」判定：同一路径出现 ≥2 次（如单文件抽多条 prompt）被误判「冲突」回落裸 basename（相对 R348 `setdefault` 先写者胜的小幅回归——uri 丢目录前缀）；修复 = 唯一性语义改为「去重路径数」（`len(set(v)) == 1`）+ 提取 `_build_sarif_path_map` 纯函数（可单测）；真跨目录同名冲突仍回落裸 basename（R349 行为保持），5 形态单测钉死（唯一/同路径重复/真冲突/.source 对象/CWD 外）
+- **R350-② audit_redos 重复 I/O 消除**（深审发现 P3, conf 0.30）— 根因 = R349 增量保存分支重读磁盘整体解析 1.4 万行缓存（`main()` 顶部 `_load_cache()` 已解析过同一文件，同一 run 内二次全量读+解析）；修复 = `_load_cache` 返回契约改 `(entries, metadata)` 一并返回，增量保存直接复用（零重复读取）；契约边界（文件缺失/损坏/非 dict metadata）4 形态单测钉死
+- 深审确认无 P0–P2 问题（4/4 维度, 293 文件）：P213 新正则边界场景（CFFI 大写 / cffi.FFI / libffis 复数）/ metadata 保留边界（文件损坏/缺失）/ path_map 回落链与 e2e 一致性 / 安全（无新增注入面）/ 一致性（README 数字与真源、test_r214 钉死值、CHANGELOG 声称与实际变更）/ R348 深审确认无发现的 4 项仍成立
+
+### 验证
+
+- R350 回归测试 9 项全绿：tests/test_r350_deep_review_fixes.py（_build_sarif_path_map 5 形态 + _load_cache 4 边界）
+- 全量 pytest **7146 passed**（+9 新增, exit 0）/ 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708 单元 394, 本轮探针集不变）
+- 门禁链 **28/28 GATE PASS**（`release_gate.py --skip 1,2`）/ 板状态 0 红（P3-36 新行）/ 版本一致性 0 漂移（v67.34.131, 4 处含 npm 锁步）
+- wheel + 干净 venv 三命令冒烟（最终工件 v67.34.131：--version / baseline / lint）
+- CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.130] - 2026-10-29
 
 ### Fixed（R349 R348 提交全面深审：3 发现——SARIF path_map 同名冲突 / P213 cffi·libffi 漏检 / ReDoS 审计批准留痕丢失）
