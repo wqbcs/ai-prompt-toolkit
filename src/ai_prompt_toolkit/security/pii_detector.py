@@ -35,6 +35,45 @@ class PIIMatch:
         return self.value[:2] + "*" * max(len(self.value) - 4, 2) + self.value[-2:]
 
 
+def _frontmatter_end(text: str) -> int:
+    """开头 YAML frontmatter 块的结束偏移（闭合 '---' 行之后）；非 frontmatter 开头返回 0。
+
+    R351 门禁课: 原正则 `^---[ \\t]*\\r?\\n.*?\\r?\\n---[ \\t]*\\r?\\n`（DOTALL）被 redoctor
+    判 O(n^3) → 新 pattern 使 ReDoS 增量审计红（test_r349 红线断言 rc==0，R351 gate step 1
+    实证）→ 改纯字符串结构扫描（O(n), 零回溯, 无正则审计面）。语义与原正则完全等价:
+    首行 '---'（尾随空白允许）+ 开闭间至少一行 + 闭合行=首个列 0 以 '---' 起头的行
+    （尾随空白允许, 第 4 字符不得为 '-'）且以换行结尾。
+    A/B 铁锚定（R344 纪律）= 原正则留测试作参照:
+    test_r351_p2_31_scan_fp.py::TestPII001FrontmatterExemption::test_frontmatter_end_equivalence
+    """
+    n = len(text)
+    if n < 8 or text[:3] != "---":
+        return 0
+    i = 3
+    while i < n and text[i] in " \t":
+        i += 1
+    if i >= n:
+        return 0
+    if text[i] == "\r" and i + 1 < n and text[i + 1] == "\n":
+        i += 2
+    elif text[i] == "\n":
+        i += 1
+    else:
+        return 0
+    seen_line = False
+    while i < n:
+        nl = text.find("\n", i)
+        if nl == -1:
+            return 0
+        line_end = nl - 1 if nl > i and text[nl - 1] == "\r" else nl
+        line = text[i:line_end]
+        if seen_line and line[:3] == "---" and all(c in " \t" for c in line[3:]):
+            return nl + 1
+        seen_line = True
+        i = nl + 1
+    return 0
+
+
 _PII_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("email", re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"), 0.95),
     ("mobile", re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)"), 0.9),
@@ -82,8 +121,18 @@ class PIIDetector:
 
     def detect(self, text: str) -> list[PIIMatch]:
         matches: list[PIIMatch] = []
+        # R351/P2-31 裁决: frontmatter `name:` = 文档/agent 名(26 模板实测 23/26 全为
+        # 文档名如"教育课程/鸿蒙/盘古", 无人名) → cn_name 豁免开头 frontmatter;
+        # 正文 `name:`/`姓名:` 仍报; 其他 PII 类型不豁免(无 frontmatter 误报证据,
+        # T1 证据驱动范围)。残留披露(R351 深审 P3): frontmatter 内真实人名(如数据模板
+        # name: 张三)= 接受漏报(name: 惯例=文档名) — pin:
+        # test_r351_p2_31_scan_fp.py::test_frontmatter_real_name_accepted_miss。
+        # 裁决留痕: docs/planning/R351_互联网开源调研与改进方案.md §10-E1
+        fm_end = _frontmatter_end(text)
         for pii_type, pattern, confidence in self._patterns:
             for m in pattern.finditer(text):
+                if pii_type == "cn_name" and fm_end > 0 and m.end() <= fm_end:
+                    continue
                 matches.append(
                     PIIMatch(
                         pii_type=pii_type,

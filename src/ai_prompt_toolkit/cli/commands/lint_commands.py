@@ -257,7 +257,7 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     "--fail-on-waiver",
     "fail_on_waiver",
     is_flag=True,
-    help="豁免审计门禁(R213): 任何文件的waiver实际生效(压制≥1条finding)即退出码2 — 严格CI禁新增豁免",
+    help="豁免审计门禁: 任何文件的waiver实际生效(压制≥1条finding)即退出码2 — 严格CI禁新增豁免",
 )
 @click.option("--multimodal", "-mm", is_flag=True, help="启用多模态Lint检查(图片引用/格式/可访问性)")
 @click.option(
@@ -284,28 +284,28 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     "--incremental",
     "incremental",
     is_flag=True,
-    help="增量门禁(R224): 与--baseline+--gate/--fail-on合用时, 门禁只计NEW findings(基线内已知的PRE-EXISTING放行) — 老仓库接入不被存量打回",
+    help="增量门禁: 与--baseline+--gate/--fail-on合用时, 门禁只计NEW findings(基线内已知的PRE-EXISTING放行) — 老仓库接入不被存量打回",
 )
 @click.option(
     "--new-from-rev",
     "new_from_rev",
     default=None,
     metavar="REV",
-    help="P2-17 git原生增量: 只lint <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
+    help="git原生增量: 只lint <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
 )
 @click.option(
     "--baseline-from",
     "baseline_from_ref",
     default=None,
     metavar="REF",
-    help="P3-20基线防伪造: 与--incremental合用时, 从git <REF>读--baseline文件内容 (REF由operator/CI提供, PR作者无法篡改base分支基线; path可仓库根相对或CWD相对, 自动解析)",
+    help="基线防伪造: 与--incremental合用时, 从git <REF>读--baseline文件内容 (REF由operator/CI提供, PR作者无法篡改base分支基线; path可仓库根相对或CWD相对, 自动解析)",
 )
 @click.option("--suggest", "suggest_mode", is_flag=True, help="修复建议: 智能推荐修复方案(按优先级排序)")
 @click.option(
     "--fix-hint",
     "fix_hint",
     is_flag=True,
-    help="P5-01: CLI 面每个 finding 下输出'修复:'提示行(数据=规则自带 remediation, 默认 off 不动 gate 输出契约)",
+    help="每个 finding 下输出'修复:'提示行(数据=规则自带 remediation, 默认 off 不动 gate 输出契约)",
 )
 @click.option("--json-diff", "json_diff_path", help="结构化对比: 输出JSON格式diff到指定路径(需配合--baseline)")
 @click.option("--explain", "explain_mode", is_flag=True, help="交互式解释: 每个finding的详细说明+OWASP参考+修复方案")
@@ -323,19 +323,19 @@ def explain_cmd(rule_id: str, as_json: bool, no_metrics: bool) -> None:
     "--stdio",
     "stdio_mode",
     is_flag=True,
-    help="P1-05a: 常驻 stdio 协议 server(行JSON请求/响应, 编辑器bridge用) — 忽略其他选项, 见 docs/stdio-protocol.md",
+    help="常驻 stdio 协议 server(行JSON请求/响应, 编辑器bridge用) — 忽略其他选项, 见 docs/stdio-protocol.md",
 )
 @click.option(
     "--inline",
     "inline_mode",
     is_flag=True,
-    help="P1-15/15b: 从 Python/TS 源码静态抽取内嵌 prompt(字符串字面量)再 lint — 裁决层复用规则引擎, 纯 stdlib",
+    help="从 Python/TS 源码静态抽取内嵌 prompt(字符串字面量)再 lint — 裁决层复用规则引擎, 纯 stdlib",
 )
 @click.option(
     "--target-model",
     "target_model",
     default=None,
-    help="P1-16: 声明部署目标模型(如 claude/gpt-4o/qwen) — prompt 绑定到其他厂商品牌时 P262 升级为 HIGH",
+    help="声明部署目标模型(如 claude/gpt-4o/qwen) — prompt 绑定到其他厂商品牌时 P262 升级为 HIGH",
 )
 def lint(
     target: str,
@@ -1331,7 +1331,7 @@ def lint(
     "--fix-hint",
     "fix_hint",
     is_flag=True,
-    help="P5-01: CLI 面每个发现下输出'修复:'提示行(与 lint 路径同口径, 默认 off)",
+    help="CLI 面每个发现下输出'修复:'提示行(与 lint 路径同口径, 默认 off)",
 )
 @click.option("--resume", is_flag=True, help="恢复模式: 从上次SIGINT中断处继续(参考pytest --lf)")
 @click.option(
@@ -1339,7 +1339,7 @@ def lint(
     "new_from_rev",
     default=None,
     metavar="REV",
-    help="P2-17 git原生增量: 只扫描 <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
+    help="git原生增量: 只扫描 <REV> 后有变更的模板文件(brownfield免基线) — 与--incremental互斥",
 )
 def scan(
     target: str,

@@ -144,7 +144,7 @@ def upgrade_fm(target: str, dry_run: bool, locale: str) -> None:
     "--snippet",
     "snippet_mode",
     is_flag=True,
-    help="R229-P2-22: 轻量片段模式 — 只打印 toml+pre-commit+CI 三段配置片段(不创建目录/不写文件), 供已有项目按需粘贴",
+    help="轻量片段模式 — 只打印 toml+pre-commit+CI 三段配置片段(不创建目录/不写文件), 供已有项目按需粘贴",
 )
 def init_project(target: str, non_interactive: bool, ci: bool, template: str | None, snippet_mode: bool) -> None:
     """初始化项目：创建项目结构 + 运行时配置 + lint 门禁配置"""
