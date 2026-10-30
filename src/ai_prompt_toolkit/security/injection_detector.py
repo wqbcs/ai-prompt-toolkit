@@ -79,7 +79,7 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-009",
         name="编码绕过",
-        pattern=r"(?:base64|utf-8|unicode|\\x[0-9a-f]{2}|\\u[0-9a-f]{4}).*?(?:decode|interpret|parse|exec)",
+        pattern=r"(?:base64|utf-8|unicode|\\x[0-9a-f]{2}|\\u[0-9a-f]{4})[^\n。！？!?；;]{0,20}(?:\n[^\n。！？!?；;]{0,4})?(?:decode|interpret|parse|exec)(?![A-Za-z0-9_])",
         severity=Severity.HIGH,
         description="检测到编码绕过模式：使用编码手段规避安全检测(OWASP LLM02)",
         remediation="对编码内容先解码再检测，禁止动态解码执行",
@@ -87,7 +87,7 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-010",
         name="多语言注入",
-        pattern=r"(?:忽略|无视|忘记|绕过).*(?:指令|规则|限制|约束|安全)",
+        pattern=r"(?<!不得建议)(?<!不得提供)(?<!不提供)(?:忽略|无视|忘记|绕过)[^\n。！？!?；;]{0,12}(?:\n[^\n。！？!?；;]{0,4})?(?:指令|规则|限制|约束|安全)",
         severity=Severity.HIGH,
         description="检测到多语言注入模式：使用中文变体规避英文检测",
         remediation="扩展检测规则至多语言，添加中文注入模式库",
@@ -119,7 +119,7 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-014",
         name="供应链注入",
-        pattern=r"(?:import|include|require|load|fetch)\s+.*(?:from|url|remote|external|untrusted)",
+        pattern=r"(?:import|include|require|load|fetch)[ \t]+[^\n。！？!?；;]{0,20}(?:\n[^\n。！？!?；;]{0,6})?(?:url|remote|external|untrusted|https?://)",
         severity=Severity.MEDIUM,
         description="检测到供应链注入模式：尝试加载外部不可信资源(OWASP LLM03)",
         remediation="限制外部资源加载，添加来源白名单验证",
@@ -143,7 +143,7 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-017",
         name="多语言绕过",
-        pattern=r"(?:忽略|无视|跳过|绕过|取消|删除|移除|覆写|替换).*(?:规则|限制|约束|安全|防护|过滤|检查|指令|以上)",
+        pattern=r"(?<!不得建议)(?<!不得提供)(?<!不提供)(?:忽略|无视|跳过|绕过|取消|删除|移除|覆写|替换)[^\n。！？!?；;]{0,12}(?:\n[^\n。！？!?；;]{0,4})?(?:规则|限制|约束|安全|防护|过滤|检查|指令|以上)",
         severity=Severity.MEDIUM,
         description="检测到中文多语言绕过模式：利用非英文指令绕过安全过滤",
         remediation="添加多语言安全规则匹配，确保中英文指令均受约束",
