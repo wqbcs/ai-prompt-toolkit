@@ -2,6 +2,24 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.139] - 2026-10-31
+
+### Added（R358：N4 隐藏字符 autofix 立规——检测面已有, 修复面补齐）
+
+- **P258/P260 autofix（可自动修复 196→198）**：取证（T1）= lint 侧隐藏字符**检测面已存在**（P258 词内零宽 14 码点 / P260 5+ 连续零宽）但 **autofix 面缺失**（196 集不含, 256-271 区间全空）; 裁决=立规——① ContextHound `hound fix` 行业先例 ② 不可见字符编辑器内无法手动定位删除（autofix=唯一修复路径, UX 刚需面）③ 剥离语义确定性安全（与 R356/R357 归一化层同范式, 22 测试护栏）; 实现=`_fix_hidden_chars()` 复用 `normalization._CF_RE` 完整 Cf 类（170 码点, 不重复造轮子）; **超集语义留痕**（对抗性审查）：P258 检测 14 码点, fix 剥离全部 Cf——Cf 无合法功能价值, 超集无损安全
+- **tests/test_r358_hidden_char_autofix.py**（新增, 8 测试）：P258 词内零宽剥离 / P260 连续零宽剥离 / 全 Cf 类超集剥离 / 可见内容保持（行计数）/ 幂等 / 干净文本 noop / 混合 findings 仅修隐藏面 / 集成员+198 计数
+- **N5 PIDS-Bench 许可核查（T1, 裁决留痕）**：数据=「research and non-commercial use」+ 1472 行中 664 行 LMSYS 文本不随库分发（上游许可禁再分发）→ **数据不入本仓库**（非商用条款与本项目商业化通道冲突, 避免许可污染）; 跨基准验证改用**论文数字引证**（外部来源良性误杀率 0.3144±0.0525 @872, 聚合 0.3825±0.0474 @1472, DOI 10.1109/ACCESS.2026.3728186）作外部背书, 不作运行时基准
+- **tests/test_fixer.py 同步**：TestAutoFixableRules 集成员 +2（P258/P260）+ 计数 196→198（R358-N4 设计变更跟随, 非弱化）
+
+### Changed
+
+- 版本 v67.34.138 → v67.34.139（4 处: pyproject/__init__/README 徽章/npm 锁步）
+
+### 验证
+
+- 全量 pytest **7288 passed** 0 failed（全量实测, 332.77s; 含 test_r358 8 新增 + 4 处计数钉死同步）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ruff check+format 变更面 clean | mypy fixer.py 0 错
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（P3-39 ✅ 新行）| 版本一致性 0 漂移（v67.34.139, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.138] - 2026-10-31
 
 ### Fixed（R357：对抗性审查发现 2/3——归一化集完成; 发现 4——背书包失实）

@@ -206,11 +206,13 @@ class TestAutoFixableRules:
             "P253",
             "P254",
             "P255",
+            "P258",
+            "P260",
         } == AUTO_FIXABLE_RULES
 
     def test_auto_fixable_rules_count(self):
-        # R164扩容后实际值
-        assert len(AUTO_FIXABLE_RULES) == 196
+        # R164扩容后实际值（R358-N4 隐藏字符 autofix +2 = 198）
+        assert len(AUTO_FIXABLE_RULES) == 198
 
     def test_ambiguous_replacements_keys(self):
         for key in AMBIGUOUS_REPLACEMENTS:

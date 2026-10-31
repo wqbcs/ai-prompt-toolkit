@@ -77,4 +77,4 @@ class TestR122MultimodalSecurity:
     def test_auto_fixable_count(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 
-        assert len(AUTO_FIXABLE_RULES) == 196  # R164扩容后实际值
+        assert len(AUTO_FIXABLE_RULES) == 198  # R164扩容后实际值（R358-N4 +2）

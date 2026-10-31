@@ -219,6 +219,8 @@ AUTO_FIXABLE_RULES = {
     "P253",
     "P254",
     "P255",
+    "P258",
+    "P260",
 }
 
 AMBIGUOUS_REPLACEMENTS: dict[str, str] = {
@@ -966,6 +968,21 @@ def _fix_p130_network_security(text: str) -> str:
     return text + block
 
 
+def _fix_hidden_chars(text: str) -> str:
+    """P258/P260 autofix：剥离全部 Unicode Cf (Format) 不可见字符（R358-N4）。
+
+    超集语义（对抗性审查留痕）：P258 检测面=14 零宽码点, fix 复用
+    normalization 的完整 Cf 类（170 码点, 测试钉死与 Unicode 数据库对齐）
+    =一次剥离全部不可见格式字符; Cf 无合法功能价值, 剥离无损且确定性
+    安全（与 R356/R357 归一化层同范式, 22 测试护栏）, 故超集安全。
+    行业先例=ContextHound `hound fix`; UX 理由=不可见字符编辑器内无法
+    手动定位删除, autofix 是唯一修复路径。
+    """
+    from ai_prompt_toolkit.security.normalization import _CF_RE
+
+    return _CF_RE.sub("", text)
+
+
 @dataclass
 class FixResult:
     rule_id: str
@@ -1185,4 +1202,6 @@ class Fixer:
             return _fix_p129_form_extension(text)
         elif rule_id == "P130":
             return _fix_p130_network_security(text)
+        elif rule_id in ("P258", "P260"):
+            return _fix_hidden_chars(text)
         return text

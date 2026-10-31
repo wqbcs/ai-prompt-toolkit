@@ -108,7 +108,7 @@ class TestR74RuleCount:
     def test_auto_fixable_count_96(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
 
-        assert len(AUTO_FIXABLE_RULES) == 196
+        assert len(AUTO_FIXABLE_RULES) == 198  # R164扩容后实际值（R358-N4 +2）
 
     def test_p156_in_auto_fixable(self):
         from ai_prompt_toolkit.linter.fixer import AUTO_FIXABLE_RULES
