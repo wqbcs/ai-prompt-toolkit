@@ -2,7 +2,27 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [v67.34.135] - 2026-10-30
+## [v67.34.136] - 2026-10-30
+
+### Added（R355：博客②③草稿 + T1-1 取证登记）
+
+- **marketing/blog-02-dual-baseline-curve.zh.md**：第二篇营销草稿《从 8.38% 到 0.81%：一条只收紧不放松的误报曲线》（正文+英文 TL;DR）；数据真源=baseline_history.jsonl（159 条机器记录）；**标题按数据修正**（原规划主题"六个月/6.03%→0.91%"与数据不符——项目真实时间线 2026-07-11→10-30=111 天, 起点=首版基线 8.38%@32, 终态 0.81%@60）；叙事含 R209→R210"表观回升"（扩样 32→56=分母事件, 数据记录而非叙述掩盖）+ 0.81% 13 天持平期（27+ 轮规则变更零放松）+ 诚实边界（60 样本小样本面/回填段无时间戳/运营点≠承诺）
+- **marketing/blog-03-brownfield-incremental-gate.zh.md**：第三篇营销草稿《brownfield 增量门禁：老仓库存量不清零, 也能第一天开门禁》（正文+英文 TL;DR）；素材真源=docs/adoption.md 行为契约 4 场景 + --json-diff 机器面 + 反模式（批量降级 severity=把尺子掰弯）+ 基线重存棘轮纪律（PR-visible diff）
+- 板行 P3-38 登记（T1-1 编码归一化缺口取证）
+
+### Changed（R355：PyPI description 打磨（E3）+ 板行回写）
+
+- **pyproject description 打磨（E3 落地）**：「AI提示词体系工具链：条件编译、安全扫描、A/B测试、Prompt Linter」→「AI 提示词确定性静态门禁：零 LLM、裁决逐字节一致、<100ms/文件、SARIF/CI 原生。Prompt Linter + 5 层安全扫描 + OWASP LLM Top 10 (2026) 映射 + MCP Server，双基线一条命令自证，中文优先」（**仅不变量措辞, 无可变数字**=零新增漂移风险面; [project.urls] Changelog 链接已在位, 未动）
+- P5-05 板行 → 🟡（①②③ 三篇草稿全落地, 发布=用户侧动作）
+
+### Fixed（R355：T1-1 取证留痕, 无规则变更）
+
+- **T1-1 编码归一化缺口取证（证据轮, 不改规则）**：6 编码面 × 同语义攻击串实测——base64/URL/hex 面**已被现有规则捕获**（DEF-ENC-001/002 + DEF-ENC-DECODED 解码复检层, 纵深防御比预期深）; **全角字符（NFKC 可归一）+ 零宽插入 U+200B = 2 独立归一化面均静默** → 漏检红证据成立, T1 立规条件满足, 立规=T1-2 独立轮（R356 排期, 回归面=708 探针+60 干净+26 模板, 不混入文档面轮）; 架构观察留痕：scan 侧 INJ 规则族对全部编码形态静默（注入防御全靠 defender 层承载）
+
+### 验证
+
+- 全量 pytest **7257 passed** 0 failed（本轮测试集不变, 独立跑 484.09s）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ReDoS 审计 NEW 0（本轮未新增 re.compile 字面量, 119 全批准）
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（149 行, P3-38 新行 + P5-05/P5-14 🟡）| 版本一致性 0 漂移（v67.34.136, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
 
 ### Fixed（R354 E1：DEF-ENC-001 编码层 pattern #1 收窄，P2-34 裁决落地）
 
