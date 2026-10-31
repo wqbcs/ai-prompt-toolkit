@@ -11,8 +11,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.134-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7252%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.135-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7257%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -56,7 +56,7 @@ prompt-cli baseline
 # false-positive 0.81%  |  60 clean samples · 271 rules
 ```
 
-> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
+> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds (measured 2026-10-30: uvx channel, zero-install to first finding in 6.8s end-to-end incl. toolchain startup, warm cache).
 >
 > **Other channels:** `uvx --from ai-prompt-toolkit prompt-cli lint <file>` (uv/uvx) · `pipx install ai-prompt-toolkit` (pipx) · `npx ai-prompt-toolkit lint <file>` (npm, auto-installs the Python package on first run) · `docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md` (container)
 
@@ -82,14 +82,18 @@ machine.
 
 **False-positive tightening history** (deterministically regenerated from
 `docs/baseline_history.jsonl` every round, byte-identical; fixed 0–10% scale, the
-curve does not rescale with the data):
+curve does not rescale with the data; industry reporting norm = recall at a fixed
+low FPR (recall@fixed-FPR) — this curve + the operating-point data page
+[`docs/operating_curve.md`](../docs/operating_curve.md) is its machine-reproducible form):
 
 [![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](../docs/baseline_history.jsonl)
 
 **Over-defense (over-kill) external anchor** — the internal 60 samples are a
 self-selected surface; the real litmus test is "do benign sentences containing
 trigger words get killed" (a support ticket quoting an attack string, the security
-document itself). Measured on PIGuard NotInject's 339 hard negatives (ACL 2025,
+document itself; industry term: **hard-benign** — benign text that looks like attack
+text, the make-or-break trust metric for detectors). Measured on PIGuard NotInject's 339
+hard negatives (hard-benign, ACL 2025,
 independent holdout, the rules were never tuned against it): **security-family
 false-kill rate 6.78%** (93 rules @ 339 samples; first point 33.92%, then
 probe-first batch fixes took it
@@ -276,7 +280,10 @@ Complementary, not substitutes.
 | Chinese rules/reports | 18 Chinese injection rules + Chinese rule families + plain-language errors + **per-language detection baseline table** | none | none | none | partial |
 
 > Scope clarification: this tool is the **CI-gate layer** (reproducible verdicts); runtime protection
-> (LLM-Guard-class) and LLM evaluation (promptfoo-class) are complementary, not substitutes. See the
+> (LLM-Guard-class) and LLM evaluation (promptfoo-class) are complementary, not substitutes. In the
+> industry's layered-defense framing, this deterministic static layer is the **no-model baseline** —
+> the form 2026 academic literature recommends for reproducible reporting (classifier verdicts flip
+> under adversarial suffixes; deterministic rule verdicts are byte-reproducible). See the
 > MCP boundary below for the MCP detection surface.
 
 ### Dual-track coexistence with promptfoo (PR static layer + eval statistical layer)

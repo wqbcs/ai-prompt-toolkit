@@ -51,6 +51,15 @@
 > 版本 v67.34.105→v67.34.120（R320-R333 十五轮细节见 CHANGELOG；R334=P270 中文
 > agent 配置注入面扩展 + 三语 README 数字漂移收口 15 处 + R242-X2 板漂移核验更正）。
 
+> R353 delta (2026-10-30, R310 快照列不覆写): 测试用例 → 7,252（全量跑口径含 5
+> slow, R353 +38 tests/test_r353_redos_inj_linearization.py）/ 版本 v67.34.120→
+> v67.34.134（R335-R353 细节见 CHANGELOG：scan 侧误报复裁三轮 R351-R353 + 深审
+> R349/R350 + 发布面 R345-R348）/ ReDoS 账本批准 94→119（R353 提取器扩
+> `pattern=` kwargs 面：INJ-*/INJ-ZH-* 37 条 kwargs pattern 首次入账, 25 条证据
+> 批准 + INJ-011/019 线性化）/ dev 钉版更新：ruff 0.16.10→0.17.0, mypy 2.1.0→
+> 2.4.0（check_env_parity 硬红口径同步, 上表 R310 数值作废）/ mypy strict 注册表
+> 286/286→290/291（R351 口径）。
+
 ## 质量门禁棘轮（只收紧不放松）
 
 | 棘轮 | 当前值 | 挂载 |

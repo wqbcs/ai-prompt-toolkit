@@ -1,6 +1,6 @@
 # L3 约束（团队层硬性约定 — 从代码与 CHANGELOG 实际惯例提取）
 
-> 更新: R310 (2026-10-16) | 首版: R213
+> 更新: R353 (2026-10-30) | 首版: R213
 > 这些约定违反即 CI 红或基线回退, 新改动必须遵守
 
 ## 规则工程纪律
@@ -22,12 +22,12 @@
 | 棘轮 | 当前值 | 挂载 |
 |---|---|---|
 | mypy 基线 | 0 / 0（禁抬; 验证前先 `rm -rf .mypy_cache` 排除陈旧缓存假绿） | release_gate + CI |
-| mypy strict 注册表 | 286/286 (100%, R300 收口) | check_mypy_ratchet S1-S4; 注册表变更唯一路径 `--update-strict`（红线钩子拦截直改） |
+| mypy strict 注册表 | 290/291 (R351 口径, 注册表变更唯一路径 `--update-strict`; 红线钩子拦截直改) | check_mypy_ratchet S1-S4 |
 | 误报率 | 阈值 0.01（实际 0.82%, 60 样本） | check_false_positives --fail-above 0.01 |
 | 漏检率 | 阈值 0.05（实际 0.00%, 379/379 单元） | check_miss_rate --fail-above 0.05 |
 | coverage | fail_under 75（R216 实测 75.67% 锁定, 不刷数） | .coveragerc |
 | 版本一致性 | pyproject / __init__ / README 徽章 / CHANGELOG 最新条目 四处一致 | check_version_consistency（门禁第 17 步, fail-fast） |
-| 环境一致性 | ruff 0.16.10 / mypy 2.1.0 / redoctor 0.1.5 钉版（漂移硬红, 不要改钉版） | check_env_parity |
+| 环境一致性 | ruff 0.17.0 / mypy 2.4.0 / redoctor 0.1.5 钉版（漂移硬红, 不要改钉版; R353 校准, R310 前数值作废） | check_env_parity |
 | 板 vs 代码 | 5 机器检查（sha 可解析/⬜行 CHANGELOG 声称/✅行规则引用 vs 活注册表/⬜行自相矛盾） | check_board_status（R243 脚本化, R294 check 4/5; /board 命令加声称抽查层） |
 | 分层 | L1 rules→io/adapters 禁入表 + L2 kernel 纯度 | check_layering（R254） |
 | 性能楔子 | <100ms/文件 | check_lint_performance |
@@ -36,9 +36,12 @@
 
 - 收口一律 `python scripts/release_gate.py`（29 步; 本地 `--skip 1,2` + 全量 pytest 单独实跑
   + 覆盖率棘轮交 CI 同形态判定）; **禁止管道吞退出码**（`| tail` 退出码来自 tail, 曾致假绿）
-- **升版门禁序**: 版本三处+README 徽章 → **CHANGELOG 段（check_version_consistency 要求
-  CHANGELOG 最新条目=当前版本, 必须先行于门禁——R308 第 17 步首红实证）** → gen_rules_doc.py
-  （非 --check）→ sync_readme_metrics → 门禁
+- **升版门禁序**: 版本四处（pyproject / `__init__.py` / README 徽章 / npm package.json,
+  npm 1:1 锁步 R346 起 check_version_consistency 机器强制）→ **CHANGELOG 段（check_version_
+  consistency 要求 CHANGELOG 最新条目=当前版本, 必须先行于门禁——R308 第 17 步首红实证）**
+  → gen_rules_doc.py（非 --check）→ sync_readme_metrics → sync_badges → **复跑 sync_readme_
+  metrics（必 RC=0: 首跑只报不修, en/ja 徽章归 sync_badges, R342 实证）** → gen_operating_
+  curve.py（R353 实证: 漏跑→升版后 test_r258 operating_curve --check 红）→ 门禁
 - 升版后必跑 gen_rules_doc.py（非 --check）— 连续两轮漏跑致 CI Docs drift 红的教训
 - 基线文件重存: 必须独立 commit + 理由; 不要为重存基线让 gate 通过
 - 收口回写板状态列必须带可验证引用（commit sha + 验证命令）

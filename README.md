@@ -10,8 +10,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.134-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7252%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.135-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7257%20passed-brightgreen.svg)](tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -54,7 +54,7 @@ prompt-cli baseline
 # 误报面  0.81%  |  干净样本 60 个 · checker 271 条
 ```
 
-> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds.
+> **Quick start (no install):** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — first finding in seconds（2026-10-30 实测：uvx 通道零安装→首条 finding 全程 6.8s，含工具链启动, 热缓存）。
 >
 > **其他渠道:** `uvx --from ai-prompt-toolkit prompt-cli lint <file>`（uv/uvx）· `pipx install ai-prompt-toolkit`（pipx）· `npx ai-prompt-toolkit lint <file>`（npm, 首跑自动装 Python 包）· `docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md`（容器）
 
@@ -258,13 +258,16 @@ docker run --rm prompt-cli lint -s /app/my_prompt.md
 ## 为什么可信
 
 **误报率收紧史**（每轮从 `docs/baseline_history.jsonl` 确定性重生成，逐字节一致；
-固定刻度 0–10%，曲线不随数据缩放）：
+固定刻度 0–10%，曲线不随数据缩放；行业报告口径=固定低 FPR 下的检出率
+（recall@fixed-FPR），本曲线 + 运营点数据页 [`docs/operating_curve.md`](docs/operating_curve.md)
+是该口径的机器可复现形态）：
 
 [![Baseline Trend](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/baseline-trend.svg)](docs/baseline_history.jsonl)
 
 **过防御（over-defense）外部锚点**——内部 60 样本是自选面，真正的试金石是
-"含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身）。
-用 PIGuard NotInject 339 条硬负样本（ACL 2025，独立 holdout，规则从未调优过）
+"含触发词的良性语句会不会被误杀"（support ticket 引用攻击串/安全文档本身；
+行业术语：**hard-benign**——形似攻击文本的良性文本, 检测器可信度生死指标）。
+用 PIGuard NotInject 339 条硬负样本（hard-benign, ACL 2025，独立 holdout，规则从未调优过）
 实测：**安全族误杀率 6.78%**（93 规则 @ 339 样本，首点 33.92%，
 逐批探针先行修复 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% 破 10% 阈值，见
 [`docs/overdefense_history.jsonl`](docs/overdefense_history.jsonl) 时间序列）——
@@ -387,7 +390,10 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 
 这不是贬低 LLM 路线 —— 语义层攻击（创意越狱/间接注入的对抗性改写）确实是纯静态
 检测的机制上限，应组合使用运行时防护（LLM Guard 类）。**分工**：本工具做 CI 门禁
-（可复现裁决层），LLM 系工具做语义评估与红队探测，两者互补不互替。
+（可复现裁决层），LLM 系工具做语义评估与红队探测，两者互补不互替。在行业分层防御
+框架中，本确定性静态层即 **no-model baseline**（2026 学术文献推荐的可复现报告形态——
+分类器裁决可被对抗后缀翻转, 确定性规则裁决逐字节可复现）；双基线公开的运营点
+（误报率 0.81%@60 干净样本 / 漏检率 0.00%@708 探针, 一条命令自证）是该基线的量化形态。
 
 ### 同类静态 Prompt 工具对比（2026-10 核实）
 

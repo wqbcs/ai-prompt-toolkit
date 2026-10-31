@@ -11,8 +11,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.134-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7252%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.135-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7257%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -56,7 +56,7 @@ prompt-cli baseline
 # 誤検出率     0.81%  |  クリーンサンプル 60 件 · ルール 271 件
 ```
 
-> **クイックスタート（インストール不要）:** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — 数秒で最初の finding。
+> **クイックスタート（インストール不要）:** `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>` — 数秒で最初の finding（2026-10-30 実測: uvx チャンネル、インストール不要→最初の finding まで 6.8 秒、ツールチェーン起動込み・ウォームキャッシュ）。
 >
 > **その他のチャネル:** `uvx --from ai-prompt-toolkit prompt-cli lint <file>`（uv/uvx）・`pipx install ai-prompt-toolkit`（pipx）・`npx ai-prompt-toolkit lint <file>`（npm、初回実行時に Python パッケージを自動インストール）・`docker run --rm ghcr.io/wqbcs/ai-prompt-toolkit prompt-cli lint -s /p.md`（コンテナ）
 
@@ -76,7 +76,8 @@ prompt-cli baseline
 
 **過防御（over-defense）外部アンカー** — 内部 60 サンプルは自選面であり、真の試金石は
 「トリガー語を含む無害文が誤殺されないか」（攻撃文字列を引用したサポートチケット /
-セキュリティ文書そのもの）です。PIGuard NotInject の 339 件のハードネガティブ（ACL 2025、
+セキュリティ文書そのもの。業界用語: **hard-benign** — 攻撃テキストに似た無害テキスト,
+検出器の信頼性の生死指標）です。PIGuard NotInject の 339 件のハードネガティブ（hard-benign, ACL 2025、
 独立 holdout、ルールはこれに対して一切チューニングしていない）で実測：**セキュリティ系
 誤殺率 6.78%**（93 ルール @ 339 サンプル。初回 33.92%、
 プロブ先行バッチ修正で 33.92%→20.94%→13.27%→11.50%→7.67%→6.78% と 10% 閾値を突破。
@@ -263,7 +264,9 @@ promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線�
 | 中国語ルール / レポート | 中国語インジェクション検出 18 件 + 中国語ルール系統 + 平易な表現のエラー + **言語別検出ベースライン表** | なし | なし | なし | 一部 |
 
 > 位置づけの明確化：本ツールは **CI ゲートレイヤ**（再現可能判定）。ランタイム防護（LLM Guard 系）と
-> LLM 評価（promptfoo 系）は補完的。MCP 検出面は下記「境界」を参照。
+> LLM 評価（promptfoo 系）は補完的。業界の分層防御フレームワークでは、この決定論的静的レイヤが
+> **no-model baseline** — 2026 年の学術文献が再現可能な報告に推奨する形態（分類器判定は敵対サフィックスで
+> 反転しうるが、決定論的ルール判定はバイト単位の再現が可能）。MCP 検出面は下記「境界」を参照。
 
 ### promptfoo との二重軌道共存（PR 静的レイヤ + eval 統計レイヤ）
 

@@ -2,7 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [v67.34.134] - 2026-10-30
+## [v67.34.135] - 2026-10-30
+
+### Fixed（R354 E1：DEF-ENC-001 编码层 pattern #1 收窄，P2-34 裁决落地）
+
+- **原 pattern `[A-Za-z0-9+/]{20,}={0,2}` 把斜杠词列/驼峰标识符当编码 blob**：26 模板实测 10/26 命中 14 处（`Critical/Major/Minor/Suggestion`、`ECS/OBS/RDS/ModelArts/CCI/GaussDB`、`onCreate/onWindowStageCreate/...`、`name/description/inputSchema`、`distributedDeviceManager` 等, 全部无数字）；真实编码语料（base64/hex/uuid）全含数字
+- **收窄 =「run 须含至少一个数字」**（base64 自然文本编码压倒性特征）：26 模板 0 误报（10/26→0/26）；真实编码 0 TP 回归（pin 测试串仍 HIT; 唯一行为差异 = 13B 明文 base64 漏, 但原 pattern 本就漏 = 非回归, 有行为不变锚定测试）；逃生舱留痕：无数字 base64 可绕本条（随机 15B ~3.2% / 30B ~0.1% / 40B+ ~0%）, 预检层+纵深防御接受, 代码注释+任务板双留痕
+- 新回归测试 5（tests/test_r354_defender_enc_narrowing.py：14 观测 FP 形态静默 / 真实编码保持 / 行为不变锚定 / 26 模板 DEF-ENC 零误报 / 模板规模稳定）；测试 7252→7257（+5）
+
+### Added（R354 E2-E5：商业化/获客面素材 + 术语对齐）
+
+- **docs/endorsement-pack.md**：P5-14 背书素材包——OWASP GenAI 资源页申请文本 + 3 条 awesome 清单 PR 条目（tldrsec/muellerberndt/mukundakatta）+ promptfoo 生态共存页建议；复制即用, 提交=用户侧动作（诚实标注未提交）
+- **marketing/blog-01-deterministic-gate.zh.md**：第一篇营销草稿《CI 门禁为什么必须是确定性的：一个 no-model baseline 的自证》（正文 + 英文 TL;DR + 渠道清单）；引用全部 2026-10-30 一手调研（Tom Ganz 2026-10-04 对抗后缀实测 / Wagner et al. arXiv 2610.03448 跨基准 τ 迁移 / Georgia Tech arXiv 2610.18408 no-model baseline）；未回源核验的二手数据不入正文；发布=用户侧动作
+- **docs/planning/R354_互联网开源调研与改进方案.md**：R354 调研与改进方案（2 S 级信号 + 12 A 级信号 + 5 执行项 E1-E5, 本轮全部落地）
+- wiki-scan 增量刷新：L0_profile（285 src / 7257 tests / 271 rules）/ L3_constraints（钉版 ruff 0.17.0 / mypy 2.4.0 / 门禁 30 步）/ L3_unknown / 人读版看板
+
+### Changed（R354 E3/E5：三语 README 术语对齐 + 快速开始实测计时）
+
+- 三语 README 质量/定位段补行业术语（**仅术语, 0 数字变更**）：hard-benign（过防御锚点段）/ no-model baseline（定位澄清段）/ recall@fixed-FPR + 运营点（operating point, 收紧史段, 链 operating_curve.md）
+- 三语 README 快速开始补实测计时：零安装→首条 finding 6.8s（2026-10-30 uvx 通道实测, 含工具链启动, 热缓存）
+- Tests 徽章 7252→7257（E1 新增 5 测试, sync_badges 刷新）
+
+### 验证
+
+- 全量 pytest **7257 passed** 0 failed（7252+5 新增, 含 5 slow 未 deselect; 独立跑 4014.86s——本轮机器高负载, R353 基线 332s）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ReDoS 审计 NEW 0（119 全批准, 本轮未新增 re.compile 字面量）
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（148 行, P2-34 ✅ + P5-05/P5-14 🟡）| 版本一致性 0 漂移（v67.34.135, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
 
 ### Fixed（R353 ReDoS 账本扩面：pattern= kwargs 提取器 + INJ-011/019 线性化 + 25 新脆弱项证据批准）
 
