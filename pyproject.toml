@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ai-prompt-toolkit"
-version = "67.34.136"
+version = "67.34.137"
 description = "AI 提示词确定性静态门禁：零 LLM、裁决逐字节一致、<100ms/文件、SARIF/CI 原生。Prompt Linter + 5 层安全扫描 + OWASP LLM Top 10 (2026) 映射 + MCP Server，双基线一条命令自证，中文优先"
 readme = "README.md"
 requires-python = ">=3.10"

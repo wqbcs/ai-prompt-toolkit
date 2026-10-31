@@ -2,7 +2,22 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [v67.34.136] - 2026-10-30
+## [v67.34.137] - 2026-10-30
+
+### Added（R356：T1-2 Unicode 归一化层立规——P3-38 取证落地）
+
+- **src/ai_prompt_toolkit/security/normalization.py**（新增）：`normalize_for_detection()` = NFKC（全角→半角、兼容性分解）+ 零宽/格式控制字符剥离（U+200B/200C/200D/2060/FEFF）；**ASCII 短路**（NFKC 对 ASCII 子集恒等 + 零宽字符全非 ASCII → `isascii()` C 层 O(n) 扫描后直接返回, 1.8MB 级目标 <5ms）; 非 ASCII 走 NFKC + 字符类 sub（均单趟 O(n)）
+- **检测入口接线（2 处）**：`PromptDefender.defend()`（白名单检查后）+ `InjectionDetector.detect()`（入口）——全角/零宽插入攻击面归一化后走既有规则层（P3-38 取证：2 独立归一化面原静默=漏检红证据）; **行计数不变性**（归一化不引入/移除换行）→ 行号天然正确; 范围纪律=仅检测面, 不动 lint 侧规则面
+- **tests/test_r356_unicode_normalization.py**（新增, 9 测试）：红转绿探针（C3 全角/C4 零宽 × defender/INJ 4 TP）+ TN 护栏（良性全角/零宽 0 误报）+ 性质测试（行计数不变/ASCII 恒等）+ 既有 TP 对照
+
+### Fixed（R356：1.8MB lint 上限回归——R343-RE-1 面, T1-2 首版引入）
+
+- **isascii() 短路（性能根因修复）**：T1-2 首版无 ASCII 短路, 1.8MB 单行目标 lint 路径 NFKC 新增数秒开销, 负载下击穿 60s 单目标上限（实证：R355 全量（无 T1-2）同测试全绿 → R356 首版全量 1 failed; 单测首版 37.97s → 修复后 36.14s）; 修复=ASCII 短路（语义等价: NFKC ASCII 恒等 + 零宽字符全非 ASCII）, 成本降至 ms 级; 复跑全量 **7266 passed 0 failed**（682.32s）确认负载下恢复
+
+### 验证
+
+- 全量 pytest **7266 passed** 0 failed（7257+9 新增, 复跑 682.32s——含 isascii 短路修复后负载下确认）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ReDoS 审计 NEW 0（_ZERO_WIDTH_RE 字符类单趟=线性, 119 全批准）| mypy 0 错（strict 291/292, normalization.py 入 strict 注册表）
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（149 行, P3-38 ✅）| 版本一致性 0 漂移（v67.34.137, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
 
 ### Added（R355：博客②③草稿 + T1-1 取证登记）
 

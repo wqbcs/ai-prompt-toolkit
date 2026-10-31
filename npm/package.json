@@ -1,6 +1,6 @@
 {
   "name": "ai-prompt-toolkit",
-  "version": "67.34.136",
+  "version": "67.34.137",
   "description": "AI prompt lint / security scan / quality gate — deterministic, zero-LLM. npm wrapper for the Python package (PyPI: ai-prompt-toolkit); all detection logic lives in the Python package (single source of truth), version 1:1 mirrored.",
   "keywords": [
     "prompt",

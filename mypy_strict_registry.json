@@ -269,6 +269,7 @@
     "src/ai_prompt_toolkit/security/inheritance_auditor.py": true,
     "src/ai_prompt_toolkit/security/injection_detector.py": true,
     "src/ai_prompt_toolkit/security/mcp_config_scanner.py": true,
+    "src/ai_prompt_toolkit/security/normalization.py": true,
     "src/ai_prompt_toolkit/security/output_scanners.py": true,
     "src/ai_prompt_toolkit/security/pii_detector.py": true,
     "src/ai_prompt_toolkit/security/prompt_scorecard.py": true,

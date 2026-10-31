@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import time
 
+from ai_prompt_toolkit.security.normalization import normalize_for_detection
 from ai_prompt_toolkit.security.types import InjectionRule
 from ai_prompt_toolkit.types import Finding, Severity
 
@@ -207,6 +208,11 @@ class InjectionDetector:
 
     def detect(self, text: str, *, template_id: str = "") -> list[Finding]:
         start = time.perf_counter()
+        # T1-2 (R356): 检测输入归一化（NFKC + 零宽剥离）——与 defender 入口同口径
+        # （P3-38 取证：全角/零宽面 INJ 族原静默）。行计数不变 → line_number 天然正确。
+        normalized = normalize_for_detection(text)
+        if normalized != text:
+            text = normalized
         findings: list[Finding] = []
         lines = text.splitlines()
 

@@ -14365,6 +14365,12 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "security/normalization.py\u0000[\\u200b\\u200c\\u200d\\u2060\\ufeff]": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   },
   "metadata": {

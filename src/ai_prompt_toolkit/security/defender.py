@@ -26,6 +26,7 @@ from enum import Enum
 from typing import Any
 from urllib.parse import unquote
 
+from ai_prompt_toolkit.security.normalization import normalize_for_detection
 from ai_prompt_toolkit.types import Finding, Severity
 
 
@@ -207,6 +208,12 @@ class PromptDefender:
         if _is_whitelisted(text):
             elapsed = (time.perf_counter() - start) * 1000
             return DefenseResult(is_safe=True, risk_score=0.0, scan_time_ms=elapsed)
+
+        # T1-2 (R356): 检测输入归一化（NFKC + 零宽剥离）——全角/零宽插入攻击面
+        # 归一后走既有层（P3-38 取证：2 独立归一化面原静默）。行计数不变 → 行号天然正确。
+        normalized = normalize_for_detection(text)
+        if normalized != text:
+            text = normalized
 
         for layer, (enabled, patterns, severity, prefix) in self._layers.items():
             if not enabled:
