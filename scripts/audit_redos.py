@@ -52,18 +52,23 @@ TARGET_DIRS = ("linter", "security")
 # 与存量 101 条同一 DoS 处置档(登记 07 风险登记册, 不重构检测 regex)。
 # 批准=不重构(重构风险=误报率/漏检率双基线漂移, 属低价值打磨陷阱)。
 APPROVE_METADATA = {
-    "approved_at": "2026-10-27",
-    "approver": "R344 audit (AtomCode), supersedes R229",
+    "approved_at": "2026-10-30",
+    "approver": "R353 audit (AtomCode), supersedes R344",
     "rationale": (
-        "94 vulnerable patterns all polynomial (O(n^4) x94), zero exponential. R344 addition: "
-        "_P028_SAFE (?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2) flagged O(n^4) by redoctor "
-        "static heuristic (step\\s+[12] single-anchor whitespace-backtrack shape) — measured strictly "
-        "linear: 10^7-whitespace adversarial run 0.208s with exact 10x-per-10x scaling "
-        "(2ms@10^5, 21ms@10^6, 208ms@10^7); multi-segment and CJK-interleaved adversarial forms "
-        "~0.02s @10^6. Pure literal alternation, no quantifier nesting — nothing to refactor. "
-        "Pre-existing 93 approvals (R227 101-item evidence + R229 P264 vendor-hash) retained with "
-        "their original measurements (all <100ms @2000-char envelope; >20K adversarial vector "
-        "registered in 07 risk register)."
+        "25 new INJ-family patterns (pattern= kwargs extractor gap closed in R353; INJ-*/INJ-ZH-* kwargs "
+        "patterns were never in the ledger before: injection_detector.py 10 + zh_injection_rules.py 15) "
+        "all polynomial O(n^4), zero exponential. Adversarial PoC timing on redoctor attack-string dense "
+        "fill at 20KB scan-side envelope (larger than the R227 2000-char lint envelope), detector-identical "
+        "flags (IGNORECASE|DOTALL): 25/25 within the <100ms/file wedge — in-round (R353) dense-fill "
+        "measurement worst 30.8ms (ZH-018); independent re-measurement 2026-10-30 (PoC-run-expanded "
+        "dense fill, min of 3) worst 0.81ms. 2 INJ rules breached the wedge pre-linearization (INJ-011 "
+        "513ms, INJ-019 364ms @20KB) — linearized to bounded O(n) spans ({0,40} same-line + {0,6} "
+        "cross-single, R352 idiom); post-linearization 2.05ms/2.06ms @20KB (250x/176x speedup), O(n) "
+        "scaling confirmed (5/10/20KB linear), TP preserved, no new FP (new-hits ⊆ old-hits on 56-doc "
+        "corpus), 26-template INJ histogram all-zero. Pre-existing 94 R344 approvals (R227 101-item "
+        "evidence + R229 P264 vendor-hash + R344 _P028_SAFE) retained with their original measurements "
+        "(all <100ms @2000-char envelope; >20K adversarial vector registered in 07 risk register). "
+        "Total approved after this round: 119."
     ),
 }
 
@@ -110,6 +115,19 @@ def _collect_regex_patterns() -> list[dict]:
                     if isinstance(tgt, ast.Name) and tgt.id.isupper():
                         for el in _iter_strings(node.value):
                             patterns.append((el[0], py.relative_to(SRC_ROOT).as_posix(), el[1]))
+                # R353: 精确捕获 `pattern=` kwargs（InjectionRule/LintRule 等 dataclass 构造）——
+                # 收口 INJ-*/INJ-ZH-* 37 条 kwargs pattern(P2-31 注记⑧)。不用 _iter_strings
+                # (会连带抓 rule_id/name/description/remediation, 实测 2568 噪声), 只抓真 regex。
+                # lineno 取 pattern 字符串自身(与 _iter_strings 同口径) → 与 Assign 分支去重
+                elif isinstance(node, ast.Call):
+                    for kw in node.keywords:
+                        if (
+                            kw.arg == "pattern"
+                            and isinstance(kw.value, ast.Constant)
+                            and isinstance(kw.value.value, str)
+                            and len(kw.value.value) >= 4
+                        ):
+                            patterns.append((kw.value.value, py.relative_to(SRC_ROOT).as_posix(), kw.value.lineno))
                 for pat, rel, ln in patterns:
                     key = (rel, pat, ln)
                     if key in seen:

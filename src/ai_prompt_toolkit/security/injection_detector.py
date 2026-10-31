@@ -95,7 +95,11 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-011",
         name="系统提示泄露",
-        pattern=r"(?:repeat|echo|output|print|show|display).*(?:system|initial|original|first)\s*(?:prompt|instruction|message)",
+        # R353: 未界 `.*` → 同行有界 {0,40} + 跨单行 {0,6}（R352 同惯用法）— redoctor O(n^4)，
+        # 密集锚点 20KB 实测 411ms 破 <100ms/file 楔子；有界化后 O(n)，新命中⊆旧命中(不重引 FP)。
+        # N=40 取英文自然短语面("show me the contents of the system prompt" gap=24)×1.5 余量;
+        # M=6 覆盖"第二步："(5 字)跨行形态(= INJ-014 既有 M 上限)
+        pattern=r"(?:repeat|echo|output|print|show|display)[^\n。！？!?；;]{0,40}(?:\n[^\n。！？!?；;]{0,6})?(?:system|initial|original|first)\s*(?:prompt|instruction|message)",
         severity=Severity.HIGH,
         description="检测到系统提示泄露模式：尝试获取系统级提示词(OWASP LLM07)",
         remediation="添加系统提示保护层，禁止输出系统级指令",
@@ -159,7 +163,11 @@ _BUILTIN_RULES: list[InjectionRule] = [
     InjectionRule(
         rule_id="INJ-019",
         name="分片注入",
-        pattern=r"(?:part\s+\d|step\s+\d|section\s+\d|第[一二三四五六七八九十\d]+[部分步节]).*(?:combine|merge|assemble|concatenate|join|拼接|合并|组装).*(?:instruction|prompt|rule|directive|指令|规则|提示)",
+        # R353: 两处未界 `.*` → 同行有界 {0,40} + 跨单行 {0,6}（R352 同惯用法）— redoctor O(n^4)，
+        # 密集锚点 20KB 实测 329ms 破 <100ms/file 楔子；有界化后 O(n)，新命中⊆旧命中(不重引 FP)。
+        # N=40 取英文自然短语面("merge them into the final prompt" gap=23)×1.5 余量;
+        # M=6 覆盖"第二步："(5 字)跨行形态(= INJ-014 既有 M 上限)
+        pattern=r"(?:part\s+\d|step\s+\d|section\s+\d|第[一二三四五六七八九十\d]+[部分步节])[^\n。！？!?；;]{0,40}(?:\n[^\n。！？!?；;]{0,6})?(?:combine|merge|assemble|concatenate|join|拼接|合并|组装)[^\n。！？!?；;]{0,40}(?:\n[^\n。！？!?；;]{0,6})?(?:instruction|prompt|rule|directive|指令|规则|提示)",
         severity=Severity.HIGH,
         description="检测到分片注入模式：将恶意指令拆分到多个部分，通过合并触发攻击(OWASP LLM01变体)",
         remediation="检测跨段指令组合，添加分片组装安全检查",

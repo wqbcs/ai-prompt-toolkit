@@ -2,6 +2,18 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.134] - 2026-10-30
+
+### Fixed（R353 ReDoS 账本扩面：pattern= kwargs 提取器 + INJ-011/019 线性化 + 25 新脆弱项证据批准）
+
+- **audit_redos 提取器 kwargs 面**（P2-32 登记 ⑧，R351 深审发现）：字面量提取原只认 `re.compile()` 调用，不覆盖 dataclass `pattern=` kwargs——INJ-*/INJ-ZH-* 37 条 kwargs pattern 从未入 redos 账本（同族盲区）；本轮精确 kwargs 捕获（仅 ≥4 字符真 regex 字符串字面量，pattern 字符串自身 lineno 去重，不抓 rule_id/name/description/remediation 噪声——实测噪声 2568 条）
+- **2 INJ 破楔规则线性化**：INJ-011 系统提示泄露（513ms@20KB）/ INJ-019 分片注入（364ms@20KB）未界 `.*` 链破 <100ms/file 楔子 → 同行有界 {0,40} + 跨单行 {0,6}（R352 惯用法；N=40 取英文自然短语面×1.5 余量，M=6 覆盖「第二步：」5 字跨行形态）；有界化后 2.05/2.06ms（250×/176×），O(n) scaling 实测（5/10/20KB 线性），TP 保持，新命中 ⊆ 旧命中（56 文档语料），26 模板 INJ 直方图全零
+- **25 新脆弱项证据批准**（injection_detector.py 10 + zh_injection_rules.py 15，全 O(n^4) 多项式零指数）：检测器同 flags（IGNORECASE|DOTALL）20KB 密集填充对抗计时——轮内测量 worst 30.8ms（ZH-018），独立复测（PoC 段扩展密集填充, min of 3）worst 0.81ms，25/25 楔子内；账本批准 94→119，metadata 留 R353 审计痕迹（supersedes R344，含独立复测口径）
+- 新测试 38（tests/test_r353_redos_inj_linearization.py：线性化行为/O(n) scaling/TP 保持/命中集包含/26 模板直方图）；测试 7214→7252（+38）
+
+- 全量 pytest **7252 passed** 0 failed（含 5 slow 未 deselect；其中 1 r258 operating_curve 漂移=升版工件序漏跑 gen_operating_curve, 补跑后文件级复验 4 passed）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708）| ReDoS 审计 NEW 0（119 全批准）| 性能楔子/SARIF/分层/依赖/环境一致性全项绿
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2, 99s; 全量 pytest 独立跑 332s）| 板状态 0 红（148 行, P3-37 新行一致）| 版本一致性 0 漂移（v67.34.134, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.133] - 2026-10-30
 
 ### Fixed（R352 P2-32 scan 侧残留同族误报复裁：4+1 规则收窄 + 8 模板防御句措辞修正 + 两相闸拆分 P2-33）

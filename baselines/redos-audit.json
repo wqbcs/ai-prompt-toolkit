@@ -14137,11 +14137,233 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "security/injection_detector.py\u0000ignore\\s+.*previous\\s+.*instruction": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "ignore\tprevious\t\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000instruction!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000you\\s+are\\s+now\\s+.*(?:admin|root|system)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "you\tare\tnow\t\t\t\t\t\t\t\t\t\t\t\troot!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:output|print|send)\\s+.*(?:secret|key|token)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "send\t\t\t\t\t\t\t\t\t\t\t\tkey!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:execute|run|eval|exec)\\s+.*command": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "run\t\t\t\t\t\t\t\t\t\t\t\tcommand!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000\\{\\{[^#/].*?\\}\\}.*\\{\\{[^#/]": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "{{\u0000}}\u0000}}}}}}}}}}{{}!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:retrieved|fetched|search).*?(?:ignore|disregard|forget)\\s+.*(?:instruction|rule|constraint)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "searchignore\tforrrrrrrrrrrget\trule!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:DAN|jailbreak|bypass|circumvent).*(?:filter|safety|guard|restriction|policy)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:wait|actually|never\\s*mind|on\\s*second\\s*thought).*?(?:reveal|show|tell|output)\\s+.*(?:secret|key|password|token)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "waitoutppppppppppput\tshow\tkey!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:base64|utf-8|unicode|\\\\x[0-9a-f]{2}|\\\\u[0-9a-f]{4})[^\\n。！？!?；;]{0,20}(?:\\n[^\\n。！？!?；;]{0,4})?(?:decode|interpret|parse|exec)(?![A-Za-z0-9_])": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?<!不得建议)(?<!不得提供)(?<!不提供)(?:忽略|无视|忘记|绕过)[^\\n。！？!?；;]{0,12}(?:\\n[^\\n。！？!?；;]{0,4})?(?:指令|规则|限制|约束|安全)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:repeat|echo|output|print|show|display)[^\\n。！？!?；;]{0,40}(?:\\n[^\\n。！？!?；;]{0,6})?(?:system|initial|original|first)\\s*(?:prompt|instruction|message)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:always|must|should|need\\s*to)\\s+(?:respond|reply|answer|output)\\s+(?:with|using|in)\\s+(?:only|exactly|just)\\s+": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:sudo|admin|root|superuser|elevated|escalat).*(?:privilege|permission|access|role|right)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:import|include|require|load|fetch)[ \\t]+[^\\n。！？!?；;]{0,20}(?:\\n[^\\n。！？!?；;]{0,6})?(?:url|remote|external|untrusted|https?://)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:please|我求你|求求|begging|desperate|紧急|urgent|life\\s*or\\s*death|救命).*(?:ignore|bypass|skip|override|break)\\s+.*(?:rule|limit|constraint|restriction)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "求求bypass\t\t\t\t\t\t\t\t\t\t\trule!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:base64|hex|rot13|unicode|url.encode|atob|btoa|\\\\x[0-9a-f]{2}|\\\\u[0-9a-f]{4}).*(?:exec|eval|run|execute|system|command)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?<!不得建议)(?<!不得提供)(?<!不提供)(?:忽略|无视|跳过|绕过|取消|删除|移除|覆写|替换)[^\\n。！？!?；;]{0,12}(?:\\n[^\\n。！？!?；;]{0,4})?(?:规则|限制|约束|安全|防护|过滤|检查|指令|以上)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/injection_detector.py\u0000(?:translate|interpret|parse|process|analyze).*(?:the\\s+following|below|this).*(?:ignore|bypass|override|disregard).*(?:instruction|rule|safety|constraint)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "parsethisthe\tfollllllllllllowingignorerule!",
+      "approved": true
+    },
+    "security/injection_detector.py\u0000(?:part\\s+\\d|step\\s+\\d|section\\s+\\d|第[一二三四五六七八九十\\d]+[部分步节])[^\\n。！？!?；;]{0,40}(?:\\n[^\\n。！？!?；;]{0,6})?(?:combine|merge|assemble|concatenate|join|拼接|合并|组装)[^\\n。！？!?；;]{0,40}(?:\\n[^\\n。！？!?；;]{0,6})?(?:instruction|prompt|rule|directive|指令|规则|提示)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": null,
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:忽略|无视|忘记|抛弃|放弃).*(?:之前|上面|上文|先前|前面的).*(?:指令|规则|限制|约束|要求|设定)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "忽略上文\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000之前指令!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:你(?:现在|现在起|从现在开始|以后)是|从现在起你是|你已(?:经)?变成了?)(?:超级|终极|无敌|全知全能|无所不能).*(?:管理员|超级用户|系统|admin|root|system|上帝|神)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/zh_injection_rules.py\u0000(?:我要你|请你|让你)(?:扮演|成为|模拟|做)(?:DAN|越狱模式|自由模式|解锁模式|无限制模式|没有限制的)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/zh_injection_rules.py\u0000(?:其实|实际上|事实上|真相是|真正).*(?:没有|不需要|不用).*(?:限制|约束|规则|安全|过滤|审核)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "其实没有不用用用用用用用用用用用限制!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:求求|求你|我跪下|我求你|救命|紧急|人命关天|生死攸关).*(?:告诉|告诉我|给我|提供|输出|展示|显示).*(?:密码|密钥|密码|token|秘密|内部|机密|敏感)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "求求告诉诉诉诉诉诉诉诉诉诉诉我密码!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:假设|设想|假定|如果|假如).*(?:世界|场景|故事|游戏|小说|虚构).*(?:没有|不存在|取消了|不需要).*(?:安全|限制|规则|约束|审核|过滤)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "假设世界虚构构构构构构构构构构构没有安全!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:将|把|用).*(?:以下|下面|这个).*(?:解码|翻译|还原|解读|解释).*(?:Base64|Unicode|摩斯密码|拼音|注音|偏旁|拆字|谐音|火星文)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "将以下\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000以下解码拼音!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:好的|明白了|知道了|了解了).*(?:那么|接下来|然后|现在|接着).*(?:能不能|可以|请|帮我).*(?:输出|显示|告诉我|提供|列出).*(?:密码|密钥|内部|机密|敏感|隐私|个人|秘密)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "好的那么请输出接下来来来来来来来来来来来请输出密码!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:我们来|让我们|请跟?我?一起)(?:玩|做|进行|模拟).*(?:游戏|角色扮演|演戏|情景剧).*(?:你是|你扮演|你饰演).*(?:黑客|犯罪|恶意|邪恶|反派|坏人|不受限)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "我们来玩游戏你是角色色色色色色色色色色色扮演黑客!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:作为|以).*(?:中国人|华人|东方|中华).*(?:应该|必须|一定要|务必).*(?:输出|提供|告诉|展示|列出).*(?:争议|敏感|政治|领土|宗教|民族)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "以华人中国人\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000应该输出争议!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?<!不)(?<!别)(?<!勿)(?<!不要)(?<!不得)(?<!禁止)(?<!严禁)(?<!不允许)(?<!不可)(?<!不许)(?:重复|输出|显示|打印|告诉我|展示)[^\\n。！？!?；;]{0,12}(?:\\n[^\\n。！？!?；;]{0,4})?(?:系统|初始|原始|第一个|原始的)[^\\n。！？!?；;]{0,8}(?:\\n[^\\n。！？!?；;]{0,4})?(?:提示|指令|消息|设定|prompt|instruction|message)": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "security/zh_injection_rules.py\u0000(?:搜索|检索|查找|找到)[^\\n。！？!?；;]{0,15}(?:\\n[^\\n。！？!?；;]{0,4})?(?:结果|内容|信息|资料)[^\\n。！？!?；;]{0,15}(?:\\n[^\\n。！？!?；;]{0,4})?(?:要求|指示|命令|暗示)[^\\n。！？!?；;]{0,8}(?:\\n[^\\n。！？!?；;]{0,4})?(?:忽略|无视|绕过|跳过|取消)[^\\n。！？!?；;]{0,8}(?:\\n[^\\n。！？!?；;]{0,4})?(?:安全|限制|规则|约束|审核)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": null,
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:以下|下面|这段).*(?:不是|并非|不算|不算作).*(?:指令|命令|要求|prompt|instruction|command).*(?:只是|仅仅|不过是|只是).*(?:示例|例子|测试|练习|演示|example|test)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "以下不是指令只是指令令令令令令令令令令令只是示例!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:如果不|要是你|你要是不|若不|除非).*(?:配合|服从|照做|答应|执行|输出).*(?:后果|惩罚|报应|下场|承担).*(?:严重|可怕|不可挽回|致命)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "若不照做\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000配合后果严重!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:既然|因为|由于).*(?:你是|你可以|你能够|你有能力).*(?:做|完成|执行|生成|创建).*(?:任何|所有|一切|whatever|anything).*(?:那|那么|所以|因此).*(?:请|就|来).*(?:做|生成|输出|执行|创建)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "既然你是做任何那做\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000请做!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:请(?:先)?翻译|translate).*(?:以下|下面|这段).*(?:为|到|into).*(?:英文|English).*(?:然后|接着|再|then).*(?:执行|忽略|输出|完成|override|ignore|execute)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "请翻译以下为英文再以下\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000执行!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:求求你|拜托|行行好|可怜可怜|帮帮忙).*(?:我知道你|你是|你有).*(?:善良|心|同情心|感情|良知).*(?:所以|因此|那).*(?:请|帮|给|让).*(?:做|输出|生成|告诉我|reveal|show)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "拜托你是心那给\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000做!",
+      "approved": true
+    },
+    "security/zh_injection_rules.py\u0000(?:让我们|我们来|咱们).*(?:玩(?:一个)?|做(?:一个)?|开始(?:一个)?).*(?:游戏|角色扮演|模拟|场景|剧情).*(?:你(?:是|扮演|演)).*(?:没有|无|不受).*(?:限制|约束|安全|规则)": {
+      "vulnerable": true,
+      "complexity": "O(n^4)",
+      "attack": "咱们玩剧情\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000游戏你是无限制!",
+      "approved": true
     }
   },
   "metadata": {
-    "approved_at": "2026-10-27",
-    "approver": "R344 audit (AtomCode), supersedes R229",
-    "rationale": "94 vulnerable patterns all polynomial (O(n^4) x94), zero exponential. R344 addition: _P028_SAFE (?:首先|然后|接着|最后|第一步|第二步|step\\s+1|step\\s+2) flagged O(n^4) by redoctor static heuristic (step\\s+[12] single-anchor whitespace-backtrack shape) — measured strictly linear: 10^7-whitespace adversarial run 0.208s with exact 10x-per-10x scaling (2ms@10^5, 21ms@10^6, 208ms@10^7); multi-segment and CJK-interleaved adversarial forms ~0.02s @10^6. Pure literal alternation, no quantifier nesting — nothing to refactor. Pre-existing 93 approvals (R227 101-item evidence + R229 P264 vendor-hash) retained with their original measurements (all <100ms @2000-char envelope; >20K adversarial vector registered in 07 risk register)."
+    "approved_at": "2026-10-30",
+    "approver": "R353 audit (AtomCode), supersedes R344",
+    "rationale": "25 new INJ-family patterns (pattern= kwargs extractor gap closed in R353; INJ-*/INJ-ZH-* kwargs patterns were never in the ledger before: injection_detector.py 10 + zh_injection_rules.py 15) all polynomial O(n^4), zero exponential. Adversarial PoC timing on redoctor attack-string dense fill at 20KB scan-side envelope (larger than the R227 2000-char lint envelope), detector-identical flags (IGNORECASE|DOTALL): 25/25 within the <100ms/file wedge — in-round (R353) dense-fill measurement worst 30.8ms (ZH-018); independent re-measurement 2026-10-30 (PoC-run-expanded dense fill, min of 3) worst 0.81ms. 2 INJ rules breached the wedge pre-linearization (INJ-011 513ms, INJ-019 364ms @20KB) — linearized to bounded O(n) spans ({0,40} same-line + {0,6} cross-single, R352 idiom); post-linearization 2.05ms/2.06ms @20KB (250x/176x speedup), O(n) scaling confirmed (5/10/20KB linear), TP preserved, no new FP (new-hits ⊆ old-hits on 56-doc corpus), 26-template INJ histogram all-zero. Pre-existing 94 R344 approvals (R227 101-item evidence + R229 P264 vendor-hash + R344 _P028_SAFE) retained with their original measurements (all <100ms @2000-char envelope; >20K adversarial vector registered in 07 risk register). Total approved after this round: 119."
   }
 }
