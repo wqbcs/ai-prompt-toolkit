@@ -17,7 +17,7 @@
 - 60 个干净样本, 误报率 **0.81%**（棘轮阈值 1%）
 - 过防御锚点：NotInject 339 hard-benign 独立 holdout, 安全族误杀率 **6.78%**（首点 33.92% 逐批修复至破 10% 阈值以下, 时间序列公开）
 - OWASP LLM Top 10 (2026) + MITRE ATLAS + 等保 2.0 三标准映射
-- MIT License, Python 3.10+, 零核心第三方依赖
+- MIT License, Python 3.10+, **安全检测核心（`src/ai_prompt_toolkit/security/`）纯标准库零第三方依赖**（包级运行时依赖=7 个声明依赖: click/rich/pyyaml/jsonschema/cachetools/jinja2 + <3.11 条件 tomli, 全部在 pyproject 显式声明）
 - 零安装试用: `pipx run --spec ai-prompt-toolkit prompt-cli lint <file>`（2026-10-30 实测 uvx 通道全程 6.8s）
 - 自证命令: `pip install ai-prompt-toolkit && prompt-cli baseline`
 

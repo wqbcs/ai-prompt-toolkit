@@ -10,8 +10,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.137-orange.svg)](CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7266%20passed-brightgreen.svg)](tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.138-orange.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7279%20passed-brightgreen.svg)](tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](docs/规则误报率基线.md)
@@ -377,7 +377,10 @@ TPA/FSP 注入形态 MCP-111/112，inputSchema 递归 walk，rug pull 基线批�
 
 ### 与 LLM 系竞品的结构性差异
 
-promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评估**场景它们是
+promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线（promptfoo 于
+2026-03 被 OpenAI 宣布收购, 开源项目继续, 但 indirect injection/hijack/
+SSRF/system-override 等 red-team 插件需 hosted generation——离线用户被
+分流到云端）。对**评估**场景它们是
 好工具；对 **CI 门禁**场景，非确定性是结构性缺陷，不是参数调得出来的：
 
 | 门禁要求 | LLM 系工具（promptfoo/garak 路线） | 本工具（确定性静态） |
@@ -395,19 +398,23 @@ promptfoo / garak / PromptGuard 等主流工具走 LLM 驱动路线。对**评�
 分类器裁决可被对抗后缀翻转, 确定性规则裁决逐字节可复现）；双基线公开的运营点
 （误报率 0.81%@60 干净样本 / 漏检率 0.00%@708 探针, 一条命令自证）是该基线的量化形态。
 
-### 同类静态 Prompt 工具对比（2026-10 核实）
+### 同类静态 Prompt 工具对比（2026-10-31 核实）
 
-| 维度 | 本工具 | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系（cognis/LintLang 等） |
-|------|--------|---------------|-----------|---------|---------------------------|
-| 语言/依赖 | Python 零核心第三方依赖 | Rust 单二进制 | Python（Semgrep+Sigstore+CVE feed，依赖重） | Python | Python/Node，纯正则 |
-| 检测面 | Prompt 全生命周期（lint/scan/probe/redteam/合规/版本）+ MCP 配置 | Prompt 静态 + 从代码抽取 inline prompt + 可移植性 | MCP 供应链全栈（SBOM/SAST/live server） | MCP 七模块（scan/harden/auth/pin） | Prompt 正则 lint（LintLang 另加 agent-config 面） |
-| OWASP LLM Top 10 映射 | **2026 版（当前）+ ATLAS + 等保 2.0 三标准** | 无公开标准映射 | CVE/ATTACK 面 | 无 | 部分 |
-| 裁决确定性 | 逐字节可复现 + 双基线时间序列（漏检/误报可一条命令复现） | 确定性静态 | 依赖运行时/网络 feed | 部分 | 确定性静态 |
-| 增量门禁 | 双基线（FP 棘轮 + 存量锁定）+ 增量只拦 NEW | 无公开基线纪律 | 有 | 有 | 无 |
-| 中文规则/报告 | 18 条中文注入检测 + 中文规则族 + 人话报错 + **分语言检测基线表** | 无 | 无 | 无 | 部分 |
+| 维度 | 本工具 | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系（cognis/LintLang 等） | GitHub Code Scanning for AI（官方, 2026-10-28 preview） |
+|------|--------|---------------|-----------|---------|---------------------------|------|
+| 语言/依赖 | Python 零核心第三方依赖 | Rust 单二进制 | Python（Semgrep+Sigstore+CVE feed，依赖重） | Python | Python/Node，纯正则 | CodeQL 引擎, 需 GitHub Advanced Security 许可（SaaS, Enterprise Server 暂不可用） |
+| 检测面 | Prompt 全生命周期（lint/scan/probe/redteam/合规/版本）+ MCP 配置 | Prompt 静态 + 从代码抽取 inline prompt + 可移植性 | MCP 供应链全栈（SBOM/SAST/live server） | MCP 七模块（scan/harden/auth/pin） | Prompt 正则 lint（LintLang 另加 agent-config 面） | indirect prompt injection (XPIA)/敏感信息泄露/过度 agency（官方口径"coverage 扩展中"） |
+| OWASP LLM Top 10 映射 | **2026 版（当前）+ ATLAS + 等保 2.0 三标准** | 无公开标准映射 | CVE/ATTACK 面 | 无 | 部分 | 未公开映射 |
+| 裁决确定性 | 逐字节可复现 + 双基线时间序列（漏检/误报可一条命令复现） | 确定性静态 | 依赖运行时/网络 feed | 部分 | 确定性静态 | 未提供逐字节可复现承诺 |
+| 增量门禁 | 双基线（FP 棘轮 + 存量锁定）+ 增量只拦 NEW | 无公开基线纪律 | 有 | 有 | 无 | 未提供 |
+| 中文规则/报告 | 18 条中文注入检测 + 中文规则族 + 人话报错 + **分语言检测基线表** | 无 | 无 | 无 | 部分 | 无 |
+| 离线/air-gap | 可（零 LLM 零网络） | 可 | 不可（网络 feed） | 可 | 可 | 不可（GHAS SaaS） |
 
 > 定位澄清：本工具做 **CI 门禁层**（可复现裁决）；运行时防护（LLM Guard 类）、
-> LLM 评估（promptfoo 类）互补不互替。MCP 检测面见下方"适用边界"。
+> LLM 评估（promptfoo 类）互补不互替。GitHub 官方 AI 代码扫描（2026-10-28
+> public preview, changelog 2026-10-28）确认了"AI 代码扫描"品类的合法性,
+> 其 SaaS/按席形态未覆盖的离线/自托管/确定性审计面即本工具楔子面。
+> MCP 检测面见下方"适用边界"。
 
 ### 与 promptfoo 双轨共存（PR 静态层 + eval 统计层）
 

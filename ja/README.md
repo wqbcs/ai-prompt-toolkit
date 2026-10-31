@@ -11,8 +11,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.137-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7266%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.138-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7279%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -236,7 +236,11 @@ Quality Gate: ❌ FAIL | 发现 1 个严重(Critical)问题
 
 ### LLM 系競合との構造的差異
 
-promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線を取っています。*評価*シーンでは良い
+promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線を取っています
+（promptfoo は 2026-03 に OpenAI による買収が発表、プロジェクトはオープンソース継続ですが、
+indirect injection / hijack / SSRF / system-override のレッドチームプラグインは
+hosted generation が必要となり、オフラインユーザーはクラウドへ誘導されています）。
+*評価*シーンでは良い
 ツールですが、**CI ゲート**シーンでは、非決定論はパラメータ調整でどうにもならない構造的欠陥です：
 
 | ゲートの要件 | LLM 系ツール（promptfoo/garak 路線） | 本ツール（決定論的静的） |
@@ -252,21 +256,25 @@ promptfoo / garak / PromptGuard 等の主流ツールは LLM ドライブ路線�
 **分担**：本ツールは CI ゲート（再現可能判定レイヤ）、LLM 系ツールは意味論評価とレッドチーム探索。
 補完的であり、置き換え関係ではありません。
 
-### 同種の静的 Prompt ツール比較（2026-10 確認）
+### 同種の静的 Prompt ツール比較（2026-10-31 確認）
 
-| 次元 | 本ツール | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系 |
-|------|--------|---------------|-----------|---------|---------------------------|
-| 言語 / 依存 | Python、コアのサードパーティ依存ゼロ | Rust 単一バイナリ | Python（Semgrep + Sigstore + CVE feed、重い依存） | Python | Python/Node、純正則 |
-| 検出面 | Prompt フルライフサイクル（lint/scan/probe/redteam/準拠/バージョン）+ MCP 設定 | Prompt 静的 + コードからの inline prompt 抽出 + 移植性 | MCP サプライチェーン全スタック（SBOM/SAST/live server） | MCP 7 モジュール（scan/harden/auth/pin） | Prompt 正則 lint |
-| OWASP LLM Top 10 対応 | **2026 版（現行）+ ATLAS + 等保 2.0 の三標準** | 公開標準対応なし | CVE/ATTACK 面 | なし | 一部 |
-| 判定の決定論 | バイト再現可能 + 二重ベースライン時系列（1 コマンドで再現） | 決定論的静的 | ランタイム / ネットワーク feed 依存 | 一部 | 決定論的静的 |
-| 増分ゲート | 二重ベースライン（FP ラチェット + 既存ロック）+ 増分は NEW のみ遮断 | 公開ベースライン規律なし | ある | ある | なし |
-| 中国語ルール / レポート | 中国語インジェクション検出 18 件 + 中国語ルール系統 + 平易な表現のエラー + **言語別検出ベースライン表** | なし | なし | なし | 一部 |
+| 次元 | 本ツール | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint 系 | GitHub Code Scanning for AI（公式, 2026-10-28 preview） |
+|------|--------|---------------|-----------|---------|---------------------------|------|
+| 言語 / 依存 | Python、コアのサードパーティ依存ゼロ | Rust 単一バイナリ | Python（Semgrep + Sigstore + CVE feed、重い依存） | Python | Python/Node、純正則 | CodeQL エンジン、GitHub Advanced Security ライセンス必須（SaaS, Enterprise Server 未対応） |
+| 検出面 | Prompt フルライフサイクル（lint/scan/probe/redteam/準拠/バージョン）+ MCP 設定 | Prompt 静的 + コードからの inline prompt 抽出 + 移植性 | MCP サプライチェーン全スタック（SBOM/SAST/live server） | MCP 7 モジュール（scan/harden/auth/pin） | Prompt 正則 lint | 間接プロンプトインジェクション（XPIA）/ 機微情報漏洩 / 過度な agency（公式口径「カバレッジ拡大中」） |
+| OWASP LLM Top 10 対応 | **2026 版（現行）+ ATLAS + 等保 2.0 の三標準** | 公開標準対応なし | CVE/ATTACK 面 | なし | 一部 | 公開マップなし |
+| 判定の決定論 | バイト再現可能 + 二重ベースライン時系列（1 コマンドで再現） | 決定論的静的 | ランタイム / ネットワーク feed 依存 | 一部 | 決定論的静的 | バイト再現のコミットメントなし |
+| 増分ゲート | 二重ベースライン（FP ラチェット + 既存ロック）+ 増分は NEW のみ遮断 | 公開ベースライン規律なし | ある | ある | なし | 未提供 |
+| 中国語ルール / レポート | 中国語インジェクション検出 18 件 + 中国語ルール系統 + 平易な表現のエラー + **言語別検出ベースライン表** | なし | なし | なし | 一部 | なし |
+| オフライン / air-gap | 可（LLM ゼロ、ネットワークゼロ） | 可 | 不可（ネットワーク feed） | 可 | 可 | 不可（GHAS SaaS） |
 
 > 位置づけの明確化：本ツールは **CI ゲートレイヤ**（再現可能判定）。ランタイム防護（LLM Guard 系）と
-> LLM 評価（promptfoo 系）は補完的。業界の分層防御フレームワークでは、この決定論的静的レイヤが
-> **no-model baseline** — 2026 年の学術文献が再現可能な報告に推奨する形態（分類器判定は敵対サフィックスで
-> 反転しうるが、決定論的ルール判定はバイト単位の再現が可能）。MCP 検出面は下記「境界」を参照。
+> LLM 評価（promptfoo 系）は補完的。GitHub 公式 AI コードスキャニング（2026-10-28 public preview,
+> changelog 日付）は「AI コードスキャン」カテゴリの正当性を確認した — その SaaS / シート課金形態が
+> カバーしないオフライン / セルフホスト / 決定論監査の面が本ツールの楔の面。業界の分層防御フレームワークでは、
+> この決定論的静的レイヤが **no-model baseline** — 2026 年の学術文献が再現可能な報告に推奨する形態
+> （分類器判定は敵対サフィックスで反転しうるが、決定論的ルール判定はバイト単位の再現が可能）。
+> MCP 検出面は下記「境界」を参照。
 
 ### promptfoo との二重軌道共存（PR 静的レイヤ + eval 統計レイヤ）
 

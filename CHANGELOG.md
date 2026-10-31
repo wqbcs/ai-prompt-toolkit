@@ -2,6 +2,31 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.138] - 2026-10-31
+
+### Fixed（R357：对抗性审查发现 2/3——归一化集完成; 发现 4——背书包失实）
+
+- **归一化集原则化完成（normalization.py 重写, 32→73 行）**：R356 首版 5 字符剥离集=武断子集（攻击者以同块字符替代 U+200B 即逃逸全部检测层, 对抗性审查发现 2/3）; 完成=按 Unicode 语义分类三阶——① NFKC ② **Unicode tag 解码**（U+E0000-E007F 序列 1:1→ASCII, E007F 分段, 无效序列剥离; tag 有编码语义, 剥离=销毁证据=新漏检面——malskanner unicode-tag-smuggling 首条规则面, DECODED 层同范式）③ **Cf (Format) 完整剥离**（Unicode 属性类 170 码点/21 区间, 排除 tag 块; 零宽/双向控制 Trojan Source 面/软连字符/词连接符全覆盖, 测试钉死与 Unicode 数据库对齐——漂移=红）
+- **背书素材包依赖声称修正（endorsement-pack.md）**：「零核心第三方依赖」与 pyproject 7 个声明依赖矛盾（审查发现 4）→ 精确化「安全检测核心（security/ 包）纯标准库零第三方依赖（核实: 全部 import=标准库+自研）; 包级=7 声明依赖」
+
+### Added（R357）
+
+- **tests/test_r357_normalization_cf.py**（新增, 13 测试）：Cf 逃逸 TP×3（U+200E LRM / U+202A bidi / U+00AD 软连字符）+ tag smuggling TP（解码后命中）+ 无效序列剥离 + E007F 分段语义 + TN 护栏×2（阿拉伯语 LRM / 全角技术段 0 误报）+ 性质×3（行计数不变/复合面/ASCII 恒等）+ 字符类钉死×2（类内=Cf + 0x30000 以下 Cf 全入类）
+- **板行 P2-35**（检测侧良性引语语境闸, INJ-001/DEF-PAT-001 族）：审查发现 1 取证（5 形态）——F1 全角引语无防护声明=实火 / F2 有防护声明=仍实火（检测侧无语境闸, 区别于 LINT 侧 P2-30 两相闸）/ F3 ASCII 引语对照=同实火（同构确认: 归一化未创造新误报机制, 是既有引语行为延伸到全角形态）/ F4 全角技术段=静默 / F5 既有 TN=静默; **数字覆盖缺口留痕**: 0.81% FP=LINT 路径, 6.78% 过防御=NotInject-339 ASCII 面, 检测侧引语面两数字均不覆盖; T1 条件=≥2 独立真实 FP（未满足, 立规前不动手）
+- **博客 ①② 诚实边界补注**：「检测侧引语面是已登记的权衡面（P2-35, 待真实 FP 取证触发）」+「两个数字不覆盖检测侧引语面, 低 FPR 声明不包含该面」
+- **docs/planning/R357_互联网开源调研与改进方案.md**（新增）：S 级 3 信号（GitHub 官方 AI 代码扫描 2026-10-28 preview / promptfoo OpenAI 收购 hosted-generation 分流 / PIDS-Bench IEEE Access 过防御互证）+ A 级 7 信号（malskanner 已触发 E1 / reizan-injectgate 同车道动态面 / promptpale 构建面 / ContextHound autofix 面 / garak hit@k / Semalith FPR=0 单点叙事对抗 / Wagner 论文 tool output FPR 稳定面）+ 改进清单 N1-N6 + PM 四问 + 对抗性自审
+- **三语 README 定位段同步（zh/en/ja）**：① promptfoo 收购事实（2026-03 官宣, 开源继续, 4 类 red-team 插件需 hosted generation=离线用户分流面）② 静态工具对比表加 **GitHub Code Scanning for AI 官方列**（2026-10-28 preview, GHAS 许可 SaaS, XPIA/敏感信息泄露/过度 agency, 未提供逐字节可复现承诺/离线面——全事实引源, 不虚构弱点）
+
+### Changed
+
+- 版本 v67.34.137 → v67.34.138（4 处: pyproject/__init__/README 徽章/npm 锁步）
+- 博客② 记录数声称锚定版本（159 条→「v67.34.136 时点 159 条, 每次发版确定性追加」, 防静态草稿漂移失实——R357 数字一致性自检发现: 真源已 161 条）
+
+### 验证
+
+- 全量 pytest **7279 passed** 0 failed（7266+13 新增, 420.97s）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ReDoS 审计 NEW 0（Cf 字符类单趟 + tag 正则单趟=线性, 119 全批准）| mypy 0 错（strict 291/292, normalization.py 已入 strict 注册表）
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（150 行, P2-35 新登记）| 版本一致性 0 漂移（v67.34.138, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.137] - 2026-10-30
 
 ### Added（R356：T1-2 Unicode 归一化层立规——P3-38 取证落地）

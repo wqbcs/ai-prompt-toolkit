@@ -11,8 +11,8 @@
 
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](../LICENSE)
-[![Version](https://img.shields.io/badge/Version-67.34.137-orange.svg)](../CHANGELOG.md)
-[![Tests](https://img.shields.io/badge/Tests-7266%20passed-brightgreen.svg)](../tests/)
+[![Version](https://img.shields.io/badge/Version-67.34.138-orange.svg)](../CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/Tests-7279%20passed-brightgreen.svg)](../tests/)
 [![CI Green Streak](https://raw.githubusercontent.com/wqbcs/ai-prompt-toolkit/main/badges/ci-streak.svg)](../.github/workflows/ci-green-streak.yml)
 [![Miss-Rate](https://img.shields.io/badge/Miss--Rate-0.00%25%40708probes-brightgreen.svg)](../docs/规则漏检率基线.md)
 [![False-Positive](https://img.shields.io/badge/False--Positive-0.81%25%4060clean-22c55e.svg)](../docs/规则误报率基线.md)
@@ -250,7 +250,10 @@ control. As ESLint is to JavaScript, `prompt-cli` is to prompt engineering.
 
 ### Structural difference vs LLM-driven tools
 
-promptfoo / garak / PromptGuard and the like take the LLM-driven route. For **evaluation** they're
+promptfoo / garak / PromptGuard and the like take the LLM-driven route (promptfoo's
+acquisition by OpenAI was announced 2026-03; the project stays open source, but
+indirect-injection/hijack/SSRF/system-override red-team plugins now require hosted
+generation — offline users are steered to the cloud). For **evaluation** they're
 good tools; for the **CI-gate** scenario, non-determinism is a structural defect that no parameter
 can tune away:
 
@@ -268,19 +271,23 @@ be combined with runtime protection (LLM-Guard-class). **Division of labor:** th
 gate (the reproducible-verdict layer); LLM tools do semantic evaluation and red-team probing.
 Complementary, not substitutes.
 
-### Comparison with static prompt tools (verified 2026-10)
+### Comparison with static prompt tools (verified 2026-10-31)
 
-| Dimension | This tool | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint family (cognis/LintLang, etc.) |
-|------|--------|---------------|-----------|---------|---------------------------|
-| Language/deps | Python, zero core third-party deps | Rust single binary | Python (Semgrep + Sigstore + CVE feed, heavy deps) | Python | Python/Node, pure regex |
-| Detection surface | prompt full lifecycle (lint/scan/probe/redteam/compliance/version) + MCP config | prompt static + inline prompts extracted from code + portability | MCP supply-chain full-stack (SBOM/SAST/live server) | MCP 7 modules (scan/harden/auth/pin) | prompt regex lint (LintLang adds agent-config surface) |
-| OWASP LLM Top 10 mapping | **2026 edition (current) + ATLAS + MLPS 2.0, three standards** | no public standard mapping | CVE/ATTACK surface | none | partial |
-| Verdict determinism | byte-reproducible + dual-baseline time series (miss/FP reproducible in one command) | deterministic static | depends on runtime/network feed | partial | deterministic static |
-| Incremental gate | dual-baseline (FP ratchet + pre-existing lock) + incremental blocks only NEW | no public baseline discipline | yes | yes | no |
-| Chinese rules/reports | 18 Chinese injection rules + Chinese rule families + plain-language errors + **per-language detection baseline table** | none | none | none | partial |
+| Dimension | This tool | aiproof (Rust) | mcp-audit | mcpscan | prompt-guard/promptlint family (cognis/LintLang, etc.) | GitHub Code Scanning for AI (official, 2026-10-28 preview) |
+|------|--------|---------------|-----------|---------|---------------------------|------|
+| Language/deps | Python, zero core third-party deps | Rust single binary | Python (Semgrep + Sigstore + CVE feed, heavy deps) | Python | Python/Node, pure regex | CodeQL engine, requires GitHub Advanced Security license (SaaS; Enterprise Server not yet supported) |
+| Detection surface | prompt full lifecycle (lint/scan/probe/redteam/compliance/version) + MCP config | prompt static + inline prompts extracted from code + portability | MCP supply-chain full-stack (SBOM/SAST/live server) | MCP 7 modules (scan/harden/auth/pin) | prompt regex lint (LintLang adds agent-config surface) | indirect prompt injection (XPIA) / sensitive info disclosure / excessive agency (official wording: "coverage expanding") |
+| OWASP LLM Top 10 mapping | **2026 edition (current) + ATLAS + MLPS 2.0, three standards** | no public standard mapping | CVE/ATTACK surface | none | partial | no public mapping |
+| Verdict determinism | byte-reproducible + dual-baseline time series (miss/FP reproducible in one command) | deterministic static | depends on runtime/network feed | partial | deterministic static | no byte-reproducibility commitment |
+| Incremental gate | dual-baseline (FP ratchet + pre-existing lock) + incremental blocks only NEW | no public baseline discipline | yes | yes | no | none provided |
+| Chinese rules/reports | 18 Chinese injection rules + Chinese rule families + plain-language errors + **per-language detection baseline table** | none | none | none | partial | none |
+| Offline/air-gap | yes (zero LLM, zero network) | yes | no (network feed) | yes | yes | no (GHAS SaaS) |
 
 > Scope clarification: this tool is the **CI-gate layer** (reproducible verdicts); runtime protection
-> (LLM-Guard-class) and LLM evaluation (promptfoo-class) are complementary, not substitutes. In the
+> (LLM-Guard-class) and LLM evaluation (promptfoo-class) are complementary, not substitutes. GitHub's
+> official AI code scanning (public preview 2026-10-28, changelog-dated) validates the
+> "AI code scanning" category; its SaaS/per-seat shape leaves the offline/self-hosted/
+> deterministic-audit surface unmet — this tool's wedge. In the
 > industry's layered-defense framing, this deterministic static layer is the **no-model baseline** —
 > the form 2026 academic literature recommends for reproducible reporting (classifier verdicts flip
 > under adversarial suffixes; deterministic rule verdicts are byte-reproducible). See the
