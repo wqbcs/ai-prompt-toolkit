@@ -2,6 +2,25 @@
 
 本文件记录 AI 提示词体系的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [v67.34.140] - 2026-10-31
+
+### Added（R359：双修复机制统一——选项 A 保守回落 + --fix 回写实化）
+
+- **双修复机制统一（选项 A 保守回落, 用户裁决）**：取证 = lint(fix=True) `_get_fix_action` if 链（51 规则）与 fixer.Fixer（AUTO_FIXABLE_RULES 198 集）并行漂移——声明面（README/LSP/MCP）按 198 集, CLI --fix 实际只走 if 链 → 149 条"声明可修"静默无效（能力超声称）；回写断链：lint() 不返回修复后文本（LintResult 无 fixed_text）, CLI 只展示"自动修复: N 处"不写回文件 → --fix 是展示态。收口=**选项 A**：`_apply_fixes` 对 if 链无 action 的 finding 回落 Fixer 引擎**安全子集 {P258, P260}**（R358 隐藏字符 autofix: 幂等/不级联/无可见侵入；交集规则路径 A 优先=行为零漂移；非安全子集规则 no-op）+ **部分修复语义**（修后单规则重检测, 未清除=文本已更新但 warning 保留）+ **LintResult.fixed_text**（条件输出, 非 fix 路径 schema 零漂移）+ **CLI --fix 两处回写**（单文件 + 目录递归）；198 集 Fixer 仍在显式修复模式/LSP 可用。宽回落（全 198）会激活 P048 原位标点替换（破 fixed.startswith(text)）+ P072/P080/P100/P120 追加级联 + P048 非幂等（模板 7 轮才收敛, 护栏只许 5）, 违背 test_autofix_append_regression.py 安全护栏与"棘轮只收紧"纪律, 故不收
+- **L2 分层 latent bug 根治（check_layering.py）**：`_target_key` 对非 linter 顶层包子模块只取首段（security.normalization→"security"）, 致 L2 kernel→非kernel 检查 `cand="security.py"` 误判（kernel 集里是 security/normalization.py）——既有 latent bug, R358 引入 fixer→normalization 边 + R359 提 fixer 为 kernel 后暴露；修复=L2 检查加 `full_rel` 子模块回退判定（mod 全路径转相对 posix 核对 kernel 集）, **零 L3 影响面**（不改 _target_key 签名, LLM 边界检查两侧一致性保持）
+- **kernel 清单 +2（check_layer_deps.py, 14 文档同步）**：fixer.py（lint(fix=True) 回落体, 纯 stdlib）+ security/normalization.py（fixer 回落体依赖 _CF_RE）入 kernel 清单, 人读面同步（kernel 57→59 / rules 扩展 10→9）
+- **tests/test_r359_fix_unification.py**（新增, 9 测试）：fixed_text 条件输出×4 / 回落安全子集×3（P258/P260 修复 + 非安全子集 no-op）/ CLI --fix 回写 e2e×1（子进程真写回文件）/ 1.8MB 性能楔×1（fix=True <60s）
+
+### Changed
+
+- 版本 v67.34.139 → v67.34.140（4 处: pyproject/__init__/README 徽章/npm 锁步）
+- **声明面待澄清（P3-41 登记, 后续轮）**：选项 A 使 --fix 保守自动应用安全子集（if 链 51 + {P258,P260} = 53）, 而 198 AUTO_FIXABLE_RULES 集是修复引擎能力（LSP/显式模式）——声明面（README/LSP/MCP/rule_explainer）现按 198 集判"auto_fixable", 需区分"--fix 自动应用 53"vs"修复引擎可修 198"；另 README "196 可自动修复" 陈旧值（R358 后应 198）+ sync_badges.py 既有 bug（计算 counts['auto_fixable'] 但替换保留旧值 \g<1>, README 数从未同步）——跨 zh/en/ja + LSP + MCP + rule_explainer 的语义澄清, 不在本轮草率大改
+
+### 验证
+
+- 全量 pytest **7297 passed** 0 failed（R358 7288 + 9 新增；关键面实测 test_r359 9/9 + test_autofix_append_regression 94/94 + test_r321 9/9 + test_r329 21/21 全绿）| 双基线不回归（FP 0.81%@60 / 漏检 0.00%@708, gate 终跑确认）| ruff check+format 变更面 clean | mypy 0 错（strict 棘轮 291/292 锁定持平）
+- 门禁链 **28/28 GATE PASS**（release_gate --skip 1,2; 全量 pytest 独立跑）| 板状态 0 红 0 警告（P3-40 ✅ 新行 + P3-41 ⬜ 登记）| 版本一致性 0 漂移（v67.34.140, 4 处含 npm 锁步）| CI 待观测（push 后 GitHub 侧实查）
+
 ## [v67.34.139] - 2026-10-31
 
 ### Added（R358：N4 隐藏字符 autofix 立规——检测面已有, 修复面补齐）

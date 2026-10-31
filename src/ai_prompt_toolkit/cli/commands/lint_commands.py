@@ -639,6 +639,14 @@ def lint(
                     lint_config=lint_cfg,
                     target_model=target_model,
                 )
+                # R359-E1: --fix 回写（修复结果必须到用户文件; stdin 临时文件回写=无害
+                # no-op, 函数退出即清理）
+                if (fix or interactive) and not dry_run and lint_res.fixed_text is not None:
+                    try:
+                        tpl_path.write_text(lint_res.fixed_text, encoding="utf-8")
+                        click.echo(f"  [FIX] {tpl_path.name}: {len(lint_res.fixed_findings)}处已修复, 已写回文件")
+                    except OSError as _fix_e:
+                        click.echo(f"warning: {tpl_path.name} 修复结果写回失败(未保存): {_fix_e}", err=True)
                 if dry_run and lint_res.auto_fixed:
                     click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(lint_res.fixed_findings)}处可修复(未实际修改)")
                     for ff in lint_res.fixed_findings:
@@ -673,6 +681,13 @@ def lint(
                     target_model=target_model,
                 )
             )
+            # R359-E1: --fix 回写（同上一分支）
+            if fix and not dry_run and result.fixed_text is not None:
+                try:
+                    tpl_path.write_text(result.fixed_text, encoding="utf-8")
+                    click.echo(f"  [FIX] {tpl_path.name}: {len(result.fixed_findings)}处已修复, 已写回文件")
+                except OSError as _fix_e:
+                    click.echo(f"warning: {tpl_path.name} 修复结果写回失败(未保存): {_fix_e}", err=True)
             if dry_run and result.auto_fixed:
                 click.echo(f"  [DRY-RUN] {tpl_path.name}: {len(result.fixed_findings)}处可修复(未实际修改)")
             tracer.trace_lint(tpl_path.name, len(result.findings), float(result.score), result.lint_time_ms)

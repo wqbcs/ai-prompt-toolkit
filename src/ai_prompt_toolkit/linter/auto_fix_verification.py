@@ -17,8 +17,8 @@
 接入方式(默认):
   - lint 走 `PromptLinter.lint()`（与 CLI 同一内核、同一 waiver 语义）;
   - fix 走 `PromptLinter._apply_fixes()` —— 与 `lint(fix=True)` 完全同一条修复路径。
-    LintResult 目前不返回修复后文本，故复用之；后续若要公开化，建议在上游加
-    一个 `apply_fixes()` 公共方法，本模块只改默认适配器、不动调用方。
+    R359-E1 起 LintResult 返回 fixed_text（CLI --fix 回写体）; 本模块继续复用
+    _apply_fixes（同一实现, 含 Fixer 引擎回落）, 调用方不变。
 """
 
 from __future__ import annotations

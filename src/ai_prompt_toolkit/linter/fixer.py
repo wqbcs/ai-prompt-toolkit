@@ -977,7 +977,11 @@ def _fix_hidden_chars(text: str) -> str:
     安全（与 R356/R357 归一化层同范式, 22 测试护栏）, 故超集安全。
     行业先例=ContextHound `hound fix`; UX 理由=不可见字符编辑器内无法
     手动定位删除, autofix 是唯一修复路径。
+    ASCII 短路（R359-E2, R356 入口变换计时纪律同范式）：Cf 全非 ASCII →
+    isascii() C 层 O(n) 扫描后直接返回, 1.8MB 级 ASCII 目标零修复开销。
     """
+    if text.isascii():
+        return text
     from ai_prompt_toolkit.security.normalization import _CF_RE
 
     return _CF_RE.sub("", text)

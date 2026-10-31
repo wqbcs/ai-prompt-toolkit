@@ -14389,6 +14389,18 @@
       "complexity": "O(n)",
       "attack": null,
       "approved": false
+    },
+    "linter/linter.py\u0000P258": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
+    },
+    "linter/linter.py\u0000P260": {
+      "vulnerable": false,
+      "complexity": "O(n)",
+      "attack": null,
+      "approved": false
     }
   },
   "metadata": {

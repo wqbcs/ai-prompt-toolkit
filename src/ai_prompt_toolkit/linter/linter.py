@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from dataclasses import replace as _dataclass_replace
 from typing import Any
 
+from ai_prompt_toolkit.linter.fixer import Fixer
 from ai_prompt_toolkit.linter.rules import (
     _AMBIGUOUS_WORDS,
     _SENSITIVE_PATTERNS,
@@ -15,6 +16,40 @@ from ai_prompt_toolkit.linter.rules import (
     run_all_checks,
 )
 from ai_prompt_toolkit.types import Finding, Severity
+
+# R359-E1: 双修复机制收口（选项 A 保守回落）— lint(fix=True) 以 _get_fix_action
+# if 链(51 规则)为主路径; 无 action 时回落 Fixer 引擎的安全子集 {P258, P260}
+# (R358 隐藏字符 autofix: 幂等/不级联/无可见侵入)。
+# 决策留痕（R359 收口, 用户裁决选项 A）: 198 AUTO_FIXABLE_RULES 集是"有修复实现"
+# 而非"可安全自动应用"——宽回落会激活 P048 原位标点替换(破 fixed.startswith(text))
+# + P072/P080/P100/P120 追加级联 + P048 非幂等(模板 7 轮才收敛, 护栏只许 5),
+# 违背 test_autofix_append_regression.py 安全护栏与"棘轮只收紧不放松"纪律。
+# "声明=现实"改为让声明面(README/LSP/MCP)反映真实自动修复集, 而非拓宽 --fix 行为;
+# 198 集 Fixer 仍在显式修复模式可用。fixer.py 已入 kernel 清单(14 文档)。
+_FIXER = Fixer()
+
+# R359-E1（选项 A）: --fix 回落安全子集 — 仅 R358 有意立的隐藏字符规则。
+# 幂等（Cf 剥离幂等）/ 不级联（隐藏字符不承载检测面）/ 无可见侵入（Cf 不可见）。
+_SAFE_FALLBACK_RULES = frozenset({"P258", "P260"})
+
+# R359-E1: 部分修复语义 — rule_id → checker 映射(修复后重检测验证)。
+# 修复只清除了部分检测面(如 P258 标签面+隐藏字符面: Cf 剥离不清除标签)时,
+# 记为 fixed 会静默压制告警 — 重检测未清除 = 文本更新但告警保留。
+_RULE_CHECKERS: dict[str, Any] | None = None
+
+
+def _get_rule_checker(rule_id: str) -> Any:
+    """rule_id → 规则 checker(延迟构建, 供修复后单规则重检测)。"""
+    global _RULE_CHECKERS
+    if _RULE_CHECKERS is None:
+        from ai_prompt_toolkit.linter.rules import _CHECKERS_EXTENDED
+
+        _RULE_CHECKERS = {}
+        for fn in _CHECKERS_EXTENDED:
+            name = getattr(fn, "__name__", "")
+            if name.startswith("check_p"):
+                _RULE_CHECKERS[f"P{name[7:]}"] = fn
+    return _RULE_CHECKERS.get(rule_id)
 
 
 @dataclass
@@ -27,6 +62,9 @@ class LintResult:
     lint_time_ms: float = 0.0
     auto_fixed: bool = False
     fixed_findings: list[Finding] = field(default_factory=list)
+    # R359-E1: 修复后文本（fix=True 且有实际修复才填充; to_dict 条件输出,
+    # 非 fix 路径 schema 零漂移）— CLI --fix 回写体
+    fixed_text: str | None = None
     # R213-P0-2: waiver 审计 — 只报"实际生效"的豁免(有≥1条finding被压制)
     waived_rules: list[str] = field(default_factory=list)
     waived_finding_count: int = 0
@@ -78,6 +116,7 @@ class LintResult:
             "lint_time_ms": self.lint_time_ms,
             "auto_fixed": self.auto_fixed,
             "fixed_findings": [f.to_dict() for f in self.fixed_findings],
+            **({"fixed_text": self.fixed_text} if self.fixed_text is not None else {}),
             "waived_rules": self.waived_rules,
             "waived_finding_count": self.waived_finding_count,
             "score": self.score,
@@ -234,9 +273,12 @@ class PromptLinter:
             findings = escalate_mismatched_brand(findings, target_model)
 
         fixed_findings: list[Finding] = []
+        fixed_text: str | None = None
         if fix:
             text, fixed_findings = self._apply_fixes(text, findings)
             findings = [f for f in findings if f not in fixed_findings]
+            if fixed_findings:
+                fixed_text = text
 
         rule_count = len(rule_ids)
         failed_count = len(findings) + len(fixed_findings)
@@ -253,6 +295,7 @@ class PromptLinter:
             lint_time_ms=round(elapsed, 2),
             auto_fixed=fix,
             fixed_findings=fixed_findings,
+            fixed_text=fixed_text,
             waived_rules=waived_rules,
             waived_finding_count=waived_finding_count,
         )
@@ -267,6 +310,18 @@ class PromptLinter:
         for finding in findings:
             action = self._get_fix_action(finding, current)
             if action is None:
+                # R359-E1（选项 A）: 回落 Fixer 引擎安全子集（交集规则路径 A 优先零漂移）
+                if finding.rule_id in _SAFE_FALLBACK_RULES:
+                    updated = _FIXER._apply_fix(finding, current)
+                    if updated != current:
+                        # R359-E1: 部分修复语义 — 重检测验证（单规则, O(n)）:
+                        # 未清除=文本更新但告警保留（不得静默压制）
+                        checker = _get_rule_checker(finding.rule_id)
+                        recheck = checker(updated) if checker is not None else None
+                        remaining = recheck if isinstance(recheck, list) else ([recheck] if recheck else [])
+                        current = updated
+                        if not remaining:
+                            fixed.append(finding)
                 continue
             updated = apply_fix_action(current, action)
             if updated == current:

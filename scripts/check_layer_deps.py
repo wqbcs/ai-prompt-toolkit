@@ -49,6 +49,8 @@ def kernel_files() -> list[Path]:
         SRC / "linter" / "linter.py",
         SRC / "linter" / "rules.py",
         SRC / "linter" / "linear_scan.py",  # R344-RE-1b: 线性扫描原语(纯 stdlib, 无界 .* 模式的线性等价重写)
+        SRC / "linter" / "fixer.py",  # R359-E1: 修复引擎(lint(fix=True) 回落体, 纯 stdlib + rules kernel 依赖)
+        SRC / "security" / "normalization.py",  # R359-E1: 归一化原语(纯 stdlib re+unicodedata, fixer 回落体依赖)
         SRC / "linter" / "baseline.py",
         SRC / "linter" / "waivers.py",
         SRC / "linter" / "target_model.py",

@@ -356,18 +356,24 @@ def scan(src: Path, kernel: set[str], exempt: dict[tuple[str, str], str]) -> dic
             if is_kernel:
                 cand = key + ".py"  # 'types.py' / 'linter/x.py' / 顶层 'x.py'
                 if cand not in kernel:
-                    edge = (rel, key)
-                    if edge in exempt:
-                        exempt_hit.add(edge)
-                        continue
-                    violations.append(
-                        {
-                            "file": rel,
-                            "target": key,
-                            "import": mod,
-                            "check": "L2 kernel→非kernel",
-                        }
-                    )
+                    # R359: 顶层包子模块(security.normalization → security/normalization.py)。
+                    # _target_key 对非 linter 子包只取首段, cand='security.py' 会把
+                    # kernel→kernel 子模块边误判为 kernel→非kernel(既有 latent bug,
+                    # R358 引入 fixer→normalization 边 + R359 提 fixer 为 kernel 后暴露)。
+                    full_rel = mod[len("ai_prompt_toolkit.") :].replace(".", "/") + ".py"
+                    if full_rel not in kernel:
+                        edge = (rel, key)
+                        if edge in exempt:
+                            exempt_hit.add(edge)
+                            continue
+                        violations.append(
+                            {
+                                "file": rel,
+                                "target": key,
+                                "import": mod,
+                                "check": "L2 kernel→非kernel",
+                            }
+                        )
 
     unused = [f"{s} → {t}" for (s, t) in sorted(exempt) if (s, t) not in exempt_hit]
     return {
